@@ -1,8 +1,8 @@
-Cache/
+**/Cache
 
 SECRETS.cs
 
-*.log
+Debug.log
 *.bin
 
 **/Debug
