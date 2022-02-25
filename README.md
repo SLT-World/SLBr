@@ -3,7 +3,7 @@ A fully-featured, fast and clean web browser made in .NET
 
 # Taking advantage of the powerful Chromium platform
 
-SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSharp) which is a wrapper around the [**Chromium Embedded Framework (CEF)**](https://bitbucket.org/chromiumembedded/cef/src/master/) to render webpages. With
+SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSharp) which is a wrapper around the [**Chromium Embedded Framework (CEF)**](https://bitbucket.org/chromiumembedded/cef/src/master/) to render webpages.
 This project would not be at this stage if it there wasn't CEFSharp.
 
 # Questions
