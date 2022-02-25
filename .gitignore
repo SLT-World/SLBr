@@ -3,7 +3,6 @@
 SECRETS.cs
 
 Debug.log
-*.bin
 
 **/Debug
 **/Release
