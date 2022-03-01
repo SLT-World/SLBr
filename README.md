@@ -1,5 +1,5 @@
 # SLBr
-A fully-featured, fast and clean web browser made in .NET
+The new, clean and lightweight .NET Web browser
 
 # Taking advantage of the powerful Chromium platform
 
