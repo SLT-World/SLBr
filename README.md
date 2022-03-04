@@ -6,7 +6,7 @@ The new, clean and lightweight .NET Web browser
 SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSharp) which is a wrapper around the [**Chromium Embedded Framework (CEF)**](https://bitbucket.org/chromiumembedded/cef/src/master/) to render webpages.
 This project would not be at this stage if it there wasn't CEFSharp.
 
-### Roadmap
+# Roadmap
 - [x] Simple Preferences to toggle some options in CefSharp
 - [x] File download support
 - [x] SafeBrowsing support
