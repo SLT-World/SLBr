@@ -7,7 +7,7 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 This project would not be at this stage if it there wasn't CEFSharp.
 
 # Roadmap
-- [x] Simple Preferences to toggle some options in CefSharp
+- [ ] Cefsharp features settings
 - [x] File download support
 - [x] SafeBrowsing support
 - [ ] Proprietary Codecs
@@ -16,6 +16,7 @@ This project would not be at this stage if it there wasn't CEFSharp.
 - [x] Cache saving
 - [ ] Account Sign-In (Browser)
 - [x] PDF Viewer
+- [x] Modes
 - [x] Javascript Binding
 - [ ] Ad blocker [Easylist](https://easylist.to/)
 - [ ] Tor support
