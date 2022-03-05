@@ -11,6 +11,7 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 - [x] SafeBrowsing support
 - [ ] Proprietary Codecs
 - [x] Google Account Sign-In (Website)
+- [x] Google Weblight Loading
 - [ ] Set as Default Browser Option
 - [x] Cache saving
 - [ ] Account Sign-In (Browser)
