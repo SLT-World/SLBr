@@ -43,10 +43,6 @@ SLBr uses the .NET [**Windows Presentation Forms**](https://docs.microsoft.com/e
 
 [**CEFSharp**](https://github.com/cefsharp/CefSharp) is well supported and has a large community, it's been around much longer than the Microsoft WebView2 and CEFSharp is more easy for my standard.
 
-**Where is the source code?**
-
-I haven't uploaded it and I'm still thinking if it's worth making the code public.
-
 **Does SLBr send browsing habits to companies or tracks activities**
 
 No, I have no idea how to do that.
