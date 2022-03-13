@@ -11,6 +11,9 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 - No support for Windows XP/2003 and Windows Vista/Server 2008 (non R2)
 - Segoe MDL2 Assets is required to be installed in Windows 7 and below
 
+# Screenshots
+![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
+
 # Roadmap
 - [ ] Cefsharp features settings
 - [x] File download support
@@ -43,6 +46,3 @@ SLBr uses the .NET [**Windows Presentation Forms**](https://docs.microsoft.com/e
 **Does SLBr send browsing habits to companies or tracks activities**
 
 No, I have no idea how to do that.
-
-# Screenshots
-![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
