@@ -45,4 +45,4 @@ SLBr uses the .NET [**Windows Presentation Forms**](https://docs.microsoft.com/e
 No, I have no idea how to do that.
 
 # Screenshots
-# [SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
+![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
