@@ -1,0 +1,43 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>SLBr UA Detector</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+    <p>This shows that SLBr is possible to be detectable with only the simplest way possible, by using the user agent only. Code below</p>
+    <code id="SLBrCheckCode">const SLBr = window.navigator.userAgent.toLowerCase() && /slbr/i.test(window.navigator.userAgent.toLowerCase())</code>
+    <pre><code id="Output" /></pre>
+    <script>
+        const IsBrowser = typeof window !== 'undefined'
+        const UserAgent = IsBrowser && window.navigator.userAgent
+        const LowerUserAgent = UserAgent.toLowerCase()
+        const Chromium = LowerUserAgent && /chromium/i.test(LowerUserAgent)
+            /*HERE*/const SLBr = LowerUserAgent && /slbr/i.test(LowerUserAgent)/*HERE*/
+        //const IE = LowerUserAgent && /; msie|trident/i.test(LowerUserAgent) && !/ucbrowser/i.test(LowerUserAgent).test(LowerUserAgent)
+        const ChromiumEdge = LowerUserAgent && /edg/i.test(LowerUserAgent)
+        //const LegacyEdge = LowerUserAgent && /edge/i.test(LowerUserAgent)
+        const Chrome = LowerUserAgent && /chrome|crios/i.test(LowerUserAgent)
+        const StrictChrome = Chrome && !/slbr|opr|opera|chromium|edg|ucbrowser|googlebot/i.test(LowerUserAgent)
+        //const StrictChrome = Chrome && !/slbr|opr|opera|chromium|edg|ucbrowser|googlebot/i.test(LowerUserAgent)
+        //const Safari = LowerUserAgent && /safari/i.test(LowerUserAgent) && !/slbr|chromium|edg|ucbrowser|chrome|crios|opr|opera|fxios|firefox/i.test(LowerUserAgent)
+        //const Firefox = LowerUserAgent && /firefox|fxios/i.test(LowerUserAgent) && !/seamonkey/i.test(LowerUserAgent)
+        //const Opera = LowerUserAgent && /opr|opera/i.test(LowerUserAgent)
+        //const SamsungBrowser = LowerUserAgent && /samsungbrowser/i.test(LowerUserAgent)
+        document.getElementById("Output").textContent = JSON.stringify({ UserAgent, Chromium, SLBr, StrictChrome, ChromiumEdge }, null, '  ')
+            //const GoogleBot = LowerUserAgent && /googlebot/i.test(LowerUserAgent)
+            //const UcBrowser = LowerUserAgent && /ucbrowser/i.test(LowerUserAgent)
+            //const Android = LowerUserAgent && LowerUserAgent.indexOf('android') > 0
+            //const IOS = LowerUserAgent && /iphone|ipad|ipod|ios/i.test(LowerUserAgent)
+            //const Mobile = /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(LowerUserAgent) || /\b(Android|Windows Phone|iPad|iPod)\b/i.test(LowerUserAgent)
+            //const IPad = LowerUserAgent && /ipad/.test(LowerUserAgent)
+            //const IPhone = LowerUserAgent && /iphone/.test(LowerUserAgent)
+            //const IPod = LowerUserAgent && /ipod/.test(LowerUserAgent)
+            //console.log({ LowerUserAgent, SLBr, Android, StrictChrome, Chromium, Edge, Firefox, GoogleBot, IE, Mobile, IOS, IPad, IPhone, IPod, Opera, Safari, SamsungBrowser, UcBrowser })
+    </script>
+</body>
+</html>

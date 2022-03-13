@@ -1,0 +1,60 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HTML Editor</title>
+    <link rel="stylesheet" type="text/css" href="./Default.css">
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Montserrat'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/codemirror.min.css" />
+    <meta charset="UTF-8" />
+    <meta property="og:title" content="HTML Editor">
+    <meta property="og:site_name" content="HTML Editor" />
+    <script async type="text/javascript" src="./Default.js"></script>
+    <script async type="text/javascript" src="./SyntaxHighlight.js"></script>
+</head>
+<body>
+    <div class="MainContent">
+        <section id="CodeEditor">
+            <div class="Container">
+                <div class="CodeGrid" style="height: 50px;">
+                    <button class="RunButton" onclick="CompileCodeEditor()" style="height: 50px; width: 250px;">
+                        Run
+                    </button>
+                    <button class="RunButton" onclick="Download()" style="height: 50px; width: 250px;">
+                        Download
+                    </button>
+                </div>
+                <div class="CodeGrid">
+                    <textarea class="HTMLTextArea" placeholder="HTML" data-gramm_editor="false">&lt;&excl;DOCTYPE html&gt;
+&Tab;&lt;html&gt;
+&Tab;&Tab;&lt;title&gt;Title&lt;&sol;title&gt;
+&Tab;&lt;body&gt;
+&Tab;&Tab;&lt;h1&gt;Heading&lt;&sol;h1&gt;
+&Tab;&Tab;&lt;p&gt;Paragraph&lt;&sol;p&gt;
+&Tab;&lt;&sol;body&gt;
+&lt;&sol;html&gt;</textarea>
+                    <textarea class="CSSTextArea language-css" placeholder="CSS" data-gramm_editor="false">body &lcub;
+&Tab;background-color: white;
+&rcub;</textarea>
+                    <textarea class="JSTextArea" placeholder="JS" data-gramm_editor="false"></textarea>
+                </div>
+                <iframe class="CodeDisplayFrame" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-modals" srcdoc="&lt;&excl;DOCTYPE html&gt;
+&lt;html&gt;
+&lt;title&gt;Title&lt;&sol;title&gt;
+&lt;body&gt;
+&lt;h1&gt;Heading&lt;&sol;h1&gt;
+&lt;p&gt;Paragraph&lt;&sol;p&gt;
+&lt;&sol;body&gt;
+&lt;&sol;html&gt;
+&lt;style&gt;
+body &lcub;
+&Tab;background-color: white;
+&rcub;
+&lt;&sol;style&gt;"></iframe>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

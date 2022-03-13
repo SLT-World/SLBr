@@ -1,0 +1,94 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>About SLBr</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />-->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+        }
+    </style>
+</head>
+<body>
+    <div class="AboutHeader">
+        <h1>SLBr</h1>
+        <p>The new, clean and lightweight .NET Web browser</p>
+    </div>
+
+    <div class="AboutContent">
+        <h2>What's New in SLBr 2022.3.13.0</h2>
+        <p>
+            Every update of SLBr delivers many new features.
+        </p>
+        <div class="List">
+            <h3>UI Changes</h3>
+            <ul>
+                <li>The settings tab/window will notify if a change is made successfully.</li>
+                <li>Find box and new tab button added to the top control bar</li>
+                <li>An improved context menu</li>
+                <li>Sharper Text</li>
+                <li>Tab pinning</li>
+                <li>URL Eliding (Meaning the "https://" and "www." will be hidden. There's an option to show the full URL in the Settings tab/window)</li>
+                <li>Dark mode will be forced into web contents</li>
+                <li>Text are now draggable into the address bar</li>
+                <li>PDF Viewer controls made visible</li>
+                <li>Native Built-in Prompts</li>
+                <li>When a request returns 404, SLBr will prompt a question asking to check if there's a saved version on Wayback Machine instead of displaying a 404 page</li>
+            </ul>
+            <h3>New developer features</h3><!--Whatdabout developers?-->
+            <ul>
+                <li>Javascript Binding (Various functions are accessible by JS using the code `slbr.FUNCTION()`)</li>
+                <li>Faster website loading with Google Weblight</li>
+                <li>Screenshot feature (Still in development)</li>
+                <li>Tests menu</li>
+                <li>Developer mode, Developer/Experimental features & functionalities will be enabled.</li>
+                <li>Chromium mode, API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's.</li>
+                <li>Internet Explorer mode, Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors.</li>
+            </ul>
+            <h3>Other new features</h3>
+            <ul>
+                <li>More URL Schemes Supported</li>
+                <li><h4>Performance slightly improved</h4></li>
+                <li>
+                    <ul>
+                        <li>Code Cleanup</li>
+                        <li>Tab Unloading - 12/3/2022</li>
+                        <li>Limited renderer processes</li>
+                        <li>Disabled lots of unused, untouched and unnoticed features of the Chromium of SLBr, features that SLBr doesn't have to support (i.e. Smooth Scrolling, Low Resolution Tiling, Plugins/Add-ons/Extensions, Proxies)</li>
+                        <li>Disabled some parts of the GPU Acceleration because using the gpu is noticeably unreliable, but kept the rest for a limited WebGL support</li>
+                        <li>No plugins/add-ons/extensions are needed to be initialized since SLBr does not support these</li>
+                        <li>Without Proxy servers slightly improve the initialization time of SLBr as it won't attempt to resolve a proxy</li>
+                        <li>Utilized a single instance for multiple small tasks</li>
+                        <li>Removed callbacks that returns more than once.</li>
+                    </ul>
+                </li><li><h4>Keyboard Shortcuts</h4></li>
+                <li>
+                    <ul>
+                        <li>Ctrl+R, F5 (Refresh)</li>
+                        <li>Ctrl+T (New Tab)</li>
+                        <li>Ctrl+W (Close Tab)</li>
+                        <li>Ctrl+S (Screenshot)</li>
+                        <li>F12 (Developer Tools)</li>
+                    </ul>
+                </li>
+                <li><h4>Modes</h4></li>
+                <li>
+                    <ul>
+                        <li>Private mode (Incognito), No browsing history will be saved, in-memory cache will be used.</li>
+                        <li>Developer mode, Developer/Experimental features & functionalities will be enabled.</li>
+                        <li>Chromium mode, API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's.</li>
+                        <li>Internet Explorer mode, Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors.</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

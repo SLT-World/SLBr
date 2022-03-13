@@ -1,0 +1,171 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>About SLBr</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />-->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0px;
+        }
+    </style>
+</head>
+<body>
+    <div class="AboutHeader">
+        <h1>SLBr</h1>
+        <p>The new, clean and lightweight .NET Web browser</p>
+        <!--<p>With Chromium as the integrated browser engine</p>-->
+        <!--<p>The new, clean, simple, fast and lightweight .NET Web browser</p>-->
+    </div>
+
+    <div class="AboutContent">
+        <h1>Based on the powerful Chromium</a> platform</h1><!--Taking advantage of-->
+        <p>
+            SLBr uses the lightweight .NET wrapper around the <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a>, CEFSharp, to render webpages and local files.
+        </p>
+        <p>
+            With the powerful Chromium browser engine, SLBr is able to stay lightweight and isn't required to use Internet Explorer, download Chromium Edge to use WebView2 or a heavy customized browser engine as the main intergrated browser engine, while also having access to Chromium's rich and useful features that can be developed into much useful features and get implemented.
+        </p>
+        <!--<h1>Special features</h1>
+        <p>
+            SLBr is able to switch between using Chromium and using Internet Explorer as the browser engine with the Default (Chromium) and Internet Explorer mode.
+        </p>-->
+        <!--<p>
+            There are 5 modes for SLBr, Default mode, Private mode (Incognito), Developer mode, Chromium mode and lastly, Internet Explorer mode. Each, with it's own unique problems and features.
+        </p>-->
+        <!--<ul>
+            <li>Private mode (Incognito), No browsing history will be saved, in-memory cache will be used.</li>
+            <li>Developer mode, Developer/Experimental features & functionalities will be enabled.</li>
+            <li>Chromium mode, API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's.</li>
+            <li>Internet Explorer mode, Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors. But hey, at least you can test out a website and see how bad it's CSS gets.</li>
+        </ul>-->
+        <!--<h1>Story</h1>
+        <p>
+            SLT used to had a fascination of web browsers. He wanted to create his own browser like what those large companies did. So he started learning C#, Winforms and WPF, and created the Skylight Browser Project, which didn't go far. The project was abandoned in favour of creating 3d interactive games. The Skylight project was lost forever.
+        </p>
+        <p>
+            Until... Chrome decided to be laggy and eat all the ram. Chrome gets slower and slower, SLT just can't bare it anymore.
+            So SLT wanted a browser, in which he can modify and change it to fit the way he wanted. He suddenly remembered his old Skylight browsers he tried making a year ago, So he opened them up, they were old and slower than chrome, so he left them there.
+        </p>
+        <p>
+            Some day while he was cleaning files in his disk, he came across the 3rd unfinished skylight browser made in WPF which he completely forgot about, it only contained a few controls and a tab control, but the UI style was very clean.
+            So he decided that the project would make good foundation for his new browser project, <strong>SLBr</strong>.
+            This time with more advanced knowledge of C# and better english, he started the development of SLBr and added various improvements and features that were thought impossible for the old skylight browsers in their time, and here we are. SLBr, the successor of Skylight, is here with a lightweight and powerful rendering engine with access to the advantages and rich features of chromium.
+        </p>
+        <p>
+            SLT's hobby of programming will keep him busy and continue supporting this project, for months to come.
+        </p>-->
+        <h2>Links of Interest & References</h2>
+        <ul>
+            <li><a href="https://github.com/SLT-World/SLBr/" target="_blank">SLBr Github Repository</a></li>
+            <li>Chromium</li>
+            <li>CEFSharp</li>
+            <li><a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a></li>
+            <li>WebView2</li>
+            <li>Internet Explorer</li>
+        </ul>
+    </div>
+    <script>
+        (function () {
+            var skipTags = { 'a': 1, 'style': 1, 'script': 1, 'iframe': 1, 'h1': 1 };
+            var findKW = function (el, term, replFn) {
+                var child, tag;
+
+                for (var i = el.childNodes.length - 1; i >= 0; i--) {
+                    child = el.childNodes[i];
+                    if (child.nodeType == 1) { // ELEMENT_NODE
+                        tag = child.nodeName.toLowerCase();
+                        if (!(tag in skipTags)) {
+                            findKW(child, term, replFn);
+                        }
+                    } else if (child.nodeType == 3) { // TEXT_NODE
+                        replaceKW(child, term, replFn);
+                    }
+                }
+            };
+            var replaceKW = function (text, term, replFn) {
+                var match,
+                    matches = [];
+
+                while (match = term.exec(text.data)) {
+                    matches.push(match);
+                }
+                for (var i = matches.length - 1; i >= 0; i--) {
+                    match = matches[i];
+
+                    // cut out the text node to replace
+                    text.splitText(match.index);
+                    text.nextSibling.splitText(match[1].length);
+                    text.parentNode.replaceChild(replFn(match[1]), text.nextSibling);
+                }
+            };
+            //findKW(
+            //    document.body, new RegExp('\\b(SLBr)\\b', 'g'),
+            //    function (match) {
+            //        var link = document.createElement('a');
+            //        link.href = 'https://github.com/SLT-World/SLBr/';
+            //        link.target = '_blank';
+            //        link.innerHTML = match;
+            //        return link;
+            //    }
+            //);
+            //findKW(
+            //    document.body, new RegExp('\\b(Chromium Embedded Framework (CEF))\\b', 'g'),
+            //    function (match) {
+            //        var link = document.createElement('a');
+            //        link.href = 'https://bitbucket.org/chromiumembedded/cef/wiki/Home';
+            //        link.target = '_blank';
+            //        link.innerHTML = match;
+            //        return link;
+            //    }
+            //);
+            findKW(
+                document.body, new RegExp('\\b(CEFSharp)\\b', 'g'),
+                function (match) {
+                    var link = document.createElement('a');
+                    link.href = 'https://cefsharp.github.io/';
+                    link.target = '_blank';
+                    link.innerHTML = match;
+                    return link;
+                }
+            );
+            findKW(
+                document.body,new RegExp('\\b(Chromium)\\b', 'g'),
+                function (match) {
+                    var link = document.createElement('a');
+                    link.href = 'https://www.chromium.org/Home/';
+                    link.target = '_blank';
+                    link.innerHTML = match;
+                    return link;
+                }
+            );
+            findKW(
+                document.body,new RegExp('\\b(WebView2)\\b', 'g'),
+                function (match) {
+                    var link = document.createElement('a');
+                    link.href = 'https://docs.microsoft.com/en-us/microsoft-edge/webview2/';
+                    link.target = '_blank';
+                    link.innerHTML = match;
+                    return link;
+                }
+            );
+            findKW(
+                document.body, new RegExp('\\b(Internet Explorer)\\b', 'g'),
+                function (match) {
+                    var link = document.createElement('a');
+                    link.href = 'https://docs.microsoft.com/en-us/dotnet/api/system.windows.controls.webbrowser/';
+                    link.target = '_blank';
+                    link.innerHTML = match;
+                    return link;
+                }
+            );
+        }()); 
+    </script>
+</body>
+</html>

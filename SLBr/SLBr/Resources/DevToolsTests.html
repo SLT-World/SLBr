@@ -1,0 +1,82 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SLBr DevTools Tests</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <style type="text/css">
+        #Receiver {
+            min-height: 256px;
+            max-height: 256px;
+            overflow-y: auto;
+            background: aliceblue;
+            display: block;
+            border-radius: 0.5em;
+            border: 1px solid cornflowerblue;
+            font-family: "Consolas", monospace;
+            padding: 1em;
+        }
+
+        section {
+            margin-bottom: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="AboutHeader">
+        <h1>SLBr DevTools Tests</h1>
+    </div>
+
+    <div class="AboutContent">
+        <main class="container">
+            <section>
+                <div class="row">
+                    <input id="Input" type="text" class="form-control col-xs-9 col-sm-9 col-md-9 col-lg-9 col-xl-9" placeholder="Write something here...">
+
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 col-xl-3">
+                        <button id="SendDataToBrowserButton" class="btn btn-primary" title="Send message to DevTools">Send</button>
+                    </div>
+                </div>
+            </section>
+
+            <!--<section>
+                <header class="row">
+                    <h2 class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">Message from App</h2>
+                </header>
+
+                <div class="row">
+                    <pre class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">                        <code id="Receiver" title="Get data from app"></code>
+                    </pre>
+                </div>
+            </section>-->
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+        let input = document.querySelector("#Input");
+        let SendDataToBrowserButton = document.querySelector("#SendDataToBrowserButton");
+
+        SendDataToBrowserButton.addEventListener("click", event => {
+            let message = input.value;
+
+            if (message.length === 0) {
+                message = "Empty message";
+            }
+
+            console.log(message);
+
+            input.value = "";
+        });
+    </script>
+</body>
+</html>
