@@ -40,13 +40,13 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 # Run the source code
 **Setup**
 
-If you haven't installed visual studio (NOT VISUAL STUDIO CODE), install it.
+1. If you haven't installed visual studio yet (NOT VISUAL STUDIO CODE), install it.
 
-After that, download the project as a ZIP file from Github.
+2. After that, download the project as a ZIP file from Github.
 
-Unzip the file, find the solution file and open it.
+3. Unzip the file, find the solution file and open it.
 
-Tada, now you can change the code the way you like and contribute some features to SLBr!
+4. Tada, now you can change the code the way you like and contribute some features to SLBr!
 
 **The class "SECRETS" is missing**
 
