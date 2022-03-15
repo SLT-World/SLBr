@@ -37,6 +37,21 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 - [ ] Extension/Plug-in/Add-on support
 - [ ] Full WebGL support
 
+# Run the source code
+**Setup**
+
+If you haven't installed visual studio (NOT VISUAL STUDIO CODE), install it.
+
+After that, download the project as a ZIP file from Github.
+
+Unzip the file, find the solution file and open it.
+
+Tada, now you can change the code the way you like and contribute some features to SLBr!
+
+**The class "SECRETS" is missing**
+
+The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it, either remove the line of code that is causing the error, which will remove support for SafeBrowsing, Google Sign-ins and Geolocation. Or, generate a new C# class called "SECRETS", have string variables named "GOOGLE_API_KEY", "GOOGLE_DEFAULT_CLIENT_ID", "GOOGLE_DEFAULT_CLIENT_SECRET".
+
 # Questions
 **What is the UI system that is used to create SLBr?**
 
