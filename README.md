@@ -1,5 +1,5 @@
 # SLBr
-The new, clean and lightweight .NET Web browser
+The new, clean, lightweight .NET Web browser
 
 SLBr is one of the best C# WPF Web Browser there is! More lightweight and less memory usage compared to Google Chrome, with a modern UI design.
 
