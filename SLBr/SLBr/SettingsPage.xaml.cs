@@ -180,7 +180,7 @@ namespace SLBr
                 }
             }));
             //NewMessage($"SLBr will {((bool)_CheckBox.IsChecked ? "" : "not")} enable dark theme.", false);
-            NewMessage($"SLBr Dark Theme has been {((bool)_CheckBox.IsChecked ? "enabled" : "disabled")}.", false);
+            NewMessage($"SLBr Dark Theme has been {((bool)_CheckBox.IsChecked ? "enabled" : "disabled")}, refresh the webpages to see the change.", false);
         }
         private void BlockKeywordsCheckBox_Click(object sender, RoutedEventArgs e)
         {

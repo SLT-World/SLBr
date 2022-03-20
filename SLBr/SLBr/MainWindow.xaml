@@ -1,5 +1,5 @@
 ﻿<!--Copyright © 2022 SLT World. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
 <Window x:Class="SLBr.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,6 +7,7 @@ Use of this source code is governed by a BSD-style license that can be found in 
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="SLBr" Closing="Window_Closing" WindowStartupLocation="CenterScreen" WindowState="Maximized" MinHeight="450" MinWidth="800" FontFamily="Segoe MDL2 Assets" Loaded="Window_Loaded">
+    <!--Opacity="0.75" WindowStyle="None" AllowsTransparency="True"-->
     <Window.Resources>
         <ResourceDictionary Source="ResourceDictionary.xaml"/>
     </Window.Resources>
@@ -56,7 +57,6 @@ Use of this source code is governed by a BSD-style license that can be found in 
                             <MenuItem Header="Tools" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
                                 <MenuItem Header="News Feed" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="20"/>
                                 <MenuItem Header="View Source" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="5"/>
-                                <!--<MenuItem Header="HTML Editor" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="9"/>-->
                                 <MenuItem Header="Developer Tools" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="6"/>
                                 <MenuItem x:Name="TestsMenuItem" Visibility="Collapsed" Header="Tests" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
                                     <MenuItem Header="Http Bin" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://httpbin.org/"/>
@@ -64,46 +64,76 @@ Use of this source code is governed by a BSD-style license that can be found in 
                                     <MenuItem Header="Bad SSL Test" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://badssl.com/"/>
                                     <MenuItem Header="HTML5 Test" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://html5test.com/"/>
                                     <MenuItem Header="CSS3 Test" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://css3test.com/"/>
-                                    <MenuItem Header="Cdm Support Test" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;slbr://cdmsupport/"/>
                                     <!--<MenuItem Header="Geolocation Test" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;slbr://geolocationtest/"/>-->
-                                    <MenuItem Header="Basic Service Worker Sample" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
-                                    <MenuItem Header="Test SafeBrowsing" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://testsafebrowsing.appspot.com/"/>
-                                    <MenuItem Header="SafeBrowsing Site Status" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://transparencyreport.google.com/safe-browsing/search"/>
-                                    <MenuItem Header="SameSite Sandbox" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://samesite-sandbox.glitch.me/"/>
                                     <MenuItem Header="Ad Block Tester" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://adblock-tester.com/"/>
                                     <MenuItem Header="Show Picker" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://show-picker.glitch.me/demo.html"/>
                                     <MenuItem Header="WebRTC Experiments" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.webrtc-experiment.com/"/>
                                     <MenuItem Header="Acid3 Test" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://acid3.acidtests.org/"/>
                                     <MenuItem Header="Page Visibility API" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.audero.it/demo/page-visibility-api-demo.html"/>
-                                    <MenuItem Header="Chrome Experiments Collection" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/collection/chrome/"/>
-                                    <MenuItem Header="Best Chrome Experiments" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
-                                        <MenuItem Header="1000" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://1000.chromeexperiments.com/"/>
-                                        <MenuItem Header="Browser Pong" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://stewd.io/pong/"/>
-                                        <MenuItem Header="X-Wing" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/x-wing/"/>
-                                        <MenuItem Header="PewPewPew" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/pewpewpew/"/>
-                                        <MenuItem Header="A Dark Room" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://adarkroom.doublespeakgames.com/"/>
-                                        <MenuItem Header="roTopo" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/rotopo/"/>
-                                        <MenuItem Header="Plink" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/plink-multiplayer-music-experience/"/>
-                                        <MenuItem Header="Kandinsky" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://musiclab.chromeexperiments.com/Kandinsky/"/>
-                                        <MenuItem Header="Poco Apollo" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/poco-apollo/"/>
-                                        <MenuItem Header="Mecabricks" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://1000.chromeexperiments.com/#/experiment/mecabricks/"/>
-                                        <MenuItem Header="House Configurator" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/house-configurator/"/>
-                                        <MenuItem Header="Ztype" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://zty.pe/"/>
-                                        <MenuItem Header="Morse Typing Trainer for GBoard" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/morse-learn/"/>
-                                        <MenuItem Header="Solace" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/solace/"/>
-                                        <MenuItem Header="A More Better Life" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/a-more-better-life/"/>
-                                        <MenuItem Header="Roger Water" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/roger-water/"/>
-                                        <MenuItem Header="Sound City" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/soundcity/"/>
-                                        <MenuItem Header="Wikiwhere" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/wikiwhere/"/>
-                                        <MenuItem Header="The Searching Planet" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/the-searching-planet/"/>
-                                        <MenuItem Header="100,000 Stars" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/100000-stars/"/>
-                                        <MenuItem Header="Roadtrip" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/roadtrip/"/>
-                                        <MenuItem Header="Radio Garden" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://radio.garden/search/"/>
-                                        <MenuItem Header="How New York Are You?" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/how-new-york-are-you/"/>
+                                    <MenuItem Header="UFO Test: Stutter" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.testufo.com/stutter"/>
+                                    <MenuItem Header="CPU Stress Test" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://cpux.net/cpu-stress-test-online"/>
+                                    <MenuItem Header="Browser Bench" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://browserbench.org/"/>
+                                    <MenuItem Header="Browser Audit" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://browseraudit.com/"/>
+                                    <MenuItem Header="HTML5 Video Test Page" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://tekeye.uk/html/html5-video-test-page"/>
+                                    <MenuItem Header="SLBr Related" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                        <MenuItem Header="SLBr Cdm Support" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;slbr://cdmsupport/"/>
+                                        <MenuItem Header="SLBr Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;slbr://urls/"/>
+                                        <MenuItem Header="SLBr Developer Interests" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                            <MenuItem Header="Replace the &quot;Available on Chrome&quot; button, with the download button." FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://gist.github.com/XP1/2794864"/>
+                                            <MenuItem Header="Flying Images" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.answers.com/Q/What_is_the_code_for_flying_images"/>
+                                            <MenuItem Header="Custom Browser Engine" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://limpet.net/mbrubeck/2014/08/08/toy-layout-engine-1.html"/>
+                                            <MenuItem Header="WPF Docked DevTools" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://github.com/cefsharp/CefSharp/discussions/4010"/>
+                                            <MenuItem Header="Zoom page with Scroll Wheel" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://chowdera.com/2021/06/20210618113207692M.html"/>
+                                            <MenuItem Header="8 Ways to cause memory leaks in .NET" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://michaelscodingspot.com/ways-to-cause-memory-leaks-in-dotnet/"/>
+                                            <MenuItem Header="WPF Release Memory" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.programmerall.com/article/31461834727/"/>
+                                        </MenuItem>
+                                    </MenuItem>
+                                    <MenuItem Header="Chromium Related" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                        <MenuItem Header="CEF Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                            <MenuItem Header="List Internal Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;chrome://chrome-urls/"/>
+                                            <MenuItem Header="Net Internal Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;chrome://net-internals/"/>
+                                            <MenuItem Header="Process Internal Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;chrome://process-internals/"/>
+                                        </MenuItem>
+                                        <MenuItem Header="V8 Javascript Engine" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://v8.dev/"/>
+                                        <MenuItem Header="Chromium API Keys" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.chromium.org/developers/how-tos/api-keys/"/>
+                                        <MenuItem Header="Google Search Console" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://search.google.com/search-console/welcome?action=inspect"/>
+                                        <MenuItem Header="ReCAPTCHA Demo" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.google.com/recaptcha/api2/demo"/>
+                                        <MenuItem Header="Basic Service Worker Sample" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
+                                        <MenuItem Header="Test SafeBrowsing" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://testsafebrowsing.appspot.com/"/>
+                                        <MenuItem Header="SameSite Sandbox" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://samesite-sandbox.glitch.me/"/>
+                                        <MenuItem Header="SafeBrowsing Site Status" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://transparencyreport.google.com/safe-browsing/search"/>
+                                        <MenuItem Header="Chromium Schedule" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://chromiumdash.appspot.com/schedule"/>
+                                        <MenuItem Header="Chrome Experiments Collection" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/collection/chrome/"/>
+                                        <MenuItem Header="Best Chrome Experiments" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                            <MenuItem Header="1000" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://1000.chromeexperiments.com/"/>
+                                            <MenuItem Header="Browser Pong" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://stewd.io/pong/"/>
+                                            <MenuItem Header="X-Wing" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/x-wing/"/>
+                                            <MenuItem Header="PewPewPew" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/pewpewpew/"/>
+                                            <MenuItem Header="A Dark Room" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://adarkroom.doublespeakgames.com/"/>
+                                            <MenuItem Header="roTopo" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/rotopo/"/>
+                                            <MenuItem Header="Plink" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/plink-multiplayer-music-experience/"/>
+                                            <MenuItem Header="Kandinsky" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://musiclab.chromeexperiments.com/Kandinsky/"/>
+                                            <MenuItem Header="Poco Apollo" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/poco-apollo/"/>
+                                            <MenuItem Header="Mecabricks" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://1000.chromeexperiments.com/#/experiment/mecabricks/"/>
+                                            <MenuItem Header="House Configurator" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/house-configurator/"/>
+                                            <MenuItem Header="Ztype" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://zty.pe/"/>
+                                            <MenuItem Header="Morse Typing Trainer for GBoard" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/morse-learn/"/>
+                                            <MenuItem Header="Solace" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/solace/"/>
+                                            <MenuItem Header="A More Better Life" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/a-more-better-life/"/>
+                                            <MenuItem Header="Roger Water" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/roger-water/"/>
+                                            <MenuItem Header="Sound City" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/soundcity/"/>
+                                            <MenuItem Header="Wikiwhere" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/wikiwhere/"/>
+                                            <MenuItem Header="The Searching Planet" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/the-searching-planet/"/>
+                                            <MenuItem Header="100,000 Stars" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/100000-stars/"/>
+                                            <MenuItem Header="Roadtrip" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/roadtrip/"/>
+                                            <MenuItem Header="Radio Garden" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://radio.garden/search/"/>
+                                            <MenuItem Header="How New York Are You?" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://experiments.withgoogle.com/how-new-york-are-you/"/>
+                                        </MenuItem>
                                     </MenuItem>
 
                                 <!--<MenuItem Header="HTML5 Demos" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">-->
                                         <MenuItem Header="HTML5 Demos" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://html5demos.com/"/>
+                                    <MenuItem Header="Detecting HTML5 Features" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://diveintohtml5.info/detect.html"/>
                                     <!--    <MenuItem Header="Drag &amp; Drop Demo" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;http://html5demos.com/drag/"/>
                                     </MenuItem>
                                     <MenuItem Header="WebGL" FontFamily="Arail" Foreground="{DynamicResource FontBrush}">
@@ -117,14 +147,13 @@ Use of this source code is governed by a BSD-style license that can be found in 
                                             <MenuItem Header="Book" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://webglsamples.org/book/book.html"/>
                                         </MenuItem>
                                     <!--</MenuItem>-->
-                                    <MenuItem Header="SLBr Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;slbr://urls/"/>
-                                    <MenuItem Header="CEF Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
-                                        <MenuItem Header="List Internal Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;chrome://chrome-urls/"/>
-                                        <MenuItem Header="Net Internal Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;chrome://net-internals/"/>
-                                        <MenuItem Header="Process Internal Urls" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;chrome://process-internals/"/>
-                                    </MenuItem>
                                 </MenuItem>
                                 <MenuItem Header="Interesting Websites" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                    <MenuItem Header="Papers Please" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                        <MenuItem Header="Citation Generator" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://saphi.re/papers_please/"/>
+                                        <!--<MenuItem Header="Passport Generator" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://nebulous.cloud/threads/papers-please-make-your-own-passport.2833/"/>-->
+                                    </MenuItem>
+                                    <MenuItem Header="Cow Sage Towers" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://cow.sagetowers.com/"/>
                                     <MenuItem Header="Leo" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://platform.leolabs.space/visualizations/leo/"/>
                                     <MenuItem Header="Nukemap" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://nuclearsecrecy.com/nukemap/"/>
                                     <MenuItem Header="Take b1nzy to space" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://takeb1nzyto.space/"/>
@@ -147,15 +176,15 @@ Use of this source code is governed by a BSD-style license that can be found in 
                     <Button x:Name="ReloadButton" Margin="0" Height="23" Width="23" ToolTip="Refresh" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE72C;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="2"/>
                     <Button Style="{DynamicResource AddButton}" Content="&#xE80F;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="10" ToolTip="Home"/>
                     <Button Style="{DynamicResource AddButton}" Content="&#xE710;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="3" ToolTip="New Tab"/>
+                    <Button Margin="0" Height="23" Width="23" ToolTip="Add to favourites" x:Name="FavouriteButton" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xEB51;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="11"/>
                     <Grid x:Name="SSLGrid" Margin="0" Height="23" Width="23">
                         <TextBlock x:Name="SSLSymbol" VerticalAlignment="Center" TextAlignment="Center" Text="&#xE72E;" Foreground="{DynamicResource ControlFontBrush}"/>
                         <Grid.ToolTip>
                             <ToolTip x:Name="SSLToolTip"/>
                         </Grid.ToolTip>
                     </Grid>
-                    <Button DockPanel.Dock="Right" Margin="0,0,5,0" Height="23" Width="23" ToolTip="Add to favourites" x:Name="FavouriteButton" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xEB51;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="11"/>
                     <TextBox DockPanel.Dock="Right" x:Name="FindTextBox" Margin="5" Height="23" Width="200" FontFamily="arial" Padding="0,1,0,0" KeyDown="FindTextBox_KeyDown" ToolTip="Find a specific text in this page"/>
-                    <TextBox AutoWordSelection="True" x:Name="AddressBox" Margin="5" Height="23" Width="auto" FontFamily="arial" Padding="0,1,0,0" KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" MouseEnter="AddressBox_MouseEnter" MouseLeave="AddressBox_MouseLeave" Tag="Loading..."/>
+                    <TextBox x:Name="AddressBox" Margin="5" Height="23" Width="auto" FontFamily="arial" Padding="0,1,0,0" KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" MouseEnter="AddressBox_MouseEnter" MouseLeave="AddressBox_MouseLeave" Tag="Loading..."/>
                 </DockPanel>
                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Height="33" Grid.Row="1" HorizontalAlignment="Stretch">
                     <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
@@ -224,6 +253,10 @@ Use of this source code is governed by a BSD-style license that can be found in 
             </DockPanel>
         </Border>
         <Grid Visibility="Collapsed" x:Name="DevToolsContainer" Grid.Column="1" Grid.Row="1" Width="500"/>
+
+        <Border x:Name="StatusBar" HorizontalAlignment="Left" VerticalAlignment="Bottom" Grid.Row="1" Height="25" Width="400" Background="{DynamicResource UnselectedTabBrush}" CornerRadius="0,5,0,0">
+            <TextBlock x:Name="StatusMessage" Margin="5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>
+        </Border>
         <!--SetHiddenIfDockedDevtools-->
     </Grid>
 </Window>

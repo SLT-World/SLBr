@@ -1,5 +1,5 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using CefSharp;
 using System;
 using System.Collections.Generic;
@@ -24,7 +24,7 @@ namespace SLBr
 		{
 			if (request.Url.Contains("roblox.com"))
 				return true;
-			if ((isRedirect || userGesture || frame.IsMain) && !Utils.IsSystemUrl(request.Url) && !Utils.IsProgramUrl(request.Url))
+			if (Utils.CanCheck(request.TransitionType) && !Utils.IsSystemUrl(request.Url) && !Utils.IsProgramUrl(request.Url))//(isRedirect || userGesture || frame.IsMain)
 			{
 				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url.Replace("https://googleweblight.com/?lite_url=", ""));
 				Utils.SafeBrowsing.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : Utils.SafeBrowsing.ThreatType.Unknown;

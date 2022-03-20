@@ -1,5 +1,5 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -21,6 +21,7 @@ using System.Management;
 using System.Drawing;
 using CefSharp.Wpf;
 using System.Windows.Input;
+using CefSharp;
 
 namespace SLBr
 {
@@ -31,7 +32,7 @@ namespace SLBr
         public static bool HasDebugger() =>
             Debugger.IsAttached;
         public static bool IsSystemUrl(string Url) =>
-            (IsInternalUrl(Url) || Url.StartsWith("file:") || Url.StartsWith("localhost:") || IsAboutUrl(Url) || Url.StartsWith("view-source:") || Url.StartsWith("devtools:") || Url.StartsWith("data:"));
+            (IsInternalUrl(Url) || Url.StartsWith("javascript:") || Url.StartsWith("file:") || Url.StartsWith("localhost:") || IsAboutUrl(Url) || Url.StartsWith("view-source:") || Url.StartsWith("devtools:") || Url.StartsWith("data:"));
         public static bool IsProgramUrl(string Url) =>
             (Url.StartsWith("callto:") || Url.StartsWith("mailto:") || Url.StartsWith("news:") || Url.StartsWith("feed:"));
         public static bool IsInternalUrl(string Url) =>
@@ -44,6 +45,8 @@ namespace SLBr
             Url.StartsWith("https:") || Url.StartsWith("http:");
         public static bool IsChromeScheme(string Url) =>
             Url.StartsWith("cef:") || Url.StartsWith("chrome:");
+        public static bool CanCheck(TransitionType _TransitionType) =>
+            _TransitionType != TransitionType.AutoSubFrame && _TransitionType != TransitionType.Blocked && _TransitionType != TransitionType.FormSubmit;
         public static bool IsSchemeNotHttp(string Url)
         {
             if (IsHttpScheme(Url))
@@ -102,7 +105,7 @@ namespace SLBr
                     }
                     else if (!IsChromiumMode && Url.StartsWith("cef:"))
                         Url = "domain:chrome:" + Url.Substring(4);
-                    else if ((Url.Contains(".") || IsSystemUrl(Url) || (IsChromiumMode && Url.StartsWith("chrome:"))) && !Url.Contains(" "))
+                    else if ((Url.Contains(".") || IsSystemUrl(Url) || (IsChromiumMode && Url.StartsWith("chrome:"))) && (!Url.Contains(" ") || Url.StartsWith("javascript:")))
                         Url = "domain:" + Url;
                     else
                         Url = "search:" + Url;

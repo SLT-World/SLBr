@@ -1,5 +1,5 @@
 ﻿<!--Copyright © 2022 SLT World. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
 
 <!DOCTYPE html>
 
@@ -7,7 +7,7 @@ Use of this source code is governed by a BSD-style license that can be found in 
 <head>
     <meta charset="utf-8" />
     <title>About SLBr</title>
-    <link rel="stylesheet" type="text/css" href="./style.css">
+    <link rel="stylesheet" type="text/css" href="./style.css"/>
     <!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />-->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
@@ -19,11 +19,47 @@ Use of this source code is governed by a BSD-style license that can be found in 
 <body>
     <div class="AboutHeader">
         <h1>SLBr</h1>
-        <p>The new, clean and lightweight .NET Web browser</p>
+        <p>The new, clean, lightweight .NET Web browser</p>
     </div>
 
     <div class="AboutContent">
-        <h2>What's New in SLBr 2022.3.13.0</h2>
+        <h2>What's New in SLBr 2022.3.20.0</h2>
+        <p>
+            Every update of SLBr delivers many new features.
+        </p>
+        <p>
+            Note from the developer: Conducted a lot of test runs this time and hopefully much of what's needed to be fixed are fixed.
+        </p>
+        <div class="List">
+            <h3>UI Changes</h3>
+            <ul>
+                <li>A status bar</li>
+                <li>A finished downloading prompt</li>
+                <li>Renamed the context menu button "Close menu" to "Cancel" and moved it to the end of the menu</li>
+                <li>Open URL in new tab context menu</li>
+                <li>Opens About page on first try</li>
+                <li>Fixed various errors that caused crashes on first try</li>
+                <li>Rearranged Tools Menu</li>
+                <!--<li>Replacing the default 500 error page with a prompt, just the same as what SLBr responds a 404 error</li>-->
+            </ul>
+            <h3>Bug fixes</h3>
+            <ul>
+                <li>SLBr will render properly on Intel i5 processors, SLBr takes a giant leap forward (For developers who are wondering how, here's the line of code that solved it: "RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;")</li>
+                <li>Fixed prompt not closing problem (Binding problem)</li>
+            </ul>
+            <h3>Code Changes</h3>
+            <ul>
+                <li>"javascript:" scheme added</li>
+                <li>More details added to the About Page</li>
+                <li>Moved and shortened code</li>
+            </ul>
+            <h3>Contributing</h3>
+            <p>
+                To contribute features to SLBr, see what features are needed at SLBr's <a target="_blank" href="https://github.com/SLT-World/SLBr/projects/1">Github Project Page</a>
+            </p>
+        </div>
+    </div>
+    <!--<h2>What's New in SLBr 2022.3.13.0</h2>
         <p>
             Every update of SLBr delivers many new features.
         </p>
@@ -42,7 +78,7 @@ Use of this source code is governed by a BSD-style license that can be found in 
                 <li>Native Built-in Prompts</li>
                 <li>When a request returns 404, SLBr will prompt a question asking to check if there's a saved version on Wayback Machine instead of displaying a 404 page</li>
             </ul>
-            <h3>New developer features</h3><!--Whatdabout developers?-->
+            <h3>New developer features</h3>
             <ul>
                 <li>Javascript Binding (Various functions are accessible by JS using the code `slbr.FUNCTION()`)</li>
                 <li>Faster website loading with Google Weblight</li>
@@ -89,6 +125,6 @@ Use of this source code is governed by a BSD-style license that can be found in 
                 </li>
             </ul>
         </div>
-    </div>
+    </div>-->
 </body>
 </html>

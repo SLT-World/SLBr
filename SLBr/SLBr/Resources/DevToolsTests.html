@@ -1,5 +1,5 @@
 ﻿<!--Copyright © 2022 SLT World. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.-->
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
 <!DOCTYPE html>
 <html>
 <head>
@@ -37,10 +37,37 @@ Use of this source code is governed by a BSD-style license that can be found in 
         <main class="container">
             <section>
                 <div class="row">
-                    <input id="Input" type="text" class="form-control col-xs-9 col-sm-9 col-md-9 col-lg-9 col-xl-9" placeholder="Write something here...">
+                    <input id="SDevToolsInput" type="text" class="form-control col-xs-9 col-sm-9 col-md-9 col-lg-9 col-xl-9" placeholder="Write something here...">
 
                     <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 col-xl-3">
-                        <button id="SendDataToBrowserButton" class="btn btn-primary" title="Send message to DevTools">Send</button>
+                        <button id="SendDataToBrowserButton" class="btn btn-primary" title="Send Message To DevTools">Send</button>
+                    </div>
+                </div>
+            </section>
+            <section>
+                <div class="row">
+                    <input id="CDialogInput" type="text" class="form-control col-xs-9 col-sm-9 col-md-9 col-lg-9 col-xl-9" placeholder="Write something here...">
+
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 col-xl-3">
+                        <button id="OpenConfirmationDialogButton" class="btn btn-primary" title="Open Confirmation Dialog">Open Confirmation Dialog</button>
+                    </div>
+                </div>
+            </section>
+            <section>
+                <div class="row">
+                    <input id="AlertInput" type="text" class="form-control col-xs-9 col-sm-9 col-md-9 col-lg-9 col-xl-9" placeholder="Write something here...">
+
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 col-xl-3">
+                        <button id="AlertButton" class="btn btn-primary" title="Alert Message">Alert</button>
+                    </div>
+                </div>
+            </section>
+            <section>
+                <div class="row">
+                    <input id="PromptInput" type="text" class="form-control col-xs-9 col-sm-9 col-md-9 col-lg-9 col-xl-9" placeholder="Write something here...">
+
+                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 col-xl-3">
+                        <button id="PromptButton" class="btn btn-primary" title="Prompt Message">Prompt</button>
                     </div>
                 </div>
             </section>
@@ -63,19 +90,57 @@ Use of this source code is governed by a BSD-style license that can be found in 
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
     <script type="text/javascript">
-        let input = document.querySelector("#Input");
+        let SDevToolsInput = document.querySelector("#SDevToolsInput");
         let SendDataToBrowserButton = document.querySelector("#SendDataToBrowserButton");
 
         SendDataToBrowserButton.addEventListener("click", event => {
-            let message = input.value;
+            let message = SDevToolsInput.value;
 
             if (message.length === 0) {
-                message = "Empty message";
+                return;
             }
 
             console.log(message);
 
-            input.value = "";
+            SDevToolsInput.value = "";
+        });
+
+        let CDialogInput = document.querySelector("#CDialogInput");
+        let OpenConfirmationDialogButton = document.querySelector("#OpenConfirmationDialogButton");
+
+        OpenConfirmationDialogButton.addEventListener("click", event => {
+            let message = CDialogInput.value;
+
+            if (message.length === 0) {
+                return;
+            }
+
+            confirm(message);
+        });
+
+        let AlertInput = document.querySelector("#AlertInput");
+        let AlertButton = document.querySelector("#AlertButton");
+
+        AlertButton.addEventListener("click", event => {
+            let message = AlertInput.value;
+
+            if (message.length === 0) {
+                return;
+            }
+
+            alert(message);
+        });
+        let PromptInput = document.querySelector("#PromptInput");
+        let PromptButton = document.querySelector("#PromptButton");
+
+        PromptButton.addEventListener("click", event => {
+            let message = PromptInput.value;
+
+            if (message.length === 0) {
+                return;
+            }
+
+            prompt(message);
         });
     </script>
 </body>

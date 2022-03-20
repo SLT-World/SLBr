@@ -1,5 +1,5 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using CefSharp;
 //using Microsoft.Win32;
 using System;
@@ -81,11 +81,13 @@ namespace SLBr
             {
                 if (downloadItem.IsComplete)
                 {
-                    MainWindow.Instance.DownloadProgressText.Visibility = Visibility.Collapsed;
+                    /*MainWindow.Instance.DownloadProgressText.Visibility = Visibility.Collapsed;
                     MainWindow.Instance.DownloadProgressBar.Visibility = Visibility.Collapsed;
                     //browser.CloseBrowser(true);
                     MainWindow.Instance.DownloadOpenFileButton.Visibility = Visibility.Visible;
-                    MainWindow.Instance.DownloadOpenFileButton.Tag = $"13<,>{downloadItem.FullPath}";
+                    MainWindow.Instance.DownloadOpenFileButton.Tag = $"13<,>{downloadItem.FullPath}";*/
+                    MainWindow.Instance.DownloadContainer.Visibility = Visibility.Collapsed;
+                    MainWindow.Instance.Prompt($"The file \"{Path.GetFileName(downloadItem.FullPath)}\" finished downloading.", true, "Open In Explorer", $"13<,>{downloadItem.FullPath}", downloadItem.FullPath, true, "\xE896");
                 }
                 else
                 {

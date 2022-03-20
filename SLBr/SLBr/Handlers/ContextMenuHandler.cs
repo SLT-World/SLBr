@@ -1,5 +1,5 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 
 using CefSharp;
 using CefSharp.Wpf;
@@ -22,22 +22,30 @@ namespace SLBr
             {
                 if (!string.IsNullOrEmpty(parameters.SelectionText))
                 {
-                    model.AddItem((CefMenuCommand)26501, "Search for text in new tab");
-                    model.AddSeparator();
-                    model.AddItem(CefMenuCommand.NotFound, "Close Menu");
-                    /*model.AddItem(CefMenuCommand.NotFound, "Close Menu");
-                    model.AddSeparator();
-                    model.Clear();
-                    model.AddItem(CefMenuCommand.Copy, "Copy");
-                    model.AddItem((CefMenuCommand)26501, "Save as");*/
+                    if (Utils.IsHttpScheme(parameters.SelectionText) || Utils.IsSchemeNotHttp(parameters.SelectionText))
+                    {
+                        //model.Clear();
+                        model.AddItem((CefMenuCommand)26501, "Open in new tab");
+                        model.AddSeparator();
+                        model.AddItem(CefMenuCommand.NotFound, "Cancel");
+                    }
+                    else
+                    {
+                        model.AddItem((CefMenuCommand)26501, "Search for text in new tab");
+                        model.AddSeparator();
+                        model.AddItem(CefMenuCommand.NotFound, "Cancel");
+                        /*model.AddItem(CefMenuCommand.NotFound, "Close Menu");
+                        model.AddSeparator();
+                        model.Clear();
+                        model.AddItem(CefMenuCommand.Copy, "Copy");
+                        model.AddItem((CefMenuCommand)26501, "Save as");*/
+                    }
                 }
                 else
                 {
                     model.Remove(CefMenuCommand.Print);
                     model.Remove(CefMenuCommand.ViewSource);
                     model.AddItem(CefMenuCommand.Reload, "Refresh");
-                    model.AddSeparator();
-                    model.AddItem(CefMenuCommand.NotFound, "Close Menu");
                     model.AddSeparator();
                     model.AddItem((CefMenuCommand)26501, "Zoom In");
                     model.AddItem((CefMenuCommand)26502, "Zoom Out");
@@ -59,15 +67,17 @@ namespace SLBr
                     model.AddItem((CefMenuCommand)26507, "Search page on SafeBrowsing");
                     model.AddItem((CefMenuCommand)26504, "View page source");
                     model.AddItem((CefMenuCommand)26505, "Inspect");
+                    model.AddSeparator();
+                    model.AddItem(CefMenuCommand.NotFound, "Cancel");
                 }
             }
             else
             {
-                model.AddItem(CefMenuCommand.NotFound, "Close Menu");
-                model.AddSeparator();
                 model.Clear();
                 model.AddItem(CefMenuCommand.Copy, "Copy");
                 model.AddItem((CefMenuCommand)26501, "Save as");
+                model.AddSeparator();
+                model.AddItem(CefMenuCommand.NotFound, "Cancel");
                 //model.AddItem((CefMenuCommand)26502, "Open in paintbrush");
             }
         }
@@ -83,8 +93,21 @@ namespace SLBr
                 {
                     if (!string.IsNullOrEmpty(SelectedText))
                     {
-                        if (commandId == (CefMenuCommand)26501)
-                            MainWindow.Instance.CreateTab(MainWindow.Instance.CreateWebBrowser(string.Format(MainWindow.Instance.MainSave.Get("Search_Engine"), SelectedText.Trim().Replace(" ", "+"))));
+                        if (Utils.IsHttpScheme(SelectedText) || Utils.IsSchemeNotHttp(SelectedText))
+                        {
+                            if (commandId == (CefMenuCommand)26501)
+                                MainWindow.Instance.CreateTab(MainWindow.Instance.CreateWebBrowser(SelectedText));
+                        }
+                        else
+                        {
+                            if (commandId == (CefMenuCommand)26501)
+                                MainWindow.Instance.CreateTab(MainWindow.Instance.CreateWebBrowser(string.Format(MainWindow.Instance.MainSave.Get("Search_Engine"), SelectedText.Trim().Replace(" ", "+"))));
+                            /*model.AddItem(CefMenuCommand.NotFound, "Close Menu");
+                            model.AddSeparator();
+                            model.Clear();
+                            model.AddItem(CefMenuCommand.Copy, "Copy");
+                            model.AddItem((CefMenuCommand)26501, "Save as");*/
+                        }
                     }
                     else
                     {

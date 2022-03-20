@@ -1,5 +1,5 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
+// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using CefSharp;
 using Newtonsoft.Json.Linq;
 using System;
@@ -37,6 +37,19 @@ namespace SLBr
 
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
+            /*try
+            {
+                if (Utils.CanCheck(request.TransitionType))
+                {
+                    if (Utils.CleanUrl(request.Url).Contains("facebook.com"))
+                        request.SetHeaderByName("user-agent", MainWindow.Instance.UserAgent.Replace($"Chromium", "Chrome"), true);
+                    else if (Utils.CleanUrl(request.Url).Contains("web.whatsapp.com"))
+                        request.SetHeaderByName("user-agent", MainWindow.Instance.UserAgent.Replace($"Chromium", "Chrome"), true);
+                    else if (Utils.CleanUrl(request.Url).Contains("mail.google.com") || Utils.CleanUrl(request.Url).Contains("web.whatsapp.com"))
+                        request.SetHeaderByName("user-agent", MainWindow.Instance.UserAgent.Replace($"SLBr {MainWindow.Instance.ReleaseVersion}", "").Replace($"Chromium", "Chrome"), true);
+                }
+            }
+            catch { }*/
             //Chrome Web Store Experiment
             //request.SetHeaderByName("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36 Edg/98.0.1108.62", false);
             //request.SetHeaderByName("sec-ch-ua", "\" Not A; Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Microsoft Edge\";v=\"98\"", false);
