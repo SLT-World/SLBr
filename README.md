@@ -8,9 +8,9 @@ SLBr is one of the best C# WPF Web Browser there is! More lightweight and less m
 SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSharp) which is a wrapper around the [**Chromium Embedded Framework (CEF)**](https://bitbucket.org/chromiumembedded/cef/src/master/) to render webpages.
 
 # Important
-- SLBr's Chromium browser engine does not work with i5 processors
+- SLBr now works with Intel i5 processors
 - Microsoft Visual C++ 2019 is required
-- .NET Framework 5.0 and above is required
+- .NET Framework 4.8 and above is required
 - No support for Windows XP/2003 and Windows Vista/Server 2008 (non R2)
 - Segoe MDL2 Assets is required to be installed in Windows 7 and below
 
@@ -26,7 +26,7 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 - [x] Google Weblight Loading
 - [ ] Set as Default Browser Option
 - [x] Cache saving
-- [ ] Account Sign-In (Browser)
+- [ ] Multi Account
 - [x] PDF Viewer
 - [x] Modes
 - [x] Javascript Binding
