@@ -65,7 +65,7 @@ namespace SLBr
             XmlNode _XmlNode = _Button.Tag as XmlNode;
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
-                MainWindow.Instance.Navigate(_XmlNode.InnerText);
+                MainWindow.Instance.Navigate(false, _XmlNode.InnerText);
             }));
         }
 

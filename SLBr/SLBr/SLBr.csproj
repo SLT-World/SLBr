@@ -83,6 +83,9 @@
   <PropertyGroup>
     <StartupObject>SLBr.App</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>SLBr.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -118,10 +121,13 @@
     <Compile Include="Handlers\LifeSpanHandler.cs" />
     <Compile Include="Handlers\RequestHandler.cs" />
     <Compile Include="Handlers\ResourceRequestHandler.cs" />
+    <Compile Include="Handlers\SchemeHandler.cs" />
+    <Compile Include="Handlers\SchemeHandlerFactory.cs" />
     <Compile Include="Prompt.cs" />
     <Compile Include="NewsPage.xaml.cs">
       <DependentUpon>NewsPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Scheme.cs" />
     <Compile Include="SECRETS.cs" />
     <Compile Include="SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
@@ -130,9 +136,11 @@
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="SLBrBrowserModel.cs" />
+    <Compile Include="StyleResourceDictionary.cs" />
     <Compile Include="Tab.cs" />
     <Compile Include="TabPanel.cs" />
     <Compile Include="Utils.cs" />
+    <Resource Include="SLBr.ico" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -158,7 +166,11 @@
     <Content Include="Images\Dark mode.png" />
     <Resource Include="Images\Light mode banner.png" />
     <Resource Include="Images\Dark mode banner.png" />
+    <Resource Include="Images\SLBr.ico" />
     <Content Include="Resources\Credits.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\RenderProcessCrashed.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\WhatsNew.html">
@@ -207,7 +219,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf">
-      <Version>99.2.120</Version>
+      <Version>99.2.140</Version>
     </PackageReference>
     <PackageReference Include="HtmlAgilityPack">
       <Version>1.11.42</Version>
@@ -253,9 +265,7 @@
     <Content Include="Resources\Default.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\DevToolsTests.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Resources\DevToolsTests.html" />
     <Content Include="Resources\Dino.html" />
     <Content Include="Resources\GeolocationTest.html" />
     <Content Include="Resources\HTMLEditor.html" />
@@ -269,12 +279,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\Plans.html" />
-    <Content Include="Resources\SLBr-Urls.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\SLBrUADetector.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Resources\SLBr-Urls.html" />
+    <Content Include="Resources\SLBrUADetector.html" />
     <Content Include="Resources\style.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -285,12 +291,10 @@
     <Content Include="Resources\Version.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\Welcome.html" />
     <Content Include="Resources\About.html" />
     <Content Include="Resources\Dino.html" />
     <Content Include="Resources\Plans.html" />
     <Content Include="Resources\SLBrUADetector.html" />
-    <Content Include="Resources\Welcome.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

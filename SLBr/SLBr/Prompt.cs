@@ -1,11 +1,6 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
 // Use of this source code is governed by a GNU license that can be found in the LICENSE file.
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace SLBr
@@ -21,6 +16,15 @@ namespace SLBr
         }
         #endregion
 
+        public bool CloseOnTabSwitch
+        {
+            get { return PCloseOnTabSwitch; }
+            set
+            {
+                PCloseOnTabSwitch = value;
+                RaisePropertyChanged("CloseOnTabSwitch");
+            }
+        }
         public string Content
         {
             get { return PContent; }
@@ -103,6 +107,7 @@ namespace SLBr
             }
         }
 
+        public bool PCloseOnTabSwitch { get; set; }
         public string PContent { get; set; }
         public Visibility PButtonVisibility { get; set; }
         public string PButtonContent { get; set; }

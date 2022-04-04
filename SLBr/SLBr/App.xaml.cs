@@ -29,6 +29,18 @@ namespace SLBr
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            Process _Process = Process.GetCurrentProcess();
+            List<Process> Processes = Process.GetProcesses().Where(p =>
+                p.ProcessName == _Process.ProcessName && !_Process.HasExited).ToList();
+
+            int count = Processes.Count() - 1;
+
+            if (count > 1)
+            {
+                //ShowWindow(Processes[0].MainWindowHandle, SW_MAXIMIZE);
+                MessageBox.Show("There " + (count > 2 ? "are" : "is") + $" already {count - 1} instance" + (count > 2 ? "s" : "") + " of SLBr running... Relaunch the application if you think something is wrong.");//BUG, Relaunching in SLBr shows this message
+                Current.Shutdown();
+            }
             /*if (e.Args.Count() > 0)
             {
                 MessageBox.Show("You have the latest version.");
@@ -91,20 +103,6 @@ namespace SLBr
             jumpList.ShowRecentCategory = false;
 
             JumpList.SetJumpList(Current, jumpList);
-
-
-            Process _Process = Process.GetCurrentProcess();
-            List<Process> Processes = Process.GetProcesses().Where(p =>
-                p.ProcessName == _Process.ProcessName && !_Process.HasExited).ToList();
-                
-            int count = Processes.Count();
-
-            if (count > 1)
-            {
-                //ShowWindow(Processes[0].MainWindowHandle, SW_MAXIMIZE);
-                MessageBox.Show("An instance is already running... Relaunch the application if you think something is wrong.");//BUG, Relaunching in SLBr shows this message
-                Current.Shutdown();
-            }
             /*bool IsNewInstance = false;
             SingleInstanceMutex = new Mutex(true, "SLBrSLTBrowser", out IsNewInstance);
             if (!IsNewInstance)

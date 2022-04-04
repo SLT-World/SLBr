@@ -95,6 +95,7 @@ namespace SLBr
                 {
                     MainWindow.Instance.MainSave.Set("Homepage", new Uri(MainWindow.Instance.MainSave.Get("Search_Engine")).Host);
                 }*/
+                MainWindow.Instance.MainSave.Set("Homepage", HomepageTextBox.Text);
                 NewMessage("The homepage has been successfully changed and saved.", false);
             }
         }
@@ -258,7 +259,7 @@ namespace SLBr
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
-                MainWindow.Instance.Prompt(Content, IncludeButton, ButtonContent, ButtonArguments, ToolTip);
+                MainWindow.Instance.Prompt(false, Content, IncludeButton, ButtonContent, ButtonArguments, ToolTip);
             }));
         }
     }

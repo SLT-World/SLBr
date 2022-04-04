@@ -2,18 +2,12 @@
 // Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using CefSharp;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace SLBr
 {
-	public class RequestHandler : IRequestHandler
+    public class RequestHandler : IRequestHandler
 	{
 		public bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
 		{
@@ -24,19 +18,17 @@ namespace SLBr
 		{
 			if (request.Url.Contains("roblox.com"))
 				return true;
-			if (Utils.CanCheck(request.TransitionType) && !Utils.IsSystemUrl(request.Url) && !Utils.IsProgramUrl(request.Url))//(isRedirect || userGesture || frame.IsMain)
+			//if (request.Url != frame.Url)
+			//	return true;
+			if (Utils.CanCheck(request.TransitionType) && !Utils.IsProtocolNotHttp(request.Url) && !Utils.IsProgramUrl(request.Url))//(isRedirect || userGesture || frame.IsMain)
 			{
 				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url.Replace("https://googleweblight.com/?lite_url=", ""));
 				Utils.SafeBrowsing.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : Utils.SafeBrowsing.ThreatType.Unknown;
 				if (_ThreatType == Utils.SafeBrowsing.ThreatType.Malware || _ThreatType == Utils.SafeBrowsing.ThreatType.Unwanted_Software)
-				{
 					//chromiumWebBrowser.LoadHtml(File.ReadAllText(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "Malware.html")), request.Url);
 					frame.LoadUrl("slbr://malware"/* + "?url=" + request.Url*/);
-				}
 				else if (_ThreatType == Utils.SafeBrowsing.ThreatType.Social_Engineering)
-				{
 					frame.LoadUrl("slbr://deception"/* + "?url=" + request.Url*/);
-				}
 				/*else
                 {
 					if (bool.Parse(MainWindow.Instance.MainSave.Get("Weblight")) && !request.Url.Contains("googleweblight.com/?lite_url="))
@@ -87,6 +79,7 @@ namespace SLBr
 
 		public void OnRenderProcessTerminated(IWebBrowser browserControl, IBrowser browser, CefTerminationStatus status)
 		{
+			browserControl.Load("slbr://renderprocesscrashed");
 		}
 
 		public void OnRenderViewReady(IWebBrowser browserControl, IBrowser browser)
@@ -95,8 +88,8 @@ namespace SLBr
 
 		public IResourceRequestHandler GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
 		{
-			var rh = new ResourceRequestHandler();
-			return rh;
+			var _ResourceRequestHandler = new ResourceRequestHandler();
+			return _ResourceRequestHandler;
 		}
 
 		public bool OnSelectClientCertificate(IWebBrowser chromiumWebBrowser, IBrowser browser, bool isProxy, string host, int port, X509Certificate2Collection certificates, ISelectClientCertificateCallback callback)

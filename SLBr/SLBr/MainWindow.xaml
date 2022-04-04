@@ -6,7 +6,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="SLBr" Closing="Window_Closing" WindowStartupLocation="CenterScreen" WindowState="Maximized" MinHeight="450" MinWidth="800" FontFamily="Segoe MDL2 Assets" Loaded="Window_Loaded">
+        Title="SLBr" DpiChanged="Window_DpiChanged" Closing="Window_Closing" WindowStartupLocation="CenterScreen" WindowState="Maximized" MinHeight="450" MinWidth="800" FontFamily="Segoe MDL2 Assets" Loaded="Window_Loaded">
     <!--Opacity="0.75" WindowStyle="None" AllowsTransparency="True"-->
     <Window.Resources>
         <ResourceDictionary Source="ResourceDictionary.xaml"/>
@@ -86,6 +86,17 @@ Use of this source code is governed by a GNU license that can be found in the LI
                                             <MenuItem Header="Zoom page with Scroll Wheel" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://chowdera.com/2021/06/20210618113207692M.html"/>
                                             <MenuItem Header="8 Ways to cause memory leaks in .NET" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://michaelscodingspot.com/ways-to-cause-memory-leaks-in-dotnet/"/>
                                             <MenuItem Header="WPF Release Memory" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.programmerall.com/article/31461834727/"/>
+                                            <MenuItem Header="A Better WPF Browser Control IE Wrapper" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.codeproject.com/Articles/555302/A-better-WPF-Browser-Control-IE-Wrapper"/>
+                                            <MenuItem Header="Hosting EXE Applications in a WPF Window Application" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.codeproject.com/Tips/673701/Hosting-EXE-Applications-in-a-WPF-Window-Applicati"/>
+                                            <MenuItem Header="Favicon Grabber Alternatives" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                                <MenuItem Header="Archived" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://f3.allesedv.com/144/www.google.com"/>
+                                                <MenuItem Header="Yandex" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://favicon.yandex.net/favicon/google.com/"/>
+                                                <MenuItem Header="GStatic T1" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://t1.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=http://google.com&amp;size=32"/>
+                                                <MenuItem Header="GStatic T2" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://t2.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=http://google.com&amp;size=64"/>
+                                                <MenuItem Header="DuckDuckGo IP2" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://icons.duckduckgo.com/ip2/google.com.ico"/>
+                                                <MenuItem Header="DuckDuckGo IP3" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://icons.duckduckgo.com/ip3/google.com.ico"/>
+                                                <MenuItem Header="Icon Horse" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://icon.horse/icon/google.com"/>
+                                            </MenuItem>
                                         </MenuItem>
                                     </MenuItem>
                                     <MenuItem Header="Chromium Related" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
@@ -166,6 +177,13 @@ Use of this source code is governed by a GNU license that can be found in the LI
                                     <MenuItem Header="Weather Channel" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://weather.com/weather/today/"/>
                                     <MenuItem Header="Type Racer" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://play.typeracer.com/"/>
                                 </MenuItem>
+                                <MenuItem Header="Google Easter Eggs" FontFamily="Arial" Foreground="{DynamicResource FontBrush}">
+                                    <MenuItem Header="Google Do a barrel roll" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://www.google.com/search?q=do+a+barrel+roll"/>
+                                    <MenuItem Header="elgoog.im Google Do a barrel roll multiple Times" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://elgoog.im/gravity/"/>
+                                    <MenuItem Header="elgoog.im Google Underwater" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://elgoog.im/doabarrelroll/?10"/>
+                                    <MenuItem Header="elgoog.im Google Underwater" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://elgoog.im/underwater/"/>
+                                    <MenuItem Header="Mr. Doob's Google Gravity" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;https://mrdoob.com/projects/chromeexperiments/google-gravity/"/>
+                                </MenuItem>
                             </MenuItem>
                             <MenuItem Header="Settings" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="8"/>
                             <MenuItem Header="About" FontFamily="Arial" Foreground="{DynamicResource FontBrush}" Click="ButtonAction" Tag="12&lt;,&gt;slbr://about/"/>
@@ -184,26 +202,28 @@ Use of this source code is governed by a GNU license that can be found in the LI
                         </Grid.ToolTip>
                     </Grid>
                     <TextBox DockPanel.Dock="Right" x:Name="FindTextBox" Margin="5" Height="23" Width="200" FontFamily="arial" Padding="0,1,0,0" KeyDown="FindTextBox_KeyDown" ToolTip="Find a specific text in this page"/>
-                    <TextBox x:Name="AddressBox" Margin="5" Height="23" Width="auto" FontFamily="arial" Padding="0,1,0,0" KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" MouseEnter="AddressBox_MouseEnter" MouseLeave="AddressBox_MouseLeave" Tag="Loading..."/>
+                    <TextBox x:Name="AddressBox" Margin="5,5,0,5" Height="23" Width="auto" FontFamily="arial" Padding="0,1,0,0" KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" MouseEnter="AddressBox_MouseEnter" MouseLeave="AddressBox_MouseLeave" Tag="Loading..."/>
                 </DockPanel>
-                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Height="33" Grid.Row="1" HorizontalAlignment="Stretch">
-                    <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <DockPanel IsItemsHost="True" Margin="5" HorizontalAlignment="Left"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Style="{DynamicResource FavouriteUrlButton}" Content="{Binding Name}" Margin="2.5,0" Click="ButtonAction" Tag="{Binding Arguments}" Height="23"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0" x:Name="FavouriteContainer" Height="33" Grid.Row="1" HorizontalAlignment="Stretch">
+                    <ScrollViewer x:Name="FavouriteScrollViewer" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden" PreviewMouseWheel="FavouriteScrollViewer_PreviewMouseWheel">
+                        <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <DockPanel IsItemsHost="True" Margin="5" HorizontalAlignment="Left"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{DynamicResource FavouriteUrlButton}" Content="{Binding Name}" Margin="2.5,0" Click="ButtonAction" MouseDown="MiddleMouseButtonAction" Tag="{Binding Arguments}" Height="23"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </Border>
                 <ItemsControl x:Name="PromptsPanel" Grid.Row="2" HorizontalAlignment="Stretch" ItemsSource="{Binding Prompts}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border BorderBrush="{DynamicResource BorderBrush}" Height="33" BorderThickness="0,0,0,1">
+                            <Border BorderBrush="{DynamicResource BorderBrush}" Height="33" BorderThickness="0,1,0,0">
                                 <DockPanel Margin="5">
                                     <TextBlock Visibility="{Binding IconVisibility}" VerticalAlignment="Center" TextAlignment="Center" Text="{Binding IconText}" FontSize="12.5" Foreground="{DynamicResource FontBrush}" Margin="7.5,0">
                                         <TextBlock.LayoutTransform>
@@ -218,14 +238,17 @@ Use of this source code is governed by a GNU license that can be found in the LI
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <ProgressBar BorderThickness="0" x:Name="WebsiteLoadingProgressBar" Grid.Row="3" Height="5" IsEnabled="False" IsIndeterminate="False" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource BorderBrush}"/>
+
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Grid.Row="3" Height="5" HorizontalAlignment="Stretch">
+                    <ProgressBar BorderThickness="0" x:Name="WebsiteLoadingProgressBar" IsEnabled="False" IsIndeterminate="False" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource BorderBrush}"/>
+                </Border>
             </Grid>
         </Border>
         <TabControl Grid.ColumnSpan="2" x:Name="Tabs" Grid.Row="1" SelectionChanged="Tabs_SelectionChanged">
             <!--<TabItem Header="Tab 1" FontFamily="Original">
                 <cefSharp:ChromiumWebBrowser Grid.Row="0" Address="https://google.com/"/>
             </TabItem>-->
-            <TabItem Header="+" FontFamily="Original">
+            <!--<TabItem Header="+" FontFamily="Original">
                 <TabItem.Resources>
                     <Style TargetType="TabItem">
                         <Setter Property="Template">
@@ -237,13 +260,13 @@ Use of this source code is governed by a GNU license that can be found in the LI
                         </Setter>
                     </Style>
                 </TabItem.Resources>
-            </TabItem>
+            </TabItem>-->
         </TabControl>
         <Border Grid.Row="2" Grid.ColumnSpan="2" Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" x:Name="DownloadContainer" Height="33" HorizontalAlignment="Stretch">
             <DockPanel x:Name="DownloadPanel" Margin="5" HorizontalAlignment="Left">
                 <TextBlock x:Name="DownloadFileName" Foreground="{DynamicResource FontBrush}" Text="FileName" FontFamily="None" VerticalAlignment="Center"/>
                 <Grid Margin="5,0" Width="150">
-                    <ProgressBar x:Name="DownloadProgressBar" Foreground="{DynamicResource _Blue}" Height="10" Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <ProgressBar x:Name="DownloadProgressBar" Foreground="{DynamicResource _Blue}" Height="17.5" Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
                     <Button Foreground="{DynamicResource FontBrush}" Style="{DynamicResource AddButton}" FontFamily="None" x:Name="DownloadOpenFileButton" Content="Open" Click="ButtonAction" Visibility="Collapsed"/>
                     <TextBlock x:Name="DownloadProgressText" Text="" FontFamily="None" VerticalAlignment="Center" Foreground="{DynamicResource FontBrush}"/>
                 </Grid>

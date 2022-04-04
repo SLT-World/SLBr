@@ -30,6 +30,9 @@ Use of this source code is governed by a GNU license that can be found in the LI
             SLBr is the best open source .NET Web Browser made with WPF (C# and XAML) there is! More lightweight and faster than Google Chrome, uses less memory compared to most major browsers. With a semi-flat modern UI design and a lot of useful features, for example: Tab Unloading, which frees up resources and memory.
         </p>
         <p>
+            More shorter description: SLBr is an open source web browser that display webpages and files. Browse the web with the tiniest memory usage possible!
+        </p>
+        <p>
             With the use of the high-performance .NET wrapper around the <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a>, CEFSharp, things are made more easy to draw and render webpages in high quality.
         </p>
         <!--, These features listed below largely improved SLBr at performance and also reduced memory usage-->
@@ -47,19 +50,15 @@ Use of this source code is governed by a GNU license that can be found in the LI
             </ul>
         </div>
         <h1>Important Information</h1><!--Taking advantage of-->
+        <p>SLT only supports open source media codecs and proprietary codecs are not supported. To build SLBr with proprietary codecs, you must first build CEF with proprietary codecs.</p>
+        <p>SLBr may not have any tutorials on the topic of building proprietary codecs. But here are some useful links that might help you with the building process:</p>
         <div class="List">
             <ul>
-                <li>SLT only supports open source media codecs and proprietary codecs are not supported. To build SLBr with proprietary codecs, you must first build CEF with proprietary codecs.</li>
-                <li>SLBr may not have any tutorials on the topic of building proprietary codecs. But here are some useful links that might help you with the building process</li>
-                <li>
-                    <ul>
-                        <li><a href="https://bitbucket.org/chromiumembedded/cef/wiki/MasterBuildQuickStart" target="_blank">CEF Master Build Quick Start Documentation</a></li>
-                        <li><a href="https://magpcss.org/ceforum/viewtopic.php?t=13515" target="_blank">Build CEF with proprietary codecs support</a></li>
-                        <li><a href="https://github.com/mitchcapper/CefSharpDockerfiles" target="_blank">CefSharp Docker</a></li>
-                        <li><a href="https://stackoverflow.com/questions/43845493/how-to-enable-h264-support-in-cef3-latest-version/45404590#45404590" target="_blank">How to enable H264 support in CEF3 latest version</a></li>
-                        <li><a href="https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md" target="_blank">CEF Automated Build Setup Documentation</a></li>
-                    </ul>
-                </li>
+                <li><a href="https://bitbucket.org/chromiumembedded/cef/wiki/MasterBuildQuickStart" target="_blank">CEF Master Build Quick Start Documentation</a></li>
+                <li><a href="https://magpcss.org/ceforum/viewtopic.php?t=13515" target="_blank">Build CEF with proprietary codecs support</a></li>
+                <li><a href="https://github.com/mitchcapper/CefSharpDockerfiles" target="_blank">CefSharp Docker</a></li>
+                <li><a href="https://stackoverflow.com/questions/43845493/how-to-enable-h264-support-in-cef3-latest-version/45404590#45404590" target="_blank">How to enable H264 support in CEF3 latest version</a></li>
+                <li><a href="https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md" target="_blank">CEF Automated Build Setup Documentation</a></li>
             </ul>
         </div>
         <h1>
@@ -83,11 +82,13 @@ Use of this source code is governed by a GNU license that can be found in the LI
         <h1>Licensing</h1>
         <p>SLBr is GNU licensed. The CEF & CEFSharp project is BSD licensed.</p>
         <h1>Special Thanks to</h1>
-        <ul>
-            <!--<li>SLT World, the primary developer of this project.</li>-->
-            <li>The <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a> by Marshall A. Greenblatt.</li><!--SLT here, I'm very confused because there are different Marshall Greenblatt on searches and which of them is the one that created CEF.-->
-            <li>The CEFSharp team, especially <a href="https://github.com/sponsors/amaitland" target="_blank">Amaitland</a> who works very hard on the CEFSharp project.</li>
-        </ul>
+        <div class="List">
+            <ul>
+                <!--<li>SLT World, the primary developer of this project.</li>-->
+                <li>The <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a> by Marshall A. Greenblatt.</li><!--SLT here, I'm very confused because there are different Marshall Greenblatt on searches and which of them is the one that created CEF.-->
+                <li>The CEFSharp team, especially <a href="https://github.com/sponsors/amaitland" target="_blank">Amaitland</a> who works very hard on the CEFSharp project.</li>
+            </ul>
+        </div>
         <!--<h1>Story</h1>
     <p>
         SLT used to had a fascination of web browsers. He wanted to create his own browser like what those large companies did. So he started learning C#, Winforms and WPF, and created the Skylight Browser Project, which didn't go far. The project was abandoned in favour of creating 3d interactive games. The Skylight project was lost forever.

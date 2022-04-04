@@ -3,15 +3,10 @@
 using CefSharp;
 //using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
-using System.Windows.Threading;
 
 namespace SLBr
 {
@@ -87,7 +82,7 @@ namespace SLBr
                     MainWindow.Instance.DownloadOpenFileButton.Visibility = Visibility.Visible;
                     MainWindow.Instance.DownloadOpenFileButton.Tag = $"13<,>{downloadItem.FullPath}";*/
                     MainWindow.Instance.DownloadContainer.Visibility = Visibility.Collapsed;
-                    MainWindow.Instance.Prompt($"The file \"{Path.GetFileName(downloadItem.FullPath)}\" finished downloading.", true, "Open In Explorer", $"13<,>{downloadItem.FullPath}", downloadItem.FullPath, true, "\xE896");
+                    MainWindow.Instance.Prompt(false, $"The file \"{Path.GetFileName(downloadItem.FullPath)}\" finished downloading.", true, "Open In Explorer", $"13<,>{downloadItem.FullPath}", downloadItem.FullPath, true, "\xE896");
                 }
                 else
                 {
@@ -100,7 +95,7 @@ namespace SLBr
                             MainWindow.Instance.DownloadProgressText.Text = "Cancelled";
                         else if (downloadItem.IsInProgress)
                         {
-                            MainWindow.Instance.DownloadProgressText.Text = $"{downloadItem.CurrentSpeed} bytes ({downloadItem.PercentComplete}%)";/*{(downloadItem.EndTime - downloadItem.StartTime).Value.TotalSeconds} seconds left.{downloadItem.ReceivedBytes}/{downloadItem.TotalBytes} bytes, */
+                            MainWindow.Instance.DownloadProgressText.Text = $"{downloadItem.PercentComplete}% Complete";/*{downloadItem.CurrentSpeed} bytes ()*//*{(downloadItem.EndTime - downloadItem.StartTime).Value.TotalSeconds} seconds left.{downloadItem.ReceivedBytes}/{downloadItem.TotalBytes} bytes, */
                             MainWindow.Instance.DownloadProgressBar.Value = downloadItem.PercentComplete;
                             //MainWindow.Instance.DownloadProgressBar.Value = downloadItem.ReceivedBytes;
                             DownloadUpdateTime = ((float)(DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).TotalSeconds) + DownloadUpdatePeriod;

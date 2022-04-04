@@ -2,15 +2,9 @@
 // Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 
 using CefSharp;
-using CefSharp.Wpf;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace SLBr
 {
@@ -22,7 +16,7 @@ namespace SLBr
             {
                 if (!string.IsNullOrEmpty(parameters.SelectionText))
                 {
-                    if (Utils.IsHttpScheme(parameters.SelectionText) || Utils.IsSchemeNotHttp(parameters.SelectionText))
+                    if (Utils.IsHttpScheme(parameters.SelectionText) || Utils.IsProtocolNotHttp(parameters.SelectionText))
                     {
                         //model.Clear();
                         model.AddItem((CefMenuCommand)26501, "Open in new tab");
@@ -93,7 +87,7 @@ namespace SLBr
                 {
                     if (!string.IsNullOrEmpty(SelectedText))
                     {
-                        if (Utils.IsHttpScheme(SelectedText) || Utils.IsSchemeNotHttp(SelectedText))
+                        if (Utils.IsHttpScheme(SelectedText) || Utils.IsProtocolNotHttp(SelectedText))
                         {
                             if (commandId == (CefMenuCommand)26501)
                                 MainWindow.Instance.CreateTab(MainWindow.Instance.CreateWebBrowser(SelectedText));

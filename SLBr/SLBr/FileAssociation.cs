@@ -2,11 +2,7 @@
 // Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SLBr
 {
@@ -30,14 +26,15 @@ namespace SLBr
         public static void EnsureAssociationsSet()
         {
             var filePath = Process.GetCurrentProcess().MainModule.FileName;
+            RegisterApplication(filePath);
             EnsureAssociationsSet(
-                /*new FileAssociation
+                new FileAssociation
                 {
                     Extension = ".htm",
                     ProgId = "SLBr",
-                    FileTypeDescription = "SLBr HTML Document",
+                    FileTypeDescription = "SLBr HTM Document",
                     ExecutableFilePath = filePath
-                },*/
+                },
                 new FileAssociation
                 {
                     Extension = ".html",
@@ -132,18 +129,17 @@ namespace SLBr
             {
                 madeChanges |= SetAssociation(
                     association.Extension,
-                    association.ProgId,
-                    association.FileTypeDescription,
-                    association.ExecutableFilePath);
+                    association.ProgId
+                    /*,association.FileTypeDescription,
+                    association.ExecutableFilePath*/);
             }
-
             if (madeChanges)
             {
                 SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSH, IntPtr.Zero, IntPtr.Zero);
             }
         }
 
-        public static bool SetAssociation(string extension, string progId, string fileTypeDescription, string applicationFilePath)
+        public static bool SetAssociation(string extension, string progId/*, string fileTypeDescription, string applicationFilePath*/)
         {
             /*bool madeChanges = false;
             madeChanges |= SetKeyDefaultValue(@"Software\Classes\" + extension, progId);
@@ -155,7 +151,10 @@ namespace SLBr
             //madeChanges |= SetKeyDefaultValue(@"Software\Classes\" + progId, fileTypeDescription);
             //madeChanges |= SetKeyDefaultValue($@"Software\Classes\{progId}\shell\open\command", $"\"{applicationFilePath}\" %1");/*\"*//*\"*/
             //madeChanges |= SetKeyDefaultValue($@"Software\Classes\{extension}\shell\open\command", $"\"{applicationFilePath}\" \"%1\"");
-            madeChanges |= NewSetKeyDefaultValue(".html", "SLBr");
+
+            //madeChanges |= NewSetKeyDefaultValue(".html", "SLBr");
+
+            madeChanges |= NewSetKeyDefaultValue(extension, progId);
             return madeChanges;
         }
 
@@ -190,7 +189,52 @@ namespace SLBr
             return false;
         }
 
-        private static bool OldSetKeyDefaultValue(string keyPath, string value)
+        private static void RegisterApplication(string ExecutableFilePath)
+        {
+            using (var key = Registry.ClassesRoot.CreateSubKey("SLBr", true))
+            {
+                if (key.GetValue(null) as string != "SLBr")
+                    key.SetValue(null, "SLBr");
+                RegistryKey CommandRegistry = key.CreateSubKey("shell\\open\\command", true);
+                CommandRegistry.SetValue(null, $"\"{ExecutableFilePath}\" \"%1\"");
+                CommandRegistry.Close();
+            }
+            using (var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Clients\\StartMenuInternet", true).CreateSubKey("SLBr", true))
+            {
+                if (key.GetValue(null) as string != "SLBr")
+                    key.SetValue(null, "SLBr");
+                
+                RegistryKey CapabilitiesRegistry = key.CreateSubKey("Capabilities", true);
+                CapabilitiesRegistry.SetValue("ApplicationDescription", "SLBr is an open source web browser that display webpages and files. Browse the web with the tiniest memory usage possible!");
+                CapabilitiesRegistry.SetValue("ApplicationIcon", $"{ExecutableFilePath},0");
+                CapabilitiesRegistry.SetValue("ApplicationName", $"SLBr");
+                RegistryKey FileAssociationsRegistry = CapabilitiesRegistry.CreateSubKey("FileAssociations", true);
+                FileAssociationsRegistry.SetValue(".htm", "SLBr");
+                FileAssociationsRegistry.SetValue(".html", "SLBr");
+                FileAssociationsRegistry.Close();
+                RegistryKey StartmenuRegistry = CapabilitiesRegistry.CreateSubKey("Startmenu", true);
+                StartmenuRegistry.SetValue("StartMenuInternet", "SLBr");
+                StartmenuRegistry.Close();
+                RegistryKey URLAssociationsRegistry = CapabilitiesRegistry.CreateSubKey("URLAssociations", true);
+                URLAssociationsRegistry.SetValue("http", "SLBr");
+                URLAssociationsRegistry.SetValue("https", "SLBr");
+                URLAssociationsRegistry.Close();
+                RegistryKey DefaultIconRegistry = key.CreateSubKey("DefaultIcon", true);
+                DefaultIconRegistry.SetValue(null, $"{ExecutableFilePath},0");
+                DefaultIconRegistry.Close();
+                RegistryKey CommandRegistry = key.CreateSubKey("shell\\open\\command", true);
+                CommandRegistry.SetValue(null, $"\"{ExecutableFilePath}\" \"%1\"");
+                CommandRegistry.Close();
+                CapabilitiesRegistry.Close();
+            }
+            using (var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\RegisteredApplications", true))
+            {
+                key.SetValue("SLBr", "Software\\Clients\\StartMenuInternet\\SLBr\\Capabilities");
+            }
+            //Add SLBr into RegisteredApplications
+        }
+
+        /*private static bool OldSetKeyDefaultValue(string keyPath, string value)
         {
             using (var key = Registry.CurrentUser.CreateSubKey(keyPath))
             {
@@ -202,6 +246,6 @@ namespace SLBr
             }
 
             return false;
-        }
+        }*/
     }
 }

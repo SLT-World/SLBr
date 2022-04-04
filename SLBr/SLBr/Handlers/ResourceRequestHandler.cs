@@ -1,16 +1,10 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
 // Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using CefSharp;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace SLBr
 {
@@ -34,27 +28,113 @@ namespace SLBr
         {
             return null;
         }
+        /*List<string> AdProviders = new List<string> { "pubads.g.doubleclick.net", "securepubads.g.doubleclick.net",
+            "www.googletagservices.com",
+            "ads.google.com",
+            "googleadservices.com", "pagead2.googleadservices.com",
+            "gads.pubmatic.com", "ads.pubmatic.com",
+            "tpc.googlesyndication.com", "pagead2.googlesyndication.com", "googleads.g.doubleclick.net" };*/
+        //List<string> Ads = new List<string> { "youtube.com/ads", "google-analytics.com", "analytics.facebook.com", "analytics.pointdrive.linkedin.com", "analytics.pinterest.com", "analytics.tiktok.com", "analytics-sg.tiktok.com", "ads.tiktok.com", "ads-sg.tiktok.com" };
+        //HashSet<string> FullAdLinks = new HashSet<string> {
+            //"youtube.com/youtubei/v1/player/ad_break", "youtube.com/youtubei/v1/log_event", "youtube.com/pagead/interaction/", "youtube.com/api/stats/ads", "youtube.com/pagead/paralleladview"
+            //, "youtube.com/pagead/adview"/*, "youtube.com/ptracking"*/, "youtube.com/pcs/activeview"
+        //};
+        HashSet<string> Ads = new HashSet<string> {
+            "pagead2.googlesyndication.com", "tpc.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "ade.googlesyndication.com", "pagead2.googleadservices.com", "adservice.google.com", "googleadservices.com",
+            "doubleclick.net", "ad.doubleclick.net", "static.doubleclick.net", "m.doubleclick.net", "mediavisor.doubleclick.net", "googleads.g.doubleclick.net", "pubads.g.doubleclick.net", "securepubads.g.doubleclick.net",
+            "gads.pubmatic.com", "ads.pubmatic.com",
+            "ads.facebook.com", "an.facebook.com",
+            "ads.youtube.com", "youtube.cleverads.vn"/*, "yt3.ggpht.com"*/,
+            "ads.tiktok.com", "ads-sg.tiktok.com",
+            "ads.reddit.com", "d.reddit.com", "rereddit.com", "events.redditmedia.com",
+            "ads-twitter.com", "static.ads-twitter.com", "ads-api.twitter.com", "advertising.twitter.com",
+            "ads.pinterest.com", "ads-dev.pinterest.com", 
+            "adtago.s3.amazonaws.com", "advice-ads.s3.amazonaws.com", "advertising-api-eu.amazon.com", "c.amazon-adsystem.com", "s.amazon-adsystem.com",
+            "ads.linkedin.com",
+            "static.media.net", "media.net", "adservetx.media.net",
+            "media.fastclick.net", "cdn.fastclick.net", 
+            "global.adserver.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com",
+            "yandexadexchange.net", "adsdk.yandex.ru"//,
 
+            //ads.yieldmo.com
+            //match.adsrvr.org
+
+            /*"api.ad.xiaomi.com",
+            "sdkconfig.ad.xiaomi.com",
+            "sdkconfig.ad.intl.xiaomi.com",
+            "globalapi.ad.xiaomi.com",*/
+        };
+        HashSet<string> Analytics = new HashSet<string> { "google-analytics.com", "ssl.google-analytics.com",
+            "stats.wp.com",
+            "analytics.facebook.com", "pixel.facebook.com",
+            "analytics.tiktok.com", "analytics-sg.tiktok.com",
+            "analytics.pinterest.com", "widgets.pinterest.com", "log.pinterest.com", "trk.pinterest.com",
+            "analytics.pointdrive.linkedin.com",
+            "analyticsengine.s3.amazonaws.com", "affiliationjs.s3.amazonaws.com",
+            "analytics.mobile.yandex.net", "appmetrica.yandex.com", "extmaps-api.yandex.net",
+            "analytics.yahoo.com",
+            "metrics.apple.com",
+            "hotjar.com", "static.hotjar.com", "api-hotjar.com",
+            "mouseflow.com", "a.mouseflow.com",
+            "freshmarketer.com"//,
+
+            /*"data.mistat.xiaomi.com",
+            "data.mistat.intl.xiaomi.com",
+            "data.mistat.india.xiaomi.com",
+            "data.mistat.rus.xiaomi.com",
+            "tracking.miui.com",
+            "sa.api.intl.miui.com",
+            "tracking.intl.miui.com",
+            "tracking.india.miui.com",
+            "tracking.rus.miui.com",
+
+            "metrics1.data.hicloud.com",
+            "metrics5.data.hicloud.com",
+            "logservice.hicloud.com",
+            "logservice1.hicloud.com",
+            "metrics-dra.dt.hicloud.com",
+            "logbak.hicloud.com"*/
+        };
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
-            /*try
+            bool Continue = true;
+            /*string Address = "BRUHHHHH";
+            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
-                if (Utils.CanCheck(request.TransitionType))
-                {
-                    if (Utils.CleanUrl(request.Url).Contains("facebook.com"))
-                        request.SetHeaderByName("user-agent", MainWindow.Instance.UserAgent.Replace($"Chromium", "Chrome"), true);
-                    else if (Utils.CleanUrl(request.Url).Contains("web.whatsapp.com"))
-                        request.SetHeaderByName("user-agent", MainWindow.Instance.UserAgent.Replace($"Chromium", "Chrome"), true);
-                    else if (Utils.CleanUrl(request.Url).Contains("mail.google.com") || Utils.CleanUrl(request.Url).Contains("web.whatsapp.com"))
-                        request.SetHeaderByName("user-agent", MainWindow.Instance.UserAgent.Replace($"SLBr {MainWindow.Instance.ReleaseVersion}", "").Replace($"Chromium", "Chrome"), true);
-                }
+                Address = chromiumWebBrowser.Address;
+            }));
+            MessageBox.Show($"{Utils.Host(request.Url)},{Utils.Host(Address)}");
+                if (Utils.Host(request.Url) != Utils.Host(Address))
+                Continue = false;*/
+            //if (request.TransitionType == TransitionType.AutoSubFrame)
+            //    Continue = false;
+            if (request.ResourceType == ResourceType.Xhr || request.ResourceType == ResourceType.Script || request.ResourceType == ResourceType.Image || request.ResourceType == ResourceType.SubFrame)
+            {
+                //Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                //{
+                string CleanedUrl = Utils.CleanUrl(request.Url, true, true);//false if check full path
+                /*if (FullAdLinks.Contains(CleanedUrl))
+                    Continue = false;
+                if (Continue)
+                {*/
+                string Host = Utils.Host(CleanedUrl, true, false);
+                if (Analytics.Contains(Host))
+                    Continue = false;
+                else if (Ads.Contains(Host))
+                    Continue = false;
+                //}
+
+                    //if (request.Url.Contains("/pagead/"))
+                    //    return CefReturnValue.Cancel;
+                    /*foreach (string Ad in Analytics)
+                    {
+                        if (Utils.CleanUrl(request.Url).Contains(Ad))
+                            return CefReturnValue.Cancel;
+                    }*/
+                    //MessageBox.Show(request.TransitionType.ToString() + "," + request.ResourceType.ToString());
+                //}));
             }
-            catch { }*/
-            //Chrome Web Store Experiment
-            //request.SetHeaderByName("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36 Edg/98.0.1108.62", false);
-            //request.SetHeaderByName("sec-ch-ua", "\" Not A; Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Microsoft Edge\";v=\"98\"", false);
-            //request.SetHeaderByName("cookie", "1P_JAR=2022-02-28-01; NID=511=WF7xnRY3fmPoA8KW27PerWOTOjQrw1MMhOIK3-B1hIT0zDunpoEaSN5p4x0sTx7gPBuJ8UlVHtDvHbZTqtDop0fPvTQYKwaVDK-DfHKzTYn2BhDLM_Xmw2E6LY_G89d2WO1xYeOmfV-0vvixbyJonM-OtnhNMHyLMoAS7nDtItdu8bSI92GP_Nk_fCjldDyD0KminbX_bpVF; __utma=73091649.1413177246.1600596546.1645953634.1646110777.3; __utmc=73091649; __utmz=73091649.1646110777.3.2.utmcsr=bing|utmccn=(organic)|utmcmd=organic|utmctr=(not provided); __utmt=1; __utmb=73091649.91.9.1646112576592", false);
-            return CefReturnValue.Continue;
+            return Continue ? CefReturnValue.Continue : CefReturnValue.Cancel;
         }
 
         public bool OnProtocolExecution(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request)
