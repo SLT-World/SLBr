@@ -1,6 +1,5 @@
 # SLBr
 The browser that prioritizes a faster web
-
 Browse the web with a fast, lightweight web browser.
 
 # Based on the Chromium platform
@@ -43,11 +42,8 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 **Setup**
 
 1. If you haven't installed visual studio yet (NOT VISUAL STUDIO CODE), install it.
-
 2. After that, download the project as a ZIP file from Github.
-
 3. Unzip the file, find the solution file and open it.
-
 4. Tada, now you can change the code the way you like and contribute some features to SLBr!
 
 **The class "SECRETS" is missing**
@@ -61,5 +57,4 @@ The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it
 **Does SLBr send browsing habits to companies or tracks activities**
 
 SLBr does send urls to the SafeBrowsing API for security.
-
 And when Weblight is enabled, SLBr sends the address to Google Weblight servers for compression
