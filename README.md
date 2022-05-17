@@ -1,18 +1,17 @@
 # SLBr
-The new, clean, lightweight .NET Web browser
+The browser that prioritizes a faster web
 
-SLBr is one of the best C# WPF Web Browser there is! More lightweight and less memory usage compared to Google Chrome, with a modern UI design.
+Browse the web with a fast, lightweight web browser.
 
-# Taking advantage of the powerful Chromium platform
+# Based on the Chromium platform
 
-SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSharp) which is a wrapper around the [**Chromium Embedded Framework (CEF)**](https://bitbucket.org/chromiumembedded/cef/src/master/) to render webpages.
+With the Chromium browser engine, SLBr has access to Chromium's useful features that can be implemented easily.
 
-# Important
-- SLBr now works with Intel i5 processors
-- Microsoft Visual C++ 2019 is required
-- .NET Framework 4.8 and above is required
-- No support for Windows XP/2003 and Windows Vista/Server 2008 (non R2)
-- Segoe MDL2 Assets is required to be installed in Windows 7 and below
+# System Requirements
+- Microsoft Visual C++ 2019
+- .NET 5.0
+- Segoe MDL2 Assets
+- Windows 7 and above
 
 # Screenshots
 ![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
@@ -24,7 +23,7 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 - [x] Default, Private, Developer, Chromium, IE modes
 - [x] Drag & Drop content
 - [x] Default Browser
-- [x] Ad & Tracker Blocker
+- [x] Built-in Ad & Tracker blocker
 - [x] Auto hide contents of "chrome://"
 - [x] Docked Inspector/DevTools
 - [x] Tab Unloading
@@ -35,6 +34,10 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 - [x] Link & Image preview
 - [x] Context Menu not closing bug fixed
 - [x] Suggestions
+- [x] Render modes [Hardware, Software]
+- [x] Parallel downloading
+- [x] Built-in News
+- [x] Google Weblight
 
 # Run the source code
 **Setup**
@@ -53,8 +56,10 @@ The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it
 
 **Why CefSharp?**
 
-[**CefSharp**](https://github.com/cefsharp/CefSharp) is well supported and has a large community, it's been around much longer than the Microsoft WebView2 and CefSharp is more easy for my standard.
+[**CefSharp**](https://github.com/cefsharp/CefSharp) is well supported and has a large community, it's been around much longer than the Microsoft WebView2 and CefSharp is easier for my standard.
 
 **Does SLBr send browsing habits to companies or tracks activities**
 
 SLBr does send urls to the SafeBrowsing API for security.
+
+And when Weblight is enabled, SLBr sends the address to Google Weblight servers for compression
