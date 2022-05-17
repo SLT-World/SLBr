@@ -1,5 +1,5 @@
 # SLBr
-The browser that prioritizes a faster web
+The browser that prioritizes a faster web<br/>
 Browse the web with a fast, lightweight web browser.
 
 # Based on the Chromium platform
@@ -56,5 +56,5 @@ The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it
 
 **Does SLBr send browsing habits to companies or tracks activities**
 
-SLBr does send urls to the SafeBrowsing API for security.
+SLBr does send urls to the SafeBrowsing API for security.<br/>
 And when Weblight is enabled, SLBr sends the address to Google Weblight servers for compression
