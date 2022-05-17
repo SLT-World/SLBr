@@ -18,24 +18,23 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 ![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
 
 # Roadmap
-- [ ] Cefsharp features settings
-- [x] File download support
-- [x] SafeBrowsing support
-- [ ] Proprietary Codecs
-- [x] Google Account Sign-In (Website)
-- [x] Google Weblight Loading
-- [ ] Set as Default Browser Option
-- [x] Cache saving
-- [ ] Multi Account
-- [x] PDF Viewer
-- [x] Modes
+- [x] Google Account Sign-In
+- [x] SafeBrowsing API
 - [x] Javascript Binding
-- [ ] Ad blocker [Easylist](https://easylist.to/)
-- [ ] Tor support
-- [ ] Proxy support
-- [ ] Auto updater
-- [ ] Extension/Plug-in/Add-on support
-- [ ] Full WebGL support
+- [x] Default, Private, Developer, Chromium, IE modes
+- [x] Drag & Drop content
+- [x] Default Browser
+- [x] Ad & Tracker Blocker
+- [x] Auto hide contents of "chrome://"
+- [x] Docked Inspector/DevTools
+- [x] Tab Unloading
+- [x] Download Handler
+- [x] Force dark theme on webpages
+- [x] Themes
+- [x] Smooth scrolling
+- [x] Link & Image preview
+- [x] Context Menu not closing bug fixed
+- [x] Suggestions
 
 # Run the source code
 **Setup**
@@ -52,15 +51,10 @@ SLBr uses the fast, light speed [**CEFSharp**](https://github.com/cefsharp/CefSh
 
 The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it, either remove the line of code that is causing the error, which will remove support for SafeBrowsing, Google Sign-ins and Geolocation. Or, generate a new C# class called "SECRETS", have string variables named "GOOGLE_API_KEY", "GOOGLE_DEFAULT_CLIENT_ID", "GOOGLE_DEFAULT_CLIENT_SECRET".
 
-# Questions
-**What is the UI system that is used to create SLBr?**
+**Why CefSharp?**
 
-SLBr uses the .NET [**Windows Presentation Forms**](https://docs.microsoft.com/en-us/visualstudio/designers/getting-started-with-wpf) as the ui system.
-
-**Why CEFSharp?**
-
-[**CEFSharp**](https://github.com/cefsharp/CefSharp) is well supported and has a large community, it's been around much longer than the Microsoft WebView2 and CEFSharp is more easy for my standard.
+[**CefSharp**](https://github.com/cefsharp/CefSharp) is well supported and has a large community, it's been around much longer than the Microsoft WebView2 and CefSharp is more easy for my standard.
 
 **Does SLBr send browsing habits to companies or tracks activities**
 
-No, I have no idea how to do that.
+SLBr does send urls to the SafeBrowsing API for security.
