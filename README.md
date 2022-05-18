@@ -29,9 +29,9 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 - [x] Download Handler
 - [x] Force dark theme on webpages
 - [x] Themes
-- [x] Smooth scrolling
-- [x] Link & Image preview
-- [x] Context Menu not closing bug fixed
+- [ ] Smooth scrolling
+- [ ] Link & Image preview
+- [ ] Context Menu not closing bug fixed
 - [x] Suggestions
 - [x] Render modes [Hardware, Software]
 - [x] Parallel downloading
