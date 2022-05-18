@@ -17,11 +17,39 @@ using System.Management;
 using System.Drawing;
 using CefSharp;
 using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace SLBr
 {
     public class Utils
     {
+        public const int HWND_BROADCAST = 0xffff;
+        public static readonly int WM_SHOWPAGE = RegisterWindowMessage("WM_SHOWPAGE");
+        [DllImport("user32")]
+        public static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wparam, IntPtr lparam);
+        [DllImport("user32")]
+        public static extern int RegisterWindowMessage(string message);
+
+        /*public enum Theme
+        {
+            Light,
+            Dark
+        }
+
+        public static Theme GetWindowsTheme()
+        {
+            int value;
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
+            {
+                value = (int)key.GetValue("AppsUseLightTheme");
+            }
+
+            if (value == 0)
+                return Theme.Dark;
+            else
+                return Theme.Light;
+        }*/
+
         public static bool IsAdministrator()
         {
             var identity = WindowsIdentity.GetCurrent();
@@ -94,7 +122,7 @@ namespace SLBr
                 Content = Content.Substring(0, Index + (KeepPrefix ? Prefix.Length : 0));
             return Content;
         }
-        public static string FilterUrlForBrowser(string Url, string SearchEngineUrl, bool Weblight, bool IsChromiumMode)
+        public static string FilterUrlForBrowser(string Url, string SearchEngineUrl, bool Weblight/*, bool IsChromiumMode*/)
         {
             Url = Url.Trim();
             if (Url.Length > 0)
@@ -371,6 +399,7 @@ namespace SLBr
             Dictionary<string, string> Data = new Dictionary<string, string>();
             public string SaveFolderPath;
             public string SaveFilePath;
+            public bool UseContinuationIndex;
 
             public Saving(bool Custom = false, string FileName = "Save2.bin", string FolderPath = "EXECUTINGASSEMBLYFOLDERPATHUTILSSAVING")
             {
@@ -412,7 +441,8 @@ namespace SLBr
                 //Load();
                 if (Has(Key))
                     return Data[Key];
-                return string.Empty;
+                
+                return "NOTFOUND";
             }
             public string[] Get(string Key, bool UseListParameter)
             {
@@ -428,7 +458,7 @@ namespace SLBr
 
                 if (!File.Exists(SaveFilePath))
                     File.Create(SaveFilePath).Close();
-                List<string> Contents = new List<string>();
+                HashSet<string> Contents = new HashSet<string>();
                 foreach (KeyValuePair<string, string> KVP in Data)
                     Contents.Add(KVP.Key + KeyValueSeparator + KVP.Value);
                 File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
@@ -440,7 +470,7 @@ namespace SLBr
                 if (!File.Exists(SaveFilePath))
                     File.Create(SaveFilePath).Close();
 
-                List<string> Contents = File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToList();
+                HashSet<string> Contents = File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToHashSet();
                 foreach (string Content in Contents)
                 {
                     if (string.IsNullOrWhiteSpace(Content))

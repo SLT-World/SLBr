@@ -1,0 +1,32 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>SLBr Geolocation Test</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+    <button id="display">Display Location</button>
+    <div id="message"></div>
+    <script>
+        const btn = document.getElementById('display');
+        // Find the user location.
+        btn.addEventListener('click', function () {
+            navigator.geolocation.getCurrentPosition(onSuccess, onError);
+        });
+
+        // Update message to display the latitude and longitude coordinates.
+        function onSuccess(position) {
+            const { latitude, longitude } = position.coords;
+            message.textContent = `Location: (${latitude},${longitude})`;
+        }
+
+        function onError() {
+            message.textContent = `Operation Failed`;
+        }
+    </script>
+</body>
+</html>

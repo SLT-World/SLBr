@@ -16,7 +16,7 @@
                 <Button DockPanel.Dock="Right" x:Name="RefreshButton" Margin="0" Height="23" Width="23" FontFamily="Segoe MDL2 Assets" Style="{DynamicResource AddButton}" Content="&#xE72C;" Foreground="{DynamicResource ControlFontBrush}" Click="RefreshButton_Click"/>
                 <TextBox Foreground="{DynamicResource FontBrush}" x:Name="SearchTextBox" Margin="5" KeyDown="SearchTextBox_KeyDown"/>
             </DockPanel>
-            <ScrollViewer MaxHeight="450" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer MaxHeight="450" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
                 <ItemsControl ItemsSource="{Binding Source={StaticResource NewsRSSFeed}, XPath=item}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -24,8 +24,8 @@
                                 <StackPanel>
                                     <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" MaxWidth="278" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}"/>
                                     <DockPanel>
-                                        <Button Padding="7.5,1" BorderBrush="{DynamicResource BorderBrush}" Margin="5" HorizontalContentAlignment="Left" Style="{DynamicResource AddButton}" Content="View" Click="Navigate" Tag="{Binding XPath=link}"/>
-                                        <TextBlock VerticalAlignment="Center" MaxWidth="215" HorizontalAlignment="Left" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{DynamicResource ControlFontBrush}"/>
+                                        <Button ToolTip="Refresh news and theme" Padding="7.5,1" BorderBrush="{DynamicResource BorderBrush}" Margin="5" HorizontalContentAlignment="Left" Style="{DynamicResource AddButton}" Content="View" Click="Navigate" Tag="{Binding XPath=link}"/>
+                                        <TextBlock ToolTip="Search news" VerticalAlignment="Center" MaxWidth="215" HorizontalAlignment="Left" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{DynamicResource ControlFontBrush}"/>
                                     </DockPanel>
                                 </StackPanel>
                             </Border>

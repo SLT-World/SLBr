@@ -16,7 +16,7 @@ namespace SLBr
             newBrowser = null;
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
-                MainWindow.Instance.CreateTab(MainWindow.Instance.CreateWebBrowser(targetUrl), true, MainWindow.Instance.Tabs.SelectedIndex + 1, true);
+                MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser(targetUrl), true, MainWindow.Instance.Tabs.SelectedIndex + 1, true);
             }));
             //Program.Form.Invoke(new Action(() => Program.Form.newPage(targetUrl)));
             //browser.MainFrame.LoadUrl(targetUrl);

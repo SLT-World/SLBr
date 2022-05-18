@@ -16,6 +16,15 @@ namespace SLBr
         }
         #endregion
 
+        /*public int ID
+        {
+            get { return PID; }
+            set
+            {
+                PID = value;
+                RaisePropertyChanged("ID");
+            }
+        }*/
         public bool CloseOnTabSwitch
         {
             get { return PCloseOnTabSwitch; }
@@ -107,6 +116,7 @@ namespace SLBr
             }
         }
 
+        //public int PID { get; set; }
         public bool PCloseOnTabSwitch { get; set; }
         public string PContent { get; set; }
         public Visibility PButtonVisibility { get; set; }

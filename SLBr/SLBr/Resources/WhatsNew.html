@@ -6,7 +6,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
-    <title>About SLBr</title>
+    <title>What's New for SLBr</title>
     <link rel="stylesheet" type="text/css" href="./style.css"/>
     <!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />-->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -48,296 +48,215 @@ Use of this source code is governed by a GNU license that can be found in the LI
 <body>
     <div class="AboutHeader">
         <h1>SLBr</h1>
-        <!--<p>The new, clean, lightweight .NET Web browser</p>-->
-        <p>SLBr 2022.4.4.0 Release Notes</p>
+        <p>The browser that prioritizes a faster web</p>
     </div>
 
     <div class="AboutContent">
-        <h2>2022.4.4.0</h2><!--<h2>What's New in SLBr VERSIONHERE</h2>-->
-        <p>
-            Note from the developer: I forgot to check the user agent in a rush to publish the previous release.
-        </p>
-        <h3>Contributing</h3>
+        <!--<h2>What's New</h2>--><!--<h2>What's New in SLBr VERSIONHERE</h2>-->
+        <h3>Contributing to SLBr</h3>
         <p>
             Want to contribute? See what help is needed in SLBr's <a target="_blank" href="https://github.com/SLT-World/SLBr/projects/1">Github Project Page</a>
         </p>
-        <br />
+        <h2>Release Notes</h2>
         <table>
+            <!--Swiftshader has been removed-->
             <tr>
                 <th>Function/Feature Implementation</th><!--Updates-->
-                <th>Action Type</th><!--Feature, Fix, Change-->
-                <th>Development State</th><!--Work In Progress, Completed, Removed, On Hold-->
+                <th>Status</th><!--Work In Progress, Passed, Removed, On Hold-->
             </tr>
             <tr>
-                <td>Native Built-In Tracker & Ad Blocker</td>
-                <td>Feature</td>
+                <td>Built-In Tracker & Ad Blocker</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>More features made available to Internet Explorer mode</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Silenced Internet Explorer mode's constant stream of script error popups</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Changed the version of the Built-In WebBrowser emulation to IE 11</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Removed Cannot Connect Response Error since it caused annoyances when using the Inspector</td>
+                <td>Removed</td>
+            </tr>
+            <tr>
+                <td>Added docked Inspector</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Added tab rearrangement, drag by holding the tab with the middle button/scrollwheel</td>
                 <td>Work In Progress</td>
             </tr>
             <tr>
-                <td>SLBr adds a drag & drop mechanism</td>
-                <td>Feature</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>Automatic tab closing feature</td>
-                <td>Feature</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>Set as Default Browser option</td>
-                <td>Feature</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>SLBr will register the required associations</td>
-                <td>Feature</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>Introduced a better single instance restriction</td>
-                <td>Fix</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>SLBr will load all protocols & schemes, the Chrome scheme will only be loaded in Developer and Chromium mode</td>
-                <td>Change</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>Tab Restoring enabled for default</td>
-                <td>Change</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>Seperate save for Private mode</td>
-                <td>Feature</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>Tab Unloading time increased</td>
-                <td>Change</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>Optimized loading & tab controls, SLBr closes witrout the need of being loaded</td>
-                <td>Feature</td>
-                <td>Completed</td>
-            </tr>
-            <tr>
-                <td>SLBr removes force dark on webpage feature</td>
+                <td>Removed pin button with the arrival of tab rearrangement</td>
                 <td>Removed</td>
-                <td>Completed</td>
             </tr>
             <tr>
-                <td>SLBr adds support of the favourite feature for Internet Explorer mode</td>
-                <td>Feature</td>
-                <td>Completed</td>
+                <td>Improved the enforcement of a single instance</td>
+                <td>Work In Progress</td>
             </tr>
             <tr>
-                <td>SLBr will only replace the text in the address bar only if it is not focused</td>
-                <td>Change</td>
-                <td>Completed</td>
+                <td>Code Cleanup</td>
+                <td>Passed</td>
             </tr>
             <tr>
-                <td>SLBr will now show urls on tabs in Internet Explorer mode (On Startup)</td>
-                <td>Feature</td>
-                <td>Completed</td>
+                <td>New style for the "More options" menu and Tooltip</td>
+                <td>Passed</td>
             </tr>
             <tr>
-                <td>SLBr opens favourite addresses in a new tab if the middle click is used</td>
-                <td>Feature</td>
-                <td>Completed</td>
+                <td>Resolved crashes caused by internet connection</td> <!--(Unfortunately, this fix didn't work out on .NET Core, it only works on .NET Standard)-->
+                <td>Work In Progress</td>
             </tr>
             <tr>
-                <td>Scroll through favourites in the favourites panel with mouse wheel</td>
-                <td>Feature</td>
-                <td>Completed</td>
+                <td>Certain features are enabled for default in Private mode</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>SLBr will release unused memory with the garbage collector every 30 seconds</td>
+                <td>Work In Progress</td>
+            </tr>
+            <tr>
+                <td>Switched from .NET Standard to the more efficient and widely supported .NET Core 5.0</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Included more chromium flags to code</td>
+                <td>Work In Progress</td>
+            </tr>
+            <tr>
+                <td>What's New page will be opened when SLBr is opened in a different version</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Better Docked Inspector</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Implemented screenshot mechanism</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Fixed Unload Tab feature that caused history to be wiped out</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Fixed back and forward buttons of IE Mode</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Full restyle of Settings</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Split the Tracker & Ad Blocker into two seperate settings for more customization</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Text rendering is no longer affected by the presence of the settings tab</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Renamed certain settings and added new settings</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Removed prompts to settings that has immediate noticable changes to the UI</td>
+                <td>Removed</td>
+            </tr>
+            <tr>
+                <td>Added theme selection and removed dark theme checkbox</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Dark theme now forceable on webpages</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Changed settings tab open index</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled Widevine Cdm Support</td>
+                <td>Work In Progress</td>
+            </tr>
+            <tr>
+                <td>Added User Data folder for Widevine and spell check dictionaries</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Changed and fixed the download handler</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Private mode no longer sends information to the SafeBrowsing api, therefore SafeBrowsing is disabled</td>
+                <td>Removed</td>
+            </tr>
+            <tr>
+                <td>Customizable render mode</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled QUIC, TCP fast open and SPDY/4</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled expensive background timer throttling</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Added suggestions dropdown</td>
+                <td>Work in progress</td>
+            </tr>
+            <tr>
+                <td>Re-enabled site isolation, trading opt out off for better security and minor affects on user experience on render process terminated</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled heavy ad intervention and privacy mitigations</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled hardware secure decryption</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled simple cache backend</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Auto reload on render process terminated</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>The performance metrics hud will be shown and ad frames will be highlighted on developer mode</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled experimental web features for Developer mode</td>
+                <td>Passed</td>
+            </tr>
+            <!--<tr>
+        <td>Switched chromium engine from external to native Win32 implementation for IME support and better performance (17-5-2022)</td>
+        <td>Passed</td>
+    </tr>
+    <tr>
+        <td>Enabled smooth scrolling</td>
+        <td>Passed</td>
+    </tr>
+    <tr>
+        <td>Link & Image drag preview</td>
+        <td>Passed</td>
+    </tr>-->
+            <tr>
+                <td>Fixed context menu not closing bug</td>
+                <td>Passed</td>
             </tr>
         </table>
-        <h3>UI Changes</h3>
-        <ul>
-            <!--<li>Removed the SLBr header on the New Page</li>-->
-            <li>SLBr in Internet Explorer mode will no longer show urls in the tabs on startup</li>
-            <li>Removed the add button from the tabs header. To create a new tab, find and press the + icon in the tools bar</li>
-            <li>A more sharper text than ever before</li>
-            <li>A bit of border position change in the tools bar</li>
-        </ul>
-        <h3>Bug fixes</h3>
-        <ul>
-            <li>Reduced some crashes in the SLBr Internet Explorer mode</li>
-            <li>Fixed the homepage setting not saving</li>
-            <li>Switched to Software Rendering to eliminate the problem of SLBr not working on certain devices</li>
-            <li>SLBr can now open files through the file explorer (It is actually implemented, just that it used to cause SLBr to crash)</li>
-            <li>Fixed useragent not applying the SLBr useragent</li>
-            <li>Fixed new release prompt showing the current version and not the new available version</li>
-            <li>Values are now passed into weblight loading</li>
-            <li>Fixed a few no internet connection crashes</li>
-        </ul>
-        <h3>Code Changes</h3>
-        <ul>
-            <li>Changed the way of registering schemes, using classes for a more cleaner look, but sacrificed faster startup time</li>
-            <li>Improved the code</li>
-            <li>Removed unnecessary usings</li>
-            <li>Removed and changed the way on how the events of close & pin buttons are added. Slightly improved a bit of load time</li>
-            <li>Changed from initializing a instance of Uri for host to a fast and straightforward url host parsing</li>
-            <li>The maximum number of render processes is set from 1 to 5, to minimize the affects of render process crashes</li>
-            <li>Limited the size of disk cache to 100 MB</li>
-        </ul>
     </div>
-    <!--<div class="List">
-        <h3>Function Changes</h3>
-        <ul>
-            <li>A work-in-progress native built-in ad & tracker blocker</li>
-            <li>Dropping is now allowed</li>
-            <li>SLBr now automatically closes a tab if the page orders to do so</li>
-            <li>SLBr is now a default browser, it means that SLBr can be selected as the default browser, SLBr takes another giant leap forward</li>
-            <li>Enforced the restriction of a single instance</li>
-            <li>SLBr will register the required associations for a default browser</li>
-            <li>SLBr can now load all protocols, even ones that were registered in the registry</li>
-            <li>The Chrome protocol will only be available in developer mode</li>
-            <li>Tab Restoring will be enabled for default</li>
-            <li>Seperated save for private mode</li>
-            <li>Increased tab unloading time</li>
-            <li>Favourite feature is now supported in Internet Explorer Mode</li>
-            <li>SLBr will only replace the text in the address bar if it is not focused</li>
-            <li>Removed webpage dark mode forcing again due to it causing unnecessary slow loading, SLBr might have a new way to dark mode in the future</li>
-            <li>You can now close tabs without the need of it being loaded</li>
-            <li>Middle click on a favourite item will now open the url in a new tab</li>
-        </ul>
-        <h3>UI Changes</h3>
-        <ul>
-            <li>SLBr in Internet Explorer mode will no longer show urls in the tabs on startup</li>
-            <li>Removed the add button from the tabs header. To create a new tab, find and press the + icon in the tools bar</li>
-            <li>A more sharper text than ever before</li>
-            <li>A bit of border position change in the tools bar</li>
-        </ul>
-        <h3>Bug fixes</h3>
-        <ul>
-            <li>Reduced some crashes in the SLBr Internet Explorer mode</li>
-            <li>Fixed the homepage setting not saving</li>
-            <li>Switched to Software Rendering to eliminate the problem of SLBr not working on certain devices</li>
-            <li>SLBr can now open files through the file explorer (It is actually implemented, just that it used to cause SLBr to crash)</li>
-            <li>Fixed useragent not applying the SLBr useragent</li>
-            <li>Fixed new release prompt showing the current version and not the new available version</li>
-            <li>Values are now passed into weblight loading</li>
-            <li>Fixed a few no internet connection crashes</li>
-        </ul>
-        <h3>Code Changes</h3>
-        <ul>
-            <li>Changed the way of registering schemes, using classes for a more cleaner look, but sacrificed faster startup time</li>
-            <li>Improved the code</li>
-            <li>Removed unnecessary usings</li>
-            <li>Removed and changed the way on how the events of close & pin buttons are added. Slightly improved a bit of load time</li>
-            <li>Changed from initializing a instance of Uri for host to a fast and straightforward url host parsing</li>
-            <li>The maximum number of render processes is set from 1 to 5, to minimize the affects of render process crashes</li>
-            <li>Limited the size of disk cache to 100 MB</li>
-        </ul>
-        <h3>Contributing</h3>
-        <p>
-            To contribute features to SLBr, see what help are needed in SLBr's <a target="_blank" href="https://github.com/SLT-World/SLBr/projects/1">Github Project Page</a>
-        </p>
-    </div>-->
-    <!--<h2>What's New in SLBr 2022.3.20.0</h2>
-        <p>
-            Every update of SLBr delivers many new features.
-        </p>
-        <p>
-            Note from the developer: Conducted a lot of test runs this time and hopefully much of what's needed to be fixed are fixed.
-        </p>
-        <div class="List">
-            <h3>UI Changes</h3>
-            <ul>
-                <li>A status bar</li>
-                <li>A finished downloading prompt</li>
-                <li>Renamed the context menu button "Close menu" to "Cancel" and moved it to the end of the menu</li>
-                <li>Open URL in new tab context menu</li>
-                <li>Opens About page on first try</li>
-                <li>Fixed various errors that caused crashes on first try</li>
-                <li>Rearranged Tools Menu</li>
-            </ul>
-            <h3>Bug fixes</h3>
-            <ul>
-                <li>SLBr will render properly on Intel i5 processors, SLBr takes a giant leap forward (For developers who are wondering how, here's the line of code that solved it: "RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;")</li>
-                <li>Fixed prompt not closing problem (Binding problem)</li>
-            </ul>
-            <h3>Code Changes</h3>
-            <ul>
-                <li>"javascript:" scheme added</li>
-                <li>More details added to the About Page</li>
-                <li>Moved and shortened code</li>
-            </ul>
-            <h3>Contributing</h3>
-            <p>
-                To contribute features to SLBr, see what features are needed at SLBr's <a target="_blank" href="https://github.com/SLT-World/SLBr/projects/1">Github Project Page</a>
-            </p>
-        </div>
-    </div>-->
-    <!--<h2>What's New in SLBr 2022.3.13.0</h2>
-        <p>
-            Every update of SLBr delivers many new features.
-        </p>
-        <div class="List">
-            <h3>UI Changes</h3>
-            <ul>
-                <li>The settings tab/window will notify if a change is made successfully.</li>
-                <li>Find box and new tab button added to the top control bar</li>
-                <li>An improved context menu</li>
-                <li>Sharper Text</li>
-                <li>Tab pinning</li>
-                <li>URL Eliding (Meaning the "https://" and "www." will be hidden. There's an option to show the full URL in the Settings tab/window)</li>
-                <li>Dark mode will be forced into web contents</li>
-                <li>Text are now draggable into the address bar</li>
-                <li>PDF Viewer controls made visible</li>
-                <li>Native Built-in Prompts</li>
-                <li>When a request returns 404, SLBr will prompt a question asking to check if there's a saved version on Wayback Machine instead of displaying a 404 page</li>
-            </ul>
-            <h3>New developer features</h3>
-            <ul>
-                <li>Javascript Binding (Various functions are accessible by JS using the code `slbr.FUNCTION()`)</li>
-                <li>Faster website loading with Google Weblight</li>
-                <li>Screenshot feature (Still in development)</li>
-                <li>Tests menu</li>
-                <li>Developer mode, Developer/Experimental features & functionalities will be enabled.</li>
-                <li>Chromium mode, API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's.</li>
-                <li>Internet Explorer mode, Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors.</li>
-            </ul>
-            <h3>Other new features</h3>
-            <ul>
-                <li>More URL Schemes Supported</li>
-                <li><h4>Performance slightly improved</h4></li>
-                <li>
-                    <ul>
-                        <li>Code Cleanup</li>
-                        <li>Tab Unloading - 12/3/2022</li>
-                        <li>Limited renderer processes</li>
-                        <li>Disabled lots of unused, untouched and unnoticed features of the Chromium of SLBr, features that SLBr doesn't have to support (i.e. Smooth Scrolling, Low Resolution Tiling, Plugins/Add-ons/Extensions, Proxies)</li>
-                        <li>Disabled some parts of the GPU Acceleration because using the gpu is noticeably unreliable, but kept the rest for a limited WebGL support</li>
-                        <li>No plugins/add-ons/extensions are needed to be initialized since SLBr does not support these</li>
-                        <li>Without Proxy servers slightly improve the initialization time of SLBr as it won't attempt to resolve a proxy</li>
-                        <li>Utilized a single instance for multiple small tasks</li>
-                        <li>Removed callbacks that returns more than once.</li>
-                    </ul>
-                </li><li><h4>Keyboard Shortcuts</h4></li>
-                <li>
-                    <ul>
-                        <li>Ctrl+R, F5 (Refresh)</li>
-                        <li>Ctrl+T (New Tab)</li>
-                        <li>Ctrl+W (Close Tab)</li>
-                        <li>Ctrl+S (Screenshot)</li>
-                        <li>F12 (Developer Tools)</li>
-                    </ul>
-                </li>
-                <li><h4>Modes</h4></li>
-                <li>
-                    <ul>
-                        <li>Private mode (Incognito), No browsing history will be saved, in-memory cache will be used.</li>
-                        <li>Developer mode, Developer/Experimental features & functionalities will be enabled.</li>
-                        <li>Chromium mode, API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's.</li>
-                        <li>Internet Explorer mode, Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors.</li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-    </div>-->
 </body>
 </html>

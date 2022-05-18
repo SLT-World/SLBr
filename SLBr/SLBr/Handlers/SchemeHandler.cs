@@ -10,8 +10,8 @@ namespace SLBr
     {
         //private static string appPath = Path.GetDirectoryName(Application.ExecutablePath) + @"\";
 
-        private string mimeType;
-        private Stream stream;
+        //private string mimeType;
+        //private Stream stream;
 
         public void Cancel()
         {
@@ -23,12 +23,13 @@ namespace SLBr
 
         public void GetResponseHeaders(IResponse response, out long responseLength, out string redirectUrl)
         {
-            responseLength = stream != null ? stream.Length : 0;
+            //responseLength = stream != null ? stream.Length : 0;
+            responseLength = 0;
             redirectUrl = null;
 
-            response.StatusCode = (int)HttpStatusCode.OK;
-            response.StatusText = "OK";
-            response.MimeType = mimeType;
+            //response.StatusCode = (int)HttpStatusCode.OK;
+            //response.StatusText = "OK";
+            //response.MimeType = mimeType;
         }
 
         public bool Open(IRequest request, out bool handleRequest, ICallback callback)
@@ -67,19 +68,21 @@ namespace SLBr
         {
             callback.Dispose();
 
-            if (stream == null)
+            /*if (stream == null)
             {
                 bytesRead = 0;
                 return false;
-            }
+            }*/
+            bytesRead = 0;
+            return false;
 
             //Data out represents an underlying buffer (typically 32kb in size).
-            var buffer = new byte[dataOut.Length];
+            /*var buffer = new byte[dataOut.Length];
             bytesRead = stream.Read(buffer, 0, buffer.Length);
 
             dataOut.Write(buffer, 0, buffer.Length);
 
-            return bytesRead > 0;
+            return bytesRead > 0;*/
         }
 
         public bool Skip(long bytesToSkip, out long bytesSkipped, IResourceSkipCallback callback)

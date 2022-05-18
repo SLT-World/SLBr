@@ -1,9 +1,12 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
 // Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using CefSharp;
+using CefSharp.DevTools;
 using CefSharp.SchemeHandler;
 using CefSharp.Wpf;
 using HtmlAgilityPack;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,12 +17,14 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Threading;
@@ -33,7 +38,47 @@ namespace SLBr
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        //bool IsDevToolsOpen;
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == Utils.WM_SHOWPAGE)
+                //Vulnerability, hackers can call methods and control how to the browser runs, please help out
+                //SOLUTION 1: Have a dialog that asks the user whether to proceed the action or ignore it
+                //SOLUTION 2: Use a pipeline
+                ShowPage();
+            return IntPtr.Zero;
+        }
+        
+        public void CreateBrowserTab(string Url, bool Focus = true, int Index = -1, bool NameByUrl = false)
+        {
+            if (IsIEMode)
+                CreateIETab(CreateIEWebBrowser(Url), Focus, Index);
+            else
+                CreateChromeTab(CreateWebBrowser(Url), Focus, Index, NameByUrl);
+        }
+
+        private void ShowAndBrowse(string Url)
+        {
+            ShowPage();
+            if (!IsProcessLoaded)
+                return;
+            if (Directory.Exists(Url) || File.Exists(Url))
+                Url = "file:\\\\\\" + Url;
+            CreateBrowserTab(Url);
+        }
+        private void ShowPage()
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                Visibility = Visibility.Visible;
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background,
+                    new Action(delegate ()
+                    {
+                        WindowState = WindowState.Normal;
+                        Activate();
+                    })
+                );
+            }
+        }
         #region Start
         public enum BuildType
         {
@@ -43,7 +88,11 @@ namespace SLBr
 
         public static MainWindow Instance;
 
-        private static Guid FolderDownloads = new Guid("374DE290-123F-4565-9164-39C4925E467B");
+        private static Guid DownloadsGuid = new Guid("374DE290-123F-4565-9164-39C4925E467B");
+        private static Guid DocumentsGuid = new Guid("FDD39AD0-238F-46AF-ADB4-6C85480369C7");
+        private static Guid MusicGuid = new Guid("4BD8D571-6D19-48D3-BE97-422220080E43");
+        private static Guid PicturesGuid = new Guid("33E28130-4E1E-4676-835A-98395C3BC3BB");
+        private static Guid SavedGamesGuid = new Guid("4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4");
 
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         private static extern int SHGetKnownFolderPath(ref Guid id, int flags, IntPtr token, out IntPtr path);
@@ -54,8 +103,22 @@ namespace SLBr
             IntPtr pathPtr = IntPtr.Zero;
             try
             {
-                SHGetKnownFolderPath(ref FolderDownloads, 0, IntPtr.Zero, out pathPtr);
+                SHGetKnownFolderPath(ref DownloadsGuid, 0, IntPtr.Zero, out pathPtr);
                 return Marshal.PtrToStringUni(pathPtr);
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(pathPtr);
+            }
+        }
+        public static string GetScreenshotPath()
+        {
+            if (Environment.OSVersion.Version.Major < 6) throw new NotSupportedException();
+            IntPtr pathPtr = IntPtr.Zero;
+            try
+            {
+                SHGetKnownFolderPath(ref PicturesGuid, 0, IntPtr.Zero, out pathPtr);
+                return Path.Combine(Marshal.PtrToStringUni(pathPtr), "Screenshots", "SLBr");
             }
             finally
             {
@@ -75,20 +138,18 @@ namespace SLBr
         public Utils.Saving FavouriteSave;
         public Utils.Saving SearchEnginesSave;
         public Utils.Saving TabsSave;
-        public Utils.Saving ATSADSEUrlsSave;
+        public Utils.Saving SearchProviderUrlsSave;
 
-        public int SettingsPages;
+        public List<string> SearchProviderUrls = new List<string>();
 
-        public List<string> ATSADSEUrls = new List<string>();
-
-        List<string> SaveNames = new List<string> { "Save.bin", "Favourites.bin", "SearchEngines.bin", "Tabs.bin", "ATSADSEUrls.bin" };
+        List<string> SaveNames = new List<string> { "Save.bin", "Favourites.bin", "SearchEngines.bin", "Tabs.bin", "SearchProviderUrls.bin" };
         List<Utils.Saving> Saves = new List<Utils.Saving>();
 
         public string ReleaseVersion;
 
         string ReleaseYear = "2022";
-        string ReleaseMonth = "4";
-        string ReleaseDay = "4";
+        string ReleaseMonth = "5";
+        string ReleaseDay = "18";
 
         bool IsInformationSet;
         public string ChromiumVersion;
@@ -104,6 +165,7 @@ namespace SLBr
         public string ApplicationDataPath;
         public string CachePath;
         public string LogPath;
+        public string UserDataPath;
         public int RemoteDebuggingPort = 8088;
 
         public bool AddressBoxFocused;
@@ -150,8 +212,16 @@ namespace SLBr
             }
         }
 
-        //public List<Prompt> Prompts = new List<Prompt>();
-        //public ObservableCollection<Prompt> PromptsBinding { get { return new ObservableCollection<Prompt>(Prompts); } }
+        private ObservableCollection<Favourite> PrivateSuggestions = new ObservableCollection<Favourite>();
+        public ObservableCollection<Favourite> Suggestions
+        {
+            get { return PrivateSuggestions; }
+            set
+            {
+                PrivateSuggestions = value;
+                RaisePropertyChanged("Suggestions");
+            }
+        }
 
         private ObservableCollection<Prompt> PrivatePrompts = new ObservableCollection<Prompt>();
         public ObservableCollection<Prompt> Prompts
@@ -164,18 +234,45 @@ namespace SLBr
             }
         }
 
-        URLScheme SLBrScheme;
+        //int PreviousTabIndex;
 
+        URLScheme SLBrScheme;
+        List<Theme> Themes = new List<Theme>();
+        public void ApplyTheme(Theme _Theme)
+        {
+            Resources["PrimaryBrush"] = new SolidColorBrush(_Theme.PrimaryColor);
+            Resources["FontBrush"] = new SolidColorBrush(_Theme.FontColor);
+            Resources["BorderBrush"] = new SolidColorBrush(_Theme.BorderColor);
+            Resources["UnselectedTabBrush"] = new SolidColorBrush(_Theme.UnselectedTabColor);
+            Resources["ControlFontBrush"] = new SolidColorBrush(_Theme.ControlFontColor);
+        }
+        public Theme GetCurrentTheme() =>
+            GetTheme(MainSave.Get("Theme"));
+        public Theme GetTheme(string Name)
+        {
+            foreach (Theme _Theme in Themes)
+            {
+                if (_Theme.Name == Name)
+                    return _Theme;
+            }
+            return Themes[0];
+        }
         #region Window
         public MainWindow()
         {
-            RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;// Fixed i5 problem with this code
+            HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
+            source.AddHook(new HwndSourceHook(WndProc));
+            Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline), new FrameworkPropertyMetadata { DefaultValue = 15 });
+
+            //RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;// Fixed i5 problem with this code
+
             /*foreach (ManagementObject video in new ManagementObjectSearcher(new SelectQuery("Win32_VideoController")).Get())
-        if ((string)video["Name"] == "Intel(R) Iris(R) Xe Graphics" && string.CompareOrdinal((string)video["DriverVersion"], "30.0.100.9667") <= 0)
-        {
-            System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
-            break;
-        }*/
+            if ((string)video["Name"] == "Intel(R) Iris(R) Xe Graphics" && string.CompareOrdinal((string)video["DriverVersion"], "30.0.100.9667") <= 0)
+            {
+                System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
+                break;
+            }*/
+
             //Intel(R) Iris(R) Xe Graphics
             //Intel(R) Core(TM) i5-1135G7
             if (Utils.HasDebugger())
@@ -213,7 +310,9 @@ namespace SLBr
             }
             if (!IsDeveloperMode)
                 IsDeveloperMode = Utils.HasDebugger();
-            if (!IsChromiumMode || !IsIEMode)
+            //IsIEMode = true;
+            //IsPrivateMode = true;
+            if (!IsChromiumMode && !IsIEMode)
             {
                 // Set Google API keys, used for Geolocation requests sans GPS.  See http://www.chromium.org/developers/how-tos/api-keys
                 Environment.SetEnvironmentVariable("GOOGLE_API_KEY", SECRETS.GOOGLE_API_KEY);
@@ -233,6 +332,7 @@ namespace SLBr
             if (IsPrivateMode)
                 ApplicationDataPath = Path.Combine(ApplicationDataPath, "Private");
             CachePath = Path.Combine(ApplicationDataPath, "Cache");
+            UserDataPath = Path.Combine(ApplicationDataPath, "User Data");
             LogPath = Path.Combine(ApplicationDataPath, "Debug.log");
             foreach (string Name in SaveNames)
                 Saves.Add(new Utils.Saving(true, Name, ApplicationDataPath));
@@ -246,31 +346,25 @@ namespace SLBr
             if (string.IsNullOrEmpty(ReleaseDay))
                 ReleaseDay = CurrentDateTime.Day.ToString();
             ReleaseVersion = $"{ReleaseYear}.{ReleaseMonth}.{ReleaseDay}.0";
+            //Assembly.GetExecutingAssembly().GetName().Version = Version.Parse(ReleaseVersion);
+            //MessageBox.Show(Assembly.GetExecutingAssembly().GetName().Version.ToString());
             Bitness = Environment.Is64BitProcess ? "64" : "36";
             ChromiumVersion = Cef.ChromiumVersion;
             if (!IsIEMode)
-            {
                 InitializeCEF();
-
-                _LifeSpanHandler = new LifeSpanHandler();
-                _DownloadHandler = new DownloadHandler();
-                _RequestHandler = new RequestHandler();
-                _ContextMenuHandler = new ContextMenuHandler();
-                _KeyboardHandler = new KeyboardHandler();
-                _JsDialogHandler = new JsDialogHandler();
-                _JSBindingHandler = new JSBindingHandler();
-                InitializeKeyboardHandler();
-                _SafeBrowsing = new Utils.SafeBrowsing(Environment.GetEnvironmentVariable("GOOGLE_API_KEY"), Environment.GetEnvironmentVariable("GOOGLE_DEFAULT_CLIENT_ID"));
-            }
+            else
+                SetBrowserEmulationVersion();
             /*else
                 InitializeIE();*/
             MainSave = Saves[0];
             FavouriteSave = Saves[1];
             SearchEnginesSave = Saves[2];
             TabsSave = Saves[3];
-            ATSADSEUrlsSave = Saves[4];
+            SearchProviderUrlsSave = Saves[4];
             ExecutableLocation = Assembly.GetExecutingAssembly().Location.Replace("\\", "\\\\");
             TinyDownloader = new WebClient();
+            if (Environment.OSVersion.Version.Major >= 6)
+                SetProcessDPIAware();
         }
         private void Window_DpiChanged(object sender, DpiChangedEventArgs e)
         {
@@ -289,156 +383,11 @@ namespace SLBr
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            //MessageBox.Show(string.Join(" ", Environment.GetCommandLineArgs()));
-            Tabs.ApplyTemplate();
-            Task.Delay(1000).ContinueWith(_ =>
-            {
-                Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-                {
-                    if (!IsPrivateMode && !MainSave.Has("AssociationsSet"))
-                    {
-                        if (Utils.IsAdministrator())
-                        {
-                            FileAssociations.EnsureAssociationsSet();
-                            Prompt(false, "The required associations for SLBr has been set, thank you for cooperating.");
-                            MainSave.Set("AssociationsSet", true.ToString());
-                        }
-                        else
-                            Prompt(false, "SLBr must be opened with administrative permissions to set the required associations.");
-                    }
-                    if (!MainSave.Has("Search_Engine"))
-                        MainSave.Set("Search_Engine", SearchEngines[0]);
-                    if (!MainSave.Has("UsedBefore"))
-                    {
-                        if (NewTabUrl == "Empty00000")
-                            NewTabUrl = "slbr://about/";
-                        MainSave.Set("UsedBefore", true.ToString());
-                    }
-                    if (!MainSave.Has("Homepage"))
-                        MainSave.Set("Homepage", "slbr://newtab"/*Utils.FixUrl(new Uri(SearchEngines[0]).Host, false)*/);
-                    if (!MainSave.Has("DarkTheme"))
-                        MainSave.Set("DarkTheme", false.ToString());
-                    else
-                        DarkTheme(bool.Parse(MainSave.Get("DarkTheme")));
-                    if (!MainSave.Has("RestoreTabs"))
-                        MainSave.Set("RestoreTabs", true.ToString());
-                    if (!MainSave.Has("Weblight"))
-                        MainSave.Set("Weblight", false.ToString());
-                    if (!MainSave.Has("SelectedTabIndex"))
-                        MainSave.Set("SelectedTabIndex", 0.ToString());
-                    if (!MainSave.Has("TabUnloading"))
-                        MainSave.Set("TabUnloading", true.ToString());
-                    if (!MainSave.Has("FullAddress"))
-                        MainSave.Set("FullAddress", false.ToString());
-                    if (!MainSave.Has("BlockKeywords"))
-                        MainSave.Set("BlockKeywords", true.ToString());
-                    if (!MainSave.Has("BlockedKeywords"))
-                        MainSave.Set("BlockedKeywords", "roblox,gacha");
-                    if (!MainSave.Has("BlockRedirect"))
-                        MainSave.Set("BlockRedirect", MainSave.Get("Homepage"));
-                    if (!MainSave.Has("AFDP"))
-                        MainSave.Set("AFDP", true.ToString());
-                    if (!MainSave.Has("ATSADSE"))
-                        MainSave.Set("ATSADSE", true.ToString());
-                    if (!MainSave.Has("DownloadPath"))
-                        MainSave.Set("DownloadPath", GetDownloadsPath());
-                    if (!MainSave.Has("HideTabs"))
-                        MainSave.Set("HideTabs", false.ToString());
-                    bool RestoreTabs = bool.Parse(MainSave.Get("RestoreTabs"));
-                    if (RestoreTabs)
-                    {
-                        if (TabsSave.Has("Tab_Count"))
-                        {
-                            if (int.Parse(TabsSave.Get("Tab_Count")) > 0)
-                            {
-                                Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-                                {
-                                    int Index = int.Parse(MainSave.Get("SelectedTabIndex"));
-                                    for (int i = 0; i < int.Parse(TabsSave.Get("Tab_Count")); i++)
-                                    {
-                                        string Url = TabsSave.Get($"Tab_{i}");
-                                        //if (!SearchEngines.Contains(Url))
-                                        bool IsSelected = Index == i;
-                                        if (IsIEMode)
-                                            CreateIETab(CreateIEWebBrowser(Url), IsSelected);
-                                        else
-                                            CreateTab(CreateWebBrowser(Url), IsSelected);
-                                    }
-                                    if (CreateTabForCommandLineUrl)
-                                    {
-                                        if (IsIEMode)
-                                            CreateIETab(CreateIEWebBrowser(NewTabUrl));
-                                        else
-                                            CreateTab(CreateWebBrowser(NewTabUrl));
-                                    }
-                                }));
-                            }
-                            else
-                            {
-                                if (IsIEMode)
-                                    CreateIETab(CreateIEWebBrowser(NewTabUrl));
-                                else
-                                    CreateTab(CreateWebBrowser(NewTabUrl));
-                            }
-                        }
-                        else
-                        {
-                            if (IsIEMode)
-                                CreateIETab(CreateIEWebBrowser(NewTabUrl));
-                            else
-                                CreateTab(CreateWebBrowser(NewTabUrl));
-                        }
-                    }
-                    else
-                    {
-                        if (IsIEMode)
-                            CreateIETab(CreateIEWebBrowser(NewTabUrl));
-                        else
-                            CreateTab(CreateWebBrowser(NewTabUrl));
-                    }
-                    HideTabs(bool.Parse(MainSave.Get("HideTabs")));
-                    /*Cef.UIThreadTaskFactory.StartNew(delegate {
-                        var rc = ((Tabs.Items.GetItemAt(1) as TabItem).Content as ChromiumWebBrowser).GetBrowser().GetHost().RequestContext;
-                        var v = new Dictionary<string, object>();
-                        v["mode"] = "fixed_servers";
-                        v["server"] = "socks5://127.0.0.1:9190";
-                        string error;
-                        bool success = rc.SetPreference("proxy", v, out error);
-                    });*/
-                }));
-            });
-            if (FavouriteSave.Has("Favourite_Count"))
-            {
-                Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-                {
-                    for (int i = 0; i < int.Parse(FavouriteSave.Get("Favourite_Count")); i++)
-                    {
-                        string[] Value = FavouriteSave.Get($"Favourite_{i}", true);
-                        //string Url = Value[0];
-                        //string Header = Value[1];
-
-                        Favourites.Add(new Favourite { Name = Value[1], Arguments = $"12<,>{Value[0]}" });
-                    }
-                    if (Favourites.Count == 0)
-                        FavouriteContainer.Visibility = Visibility.Collapsed;
-                    else
-                        FavouriteContainer.Visibility = Visibility.Visible;
-                }));
-            }
-            else
-                FavouriteContainer.Visibility = Visibility.Collapsed;
-            if (ATSADSEUrlsSave.Has("ATSADSEUrl_Count"))
-            {
-                Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-                {
-                    for (int i = 0; i < int.Parse(ATSADSEUrlsSave.Get("ATSADSEUrl_Count")); i++)
-                    {
-                        string Url = ATSADSEUrlsSave.Get($"ATSADSEUrl_{i}");
-                        if (!ATSADSEUrls.Contains(Url))
-                            ATSADSEUrls.Add(Url);
-                    }
-                }));
-            }
+            Themes.Add(new Theme("Light", Colors.White, Colors.Black, Colors.Gainsboro, Colors.WhiteSmoke, Colors.Gray));
+            Themes.Add(new Theme("Dark", (Color)ColorConverter.ConvertFromString("#202225"), Colors.White, (Color)ColorConverter.ConvertFromString("#36393F"), (Color)ColorConverter.ConvertFromString("#2F3136"), Colors.Gainsboro));
+            Themes.Add(new Theme("Cheesy", (Color)ColorConverter.ConvertFromString("#FEE2AE"), Colors.Black, (Color)ColorConverter.ConvertFromString("#FDCD74"), (Color)ColorConverter.ConvertFromString("#FDBC44"), Colors.Orange));
+            //Themes.Add(new Theme("Lush Green", (Color)ColorConverter.ConvertFromString("#037D06"), Colors.White, (Color)ColorConverter.ConvertFromString("#308214"), (Color)ColorConverter.ConvertFromString("#308214"), Colors.Gainsboro));
+            Themes.Add(new Theme("Lush Green", (Color)ColorConverter.ConvertFromString("#82CC52"), Colors.White, (Color)ColorConverter.ConvertFromString("#77C34F"), (Color)ColorConverter.ConvertFromString("#62B249"), Colors.White));
             if (SearchEnginesSave.Has("Search_Engine_Count"))
             {
                 SearchEngines = new List<string>();
@@ -454,6 +403,173 @@ namespace SLBr
             }
             else
                 SearchEngines = new List<string>(DefaultSearchEngines);
+            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+            {
+                if (!IsPrivateMode && !MainSave.Has("AssociationsSet"))
+                {
+                    if (Utils.IsAdministrator())
+                    {
+                        FileAssociations.EnsureAssociationsSet();
+                        Prompt(false, "The required associations for SLBr has been set, thank you for cooperating.");
+                        MainSave.Set("AssociationsSet", true.ToString());
+                    }
+                    else
+                        Prompt(false, "SLBr must be opened with administrative permissions to set the required associations.");
+                }
+                if (!MainSave.Has("Search_Engine"))
+                {
+                    if (IsPrivateMode)
+                        SearchEngines.Insert(0, "https://duckduckgo.com/?q={0}");
+                    MainSave.Set("Search_Engine", SearchEngines[0]);
+                }
+                if (!MainSave.Has("UsedBefore"))
+                {
+                    if (NewTabUrl == "Empty00000" && !IsPrivateMode)
+                    {
+                        NewTabUrl = "slbr://about/";
+                        CreateTabForCommandLineUrl = true;
+                    }
+                    MainSave.Set("UsedBefore", true.ToString());
+                }
+                if (MainSave.Has("PreviousSessionV") && MainSave.Get("PreviousSessionV") != ReleaseVersion)
+                {
+                    if (NewTabUrl == "Empty00000" && !IsPrivateMode)
+                    {
+                        NewTabUrl = "slbr://whatsnew/";
+                        CreateTabForCommandLineUrl = true;
+                    }
+                }
+                MainSave.Set("PreviousSessionV", ReleaseVersion);
+                if (!MainSave.Has("Homepage"))
+                    MainSave.Set("Homepage", "slbr://newtab"/*Utils.FixUrl(new Uri(SearchEngines[0]).Host, false)*/);
+                if (!MainSave.Has("Theme"))
+                    MainSave.Set("Theme", "Dark");
+                if (!MainSave.Has("DarkWebpage"))
+                    MainSave.Set("DarkWebpage", true.ToString());
+                ApplyTheme(GetCurrentTheme());
+                if (!MainSave.Has("RestoreTabs"))
+                    MainSave.Set("RestoreTabs", (!IsPrivateMode).ToString());
+                if (!MainSave.Has("FavouritesBar"))
+                    MainSave.Set("FavouritesBar", true.ToString());
+                if (!MainSave.Has("AdBlock"))
+                    AdBlock(IsPrivateMode);
+                else
+                    AdBlock(bool.Parse(MainSave.Get("AdBlock")));
+                if (!MainSave.Has("TrackerBlock"))
+                    TrackerBlock(IsPrivateMode);
+                else
+                    TrackerBlock(bool.Parse(MainSave.Get("TrackerBlock")));
+                if (!MainSave.Has("RenderMode"))
+                {
+                    string _RenderMode = "Hardware";
+                    var ProcessorID = Utils.GetProcessorID();
+                    foreach (string Processor in HardwareUnavailableProcessors)
+                    {
+                        if (ProcessorID.Contains(Processor))
+                        {
+                            _RenderMode = Processor;
+                        }
+                    }
+                    SetRenderMode(_RenderMode, false);
+                }
+                else
+                    SetRenderMode(MainSave.Get("RenderMode"), true);
+                if (!MainSave.Has("LiteMode"))
+                    MainSave.Set("LiteMode", true.ToString());
+                if (!MainSave.Has("DoNotTrack"))
+                    MainSave.Set("DoNotTrack", true.ToString());
+                if (!MainSave.Has("AutoSuggestions"))
+                    SetAutoSuggestions(false);
+                else
+                    SetAutoSuggestions(bool.Parse(MainSave.Get("AutoSuggestions")));
+                if (!MainSave.Has("Weblight"))
+                    MainSave.Set("Weblight", false.ToString());
+                if (!MainSave.Has("SelectedTabIndex"))
+                    MainSave.Set("SelectedTabIndex", 0.ToString());
+                if (!MainSave.Has("ShowTabs"))
+                    MainSave.Set("ShowTabs", true.ToString());
+
+                if (!MainSave.Has("ShowPerformanceMetrics"))
+                    MainSave.Set("ShowPerformanceMetrics", true.ToString());
+
+                if (!MainSave.Has("TabUnloading"))
+                    MainSave.Set("TabUnloading", true.ToString());
+                if (!MainSave.Has("FullAddress"))
+                    MainSave.Set("FullAddress", false.ToString());
+                if (!MainSave.Has("BlockKeywords"))
+                    MainSave.Set("BlockKeywords", false.ToString());
+                if (!MainSave.Has("BlockedKeywords"))
+                    MainSave.Set("BlockedKeywords", "");
+                if (!MainSave.Has("BlockRedirect"))
+                    MainSave.Set("BlockRedirect", MainSave.Get("Homepage"));
+                if (!MainSave.Has("DownloadPrompt"))
+                    MainSave.Set("DownloadPrompt", true.ToString());
+                if (!MainSave.Has("FindSearchProvider"))
+                    MainSave.Set("FindSearchProvider", false.ToString());
+                if (!MainSave.Has("DownloadPath"))
+                    MainSave.Set("DownloadPath", GetDownloadsPath());
+                if (!MainSave.Has("ScreenshotPath"))
+                    MainSave.Set("ScreenshotPath", GetScreenshotPath());
+                bool RestoreTabs = bool.Parse(MainSave.Get("RestoreTabs"));
+                if (RestoreTabs)
+                {
+                    if (TabsSave.Has("Tab_Count"))
+                    {
+                        if (int.Parse(TabsSave.Get("Tab_Count")) > 0)
+                        {
+                            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                            {
+                                int Index = int.Parse(MainSave.Get("SelectedTabIndex"));
+                                for (int i = 0; i < int.Parse(TabsSave.Get("Tab_Count")); i++)
+                                {
+                                    string Url = TabsSave.Get($"Tab_{i}").Replace("slbr://renderprocesscrashed?s=", "");
+                                    //if (!SearchEngines.Contains(Url))
+                                    bool IsSelected = Index == i;
+                                    CreateBrowserTab(Url, IsSelected, -1, true);
+                                }
+                                if (CreateTabForCommandLineUrl)
+                                    CreateBrowserTab(NewTabUrl);
+                            }));
+                        }
+                        else
+                            CreateBrowserTab(NewTabUrl);
+                    }
+                    else
+                        CreateBrowserTab(NewTabUrl);
+                }
+                else
+                    CreateBrowserTab(NewTabUrl);
+                ShowTabs(bool.Parse(MainSave.Get("ShowTabs")));
+                if (FavouriteSave.Has("Favourite_Count"))
+                {
+                    Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                    {
+                        for (int i = 0; i < int.Parse(FavouriteSave.Get("Favourite_Count")); i++)
+                        {
+                            string[] Value = FavouriteSave.Get($"Favourite_{i}", true);
+                            Favourites.Add(new Favourite { Name = Value[1], Arguments = $"12<,>{Value[0]}", Address = Value[0] });
+                        }
+                        if (Favourites.Count == 0 || !bool.Parse(MainSave.Get("FavouritesBar")))
+                            FavouriteContainer.Visibility = Visibility.Collapsed;
+                        else
+                            FavouriteContainer.Visibility = Visibility.Visible;
+                    }));
+                }
+                else
+                    FavouriteContainer.Visibility = Visibility.Collapsed;
+            }));
+            if (SearchProviderUrlsSave.Has("Url_Count"))
+            {
+                Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                {
+                    for (int i = 0; i < int.Parse(SearchProviderUrlsSave.Get("Url_Count")); i++)
+                    {
+                        string Url = SearchProviderUrlsSave.Get(i.ToString());
+                        if (!SearchProviderUrls.Contains(Url))
+                            SearchProviderUrls.Add(Url);
+                    }
+                }));
+            }
             if (IsPrivateMode)
             {
                 Prompt(false, NoCacheString);//is being used
@@ -473,40 +589,61 @@ namespace SLBr
                 FindTextBox.Visibility = Visibility.Collapsed;
                 SSLGrid.Visibility = Visibility.Collapsed;
             }
-            //else if (!Utils.HasDebugger())
-            //{
-            try
+            GCTimer = new DispatcherTimer();
+            GCTimer.Tick += GCCollect_Tick;
+            GCTimer.Interval = new TimeSpan(0, 0, 30);
+            GCTimer.Start();
+            if (!IsIEMode)
             {
-                string VersionInfo = TinyDownloader.DownloadString("https://raw.githubusercontent.com/SLT-World/SLBr/main/Version.txt").Replace("\n", "");
-                if (!VersionInfo.StartsWith(ReleaseVersion))
-                    Prompt(false, string.Format(NewUpdateString, VersionInfo), true, "Download", $"24<,>https://github.com/SLT-World/SLBr/releases/tag/{VersionInfo}", $"https://github.com/SLT-World/SLBr/releases/tag/{VersionInfo}", true, "\xE896");//SLBr is up to date
-                //SLBr {0} is the published stable version, please download the stable version for a stable performance
+                Inspector = new ChromiumWebBrowser("localhost:8088/json/list");
+                ConfigureInspectorBrowser();
+                UtilityContainer.Children.Add(Inspector);
+                RenderOptions.SetBitmapScalingMode(Inspector, BitmapScalingMode.LowQuality);
             }
-            catch { }
-            //}
+            if (Utils.CheckForInternetConnection())
+            {
+                try
+                {
+                    string VersionInfo = TinyDownloader.DownloadString("https://raw.githubusercontent.com/SLT-World/SLBr/main/Version.txt").Replace("\n", "");
+                    if (!VersionInfo.StartsWith(ReleaseVersion))
+                        Prompt(false, string.Format(NewUpdateString, VersionInfo), true, "Download", $"24<,>https://github.com/SLT-World/SLBr/releases/tag/{VersionInfo}", $"https://github.com/SLT-World/SLBr/releases/tag/{VersionInfo}", true, "\xE896");//SLBr is up to date
+                }
+                catch { }
+            }
+
             IsProcessLoaded = true;
+
             FavouritesPanel.ItemsSource = Favourites;
             FavouritesMenu.Collection = Favourites;
+            SuggestionsMenu.Collection = Suggestions;
             PromptsPanel.ItemsSource = Prompts;
-            UnloadAllTabsTimer = new DispatcherTimer();
-            UnloadAllTabsTimer.Tick += UnloadAllTabsTimer_Tick;
-            UnloadAllTabsTimer.Interval = new TimeSpan(0, 10, 0);
-            UnloadAllTabsTimer.Start();
+            if (DateTime.Now.Day == 10 && DateTime.Now.Month == 10)
+                ROCNationalDay.Visibility = Visibility.Visible;
+            /*SSLToolTip.ApplyTemplate();
+            SSLToolTip.IsOpen = true;
+            SSLToolTip.Content = "APPLYTEMPLATE";
+            SSLToolTip.IsOpen = false;*/
         }
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (IsProcessLoaded)
             {
-                UnloadAllTabsTimer.Stop();
+                if (GCTimer != null)
+                    GCTimer.Stop();
+                //if (UnloadAllTabsTimer != null)
+                //    UnloadAllTabsTimer.Stop();
+                FavouriteSave.Set("Favourite_Count", Favourites.Count.ToString(), false);
                 for (int i = 0; i < Favourites.Count; i++)
                     FavouriteSave.Set($"Favourite_{i}", Favourites[i].Arguments.Replace("12<,>", ""), Favourites[i].Name, false);
-                FavouriteSave.Set("Favourite_Count", Favourites.Count.ToString());
+                FavouriteSave.Save();
+                SearchEnginesSave.Set("Search_Engine_Count", SearchEngines.Count.ToString(), false);
                 for (int i = 0; i < SearchEngines.Count; i++)
                     SearchEnginesSave.Set($"Search_Engine_{i}", SearchEngines[i], false);
-                SearchEnginesSave.Set("Search_Engine_Count", SearchEngines.Count.ToString());
-                for (int i = 0; i < ATSADSEUrls.Count; i++)
-                    ATSADSEUrlsSave.Set($"ATSADSEUrl_{i}", ATSADSEUrls[i], false);
-                ATSADSEUrlsSave.Set("ATSADSEUrl_Count", ATSADSEUrls.Count.ToString());
+                SearchEnginesSave.Save();
+                SearchProviderUrlsSave.Set("Url_Count", SearchProviderUrls.Count.ToString(), false);
+                for (int i = 0; i < SearchProviderUrls.Count; i++)
+                    SearchProviderUrlsSave.Set(i.ToString(), SearchProviderUrls[i], false);
+                SearchProviderUrlsSave.Save();
                 bool RestoreTabs = bool.Parse(MainSave.Get("RestoreTabs"));
                 if (RestoreTabs)
                 {
@@ -517,7 +654,7 @@ namespace SLBr
                         //if (i == 0)
                         //    continue;
                         TabItem Tab = (TabItem)Tabs.Items.GetItemAt(i);
-                        string Url = "";
+                        string Url;
                         if (IsIEMode)
                         {
                             WebBrowser Browser = GetIEBrowser(Tab);
@@ -541,114 +678,398 @@ namespace SLBr
                     MainSave.Set("SelectedTabIndex", SelectedIndex.ToString());
                 }
             }
-            Cef.Shutdown();
+            if (!IsIEMode)
+            {
+                Inspector.Dispose();
+                //UIThreadTimer.Tick -= UIThreadTimer_Tick;
+                //UIThreadTimer.Stop();
+                Cef.Shutdown();
+            }
             //MainSave.Save();
+            Application.Current.Shutdown();
         }
         #endregion
-        private void InitializeCEF()
+        HashSet<string> HardwareUnavailableProcessors = new HashSet<string>
         {
-            /*if (!File.Exists(LogFile))
-                File.Create(LogFile).Close();*/
-            CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
-            CefSharpSettings.ShutdownOnExit = true;
-            Cef.EnableHighDPISupport();
-            var settings = new CefSettings();
-            if (!IsChromiumMode)
-                settings.UserAgentProduct = $"SLBr/{ReleaseVersion} Chrome/{ChromiumVersion}";
-            //settings.BackgroundColor = Cef.ColorSetARGB(0, 255, 255, 255);
-            //CefSharpSettings.ConcurrentTaskExecution = true; //true
-            //CefSharpSettings.FocusedNodeChangedEnabled = true;
-            //CefSharpSettings.WcfEnabled = true; //true
+            "Intel(R) Iris(R) Xe Graphics",
+            "Intel(R) Core(TM) i5"
+        };
+        string NoHardwareAvailableMessage = "The browser may seem to be unstable when using {0} cards. It is recommended to change from hardware to software rendering under Settings > Performance > Render Mode if you encounter such problem.";
+        public void SetRenderMode(string Mode, bool Notify)
+        {
+            if (Mode == "Hardware")
+            {
+                RenderOptions.ProcessRenderMode = RenderMode.Default;
+                if (Notify)
+                {
+                    var ProcessorID = Utils.GetProcessorID();
+                    foreach (string Processor in HardwareUnavailableProcessors)
+                    {
+                        if (ProcessorID.Contains(Processor))
+                        {
+                            Prompt(false, NoHardwareAvailableMessage.Replace("{0}", Processor), false, "", "", "", true, "\xE7BA");
+                        }
+                    }
+                }
+            }
+            else if (Mode == "Software")
+            {
+                RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+            }
+            MainSave.Set("RenderMode", Mode);
+        }
 
-            //settings.CefCommandLineArgs.Add("enable-widevine");
-            settings.CefCommandLineArgs.Add("enable-widevine-cdm");
+        private DispatcherTimer GCTimer;
+        private int UnloadTabsTime;
+        private void GCCollect_Tick(object sender, EventArgs e)
+        {
+            GC.Collect();
+            //GC.WaitForPendingFinalizers();
+            if (bool.Parse(MainSave.Get("TabUnloading")))
+            {
+                if (UnloadTabsTime >= 300)//900
+                {
+                    int SelectedIndex = Tabs.SelectedIndex;
+                    foreach (TabItem Tab in Tabs.Items)
+                    {
+                        if (!Tab.IsSelected)
+                        {
+                            int _TabIndex = Tabs.Items.IndexOf(Tab);
+                            if (_TabIndex > SelectedIndex + 1 || _TabIndex < SelectedIndex - 1)
+                                UnloadTab(Tab, true);//PROBLEM: Look at the UnloadTab code
+                        }
+                    }
+                    UnloadTabsTime = 0;
+                }
+                else
+                    UnloadTabsTime += 30;
+            }
+        }
+        [DllImport("user32.dll")]
+        private static extern bool SetProcessDPIAware();
+        #region CEF Arguments
+        /*private void DisableTouch(CefSettings settings)
+        {
+            settings.CefCommandLineArgs.Add("disable-touch-adjustment", "1");
+            settings.CefCommandLineArgs.Add("top-chrome-touch-ui", "disabled");
+            settings.CefCommandLineArgs.Add("touch-events", "disabled");
+            settings.CefCommandLineArgs.Add("touch-devices", "disabled");
+        }*/
+        private void SetCEFArgs(CefSettings settings)
+        {
+            SetOffscreenArgs(settings);
+            SetNetworkArgs(settings);
+            SetRendererArgs(settings);
+            SetAPIArgs(settings);
+            SetSecurityArgs(settings);
+        }
+        private void SetOffscreenArgs(CefSettings settings)
+        {
+            //settings.CefCommandLineArgs.Add("disable-gpu");
+            settings.CefCommandLineArgs.Add("enable-gpu-rasterization");
+            settings.CefCommandLineArgs.Add("enable-native-gpu-memory-buffers");
 
-            settings.CommandLineArgsDisabled = true;
-            settings.LogFile = LogPath;
-            settings.LogSeverity = LogSeverity.Warning;
-            settings.CachePath = CachePath;
-            //settings.CefCommandLineArgs.Add("enable-print-preview");//Only for Non-OSR
-            settings.RemoteDebuggingPort = RemoteDebuggingPort;
+            settings.CefCommandLineArgs.Add("disable-gpu-compositing");
+            settings.CefCommandLineArgs.Add("enable-begin-frame-scheduling");
+            settings.CefCommandLineArgs.Add("disable-direct-composition");
+            settings.CefCommandLineArgs.Add("disable-gpu-vsync");
+            settings.CefCommandLineArgs.Add("disable-gpu-shader-disk-cache");
 
-            settings.CefCommandLineArgs.Add("enable-media-stream");
-            settings.CefCommandLineArgs.Add("use-fake-ui-for-media-stream");
-            settings.CefCommandLineArgs.Add("enable-usermedia-screen-capture");//SLT here, which one is the correct one
-            settings.CefCommandLineArgs.Add("enable-usermedia-screen-capturing");//SLT here, which one is the correct one
+            settings.CefCommandLineArgs.Add("multi-threaded-message-loop");
 
-            settings.CefCommandLineArgs.Add("enable-speech-input");
-            settings.CefCommandLineArgs.Add("enable-features", "PdfUnseasoned");
+            if (IsPrivateMode)
+                settings.CefCommandLineArgs.Add("enable-filesystem-in-incognito");
+            else if (IsDeveloperMode)
+                settings.CefCommandLineArgs.Add("enable-commerce-developer");
+
+            settings.CefCommandLineArgs.Remove("enable-chrome-runtime");
+            settings.CefCommandLineArgs.Add("reduce-user-agent");
+
+            //Optimization
+            settings.CefCommandLineArgs.Add("enable-low-end-device-mode");
+            settings.CefCommandLineArgs.Add("enable-zero-copy");//Enable Zero Copy for Intel
+            settings.CefCommandLineArgs.Add("disable-background-mode");
+
+            settings.CefCommandLineArgs.Add("kiosk");
+
+            settings.CefCommandLineArgs.Add("renderer-process-limit", "25");
+
+            settings.CefCommandLineArgs.Add("enable-simple-cache-backend");
+
+            settings.CefCommandLineArgs.Add("js-flags", "--max_old_space_size=1024,--lite_mode,--optimize_for_size,--idle-time-scavenge,--lazy");//enable-lazy-source-positions,gc-experiment-background-schedule
+            settings.CefCommandLineArgs.Add("disk-cache-size", "5242880");//104857600
+            //https://gist.github.com/andrewiggins/68c3165d47769a39eb5ae16e3001d6c6
+            //Optimization
+
+            //settings.CefCommandLineArgs.Add("proxy-server", "enable-drdc");
+
+            //settings.CefCommandLineArgs.Add("proxy-server", ProxyServer);
+            //settings.CefCommandLineArgs.Add("disable-pinch");
+            //settings.CefCommandLineArgs.Add("no-experiments");
+
+            //settings.CefCommandLineArgs.Add("in-process-gpu");//The --in-process-gpu option will run the GPU process as a thread in the main browser process. These processes consume most of the CPU time and the GPU driver crash will likely crash the whole browser, so you probably don't want to use it.
+        }
+        private void SetRendererArgs(CefSettings settings)
+        {
+            //settings.CefCommandLineArgs.Add("enable-reader-mode");
+            //if (IsDeveloperMode)
+            //    settings.CefCommandLineArgs.Add("show-performance-metrics-hud", "1");
+
+            //Optimization
+            //settings.CefCommandLineArgs.Add("disable-accelerated-2d-canvas");
+            //settings.CefCommandLineArgs.Add("back-forward-cache");
+
+            //settings.CefCommandLineArgs.Add("scroll-unification");
+
+            //settings.CefCommandLineArgs.Add("enable-smooth-scrolling");
+            //settings.CefCommandLineArgs.Add("enable-overlay-scrollbar");
+
+            //settings.CefCommandLineArgs.Add("disable-threaded-scrolling");
+            //settings.CefCommandLineArgs.Add("disable-smooth-scrolling");
+            //settings.CefCommandLineArgs.Add("disable-features", "AsyncWheelEvents,TouchpadAndWheelScrollLatching");
+
+            settings.CefCommandLineArgs.Add("canvas-oop-rasterization");
+
+            //settings.CefCommandLineArgs.Add("off-screen-frame-rate", "30");
+
+            settings.CefCommandLineArgs.Add("enable-tile-compression");
+
+            settings.CefCommandLineArgs.Add("proactive-tab-freeze-and-discard");//75
+            settings.CefCommandLineArgs.Add("proactive-tab-freeze");//80
+            settings.CefCommandLineArgs.Add("automatic-tab-discarding");
+
+            settings.CefCommandLineArgs.Add("stop-loading-in-background");
+
+            settings.CefCommandLineArgs.Add("expensive-background-timer-throttling");
+            settings.CefCommandLineArgs.Add("intensive-wake-up-throttling");
+
+            settings.CefCommandLineArgs.Add("max-tiles-for-interest-area", "64");
+            settings.CefCommandLineArgs.Add("default-tile-width", "64");
+            settings.CefCommandLineArgs.Add("default-tile-height", "64");
+            settings.CefCommandLineArgs.Add("num-raster-threads", "1");
+            //Optimization
+
+            //back-forward-cache
+            //enable-de-jelly
+            //enable-prerender2
+            //enable-dom-distiller
+            //settings.CefCommandLineArgs.Add("enable-offline-auto-reload-visible-only");
+
+            settings.CefCommandLineArgs.Add("enable-scroll-anchoring");
+
+            //settings.CefCommandLineArgs.Add("force-effective-connection-type");
+
+            settings.CefCommandLineArgs.Add("disable-surfaces");
+
+            settings.CefCommandLineArgs.Add("enable-throttle-display-none-and-visibility-hidden-cross-origin-iframes");
+
+            //disable-features="WebAuthenticationUseNativeWinApi"
+
+            if (IsDeveloperMode)
+                settings.CefCommandLineArgs.Add("enable-print-preview");//Only for Non-OSR
+
+            //settings.CefCommandLineArgs.Add("enable-use-zoom-for-dsf");
             //settings.CefCommandLineArgs.Add("enable-viewport");
             //settings.CefCommandLineArgs.Add("enable-features", "CastMediaRouteProvider,NetworkServiceInProcess");
 
-            //settings.CefCommandLineArgs.Add("disable-extensions");
-            //settings.CefCommandLineArgs.Add("enable-logging"); //Enable Logging for the Renderer process (will open with a cmd prompt and output debug messages - use in conjunction with setting LogSeverity = LogSeverity.Verbose;)
-            settings.CefCommandLineArgs.Add("ignore-certificate-errors");
+            //if (IsDeveloperMode)
+            //    settings.CefCommandLineArgs.Add("enable-logging"); //Enable Logging for the Renderer process (will open with a cmd prompt and output debug messages - use in conjunction with setting LogSeverity = LogSeverity.Verbose;)
 
-            //OSR Performance
-            //settings.SetOffScreenRenderingBestPerformanceArgs();
-            settings.CefCommandLineArgs.Add("disable-direct-composition");
-            settings.CefCommandLineArgs.Add("disable-gpu-compositing");
-            settings.CefCommandLineArgs.Add("enable-begin-frame-scheduling");
-            settings.CefCommandLineArgs.Add("disable-gpu-vsync");
+            //settings.CefCommandLineArgs.Remove("mute-audio");
+            //settings.BackgroundColor = Cef.ColorSetARGB(0, 255, 255, 255);
 
-            //settings.CefCommandLineArgs.Add("disable-gpu");
-            //settings.CefCommandLineArgs.Add("disable-software-rasterizer");
+            //settings.CefCommandLineArgs.Add("autoplay-policy", "no-user-gesture-required");
+        }
+        private void SetNetworkArgs(CefSettings settings)
+        {
+            settings.CefCommandLineArgs.Add("enable-tcp-fast-open");
+            settings.CefCommandLineArgs.Add("enable-quic");
+            settings.CefCommandLineArgs.Add("enable-spdy4");
 
-            settings.CefCommandLineArgs.Add("disable-gpu-shader-disk-cache");
-            settings.CefCommandLineArgs.Add("off-screen-frame-rate", "30");
-
-            //settings.CefCommandLineArgs.Add("proxy-server", ProxyServer);
-            settings.CefCommandLineArgs.Add("debug-plugin-loading");
-            settings.CefCommandLineArgs.Add("disable-plugins-discovery");
-            //settings.CefCommandLineArgs.Add("allow-running-insecure-content");
             settings.CefCommandLineArgs.Add("no-proxy-server");
-            settings.CefCommandLineArgs.Add("disable-pinch");
-            //settings.CefCommandLineArgs["disable-features"] += ",SameSiteByDefaultCookies";//Cross Site Request
+            //settings.CefCommandLineArgs.Add("winhttp-proxy-resolver");
 
-            settings.CefCommandLineArgs.Add("renderer-process-limit", "5");
-            settings.CefCommandLineArgs.Add("multi-threaded-message-loop");
+            settings.CefCommandLineArgs.Add("no-pings");
 
-            settings.CefCommandLineArgs.Add("disable-threaded-scrolling");
-            settings.CefCommandLineArgs.Add("disable-smooth-scrolling");
-            settings.CefCommandLineArgs.Add("disable-features", "AsyncWheelEvents,TouchpadAndWheelScrollLatching");
+            //settings.CefCommandLineArgs.Add("disable-http2");
 
-            settings.CefCommandLineArgs.Add("disable-surfaces");
-            settings.CefCommandLineArgs.Remove("process-per-tab");
-            settings.CefCommandLineArgs.Add("disable-site-isolation-trials");
+            //enable-resource-prefetch
+            //settings.CefCommandLineArgs.Add("dns-prefetch-disable");
+        }
+        private void SetAPIArgs(CefSettings settings)
+        {
+            //web-sql-access
+            settings.CefCommandLineArgs.Add("sanitizer-api");
+            settings.CefCommandLineArgs.Add("enable-winrt-geolocation-implementation");
+
+            settings.CefCommandLineArgs.Add("disable-spell-checking");
+
+            /*settings.CefCommandLineArgs.Add("enable-3d-apis", "1");
+            settings.CefCommandLineArgs.Add("enable-webgl-draft-extensions", "1");
+            settings.CefCommandLineArgs.Add("enable-gpu", "1");
+            settings.CefCommandLineArgs.Add("enable-webgl", "1");*/
+
+            //settings.CefCommandLineArgs.Add("disable-3d-apis", "1");
+            //settings.CefCommandLineArgs.Add("disable-software-rasterizer");
+            SetMediaArgs(settings);
+            SetStreamingArgs(settings);
+            SetPluginArgs(settings);
+            SetVRArgs(settings);
+        }
+        private void SetSecurityArgs(CefSettings settings)
+        {
+            //settings.CefCommandLineArgs.Add("enable-webrtc-hide-local-ips-with-mdns");
+
+            settings.CefCommandLineArgs.Add("disable-domain-reliability");
+            settings.CefCommandLineArgs.Add("disable-client-side-phishing-detection");
+
+            settings.CefCommandLineArgs.Add("disallow-doc-written-script-loads");
+            //settings.CefCommandLineArgs.Add("block-insecure-private-network-requests");
+
+            settings.CefCommandLineArgs.Add("ignore-certificate-errors");
+            //settings.CefCommandLineArgs.Add("allow-running-insecure-content");
 
             settings.CefCommandLineArgs.Add("allow-universal-access-from-files");
             settings.CefCommandLineArgs.Add("allow-file-access-from-files");
-            //settings.CefCommandLineArgs.Add("disable-features=IsolateOrigins,process-per-tab,site-per-process,process-per-site");
-            //settings.CefCommandLineArgs.Add("process-per-site");
-            //settings.CefCommandLineArgs.Remove("process-per-site");
-            //settings.CefCommandLineArgs.Remove("site-per-process");
-            //settings.CefCommandLineArgs.Add("process-per-site-instance");
 
-            //settings.CefCommandLineArgs.Add("disable-3d-apis", "1");
+            settings.CefCommandLineArgs.Add("enable-heavy-ad-intervention");
+            settings.CefCommandLineArgs.Add("heavy-ad-privacy-mitigations");
+
+            settings.CefCommandLineArgs.Add("disable-sync");
+
+            settings.CefCommandLineArgs.Add("enable-hardware-secure-decryption");
+            //settings.CefCommandLineArgs.Add("enable-hardware-secure-decryption-experiment");
+
+            //settings.CefCommandLineArgs.Add("treat-unsafe-downloads-as-active-content");
+
+            //settings.CefCommandLineArgs.Add("strict-origin-isolation");
+
+            settings.CefCommandLineArgs.Remove("process-per-tab");
+            //settings.CefCommandLineArgs.Add("disable-site-isolation-trials");
+            //settings.CefCommandLineArgs.Add("site-isolation-trial-opt-out");
+            settings.CefCommandLineArgs.Add("process-per-site");
+
+            //settings.CefCommandLineArgs.Add("disable-features=IsolateOrigins,process-per-tab,site-per-process,process-per-site");
+
+            //settings.CefCommandLineArgs["disable-features"] += ",SameSiteByDefaultCookies";//Cross Site Request
+
+            if (IsDeveloperMode)
+                settings.CefCommandLineArgs.Add("ignore-gpu-blocklist");//Uncomment this if CPU is blacklisted or not utilized for SLBr's use on your device
+        }
+        private void SetMediaArgs(CefSettings settings)
+        {
+            //Media: Files, Folders, Images, Videos, Frames, etc...
+            settings.CefCommandLineArgs.Add("enable-parallel-downloading");
+
+            settings.CefCommandLineArgs.Add("enable-jxl");
+            settings.CefCommandLineArgs.Add("enable-widevine-cdm");
+
+            if (IsDeveloperMode)
+            {
+                settings.CefCommandLineArgs.Add("enable-experimental-web-platform-features");
+                settings.CefCommandLineArgs.Add("enable-javascript-harmony");
+                settings.CefCommandLineArgs.Add("enable-future-v8-vm-features");
+                //settings.CefCommandLineArgs.Add("enable-portals");
+                //settings.CefCommandLineArgs.Add("enable-webgl-developer-extensions");
+                //settings.CefCommandLineArgs.Add("webxr-incubations");
+                //settings.CefCommandLineArgs.Add("enable-generic-sensor-extra-classes");
+                //settings.CefCommandLineArgs.Add("enable-experimental-cookie-features");
+            }
+
+            //Optimizations
+            settings.CefCommandLineArgs.Add("disable-login-animations");
             settings.CefCommandLineArgs.Add("disable-low-res-tiling");
-            //settings.CefCommandLineArgs.Add("disable-direct-write");
-            //settings.CefCommandLineArgs.Add("allow-sandbox-debugging");
-            //settings.CefCommandLineArgs.Add("webview-sandboxed-renderer");
-            settings.CefCommandLineArgs.Add("js-flags", "max_old_space_size=1024,lite_mode");
-            settings.CefCommandLineArgs.Add("disk-cache-size", "104857600");
-            //settings.CefCommandLineArgs.Add("ignore-gpu-blocklist");//Uncomment this if CPU is blacklisted or not utilized for SLBr's use on your device
-            //settings.CefCommandLineArgs.Add("no-experiments");
+
+            settings.CefCommandLineArgs.Add("disable-background-video-track");
+            settings.CefCommandLineArgs.Add("zero-copy-video-capture");
+            settings.CefCommandLineArgs.Add("enable-lite-video");
+            //settings.CefCommandLineArgs.Add("disable-accelerated-video-decode");
+
+            settings.CefCommandLineArgs.Add("force-enable-lite-pages");
+            settings.CefCommandLineArgs.Add("enable-lazy-image-loading");
+            settings.CefCommandLineArgs.Add("enable-lazy-frame-loading");
+
+            //settings.CefCommandLineArgs.Add("subframe-shutdown-delay");
+            //Optimizations
+        }
+        private void SetStreamingArgs(CefSettings settings)
+        {
+            settings.CefCommandLineArgs.Add("turn-off-streaming-media-caching-on-battery");
+            settings.CefCommandLineArgs.Add("enable-media-stream");
+            settings.CefCommandLineArgs.Add("use-fake-ui-for-media-stream");
+            settings.CefCommandLineArgs.Add("enable-usermedia-screen-capturing");
+            settings.CefCommandLineArgs.Add("disable-rtc-smoothness-algorithm");
+            settings.CefCommandLineArgs.Add("enable-speech-input");
+        }
+        private void SetVRArgs(CefSettings settings)
+        {
             //settings.CefCommandLineArgs.Add("no-vr-runtime");
             //settings.CefCommandLineArgs.Add("force-webxr-runtime");
-            //settings.CefCommandLineArgs.Add("in-process-gpu");//The --in-process-gpu option will run the GPU process as a thread in the main browser process. These processes consume most of the CPU time and the GPU driver crash will likely crash the whole browser, so you probably don't wanna use it.
+        }
+        private void SetPluginArgs(CefSettings settings)
+        {
+            //settings.CefCommandLineArgs.Add("pdf-ocr");
+            //settings.CefCommandLineArgs.Add("pdf-xfa-forms");
+            //https://bitbucket.org/chromiumembedded/cef/issues/2969/support-chrome-windows-with-cef-callbacks
+            settings.CefCommandLineArgs.Add("enable-features", "PdfUnseasoned");
+            settings.CefCommandLineArgs.Add("debug-plugin-loading");
+            settings.CefCommandLineArgs.Add("disable-plugins-discovery");
+            //enable-ime-service
+            //settings.CefCommandLineArgs.Add("disable-extensions");
+        }
+        #endregion
+        DispatcherTimer UIThreadTimer;
+        private void UIThreadTimer_Tick(object sender, EventArgs e)
+        {
+            Cef.DoMessageLoopWork();
+        }
+        private void InitializeCEF()
+        {
+            _LifeSpanHandler = new LifeSpanHandler();
+            _DownloadHandler = new DownloadHandler();
+            _RequestHandler = new RequestHandler();
+            _ContextMenuHandler = new ContextMenuHandler();
+            _KeyboardHandler = new KeyboardHandler();
+            _JsDialogHandler = new JsDialogHandler();
+            _JSBindingHandler = new JSBindingHandler();
+            InitializeKeyboardHandler();
+            if (!IsPrivateMode)
+                _SafeBrowsing = new Utils.SafeBrowsing(Environment.GetEnvironmentVariable("GOOGLE_API_KEY"), Environment.GetEnvironmentVariable("GOOGLE_DEFAULT_CLIENT_ID"));
+            else
+                _SafeBrowsing = new Utils.SafeBrowsing("", "");
 
-            /*settings.CefCommandLineArgs.Add("flag-switches-begin");
-            settings.CefCommandLineArgs.Add("flag-switches-end");*/
+            CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
+            CefSharpSettings.ShutdownOnExit = true;
+            CefSettings settings = new CefSettings();
 
-            settings.CefCommandLineArgs.Add("autoplay-policy", "no-user-gesture-required");
+            using (var currentProcess = Process.GetCurrentProcess())
+                settings.BrowserSubprocessPath = currentProcess.MainModule.FileName;
+
+            settings.MultiThreadedMessageLoop = true;
+
+            //settings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
+            settings.CommandLineArgsDisabled = true;
+            if (!IsChromiumMode)
+                settings.UserAgentProduct = $"SLBr/{ReleaseVersion} Chrome/{ChromiumVersion}";
+            settings.LogFile = LogPath;
+            settings.LogSeverity = LogSeverity.Warning;
+            if (IsPrivateMode)
+            {
+                //InMemory
+                settings.CefCommandLineArgs.Add("disable-application-cache");
+                settings.CefCommandLineArgs.Add("disable-cache");
+                //settings.CefCommandLineArgs.Add("disable-session-storage");
+            }
+            else
+                settings.CachePath = CachePath;
+            settings.RemoteDebuggingPort = RemoteDebuggingPort;
+            settings.UserDataPath = UserDataPath;
+
+            SetCEFArgs(settings);
 
             //Enables Uncaught exception handler
             //settings.UncaughtExceptionStackSize = 10;
-            //settings.CefCommandLineArgs.Remove("mute-audio");
-            //else
-            //    settings.UserAgentProduct = $"Chromium/{ChromiumVersion}";
-            //settings.ChromeRuntime = true;
-            //settings.CefCommandLineArgs.Add("enable-chrome-runtime");//https://bitbucket.org/chromiumembedded/cef/issues/2969/support-chrome-windows-with-cef-callbacks
+            
             /*var proxy = ProxyConfig.GetProxyInformation();
             switch (proxy.AccessType)
             {
@@ -669,10 +1090,6 @@ namespace SLBr
                         break;
                     }
             }*/
-            //CefSharpSettings.FocusedNodeChangedEnabled = true;
-            //CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
-            //Load pepper flash player
-            //settings.CefCommandLineArgs.Add("ppapi-flash-path", System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"pepflashplayer.dll");
 
             if (!IsDeveloperMode && !IsChromiumMode)
             {
@@ -698,11 +1115,11 @@ namespace SLBr
 
                     new URLScheme.Scheme { PageName = "Malware", FileName = "Malware.html" },
                     new URLScheme.Scheme { PageName = "Deception", FileName = "Deception.html" },
-                    new URLScheme.Scheme { PageName = "CannotConnect", FileName = "CannotConnect.html" },
                     new URLScheme.Scheme { PageName = "RenderProcessCrashed", FileName = "RenderProcessCrashed.html" },
+                    //new URLScheme.Scheme { PageName = "CannotConnect", FileName = "CannotConnect.html" },
 
                     new URLScheme.Scheme { PageName = "Copy_Icon.svg", FileName = "Copy_Icon.svg" }
-            }
+                }
             };
             string SLBrSchemeRootFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), SLBrScheme.RootFolder);
             foreach (var Scheme in SLBrScheme.Schemes)
@@ -722,108 +1139,86 @@ namespace SLBr
                 });
             }
             Cef.Initialize(settings);
+            if (Environment.OSVersion.Version.Major >= 6)
+                Cef.EnableHighDPISupport();
+            if (IsPrivateMode)
+            {
+                Cef.GetGlobalCookieManager().DeleteCookies("", "");
+            }
+            //UIThreadTimer = new DispatcherTimer();
+            //UIThreadTimer.Interval = TimeSpan.FromMilliseconds(1000 / 30);
+            //UIThreadTimer.Tick += UIThreadTimer_Tick;
+            //UIThreadTimer.Start();
         }
-        /*public void InitializeIE()
-        {
-            RegistryKey Regkey = null;
-            try
-            {
-                // For 64 bit machine
-                if (Environment.Is64BitOperatingSystem)
-                    Regkey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\\Wow6432Node\\Microsoft\\Internet Explorer\\Main\\FeatureControl\\FEATURE_BROWSER_EMULATION", true);
-                else  //For 32 bit machine
-                    Regkey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\\Microsoft\\Internet Explorer\\Main\\FeatureControl\\FEATURE_BROWSER_EMULATION", true);
-
-                // If the path is not correct or
-                // if the user haven't priviledges to access the registry
-                if (Regkey == null)
-                {
-                    MessageBox.Show("Application Settings Failed - Address Not found");
-                    return;
-                }
-
-                string FindAppkey = Convert.ToString(Regkey.GetValue("SLBr"));
-
-                // Check if key is already present
-                if (FindAppkey == "11001")
-                {
-                    MessageBox.Show("Required Application Settings Present");
-                    Regkey.Close();
-                    return;
-                }
-
-                // If a key is not present add the key, Key value 8000 (decimal)
-                if (string.IsNullOrEmpty(FindAppkey))
-                    Regkey.SetValue("SLBr", unchecked((int)0x1F40), RegistryValueKind.DWord);
-
-                // Check for the key after adding
-                FindAppkey = Convert.ToString(Regkey.GetValue("SLBr"));
-
-                if (FindAppkey == "11001")
-                    MessageBox.Show("Application Settings Applied Successfully");
-                else
-                    MessageBox.Show("Application Settings Failed, Ref: " + FindAppkey);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Application Settings Failed");
-                MessageBox.Show(ex.Message);
-            }
-            finally
-            {
-                // Close the Registry
-                if (Regkey != null)
-                    Regkey.Close();
-            }
-        }*/
         private void InitializeKeyboardHandler()
         {
             /*_KeyboardHandler.AddKey(Refresh, (int)System.Windows.Forms.Keys.R, true);
             _KeyboardHandler.AddKey(delegate() { CreateTab(CreateWebBrowser()); }, (int)System.Windows.Forms.Keys.T, true);
-            _KeyboardHandler.AddKey(delegate () { CloseTab(); }, (int)System.Windows.Forms.Keys.W, true);
-            _KeyboardHandler.AddKey(Screenshot, (int)System.Windows.Forms.Keys.S, true);*/
-            _KeyboardHandler.AddKey(Refresh, (int)System.Windows.Forms.Keys.F5);
-            _KeyboardHandler.AddKey(DevTools, (int)System.Windows.Forms.Keys.F12);
+            _KeyboardHandler.AddKey(delegate () { CloseTab(); }, (int)System.Windows.Forms.Keys.W, true);*/
+            _KeyboardHandler.AddKey(Screenshot, (int)Key.S, true);
+            _KeyboardHandler.AddKey(Refresh, (int)Key.F5);
+            _KeyboardHandler.AddKey(UseInspector, (int)Key.F12);
         }
         bool CreateTabForCommandLineUrl;
-        /*using (var devToolsClient = browser.GetDevToolsClient())
-{
-    //Get the content size
-    var layoutMetricsResponse = await devToolsClient.Page.GetLayoutMetricsAsync();
-    var contentSize = layoutMetricsResponse.ContentSize;
+        ChromiumWebBrowser Inspector;
 
-    var viewPort = new Viewport()
-    {
-        Height= contentSize.Height,
-        Width = contentSize.Width,
-        X = 0,
-        Y = 0,
-        Scale = 1 
-    };
+        private const string IEBrowserEmulationKey = @"Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION";
 
-    // https://bugs.chromium.org/p/chromium/issues/detail?id=1198576#c17
-    var result = await devToolsClient.Page.CaptureScreenshotAsync(clip: viewPort, fromSurface:true, captureBeyondViewport: true);
-
-    return result.Data;
-}v*/
         bool IsProcessLoaded;
 
         string NewUpdateString = "SLBr {0} is now available, please update SLBr to keep up with the progress.";
 
         string DeveloperModeString = "Enabled access to developer/experimental features & functionalities of SLBr.";
-        string IEModeString = "Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors. But hey, at least you can test out a website and see how bad it's styling gets.";
+        string IEModeString = "Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors. But hey, have some fun testing out websites and see how broken it gets.";
         string NoCacheString = "No browsing history will be saved, in-memory cache will be used.";
         string NoAPIKeysString = "API Keys are missing. The following functionalities of SLBr will be disabled [SafeBrowsing, Google Sign-in].";
-
-        private void UnloadAllTabsTimer_Tick(object sender, EventArgs e)
+        public static bool SetBrowserEmulationVersion()
         {
-            if (!bool.Parse(MainSave.Get("TabUnloading")))
-                return;
-            foreach (TabItem Tab in Tabs.Items)
+            bool _Result = false;
+            try
             {
-                if (!Tab.IsSelected)
-                    UnloadTab(Tab, true);//PROBLEM: Look at the UnloadTab code
+                RegistryKey _RegistryKey = Registry.CurrentUser.OpenSubKey(IEBrowserEmulationKey, true);
+
+                if (_RegistryKey != null)
+                {
+                    string ProgramName = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
+                    _RegistryKey.SetValue(ProgramName, 11001, RegistryValueKind.DWord);
+
+                    //key.DeleteValue(programName, false);
+
+                    _Result = true;
+                }
             }
+            catch// (SecurityException)
+            {
+                // The user does not have the permissions required to read from the registry key.
+            }
+            /*catch (UnauthorizedAccessException)
+            {
+                // The user does not have the necessary registry rights.
+            }*/
+
+            return _Result;
+        }
+
+        public void AdBlock(bool Boolean)
+        {
+            MainSave.Set("AdBlock", Boolean.ToString());
+            if (!IsIEMode)
+                _RequestHandler.AdBlock = Boolean;
+        }
+        public void TrackerBlock(bool Boolean)
+        {
+            MainSave.Set("TrackerBlock", Boolean.ToString());
+            if (!IsIEMode)
+                _RequestHandler.TrackerBlock = Boolean;
+        }
+        public void SetAutoSuggestions(bool Boolean)
+        {
+            SuggestionsDropdown.Visibility = Boolean ? Visibility.Visible : Visibility.Collapsed;
+            MainSave.Set("AutoSuggestions", Boolean.ToString());
+            if (IsIEMode)
+                SuggestionsDropdown.Visibility = Visibility.Collapsed;
         }
 
         #region Actions
@@ -835,7 +1230,7 @@ namespace SLBr
             Create_Tab = 3,
             Print = 4,
             Source = 5,
-            DevTools = 6,
+            Inspector = 6,
             CloseTab = 7,
             Settings = 8,
             HTMLEditor = 9,
@@ -858,6 +1253,8 @@ namespace SLBr
         }
         private void Action(Actions _Action, object sender = null, bool Middle = false, string LastValue = "", string Value1 = "", string Value2 = "", string Value3 = "")
         {
+            if (!IsProcessLoaded)
+                return;
             switch (_Action)
             {
                 case Actions.Undo:
@@ -870,10 +1267,11 @@ namespace SLBr
                     Refresh();
                     break;
                 case Actions.Create_Tab:
-                    if (IsIEMode)
+                    CreateBrowserTab("Empty00000");
+                    /*if (IsIEMode)
                         CreateIETab(CreateIEWebBrowser());
                     else
-                        CreateTab(CreateWebBrowser());
+                        CreateTab(CreateWebBrowser());*/
                     break;
                 case Actions.Print:
                     Print();
@@ -881,8 +1279,8 @@ namespace SLBr
                 case Actions.Source:
                     ViewSource();
                     break;
-                case Actions.DevTools:
-                    DevTools();
+                case Actions.Inspector:
+                    UseInspector();
                     break;
                 case Actions.CloseTab:
                     /*if (sender != null && sender is MenuItem)
@@ -930,8 +1328,6 @@ namespace SLBr
                         FileExplorer(Value1);
                     break;
                 case Actions.DarkTheme:
-                    //MessageBox.Show($"{Value1}|{Value2}|{Value3},{LastValue}");
-                    DarkTheme(bool.Parse(Value1));
                     break;
                 case Actions.Relaunch:
                     Relaunch();
@@ -952,7 +1348,7 @@ namespace SLBr
                     NewsFeed();
                     break;
                 case Actions.Pin:
-                    Pin(sender);
+                    //Pin(sender);
                     break;
                 case Actions.ClosePrompt:
                     ClosePrompt(int.Parse(Value1));
@@ -969,7 +1365,6 @@ namespace SLBr
                     break;
             }
         }
-
         public async void Screenshot()
         {
             if (IsIEMode)
@@ -977,14 +1372,20 @@ namespace SLBr
                 Prompt(false, "The screenshot feature is not supported on Internet Explorer mode.", false);
                 return;
             }
-            else if (!IsDeveloperMode)
+            /*else if (!IsDeveloperMode)
             {
                 Prompt(false, "The screenshot feature is still an experimental feature.", false);
                 return;
-            }
-            using (var _DevToolsClient = GetBrowser().GetDevToolsClient())
+            }*/
+            ChromiumWebBrowser _Browser = GetBrowser();
+            if (_Browser == null)
+                return;
+            string ScreenshotPath = MainSave.Get("ScreenshotPath");
+            if (!Directory.Exists(ScreenshotPath))
+                Directory.CreateDirectory(ScreenshotPath);
+            using (var _DevToolsClient = _Browser.GetDevToolsClient())
             {
-                string Url = $"{Path.Combine(GetDownloadsPath(), "SLBr_Screenshot_Test.png")}";
+                string Url = $"{Path.Combine(ScreenshotPath, Regex.Replace($"{_Browser.Title}_{DateTime.Now.ToString().Replace("/", "_").Replace(" ", "_").Replace(":", "_")}.png", "[^a-zA-Z0-9._]", String.Empty))}";
                 var result = await _DevToolsClient.Page.CaptureScreenshotAsync(CefSharp.DevTools.Page.CaptureScreenshotFormat.Png, null, null, null, false);
                 File.WriteAllBytes(Url, result.Data);
                 Navigate(true, "file:///////" + Url);
@@ -1015,18 +1416,27 @@ namespace SLBr
                 }
             }
         }
-        public void HideTabs(bool Toggle)
+        public void ShowTabs(bool Toggle)
         {
-            MainSave.Set("HideTabs", Toggle.ToString());
+            MainSave.Set("ShowTabs", Toggle.ToString());
             TabPanel _TabPanel = (TabPanel)Tabs.Template.FindName("HeaderPanel", Tabs);
             if (Toggle)
+            {
+                _TabPanel.Visibility = Visibility.Visible;
+                if (_SettingsWindow != null)
+                {
+                    _SettingsWindow.Close();
+                    //_SettingsWindow = null;
+                    Settings();
+                }
+            }
+            else
             {
                 foreach (TabItem Item in Tabs.Items)
                 {
                     if (Item.Name == "SLBrSettingsTab")
                     {
-                        Tabs.SelectedItem = Item;
-                        CloseTab();
+                        CloseTab(Item);
                         _SettingsWindow = new SettingsWindow();
                         _SettingsWindow.Show();
                         break;
@@ -1034,18 +1444,8 @@ namespace SLBr
                 }
                 _TabPanel.Visibility = Visibility.Collapsed;
             }
-            else
-            {
-                if (_SettingsWindow != null)
-                {
-                    _SettingsWindow.Close();
-                    //_SettingsWindow = null;
-                    Settings();
-                }
-                _TabPanel.Visibility = Visibility.Visible;
-            }
         }
-        public void Pin(object sender)
+        /*public void Pin(object sender)
         {
             TabItem Tab = GetCurrentTab();
             int TabIndex = Tabs.Items.IndexOf(Tab);
@@ -1063,7 +1463,7 @@ namespace SLBr
                 Tabs.Items.Remove(Tab);
                 Tabs.Items.Insert(Index, Tab);
                 Tab.IsSelected = true;
-                Tab.Tag = $"{TabIndex}<,>Unpinned";
+                //Tab.Tag = $"{TabIndex}<,>Unpinned";
             }
             else
             {
@@ -1071,15 +1471,9 @@ namespace SLBr
                 Tabs.Items.Remove(Tab);
                 Tabs.Items.Insert(1, Tab);
                 Tab.IsSelected = true;
-                Tab.Tag = $"{TabIndex}<,>Pinned";
+                //Tab.Tag = $"{TabIndex}<,>Pinned";
             }
-            /*_PinButton = (Button)Tab.Template.FindName("PinButton", Tab);
-            if (_PinButton != null && !_PinButton.Tag.ToString().Contains("ActionSetted"))
-            {
-                _PinButton.Tag = "21<,>ActionSetted";
-                _PinButton.Click += new RoutedEventHandler(ButtonAction);
-            }*/
-        }
+        }*/
         public void NewsFeed()
         {
             new NewsPage().Show();
@@ -1133,19 +1527,9 @@ namespace SLBr
                 if (File.Exists(_Path))
                     File.Delete(_Path);
                 Save.Clear();
-                /*ATSADSEUrls
-                    SearchEngines
-                    Favourites*/
             }
             Relaunch(false);
         }
-        /*public void ClearCache()
-        {
-            string _Path = CachePath;
-            if (Directory.Exists(_Path))
-                Directory.Delete(_Path);
-            //Restart();
-        }*/
         public void Relaunch(bool CallClosingEvent = true)
         {
             if (CallClosingEvent && MessageBox.Show("Are you sure you want to relaunch SLBr? (Everything will be saved)", "Confirmation", MessageBoxButton.YesNo) == MessageBoxResult.No)
@@ -1155,27 +1539,8 @@ namespace SLBr
             else if (!CallClosingEvent)
                 IsProcessLoaded = false;
             //Closing -= Window_Closing;
-            Process.Start(Application.ResourceAssembly.Location);//DoNotUseIfUsingClickOnce
             Application.Current.Shutdown();
-        }
-        public void DarkTheme(bool Toggle)
-        {
-            if (Toggle)
-            {
-                Resources["PrimaryBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#202225"));
-                Resources["FontBrush"] = new SolidColorBrush(Colors.White);
-                Resources["BorderBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#36393F"));
-                Resources["UnselectedTabBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2F3136"));
-                Resources["ControlFontBrush"] = new SolidColorBrush(Colors.Gainsboro);
-            }
-            else
-            {
-                Resources["PrimaryBrush"] = new SolidColorBrush(Colors.White);
-                Resources["FontBrush"] = new SolidColorBrush(Colors.Black);
-                Resources["BorderBrush"] = new SolidColorBrush(Colors.Gainsboro);
-                Resources["UnselectedTabBrush"] = new SolidColorBrush(Colors.WhiteSmoke);
-                Resources["ControlFontBrush"] = new SolidColorBrush(Colors.Gray);
-            }
+            Process.Start(Application.ResourceAssembly.Location);//DoNotUseIfUsingClickOnce
         }
         public void FileExplorer(string _Path)
         {
@@ -1201,7 +1566,7 @@ namespace SLBr
             {
                 if (NewTab)
                 {
-                    CreateIETab(CreateIEWebBrowser(Url));
+                    CreateIETab(CreateIEWebBrowser(Url), true, Tabs.SelectedIndex + 1);
                     return;
                 }
                 WebBrowser _Browser = GetIEBrowser();
@@ -1213,7 +1578,7 @@ namespace SLBr
             {
                 if (NewTab)
                 {
-                    CreateTab(CreateWebBrowser(Url));
+                    CreateChromeTab(CreateWebBrowser(Url), true, Tabs.SelectedIndex + 1, true);
                     return;
                 }
                 ChromiumWebBrowser _Browser = GetBrowser();
@@ -1256,10 +1621,10 @@ namespace SLBr
             }
             else if (IsLoaded)
             {
-                Favourites.Add(new Favourite { Name = Title, Arguments = $"12<,>{Url}" });
+                Favourites.Add(new Favourite { Name = Title, Arguments = $"12<,>{Url}", Address = Url });
                 FavouriteButton.Content = "\xEB52";
             }
-            if (Favourites.Count == 0)
+            if (Favourites.Count == 0 || !bool.Parse(MainSave.Get("FavouritesBar")))
                 FavouriteContainer.Visibility = Visibility.Collapsed;
             else
                 FavouriteContainer.Visibility = Visibility.Visible;
@@ -1288,42 +1653,26 @@ namespace SLBr
                 Prompt(false, "HTML Editor is not supported on Internet Explorer mode.", false);
                 return;
             }
-            CreateTab(CreateWebBrowser("slbr://htmleditor"));
+            CreateChromeTab(CreateWebBrowser("slbr://htmleditor"));
         }
         public void Settings()
         {
             //new SettingsWindow().ShowDialog();
-            if (bool.Parse(MainSave.Get("HideTabs")))
+            if (bool.Parse(MainSave.Get("ShowTabs")))
             {
-                //if (_SettingsWindow == null)
-                //{
-                _SettingsWindow = new SettingsWindow();
-                _SettingsWindow.Show();
-                //}
-                //else
-                //    MessageBox.Show("An instance of the settings window is already running.");
-            }
-            else
-            {
-                if (SettingsPages > 0)
+                if (SettingsPage.Instance != null)
                 {
-                    bool FoundSettingsPage = false;
                     foreach (TabItem Item in Tabs.Items)
                     {
                         if (Item.Name == "SLBrSettingsTab")
                         {
                             Tabs.SelectedItem = Item;
-                            if (!FoundSettingsPage)
-                                FoundSettingsPage = true;
-                            break;
+                            return;
                         }
                     }
-                    if (!FoundSettingsPage)
-                        SettingsPages = 0;
-                    return;
                 }
 
-                int Count = Tabs.Items.Count;
+                //int Count = Tabs.Items.Count;
                 Frame _Frame = new Frame();
                 TabItem Tab = new TabItem()
                 {
@@ -1332,10 +1681,13 @@ namespace SLBr
                     Content = _Frame
                 };
                 _Frame.Content = new SettingsPage();
-                Tabs.Items.Insert(Count/* - 1*/, Tab);
-                Tab.Tag = $"{Count}<,>Unpinned";
+                Tabs.Items.Insert(Tabs.SelectedIndex + 1, Tab);
+                //Tab.Tag = $"{Count}<,>Unpinned";
                 Tabs.SelectedItem = Tab;
-                AddressBox.Text = string.Empty;
+                /*AddressBox.Text = "SLBr Settings Tab";
+                ReloadButton.Content = "\xE72C";
+                WebsiteLoadingProgressBar.IsEnabled = false;
+                WebsiteLoadingProgressBar.IsIndeterminate = false;*/
                 _Frame.LoadCompleted += (sender, args) =>
                 {
                     Application.Current.Dispatcher.BeginInvoke(new Action(delegate
@@ -1350,7 +1702,19 @@ namespace SLBr
                         }
                     }));
                 };
-                SettingsPages++;
+            }
+            else
+            {
+                //if (_SettingsWindow == null)
+                //{
+                if (SettingsPage.Instance != null)
+                {
+                    _SettingsWindow = new SettingsWindow();
+                    _SettingsWindow.Show();
+                }
+                //}
+                //else
+                //    MessageBox.Show("An instance of the settings window is already running.");
             }
         }
         public void CloseTab(TabItem SpecifiedTab = null)
@@ -1364,38 +1728,71 @@ namespace SLBr
                 throw new Exception();*/
             if (Tabs.Items.Count == 1)
                 return;
-            if (Tab.Name == "SLBrSettingsTab")
-                SettingsPages--;
+            //if (Tab.Name == "SLBrSettingsTab")
+            //    SettingsPages--;
+            //Tabs.SelectedIndex = PreviousTabIndex;
             if (IsIEMode)
             {
-                WebBrowser _Browser = GetIEBrowser();
+                WebBrowser _Browser = GetIEBrowser(Tab);
                 if (_Browser != null)
                     _Browser.Dispose();
             }
             else
             {
-                ChromiumWebBrowser _Browser = GetBrowser();
+                ChromiumWebBrowser _Browser = GetBrowser(Tab);
                 if (_Browser != null)
                 {
+                    /*if (_Browser.BrowserSettings == null)
+                    {
+                        _Browser.BrowserSettings = new BrowserSettings
+                        {
+                            BackgroundColor = bool.Parse(MainSave.Get("DarkWebpage")) ? Utils.ColorToUInt(System.Drawing.Color.Black) : Utils.ColorToUInt(System.Drawing.Color.White)
+                        };
+                    }*/
+                    Tab.Content = null;
                     //DisposeBrowser(_Browser);
                     //_Browser.Stop();
-                    //_Browser.BrowserCore.CloseBrowser(true);
+                    if (_Browser.BrowserCore != null)
+                        _Browser.BrowserCore.CloseBrowser(true);
+                    //_Browser.BrowserSettings = null;
+                    //if (_Browser.IsBrowserInitialized)
                     _Browser.Dispose();
                 }
             }
             Tabs.Items.Remove(Tab);
+            //GC.Collect();
         }
-        public void DevTools()
+        bool IsUtilityContainerOpen;
+        public void UseInspector()
         {
             if (IsIEMode)
             {
                 Prompt(false, "Developer Tools is not supported on Internet Explorer mode.", false);
                 return;
             }
-            ChromiumWebBrowser _Browser = GetBrowser();
+            IsUtilityContainerOpen = UtilityContainer.Visibility == Visibility.Visible;
+            /*ChromiumWebBrowser _Browser = GetBrowser();
             if (_Browser == null)
                 return;
-            _Browser.ShowDevTools();
+            _Browser.ShowDevTools();*/
+            FrameworkElement _Element = (FrameworkElement)Tabs.SelectedContent;
+            Thickness _Margin = _Element.Margin;
+            if (IsUtilityContainerOpen)
+            {
+                _Margin.Right = 0;
+                Inspector.Address = "about:blank";
+            }
+            else
+            {
+                _Margin.Right = 500;
+                Inspector.Address = "localhost:8088/json/list";
+            }
+            _Element.Margin = _Margin;
+            //Inspector.GetDevToolsClient().DeviceOrientation.ClearDeviceOrientationOverrideAsync();
+            //--load-media-router-component-extension, 0
+            UtilityContainer.Visibility = IsUtilityContainerOpen ? Visibility.Collapsed : Visibility.Visible;
+            //InspectorSplitter.Visibility = DevToolsContainer.Visibility;
+            IsUtilityContainerOpen = !IsUtilityContainerOpen;
             /*if (IsDevToolsOpen)
             {
                 Grid.SetColumnSpan(Tabs, 2);
@@ -1429,7 +1826,7 @@ namespace SLBr
             ChromiumWebBrowser _Browser = GetBrowser();
             if (_Browser == null)
                 return;
-            CreateTab(CreateWebBrowser($"view-source:{_Browser.Address}"));
+            CreateChromeTab(CreateWebBrowser($"view-source:{_Browser.Address}"), true, MainWindow.Instance.Tabs.SelectedIndex + 1);
             //_Browser.ViewSource();
         }
         public void Print()
@@ -1467,7 +1864,7 @@ namespace SLBr
             else
             {
                 ChromiumWebBrowser _Browser = GetBrowser();
-                if (_Browser == null)
+                if (_Browser == null || !_Browser.IsBrowserInitialized)
                     return;
                 if (_Browser.CanGoBack == true)
                     _Browser.Back();
@@ -1486,7 +1883,7 @@ namespace SLBr
             else
             {
                 ChromiumWebBrowser _Browser = GetBrowser();
-                if (_Browser == null)
+                if (_Browser == null || !_Browser.IsBrowserInitialized)
                     return;
                 if (_Browser.CanGoForward == true)
                     _Browser.Forward();
@@ -1507,7 +1904,7 @@ namespace SLBr
             else
             {
                 ChromiumWebBrowser _Browser = GetBrowser();
-                if (_Browser == null)
+                if (_Browser == null || !_Browser.IsBrowserInitialized)
                     return;
                 if (_Browser.IsLoaded)
                     _Browser.Reload();
@@ -1516,97 +1913,203 @@ namespace SLBr
             }
         }
         #endregion
-        public void CreateTab(ChromiumWebBrowser _Browser, bool Focus = true, int Index = 0, bool NameByUrl = false)
+        public MenuItem CreateMenuItemForList(string Header, string Tag = "Empty00000", RoutedEventHandler? _RoutedEventHandler = null)
+        {
+            MenuItem _MenuItem = new MenuItem();
+            _MenuItem.FontFamily = new FontFamily("Arial");
+            //_MenuItem.Foreground = (SolidColorBrush)Resources["FontBrush"];//new SolidColorBrush(Colors.Black);
+            _MenuItem.Header = Header;
+            if (Tag != "Empty00000")
+                _MenuItem.Tag = Tag;
+            if (_RoutedEventHandler != null)
+                _MenuItem.Click += _RoutedEventHandler;
+            return _MenuItem;
+        }
+        public void ButtonAction(object sender, RoutedEventArgs e)
+        {
+            Actions _Action;
+            var Target = (FrameworkElement)sender;
+            string _Tag = Target.Tag.ToString();
+            var Values = _Tag.Split(new string[] { "<,>" }, StringSplitOptions.None);//_Tag.Split(new[] { '<,>' }, 3);//2 = 3//, "&lt;,&gt;"
+            _Action = (Actions)int.Parse(Values[0]);
+            string LastValue = Values.Last();
+            Action(_Action, sender, false, LastValue, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
+        }
+        public void MiddleMouseButtonAction(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Middle && e.ButtonState != MouseButtonState.Pressed)
+                return;
+            Actions _Action;
+            var Target = (FrameworkElement)sender;
+            string _Tag = Target.Tag.ToString();
+            var Values = _Tag.Split(new string[] { "<,>" }, StringSplitOptions.None);//_Tag.Split(new[] { '<,>' }, 3);//2 = 3//, "&lt;,&gt;"
+            _Action = (Actions)int.Parse(Values[0]);
+            string LastValue = Values.Last();
+            Action(_Action, sender, true, LastValue, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
+        }
+        public void MiddleButtonAction(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState != MouseButtonState.Pressed)
+                return;
+            Actions _Action;
+            var Target = (FrameworkElement)sender;
+            string _Tag = Target.Tag.ToString();
+            var Values = _Tag.Split(new string[] { "<,>" }, StringSplitOptions.None);//_Tag.Split(new[] { '<,>' }, 3);//2 = 3//, "&lt;,&gt;"
+            _Action = (Actions)int.Parse(Values[0]);
+            string LastValue = Values.Last();
+            Action(_Action, sender, true, LastValue, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
+        }
+
+        public void CreateChromeTab(ChromiumWebBrowser _Browser, bool Focus = true, int Index = -1, bool NameByUrl = false)
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
                 int Count = Tabs.Items.Count;
-                if (Index > 0)
+                if (Index > -1)
                     Count = Index;
-                string TabName = NameByUrl ? _Browser.Address : "New Tab";
+                string TabName = NameByUrl ? Utils.CleanUrl(_Browser.Address).Replace("www.", "") : "New Tab";
                 TabItem Tab = new TabItem()
                 {
                     Header = $"{TabName}"
                 };
                 ApplyToTab(_Browser, Tab, true);
                 Tabs.Items.Insert(Count/* - 1*/, Tab);
-                Tab.Tag = $"{Count}<,>Unpinned";
+                //Tab.Tag = $"{Count}<,>Unpinned";
                 Tab.IsSelected = Focus;
-                Tab.UseLayoutRounding = true;
-                Tab.SnapsToDevicePixels = true;
             }));
         }
-        public void CreateIETab(WebBrowser _Browser, bool Focus = true, int Index = 0)
+        public void CreateIETab(WebBrowser _Browser, bool Focus = true, int Index = -1)
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
                 int Count = Tabs.Items.Count;
-                if (Index > 0)
+                if (Index > -1)
                     Count = Index;
                 string TabName = /*NameByUrl ? *//*_Browser.Source != null ? _Browser.Source.AbsoluteUri : */"New Tab";
                 TabItem Tab = new TabItem()
                 {
-                    //Header = $"Tab {Count}"
                     Header = $"{TabName}"
                 };
-                _Browser = ConfigureIE(_Browser, Tab);
+                /*_Browser = */ConfigureIE(_Browser, Tab);
                 //Tab.Background = Brushes.Transparent;
                 //Tab.FontFamily = new FontFamily("Original");
                 Tab.Content = _Browser;
                 /*_Browser.SnapsToDevicePixels = true;
                 _Browser.UseLayoutRounding = true;*/
                 Tabs.Items.Insert(Count/* - 1*/, Tab);
-                Tab.Tag = $"{Count}<,>Unpinned";
+                //Tab.Tag = $"{Count}<,>Unpinned";
                 Tab.IsSelected = Focus;
                 //Tab.UseLayoutRounding = true;
+                Tab.SnapsToDevicePixels = true;
                 //NewMessage("You are in SLBr developer mode, you have access to developer features of SLBr.", false);
                 /*else if (InternetExplorerMode)
                     NewMessage("All sites in this tab will be opened in Internet Explorere mode.", false);*/
             }));
         }
 
-        public void UnloadTab(TabItem Tab, bool IgnoreIfSound = false)
+        private class InspectorObject
         {
-            ChromiumWebBrowser _Browser = GetBrowser(Tab);
-            if (_Browser != null && _Browser.IsBrowserInitialized)
+            //public string description { get; set; }
+            public string devtoolsFrontendUrl { get; set; }
+            public string id { get; set; }
+            //public string title { get; set; }
+            //public string type { get; set; }
+            public string url { get; set; }
+            //public string webSocketDebuggerUrl { get; set; }
+        }
+        private void ConfigureInspectorBrowser()
+        {
+            Inspector.BrowserSettings = new BrowserSettings
             {
-                if (IgnoreIfSound)//PROBLEM: This checks if the address is a known music website. I need help on detecting sound.
+                WebGl = CefState.Disabled,
+                WindowlessFrameRate = 20,
+                BackgroundColor = Utils.ColorToUInt(System.Drawing.Color.Black),
+            };
+            Inspector.AllowDrop = true;
+            Inspector.FrameLoadEnd += (sender, args) =>
+            {
+                if (args.Frame.IsValid && args.Frame.IsMain)
                 {
-                    string CleanedAddress = Utils.CleanUrl(_Browser.Address);
-                    if (CleanedAddress.Contains("youtube.com/watch")
-                        || CleanedAddress.Contains("spotify.com/track/")
-                        || CleanedAddress.Contains("soundcloud.com")
-                        || CleanedAddress.Contains("dailymotion.com/video/")
-                        || CleanedAddress.Contains("vimeo.com")
-                        || CleanedAddress.Contains("twitch.tv/")
-                        || CleanedAddress.Contains("bitchute.com/video/")
-                        || CleanedAddress.Contains("ted.com/talks/")
-                        || CleanedAddress.Contains("meet.google.com/")
-                        )
+                    //_Browser.GetDevToolsClient().Page.SetAdBlockingEnabledAsync(true);
+                    /*Inspector.GetMainFrame().ExecuteJavaScriptAsync(@"console.log(""1"");" +
+                        @"const htmlc = document.getElementsByTagName(""HTML"")[0];console.log(""2"");" +
+                        @"console.log(htmlc);" +
+                        //@"if (htmlc.classList[0] == '-theme-with-dark-background'){" +
+                        //@"console.log(""3"");}" +
+                        @"htmlc.classList.remove('-theme-with-dark-background');" +
+                        @"htmlc.classList.remove('-theme-with-dark-background');" +
+                        @"htmlc.classList.remove('-theme-with-dark-background');" +
+                        @"htmlc.classList.remove('-theme-with-dark-background');" +
+                        @"htmlc.classList.remove('-theme-with-dark-background');" +
+                        @"htmlc.classList.remove('-theme-with-dark-background');" +
+                        @"console.log(htmlc.classList);"
+                        );*/
+                    //Inspector.GetMainFrame().ExecuteJavaScriptAsync("document.getElementById("MyElement").classList.toggle('MyClass');");
+                    if (args.Url == "http://localhost:8088/json/list")
                     {
-                        return;
+                        Inspector.GetMainFrame().EvaluateScriptAsync(@"document.getElementsByTagName('body')[0].innerHTML").ContinueWith(t =>
+                        {
+                            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                            {
+                                if (t.Result != null && t.Result.Result != null)
+                                {
+                                    var result = t.Result.Result.ToString();
+
+                                    var _Document = new HtmlDocument();
+                                    _Document.LoadHtml(result);
+                                    HtmlNode _Node = _Document.DocumentNode.SelectSingleNode("//pre");
+                                    if (_Node != null)
+                                    {
+                                        string Content = _Node.InnerHtml;
+                                        List<InspectorObject> InspectorObjects = JsonConvert.DeserializeObject<List<InspectorObject>>(Content);
+                                        foreach (InspectorObject _InspectorObject in InspectorObjects)
+                                        {
+                                            if (_InspectorObject.url == AddressBox.Tag.ToString())
+                                            {
+                                                Inspector.Address = "http://localhost:8088" + _InspectorObject.devtoolsFrontendUrl;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }));
+                        });
+                    }
+                    else
+                    {
+                        if (MainSave.Get("Theme") == "Dark")
+                            Inspector.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(bool.Parse(MainSave.Get("DarkWebpage")));
+                        else
+                            Inspector.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(false);
                     }
                 }
-                string Url = _Browser.Address;
-                _Browser.Dispose();
-                Tab.Content = null;
-                ApplyToTab(CreateWebBrowser(Url), Tab, true);
-            }
-        }
-        public void ApplyToTab(ChromiumWebBrowser _Browser, TabItem Tab, bool Configure)
-        {
-            if (Configure)
-                _Browser = this.Configure(_Browser, Tab);
-            Tab.Content = _Browser;
+            };
         }
 
-        public ChromiumWebBrowser Configure(ChromiumWebBrowser _Browser, TabItem Tab/* = null*/)
+        public ChromiumWebBrowser CreateWebBrowser(string Url = "Empty00000")
         {
-            _Browser.JavascriptObjectRepository.Register("slbr", _JSBindingHandler, true, BindingOptions.DefaultBinder);
+            if (Url == "Empty00000")
+                Url = MainSave.Get("Homepage");
+            ChromiumWebBrowser _Browser = new ChromiumWebBrowser(Url);//Configure(GetBrowserFromPool(), Url);
+            RenderOptions.SetBitmapScalingMode(_Browser, BitmapScalingMode.LowQuality);//BUG: If the settings menu was opened, all would be blurry until the settings tab is closed
+            _Browser.Address = Utils.FixUrl(Url, bool.Parse(MainSave.Get("Weblight")));
+            return _Browser;
+        }
+        public WebBrowser CreateIEWebBrowser(string Url = "Empty00000")
+        {
+            if (Url == "Empty00000")
+                Url = MainSave.Get("Homepage");
+            WebBrowser _Browser = new WebBrowser();//Configure(GetBrowserFromPool(), Url);
+            _Browser.Navigate(Url);
+            return _Browser;
+        }
+        private void Configure(ChromiumWebBrowser _Browser, TabItem Tab/* = null*/)
+        {
+            _Browser.JavascriptObjectRepository.Register("slbr", _JSBindingHandler, BindingOptions.DefaultBinder);
             //_Browser.ExecuteScriptAsyncWhenPageLoaded(File.ReadAllText("Resources/JsBinding.js")/*, true*/);
             _Browser.TitleChanged += TitleChanged;
             _Browser.LoadingStateChanged += LoadingStateChanged;
-            _Browser.AddressChanged += AddressChanged;
+            //_Browser.AddressChanged += AddressChanged;
             // Enable touch scrolling - once properly tested this will likely become the default
             //_Browser.IsManipulationEnabled = true;
             _Browser.LifeSpanHandler = _LifeSpanHandler;
@@ -1655,75 +2158,105 @@ namespace SLBr
                             $"document.getElementById(\"_executable_path\").innerHTML = \"{ExecutableLocation}\";" +
                             $"document.getElementById(\"_cache_path\").innerHTML = \"{CachePath.Replace("\\", "\\\\")}\";");
                     }
+                    //_Browser.GetDevToolsClient().DeviceOrientation.ClearDeviceOrientationOverrideAsync();
+                    // && _Browser.GetDevToolsClient().Network.GetResponseBodyAsync("content-type").Result.Bod
+                    //Dark theme cannot be applied in "text/plain, application/json, image/svg+xml"
+                    if (args.Browser.IsLoading)
+                    {
+                        DevToolsClient _DevToolsClient = _Browser.GetDevToolsClient();
+                        if (MainSave.Get("Theme") == "Dark")
+                        {
+                            _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(bool.Parse(MainSave.Get("DarkWebpage")));
+                            //_Browser.GetDevToolsClient().Emulation.SetDefaultBackgroundColorOverrideAsync(Cef.ColorSetARGB(255, 0, 0, 0));
+                        }
+                        else
+                        {
+                            _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(false);
+                            //_Browser.GetDevToolsClient().Emulation.SetDefaultBackgroundColorOverrideAsync();
+                        }
+                        if (IsDeveloperMode)
+                        {
+                            bool ShowPerformanceMetrics = bool.Parse(MainSave.Get("ShowPerformanceMetrics"));
+                            //show-performance-metrics-hud
+                            _DevToolsClient.Overlay.SetShowWebVitalsAsync(ShowPerformanceMetrics);
+                            _DevToolsClient.Overlay.SetShowAdHighlightsAsync(ShowPerformanceMetrics);
+                            _DevToolsClient.Overlay.SetShowFPSCounterAsync(ShowPerformanceMetrics);
+                        }
+                    }
+                    //_Browser.GetDevToolsClient().Emulation.SetCPUThrottlingRateAsync
                     //if (bool.Parse(MainSave.Get("DarkTheme")))
                     //{
-                        /*args.Frame.ExecuteJavaScriptAsync("document.documentElement.style.setProperty('filter', 'invert(100%)');" +
-                                    "const addCSS = s => document.head.appendChild(document.createElement('style')).innerHTML=s;" +
-                                    "addCSS('iframe, img, svg, video{ filter:invert(100%); }');" +
-                                    "const all = document.querySelectorAll('*');" +
-                                    "const restricted = ['iframe', 'img', 'svg', 'video'];" +
-                                    "all.forEach(tags => {" +
-                                        "if (!restricted.includes(tags.tagName.toLowerCase()))" +
-                                        "{" +
-                                            "if (getComputedStyle(tags).backgroundImage != 'none')" +
-                                            "{" +
-                                                "tags.style.filter = 'invert(100%)';" +
-                                            "}" +
-                                        "}" +
-                                    "});");*/
-
-                        /*args.Frame.ExecuteJavaScriptAsync("document.documentElement.setAttribute('data-theme', 'light');" +
-                            "document.documentElement.classList.add(\"light\")" +
-                            "document.documentElement.setAttribute('data-force-color-mode', 'light');" +
-                            "if (document.documentElement.classList.contains(\"dark\"))" +
-                            "document.documentElement.classList.remove(\"dark\")" + 
-                            "localStorage.setItem('theme', 'light');" +
-                            "localStorage.setItem('color-mode', 'light');");*/
-
-                        /*args.Frame.ExecuteJavaScriptAsync("function detectColorScheme()" +
-                            "{" +
-                                "var theme = \"light\";" +
-                                "if (localStorage.getItem(\"theme\"))" +
-                                "{" +
-                                    "if (localStorage.getItem(\"theme\") == \"dark\")" +
+                    /*args.Frame.ExecuteJavaScriptAsync("document.documentElement.style.setProperty('filter', 'invert(100%)');" +
+                                "const addCSS = s => document.head.appendChild(document.createElement('style')).innerHTML=s;" +
+                                "addCSS('iframe, img, svg, video{ filter:invert(100%); }');" +
+                                "const all = document.querySelectorAll('*');" +
+                                "const restricted = ['iframe', 'img', 'svg', 'video'];" +
+                                "all.forEach(tags => {" +
+                                    "if (!restricted.includes(tags.tagName.toLowerCase()))" +
                                     "{" +
-                                        "var theme = \"dark\";" +
+                                        "if (getComputedStyle(tags).backgroundImage != 'none')" +
+                                        "{" +
+                                            "tags.style.filter = 'invert(100%)';" +
+                                        "}" +
                                     "}" +
-                                "}" +
-                                "else if (!window.matchMedia)" +
-                                "{" +
-                                    "return false; " +
-                                "}" +
-                                "else if (window.matchMedia(\"(prefers-color-scheme: dark)\").matches) " +
+                                "});");*/
+
+                    /*args.Frame.ExecuteJavaScriptAsync("document.documentElement.setAttribute('data-theme', 'light');" +
+                        "document.documentElement.classList.add(\"light\")" +
+                        "document.documentElement.setAttribute('data-force-color-mode', 'light');" +
+                        "if (document.documentElement.classList.contains(\"dark\"))" +
+                        "document.documentElement.classList.remove(\"dark\")" + 
+                        "localStorage.setItem('theme', 'light');" +
+                        "localStorage.setItem('color-mode', 'light');");*/
+                    /*args.Frame.ExecuteJavaScriptAsync("function detectColorScheme()" +
+                        "{" +
+                            "var theme = \"light\";" +
+                            "if (localStorage.getItem(\"theme\"))" +
+                            "{" +
+                                "if (localStorage.getItem(\"theme\") == \"dark\")" +
                                 "{" +
                                     "var theme = \"dark\";" +
                                 "}" +
-                                "if (theme == \"dark\")" +
-                                "{" +
-                                    "document.documentElement.setAttribute(\"data-theme\", \"dark\");" +
-                                "}" +
                             "}" +
-                            "detectColorScheme();");*/
+                            "else if (!window.matchMedia)" +
+                            "{" +
+                                "return false; " +
+                            "}" +
+                            "else if (window.matchMedia(\"(prefers-color-scheme: dark)\").matches) " +
+                            "{" +
+                                "var theme = \"dark\";" +
+                            "}" +
+                            "if (theme == \"dark\")" +
+                            "{" +
+                                "document.documentElement.setAttribute(\"data-theme\", \"dark\");" +
+                            "}" +
+                        "}" +
+                        "detectColorScheme();");*/
 
-                        //args.Frame.ExecuteJavaScriptAsync("localStorage.setItem('theme', 'dark');" +
-                        //"document.documentElement.setAttribute('data-theme', 'dark'); ");
+                    //args.Frame.ExecuteJavaScriptAsync("localStorage.setItem('theme', 'dark');" +
+                    //"document.documentElement.setAttribute('data-theme', 'dark'); ");
 
-                        //args.Frame.ExecuteJavaScriptAsync("document.styleSheets[0].cssRules[0].conditionText = \"(prefers-color-scheme: light)\";");
-                        //args.Frame.ExecuteJavaScriptAsync("document.styleSheets[0].insertRule(\"(prefers-color-scheme: light)\", 0);");
+                    //args.Frame.ExecuteJavaScriptAsync("document.styleSheets[0].cssRules[0].conditionText = \"(prefers-color-scheme: light)\";");
+                    //args.Frame.ExecuteJavaScriptAsync("document.styleSheets[0].insertRule(\"(prefers-color-scheme: light)\", 0);");
                     //}
                     int HttpStatusCode = args.HttpStatusCode;
                     Application.Current.Dispatcher.BeginInvoke(new Action(delegate
                     {
+                        if (string.IsNullOrEmpty(_Browser.Address))
+                            _Browser.Address = Utils.FixUrl(MainSave.Get("Homepage"), bool.Parse(MainSave.Get("Weblight")));
+                        if (CanChangeAddressBox())
+                            AddressBox.Text = bool.Parse(MainSave.Get("FullAddress")) ? _Browser.Address : Utils.CleanUrl(_Browser.Address);
+                        AddressBox.Tag = _Browser.Address;
                         if (HttpStatusCode == 404 && !Utils.CleanUrl(ArgsUrl).StartsWith("web.archive.org"))
                             Prompt(true, "This page is missing, do you want to check if there's a saved version on the Wayback Machine?", true, "Check for saved version", $"24<,>https://web.archive.org/{ArgsUrl}", $"https://web.archive.org/{ArgsUrl}", true, "\xF142");
-                        else if (Utils.CleanUrl(ArgsUrl).EndsWith(".png") || Utils.CleanUrl(ArgsUrl).EndsWith(".jpeg") || Utils.CleanUrl(ArgsUrl).EndsWith(".webp"))
-                            Prompt(true, "You are viewing a image, don't mistake it for a webpage.", false);
+                        /*else if (Utils.CleanUrl(ArgsUrl).EndsWith(".png") || Utils.CleanUrl(ArgsUrl).EndsWith(".jpeg") || Utils.CleanUrl(ArgsUrl).EndsWith(".webp"))
+                            Prompt(true, "You are viewing a image, don't mistake it for a webpage.", false);*/
                         else
                             CloseClosableMessages();
                         try
                         {
                             string Host = Utils.Host(_Browser.Address);//new Uri(_Browser.Address).Host;
-                            if (bool.Parse(MainSave.Get("ATSADSE")) && !ATSADSEUrls.Contains(Host) && !SearchEngines.Select(item => Utils.Host(_Browser.Address)/*new Uri(item).Host*/).Contains(Host))
+                            if (bool.Parse(MainSave.Get("FindSearchProvider")) && !SearchProviderUrls.Contains(Host) && !SearchEngines.Select(item => Utils.Host(_Browser.Address)/*new Uri(item).Host*/).Contains(Host))
                             {
                                 Application.Current.Dispatcher.BeginInvoke(new Action(delegate
                                 {
@@ -1742,7 +2275,7 @@ namespace SLBr
                                                 if (_Node != null)
                                                 {
                                                     Url = _Node.Attributes["href"].Value;
-                                                    ATSADSEUrls.Add(Host);
+                                                    SearchProviderUrls.Add(Host);
                                                     if (!Url.StartsWith("//") && Url.StartsWith("/"))
                                                         Url = "http://" + Host + Url;
                                                     else if (Url.StartsWith("//"))
@@ -1768,16 +2301,6 @@ namespace SLBr
                             }
                         }
                         catch { }
-                        /*Button _Button = (Button)Tab.Template.FindName("CloseTabButton", Tab);
-                        if (_Button != null && !_Button.Tag.ToString().Contains("ActionSetted"))// && Tab.ContextMenu.Items[0] != null
-                        {
-                            //_Browser.ExecuteScriptAsync("chrome.webRequest.onBeforeRequest.addListener(function(details) { return { cancel: true}; },{ urls:[\"*://*.doubleclick.net/*\"] },[\"blocking\"]);");
-                            //MenuItem _MenuItem = (MenuItem)Tab.ContextMenu.Items[0];
-                            //_MenuItem.Tag = "7";
-                            //_MenuItem.Click += new RoutedEventHandler(ButtonAction);
-                            _Button.Tag = "7<,>ActionSetted";
-                            _Button.Click += new RoutedEventHandler(ButtonAction);
-                        }*/
                         Image _Image = (Image)Tab.Template.FindName("Icon", Tab);
                         System.Windows.Shapes.Path _DefaultTabIcon = (System.Windows.Shapes.Path)Tab.Template.FindName("TabIcon", Tab);
                         if (_DefaultTabIcon != null && _Image != null)
@@ -1802,149 +2325,160 @@ namespace SLBr
                                 _Image.Visibility = Visibility.Collapsed;
                             }
                         }
-                        /*Button _PinButton = (Button)Tab.Template.FindName("PinButton", Tab);
-                        if (_PinButton != null && !_PinButton.Tag.ToString().Contains("ActionSetted"))
-                        {
-                            _PinButton.Tag = "21<,>ActionSetted";
-                            _PinButton.Click += new RoutedEventHandler(ButtonAction);
-                        }*/
+                        if (_Browser.IsLoaded && IsUtilityContainerOpen && Inspector.Address == "http://localhost:8088/json/list")
+                            Inspector.Address = "localhost:8088/json/list";
                         //_Browser.ExecuteScriptAsync("function C(d,o){v=d.createElement('div');o.parentNode.replaceChild(v,o);}function A(d){for(j=0;t=[\", Interaction.IIf(browser.Address.Contains(\"youtube.com\"), \"'iframe','marquee'\", \"'iframe','embed','marquee'\")), \"][j];++j){o=d.getElementsByTagName(t);for(i=o.length-1;i>=0;i--)C(d,o[i]);}g=d.images;for(k=g.length-1;k>=0;k--)if({'21x21':1,'48x48':1,'60x468':1,'88x31':1,'88x33':1,'88x62':1,'90x30':1,'90x32':1,'90x90':1,'100x30':1,'100x37':1,'100x45':1,'100x50':1,'100x70':1,'100x100':1,'100x275':1,'110x50':1,'110x55':1,'110x60':1,'110x110':1,'120x30':1,'120x60':1,'120x80':1,'120x90':1,'120x120':1,'120x163':1,'120x181':1,'120x234':1,'120x240':1,'120x300':1,'120x400':1,'120x410':1,'120x500':1,'120x600':1,'120x800':1,'125x40':1,'125x60':1,'125x65':1,'125x72':1,'125x80':1,'125x125':1,'125x170':1,'125x250':1,'125x255':1,'125x300':1,'125x350':1,'125x400':1,'125x600':1,'125x800':1,'126x110':1,'130x60':1,'130x65':1,'130x158':1,'130x200':1,'132x70':1,'140x55':1,'140x350':1,'145x145':1,'146x60':1,'150x26':1,'150x60':1,'150x90':1,'150x100':1,'150x150':1,'155x275':1,'155x470':1,'160x80':1,'160x126':1,'160x600':1,'180x30':1,'180x66':1,'180x132':1,'180x150':1,'194x165':1,'200x60':1,'220x100':1,'225x70':1,'230x30':1,'230x33':1,'230x60':1,'234x60':1,'234x68':1,'240x80':1,'240x300':1,'250x250':1,'275x60':1,'280x280':1,'300x60':1,'300x100':1,'300x250':1,'320x50':1,'320x70':1,'336x280':1,'350x300':1,'350x850':1,'360x300':1,'380x112':1,'380x250':1,'392x72':1,'400x40':1,'400x50':1,'425x600':1,'430x225':1,'440x40':1,'464x62':1,'468x16':1,'468x60':1,'468x76':1,'468x120':1,'468x248':1,'470x60':1,'480x400':1,'486x60':1,'545x90':1,'550x5':1,'600x30':1,'720x90':1,'720x300':1,'725x90':1,'728x90':1,'734x96':1,'745x90':1,'750x25':1,'750x100':1,'750x150':1,'850x120':1}[g[k].width+'x'+g[k].height])C(d,g[k]);}A(document);for(f=0;z=frames[f];++f)A(z.document)");
                     }));
                 }
             };
+
+            /*_Browser.RequestContext = new RequestContext(_RequestContextSettings);
+            Cef.UIThreadTaskFactory.StartNew(delegate
+            {
+                _Browser.RequestContext.SetPreference("enable_do_not_track", true, out _);
+                _Browser.RequestContext.SetPreference("browser.enable_do_not_track", true, out _);
+                //var success = requestContext.SetPreference("enable_do_not_track", true, out errorMessage);
+                //if (!success)
+                //{
+                //    this.InvokeOnUiThreadIfRequired(() => MessageBox.Show("Unable to set preference enable_do_not_track errorMessage: " + errorMessage));
+                //}
+                //_Browser.RequestContext.SetPreference("browser.enable_spellchecking", true, out _);
+                //_Browser.RequestContext.SetPreference("spellcheck.dictionaries", new List<object> { "en-US" }, out _);
+            });*/
+            
             _Browser.BrowserSettings = new BrowserSettings
             {
-                BackgroundColor = bool.Parse(MainSave.Get("DarkTheme")) ? Utils.ColorToUInt(System.Drawing.Color.Black) : Utils.ColorToUInt(System.Drawing.Color.White)
+                BackgroundColor = bool.Parse(MainSave.Get("DarkWebpage")) ? Utils.ColorToUInt(System.Drawing.Color.Black) : Utils.ColorToUInt(System.Drawing.Color.White)
             };
-            return _Browser;
+            //return _Browser;
         }
-
-        bool CanChangeAddressBox()
-        {
-            string Text = AddressBox.Text.Trim();
-            return !AddressBoxFocused || !Text.Contains(" ");
-        }
-
-        public WebBrowser ConfigureIE(WebBrowser _Browser, TabItem Tab/* = null*/)
+        private void ConfigureIE(WebBrowser _Browser, TabItem Tab/* = null*/)
         {
             _Browser.LoadCompleted += delegate (object sender, NavigationEventArgs e) { IE_LoadCompleted(sender, e, Tab); };
-            return _Browser;
+            //_Browser.Navigated += (object sender, NavigationEventArgs e) => { IE_Navigated(_Browser, e, Tab); };
+            _Browser.Loaded += (object sender, RoutedEventArgs e) => { SuppressIEScriptErrors(_Browser, true); };
+            //_Browser.Navigating += webBrowser_Navigating;
+            //return _Browser;
         }
-
-        private void IE_LoadCompleted(object sender, NavigationEventArgs e, TabItem Tab)
-        {
-            WebBrowser _Browser = sender as WebBrowser;
-            string ArgsUrl = e.Uri.AbsoluteUri;
-            if (!IsInformationSet)
-                IsInformationSet = true;
-            //int HttpStatusCode = e.WebResponse.ContentType;
-            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-            {
-                if (AddressBox.Text != (bool.Parse(MainSave.Get("FullAddress")) ? e.Uri.AbsoluteUri : Utils.CleanUrl(e.Uri.AbsoluteUri)) && _Browser == GetIEBrowser())
-                {
-                    if (CanChangeAddressBox())
-                        AddressBox.Text = bool.Parse(MainSave.Get("FullAddress")) ? e.Uri.AbsoluteUri : Utils.CleanUrl(e.Uri.AbsoluteUri);
-                    AddressBox.Tag = e.Uri.AbsoluteUri;
-                }
-                Image _Image = (Image)Tab.Template.FindName("Icon", Tab);
-                System.Windows.Shapes.Path _DefaultTabIcon = (System.Windows.Shapes.Path)Tab.Template.FindName("TabIcon", Tab);
-                if (_DefaultTabIcon != null && _Image != null)
-                {
-                    try
-                    {
-                        var bytes = TinyDownloader.DownloadData("https://www.google.com/s2/favicons?domain=" + e.Uri.Host);
-                        var ms = new MemoryStream(bytes);
-
-                        var bi = new BitmapImage();
-                        bi.BeginInit();
-                        bi.StreamSource = ms;
-                        bi.EndInit();
-
-                        _DefaultTabIcon.Visibility = Visibility.Collapsed;
-                        _Image.Visibility = Visibility.Visible;
-                        _Image.Source = bi;
-                    }
-                    catch
-                    {
-                        _DefaultTabIcon.Visibility = Visibility.Visible;
-                        _Image.Visibility = Visibility.Collapsed;
-                    }
-                }
-                if (_Browser.CanGoBack)
-                    BackButton.Foreground = Resources["ControlFontBrush"] as SolidColorBrush;
-                else
-                    BackButton.Foreground = Resources["BorderBrush"] as SolidColorBrush;
-                if (_Browser.CanGoForward)
-                    ForwardButton.Foreground = Resources["ControlFontBrush"] as SolidColorBrush;
-                else
-                    ForwardButton.Foreground = Resources["BorderBrush"] as SolidColorBrush;
-            }));
-        }
-
-        /*private Rect GetBoundingBox(FrameworkElement element, Window containerWindow)
-        {
-            GeneralTransform transform = element.TransformToAncestor(containerWindow);
-            Point topLeft = transform.Transform(new Point(0, 0));
-            Point bottomRight = transform.Transform(new Point(element.ActualWidth, element.ActualHeight));
-            return new Rect(topLeft, bottomRight);
-        }*/
-        public static MenuItem CreateMenuItemForList(string Header, string Tag = "Empty00000", RoutedEventHandler _RoutedEventHandler = null)
-        {
-            MenuItem _MenuItem = new MenuItem();
-            _MenuItem.FontFamily = new FontFamily("Arial");
-            _MenuItem.Foreground = new SolidColorBrush(Colors.Black);
-            _MenuItem.Header = Header;
-            if (Tag != "Empty00000")
-                _MenuItem.Tag = Tag;
-            if (_RoutedEventHandler != null)
-                _MenuItem.Click += _RoutedEventHandler;
-            return _MenuItem;
-        }
-        public void ButtonAction(object sender, RoutedEventArgs e)
-        {
-            Actions _Action;
-            var Target = (FrameworkElement)sender;
-            string _Tag = Target.Tag.ToString();
-            var Values = _Tag.Split(new string[] { "<,>" }, StringSplitOptions.None);//_Tag.Split(new[] { '<,>' }, 3);//2 = 3//, "&lt;,&gt;"
-            _Action = (Actions)int.Parse(Values[0]);
-            string LastValue = Values.Last();
-            Action(_Action, sender, false, LastValue, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
-        }
-        public void MiddleMouseButtonAction(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton != MouseButton.Middle && e.ButtonState != MouseButtonState.Pressed)
-                return;
-            Actions _Action;
-            var Target = (FrameworkElement)sender;
-            string _Tag = Target.Tag.ToString();
-            var Values = _Tag.Split(new string[] { "<,>" }, StringSplitOptions.None);//_Tag.Split(new[] { '<,>' }, 3);//2 = 3//, "&lt;,&gt;"
-            _Action = (Actions)int.Parse(Values[0]);
-            string LastValue = Values.Last();
-            Action(_Action, sender, true, LastValue, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
-        }
-
-        public ChromiumWebBrowser CreateWebBrowser(string Url = "Empty00000")
-        {
-            if (Url == "Empty00000")
-                Url = MainSave.Get("Homepage");
-            ChromiumWebBrowser _Browser = new ChromiumWebBrowser(Url);//Configure(GetBrowserFromPool(), Url);
-            RenderOptions.SetBitmapScalingMode(_Browser, BitmapScalingMode.Fant);//BUG: If the settings menu was opened, all would be blurry until the settings tab is closed
-            _Browser.Address = Utils.FixUrl(Url, bool.Parse(MainSave.Get("Weblight")));
-            return _Browser;
-        }
-        public WebBrowser CreateIEWebBrowser(string Url = "Empty00000")
-        {
-            if (Url == "Empty00000")
-                Url = MainSave.Get("Homepage");
-            WebBrowser _Browser = new WebBrowser();//Configure(GetBrowserFromPool(), Url);
-            _Browser.Navigate(Url);
-            return _Browser;
-        }
-
         void BrowserChanged(object sender, bool IsSwitchTab = false)
         {
             if (IsIEMode)
+            {
+                Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                {
+                    WebBrowser CurrentBrowser = GetIEBrowser();
+                    if (CurrentBrowser == null || CurrentBrowser.Source == null)
+                        return;
+                    if (sender is WebBrowser)
+                    {
+                        WebBrowser _Browser = sender as WebBrowser;
+                        if (CurrentBrowser != _Browser)
+                            return;
+                    }
+                    if (string.IsNullOrEmpty(CurrentBrowser.Source.AbsoluteUri))
+                        CurrentBrowser.Navigate(Utils.FixUrl(MainSave.Get("Homepage"), bool.Parse(MainSave.Get("Weblight"))));
+                    if (CanChangeAddressBox())
+                        AddressBox.Text = bool.Parse(MainSave.Get("FullAddress")) ? CurrentBrowser.Source.AbsoluteUri : Utils.CleanUrl(CurrentBrowser.Source.AbsoluteUri);
+                    AddressBox.Tag = CurrentBrowser.Source.AbsoluteUri;
+                    /*bool ContinueUrlCheck = true;
+                    if (CurrentBrowser.Address.StartsWith("http") || CurrentBrowser.Address.StartsWith("file:"))
+                    {
+                        string Host = Utils.Host(CurrentBrowser.Address);
+                        if (CurrentBrowser.Address.StartsWith("https:"))
+                        {
+                            SSLSymbol.Text = "\xE72E";
+                            SSLToolTip.Content = $"{Host} has a valid SSL certificate";
+                            ContinueUrlCheck = false;
+                        }
+                        else if (CurrentBrowser.Address.StartsWith("http:"))
+                        {
+                            SSLSymbol.Text = "\xE785";
+                            SSLToolTip.Content = $"{Host} doesn't have a valid SSL certificate";
+                            ContinueUrlCheck = false;
+                        }
+                        else if (CurrentBrowser.Address.StartsWith("file:"))
+                        {
+                            SSLSymbol.Text = "\xE8B7";
+                            SSLToolTip.Content = $"Local or shared file";
+                            ContinueUrlCheck = false;
+                        }
+                    }
+                    if (ContinueUrlCheck)
+                    {
+                        if (Utils.IsInteralProtocol(CurrentBrowser.Address))
+                        {
+                            SSLSymbol.Text = "\xE8BE";
+                            SSLToolTip.Content = $"Secure SLBr Page";
+                        }
+                        else if (Utils.IsProtocolNotHttp(CurrentBrowser.Address))
+                        {
+                            SSLSymbol.Text = "\xE72E";
+                            SSLToolTip.Content = $"{CurrentBrowser.Address} is a protocol and is considered secure";
+                        }
+                        else
+                        {
+                            SSLSymbol.Text = "\xE783";
+                            SSLToolTip.Content = $"Unknown";
+                        }
+                    }*/
+                    if (!IsSwitchTab)
+                    {
+                        //CurrentBrowser.Reload();
+                        ReloadButton.Content = CurrentBrowser.IsLoaded ? "\xE711" : "\xE72C";
+                        WebsiteLoadingProgressBar.IsEnabled = CurrentBrowser.IsLoaded;
+                        WebsiteLoadingProgressBar.IsIndeterminate = CurrentBrowser.IsLoaded;
+                        /*if (CurrentBrowser.IsLoaded)
+                        {
+                            ReloadButton.Content = "\xE711";
+                            WebsiteLoadingProgressBar.IsEnabled = true;
+                            WebsiteLoadingProgressBar.IsIndeterminate = true;
+                        }
+                        else
+                        {
+                            ReloadButton.Content = "\xE72C";
+                            WebsiteLoadingProgressBar.IsEnabled = false;
+                            WebsiteLoadingProgressBar.IsIndeterminate = false;
+                        }*/
+                        /*if (bool.Parse(MainSave.Get("BlockKeywords")) && MainSave.Get("BlockedKeywords").Length > 0)
+                        {
+                            string[] BlockedKeywords = MainSave.Get("BlockedKeywords").Split(',');
+                            bool ContainsKeyword = false;
+                            for (int i = 0; i < BlockedKeywords.Length; i++)
+                            {
+                                ContainsKeyword = CurrentBrowser.Source.AbsoluteUri.ToLower().Contains(BlockedKeywords[i]) || (CurrentBrowser.Title != null && CurrentBrowser.Title.ToLower().Contains(BlockedKeywords[i]));
+                                if (ContainsKeyword)
+                                {
+                                    CurrentBrowser.Navigate(Utils.FixUrl(MainSave.Get("BlockRedirect"), bool.Parse(MainSave.Get("Weblight"))));
+                                    break;
+                                }
+                            }
+                        }*/
+                    }
+                    else
+                    {
+                        BackButton.IsEnabled = CurrentBrowser.CanGoBack;
+                        ForwardButton.IsEnabled = CurrentBrowser.CanGoForward;
+                    }
+                    if (FavouriteExists(AddressBox.Tag.ToString()) != -1)
+                        FavouriteButton.Content = "\xEB52";
+                    else
+                        FavouriteButton.Content = "\xEB51";
+                    if (HistoryListMenuItem.Items.Count > 0 && ((MenuItem)HistoryListMenuItem.Items[0]).Header.ToString() == CurrentBrowser.Source.AbsoluteUri)
+                        return;
+                    string Address = Utils.FixUrl(CurrentBrowser.Source.AbsoluteUri, bool.Parse(MainSave.Get("Weblight")));
+                    //if (Address.Contains("googleweblight.com/?lite_url=") && bool.Parse(MainSave.Get("Weblight")))
+                    //    Address = Address.Replace("googleweblight.com/?lite_url=", "");
+                    MenuItem _HistoryMenuItem = CreateMenuItemForList(Address, $"12<,>{Address}", new RoutedEventHandler(ButtonAction));
+                    HistoryListMenuItem.Items.Insert(0, _HistoryMenuItem);
+                    //if (HistoryListMenuItem.Items.Contains(CurrentBrowser.Address))
+                    //{
+                    //    HistoryListMenuItem.Items.RemoveAt(HistoryListMenuItem.Items.IndexOf(CurrentBrowser.Address));
+                    //}
+                    if (HistoryListMenuItem.Items.Count > 25)
+                        HistoryListMenuItem.Items.RemoveAt(25);
+                }));
                 return;
+            }
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
                 /*TabItem Tab = Tabs.SelectedItem as TabItem;
@@ -2040,6 +2574,8 @@ namespace SLBr
                 {
                     BackButton.IsEnabled = CurrentBrowser.CanGoBack;
                     ForwardButton.IsEnabled = CurrentBrowser.CanGoForward;
+                    if (IsUtilityContainerOpen)
+                        Inspector.Address = "localhost:8088/json/list";
                 }
                 if (FavouriteExists(AddressBox.Tag.ToString()) != -1)
                     FavouriteButton.Content = "\xEB52";
@@ -2060,6 +2596,119 @@ namespace SLBr
                     HistoryListMenuItem.Items.RemoveAt(25);
             }));
         }
+        private void UnloadTab(TabItem Tab, bool IgnoreIfSound = false)
+        {
+            ChromiumWebBrowser _Browser = GetBrowser(Tab);
+            if (_Browser != null && _Browser.IsBrowserInitialized)
+            {
+                if (IgnoreIfSound)//PROBLEM: This checks if the address is a known music website. I need help on detecting sound.
+                {
+                    string CleanedAddress = Utils.CleanUrl(_Browser.Address);
+                    if (_Browser.GetBrowser().CanGoBack || (CleanedAddress.Contains("youtube.com/watch")
+                        || CleanedAddress.Contains("meet.google.com/")
+                        || CleanedAddress.Contains("spotify.com/track/")
+                        || CleanedAddress.Contains("soundcloud.com")
+                        || CleanedAddress.Contains("dailymotion.com/video/")
+                        || CleanedAddress.Contains("vimeo.com")
+                        || CleanedAddress.Contains("twitch.tv/")
+                        || CleanedAddress.Contains("bitchute.com/video/")
+                        || CleanedAddress.Contains("ted.com/talks/"))
+                        )
+                    {
+                        return;
+                    }
+                }
+                string Url = _Browser.Address;
+                _Browser.Dispose();
+                Tab.Content = null;
+                ApplyToTab(CreateWebBrowser(Url), Tab, true);
+            }
+        }
+        private void ApplyToTab(ChromiumWebBrowser _Browser, TabItem Tab, bool Configure)
+        {
+            if (Configure)
+                /*_Browser = */
+                this.Configure(_Browser, Tab);
+            Tab.Content = _Browser;
+        }
+
+        #region IE
+        private void IE_Loaded(object sender, RoutedEventArgs e)
+        {
+            var _Browser = sender as WebBrowser;
+            _Browser.Loaded -= IE_Loaded;
+            SuppressIEScriptErrors(_Browser, true);
+        }
+        private void SuppressIEScriptErrors(WebBrowser _Browser, bool Hide)
+        {
+            if (!_Browser.IsLoaded)
+            {
+                _Browser.Loaded += IE_Loaded; // in case we are too early
+                return;
+            }
+            FieldInfo fiComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (fiComWebBrowser == null) return;
+            object objComWebBrowser = fiComWebBrowser.GetValue(_Browser);
+            if (objComWebBrowser == null) return;
+            objComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, new object[] { Hide });
+            /*var fiComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (fiComWebBrowser == null) return;
+            var objComWebBrowser = fiComWebBrowser.GetValue(wb);
+            if (objComWebBrowser == null)
+            {
+                wb.Loaded += (o, s) => HideIEScriptErrors(wb, hide); //In case we are to early
+                return;
+            }
+            objComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, new object[] { hide });*/
+        }
+        private void IE_Navigated(WebBrowser _Browser, NavigationEventArgs e, TabItem _Tab)
+        {
+        }
+        private void IE_LoadCompleted(object sender, NavigationEventArgs e, TabItem Tab)
+        {
+            WebBrowser _Browser = sender as WebBrowser;
+            string ArgsUrl = e.Uri.AbsoluteUri;
+            IsInformationSet = true;
+            //int HttpStatusCode = e.WebResponse.ContentType;
+            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+            {
+                Tab.Header = bool.Parse(MainSave.Get("FullAddress")) ? e.Uri.AbsoluteUri : Utils.CleanUrl(e.Uri.AbsoluteUri);
+                if (AddressBox.Text != (bool.Parse(MainSave.Get("FullAddress")) ? e.Uri.AbsoluteUri : Utils.CleanUrl(e.Uri.AbsoluteUri)) && _Browser == GetIEBrowser())
+                {
+                    if (CanChangeAddressBox())
+                        AddressBox.Text = bool.Parse(MainSave.Get("FullAddress")) ? e.Uri.AbsoluteUri : Utils.CleanUrl(e.Uri.AbsoluteUri);
+                    AddressBox.Tag = e.Uri.AbsoluteUri;
+                }
+                Image _Image = (Image)Tab.Template.FindName("Icon", Tab);
+                System.Windows.Shapes.Path _DefaultTabIcon = (System.Windows.Shapes.Path)Tab.Template.FindName("TabIcon", Tab);
+                /*if (_DefaultTabIcon != null && _Image != null)
+                {
+                    try
+                    {
+                        var bytes = TinyDownloader.DownloadData("https://www.google.com/s2/favicons?domain=" + e.Uri.Host);
+                        var ms = new MemoryStream(bytes);
+
+                        var bi = new BitmapImage();
+                        bi.BeginInit();
+                        bi.StreamSource = ms;
+                        bi.EndInit();
+
+                        _DefaultTabIcon.Visibility = Visibility.Collapsed;
+                        _Image.Visibility = Visibility.Visible;
+                        _Image.Source = bi;
+                    }
+                    catch
+                    {
+                        _DefaultTabIcon.Visibility = Visibility.Visible;
+                        _Image.Visibility = Visibility.Collapsed;
+                    }
+                }*/
+                _DefaultTabIcon.Visibility = Visibility.Visible;
+                BackButton.IsEnabled = _Browser.CanGoBack;
+                ForwardButton.IsEnabled = _Browser.CanGoForward;
+            }));
+        }
+        #endregion
 
         #region CEF
         private void OnWebBrowserStatusMessage(object sender, StatusMessageEventArgs e)
@@ -2093,13 +2742,7 @@ namespace SLBr
                 ChromiumWebBrowser _Browser = (ChromiumWebBrowser)sender;
                 TabItem Tab = GetCurrentTab();
                 ChromiumWebBrowser CurrentBrowser = GetBrowser();
-                if (CurrentBrowser != _Browser)
-                    return;
-                if (string.IsNullOrEmpty(CurrentBrowser.Address))
-                    CurrentBrowser.Address = Utils.FixUrl(MainSave.Get("Homepage"), bool.Parse(MainSave.Get("Weblight")));
-                if (CanChangeAddressBox())
-                    AddressBox.Text = bool.Parse(MainSave.Get("FullAddress")) ? CurrentBrowser.Address : Utils.CleanUrl(CurrentBrowser.Address);
-                AddressBox.Tag = CurrentBrowser.Address;
+                
             }));
         }
         private void LoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
@@ -2174,8 +2817,13 @@ namespace SLBr
                     ClosePrompt(i);
             }
         }
-
         #region AddressBox
+        private bool CanChangeAddressBox()
+        {
+            string Text = AddressBox.Text.Trim();
+            return !AddressBoxFocused || !Text.Contains(" ");
+        }
+
         private void AddressBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (IsIEMode)
@@ -2204,32 +2852,39 @@ namespace SLBr
             ChromiumWebBrowser _Browser = GetBrowser();
             if (_Browser == null)
                 return;
-            if (e.Key == Key.Enter && AddressBox.Text.Trim().Length > 0)
+            if (AddressBox.Text.Trim().Length > 0)
             {
-                /*if (AddressBox.Text.StartsWith("search:"))
-                    _Browser.Address = Utils.FixUrl(string.Format(MainSave.Get("Search_Engine"), AddressBox.Text.Substring(7).Trim().Replace(" ", "+")), bool.Parse(MainSave.Get("Weblight")));
-                else if (AddressBox.Text.StartsWith("mailto:"))
-                    Process.Start(AddressBox.Text);
-                else if (IsChromiumMode && AddressBox.Text.StartsWith("chrome:"))
-                    _Browser.Address = AddressBox.Text;
-                else if (!IsChromiumMode && AddressBox.Text.StartsWith("cef:"))
-                    _Browser.Address = "chrome:" + AddressBox.Text.Substring(4);
-                else if (Utils.IsSystemUrl(AddressBox.Text))
-                    _Browser.Address = AddressBox.Text;
-                else if (AddressBox.Text.Contains("."))
+                if (e.Key == Key.Enter)
                 {
-                    if (AddressBox.Text.StartsWith("https://") || AddressBox.Text.StartsWith("http://"))
-                        _Browser.Address = Utils.FixUrl(AddressBox.Text.Trim().Replace(" ", string.Empty), bool.Parse(MainSave.Get("Weblight")));
+                    /*if (AddressBox.Text.StartsWith("search:"))
+                        _Browser.Address = Utils.FixUrl(string.Format(MainSave.Get("Search_Engine"), AddressBox.Text.Substring(7).Trim().Replace(" ", "+")), bool.Parse(MainSave.Get("Weblight")));
+                    else if (AddressBox.Text.StartsWith("mailto:"))
+                        Process.Start(AddressBox.Text);
+                    else if (IsChromiumMode && AddressBox.Text.StartsWith("chrome:"))
+                        _Browser.Address = AddressBox.Text;
+                    else if (!IsChromiumMode && AddressBox.Text.StartsWith("cef:"))
+                        _Browser.Address = "chrome:" + AddressBox.Text.Substring(4);
+                    else if (Utils.IsSystemUrl(AddressBox.Text))
+                        _Browser.Address = AddressBox.Text;
+                    else if (AddressBox.Text.Contains("."))
+                    {
+                        if (AddressBox.Text.StartsWith("https://") || AddressBox.Text.StartsWith("http://"))
+                            _Browser.Address = Utils.FixUrl(AddressBox.Text.Trim().Replace(" ", string.Empty), bool.Parse(MainSave.Get("Weblight")));
+                        else
+                            _Browser.Address = Utils.FixUrl("http://" + AddressBox.Text.Trim().Replace(" ", string.Empty), bool.Parse(MainSave.Get("Weblight")));
+                    }
                     else
-                        _Browser.Address = Utils.FixUrl("http://" + AddressBox.Text.Trim().Replace(" ", string.Empty), bool.Parse(MainSave.Get("Weblight")));
+                        _Browser.Address = string.Format(MainSave.Get("Search_Engine"), AddressBox.Text.Trim().Replace(" ", "+"));
+                    if (AddressBox.Text.ToLower().Contains("cefsharp.browsersubprocess"))
+                        MessageBox.Show("cefsharp.browsersubprocess is necessary for the browser engine to function accordingly.");*/
+                    string Url = Utils.FilterUrlForBrowser(AddressBox.Text, MainSave.Get("Search_Engine"), bool.Parse(MainSave.Get("Weblight"))/*, IsChromiumMode*/);
+                    if (!Utils.IsProgramUrl(Url))
+                        _Browser.Address = Url;
                 }
-                else
-                    _Browser.Address = string.Format(MainSave.Get("Search_Engine"), AddressBox.Text.Trim().Replace(" ", "+"));
-                if (AddressBox.Text.ToLower().Contains("cefsharp.browsersubprocess"))
-                    MessageBox.Show("cefsharp.browsersubprocess is necessary for the browser engine to function accordingly.");*/
-                string Url = Utils.FilterUrlForBrowser(AddressBox.Text, MainSave.Get("Search_Engine"), bool.Parse(MainSave.Get("Weblight")), IsChromiumMode);
-                if (!Utils.IsProgramUrl(Url))
-                    _Browser.Address = Url;
+                else if (bool.Parse(MainSave.Get("AutoSuggestions")) && (e.Key >= Key.A && e.Key <= Key.Z)/* || (e.Key >= Key.D0 && e.Key <= Key.D9) || (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)*/ && Utils.CheckForInternetConnection(100))
+                {
+                    SetSuggestions();
+                }
             }
         }
         private void AddressBox_GotFocus(object sender, RoutedEventArgs e)
@@ -2297,27 +2952,81 @@ namespace SLBr
                 _Browser.StopFinding(true);
             }
         }
-
-        DispatcherTimer UnloadAllTabsTimer;
-
         private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            CloseClosableMessages();
-            BrowserChanged(sender, true);
-            TabItem Tab = (TabItem)Tabs.SelectedItem;
-            if (Tab != null)
+            if (IsProcessLoaded)
             {
-                if (Tab.Tag != null && Tab.Tag.ToString().Contains("Unpinned"))
-                    Tab.Tag = Tabs.Items.IndexOf(Tab);
-                if (Tab.Name == "SLBrSettingsTab")
-                    AddressBox.Text = string.Empty;
+                CloseClosableMessages();
+                BrowserChanged(sender, true);
+                TabItem Tab = (TabItem)Tabs.SelectedItem;
+                if (Tab != null)
+                {
+                    /*if (Tab.Tag != null && Tab.Tag.ToString().Contains("Unpinned"))
+                        Tab.Tag = Tabs.Items.IndexOf(Tab);*/
+                    if (Tab.Name == "SLBrSettingsTab")
+                    {
+                        if (IsUtilityContainerOpen)
+                            UseInspector();
+                        AddressBox.Text = string.Empty;
+                    }
+                    else
+                    {
+                        //UnloadTabsTime = 0;
+                        //PreviousTabIndex = Tabs.SelectedIndex;
+                        FrameworkElement _Element = (FrameworkElement)Tab.Content;
+                        Thickness _Margin = _Element.Margin;
+                        if (IsUtilityContainerOpen)
+                            _Margin.Right = 500;
+                        else
+                            _Margin.Right = 0;
+                        _Element.Margin = _Margin;
+                    }
+                }
             }
         }
-
         private void FavouriteScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             FavouriteScrollViewer.ScrollToHorizontalOffset(FavouriteScrollViewer.HorizontalOffset - e.Delta / 3);
             e.Handled = true;
+        }
+        private void SetSuggestions()
+        {
+            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+            {
+                Suggestions.Clear();
+                /*for (int i = 0; i < Suggestions.Count; i++)
+                {
+                    Suggestions.RemoveAt(i);
+                }*/
+                //SuggestionsMenu.Items.Clear();
+                //https://suggestqueries.google.com/complete/search?client=chrome&q=
+                //http://suggestqueries.google.com/complete/search?output=firefox&q=
+                if (!string.IsNullOrWhiteSpace(AddressBox.Text))
+                {
+                    string TextToScan = Utils.CleanUrl(AddressBox.Text)/*.Replace("www.", "")*/;
+                    var url = new Uri("https://suggestqueries.google.com/complete/search?client=chrome&q=" + TextToScan);
+                    //var url = new Uri("https://canary.discord.com/api/v10/gifs/suggest?q=" + TextToScan);
+                    var request = (HttpWebRequest)WebRequest.Create(url);
+                    var response = (HttpWebResponse)request.GetResponse();
+                    var responseText = (new StreamReader(response.GetResponseStream())).ReadToEnd();
+                    var items = (from each in responseText.Split(',')
+                                 select each.Trim('[', ']', '\"', ':', '{', '}')).ToArray<string>();
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        if (i < 6)
+                        {
+                            if (items[i].Contains(AddressBox.Text))
+                            {
+                                Suggestions.Add(new Favourite { Name = items[i] });
+                                //var _MenuItem = new MenuItem();
+                                //_MenuItem.FontFamily = new FontFamily();
+                                //_MenuItem.Header = items[i];
+                                //SuggestionsMenu.Items.Add(_MenuItem);
+                            }
+                        }
+                    }
+                }
+            }));
         }
     }
 }

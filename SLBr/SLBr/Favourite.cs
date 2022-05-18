@@ -33,8 +33,18 @@ namespace SLBr
                 RaisePropertyChanged("Arguments");
             }
         }
+        public string Address
+        {
+            get { return DUrl; }
+            set
+            {
+                DUrl = value;
+                RaisePropertyChanged("Url");
+            }
+        }
 
-        public string DName { get; set; }
-        public string DArguments { get; set; }
+        private string DName { get; set; }
+        private string DArguments { get; set; }
+        private string DUrl { get; set; }
     }
 }

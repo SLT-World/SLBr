@@ -33,7 +33,7 @@ namespace SLBr
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            DarkTheme(bool.Parse(MainWindow.Instance.MainSave.Get("DarkTheme")));
+            ApplyTheme(MainWindow.Instance.GetCurrentTheme());
         }
 
         //SUPPORT FOR MULTI NEWS LIKE YANDEX, GOOGLE ETC
@@ -57,6 +57,7 @@ namespace SLBr
         {
             XmlDataProvider XML = Resources["NewsRSSFeed"] as XmlDataProvider;
             XML.Refresh();
+            ApplyTheme(MainWindow.Instance.GetCurrentTheme());
         }
 
         private void Navigate(object sender, RoutedEventArgs e)
@@ -68,25 +69,13 @@ namespace SLBr
                 MainWindow.Instance.Navigate(false, _XmlNode.InnerText);
             }));
         }
-
-        public void DarkTheme(bool Toggle)
+        public void ApplyTheme(Theme _Theme)
         {
-            if (Toggle)
-            {
-                Resources["PrimaryBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#202225"));
-                Resources["FontBrush"] = new SolidColorBrush(Colors.White);
-                Resources["BorderBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#36393F"));
-                Resources["UnselectedTabBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2F3136"));
-                Resources["ControlFontBrush"] = new SolidColorBrush(Colors.Gainsboro);
-            }
-            else
-            {
-                Resources["PrimaryBrush"] = new SolidColorBrush(Colors.White);
-                Resources["FontBrush"] = new SolidColorBrush(Colors.Black);
-                Resources["BorderBrush"] = new SolidColorBrush(Colors.Gainsboro);
-                Resources["UnselectedTabBrush"] = new SolidColorBrush(Colors.WhiteSmoke);
-                Resources["ControlFontBrush"] = new SolidColorBrush(Colors.Gray);
-            }
+            Resources["PrimaryBrush"] = new SolidColorBrush(_Theme.PrimaryColor);
+            Resources["FontBrush"] = new SolidColorBrush(_Theme.FontColor);
+            Resources["BorderBrush"] = new SolidColorBrush(_Theme.BorderColor);
+            Resources["UnselectedTabBrush"] = new SolidColorBrush(_Theme.UnselectedTabColor);
+            Resources["ControlFontBrush"] = new SolidColorBrush(_Theme.ControlFontColor);
         }
     }
 }

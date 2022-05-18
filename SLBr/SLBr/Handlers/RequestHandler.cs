@@ -1,6 +1,7 @@
 ﻿// Copyright © 2022 SLT World. All rights reserved.
 // Use of this source code is governed by a GNU license that can be found in the LICENSE file.
 using CefSharp;
+using CefSharp.Wpf;
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows;
@@ -9,8 +10,15 @@ namespace SLBr
 {
     public class RequestHandler : IRequestHandler
 	{
+		public bool AdBlock;
+		public bool TrackerBlock;
+
+		//string Username;
+		//string Password;
+
 		public bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
 		{
+			//callback.Continue(Username, Password);
 			return false;
 		}
 
@@ -51,7 +59,7 @@ namespace SLBr
 			{
 				Application.Current.Dispatcher.BeginInvoke(new Action(delegate
 				{
-					MainWindow.Instance.CreateTab(MainWindow.Instance.CreateWebBrowser(targetUrl), false, MainWindow.Instance.Tabs.SelectedIndex + 1, true);
+					MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser(targetUrl), false, MainWindow.Instance.Tabs.SelectedIndex + 1, true);
 				}));
 				return true;
 			}
@@ -79,7 +87,24 @@ namespace SLBr
 
 		public void OnRenderProcessTerminated(IWebBrowser browserControl, IBrowser browser, CefTerminationStatus status)
 		{
-			browserControl.Load("slbr://renderprocesscrashed");
+			if (Utils.CheckForInternetConnection())
+				browser.Reload(true);
+			else
+			{
+				Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+				{
+					ChromiumWebBrowser _ChromiumWebBrowser = (ChromiumWebBrowser)browserControl;
+					//MessageBox.Show(browserControl.Address);
+					//_ChromiumWebBrowser.Load($"slbr://renderprocesscrashed?s={browserControl.Address}");
+					_ChromiumWebBrowser.Address = $"slbr://renderprocesscrashed?s={browserControl.Address}";
+				}));
+			}
+			/*browserControl.LoadHtml("<html>renderprocesscrashed</html>");
+
+			Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+			{
+				browserControl.LoadHtml("<html>renderprocesscrashed</html>", browserControl.Address);
+			}));*/
 		}
 
 		public void OnRenderViewReady(IWebBrowser browserControl, IBrowser browser)
@@ -88,7 +113,7 @@ namespace SLBr
 
 		public IResourceRequestHandler GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
 		{
-			var _ResourceRequestHandler = new ResourceRequestHandler();
+			var _ResourceRequestHandler = new ResourceRequestHandler(AdBlock, TrackerBlock);
 			return _ResourceRequestHandler;
 		}
 

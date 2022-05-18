@@ -3,6 +3,8 @@
 using CefSharp;
 using System;
 using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Input;
 
 namespace SLBr
 {
@@ -27,7 +29,7 @@ namespace SLBr
 
     class KeyboardHandler : IKeyboardHandler
     {
-        List<HotKey> Keys = new List<HotKey>();
+        HashSet<HotKey> Keys = new HashSet<HotKey>();
 
         public void AddKey(Action Function, int _KeyCode, bool HasControl = false, bool HasShift = false, bool HasAlt = false)
         {
@@ -38,28 +40,30 @@ namespace SLBr
         {
             if (type == KeyType.RawKeyDown)
             {
-                bool HasControl = modifiers == CefEventFlags.ControlDown;
-                bool HasShift = modifiers == CefEventFlags.ShiftDown;
-                bool HasAlt = modifiers == CefEventFlags.AltDown;
-
-                //MessageBox.Show($"{windowsKeyCode},{HasControl},{HasShift},{HasAlt}");
-                foreach (HotKey Key in Keys)
+                MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate
                 {
-                    //MessageBox.Show($"{Key.KeyCode},{Key.Control},{Key.Shift},{Key.Alt}");
-                    if (Key.KeyCode == windowsKeyCode && Key.Control == HasControl && Key.Shift == HasShift && Key.Alt == HasAlt)
+                    bool HasControl = modifiers == CefEventFlags.ControlDown;
+                    bool HasShift = modifiers == CefEventFlags.ShiftDown;
+                    bool HasAlt = modifiers == CefEventFlags.AltDown;
+                    int WPFKeyCode = (int)KeyInterop.KeyFromVirtualKey(windowsKeyCode);
+                    //MessageBox.Show($"{windowsKeyCode},{nativeKeyCode}");
+                    foreach (HotKey Key in Keys)
                     {
-                        MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate
+                        //MessageBox.Show($"{Key.KeyCode},{Key.Control},{Key.Shift},{Key.Alt}");
+                        if (Key.KeyCode == WPFKeyCode && Key.Control == HasControl && Key.Shift == HasShift && Key.Alt == HasAlt)
                         {
+                            //MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate
+                            //{
                             Key.Callback();
-                        }));
+                            //}));
+                            break;
+                        }
                     }
-                }
-
-                //MessageBox.Show($"{windowsKeyCode},{HasControl},{HasShift},{HasAlt}");
-
+                    //MessageBox.Show($"{windowsKeyCode},{HasControl},{HasShift},{HasAlt}");
+                }));
             }
 
-            return false;
+            return true;
         }
 
         public bool OnPreKeyEvent(IWebBrowser chromiumWebBrowser, IBrowser browser, KeyType type, int windowsKeyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey, ref bool isKeyboardShortcut)
