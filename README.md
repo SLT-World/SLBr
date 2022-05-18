@@ -37,6 +37,7 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 - [x] Parallel downloading
 - [x] Built-in News
 - [x] Google Weblight
+- [x] Self Host Chromium
 
 # Run the source code
 **Setup**
