@@ -2,8 +2,8 @@
   
   # SLBr
   
-  The browser that prioritizes a faster web<br/>
-  Browse the web with a fast, lightweight web browser.
+  **The browser that prioritizes a faster web**<br/>
+  **Browse the web with a fast, lightweight web browser.**
 </div>
 
 ## Based on the Chromium platform
