@@ -1,21 +1,22 @@
-# SLBr
-The browser that prioritizes a faster web<br/>
-Browse the web with a fast, lightweight web browser.
+<div align="center">
+  
+  # SLBr
+  
+  The browser that prioritizes a faster web<br/>
+  Browse the web with a fast, lightweight web browser.
+</div>
 
-# Based on the Chromium platform
+## Based on the Chromium platform
 
 With the Chromium browser engine, SLBr has access to Chromium's useful features that can be implemented easily.
 
-# System Requirements
+## System Requirements
 - Microsoft Visual C++ 2019
 - .NET 5.0
 - Segoe MDL2 Assets
 - Windows 7 and above
 
-# Screenshots
-![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
-
-# Roadmap
+## Roadmap
 - [x] Google Account Sign-In
 - [x] SafeBrowsing API
 - [x] Javascript Binding
@@ -39,7 +40,10 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 - [x] Google Weblight
 - [x] Self Host Chromium
 
-# Run the source code
+## Screenshots
+![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
+
+## Run the source code
 **Setup**
 
 1. If you haven't installed visual studio yet (NOT VISUAL STUDIO CODE), install it.
