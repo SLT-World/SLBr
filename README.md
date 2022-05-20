@@ -12,7 +12,7 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 
 ## System Requirements
 - Microsoft Visual C++ 2019
-- .NET 5.0
+- .NET 6.0
 - Segoe MDL2 Assets
 - Windows 7 and above
 
