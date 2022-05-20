@@ -149,7 +149,7 @@ namespace SLBr
 
         string ReleaseYear = "2022";
         string ReleaseMonth = "5";
-        string ReleaseDay = "18";
+        string ReleaseDay = "20";
 
         bool IsInformationSet;
         public string ChromiumVersion;
@@ -452,11 +452,11 @@ namespace SLBr
                 if (!MainSave.Has("FavouritesBar"))
                     MainSave.Set("FavouritesBar", true.ToString());
                 if (!MainSave.Has("AdBlock"))
-                    AdBlock(IsPrivateMode);
+                    AdBlock(true);
                 else
                     AdBlock(bool.Parse(MainSave.Get("AdBlock")));
                 if (!MainSave.Has("TrackerBlock"))
-                    TrackerBlock(IsPrivateMode);
+                    TrackerBlock(true);
                 else
                     TrackerBlock(bool.Parse(MainSave.Get("TrackerBlock")));
                 if (!MainSave.Has("RenderMode"))
@@ -467,7 +467,7 @@ namespace SLBr
                     {
                         if (ProcessorID.Contains(Processor))
                         {
-                            _RenderMode = Processor;
+                            _RenderMode = "Software";
                         }
                     }
                     SetRenderMode(_RenderMode, false);
@@ -479,7 +479,7 @@ namespace SLBr
                 if (!MainSave.Has("DoNotTrack"))
                     MainSave.Set("DoNotTrack", true.ToString());
                 if (!MainSave.Has("AutoSuggestions"))
-                    SetAutoSuggestions(false);
+                    SetAutoSuggestions(true);
                 else
                     SetAutoSuggestions(bool.Parse(MainSave.Get("AutoSuggestions")));
                 if (!MainSave.Has("Weblight"))
@@ -595,6 +595,10 @@ namespace SLBr
             GCTimer.Start();
             if (!IsIEMode)
             {
+                SuggestionsTimer = new DispatcherTimer();
+                SuggestionsTimer.Tick += SuggestionsTimer_Tick;
+                SuggestionsTimer.Interval = new TimeSpan(0, 0, 1);
+
                 Inspector = new ChromiumWebBrowser("localhost:8088/json/list");
                 ConfigureInspectorBrowser();
                 UtilityContainer.Children.Add(Inspector);
@@ -624,6 +628,13 @@ namespace SLBr
             SSLToolTip.Content = "APPLYTEMPLATE";
             SSLToolTip.IsOpen = false;*/
         }
+
+        private void SuggestionsTimer_Tick(object? sender, EventArgs e)
+        {
+            SuggestionsTimer.Stop();
+            SetSuggestions();
+        }
+
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (IsProcessLoaded)
@@ -824,13 +835,13 @@ namespace SLBr
             //settings.CefCommandLineArgs.Add("enable-smooth-scrolling");
             //settings.CefCommandLineArgs.Add("enable-overlay-scrollbar");
 
-            //settings.CefCommandLineArgs.Add("disable-threaded-scrolling");
-            //settings.CefCommandLineArgs.Add("disable-smooth-scrolling");
-            //settings.CefCommandLineArgs.Add("disable-features", "AsyncWheelEvents,TouchpadAndWheelScrollLatching");
+            settings.CefCommandLineArgs.Add("disable-threaded-scrolling");
+            settings.CefCommandLineArgs.Add("disable-smooth-scrolling");
+            settings.CefCommandLineArgs.Add("disable-features", "AsyncWheelEvents,TouchpadAndWheelScrollLatching");
 
             settings.CefCommandLineArgs.Add("canvas-oop-rasterization");
 
-            //settings.CefCommandLineArgs.Add("off-screen-frame-rate", "30");
+            settings.CefCommandLineArgs.Add("off-screen-frame-rate", "40");
 
             settings.CefCommandLineArgs.Add("enable-tile-compression");
 
@@ -951,7 +962,7 @@ namespace SLBr
 
             //settings.CefCommandLineArgs.Add("disable-features=IsolateOrigins,process-per-tab,site-per-process,process-per-site");
 
-            //settings.CefCommandLineArgs["disable-features"] += ",SameSiteByDefaultCookies";//Cross Site Request
+            //settings.CefCommandLineArgs["disable-features"] += ",SameSiteByDefaultCookies,CookiesWithoutSameSiteMustBeSecure";//Cross Site Request
 
             if (IsDeveloperMode)
                 settings.CefCommandLineArgs.Add("ignore-gpu-blocklist");//Uncomment this if CPU is blacklisted or not utilized for SLBr's use on your device
@@ -2883,7 +2894,9 @@ namespace SLBr
                 }
                 else if (bool.Parse(MainSave.Get("AutoSuggestions")) && (e.Key >= Key.A && e.Key <= Key.Z)/* || (e.Key >= Key.D0 && e.Key <= Key.D9) || (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)*/ && Utils.CheckForInternetConnection(100))
                 {
-                    SetSuggestions();
+                    SuggestionsTimer.Stop();
+                    SuggestionsTimer.Start();
+                    //SetSuggestions();
                 }
             }
         }
@@ -2989,6 +3002,7 @@ namespace SLBr
             FavouriteScrollViewer.ScrollToHorizontalOffset(FavouriteScrollViewer.HorizontalOffset - e.Delta / 3);
             e.Handled = true;
         }
+        DispatcherTimer SuggestionsTimer;
         private void SetSuggestions()
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate

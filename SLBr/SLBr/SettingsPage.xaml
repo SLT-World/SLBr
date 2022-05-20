@@ -98,7 +98,7 @@
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="FullAddressCheckBox" Click="FullAddressCheckBox_Click" Margin="5" Content="Show full address"/>
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ShowTabsCheckBox" Click="ShowTabsCheckBox_Click" Margin="5" Content="Show tabs"/>
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ShowFavouritesBarCheckBox" Click="ShowFavouritesBarCheckBox_Click" Margin="5" Content="Show favourites bar"/>
-                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ShowSuggestionsCheckBox" Click="ShowSuggestionsCheckBox_Click" Margin="5" Content="Show suggestions (Performance might be impacted)"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ShowSuggestionsCheckBox" Click="ShowSuggestionsCheckBox_Click" Margin="5" Content="Show suggestions"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">

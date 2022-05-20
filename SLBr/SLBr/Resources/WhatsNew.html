@@ -59,201 +59,24 @@ Use of this source code is governed by a GNU license that can be found in the LI
         </p>
         <h2>Release Notes</h2>
         <table>
-            <!--Swiftshader has been removed-->
             <tr>
                 <th>Function/Feature Implementation</th><!--Updates-->
                 <th>Status</th><!--Work In Progress, Passed, Removed, On Hold-->
             </tr>
             <tr>
-                <td>Built-In Tracker & Ad Blocker</td>
+                <td>Re-aligned top controls</td>
                 <td>Passed</td>
             </tr>
             <tr>
-                <td>More features made available to Internet Explorer mode</td>
+                <td>Suggestions will only be set after the address box is finished typing</td>
                 <td>Passed</td>
             </tr>
             <tr>
-                <td>Silenced Internet Explorer mode's constant stream of script error popups</td>
+                <td>Fixed render mode problem</td>
                 <td>Passed</td>
             </tr>
             <tr>
-                <td>Changed the version of the Built-In WebBrowser emulation to IE 11</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Removed Cannot Connect Response Error since it caused annoyances when using the Inspector</td>
-                <td>Removed</td>
-            </tr>
-            <tr>
-                <td>Added docked Inspector</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Added tab rearrangement, drag by holding the tab with the middle button/scrollwheel</td>
-                <td>Work In Progress</td>
-            </tr>
-            <tr>
-                <td>Removed pin button with the arrival of tab rearrangement</td>
-                <td>Removed</td>
-            </tr>
-            <tr>
-                <td>Improved the enforcement of a single instance</td>
-                <td>Work In Progress</td>
-            </tr>
-            <tr>
-                <td>Code Cleanup</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>New style for the "More options" menu and Tooltip</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Resolved crashes caused by internet connection</td> <!--(Unfortunately, this fix didn't work out on .NET Core, it only works on .NET Standard)-->
-                <td>Work In Progress</td>
-            </tr>
-            <tr>
-                <td>Certain features are enabled for default in Private mode</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>SLBr will release unused memory with the garbage collector every 30 seconds</td>
-                <td>Work In Progress</td>
-            </tr>
-            <tr>
-                <td>Switched from .NET Standard to the more efficient and widely supported .NET Core 5.0</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Included more chromium flags to code</td>
-                <td>Work In Progress</td>
-            </tr>
-            <tr>
-                <td>What's New page will be opened when SLBr is opened in a different version</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Better Docked Inspector</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Implemented screenshot mechanism</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Fixed Unload Tab feature that caused history to be wiped out</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Fixed back and forward buttons of IE Mode</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Full restyle of Settings</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Split the Tracker & Ad Blocker into two seperate settings for more customization</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Text rendering is no longer affected by the presence of the settings tab</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Renamed certain settings and added new settings</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Removed prompts to settings that has immediate noticable changes to the UI</td>
-                <td>Removed</td>
-            </tr>
-            <tr>
-                <td>Added theme selection and removed dark theme checkbox</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Dark theme now forceable on webpages</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Changed settings tab open index</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Enabled Widevine Cdm Support</td>
-                <td>Work In Progress</td>
-            </tr>
-            <tr>
-                <td>Added User Data folder for Widevine and spell check dictionaries</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Changed and fixed the download handler</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Private mode no longer sends information to the SafeBrowsing api, therefore SafeBrowsing is disabled</td>
-                <td>Removed</td>
-            </tr>
-            <tr>
-                <td>Customizable render mode</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Enabled QUIC, TCP fast open and SPDY/4</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Enabled expensive background timer throttling</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Added suggestions dropdown</td>
-                <td>Work in progress</td>
-            </tr>
-            <tr>
-                <td>Re-enabled site isolation, trading opt out off for better security and minor affects on user experience on render process terminated</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Enabled heavy ad intervention and privacy mitigations</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Enabled hardware secure decryption</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Enabled simple cache backend</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Auto reload on render process terminated</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>The performance metrics hud will be shown and ad frames will be highlighted on developer mode</td>
-                <td>Passed</td>
-            </tr>
-            <tr>
-                <td>Enabled experimental web features for Developer mode</td>
-                <td>Passed</td>
-            </tr>
-            <!--<tr>
-        <td>Switched chromium engine from external to native Win32 implementation for IME support and better performance (17-5-2022)</td>
-        <td>Passed</td>
-    </tr>
-    <tr>
-        <td>Enabled smooth scrolling</td>
-        <td>Passed</td>
-    </tr>
-    <tr>
-        <td>Link & Image drag preview</td>
-        <td>Passed</td>
-    </tr>-->
-            <tr>
-                <td>Fixed context menu not closing bug</td>
+                <td>Enabled ad & tracker blocker for default</td>
                 <td>Passed</td>
             </tr>
         </table>

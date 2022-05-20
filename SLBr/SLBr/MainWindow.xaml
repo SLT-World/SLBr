@@ -31,8 +31,8 @@ Use of this source code is governed by a GNU license that can be found in the LI
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
-                <DockPanel x:Name="ToolBarPanel" Grid.Row="0">
-                    <Menu FontFamily="Segoe MDL2 Assets" Margin="5,0,0,0" Height="23" Width="23" Background="Transparent" BorderBrush="Transparent" Foreground="{DynamicResource ControlFontBrush}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5">
+                    <Menu FontFamily="Segoe MDL2 Assets" Margin="0" Height="23" Width="23" Background="Transparent" BorderBrush="Transparent" Foreground="{DynamicResource ControlFontBrush}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <MenuItem ToolTip="More options" Header="&#xE700;" Height="23" Margin="0,2" Foreground="{DynamicResource ControlFontBrush}" BorderThickness="0">
                             <MenuItem Header="New Tab" FontFamily="Arial" Click="ButtonAction" Tag="3"/>
                             <Separator/>
@@ -199,25 +199,24 @@ Use of this source code is governed by a GNU license that can be found in the LI
                             <MenuItem Header="About" FontFamily="Arial" Click="ButtonAction" Tag="12&lt;,&gt;slbr://about/"/>
                         </MenuItem>
                     </Menu>
-                    <Button x:Name="BackButton" Style="{DynamicResource AddButton}" ToolTip="Back" Content="&#xE72B;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="0"/>
-                    <Button x:Name="ForwardButton" Style="{DynamicResource AddButton}" ToolTip="Forward" Content="&#xE72A;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="1"/>
-                    <Button x:Name="ReloadButton" Margin="0" Height="23" Width="23" ToolTip="Refresh" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE72C;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="2"/>
-                    <Button Style="{DynamicResource AddButton}" Content="&#xE80F;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="10" ToolTip="Home"/>
                     <Button Style="{DynamicResource AddButton}" Content="&#xE710;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="3" ToolTip="New Tab"/>
-                    <Button Margin="0" Height="23" Width="23" ToolTip="Add to favourites" x:Name="FavouriteButton" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xEB51;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="11"/>
+                    <Button x:Name="BackButton" Style="{DynamicResource AddButton}" ToolTip="Back" Content="&#xE72B;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="0"/>
+                    <Button x:Name="ReloadButton" Margin="0" Height="23" Width="23" ToolTip="Refresh" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE72C;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="2"/>
+                    <Button x:Name="ForwardButton" Style="{DynamicResource AddButton}" ToolTip="Forward" Content="&#xE72A;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="1"/>
+                    <Button Style="{DynamicResource AddButton}" Content="&#xE80F;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="10" ToolTip="Home"/>
                     <Grid x:Name="SSLGrid" Margin="0" Height="23" Width="23">
                         <TextBlock x:Name="SSLSymbol" VerticalAlignment="Center" TextAlignment="Center" Text="&#xE72E;" Foreground="{DynamicResource ControlFontBrush}"/>
                         <Grid.ToolTip>
                             <ToolTip x:Name="SSLToolTip"/>
                         </Grid.ToolTip>
                     </Grid>
-                    <DockPanel DockPanel.Dock="Right" Margin="0,5,5,5">
+                    <DockPanel DockPanel.Dock="Right" Margin="0">
                         <Border x:Name="ROCNationalDay" Visibility="Collapsed" Tag="12&lt;,&gt;https://www.president.gov.tw/" MouseDown="MiddleButtonAction" ToolTip="Grand National Day of the Republic of China" Margin="0" Height="23" Width="23" Background="#000096" CornerRadius="25">
                             <Image Source="Resources/Republic_of_China_Star_Only.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Border>
                     </DockPanel>
-                    <TextBox DockPanel.Dock="Right" x:Name="FindTextBox"  Margin="5,5,0,5" Height="23" Width="200" FontFamily="arial" Padding="0,1,0,0" KeyDown="FindTextBox_KeyDown" ToolTip="Find a specific text in this page"/>
-                    <Menu x:Name="SuggestionsDropdown" DockPanel.Dock="Right" FontFamily="Segoe MDL2 Assets" Margin="5,0,0,0" Height="23" Width="23" Background="Transparent" BorderBrush="Transparent" Foreground="{DynamicResource ControlFontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBox DockPanel.Dock="Right" x:Name="FindTextBox" Margin="5,0,0,0" Height="23" Width="200" FontFamily="arial" Padding="0,1,0,0" KeyDown="FindTextBox_KeyDown" ToolTip="Find a specific text in this page"/>
+                    <Menu x:Name="SuggestionsDropdown" DockPanel.Dock="Right" FontFamily="Segoe MDL2 Assets" Margin="0" Height="23" Width="23" Background="Transparent" BorderBrush="Transparent" Foreground="{DynamicResource ControlFontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <MenuItem ToolTip="Suggestions" Header="&#xEA80;" Height="23" Margin="0,2" Foreground="{DynamicResource ControlFontBrush}" BorderThickness="0">
                             <MenuItem.ItemsSource>
                                     <CompositeCollection>
@@ -234,7 +233,8 @@ Use of this source code is governed by a GNU license that can be found in the LI
                             </MenuItem.ItemContainerStyle>
                         </MenuItem>
                     </Menu>
-                    <TextBox x:Name="AddressBox" Margin="5,5,0,5" Height="23" Width="auto" FontFamily="arial" Padding="0,1,0,0" KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" MouseEnter="AddressBox_MouseEnter" MouseLeave="AddressBox_MouseLeave" Tag="Loading..."/>
+                    <Button DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Add to favourites" x:Name="FavouriteButton" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xEB51;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="11"/>
+                    <TextBox x:Name="AddressBox" Margin="5,0" Height="23" Width="auto" FontFamily="arial" Padding="0" KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" MouseEnter="AddressBox_MouseEnter" MouseLeave="AddressBox_MouseLeave" Tag="Loading..."/>
                 </DockPanel>
                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0" x:Name="FavouriteContainer" Height="33" Grid.Row="1" HorizontalAlignment="Stretch">
                     <ScrollViewer x:Name="FavouriteScrollViewer" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden" PreviewMouseWheel="FavouriteScrollViewer_PreviewMouseWheel">

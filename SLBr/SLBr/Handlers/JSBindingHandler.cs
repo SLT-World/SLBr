@@ -27,28 +27,6 @@ namespace SLBr
         }
         public string SayHello(string name) { return $"Hello {name}!"; }
 
-        public void Back()
-        {
-            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-            {
-                MainWindow.Instance.Undo();
-            }));
-        }
-        public void Forward()
-        {
-            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-            {
-                MainWindow.Instance.Redo();
-            }));
-        }
-        public void Refresh()
-        {
-            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-            {
-                MainWindow.Instance.Refresh();
-            }));
-        }
-
         public void PromptExample()
         {
             Prompt("Example Message", "", "");
