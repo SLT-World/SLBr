@@ -44,7 +44,7 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 Go to https://github.com/SLT-World/SLBr/releases and download the latest version. Don't mess this up with the source code.
 
 ## Screenshots
-![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Dark%20mode%20banner%20github.png)
+![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/New%20Dark%20Mode.png)
 
 ## How to run the source code
 Go to https://github.com/SLT-World/SLBr/releases and download the latest version. This is a guide on how to compile and run the source code.
