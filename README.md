@@ -16,6 +16,9 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 - Segoe MDL2 Assets
 - Windows 7 and above
 
+## How to download
+Go to https://github.com/SLT-World/SLBr/releases and download the latest version. Don't mess this up with the source code.
+
 ## Roadmap
 - [x] Google Account Sign-In
 - [x] SafeBrowsing API
@@ -40,11 +43,11 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 - [x] Google Weblight
 - [x] Self Host Chromium
 
-## How to download
-Go to https://github.com/SLT-World/SLBr/releases and download the latest version. Don't mess this up with the source code.
-
-## Screenshots
+## Screenshots & Videos
 ![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/New%20Dark%20Mode.png)
+![SLBr Youtube Popout](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Screenshot%20Youtube%20Popout.png)
+
+Video: https://youtu.be/PtmDRjgwmHI
 
 ## How to run the source code
 Go to https://github.com/SLT-World/SLBr/releases and download the latest version. This is a guide on how to compile and run the source code.
