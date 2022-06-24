@@ -16,6 +16,7 @@ namespace SLBr
 
     public class FileAssociations
     {
+        //https://superuser.com/questions/130672/how-do-i-set-the-windows-default-browser-for-a-custom-application-like-foobar
         // needed so that Explorer windows get refreshed after the registry is updated
         [System.Runtime.InteropServices.DllImport("Shell32.dll")]
         private static extern int SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2);
