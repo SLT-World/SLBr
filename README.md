@@ -14,8 +14,8 @@ SLBr is neither affiliated with Google nor Microsoft.
 - Segoe MDL2 Assets
 - Windows 7 and above
 
-## How to download
-Go to https://github.com/SLT-World/SLBr/releases and download the latest version. Don't mess this up with the source code.
+## How to download executables
+Go to https://github.com/SLT-World/SLBr/releases and download the latest version. To download and compile the source code, scroll to the end of README
 
 ## Roadmap
 - [x] www.google.com Account Sign-In
