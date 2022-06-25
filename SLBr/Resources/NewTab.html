@@ -1,0 +1,168 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" class="StretchToOneHundred">
+<head>
+    <meta charset="utf-8" />
+    <title>New Tab</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script>
+        var ImgAPIs = ["url('https://picsum.photos/1920/1080')",
+        "url('https://source.unsplash.com/1920x1080/?nature')",
+        "url('https://source.unsplash.com/1920x1080/?landscape')",
+        "url('https://source.unsplash.com/1920x1080/?space')",
+        "url('https://source.unsplash.com/1920x1080/?nasa')",
+        "url('https://source.unsplash.com/1920x1080/?earth')",
+        "url('https://source.unsplash.com/1920x1080/?soil')",
+        "url('https://source.unsplash.com/1920x1080/?green-energy')",
+        "url('https://source.unsplash.com/1920x1080/?natural')",
+        "url('https://source.unsplash.com/1920x1080/?environmental')",
+        "url('https://source.unsplash.com/1920x1080/?trees')",
+        "url('https://source.unsplash.com/1920x1080/?travel')",
+        ]
+
+        function setBackgroundImage() {
+            document.documentElement.style.backgroundImage = ImgAPIs[Math.floor(Math.random() * ImgAPIs.length)];
+        }
+    </script>
+</head>
+<body onload="setBackgroundImage()">
+    <style>
+        html {
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+ul.nav {
+  padding-left: 0px;
+  background-color: transparent;
+  text-align: center;
+  margin-top: 25px;
+
+  width: 350px;
+  list-style-position: inside;
+  font-size: 0;
+}
+ul.nav > li {
+  display: inline-block;
+
+  /*100px*/
+  width: 50px;
+  height: 50px;
+
+  /*padding: 50px 50px;*/
+  vertical-align: middle;
+  text-align: center;
+  background: #F5F5F5;
+  
+  /*20px*/
+  border-radius: 10px;
+  
+  /*0 7.5px*/
+  margin: 7.5px 7.5px 7.5px 7.5px;
+  font-size: 14px;
+}
+ul.nav > li:hover {
+  background-color: #DDD;
+}
+ul.nav > li > a {
+  color: white;
+  text-decoration: none;
+  vertical-align: middle;
+  text-align: center;
+  height: 100%;
+}
+    </style>
+    <div class="Center NewTabSearchContainer">
+        <div>
+            <!--<h1 class="Center">SLBr</h1>-->
+            <div class="Center" style="padding-bottom: 25px;">
+                <img class="Center SLBrIcon" style="user-select: none;" src="./SLBr.ico" width="100" height="100" />
+            </div>
+            <div class="Search">
+                <div class="SearchInput">
+                    <!--<a title="tooltip_text">Contents</a>-->
+                    <span class="material-icons" style="user-select: none;">search</span>
+                    <input type="text" id="SearchField" autocomplete="off"/>
+                </div>
+            </div>
+            <div class="Center">
+                <ul class="nav">
+                  <li>
+                    <a href="https://google.com/gmail" class="Center">
+                        <img style="user-select: none;" src="https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_32dp.png" alt="Google Mail" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://google.com/drive" class="Center">
+                        <img style="user-select: none;" src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" alt="Google Drive" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://youtube.com/" class="Center">
+                        <img style="user-select: none;" src="https://www.youtube.com/s/desktop/e43db149/img/favicon_144x144.png" alt="Youtube" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://reddit.com/" class="Center">
+                        <img style="user-select: none;" src="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png" alt="Reddit" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://twitter.com/" class="Center">
+                        <img style="user-select: none;" src="https://abs.twimg.com/favicons/twitter.ico" alt="Twitter" width="50%" height="50%"/><!--https://abs.twimg.com/errors/logo46x38.png-->
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://facebook.com/" class="Center">
+                        <img style="user-select: none;" src="https://static.xx.fbcdn.net/rsrc.php/yD/r/d4ZIVX-5C-b.ico" alt="Facebook" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://weather.com/" class="Center">
+                        <img style="user-select: none;" src="https://weather.com/daybreak-home/assets/android-icon-192x192.59ccbc.png" alt="Weather Channel" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://wikipedia.org/" class="Center">
+                        <img style="user-select: none;" src="https://www.wikipedia.org/static/favicon/wikipedia.ico" alt="Wikipedia" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://github.com/" class="Center">
+                        <img style="user-select: none;" src="https://github.githubassets.com/pinned-octocat.svg" alt="Github" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://web.archive.org/" class="Center">
+                        <img style="user-select: none;" src="https://web.archive.org/_static/images/archive.ico" alt="Web Archive" width="50%" height="50%"/>
+                    </a>
+                  </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        document.getElementById('SearchField').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                search(document.getElementById("SearchField").value);
+            }
+        });
+        async function search(value) {
+            await CefSharp.BindObjectAsync("slbr");
+
+            var retval = slbr.searchProviderPrefix();
+
+            retval.then(function (spp) {
+                //alert(spp);
+                window.location.href = spp.replace("{0}", value).replace(" ", "+");
+                //slbr.showMessage(spp.replace("{0}", value).replace(" ", "+"), "", "");
+            });
+        };
+                /*(async function () {
+        await CefSharp.BindObjectAsync("slbr");
+        //document.getElementById("SearchField").value = "SLBr Hehe";
+        //search(document.getElementById("SearchField").value);
+})();*/
+    </script>
+</body>
+</html>

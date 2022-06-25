@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "SLBr": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false,
+      "nativeDebugging": false
+    }
+  }
+}

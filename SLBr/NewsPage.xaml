@@ -1,0 +1,38 @@
+﻿<Window x:Class="SLBr.NewsPage"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="News Feed" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" MaxHeight="450" MaxWidth="300" Loaded="Page_Loaded">
+    <!--WindowStartupLocation="CenterScreen"-->
+    <Window.Resources>
+        <ResourceDictionary Source="ResourceDictionary.xaml"/>
+    </Window.Resources>
+    <Grid Background="{DynamicResource PrimaryBrush}">
+        <StackPanel>
+            <DockPanel x:Name="ToolBarPanel">
+                <TextBlock Foreground="{DynamicResource FontBrush}" Margin="7.5,0,0,0" VerticalAlignment="Center" Text="News"/>
+                <Button DockPanel.Dock="Right" x:Name="RefreshButton" Margin="0" Height="23" Width="23" FontFamily="Segoe MDL2 Assets" Style="{DynamicResource AddButton}" Content="&#xE72C;" Foreground="{DynamicResource ControlFontBrush}" Click="RefreshButton_Click"/>
+                <TextBox Foreground="{DynamicResource FontBrush}" x:Name="SearchTextBox" Margin="5" KeyDown="SearchTextBox_KeyDown"/>
+            </DockPanel>
+            <ScrollViewer MaxHeight="450" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                <ItemsControl ItemsSource="{Binding Source={StaticResource NewsRSSFeed}, XPath=item}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="5" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5">
+                                <StackPanel>
+                                    <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" MaxWidth="278" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}"/>
+                                    <DockPanel>
+                                        <Button ToolTip="Refresh news and theme" Padding="7.5,1" BorderBrush="{DynamicResource BorderBrush}" Margin="5" HorizontalContentAlignment="Left" Style="{DynamicResource AddButton}" Content="View" Click="Navigate" Tag="{Binding XPath=link}"/>
+                                        <TextBlock ToolTip="Search news" VerticalAlignment="Center" MaxWidth="215" HorizontalAlignment="Left" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{DynamicResource ControlFontBrush}"/>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
+    </Grid>
+</Window>
