@@ -6,6 +6,8 @@
   **Browse the web with a fast, lightweight web browser.**
 </div>
 
+SLBr is neither affiliated with Google nor Microsoft.
+
 ## System Requirements
 - Microsoft Visual C++ 2019
 - .NET 6.0
@@ -56,11 +58,7 @@ Go to https://github.com/SLT-World/SLBr/releases and download the latest version
 
 **The class "SECRETS" is missing**
 
-The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it, either remove the line of code that is causing the error, which will remove support for SafeBrowsing, Google Sign-ins and Geolocation. Or, generate a new C# class called "SECRETS", have string variables named "GOOGLE_API_KEY", "GOOGLE_DEFAULT_CLIENT_ID", "GOOGLE_DEFAULT_CLIENT_SECRET".
-
-**Why CefSharp?**
-
-[**CefSharp**](https://github.com/cefsharp/CefSharp) is well supported and has a large community, it's been around much longer than the Microsoft WebView2 and CefSharp is easier for my standard.
+The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it, either remove the line of code that is causing the error, which will remove support for SafeBrowsing, www.google.com sign-ins and Geolocation. Or, generate a new C# class called "SECRETS", have string variables named "GOOGLE_API_KEY", "GOOGLE_DEFAULT_CLIENT_ID", "GOOGLE_DEFAULT_CLIENT_SECRET".
 
 **Does SLBr send browsing habits to companies or tracks activities**
 
