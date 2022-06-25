@@ -6,10 +6,6 @@
   **Browse the web with a fast, lightweight web browser.**
 </div>
 
-## Based on the Chromium platform
-
-With the Chromium browser engine, SLBr has access to Chromium's useful features that can be implemented easily.
-
 ## System Requirements
 - Microsoft Visual C++ 2019
 - .NET 6.0
@@ -20,7 +16,7 @@ With the Chromium browser engine, SLBr has access to Chromium's useful features 
 Go to https://github.com/SLT-World/SLBr/releases and download the latest version. Don't mess this up with the source code.
 
 ## Roadmap
-- [x] Google Account Sign-In
+- [x] www.google.com Account Sign-In
 - [x] SafeBrowsing API
 - [x] Javascript Binding
 - [x] Default, Private, Developer, Chromium, IE modes
@@ -40,7 +36,7 @@ Go to https://github.com/SLT-World/SLBr/releases and download the latest version
 - [x] Render modes [Hardware, Software]
 - [x] Parallel downloading
 - [x] Built-in News
-- [x] Google Weblight
+- [x] Weblight
 - [x] Self Host Chromium
 
 ## Screenshots & Videos
@@ -68,5 +64,5 @@ The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it
 
 **Does SLBr send browsing habits to companies or tracks activities**
 
-SLBr does send urls to the SafeBrowsing API for security.<br/>
-And when Weblight is enabled, SLBr sends the address to Google Weblight servers for compression
+SLBr does send urls to SafeBrowsing Servers for user security.<br/>
+And when Weblight is enabled, SLBr sends the address to Weblight servers for compression
