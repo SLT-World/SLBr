@@ -13,41 +13,72 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Xml;
-using System.Xml.Linq;
 using System.Management;
 using System.Drawing;
-using CefSharp.Wpf;
-using System.Windows.Input;
 using CefSharp;
+using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace SLBr
 {
     public class Utils
     {
+        public const int HWND_BROADCAST = 0xffff;
+        public static readonly int WM_SHOWPAGE = RegisterWindowMessage("WM_SHOWPAGE");
+        [DllImport("user32")]
+        public static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wparam, IntPtr lparam);
+        [DllImport("user32")]
+        public static extern int RegisterWindowMessage(string message);
+
+        /*public enum Theme
+        {
+            Light,
+            Dark
+        }
+
+        public static Theme GetWindowsTheme()
+        {
+            int value;
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
+            {
+                value = (int)key.GetValue("AppsUseLightTheme");
+            }
+
+            if (value == 0)
+                return Theme.Dark;
+            else
+                return Theme.Light;
+        }*/
+
+        public static bool IsAdministrator()
+        {
+            var identity = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        }
         public static uint ColorToUInt(Color color) =>
             (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));
         public static bool HasDebugger() =>
             Debugger.IsAttached;
-        public static bool IsSystemUrl(string Url) =>
-            (IsInternalUrl(Url) || Url.StartsWith("javascript:") || Url.StartsWith("file:") || Url.StartsWith("localhost:") || IsAboutUrl(Url) || Url.StartsWith("view-source:") || Url.StartsWith("devtools:") || Url.StartsWith("data:"));
+        /*public static bool IsSystemUrl(string Url) =>
+            (IsInternalUrl(Url) || Url.StartsWith("ws:") || Url.StartsWith("wss:") || Url.StartsWith("javascript:") || Url.StartsWith("file:") || Url.StartsWith("localhost:") || IsAboutUrl(Url) || Url.StartsWith("view-source:") || Url.StartsWith("devtools:") || Url.StartsWith("data:"));*/
         public static bool IsProgramUrl(string Url) =>
             (Url.StartsWith("callto:") || Url.StartsWith("mailto:") || Url.StartsWith("news:") || Url.StartsWith("feed:"));
-        public static bool IsInternalUrl(string Url) =>
+        public static bool IsInteralProtocol(string Url) =>
             Url.StartsWith("slbr:");
+        /*public static bool CanSchemeWithSpace(string Url) =>
+            Url.StartsWith("javascript:") || Url.StartsWith("ws:") || Url.StartsWith("wss:");*/
         public static bool IsAboutUrl(string Url) =>
             Url.StartsWith("about:");
-        public static bool IsBrowserUrlScheme(string Url) =>//NoHttps//WithCEFandChrome
-            IsSystemUrl(Url) || IsProgramUrl(Url) || IsInternalUrl(Url) || IsAboutUrl(Url) || IsChromeScheme(Url);
+        /*public static bool IsBrowserUrlScheme(string Url) =>//NoHttps//WithCEFandChrome
+            IsSystemUrl(Url) || IsProgramUrl(Url) || IsInternalUrl(Url) || IsAboutUrl(Url) || IsChromeScheme(Url);*/
         public static bool IsHttpScheme(string Url) =>//NoHttps
             Url.StartsWith("https:") || Url.StartsWith("http:");
-        public static bool IsChromeScheme(string Url) =>
-            Url.StartsWith("cef:") || Url.StartsWith("chrome:");
+        /*public static bool IsChromeScheme(string Url) =>
+            Url.StartsWith("cef:") || Url.StartsWith("chrome:");*/
         public static bool CanCheck(TransitionType _TransitionType) =>
             _TransitionType != TransitionType.AutoSubFrame && _TransitionType != TransitionType.Blocked && _TransitionType != TransitionType.FormSubmit;
-        public static bool IsSchemeNotHttp(string Url)
+        public static bool IsProtocolNotHttp(string Url)
         {
             if (IsHttpScheme(Url))
                 return false;
@@ -91,9 +122,10 @@ namespace SLBr
                 Content = Content.Substring(0, Index + (KeepPrefix ? Prefix.Length : 0));
             return Content;
         }
-        public static string FilterUrlForBrowser(string Url, string SearchEngineUrl, bool Weblight, bool IsChromiumMode)
+        public static string FilterUrlForBrowser(string Url, string SearchEngineUrl, bool Weblight/*, bool IsChromiumMode*/)
         {
-            if (Url.Trim().Length > 0)
+            Url = Url.Trim();
+            if (Url.Length > 0)
             {
                 //MessageBox.Show($"{Url},{!Url.StartsWith("domain:")},{!Url.StartsWith("search:")}");
                 if (!Url.StartsWith("domain:") && !Url.StartsWith("search:"))
@@ -103,9 +135,9 @@ namespace SLBr
                         Process.Start(Url);
                         return Url;
                     }
-                    else if (!IsChromiumMode && Url.StartsWith("cef:"))
-                        Url = "domain:chrome:" + Url.Substring(4);
-                    else if ((Url.Contains(".") || IsSystemUrl(Url) || (IsChromiumMode && Url.StartsWith("chrome:"))) && (!Url.Contains(" ") || Url.StartsWith("javascript:")))
+                    /*else if (!IsChromiumMode && Url.StartsWith("cef:"))
+                        Url = "domain:chrome:" + Url.Substring(4);*/
+                    else if ((Url.Contains(".") || IsProtocolNotHttp(Url)/* || IsSystemUrl(Url) || (IsChromiumMode && Url.StartsWith("chrome:"))) && (!Url.Contains(" ") || CanSchemeWithSpace(Url)*/))
                         Url = "domain:" + Url;
                     else
                         Url = "search:" + Url;
@@ -115,7 +147,7 @@ namespace SLBr
                 {
                     ContinueCheck = false;
                     string SubstringUrl = Url.Substring(7);
-                    if (IsBrowserUrlScheme(SubstringUrl))
+                    if (IsProtocolNotHttp(SubstringUrl))
                     {
                         if (IsAboutUrl(SubstringUrl))
                             Url = FixUrl(SubstringUrl.Replace("about://", "slbr://").Replace("about:", "slbr://"), false);
@@ -126,12 +158,12 @@ namespace SLBr
                         Url = FixUrl(SubstringUrl, Weblight);
                     else
                     {
-                        if (IsSchemeNotHttp(SubstringUrl))
+                        /*if (IsProtocolNotHttp(SubstringUrl))
                         {
                             Url = "search:" + SubstringUrl;
                             ContinueCheck = true;
                         }
-                        else
+                        else*/
                             Url = FixUrl(SubstringUrl, Weblight);
                     }
                 }
@@ -144,54 +176,60 @@ namespace SLBr
             return Url;
         }
 
-        public static string CleanUrl(string Url)
+        public static string Host(string Url, bool RemoveWWW = true, bool CleanUrl = true)
+        {
+            string Host = CleanUrl ? Utils.CleanUrl(Url) : Url;
+            if (RemoveWWW)
+                Host = Host.Replace("www.", "");
+            return Host.Split('/')[0];
+        }
+        public static string CleanUrl(string Url, bool RemoveValues = true, bool RemoveLastSlash = true)
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
-            if (Url.StartsWith("chrome://"))
+            /*if (Url.StartsWith("chrome://"))
             {
                 if (!MainWindow.Instance.IsChromiumMode)
                     Url = "cef" + Url.Substring(6);
-            }
-            int ToRemoveIndex = Url.LastIndexOf("?");
-            if (ToRemoveIndex >= 0)
-                Url = Url.Substring(0, ToRemoveIndex);
-            else
+            }*/
+            if (RemoveValues)
             {
-                ToRemoveIndex = Url.LastIndexOf("#");
+                int ToRemoveIndex = Url.LastIndexOf("?");
                 if (ToRemoveIndex >= 0)
                     Url = Url.Substring(0, ToRemoveIndex);
+                else
+                {
+                    ToRemoveIndex = Url.LastIndexOf("#");
+                    if (ToRemoveIndex >= 0)
+                        Url = Url.Substring(0, ToRemoveIndex);
+                }
+                /*if (Url.EndsWith(".pdf#toolbar=0"))
+                    Url = Utils.RemovePrefix(Url, "#toolbar=0", false, true);*/
             }
-            /*if (Url.EndsWith(".pdf#toolbar=0"))
-                Url = Utils.RemovePrefix(Url, "#toolbar=0", false, true);*/
             Url = RemovePrefix(Url, "http://");
             Url = RemovePrefix(Url, "https://");
             Url = RemovePrefix(Url, "file:///");
             //if (Url.Replace(new Uri(FixUrl(Url, false, false)).Host, "").Contains("/"))
+            if (RemoveLastSlash)
                 Url = RemovePrefix(Url, "/", false, true);
             return Url;
         }
-        public static string FixUrl(string Url, bool Weblight/*, bool SearchEngine = false*/)
+        public static string FixUrl(string Url, bool Weblight)
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
 
             Url = Url.Trim();
 
-            //if (SearchEngine)
-            //    Url = Url.Replace(" ", "+");
-            //else
-            //{
-                Url = Url.Replace(" ", "%20");//string.Empty
-                if (!IsSystemUrl(Url) && !Url.StartsWith("chrome:") && !Url.StartsWith("cef:"))
-                {
-                    if (!Url.StartsWith("https://") && !Url.StartsWith("http://"))
-                        Url = "https://" + Url;
-                    //Use HTTPS for Incomplete URLs
-                }
-            //}
-            if (Weblight && !IsSystemUrl(Url))
-                Url = "https://googleweblight.com/?lite_url=" + CleanUrl(Url);
+            Url = Url.Replace(" ", "%20");
+            if (!IsProtocolNotHttp(Url)/*!IsSystemUrl(Url) && !Url.StartsWith("chrome:") && !Url.StartsWith("cef:")*/)
+            {
+                if (!Url.StartsWith("https://") && !Url.StartsWith("http://"))
+                    Url = "https://" + Url;
+                //Use HTTPS for Incomplete URLs
+            }
+            if (Weblight && IsHttpScheme(Url)/* && !IsSystemUrl(Url)*/)
+                Url = "https://googleweblight.com/?lite_url=" + CleanUrl(Url, false);
             return Url;
         }
 
@@ -319,9 +357,16 @@ namespace SLBr
                         }}";
 
                     var Content = new StringContent(Payload, Encoding.Default, "application/json");
-
-                    var Response = _HttpClient.PostAsync($"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={APIKey}", Content).Result;
-                    string ResultContent = Response.Content.ReadAsStringAsync().Result;
+                    string ResultContent = "";
+                    try
+                    {
+                        var Response = _HttpClient.PostAsync($"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={APIKey}", Content).Result;
+                        ResultContent = Response.Content.ReadAsStringAsync().Result;
+                    }
+                    catch
+                    {
+                        ResultContent = "";
+                    }
                     Payload = string.Empty;
                     return ResultContent;
                 }
@@ -354,6 +399,7 @@ namespace SLBr
             Dictionary<string, string> Data = new Dictionary<string, string>();
             public string SaveFolderPath;
             public string SaveFilePath;
+            public bool UseContinuationIndex;
 
             public Saving(bool Custom = false, string FileName = "Save2.bin", string FolderPath = "EXECUTINGASSEMBLYFOLDERPATHUTILSSAVING")
             {
@@ -395,7 +441,8 @@ namespace SLBr
                 //Load();
                 if (Has(Key))
                     return Data[Key];
-                return string.Empty;
+                
+                return "NOTFOUND";
             }
             public string[] Get(string Key, bool UseListParameter)
             {
@@ -411,7 +458,7 @@ namespace SLBr
 
                 if (!File.Exists(SaveFilePath))
                     File.Create(SaveFilePath).Close();
-                List<string> Contents = new List<string>();
+                HashSet<string> Contents = new HashSet<string>();
                 foreach (KeyValuePair<string, string> KVP in Data)
                     Contents.Add(KVP.Key + KeyValueSeparator + KVP.Value);
                 File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
@@ -423,7 +470,7 @@ namespace SLBr
                 if (!File.Exists(SaveFilePath))
                     File.Create(SaveFilePath).Close();
 
-                List<string> Contents = File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToList();
+                HashSet<string> Contents = File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToHashSet();
                 foreach (string Content in Contents)
                 {
                     if (string.IsNullOrWhiteSpace(Content))

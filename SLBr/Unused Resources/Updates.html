@@ -1,0 +1,156 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>SLBr Updates</title><!-- & Milestones-->
+    <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+    <!--<p>
+        A long time ago, I (<strong>SLT World</strong>) had an idea of a clean, light and fast browser.
+        I named my browser project, "<strong>Skylight</strong>" and created 3 versions of it, but it didn't go far, the first 2 of them failed and the last one abandoned (This project) because the performance of the 1st and 2nd isn't what I wanted and by the time I started the development of the 3rd browser, I got bored and wanted to try something new.
+        So I took some rest from the browser project and took the hobby of creating unity games.
+        One day, while cleaning some folders, I found this, the 3rd version of <strong>Skylight</strong> that only contains a tab component and a few buttons.
+        I decided to make a new browser, <strong>a better browser</strong>, with the skills I've learnt from creating games, and use this project as <strong>the foundation of a new browser</strong>.
+    </p>
+    <p>
+        This project, originally part of the <strong>Skylight Project</strong>, was now <strong>SLBr</strong>.
+        <strong>The successor of Skylight!</strong>
+    </p>-->
+    <div id="checkboxes">
+        <h2>VERSIONHERE - SLBr's Second Update</h2>
+        <ul>
+            <li><h3>What are the new features?</h3></li>
+            <li><p>Improved Performance [Disabling Proxy Servers, Limiting callbacks that calls more than ones, Removing features that don't generally help out with anything (i.e. Smooth Scrolling)]</p></li>
+            <li><p>Pinning and Unpinning tabs</p></li>
+            <li><p>Sharp Text</p></li>
+            <li><p>Code Cleanup</p></li>
+            <li><p>Google Weblight Loading</p></li>
+            <li><p>Keyboard Shortcuts</p></li>
+            <!--<li><p>SLBr cannot support i5 processors, so a message was made to say that SLBr doesn't support i5 processors</p></li>-->
+            <li><p>More context menus</p></li>
+            <li><p>Javascript Binding Support (Functions are accessible by JS using the code `slbr.FUNCTION()`)</p></li>
+            <li><p>Settings will notify if the change is made.</p></li>
+            <!--<li><p>Screenshot function in default context menu</p></li>-->
+            <li><p>Hide Tabs</p></li>
+            <li><p>Website parameters are hidden unless you click or hover over the address bar</p></li>
+            <li><p>No proxy server slightly improves initialization time as it won't attempt to resolve a proxy</p></li>
+            <li><p>Slightly improved performance by utilizing the same instance for multiple small tasks</p></li>
+            <li><h3>Modes (Pin SLBr on the taskbar, close SLBr, right click on SLBr and click on one of the "Open in ----" actions)</h3></li>
+            <li><p>Default Mode</p></li>
+            <li><p>Private Mode (Incognito) [No browsing history will be saved, in-memory cache will be used]</p></li>
+            <li><p>Developer Mode [Developer/Experimental features & functionalities]</p></li>
+            <li><p>Chromium Mode [API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's]</p></li>
+            <li><p>Internet Explorer Mode [Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors. But hey, at least you can test out a website and see how bad it's styling gets.]</p></li>
+            <li><h3>What are the changes?</h3></li>
+            <li><p>Dark Theme will be enabled for default</p></li>
+            <li><p>Menu/Tools/Tests is now only accessible by using the developer mode</p></li>
+            <li><p>UI improvements</p></li>
+            <li><p>Message Panel</p></li>
+            <li><p>Dark mode will be forced into web contents</p></li>
+            <li><p>The address bar will allow text to be dragged into it</p></li>
+            <li><p>Instead of the built-in 404 page, the browser will show a message asking to check if there's a saved version on Wayback Machine (Idea inspired by Brave)</p></li>
+            <li><h3>What are the supported features of this update?</h3></li>
+            <li><input type="checkbox" disabled value="Full AdBlock Support" />Full AdBlock Support</li>
+            <li><input type="checkbox" disabled checked value="Weblight Loading" />Weblight Loading</li>
+            <li><input type="checkbox" disabled value="Full WebGL Support" />Full WebGL Support</li>
+            <li><input type="checkbox" disabled value="Set as Default Browser Option" />Set as Default Browser Option</li>
+            <li><input type="checkbox" disabled value="Account Sign-In (Browser)" />Account Sign-In (Browser)</li>
+            <li><input type="checkbox" disabled value="Proprietary Codecs" /><a href="slbr://cdmsupport/" target="_blank">Proprietary Codecs</a></li>
+            <li><input type="checkbox" disabled checked value="Javascript Binding" />Javascript Binding</li>
+            <li><input type="checkbox" disabled value="Extensions, Plug-Ins, Add-ons" />Extensions, Plug-Ins, Add-ons</li>
+            <li><input type="checkbox" disabled value="Proxy" />Proxy</li>
+            <li><input type="checkbox" disabled value="Tor Network Connection (The Onion Router Network)" /><a href="https://www.torproject.org/" target="_blank">Tor Network (The Onion Router Network)</a></li>
+        </ul>
+        <h2>2020.2.25.0 - The Start of SLBr</h2>
+        <ul>
+            <li><h3>What are the new features?</h3></li><!--New features-->
+            <li><p>Basic Functions [Back, Forward, Refresh, Stop Loading, Home]</p></li>
+            <li><p>Basic Needs [Tabs, Settings, Favourites, History, Downloads (with Download Location Dialog), Cache]</p></li>
+            <li><p>User-friendly UI</p></li>
+            <li><p>Fast Lightweight Rendering Engine</p></li>
+            <li><p>Security Functions [SSL Certificate Checker, Anti-malware & Anti-phishing]</p></li>
+            <li><p>Built-in pages [Error Pages, Warning Pages, Information pages (<a href="slbr://urls/">slbr://urls</a>)]</p></li>
+            <li><p>Include "search:" in front of a text containing a dot (Which is seen as a domain by SLBr)</p></li>
+            <li><p>Customizable Features [Homepage, Search Provider, Download Path]</p></li>
+            <li><p>Other Features [Dark Theme, Restore tabs from previous session, Block keywords, Ask for download path, Ask to set as default search provider]</p></li>
+            <li><p>If you're interested in some country news, you can use the News Feed tool</p></li>
+            <li><p>The browser doesn't support saving the back and forth history</p></li>
+            <li><p>Keywords such as gacha and roblox are blocked for default, you can disable or change it in settings</p></li>
+            <li><p>HTML File Association</p></li>
+            <li><h3>What are the changes?</h3></li><!--Changes-->
+            <li><p>-</p></li>
+            <li><h3>What are the supported features of this update?</h3></li><!--Support for-->
+            <li><input type="checkbox" disabled value="AdBlock Support" />AdBlock Support</li>
+            <!--<li><input type="checkbox" disabled checked value="Minor AdBlock Support" />Minor AdBlock Support</li>-->
+            <!--<li><input type="checkbox" disabled value="Full WebGL Support" />Full WebGL Support</li>-->
+            <li><input type="checkbox" disabled value="Minor WebGL Support" />Minor WebGL Support</li>
+            <li><input type="checkbox" disabled checked value="Cache" />Cache</li>
+            <li><input type="checkbox" disabled value="Set as Default Browser Option" />Set as Default Browser Option</li>
+            <li><input type="checkbox" disabled checked value="Google Account Sign-In (Website)" />Google Account Sign-In (Website)</li>
+            <li><input type="checkbox" disabled value="Account Sign-In (Browser)" />Account Sign-In (Browser)</li>
+            <li><input type="checkbox" disabled checked value="Safe Browsing API" /><a href="https://developers.google.com/safe-browsing/v4/" target="_blank">Safe Browsing API</a></li>
+            <li><input type="checkbox" disabled checked value="PDF Viewer" />PDF Viewer</li>
+            <li><input type="checkbox" disabled value="Proprietary Codecs" /><a href="slbr://cdmsupport/" target="_blank">Proprietary Codecs</a></li>
+            <li><input type="checkbox" disabled value="Javascript Binding" />Javascript Binding</li>
+            <li><input type="checkbox" disabled value="Extensions, Plug-Ins, Add-ons" />Extensions</li>
+            <li><input type="checkbox" disabled value="Proxy" />Proxy</li>
+            <li><input type="checkbox" disabled value="Tor Network (The Onion Router Network)" /><a href="https://www.torproject.org/" target="_blank">Tor Network (The Onion Router Network)</a></li>
+            <li><input type="checkbox" disabled checked value="ARM Build" />ARM Build</li>
+        </ul>
+    </div>
+
+    <p>SLBr was made possible by <a href="https://docs.microsoft.com/en-us/visualstudio/designers/getting-started-with-wpf/" target="_blank">Windows Presentation Forms</a>, <a href="https://www.chromium.org/Home/" target="_blank">The Chromium Project</a>, <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework</a> and <a href="https://cefsharp.github.io/" target="_blank">CEFSharp</a>. If you can, please donate and support them. It will contribute greatly to SLBr and every developer using them as well.</p>
+    <!--<p>I, the developer, owner and maintainer of SLBr greatly appreciate and thank <a href="https://www.chromium.org/Home/" target="_blank">The Chromium Project</a>, <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework</a> and <a href="https://cefsharp.github.io/" target="_blank">CEFSharp</a> for making my dreams of SLBr possible. Please, if you can, user, donate and sponsor them. It will contribute greatly to them as well to SLBr.</p>-->
+    <script>
+        function SortLists() {
+            var lists, list, i, switching, b, shouldSwitch;
+            lists = document.getElementsByTagName("ul");
+            for (let i = 0; i < lists.length; i++) {
+                list = lists[i];
+                switching = true;
+                while (switching) {
+                    switching = false;
+                    b = list.getElementsByTagName("li");
+                    for (i = 0; i < (b.length - 1); i++) {
+                        shouldSwitch = false;
+                        //if ((b[i].getElementsByTagName("input")[0] && b[i].getElementsByTagName("input")[0].value)) {
+                        //    alert(b[i].getElementsByTagName("input")[0].value);
+                        //}
+                        if (b[i].getElementsByTagName("input")[0] && b[i].getElementsByTagName("input")[0].value.toLowerCase() > b[i + 1].getElementsByTagName("input")[0].value.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                        else if (b[i].getElementsByTagName("p")[0] && b[i].getElementsByTagName("p")[0].innerHTML.toLowerCase() > b[i + 1].getElementsByTagName("p")[0].innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                    if (shouldSwitch) {
+                        b[i].parentNode.insertBefore(b[i + 1], b[i]);
+                        switching = true;
+                    }
+                }
+            }
+        }
+        function SortCheckboxes() {
+            var array = []
+            var checkboxes = document.querySelectorAll('input[type=checkbox]');
+
+            for (let i = 0; i < checkboxes.length; i++) {
+                var checkbox = checkboxes[i];
+                if (checkbox.checked)
+                    checkbox.title = "Supported";
+                else
+                    checkbox.title = "Unsupported";
+            }
+        }
+
+        SortCheckboxes();
+        SortLists();
+    </script>
+</body>
+</html>

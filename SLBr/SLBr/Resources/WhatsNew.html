@@ -6,7 +6,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
-    <title>About SLBr</title>
+    <title>What's New for SLBr</title>
     <link rel="stylesheet" type="text/css" href="./style.css"/>
     <!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />-->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,117 +14,72 @@ Use of this source code is governed by a GNU license that can be found in the LI
         body {
             margin: 0px;
         }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            /*margin-right: auto;
+            margin-left: auto;*/
+        }
+
+        td, th {
+            border: 1px solid #F5F5F5;
+            /*text-align: left;*/
+            padding: 8px;
+        }
+        
+        th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #0092FF;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #F5F5F5;
+        }
+
+        tr:hover {
+            background-color: #DDD;
+        }
     </style>
 </head>
 <body>
     <div class="AboutHeader">
         <h1>SLBr</h1>
-        <p>The new, clean, lightweight .NET Web browser</p>
+        <p>The browser that prioritizes a faster web</p>
     </div>
 
     <div class="AboutContent">
-        <h2>What's New in SLBr 2022.3.20.0</h2>
+        <!--<h2>What's New</h2>--><!--<h2>What's New in SLBr VERSIONHERE</h2>-->
+        <h3>Contributing to SLBr</h3>
         <p>
-            Every update of SLBr delivers many new features.
+            Want to contribute? See what help is needed in SLBr's <a target="_blank" href="https://github.com/SLT-World/SLBr/projects/1">Github Project Page</a>
         </p>
-        <p>
-            Note from the developer: Conducted a lot of test runs this time and hopefully much of what's needed to be fixed are fixed.
-        </p>
-        <div class="List">
-            <h3>UI Changes</h3>
-            <ul>
-                <li>A status bar</li>
-                <li>A finished downloading prompt</li>
-                <li>Renamed the context menu button "Close menu" to "Cancel" and moved it to the end of the menu</li>
-                <li>Open URL in new tab context menu</li>
-                <li>Opens About page on first try</li>
-                <li>Fixed various errors that caused crashes on first try</li>
-                <li>Rearranged Tools Menu</li>
-                <!--<li>Replacing the default 500 error page with a prompt, just the same as what SLBr responds a 404 error</li>-->
-            </ul>
-            <h3>Bug fixes</h3>
-            <ul>
-                <li>SLBr will render properly on Intel i5 processors, SLBr takes a giant leap forward (For developers who are wondering how, here's the line of code that solved it: "RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;")</li>
-                <li>Fixed prompt not closing problem (Binding problem)</li>
-            </ul>
-            <h3>Code Changes</h3>
-            <ul>
-                <li>"javascript:" scheme added</li>
-                <li>More details added to the About Page</li>
-                <li>Moved and shortened code</li>
-            </ul>
-            <h3>Contributing</h3>
-            <p>
-                To contribute features to SLBr, see what features are needed at SLBr's <a target="_blank" href="https://github.com/SLT-World/SLBr/projects/1">Github Project Page</a>
-            </p>
-        </div>
+        <h2>Release Notes</h2>
+        <table>
+            <tr>
+                <th>Function/Feature Implementation</th><!--Updates-->
+                <th>Status</th><!--Work In Progress, Passed, Removed, On Hold-->
+            </tr>
+            <tr>
+                <td>Re-aligned top controls</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Suggestions will only be set after the address box is finished typing</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Fixed render mode problem</td>
+                <td>Passed</td>
+            </tr>
+            <tr>
+                <td>Enabled ad & tracker blocker for default</td>
+                <td>Passed</td>
+            </tr>
+        </table>
     </div>
-    <!--<h2>What's New in SLBr 2022.3.13.0</h2>
-        <p>
-            Every update of SLBr delivers many new features.
-        </p>
-        <div class="List">
-            <h3>UI Changes</h3>
-            <ul>
-                <li>The settings tab/window will notify if a change is made successfully.</li>
-                <li>Find box and new tab button added to the top control bar</li>
-                <li>An improved context menu</li>
-                <li>Sharper Text</li>
-                <li>Tab pinning</li>
-                <li>URL Eliding (Meaning the "https://" and "www." will be hidden. There's an option to show the full URL in the Settings tab/window)</li>
-                <li>Dark mode will be forced into web contents</li>
-                <li>Text are now draggable into the address bar</li>
-                <li>PDF Viewer controls made visible</li>
-                <li>Native Built-in Prompts</li>
-                <li>When a request returns 404, SLBr will prompt a question asking to check if there's a saved version on Wayback Machine instead of displaying a 404 page</li>
-            </ul>
-            <h3>New developer features</h3>
-            <ul>
-                <li>Javascript Binding (Various functions are accessible by JS using the code `slbr.FUNCTION()`)</li>
-                <li>Faster website loading with Google Weblight</li>
-                <li>Screenshot feature (Still in development)</li>
-                <li>Tests menu</li>
-                <li>Developer mode, Developer/Experimental features & functionalities will be enabled.</li>
-                <li>Chromium mode, API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's.</li>
-                <li>Internet Explorer mode, Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors.</li>
-            </ul>
-            <h3>Other new features</h3>
-            <ul>
-                <li>More URL Schemes Supported</li>
-                <li><h4>Performance slightly improved</h4></li>
-                <li>
-                    <ul>
-                        <li>Code Cleanup</li>
-                        <li>Tab Unloading - 12/3/2022</li>
-                        <li>Limited renderer processes</li>
-                        <li>Disabled lots of unused, untouched and unnoticed features of the Chromium of SLBr, features that SLBr doesn't have to support (i.e. Smooth Scrolling, Low Resolution Tiling, Plugins/Add-ons/Extensions, Proxies)</li>
-                        <li>Disabled some parts of the GPU Acceleration because using the gpu is noticeably unreliable, but kept the rest for a limited WebGL support</li>
-                        <li>No plugins/add-ons/extensions are needed to be initialized since SLBr does not support these</li>
-                        <li>Without Proxy servers slightly improve the initialization time of SLBr as it won't attempt to resolve a proxy</li>
-                        <li>Utilized a single instance for multiple small tasks</li>
-                        <li>Removed callbacks that returns more than once.</li>
-                    </ul>
-                </li><li><h4>Keyboard Shortcuts</h4></li>
-                <li>
-                    <ul>
-                        <li>Ctrl+R, F5 (Refresh)</li>
-                        <li>Ctrl+T (New Tab)</li>
-                        <li>Ctrl+W (Close Tab)</li>
-                        <li>Ctrl+S (Screenshot)</li>
-                        <li>F12 (Developer Tools)</li>
-                    </ul>
-                </li>
-                <li><h4>Modes</h4></li>
-                <li>
-                    <ul>
-                        <li>Private mode (Incognito), No browsing history will be saved, in-memory cache will be used.</li>
-                        <li>Developer mode, Developer/Experimental features & functionalities will be enabled.</li>
-                        <li>Chromium mode, API Keys will not be assigned, some functionalities will be disabled and the useragent will be chromium's.</li>
-                        <li>Internet Explorer mode, Javascript will not function properly and much of SLBr's functionalities will be disabled/broken. There will also be unexpected crashes and lots of errors.</li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-    </div>-->
 </body>
 </html>

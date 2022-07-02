@@ -1,0 +1,96 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>SLBr Cdm Support</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <script language="JavaScript">
+        function probeSupport() {
+            var tests = [];
+            var testKeySystems = [
+                'com.widevine.alpha',
+                'org.w3.clearkey'
+            ];
+
+            var testCodecs = [
+                { type: 'H.264', contentType: 'video/mp4; codecs="avc1.42E01E"' },
+                { type: 'H.264/MPEG-4 AVC', contentType: 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"' },
+                { type: 'ogg', contentType: 'video/ogg; codecs="theora"' },
+                { type: 'webm-vp8', contentType: 'video/webm; codecs="vp8"' },
+                { type: 'webm-vp9-', contentType: 'video/webm; codecs="vp9"' }
+            ];
+
+            var basicVideoCapabilities = [
+                { contentType: 'video/mp4; codecs="avc1.42E01E"' },
+                { contentType: 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"' },
+                { contentType: 'video/webm; codecs="vp8"' },
+                { contentType: 'video/webm; codecs="vp9"' }
+            ];
+
+            var basicConfig = {
+                videoCapabilities: basicVideoCapabilities
+            };
+            var configs = [basicConfig];
+            var support = { ContentDecryptionModules: {}, PlaybackSupport: {} };
+
+            testKeySystems.forEach(function (keySystem) {
+                var p = navigator.requestMediaKeySystemAccess(keySystem, configs)
+                    .then(function (access) {
+                        var config = access.getConfiguration();
+                        support.ContentDecryptionModules[keySystem] = "Available";
+                    }, function () {
+                        support.ContentDecryptionModules[keySystem] = "Not Available";
+                    });
+                tests.push(p);
+            });
+
+            return Promise.all(tests).then(function () {
+                var testEl = document.createElement("video"),
+                    mpeg4, h264, ogg, webm;
+                testCodecs.forEach(function (testCodec) {
+                    var canPlay = testEl.canPlayType(testCodec.contentType);
+                    canPlay = canPlay !== "" ? canPlay[0].toUpperCase() + canPlay.substring(1) : "No";
+                    support.PlaybackSupport[testCodec.type] = { "ContentType": testCodec.contentType, "Supported": canPlay };
+                });
+                return support;
+            });
+        }
+
+        function printSupport(support) {
+            var output = document.getElementById('output');
+            output.textContent = support;
+        }
+
+        function doTest() {
+            probeSupport().then(function (support) {
+                printSupport(JSON.stringify(support, null, '  '));
+            });
+        }
+    </script>
+</head>
+<body onload="doTest()">
+    <pre><code id="output" /></pre>
+    <p>
+        <a href="https://shaka-player-demo.appspot.com/demo/">Google Shaka Player demo - video play back</a>
+    </p>
+    <p>
+        <strong>Note:</strong><br />
+        <ul>
+            <!--<li>
+                Support for Widevine CDM requires additional steps as
+                <a href="https://github.com/cefsharp/CefSharp/issues/1934">outlined here</a>.
+            </li>-->
+            <li>
+                Proprietary codecs (such as <a href="https://www.itu.int/rec/T-REC-H.264" target="_blank">H.264</a>) are not supported due to
+                licensing requirements.
+                <!--<br />
+                Details on how to build the CEF project and other resources can be
+                <a href="https://bitbucket.org/chromiumembedded/cef">found here</a>.-->
+            </li>
+        </ul>
+    </p>
+</body>
+</html>

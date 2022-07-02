@@ -43,12 +43,12 @@ Use of this source code is governed by a GNU license that can be found in the LI
                         <span id="chromium_version">Chromium Version</span>
                     </td>
                 </tr>
-                <tr>
+                <!--<tr>
                     <td class="label">Internet Explorer</td>
                     <td class="version">
                         <span id="ie_version">IE Version</span>
                     </td>
-                </tr>
+                </tr>-->
 
                 <!--<tr>
                     <td class="label">Revision</td>
@@ -135,7 +135,6 @@ Use of this source code is governed by a GNU license that can be found in the LI
             await CefSharp.BindObjectAsync("slbr");
             document.getElementById("_os_type").innerHTML = "Windows";
             document.getElementById("_useragent").innerHTML = navigator.userAgent;
-            document.getElementById("ie_version").innerHTML = "7.0";
             /*slbr.showExampleMessage();*/
             //document.getElementById("chromium_version").innerHTML = getChromiumVersion();
             //document.getElementById("_executable_path").innerHTML = slbr.executableLocation;

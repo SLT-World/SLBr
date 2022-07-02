@@ -1,0 +1,64 @@
+﻿<!--Copyright © 2022 SLT World. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <title>Site couldn't be reached</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <style>
+        body{
+            text-align: center;
+            width: 100%;
+            margin: 0px;
+        }
+
+        #content{
+            width: 100%;
+            margin-top: 140px;
+        }
+
+        .icon{
+            font-family: 'Segoe MDL2 Assets';
+            font-size: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <h1 class="icon"></h1>
+        <h2>Site couldn't be reached</h2><!--Page failed to load-->
+        <h5>
+            Check network cables, modem, and router<br/>
+            Reconnect to Wi-Fi
+        </h5>
+    </div>
+</body>
+</html>
+
+<!--<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Cannot Connect</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+    <h1>Cannot Connect</h1>
+    <p id="P1"></p>
+    <script>
+        function GetURLParameter(sParam) {
+            var sPageURL = window.location.search.substring(1);
+            var sURLVariables = sPageURL.split('&');
+            for (var i = 0; i < sURLVariables.length; i++) {
+                var sParameterName = sURLVariables[i].split('=');
+                if (sParameterName[0] == sParam) {
+                    return sParameterName[1];
+                }
+            }
+        }
+
+        document.getElementById("P1").innerHTML = GetURLParameter("url");
+
+    </script>-->
