@@ -264,6 +264,8 @@ namespace SLBr
             source.AddHook(new HwndSourceHook(WndProc));
             Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline), new FrameworkPropertyMetadata { DefaultValue = 15 });
 
+            this.Cursor = ((FrameworkElement)Resources["CursorNormal"]).Cursor;
+
             //RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;// Fixed i5 problem with this code
 
             /*foreach (ManagementObject video in new ManagementObjectSearcher(new SelectQuery("Win32_VideoController")).Get())
