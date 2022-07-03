@@ -13,7 +13,9 @@ Use of this source code is governed by a GNU license that can be found in the LI
             </Setter.Value>
         </Setter>
     </Style>
-    
+
+    <FrameworkElement x:Key="CursorNormal" Cursor="Resources/Cursors/Posy cursor.cur"/>
+
     <Color x:Key="GainsboroColor">Gainsboro</Color>
     <Color x:Key="WhiteColor">White</Color>
     <Color x:Key="WhiteSmokeColor">WhiteSmoke</Color>
