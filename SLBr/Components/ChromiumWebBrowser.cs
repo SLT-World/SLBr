@@ -12,7 +12,7 @@ namespace SLBr
 {
 	public class ChromiumWebBrowser : CefSharp.Wpf.ChromiumWebBrowser
 	{
-		public ChromiumWebBrowser() : base()
+        public ChromiumWebBrowser() : base()
 		{
 		}
 		public ChromiumWebBrowser(string path) : base(path)

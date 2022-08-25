@@ -30,7 +30,7 @@ namespace SLBr
 
         //private static Mutex SingleInstanceMutex;
 
-        static Mutex mutex = new Mutex(true, "{SLBrSLTBrowser-SLT-WORLD-BROWSER-SLBr}");
+        //static Mutex mutex = new Mutex(true, "{SLBrSLTBrowser-SLT-WORLD-BROWSER-SLBr}");
         [STAThread]
         private void Application_Startup(object sender, StartupEventArgs e)
         {
@@ -40,7 +40,7 @@ namespace SLBr
                 SelfHost.Main(args);
                 return;
             }
-            if (mutex.WaitOne(TimeSpan.Zero, true))
+            /*if (mutex.WaitOne(TimeSpan.Zero, true))
                 mutex.ReleaseMutex();
             else
             {
@@ -51,7 +51,9 @@ namespace SLBr
                     IntPtr.Zero,
                     IntPtr.Zero);
                 Current.Shutdown();
-            }
+            }*/
+
+
             /*bool IsNewInstance = false;
             SingleInstanceMutex = new Mutex(true, "SLBrSLTBrowser", out IsNewInstance);
             if (!IsNewInstance)
@@ -94,7 +96,7 @@ namespace SLBr
             JumpTask PrivateOpenTask = new JumpTask
             {
                 Title = "Open in private mode",
-                Arguments = "Private",
+                Arguments = "--private",
                 //Description = "No browsing history will be saved, in memory cache will be used (Incognito)",
                 CustomCategory = "Actions",
                 ApplicationPath = ExecutablePath,
@@ -103,7 +105,7 @@ namespace SLBr
             JumpTask DeveloperOpenTask = new JumpTask
             {
                 Title = "Open in developer mode",
-                Arguments = "Developer",
+                Arguments = "--developer",
                 //Description = "Access to developer features of SLBr and bypass the i5 processor check",
                 CustomCategory = "Actions",
                 ApplicationPath = ExecutablePath,
@@ -112,7 +114,7 @@ namespace SLBr
             JumpTask ChromiumOpenTask = new JumpTask
             {
                 Title = "Open in chromium mode",
-                Arguments = "Chromium",
+                Arguments = "--chromium",
                 //Description = "Access to developer features of SLBr and bypass the i5 processor check",
                 CustomCategory = "Actions",
                 ApplicationPath = ExecutablePath,
@@ -121,7 +123,7 @@ namespace SLBr
             JumpTask IEOpenTask = new JumpTask
             {
                 Title = "Open in Internet Explorer mode",
-                Arguments = "IE",
+                Arguments = "--ie",
                 //Description = "Access to developer features of SLBr and bypass the i5 processor check",
                 CustomCategory = "Actions",
                 ApplicationPath = ExecutablePath,

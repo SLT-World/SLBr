@@ -1,11 +1,235 @@
 ﻿using CefSharp;
 using CefSharp.Callback;
+using SLBr.Protocols;
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
 
 namespace SLBr
 {
+    public class WaybackSchemeHandler : ResourceHandler
+    {
+        public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
+        {
+            if (bool.Parse(MainWindow.Instance.MainSave.Get("Wayback")))
+            {
+                Task.Run(() =>
+                {
+                    using (callback)
+                    {
+                        string Year = request.Url.Contains("year=") ? Utils.Between(request.Url, "year=", "&") : "2000";
+                        string Url = request.Url.Replace($"#year={Year}", "").Replace($"?year={Year}", "").Replace($"&year={Year}", "");
+                        var httpWebRequest = (HttpWebRequest)WebRequest.Create(Url.Replace("wayback://", $"http://theoldnet.com/get?year={Year}&noscripts=true&decode=true&url="));
+
+                        var httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+
+                        // Get the stream associated with the response.
+                        var receiveStream = httpWebResponse.GetResponseStream();
+                        var mime = httpWebResponse.ContentType;
+
+                        var stream = new MemoryStream();
+                        receiveStream.CopyTo(stream);
+                        httpWebResponse.Close();
+
+                        //Reset the stream position to 0 so the stream can be copied into the underlying unmanaged buffer
+                        stream.Position = 0;
+
+                        //Populate the response values - No longer need to implement GetResponseHeaders (unless you need to perform a redirect)
+                        ResponseLength = stream.Length;
+                        MimeType = mime.Replace("; charset=iso-8859-1", "");
+                        StatusCode = (int)HttpStatusCode.OK;
+                        Stream = stream;
+
+                        callback.Continue();
+                    }
+                });
+                return CefReturnValue.ContinueAsync;
+            }
+            callback.Dispose();
+            return CefReturnValue.Cancel;
+        }
+    }
+    public class WeblightSchemeHandler : ResourceHandler
+    {
+        public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
+        {
+            Task.Run(() =>
+            {
+                using (callback)
+                {
+                    var httpWebRequest = (HttpWebRequest)WebRequest.Create("https://googleweblight.com/?lite_url=google.com");//request.Url.Replace("weblight://", 
+                    httpWebRequest.Method = "GET";
+                    //httpWebRequest.ContentType = "application/x-www-form-urlencoded";
+                    var httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+
+                    // Get the stream associated with the response.
+                    var receiveStream = httpWebResponse.GetResponseStream();
+                    var mime = httpWebResponse.ContentType;
+
+                    var stream = new MemoryStream();
+                    receiveStream.CopyTo(stream);
+                    httpWebResponse.Close();
+
+                    //Reset the stream position to 0 so the stream can be copied into the underlying unmanaged buffer
+                    stream.Position = 0;
+
+                    //Populate the response values - No longer need to implement GetResponseHeaders (unless you need to perform a redirect)
+                    ResponseLength = stream.Length;
+                    MimeType = mime;
+                    StatusCode = (int)HttpStatusCode.OK;
+                    Stream = stream;
+
+                    callback.Continue();
+                }
+            });
+            return CefReturnValue.ContinueAsync;
+        }
+    }
+    public class IPFSSchemeHandler : ResourceHandler
+    {
+        public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
+        {
+            if (bool.Parse(MainWindow.Instance.MainSave.Get("IPFS")))
+            {
+                Task.Run(() =>
+                {
+                    using (callback)
+                    {
+                        var httpWebRequest = (HttpWebRequest)WebRequest.Create(request.Url.Replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/"));
+
+                        var httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+
+                        // Get the stream associated with the response.
+                        var receiveStream = httpWebResponse.GetResponseStream();
+                        var mime = httpWebResponse.ContentType;
+
+                        var stream = new MemoryStream();
+                        receiveStream.CopyTo(stream);
+                        httpWebResponse.Close();
+
+                        //Reset the stream position to 0 so the stream can be copied into the underlying unmanaged buffer
+                        stream.Position = 0;
+
+                        //Populate the response values - No longer need to implement GetResponseHeaders (unless you need to perform a redirect)
+                        ResponseLength = stream.Length;
+                        MimeType = mime;
+                        StatusCode = (int)HttpStatusCode.OK;
+                        Stream = stream;
+
+                        callback.Continue();
+                    }
+                });
+                return CefReturnValue.ContinueAsync;
+            }
+            callback.Dispose();
+            return CefReturnValue.Cancel;
+        }
+    }
+    public class IPNSSchemeHandler : ResourceHandler
+    {
+        public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
+        {
+            if (bool.Parse(MainWindow.Instance.MainSave.Get("IPFS")))
+            {
+                Task.Run(() =>
+                {
+                    using (callback)
+                    {
+                        var httpWebRequest = (HttpWebRequest)WebRequest.Create(request.Url.Replace("ipns://", "https://cloudflare-ipfs.com/ipns/"));
+
+                        var httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+
+                        // Get the stream associated with the response.
+                        var receiveStream = httpWebResponse.GetResponseStream();
+                        var mime = httpWebResponse.ContentType;
+
+                        var stream = new MemoryStream();
+                        receiveStream.CopyTo(stream);
+                        httpWebResponse.Close();
+
+                        //Reset the stream position to 0 so the stream can be copied into the underlying unmanaged buffer
+                        stream.Position = 0;
+
+                        //Populate the response values - No longer need to implement GetResponseHeaders (unless you need to perform a redirect)
+                        ResponseLength = stream.Length;
+                        MimeType = mime;
+                        StatusCode = (int)HttpStatusCode.OK;
+                        Stream = stream;
+
+                        callback.Continue();
+                    }
+                });
+                return CefReturnValue.ContinueAsync;
+            }
+            callback.Dispose();
+            return CefReturnValue.Cancel;
+        }
+    }
+    public class GeminiSchemeHandler : ResourceHandler
+    {
+        public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
+        {
+            if (bool.Parse(MainWindow.Instance.MainSave.Get("Gemini")))
+            {
+                var uri = new Uri(Utils.CleanUrl(request.Url));
+                //try
+                //{
+                GeminiGopherIResponse resp = Gemini.Fetch(uri);
+                if (resp != null)
+                {
+                    //MessageBox.Show(GeminiSchemeHandlerFactory.Instance.TextGeminiInstance.Format(resp.Bytes.ToArray()));
+                    //Stream = new MemoryStream(Encoding.UTF8.GetBytes(GeminiSchemeHandlerFactory.Instance.TextGeminiInstance.Format(resp.Bytes.ToArray())));
+                    Stream = new MemoryStream(Encoding.UTF8.GetBytes(TextGemini.NewFormat(resp.Bytes.ToArray(), request.Url.EndsWith("?raw=true"))));
+
+                    MimeType = resp.Mime.Contains("text/gemini") ? "text/html" : resp.Mime;
+
+                    callback.Continue();
+                    return CefReturnValue.ContinueAsync;
+                }
+            }
+            //}
+            //catch
+            //{
+            callback.Dispose();
+            return CefReturnValue.Cancel;
+            //}
+        }
+    }
+    public class GopherSchemeHandler : ResourceHandler
+    {
+        public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
+        {
+            if (bool.Parse(MainWindow.Instance.MainSave.Get("Gopher")))
+            {
+                var uri = new Uri(Utils.CleanUrl(request.Url));
+                //try
+                //{
+                GeminiGopherIResponse resp = Gopher.Fetch(uri);
+                if (resp != null)
+                {
+                    //MessageBox.Show(GeminiSchemeHandlerFactory.Instance.TextGeminiInstance.Format(resp.Bytes.ToArray()));
+                    //Stream = new MemoryStream(Encoding.UTF8.GetBytes(GeminiSchemeHandlerFactory.Instance.TextGeminiInstance.Format(resp.Bytes.ToArray())));
+                    Stream = new MemoryStream(resp.Bytes.ToArray());
+
+                    MimeType = resp.Mime.Contains("application/gopher-menu") ? "text/html" : resp.Mime;
+
+                    callback.Continue();
+                    return CefReturnValue.ContinueAsync;
+                }
+            }
+            //}
+            //catch
+            //{
+            callback.Dispose();
+            return CefReturnValue.Cancel;
+            //}
+        }
+    }
     public class BlankSchemeHandler : IResourceHandler, IDisposable
     {
         //private static string appPath = Path.GetDirectoryName(Application.ExecutablePath) + @"\";
@@ -19,6 +243,7 @@ namespace SLBr
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
         }
 
         public void GetResponseHeaders(IResponse response, out long responseLength, out string redirectUrl)

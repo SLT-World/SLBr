@@ -26,8 +26,9 @@ Use of this source code is governed by a GNU license that can be found in the LI
 
     <div class="AboutContent">
         <h1>SLBr</h1>
-        <p>The browser that prioritizes a faster web</p>
         <p>
+            The browser that prioritizes a faster web
+            <br>
             Browse the web with a fast, lightweight web browser.
         </p>
         <!--<p>
@@ -36,23 +37,68 @@ Use of this source code is governed by a GNU license that can be found in the LI
         <!--<p>
             With the use of the high-performance .NET wrapper around the <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a>, CefSharp, webpages are rendered in high quality.
         </p>-->
-        <h1>Based on the Chromium platform</h1>
+        <!--<h1>Based on the Chromium platform</h1>
         <p>
             With the Chromium browser engine, SLBr has access to Chromium's useful features that can be implemented easily.
+        </p>-->
+        <h1>Based on CefSharp</h1>
+        <p>
+            CefSharp is an embedded Chromium browser for .NET apps such as WPF and Winforms. It is a lightweight .NET wrapper for the Chromium Embedded Framework (CEF).
+            <br>
+            CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTML5 audio/video elements as well as WebGL. CefSharp has basically everything a modern browser would need.
         </p>
         <h1>
             SLBr's most notable features
         </h1>
+        <table>
+            <tr>
+                <th style="border-radius: 10px 0 0 0;">Feature</th>
+                <th style="border-radius: 0 10px 0 0;">Description</th>
+            </tr>
+            <tr>
+                <td>Tab Unloading</td>
+                <td>Inactive/unused but initialized browser processes are automatically unloaded.</td>
+            </tr>
+            <tr>
+                <td>Switchable render modes</td>
+                <td>Switch to the most suitable render mode for improved rendering.</td>
+            </tr>
+            <tr>
+                <td>Built-in Tracker Blocker & Ad Blocker</td>
+                <td>Blocks intrusive ads and trackers.</td>
+            </tr>
+            <tr>
+                <td>Parallel downloading</td>
+                <td>Downloads multiple chunks at the same time to accelerate the downloading of large files.</td>
+            </tr>
+            <tr>
+                <td>Google Weblight Servers</td>
+                <td>Load optimized webpages through Google Weblight servers.</td>
+            </tr>
+            <tr>
+                <td>Multi modes</td>
+                <td>Private mode (Incognito), Developer mode (Experimental features), Chromium mode (Default Chromium), Internet Explorer mode (Internet Explorer).</td>
+            </tr>
+            <tr>
+                <td>World Wide Web alternatives</td>
+                <td>IPFS, Gemini & Gopher view.</td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td style="border-radius: 0 0 0 10px;">&nbsp;</td>
+                <td style="border-radius: 0 0 10px 0;">&nbsp;</td>
+            </tr>
+        </table>
+        <h1>Licensing</h1>
+        <p>SLBr is GNU licensed while CEF & CefSharp are BSD licensed.</p>
+        <h1>Special thanks to</h1>
         <ul>
-            <li>Tab Unloading - Inactive/unused but initialized browser processes are automatically unloaded</li>
-            <li>Switchable render modes - Switch to the most suitable render mode for improved rendering</li>
-            <li>Built-in Tracker (Blocker) & Ad Blocker - Blocks intrusive ads and trackers.</li>
-            <li>Lite Mode</li>
-            <li>Parallel downloading - Downloads multiple chunks at the same time to accelerate the downloading of large files</li>
-            <li>Google Weblight Loading - Load optimized webpages through Google Web Light servers</li>
-            <li>File Associations and Default Browser</li>
-            <li>Built-in News</li>
-            <li>Multi modes - Private mode (Incognito), Developer mode (Experimental features), Chromium mode (Default Chromium), Internet Explorer mode (Internet Explorer?)</li>
+            <li>The <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a> by Marshall A. Greenblatt.</li>
+            <li>The CefSharp team, and <a href="https://github.com/sponsors/amaitland" target="_blank">Amaitland</a> who dedicated himself to the CefSharp project.</li>
+            <li><a href="https://github.com/sponsors/RangerMauve" target="_blank">Mauve</a> who helped out on the IPFS implementation for SLBr.</li>
         </ul>
         <h1>System Requirements</h1>
         <ul>
@@ -60,6 +106,14 @@ Use of this source code is governed by a GNU license that can be found in the LI
             <li>.NET 6.0</li>
             <li>Segoe MDL2 Assets</li>
             <li>Windows 7 and above</li>
+        </ul>
+        <h1>Keyboard Shortcuts</h1>
+        <ul>
+            <li>F5 (Refresh)</li>
+            <!--<li>Ctrl+T (New Tab)</li>
+        <li>Ctrl+W (Close Tab)</li>-->
+            <li>Ctrl+S (Screenshot)</li>
+            <li>F12 (Developer Tools)</li>
         </ul>
         <h1>Limitations</h1>
         <ul>
@@ -69,34 +123,6 @@ Use of this source code is governed by a GNU license that can be found in the LI
             <li>Limited extension APIs</li>
             <li>No proxy support</li>
         </ul>
-        <!--<p>SLBr may not have any tutorials on the topic of building proprietary codecs. But here are some useful links that might help you with the building process:</p>
-    <div class="List">
-        <ul>
-            <li><a href="https://bitbucket.org/chromiumembedded/cef/wiki/MasterBuildQuickStart" target="_blank">CEF Master Build Quick Start Documentation</a></li>
-            <li><a href="https://magpcss.org/ceforum/viewtopic.php?t=13515" target="_blank">Build CEF with proprietary codecs support</a></li>
-            <li><a href="https://github.com/mitchcapper/CefSharpDockerfiles" target="_blank">CefSharp Docker</a></li>
-            <li><a href="https://stackoverflow.com/questions/43845493/how-to-enable-h264-support-in-cef3-latest-version/45404590#45404590" target="_blank">How to enable H264 support in CEF3 latest version</a></li>
-            <li><a href="https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md" target="_blank">CEF Automated Build Setup Documentation</a></li>
-        </ul>
-    </div>-->
-        <!--<h1>
-        Features that keeps SLBr from being a memory hog it once was (Yes, SLBr used to be a memory hog just like Google Chrome)
-    </h1>-->
-        <h1>Keyboard Shortcuts</h1>
-        <ul>
-            <li>F5 (Refresh)</li>
-            <!--<li>Ctrl+T (New Tab)</li>
-        <li>Ctrl+W (Close Tab)</li>-->
-            <li>Ctrl+S (Screenshot)</li>
-            <li>F12 (Developer Tools)</li>
-        </ul>
-        <!--<h1>Licensing</h1>
-        <p>SLBr is GNU licensed while CEF & CefSharp are BSD licensed.</p>
-        <h1>Thanks to</h1>
-        <ul>
-            <li>The <a href="https://bitbucket.org/chromiumembedded/cef/wiki/Home" target="_blank">Chromium Embedded Framework (CEF)</a> by Marshall A. Greenblatt.</li>
-            <li>The CefSharp team, and <a href="https://github.com/sponsors/amaitland" target="_blank">Amaitland</a> who dedicated himself to the CefSharp project.</li>
-        </ul>-->
         <h1>Links of Interest & References</h1>
         <div class="List">
             <ul>

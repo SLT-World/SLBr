@@ -25,6 +25,10 @@ namespace SLBr
             return MainWindow.Instance.MainSave.Get("Search_Engine");
             //return "Bruh";
         }
+        public int AdsBlocked() =>
+            MainWindow.Instance.AdsBlocked;
+        public int TrackersBlocked() =>
+            MainWindow.Instance.TrackersBlocked;
         public string SayHello(string name) { return $"Hello {name}!"; }
 
         public void PromptExample()

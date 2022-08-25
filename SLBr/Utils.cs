@@ -25,14 +25,10 @@ namespace SLBr
 {
     public static class Extensions
     {
-        public static CefState ToCefState(this bool self)
-        {
-            return self ? CefState.Enabled : CefState.Disabled;
-        }
-        public static bool ToBoolean(this CefState self)
-        {
-            return self == CefState.Enabled ? true : false;
-        }
+        public static CefState ToCefState(this bool self) =>
+            self ? CefState.Enabled : CefState.Disabled;
+        public static bool ToBoolean(this CefState self) =>
+            self == CefState.Enabled ? true : false;
         public static T DeepCopy<T>(this T self)
         {
             var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
@@ -74,6 +70,19 @@ namespace SLBr
             else
                 return Theme.Light;
         }*/
+        private static string ReadableFileSize(double CrypticSize)
+        {
+            string[] sizes = { "B", "KB", "MB", "GB" };
+            int order = 0;
+
+            while (CrypticSize >= 1024 && order + 1 < sizes.Length)
+            {
+                order++;
+                CrypticSize = CrypticSize / 1024;
+            }
+
+            return String.Format("{0:0.#}{1}", CrypticSize, sizes[order]);
+        }
         public static Bitmap ResizeBitmap(Bitmap bmp, int width, int height)
         {
             //Bitmap result = new Bitmap(width, height);
@@ -82,7 +91,6 @@ namespace SLBr
             {
                 g.DrawImage(bmp, 0, 0, width, height);
             }*/
-
             return result;
         }
         public static ImageCodecInfo GetEncoder(ImageFormat format)
@@ -91,9 +99,7 @@ namespace SLBr
             foreach (ImageCodecInfo codec in codecs)
             {
                 if (codec.FormatID == format.Guid)
-                {
                     return codec;
-                }
             }
             return null;
         }
@@ -119,16 +125,20 @@ namespace SLBr
             Url.StartsWith("about:");
         /*public static bool IsBrowserUrlScheme(string Url) =>//NoHttps//WithCEFandChrome
             IsSystemUrl(Url) || IsProgramUrl(Url) || IsInternalUrl(Url) || IsAboutUrl(Url) || IsChromeScheme(Url);*/
-        public static bool IsHttpScheme(string Url) =>//NoHttps
-            Url.StartsWith("https:") || Url.StartsWith("http:");
-        /*public static bool IsChromeScheme(string Url) =>
-            Url.StartsWith("cef:") || Url.StartsWith("chrome:");*/
         public static bool IsDataOffender(ResourceType _ResourceType) =>
             _ResourceType == ResourceType.MainFrame || _ResourceType == ResourceType.Image || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.FontResource;
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
-            _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Image || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame;
+            _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Image || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame;
         public static bool CanCheck(TransitionType _TransitionType) =>
             _TransitionType != TransitionType.AutoSubFrame && _TransitionType != TransitionType.Blocked && _TransitionType != TransitionType.FormSubmit;
+        public static bool IsHttpScheme(string Url) =>//NoHttps
+            Url.StartsWith("https:") || Url.StartsWith("http:");
+        public static bool IsWeblightScheme(string Url) =>//NoHttps
+            Url.StartsWith("weblight:") || Url.Contains("https://googleweblight.com/?lite_url=");
+        public static bool IsDomain(string Url) =>//NoHttps
+            !Url.StartsWith(".") && Url.Contains(".");
+        /*public static bool IsChromeScheme(string Url) =>
+            Url.StartsWith("cef:") || Url.StartsWith("chrome:");*/
         public static bool IsProtocolNotHttp(string Url)
         {
             if (IsHttpScheme(Url))
@@ -148,6 +158,12 @@ namespace SLBr
                     return true;
             }
             return false;
+        }
+        public static bool IsUrl(string Url)
+        {
+            if (!IsHttpScheme(Url) && !IsProtocolNotHttp(Url) && !IsDomain(Url) && !Url.EndsWith("/"))
+                return false;
+            return true;
         }
 
         public static string RemovePrefix(string Url, string Prefix, bool CaseSensitive = false, bool Back = false, bool ReturnCaseSensitive = true)
@@ -173,12 +189,11 @@ namespace SLBr
                 Content = Content.Substring(0, Index + (KeepPrefix ? Prefix.Length : 0));
             return Content;
         }
-        public static string FilterUrlForBrowser(string Url, string SearchEngineUrl, bool Weblight/*, bool IsChromiumMode*/)
+        public static string FilterUrlForBrowser(string Url, string SearchEngineUrl, bool Weblight)
         {
             Url = Url.Trim();
             if (Url.Length > 0)
             {
-                //MessageBox.Show($"{Url},{!Url.StartsWith("domain:")},{!Url.StartsWith("search:")}");
                 if (!Url.StartsWith("domain:") && !Url.StartsWith("search:"))
                 {
                     if (IsProgramUrl(Url))
@@ -186,9 +201,7 @@ namespace SLBr
                         Process.Start(Url);
                         return Url;
                     }
-                    /*else if (!IsChromiumMode && Url.StartsWith("cef:"))
-                        Url = "domain:chrome:" + Url.Substring(4);*/
-                    else if ((Url.Contains(".") || IsProtocolNotHttp(Url)/* || IsSystemUrl(Url) || (IsChromiumMode && Url.StartsWith("chrome:"))) && (!Url.Contains(" ") || CanSchemeWithSpace(Url)*/))
+                    else if (IsUrl(Url))
                         Url = "domain:" + Url;
                     else
                         Url = "search:" + Url;
@@ -234,7 +247,7 @@ namespace SLBr
                 Host = Host.Replace("www.", "");
             return Host.Split('/')[0];
         }
-        public static string CleanUrl(string Url, bool RemoveValues = true, bool RemoveLastSlash = true)
+        public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveAnchor = true, bool RemoveWWW = false)
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
@@ -243,19 +256,19 @@ namespace SLBr
                 if (!MainWindow.Instance.IsChromiumMode)
                     Url = "cef" + Url.Substring(6);
             }*/
-            if (RemoveValues)
+            if (RemoveParameters)
             {
                 int ToRemoveIndex = Url.LastIndexOf("?");
                 if (ToRemoveIndex >= 0)
                     Url = Url.Substring(0, ToRemoveIndex);
-                else
-                {
-                    ToRemoveIndex = Url.LastIndexOf("#");
-                    if (ToRemoveIndex >= 0)
-                        Url = Url.Substring(0, ToRemoveIndex);
-                }
                 /*if (Url.EndsWith(".pdf#toolbar=0"))
                     Url = Utils.RemovePrefix(Url, "#toolbar=0", false, true);*/
+            }
+            if (RemoveAnchor)
+            {
+                int ToRemoveIndex = Url.LastIndexOf("#");
+                if (ToRemoveIndex >= 0)
+                    Url = Url.Substring(0, ToRemoveIndex);
             }
             Url = RemovePrefix(Url, "http://");
             Url = RemovePrefix(Url, "https://");
@@ -263,6 +276,8 @@ namespace SLBr
             //if (Url.Replace(new Uri(FixUrl(Url, false, false)).Host, "").Contains("/"))
             if (RemoveLastSlash)
                 Url = RemovePrefix(Url, "/", false, true);
+            if (RemoveWWW)
+                Url = RemovePrefix(Url, "www.");
             return Url;
         }
         public static string FixUrl(string Url, bool Weblight)
@@ -277,13 +292,22 @@ namespace SLBr
             {
                 if (!Url.StartsWith("https://") && !Url.StartsWith("http://"))
                     Url = "https://" + Url;
-                //Use HTTPS for Incomplete URLs
             }
-            if (Weblight && IsHttpScheme(Url)/* && !IsSystemUrl(Url)*/)
-                Url = "https://googleweblight.com/?lite_url=" + Url;
+            if (Weblight && !IsWeblightScheme(Url) && IsUrl(Url)/* && !IsSystemUrl(Url)*/)
+                Url = "weblight://" + Url; //"https://googleweblight.com/?lite_url="
             return Url;
         }
-
+        public static string Between(string Value, string FirstString, string LastString)
+        {
+            string FinalString;
+            int Pos1 = Value.IndexOf(FirstString) + FirstString.Length;
+            int Pos2 = Value.IndexOf(LastString);
+            if (Pos2 - Pos1 > -1)
+                FinalString = Value.Substring(Pos1, Pos2 - Pos1);
+            else
+                FinalString = Value.Substring(Pos1);
+            return FinalString;
+        }
         public static bool CheckForInternetConnection(int timeoutMs = 1500, string url = null)
         {
             try
@@ -310,6 +334,13 @@ namespace SLBr
             {
                 return false;
             }
+        }
+
+        public static string ConvertUrlToReadableUrl(IdnMapping _IdnMapping, string Url)
+        {
+            if (string.IsNullOrEmpty(Url))
+                return Url;
+            return Uri.UnescapeDataString(_IdnMapping.GetUnicode(Url.Trim()));
         }
 
         public class SafeBrowsing
@@ -501,7 +532,6 @@ namespace SLBr
             }
             public void Clear() =>
                 Data.Clear();
-
             public void Save()
             {
                 if (!Directory.Exists(SaveFolderPath))
@@ -554,7 +584,7 @@ namespace SLBr
                 public string url { get; set; }
             }
 
-            public static Bookmarks Import<T>(string _Path)
+            public static Bookmarks Import(string _Path)
             {
                 string FileContent = File.ReadAllText(_Path);
                 return (Bookmarks)Decode<Bookmarks>(FileContent);
@@ -568,19 +598,5 @@ namespace SLBr
                 return JsonConvert.DeserializeObject<T>(JsonData);
             }
         }
-
-        /*public class AdManager
-        {
-            public string EasyList;
-            public AdManager()
-            {
-                EasyList = MainWindow.Instance.TinyDownloader.DownloadString()
-            }
-
-            public bool IsAd(string Url)
-            {
-
-            }
-        }*/
     }
 }

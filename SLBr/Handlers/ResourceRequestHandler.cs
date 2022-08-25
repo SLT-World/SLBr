@@ -50,7 +50,7 @@ namespace SLBr
             "smartadserver.com", "bidswitch.net", "taboola", "amazon-adsystem.com", "survey.min.js", "survey.js", "social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
             "ad.js", "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
             "admanager.js", "adserver", "smartadserver", "usync.js", "moneybid.js", "miner.js", "prebid", "youtube.com/ptracking", "fls.doubleclick.net", "google.com/ads",
-            "advertising.js", "adsense.js"
+            "advertising.js", "adsense.js", "track", "plusone.js"
         };
         FastHashSet<string> Miners = new FastHashSet<string> {
             "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",
@@ -104,7 +104,9 @@ namespace SLBr
             "ids.ad.gt", "powerad.ai", "hb.brainlyads.com", "pixel.quantserve.com", "ads.anura.io", "static.getclicky.com",
             "ad.turn.com", "rtb.mfadsrvr.com", "ad.mrtnsvr.com", "s.ad.smaato.net", "rtb-csync.smartadserver.com", "ssbsync.smartadserver.com",
             "adpush.technoratimedia.com", "pixel.tapad.com", "secure.adnxs.com", "data.adsrvr.org", "px.adhigh.net",
-            "epnt.ebay.com", "mb.moatads.com", "ad.adsrvr.org", "a.ad.gt", "pixels.ad.gt", "z.moatads.com", "px.moatads.com"
+            "epnt.ebay.com", "mb.moatads.com", "ad.adsrvr.org", "a.ad.gt", "pixels.ad.gt", "z.moatads.com", "px.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
+            "btloader.com", "ad-delivery.net", "ad.doubleclick.net",
+            "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com"
         };
         FastHashSet<string> Analytics = new FastHashSet<string> { "google-analytics.com", "ssl.google-analytics.com",
             "stats.wp.com",
@@ -150,7 +152,7 @@ namespace SLBr
             "sync.outbrain.com", "widgets.outbrain.com",
             "collect.mopinion.com", "pb-server.ezoic.com",
             "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
-            "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com"
+            "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com", "a.pub.network"
         };
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
@@ -168,6 +170,10 @@ namespace SLBr
             //if (Utils.IsDataOffender(request.ResourceType))
             //{
             //}
+
+            //if (request.Url.StartsWith("ipfs://"))
+            //    request.Url = request.Url.Replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
+
             if (Utils.IsPossiblyAd(request.ResourceType))
             {
                 if (AdBlock || TrackerBlock)
@@ -201,7 +207,7 @@ namespace SLBr
                             if (Analytics.Contains(Host))
                             {
                                 Continue = false;
-                                MainWindow.Instance.BlockedTrackers++;
+                                MainWindow.Instance.TrackersBlocked++;
                             }
                         if (Continue)
                         {
@@ -209,7 +215,7 @@ namespace SLBr
                                 if (Ads.Contains(Host))
                                 {
                                     Continue = false;
-                                    MainWindow.Instance.BlockedAds++;
+                                    MainWindow.Instance.AdsBlocked++;
                                 }
                         }
                     }

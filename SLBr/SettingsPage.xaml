@@ -62,6 +62,23 @@
                     </GroupBox>
                 </StackPanel>
             </TabItem>
+            <TabItem Header="Web" Style="{DynamicResource SettingsTab}">
+                <StackPanel MinWidth="515">
+                    <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Web</TextBlock>
+                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
+                        <GroupBox.Header>
+                            Protocols
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="WaybackCheckBox" Click="WaybackCheckBox_Click" Margin="5" Content="Wayback"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="WeblightSchemeCheckBox" Click="WeblightSchemeCheckBox_Click" Margin="5" Content="Weblight"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="IPFSCheckBox" Click="IPFSCheckBox_Click" Margin="5" Content="IPFS"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="GeminiCheckBox" Click="GeminiCheckBox_Click" Margin="5" Content="Gemini"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="GopherCheckBox" Click="GopherCheckBox_Click" Margin="5" Content="Gopher"/>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
             <TabItem Header="Search" Style="{DynamicResource SettingsTab}">
                 <StackPanel MinWidth="515">
                     <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Search settings</TextBlock>
@@ -189,11 +206,11 @@
                         </DockPanel>
                     </Border>
                     <TextBlock Margin="5">
-                        SLBr is made possible by the
-                        <Hyperlink NavigateUri="https://www.chromium.org/" RequestNavigate="Hyperlink_RequestNavigate">
-                            Chromium
+                        SLBr is made possible by
+                        <Hyperlink NavigateUri="https://github.com/amaitland/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">
+                            Cefsharp
                         </Hyperlink>
-                        open source project and
+                        and
                         <Hyperlink NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">
                             other source software
                         </Hyperlink>.</TextBlock>

@@ -6,6 +6,35 @@ body {
     font-family: 'Segoe UI Light', Tahoma, sans-serif;
 }
 
+table {
+    border-collapse: collapse;
+    width: 100%;
+    /*margin-right: auto;
+            margin-left: auto;*/
+}
+
+td, th {
+    /*text-align: left;*/
+    /*border: 1px solid #F5F5F5;*/
+    padding: 8px;
+}
+
+th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #0092FF;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #F5F5F5;
+}
+
+/*tr:hover {
+            background-color: #DDD;
+        }*/
+
 /*#checkboxes {
     float: left;
 }*/

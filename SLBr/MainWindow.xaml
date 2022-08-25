@@ -216,7 +216,13 @@ Use of this source code is governed by a GNU license that can be found in the LI
                                 <Image Source="Resources/Republic_of_China_Star_Only.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Border>
                         </Border>
-                        <Border CornerRadius="25" Tag="12&lt;,&gt;https://www.comebackalive.in.ua/donate" MouseDown="MiddleButtonAction" ToolTip="Donate to Ukraine"  Background="{DynamicResource BorderBrush}" x:Name="UkraineWar" Visibility="Visible" Margin="5,0,0,0" Height="23" Width="23">
+                        <Border x:Name="YoutubeDownloadButton" CornerRadius="25" Tag="12&lt;,&gt;https://ytmp3.cc/{CurrentUrl}" MouseDown="MiddleButtonAction" ToolTip="Download Video" Background="{DynamicResource BorderBrush}" Margin="5,0,0,0" Height="23" Width="23">
+                            <TextBlock TextAlignment="Center" VerticalAlignment="Center" Text="&#xE896;" Foreground="Red"/>
+                        </Border>
+                        <Border CornerRadius="25" Tag="12&lt;,&gt;slbr://tetris" MouseDown="MiddleButtonAction" ToolTip="Play Tetris" Background="{DynamicResource BorderBrush}" Margin="5,0,0,0" Height="23" Width="23">
+                            <TextBlock TextAlignment="Center" VerticalAlignment="Center" Text="&#xE809;" Foreground="{DynamicResource ControlFontBrush}"/>
+                        </Border>
+                        <!--<Border CornerRadius="25" Tag="12&lt;,&gt;https://www.unicef.ie/donate/ukraine/#1" MouseDown="MiddleButtonAction" ToolTip="Donate to Ukraine"  Background="{DynamicResource BorderBrush}" x:Name="UkraineWar" Visibility="Visible" Margin="5,0,0,0" Height="23" Width="23">
                             <Border Margin="5" CornerRadius="25">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -227,7 +233,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
                                     <Border Grid.Row="1" Background="#FFD600" CornerRadius="0,0,25,25"/>
                                 </Grid>
                             </Border>
-                        </Border>
+                        </Border>-->
                     </DockPanel>
                     <TextBox DockPanel.Dock="Right" x:Name="FindTextBox" Margin="5,0,0,0" Height="23" Width="200" FontFamily="arial" Padding="0,1,0,0" KeyDown="FindTextBox_KeyDown" ToolTip="Find a specific text in this page"/>
                     <Menu x:Name="SuggestionsDropdown" DockPanel.Dock="Right" FontFamily="Segoe MDL2 Assets" Margin="0" Height="23" Width="23" Background="Transparent" BorderBrush="Transparent" Foreground="{DynamicResource ControlFontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -249,6 +255,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
                     </Menu>
                     <Button DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Add to favourites" x:Name="FavouriteButton" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xEB51;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="11"/>
                     <Button DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Reader mode" x:Name="ReaderModeButton" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE736;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="26"/>
+                    <Button DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Translate to English" Style="{DynamicResource AddButton}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xF2B7;" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="27"/>
                     <TextBox x:Name="AddressBox" Margin="5,0" Height="23" Width="auto" FontFamily="arial" Padding="0" KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" MouseEnter="AddressBox_MouseEnter" MouseLeave="AddressBox_MouseLeave" Tag="Loading..."/>
                 </DockPanel>
                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0" x:Name="FavouriteContainer" Height="33" Grid.Row="1" HorizontalAlignment="Stretch">

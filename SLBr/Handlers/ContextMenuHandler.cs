@@ -52,6 +52,7 @@ namespace SLBr
                     model.AddItem((CefMenuCommand)26505, "Reset Zoom Level");
                     model.AddSeparator();
                     model.AddItem((CefMenuCommand)26506, "Screenshot");
+                    model.AddItem((CefMenuCommand)26511, "Translate to English");
                     model.AddSeparator();
                     /*IMenuModel _EditSubMenuModel = model.AddSubMenu(CefMenuCommand.NotFound, "Edit");
                     _EditSubMenuModel.AddItem(CefMenuCommand.Undo, "Undo");
@@ -201,21 +202,15 @@ namespace SLBr
 
             webBrowser.Dispatcher.Invoke(() =>
             {
-                var menu = new ContextMenu
-                {
-                    IsOpen = true
-                };
+                var menu = new ContextMenu { IsOpen = true };
 
                 RoutedEventHandler handler = null;
 
                 handler = (s, e) =>
                 {
                     menu.Closed -= handler;
-
                     if (!callback.IsDisposed)
-                    {
                         callback.Cancel();
-                    }
                 };
 
                 menu.Closed += handler;
@@ -363,6 +358,11 @@ namespace SLBr
                                 case (CefMenuCommand)26510:
                                     {
                                         chromiumWebBrowser.StartDownload(Parameters.SourceUrl);
+                                        break;
+                                    }
+                                case (CefMenuCommand)26511:
+                                    {
+                                        MainWindow.Instance.Translate();
                                         break;
                                     }
                             }

@@ -81,6 +81,11 @@ namespace SLBr
             ShowPerformanceMetricsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("ShowPerformanceMetrics"));
             DoNotTrackCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("DoNotTrack"));
             VideoPopoutCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("VideoPopout"));
+            IPFSCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("IPFS"));
+            WeblightSchemeCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("WeblightScheme"));
+            WaybackCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("Wayback"));
+            GeminiCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("Gemini"));
+            GopherCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("Gopher"));
             string ThemeName = MainWindow.Instance.MainSave.Get("Theme");
             foreach (object o in ThemeSelection.Items)
             {
@@ -325,6 +330,7 @@ namespace SLBr
         private void WeblightCheckBox_Click(object sender, RoutedEventArgs e)
         {
             var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("WeblightScheme", _CheckBox.IsChecked.ToString());
             MainWindow.Instance.MainSave.Set("Weblight", _CheckBox.IsChecked.ToString());
             NewMessage($"SLBr will {((bool)_CheckBox.IsChecked ? "always" : "not")} load websites with Weblight.", false);
         }
@@ -358,6 +364,36 @@ namespace SLBr
             var _CheckBox = sender as CheckBox;
             MainWindow.Instance.MainSave.Set("DarkWebpage", _CheckBox.IsChecked.ToString());
             //NewMessage($"Refresh to see change", false);
+        }
+        private void WaybackCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("Wayback", _CheckBox.IsChecked.ToString());
+            //NewMessage($"SLBr will {((bool)_CheckBox.IsChecked ? "unload tabs free up resources and memory" : "not unload tabs")}.", false);
+        }
+        private void WeblightSchemeCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("WeblightScheme", _CheckBox.IsChecked.ToString());
+            //NewMessage($"SLBr will {((bool)_CheckBox.IsChecked ? "unload tabs free up resources and memory" : "not unload tabs")}.", false);
+        }
+        private void IPFSCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("IPFS", _CheckBox.IsChecked.ToString());
+            //NewMessage($"SLBr will {((bool)_CheckBox.IsChecked ? "unload tabs free up resources and memory" : "not unload tabs")}.", false);
+        }
+        private void GeminiCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("Gemini", _CheckBox.IsChecked.ToString());
+            //NewMessage($"SLBr will {((bool)_CheckBox.IsChecked ? "unload tabs free up resources and memory" : "not unload tabs")}.", false);
+        }
+        private void GopherCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("Gopher", _CheckBox.IsChecked.ToString());
+            //NewMessage($"SLBr will {((bool)_CheckBox.IsChecked ? "unload tabs free up resources and memory" : "not unload tabs")}.", false);
         }
         public void NewMessage(string Content, bool IncludeButton = true, string ButtonContent = "", string ButtonArguments = "", string ToolTip = "")
         {

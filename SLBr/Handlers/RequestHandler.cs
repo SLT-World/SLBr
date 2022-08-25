@@ -24,13 +24,15 @@ namespace SLBr
 
 		public bool OnBeforeBrowse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool userGesture, bool isRedirect)
 		{
-			if (request.Url.Contains("roblox.com"))
-				return true;
+			if (request.Url.StartsWith("weblight://") && bool.Parse(MainWindow.Instance.MainSave.Get("WeblightScheme")))
+				frame.LoadUrl("https://googleweblight.com/?lite_url=" + Utils.CleanUrl(request.Url.Replace("weblight://", "")));
+			//if (request.Url.Contains("roblox.com"))
+			//	return true;
 			//if (request.Url != frame.Url)
 			//	return true;
 			if (Utils.CanCheck(request.TransitionType) && !Utils.IsProtocolNotHttp(request.Url) && !Utils.IsProgramUrl(request.Url))//(isRedirect || userGesture || frame.IsMain)
 			{
-				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url.Replace("https://googleweblight.com/?lite_url=", ""));
+				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url.Replace("https://googleweblight.com/?lite_url=", "").Replace("weblight://", ""));
 				Utils.SafeBrowsing.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : Utils.SafeBrowsing.ThreatType.Unknown;
 				if (_ThreatType == Utils.SafeBrowsing.ThreatType.Malware || _ThreatType == Utils.SafeBrowsing.ThreatType.Unwanted_Software)
 					//chromiumWebBrowser.LoadHtml(File.ReadAllText(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "Malware.html")), request.Url);
