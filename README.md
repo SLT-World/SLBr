@@ -6,8 +6,6 @@
   **Browse the web with a fast, lightweight web browser.**
 </div>
 
-SLBr is neither affiliated with Google nor Microsoft.
-
 ## Installing SLBr
 Install the latest version of SLBr and open it
 - https://github.com/SLT-World/SLBr/releases/latest
@@ -44,3 +42,5 @@ This is a guide on how to compile and run the source code.
 **The class "SECRETS" is missing**
 
 The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it, either remove the line of code that is causing the error, which will remove support for SafeBrowsing, www.google.com sign-ins and Geolocation. Or, generate a new C# class called "SECRETS", have string variables named "GOOGLE_API_KEY", "GOOGLE_DEFAULT_CLIENT_ID", "GOOGLE_DEFAULT_CLIENT_SECRET".
+
+SLBr is neither affiliated with Google nor Microsoft.
