@@ -8,38 +8,24 @@
 
 SLBr is neither affiliated with Google nor Microsoft.
 
+## Installing SLBr
+Install the latest version of SLBr and open it
+- https://github.com/SLT-World/SLBr/releases/latest
+
+## Based on CefSharp
+CefSharp is an embedded Chromium browser for .NET apps such as WPF and Winforms. It is a lightweight .NET wrapper for the Chromium Embedded Framework (CEF).
+CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTML5 audio/video elements as well as WebGL. CefSharp has basically everything a modern browser would need.
+
+## Special thanks to
+- The Chromium Embedded Framework (CEF) by Marshall A. Greenblatt.
+- The CefSharp team, and Amaitland who dedicated himself to the CefSharp project.
+- Mauve who helped out on the IPFS implementation for SLBr.
+
 ## System Requirements
 - Microsoft Visual C++ 2019
 - .NET 6.0
 - Segoe MDL2 Assets
 - Windows 7 and above
-
-## How to download executables
-Go to https://github.com/SLT-World/SLBr/releases and download the latest version. To download and compile the source code, scroll to the end of README
-
-## Roadmap
-- [x] www.google.com Account Sign-In
-- [x] SafeBrowsing API
-- [x] Javascript Binding
-- [x] Default, Private, Developer, Chromium, IE modes
-- [x] Drag & Drop content
-- [x] Default Browser
-- [x] Built-in Ad & Tracker blocker
-- [x] Auto hide contents of "chrome://"
-- [x] Docked Inspector/DevTools
-- [x] Tab Unloading
-- [x] Download Handler
-- [x] Force dark theme on webpages
-- [x] Themes
-- [ ] Smooth scrolling
-- [ ] Link & Image preview
-- [x] Context Menu not closing bug fixed
-- [x] Suggestions
-- [x] Render modes [Hardware, Software]
-- [x] Parallel downloading
-- [x] Built-in News
-- [x] Weblight
-- [x] Self Host Chromium
 
 ## Screenshots & Videos
 ![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/New%20Dark%20Mode.png)
@@ -47,20 +33,14 @@ Go to https://github.com/SLT-World/SLBr/releases and download the latest version
 
 Video: https://youtu.be/PtmDRjgwmHI
 
-## How to run the source code
-Go to https://github.com/SLT-World/SLBr/releases and download the latest version. This is a guide on how to compile and run the source code.
+## Compiling and building SLBr
+This is a guide on how to compile and run the source code.
 **Setup**
 
-1. If you haven't installed visual studio yet (NOT VISUAL STUDIO CODE), install it.
-2. After that, download the project as a ZIP file from Github.
-3. Unzip the file, find the solution file and open it.
-4. Tada, now you can change the code the way you like and contribute some features to SLBr!
+1. Install and set up [Visual Studio](https://visualstudio.microsoft.com/vs/)
+2. Download SLBr's Source code and unzip it
+3. Find the solution file
 
 **The class "SECRETS" is missing**
 
 The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it, either remove the line of code that is causing the error, which will remove support for SafeBrowsing, www.google.com sign-ins and Geolocation. Or, generate a new C# class called "SECRETS", have string variables named "GOOGLE_API_KEY", "GOOGLE_DEFAULT_CLIENT_ID", "GOOGLE_DEFAULT_CLIENT_SECRET".
-
-**Does SLBr send browsing habits to companies or tracks activities**
-
-SLBr does send urls to SafeBrowsing Servers for user security.<br/>
-And when Weblight is enabled, SLBr sends the address to Weblight servers for compression
