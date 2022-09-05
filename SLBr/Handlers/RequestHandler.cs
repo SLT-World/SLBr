@@ -1,14 +1,13 @@
-﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
-using CefSharp;
+﻿using CefSharp;
 using CefSharp.Wpf;
+using SLBr.Pages;
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 
-namespace SLBr
+namespace SLBr.Handlers
 {
-    public class RequestHandler : IRequestHandler
+	public class RequestHandler : IRequestHandler
 	{
 		public bool AdBlock;
 		public bool TrackerBlock;
@@ -24,20 +23,27 @@ namespace SLBr
 
 		public bool OnBeforeBrowse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool userGesture, bool isRedirect)
 		{
-			if (request.Url.StartsWith("weblight://") && bool.Parse(MainWindow.Instance.MainSave.Get("WeblightScheme")))
-				frame.LoadUrl("https://googleweblight.com/?lite_url=" + Utils.CleanUrl(request.Url.Replace("weblight://", "")));
+			if (bool.Parse(MainWindow.Instance.MainSave.Get("ModernWikipedia")))
+			{
+				if (request.Url.Contains("wik"))
+				{
+					string OutputUrl = Utils.ToMobileWiki(request.Url);
+					if (OutputUrl != request.Url)
+						frame.LoadUrl(Utils.ToMobileWiki(request.Url));
+				}
+			}
 			//if (request.Url.Contains("roblox.com"))
 			//	return true;
 			//if (request.Url != frame.Url)
 			//	return true;
 			if (Utils.CanCheck(request.TransitionType) && !Utils.IsProtocolNotHttp(request.Url) && !Utils.IsProgramUrl(request.Url))//(isRedirect || userGesture || frame.IsMain)
 			{
-				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url.Replace("https://googleweblight.com/?lite_url=", "").Replace("weblight://", ""));
-				Utils.SafeBrowsing.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : Utils.SafeBrowsing.ThreatType.Unknown;
-				if (_ThreatType == Utils.SafeBrowsing.ThreatType.Malware || _ThreatType == Utils.SafeBrowsing.ThreatType.Unwanted_Software)
+				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url);
+				SafeBrowsing.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsing.ThreatType.Unknown;
+				if (_ThreatType == SafeBrowsing.ThreatType.Malware || _ThreatType == SafeBrowsing.ThreatType.Unwanted_Software)
 					//chromiumWebBrowser.LoadHtml(File.ReadAllText(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "Malware.html")), request.Url);
 					frame.LoadUrl("slbr://malware"/* + "?url=" + request.Url*/);
-				else if (_ThreatType == Utils.SafeBrowsing.ThreatType.Social_Engineering)
+				else if (_ThreatType == SafeBrowsing.ThreatType.Social_Engineering)
 					frame.LoadUrl("slbr://deception"/* + "?url=" + request.Url*/);
 				/*else
                 {
@@ -61,11 +67,11 @@ namespace SLBr
 			{
 				Application.Current.Dispatcher.BeginInvoke(new Action(delegate
 				{
-					MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser(targetUrl), false, MainWindow.Instance.Tabs.SelectedIndex + 1, true);
+					MainWindow.Instance.NewBrowserTab(targetUrl, 0, false, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
 				}));
 				return true;
 			}
-   //         else
+			//         else
 			//{
 			//	if (Utils.IsAboutUrl(targetUrl))
 			//	{
@@ -80,7 +86,7 @@ namespace SLBr
 		public void OnPluginCrashed(IWebBrowser browserControl, IBrowser browser, string pluginPath)
 		{
 		}
-		
+
 		public bool OnQuotaRequest(IWebBrowser browserControl, IBrowser browser, string originUrl, long newSize, IRequestCallback callback)
 		{
 			callback.Continue(true);
@@ -119,13 +125,13 @@ namespace SLBr
 			return _ResourceRequestHandler;
 		}
 
-		public bool OnSelectClientCertificate(IWebBrowser chromiumWebBrowser, IBrowser browser, bool isProxy, string host, int port, X509Certificate2Collection certificates, ISelectClientCertificateCallback callback)
+		public void OnDocumentAvailableInMainFrame(IWebBrowser chromiumWebBrowser, IBrowser browser)
+		{
+		}
+
+        public bool OnSelectClientCertificate(IWebBrowser chromiumWebBrowser, IBrowser browser, bool isProxy, string host, int port, X509Certificate2Collection certificates, ISelectClientCertificateCallback callback)
 		{
 			return false;
 		}
-
-        public void OnDocumentAvailableInMainFrame(IWebBrowser chromiumWebBrowser, IBrowser browser)
-        {
-        }
     }
 }

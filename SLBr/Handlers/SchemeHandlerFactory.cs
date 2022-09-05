@@ -1,21 +1,13 @@
-﻿
-using CefSharp;
+﻿using CefSharp;
 using SLBr.Protocols;
 
-namespace SLBr
+namespace SLBr.Handlers
 {
     public class WaybackSchemeHandlerFactory : ISchemeHandlerFactory
     {
         public IResourceHandler Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
         {
             return new WaybackSchemeHandler();
-        }
-    }
-    public class WeblightSchemeHandlerFactory : ISchemeHandlerFactory
-    {
-        public IResourceHandler Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
-        {
-            return new WeblightSchemeHandler();
         }
     }
     public class IPFSSchemeHandlerFactory : ISchemeHandlerFactory
@@ -36,7 +28,7 @@ namespace SLBr
     {
         public static GeminiSchemeHandlerFactory Instance;
         public TextGemini TextGeminiInstance;
-        
+
         public GeminiSchemeHandlerFactory()
         {
             TextGeminiInstance = new TextGemini();
@@ -52,13 +44,6 @@ namespace SLBr
         public IResourceHandler Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
         {
             return new GopherSchemeHandler();
-        }
-    }
-    public class BlankSchemeHandlerFactory : ISchemeHandlerFactory
-    {
-        public IResourceHandler Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
-        {
-            return new BlankSchemeHandler();
         }
     }
 }

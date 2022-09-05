@@ -1,7 +1,6 @@
-﻿using CefSharp.BrowserSubprocess;
+﻿using CefSharp;
+using CefSharp.BrowserSubprocess;
 using System;
-using CefSharp.Wpf;
-using CefSharp;
 
 namespace SLBr
 {

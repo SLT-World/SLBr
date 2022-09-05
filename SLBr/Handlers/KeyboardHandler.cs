@@ -1,12 +1,8 @@
-﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
-using CefSharp;
+﻿using CefSharp;
 using System;
-using System.Collections.Generic;
-using System.Windows;
 using System.Windows.Input;
 
-namespace SLBr
+namespace SLBr.Handlers
 {
     class HotKey
     {
@@ -27,7 +23,7 @@ namespace SLBr
         public Action Callback;//Function
     }
 
-    class KeyboardHandler : IKeyboardHandler
+    public class KeyboardHandler : IKeyboardHandler
     {
         FastHashSet<HotKey> Keys = new FastHashSet<HotKey>();
 
@@ -38,6 +34,11 @@ namespace SLBr
 
         public bool OnKeyEvent(IWebBrowser chromiumWebBrowser, IBrowser browser, KeyType type, int windowsKeyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey)
         {
+            return true;
+        }
+
+        public bool OnPreKeyEvent(IWebBrowser chromiumWebBrowser, IBrowser browser, KeyType type, int windowsKeyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey, ref bool isKeyboardShortcut)
+        {
             if (type == KeyType.RawKeyDown)
             {
                 MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate
@@ -46,28 +47,16 @@ namespace SLBr
                     bool HasShift = modifiers == CefEventFlags.ShiftDown;
                     bool HasAlt = modifiers == CefEventFlags.AltDown;
                     int WPFKeyCode = (int)KeyInterop.KeyFromVirtualKey(windowsKeyCode);
-                    //MessageBox.Show($"{windowsKeyCode},{nativeKeyCode}");
                     foreach (HotKey Key in Keys)
                     {
-                        //MessageBox.Show($"{Key.KeyCode},{Key.Control},{Key.Shift},{Key.Alt}");
                         if (Key.KeyCode == WPFKeyCode && Key.Control == HasControl && Key.Shift == HasShift && Key.Alt == HasAlt)
                         {
-                            //MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate
-                            //{
                             Key.Callback();
-                            //}));
                             break;
                         }
                     }
-                    //MessageBox.Show($"{windowsKeyCode},{HasControl},{HasShift},{HasAlt}");
                 }));
             }
-
-            return true;
-        }
-
-        public bool OnPreKeyEvent(IWebBrowser chromiumWebBrowser, IBrowser browser, KeyType type, int windowsKeyCode, int nativeKeyCode, CefEventFlags modifiers, bool isSystemKey, ref bool isKeyboardShortcut)
-        {
             return false;
         }
     }

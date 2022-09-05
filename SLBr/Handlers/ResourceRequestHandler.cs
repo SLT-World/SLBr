@@ -1,13 +1,11 @@
-﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
-using CefSharp;
+﻿using CefSharp;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Windows;
-using System.Windows.Threading;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace SLBr
+namespace SLBr.Handlers
 {
     public class ResourceRequestHandler : IResourceRequestHandler
     {
@@ -52,41 +50,39 @@ namespace SLBr
             "admanager.js", "adserver", "smartadserver", "usync.js", "moneybid.js", "miner.js", "prebid", "youtube.com/ptracking", "fls.doubleclick.net", "google.com/ads",
             "advertising.js", "adsense.js", "track", "plusone.js"
         };
-        FastHashSet<string> Miners = new FastHashSet<string> {
+        FastHashSet<string> MinersFiles = new FastHashSet<string> {
             "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",
             "worker-asmjs.min.js", "miner.js", "webmr4.js", "webmr.js", "webxmr.js",
             "lib/crypta.js", "static/js/tpb.js", "bitrix/js/main/core/core_tasker.js", "bitrix/js/main/core/core_loader.js", "vbb/me0w.js", "lib/crlt.js", "pool/direct.js",
             "plugins/wp-monero-miner-pro", "plugins/ajcryptominer", "plugins/aj-cryptominer",
             "?perfekt=wss://", "?proxy=wss://", "?proxy=ws://"
         };//https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
+        FastHashSet<string> Miners = new FastHashSet<string> {
+            "coin-hive.com", "coin-have.com", "adminer.com", "ad-miner.com", "coinminerz.com", "coinhive-manager.com", "coinhive.com", "prometheus.phoenixcoin.org", "coinhiveproxy.com", "jsecoin.com", "crypto-loot.com", "cryptonight.wasm", "cloudflare.solutions"
+        };//https://v.firebog.net/hosts/static/w3kbl.txt
         FastHashSet<string> Ads = new FastHashSet<string> {
             "pagead2.googlesyndication.com", "tpc.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "ade.googlesyndication.com", "pagead2.googleadservices.com", "adservice.google.com", "googleadservices.com",
             "googleads2.g.doubleclick.net", "googleads3.g.doubleclick.net", "googleads4.g.doubleclick.net", "googleads5.g.doubleclick.net", "googleads6.g.doubleclick.net", "googleads7.g.doubleclick.net", "googleads8.g.doubleclick.net", "googleads9.g.doubleclick.net",
-            "doubleclick.net", "ad.doubleclick.net", "cm.g.doubleclick.net", "static.doubleclick.net", "m.doubleclick.net", "mediavisor.doubleclick.net", "pubads.g.doubleclick.net", "securepubads.g.doubleclick.net", "www3.doubleclick.net",
-            "ads.google.com",
-            "googleads.g.doubleclick.net",
+            "doubleclick.net", "stats.g.doubleclick.net", "ad.doubleclick.net", "ads.doubleclick.net", "ad.mo.doubleclick.net", "ad-g.doubleclick.net", "cm.g.doubleclick.net", "static.doubleclick.net", "m.doubleclick.net", "mediavisor.doubleclick.net", "pubads.g.doubleclick.net", "securepubads.g.doubleclick.net", "www3.doubleclick.net",
+            "secure-ds.serving-sys.com", "s.innovid.com", "innovid.com", "dts.innovid.com",
+            "googleads.g.doubleclick.net", "pagead.l.doubleclick.net", "g.doubleclick.net", "fls.doubleclick.net",
             "gads.pubmatic.com", "ads.pubmatic.com",// "image6.pubmatic.com",
             "ads.facebook.com", "an.facebook.com",
-            "ads.youtube.com", "youtube.cleverads.vn"/*, "yt3.ggpht.com"*/,
+            "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn"/*, "yt3.ggpht.com"*/,
             "ads.tiktok.com", "ads-sg.tiktok.com",
             "ads.reddit.com", "d.reddit.com", "rereddit.com", "events.redditmedia.com",
             "ads-twitter.com", "static.ads-twitter.com", "ads-api.twitter.com", "advertising.twitter.com",
             "ads.pinterest.com", "ads-dev.pinterest.com",
-            "adtago.s3.amazonaws.com", "advice-ads.s3.amazonaws.com", "advertising-api-eu.amazon.com", "c.amazon-adsystem.com", "s.amazon-adsystem.com",
+            "adtago.s3.amazonaws.com", "advice-ads.s3.amazonaws.com", "advertising-api-eu.amazon.com", "c.amazon-adsystem.com", "s.amazon-adsystem.com", "amazonclix.com",
             "ads.linkedin.com",
             "static.media.net", "media.net", "adservetx.media.net",
             "media.fastclick.net", "cdn.fastclick.net",
             "global.adserver.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com",
             "yandexadexchange.net", "adsdk.yandex.ru",
-
+            "files.adform.net",
             "static.adsafeprotected.com", "pixel.adsafeprotected.com",
-
-            "api.ad.xiaomi.com",
-            "sdkconfig.ad.xiaomi.com",
-            "sdkconfig.ad.intl.xiaomi.com",
-            "globalapi.ad.xiaomi.com",
+            "api.ad.xiaomi.com", "sdkconfig.ad.xiaomi.com", "sdkconfig.ad.intl.xiaomi.com", "globalapi.ad.xiaomi.com",
             "t.adx.opera.com",
-
             "business.samsungusa.com", "samsungads.com", "ad.samsungadhub.com", "config.samsungads.com", "samsung-com.112.2o7.net",
             "click.oneplus.com", "click.oneplus.cn", "open.oneplus.net",
             "asadcdn.com",
@@ -104,11 +100,11 @@ namespace SLBr
             "ids.ad.gt", "powerad.ai", "hb.brainlyads.com", "pixel.quantserve.com", "ads.anura.io", "static.getclicky.com",
             "ad.turn.com", "rtb.mfadsrvr.com", "ad.mrtnsvr.com", "s.ad.smaato.net", "rtb-csync.smartadserver.com", "ssbsync.smartadserver.com",
             "adpush.technoratimedia.com", "pixel.tapad.com", "secure.adnxs.com", "data.adsrvr.org", "px.adhigh.net",
-            "epnt.ebay.com", "mb.moatads.com", "ad.adsrvr.org", "a.ad.gt", "pixels.ad.gt", "z.moatads.com", "px.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
-            "btloader.com", "ad-delivery.net", "ad.doubleclick.net",
+            "epnt.ebay.com", "pixel.moatads.com", "mb.moatads.com", "ad.adsrvr.org", "a.ad.gt", "pixels.ad.gt", "z.moatads.com", "px.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
+            "btloader.com", "ad-delivery.net",
             "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com"
         };
-        FastHashSet<string> Analytics = new FastHashSet<string> { "google-analytics.com", "ssl.google-analytics.com",
+        FastHashSet<string> Analytics = new FastHashSet<string> { "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "google-analytics.com", "ssl.google-analytics.com",
             "stats.wp.com",
             "analytics.facebook.com", "pixel.facebook.com",
             "analytics.tiktok.com", "analytics-sg.tiktok.com",
@@ -159,26 +155,19 @@ namespace SLBr
             var headers = request.Headers;
             //Filter Lists
             bool Continue = true;
-            if (bool.Parse(MainWindow.Instance.MainSave.Get("LiteMode")))
-            {
+            //if (bool.Parse(MainWindow.Instance.MainSave.Get("LiteMode")))
+            //{
                 //headers["Save-Data"] = "on";
                 headers.Add("Save-Data", "on");
                 headers.Add("Device-Memory", "0.25");
                 //headers["Device-Memory"] = "0.25";
-                //headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36";
-            }
-            //if (Utils.IsDataOffender(request.ResourceType))
-            //{
             //}
-
-            //if (request.Url.StartsWith("ipfs://"))
-            //    request.Url = request.Url.Replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
 
             if (Utils.IsPossiblyAd(request.ResourceType))
             {
                 if (AdBlock || TrackerBlock)
                 {
-                    string CleanedUrl = Utils.CleanUrl(request.Url, true, true);//false if check full path
+                    string CleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);//false if check full path
                     string Host = Utils.Host(CleanedUrl, true, false);
                     if (request.ResourceType == ResourceType.Script || request.ResourceType == ResourceType.Xhr)
                     {
@@ -187,8 +176,8 @@ namespace SLBr
                             if (CleanedUrl.Contains(Script.ToLower()))
                                 Continue = false;
                         }
-                        if (bool.Parse(MainWindow.Instance.MainSave.Get("DoNotTrack")))
-                            headers["DNT"] = "1";
+                        //if (bool.Parse(MainWindow.Instance.MainSave.Get("DoNotTrack")))
+                        //    headers["DNT"] = "1";
                     }
                     /*if (Scripts.Contains(Path.GetFileName(CleanedUrl)))
                         Continue = false;
@@ -232,50 +221,6 @@ namespace SLBr
 
         public void OnResourceLoadComplete(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, UrlRequestStatus status, long receivedContentLength)
         {
-            //int code = response.StatusCode;
-            //if (!frame.IsValid || frame.Url != request.Url)
-            //    return;
-            //if (request.Url.StartsWith("file:///"))
-            //{
-
-                //string _Path = request.Url/*.Substring(8)*/;
-                //if (File.Exists(_Path) || Directory.Exists(_Path))
-                //    return;
-                //else
-                //{
-                //    frame.LoadUrl("slbr://cannotconnect" + "?url=" + request.Url);
-                //}
-
-            //}
-
-            /*else if (code == 404)
-            {
-                string Url = request.Url;
-                if (!Utils.CleanUrl(Url).StartsWith("web.archive.org"))
-                {
-                    Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-                    {
-                        MainWindow.Instance.NewMessage("This page is missing, do you want to check if there's a saved version on the Wayback Machine?", $"https://web.archive.org/{Url}", "Check for saved version");*/
-            //dynamic Data = JObject.Parse(MainWindow.Instance.TinyDownloader.DownloadString($"https://archive.org/wayback/available?url={request.Url}"));
-            /*try
-            {
-                dynamic archived_snapshots = Data.archived_snapshots;
-                archived_snapshots.
-            }
-            catch { }*/
-            /*}));
-        }
-        //frame.LoadUrl("slbr://notfound" + "?url=" + request.Url);
-    }*/
-            //    else if (request.Url.StartsWith("file:///"))
-            //    {
-            //        string _Path = request.Url.Substring(8);
-            //        if (!File.Exists(_Path))
-            //            frame.LoadUrl("slbr://notfound" + "?url=" + _Path);
-            //    }
-
-            //else if (code == 0 || code == 444 || (code >= 500 && code <= 599))
-            //    frame.LoadUrl("slbr://cannotconnect" + "?url=" + request.Url);
         }
 
         public void OnResourceRedirect(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, ref string newUrl)

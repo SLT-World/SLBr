@@ -1,59 +1,105 @@
-﻿// Copyright © 2022 SLT World. All rights reserved.
-// Use of this source code is governed by a GNU license that can be found in the LICENSE file.
-
-using CefSharp;
+﻿using CefSharp;
 using CefSharp.Wpf;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
-namespace SLBr
+namespace SLBr.Handlers
 {
-    class ContextMenuHandler : IContextMenuHandler
+    public class ContextMenuHandler : IContextMenuHandler
     {
-        //TODO: HAVE CUSTOM CONTEXT MENU STYLE LIKE MS EDGE
-
         public void OnBeforeContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
         {
-            if (parameters.MediaType != ContextMenuMediaType.Image)//parameters.MediaType == ContextMenuMediaType.None
+            if (parameters.IsEditable)
             {
-                if (!string.IsNullOrEmpty(parameters.SelectionText))
+                model.Clear();
+                switch (parameters.DictionarySuggestions.Count)
                 {
-                    if (Utils.IsHttpScheme(parameters.SelectionText) || Utils.IsProtocolNotHttp(parameters.SelectionText))
-                    {
-                        //model.Clear();
-                        model.AddItem((CefMenuCommand)26501, "Open in new tab");
+                    case 0:
+                        break;
+                    case 1:
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
                         model.AddSeparator();
-                        model.AddItem(CefMenuCommand.NotFound, "Cancel");
-                    }
-                    else
-                    {
-                        model.AddItem((CefMenuCommand)26502, "Search for text in new tab");
+                        break;
+                    case 2:
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
                         model.AddSeparator();
-                        model.AddItem(CefMenuCommand.NotFound, "Cancel");
-                        /*model.AddItem(CefMenuCommand.NotFound, "Close Menu");
+                        break;
+                    case 3:
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
                         model.AddSeparator();
-                        model.Clear();
-                        model.AddItem(CefMenuCommand.Copy, "Copy");
-                        model.AddItem((CefMenuCommand)26501, "Save as");*/
-                    }
+                        break;
+                    case 4:
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
+                        model.AddSeparator();
+                        break;
+                    case 5:
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion4, parameters.DictionarySuggestions[4]);
+                        model.AddSeparator();
+                        break;
+                    default:
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
+                        model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
+                        model.AddSeparator();
+                        break;
+                }
+                model.AddItem(CefMenuCommand.Cut, "Cut");
+                model.AddItem(CefMenuCommand.Copy, "Copy");
+                model.AddItem(CefMenuCommand.Paste, "Paste");
+                model.AddItem(CefMenuCommand.Delete, "Delete");
+                model.AddItem(CefMenuCommand.SelectAll, "Select All");
+            }
+            else if (!string.IsNullOrEmpty(parameters.SelectionText))
+            {
+                model.Clear();
+                if (Utils.IsUrl(parameters.SelectionText))
+                {
+                    model.AddItem((CefMenuCommand)26502, "Open in new tab");
+                    model.AddItem(CefMenuCommand.Copy, "Copy");
                 }
                 else
+                {
+                    model.AddItem(CefMenuCommand.Find, $"Search \"{parameters.SelectionText}\" in new tab");
+                    model.AddItem(CefMenuCommand.Copy, "Copy");
+                }
+            }
+            else
+            {
+                if (parameters.MediaType != ContextMenuMediaType.Image)//parameters.MediaType == ContextMenuMediaType.None
                 {
                     model.Remove(CefMenuCommand.Print);
                     model.Remove(CefMenuCommand.ViewSource);
                     model.AddItem(CefMenuCommand.Reload, "Refresh");
-                    model.AddSeparator();
+                    /*model.AddSeparator();
                     model.AddItem((CefMenuCommand)26503, "Zoom In");
                     model.AddItem((CefMenuCommand)26504, "Zoom Out");
                     model.AddItem((CefMenuCommand)26505, "Reset Zoom Level");
                     model.AddSeparator();
                     model.AddItem((CefMenuCommand)26506, "Screenshot");
-                    model.AddItem((CefMenuCommand)26511, "Translate to English");
+                    model.AddItem((CefMenuCommand)26511, "Translate to English");*/
                     model.AddSeparator();
+                    model.AddItem(CefMenuCommand.Print, "Print");
+                    model.AddSeparator();
+                    model.AddItem((CefMenuCommand)26504, "View page source");
+                    model.AddItem((CefMenuCommand)26503, "Inspect");
                     /*IMenuModel _EditSubMenuModel = model.AddSubMenu(CefMenuCommand.NotFound, "Edit");
                     _EditSubMenuModel.AddItem(CefMenuCommand.Undo, "Undo");
                     _EditSubMenuModel.AddItem(CefMenuCommand.Redo, "Redo");
@@ -65,92 +111,56 @@ namespace SLBr
                     _EditSubMenuModel.AddSeparator();
                     _EditSubMenuModel.AddItem(CefMenuCommand.SelectAll, "Select All");
                     model.AddSeparator();*/
-                    model.AddItem((CefMenuCommand)26507, "Search page on SafeBrowsing");
-                    model.AddItem((CefMenuCommand)26508, "View page source");
+                    /*model.AddItem((CefMenuCommand)26508, "View page source");
                     model.AddItem((CefMenuCommand)26509, "Inspect");
-                    model.AddSeparator();
-                    model.AddItem(CefMenuCommand.NotFound, "Cancel");
+                    model.AddSeparator();*/
+                }
+                else
+                {
+                    model.Clear();
+                    model.AddItem(CefMenuCommand.Copy, "Copy");
+                    model.AddItem((CefMenuCommand)26505, "Copy address");
+                    model.AddItem((CefMenuCommand)26501, "Save as");
+                    //model.AddItem((CefMenuCommand)26502, "Open in paintbrush");
                 }
             }
-            else
-            {
-                model.Clear();
-                model.AddItem(CefMenuCommand.Copy, "Copy");
-                model.AddItem((CefMenuCommand)26510, "Save as");
-                model.AddSeparator();
-                model.AddItem(CefMenuCommand.NotFound, "Cancel");
-                //model.AddItem((CefMenuCommand)26502, "Open in paintbrush");
-            }
+            model.AddSeparator();
+            model.AddItem(CefMenuCommand.NotFound, "Cancel");
         }
+
+        //Save as 26501
+        //26502 Open in new Tab
+        //26503 Inspector
+        //26504 View source
+        //26505 Copy Image Url
 
         public bool OnContextMenuCommand(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags)
         {
             if (commandId == CefMenuCommand.NotFound)
                 return false;
             bool ToReturn = false;
-            if (parameters.MediaType != ContextMenuMediaType.Image)//parameters.MediaType == ContextMenuMediaType.None
+            if (parameters.IsEditable)
+            {
+                    
+            }
+            else if (!string.IsNullOrEmpty(parameters.SelectionText))
             {
                 string SelectedText = parameters.SelectionText;
                 Application.Current.Dispatcher.BeginInvoke(new Action(delegate
                 {
-                    if (!string.IsNullOrEmpty(SelectedText))
+                    if (Utils.IsUrl(SelectedText))
                     {
-                        if (Utils.IsHttpScheme(SelectedText) || Utils.IsProtocolNotHttp(SelectedText))
+                        if (commandId == (CefMenuCommand)26502)
                         {
-                            if (commandId == (CefMenuCommand)26501)
-                            {
-                                MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser(SelectedText), true, MainWindow.Instance.Tabs.SelectedIndex + 1);
-                                ToReturn = true;
-                            }
-                        }
-                        else
-                        {
-                            if (commandId == (CefMenuCommand)26502) {
-                                MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser(string.Format(MainWindow.Instance.MainSave.Get("Search_Engine"), SelectedText.Trim().Replace(" ", "+"))), true, MainWindow.Instance.Tabs.SelectedIndex + 1);
-                                ToReturn = true;
-                            }
-                            /*model.AddItem(CefMenuCommand.NotFound, "Close Menu");
-                            model.AddSeparator();
-                            model.Clear();
-                            model.AddItem(CefMenuCommand.Copy, "Copy");
-                            model.AddItem((CefMenuCommand)26501, "Save as");*/
+                            MainWindow.Instance.NewBrowserTab(SelectedText, 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                            ToReturn = true;
                         }
                     }
                     else
                     {
-                        if (commandId == (CefMenuCommand)26503)
+                        if (commandId == CefMenuCommand.Find)
                         {
-                            MainWindow.Instance.ZoomIn();
-                            ToReturn = true;
-                        }
-                        else if (commandId == (CefMenuCommand)26504)
-                        {
-                            MainWindow.Instance.ZoomOut();
-                            ToReturn = true;
-                        }
-                        else if (commandId == (CefMenuCommand)26505)
-                        {
-                            MainWindow.Instance.ResetZoomLevel();
-                            ToReturn = true;
-                        }
-                        else if (commandId == (CefMenuCommand)26506)
-                        {
-                            MainWindow.Instance.Screenshot();
-                            ToReturn = true;
-                        }
-                        else if (commandId == (CefMenuCommand)26507)
-                        {
-                            MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser($"https://transparencyreport.google.com/safe-browsing/search?url={chromiumWebBrowser.Address}"));
-                            ToReturn = true;
-                        }
-                        else if (commandId == (CefMenuCommand)26508)
-                        {
-                            MainWindow.Instance.ViewSource();
-                            ToReturn = true;
-                        }
-                        else if (commandId == (CefMenuCommand)26509)
-                        {
-                            MainWindow.Instance.UseInspector();
+                            MainWindow.Instance.NewBrowserTab(Utils.FixUrl(string.Format(MainWindow.Instance.MainSave.Get("Search_Engine"), SelectedText)), 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1); ;
                             ToReturn = true;
                         }
                     }
@@ -158,23 +168,54 @@ namespace SLBr
             }
             else
             {
-                if (commandId == CefMenuCommand.Copy)
+                if (parameters.MediaType != ContextMenuMediaType.Image)
                 {
-                    Clipboard.SetText(parameters.SourceUrl);
-                    ToReturn = true;
+                    Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                    {
+                        if (commandId == (CefMenuCommand)26504)
+                        {
+                            MainWindow.Instance.NewBrowserTab($"view-source:{chromiumWebBrowser.Address}", 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                            ToReturn = true;
+                        }
+                        if (commandId == (CefMenuCommand)26503)
+                        {
+                            MainWindow.Instance.Inspect();
+                            ToReturn = true;
+                        }
+                    }));
                 }
-                else if (commandId == (CefMenuCommand)26510)
+                else
                 {
-                    chromiumWebBrowser.StartDownload(parameters.SourceUrl);
-                    ToReturn = true;
+                    if (commandId == CefMenuCommand.Copy)
+                    {
+                        try
+                        {
+                            Clipboard.SetDataObject(new Bitmap(new MemoryStream(MainWindow.Instance.TinyDownloader.DownloadData(parameters.SourceUrl))));
+                        }
+                        catch
+                        {
+                            Clipboard.SetText(parameters.SourceUrl);
+                        }
+                        ToReturn = true;
+                    }
+                    if (commandId == (CefMenuCommand)26505)
+                    {
+                        Clipboard.SetText(parameters.SourceUrl);
+                        ToReturn = true;
+                    }
+                    else if (commandId == (CefMenuCommand)26501)
+                    {
+                        chromiumWebBrowser.StartDownload(parameters.SourceUrl);
+                        ToReturn = true;
+                    }
+                    /*else if (commandId == (CefMenuCommand)26502)
+                    {
+                        chromiumWebBrowser.StartDownload(parameters.SourceUrl);
+                        //string DownloadPath = MainWindow.Instance.MainSave.Get("DownloadPath");
+                        //string FileName = Path.Combine(DownloadPath, Path.GetFileName(parameters.SourceUrl));
+                        Process.Start(FileName);
+                    }*/
                 }
-                /*else if (commandId == (CefMenuCommand)26502)
-                {
-                    chromiumWebBrowser.StartDownload(parameters.SourceUrl);
-                    //string DownloadPath = MainWindow.Instance.MainSave.Get("DownloadPath");
-                    //string FileName = Path.Combine(DownloadPath, Path.GetFileName(parameters.SourceUrl));
-                    Process.Start(FileName);
-                }*/
             }
             return ToReturn;
         }
@@ -182,7 +223,6 @@ namespace SLBr
         public void OnContextMenuDismissed(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame)
         {
             var _Browser = (ChromiumWebBrowser)chromiumWebBrowser;
-
             _Browser.Dispatcher.Invoke(() =>
             {
                 _Browser.ContextMenu = null;
@@ -191,199 +231,7 @@ namespace SLBr
 
         public bool RunContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model, IRunContextMenuCallback callback)
         {
-            //callback.Cancel();
-            //return false;
-            var webBrowser = (ChromiumWebBrowser)chromiumWebBrowser;
-
-            //IMenuModel is only valid in the context of this method, so need to read the values before invoking on the UI thread
-            var menuItems = GetMenuItems(model).ToList();
-
-            ContextMenuParams Parameters = new ContextMenuParams(parameters);
-
-            webBrowser.Dispatcher.Invoke(() =>
-            {
-                var menu = new ContextMenu { IsOpen = true };
-
-                RoutedEventHandler handler = null;
-
-                handler = (s, e) =>
-                {
-                    menu.Closed -= handler;
-                    if (!callback.IsDisposed)
-                        callback.Cancel();
-                };
-
-                menu.Closed += handler;
-                menu.Style = (Style)MainWindow.Instance.Resources["ContextMenuStyle"];
-
-                foreach (var item in menuItems)
-                {
-                    if (item.Item2 == CefMenuCommand.NotFound && string.IsNullOrWhiteSpace(item.Item1))
-                    {
-                        menu.Items.Add(new Separator());
-                        continue;
-                    }
-
-                    menu.Items.Add(new MenuItem
-                    {
-                        Header = item.Item1.Replace("&", "_"),
-                        IsEnabled = item.Item3,
-                        Command = new RelayCommand(() =>
-                        {
-                            switch (item.Item2)
-                            {
-                                case CefMenuCommand.Back:
-                                    {
-                                        browser.GoBack();
-                                        break;
-                                    }
-                                case CefMenuCommand.Forward:
-                                    {
-                                        browser.GoForward();
-                                        break;
-                                    }
-                                case CefMenuCommand.Cut:
-                                    {
-                                        browser.FocusedFrame.Cut();
-                                        break;
-                                    }
-                                case CefMenuCommand.Copy:
-                                    {
-                                        if (Parameters.MediaType != ContextMenuMediaType.Image)
-                                            browser.FocusedFrame.Copy();
-                                        else
-                                            Clipboard.SetText(Parameters.SourceUrl);
-                                        break;
-                                    }
-                                case CefMenuCommand.Paste:
-                                    {
-                                        browser.FocusedFrame.Paste();
-                                        break;
-                                    }
-                                case CefMenuCommand.Print:
-                                    {
-                                        browser.GetHost().Print();
-                                        break;
-                                    }
-                                case CefMenuCommand.ViewSource:
-                                    {
-                                        browser.FocusedFrame.ViewSource();
-                                        break;
-                                    }
-                                case CefMenuCommand.Undo:
-                                    {
-                                        browser.FocusedFrame.Undo();
-                                        break;
-                                    }
-                                case CefMenuCommand.StopLoad:
-                                    {
-                                        browser.StopLoad();
-                                        break;
-                                    }
-                                case CefMenuCommand.SelectAll:
-                                    {
-                                        browser.FocusedFrame.SelectAll();
-                                        break;
-                                    }
-                                case CefMenuCommand.Redo:
-                                    {
-                                        browser.FocusedFrame.Redo();
-                                        break;
-                                    }
-                                case CefMenuCommand.Find:
-                                    {
-                                        browser.GetHost().Find(Parameters.SelectionText, true, false, false);
-                                        break;
-                                    }
-                                case CefMenuCommand.AddToDictionary:
-                                    {
-                                        browser.GetHost().AddWordToDictionary(Parameters.MisspelledWord);
-                                        break;
-                                    }
-                                case CefMenuCommand.Reload:
-                                    {
-                                        browser.Reload();
-                                        break;
-                                    }
-                                case CefMenuCommand.ReloadNoCache:
-                                    {
-                                        browser.Reload(ignoreCache: true);
-                                        break;
-                                    }
-                                case (CefMenuCommand)26501:
-                                    {
-                                        MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser(Parameters.SelectionText), true, MainWindow.Instance.Tabs.SelectedIndex + 1);
-                                        break;
-                                    }
-                                case (CefMenuCommand)26502:
-                                    {
-                                        MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser(string.Format(MainWindow.Instance.MainSave.Get("Search_Engine"), Parameters.SelectionText.Trim().Replace(" ", "+"))), true, MainWindow.Instance.Tabs.SelectedIndex + 1);
-                                        break;
-                                    }
-                                case (CefMenuCommand)26503:
-                                    {
-                                        MainWindow.Instance.ZoomIn();
-                                        break;
-                                    }
-                                case (CefMenuCommand)26504:
-                                    {
-                                        MainWindow.Instance.ZoomOut();
-                                        break;
-                                    }
-                                case (CefMenuCommand)26505:
-                                    {
-                                        MainWindow.Instance.ResetZoomLevel();
-                                        break;
-                                    }
-                                case (CefMenuCommand)26506:
-                                    {
-                                        MainWindow.Instance.Screenshot();
-                                        break;
-                                    }
-                                case (CefMenuCommand)26507:
-                                    {
-                                        MainWindow.Instance.CreateChromeTab(MainWindow.Instance.CreateWebBrowser($"https://transparencyreport.google.com/safe-browsing/search?url={chromiumWebBrowser.Address}"), true, MainWindow.Instance.Tabs.SelectedIndex + 1);
-                                        break;
-                                    }
-                                case (CefMenuCommand)26508:
-                                    {
-                                        MainWindow.Instance.ViewSource();
-                                        break;
-                                    }
-                                case (CefMenuCommand)26509:
-                                    {
-                                        MainWindow.Instance.UseInspector();
-                                        break;
-                                    }
-                                case (CefMenuCommand)26510:
-                                    {
-                                        chromiumWebBrowser.StartDownload(Parameters.SourceUrl);
-                                        break;
-                                    }
-                                case (CefMenuCommand)26511:
-                                    {
-                                        MainWindow.Instance.Translate();
-                                        break;
-                                    }
-                            }
-                        })
-                    });
-                }
-                webBrowser.ContextMenu = menu;
-            });
-            Parameters.Dispose();
-            return true;
-        }
-
-        private static IEnumerable<Tuple<string, CefMenuCommand, bool>> GetMenuItems(IMenuModel model)
-        {
-            for (var i = 0; i < model.Count; i++)
-            {
-                var header = model.GetLabelAt(i);
-                var commandId = model.GetCommandIdAt(i);
-                var isEnabled = model.IsEnabledAt(i);
-                yield return new Tuple<string, CefMenuCommand, bool>(header, commandId, isEnabled);
-            }
+            return false;
         }
     }
 }

@@ -148,8 +148,6 @@ ul.nav > li > a {
             }
         });
         async function search(value) {
-            await CefSharp.BindObjectAsync("slbr");
-
             var retval = slbr.searchProviderPrefix();
 
             retval.then(function (spp) {

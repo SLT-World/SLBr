@@ -23,25 +23,19 @@ namespace SLBr.Protocols
             byte[] metaraw = buffer.ToArray();
             this.Bytes = buffer.Skip(pyldStart).Take(pyldLen).ToList();
 
-            //slightly fake approach - probably better to parse the path
-            //and/or the selector
-            this.Mime = "application/octet-stream";       //may be overwritten later
-            this._Encoding = "UTF-8";        //maybe use ASCII instead?
+            this.Mime = "application/octet-stream";
+            this._Encoding = "UTF-8";
             this._Uri = uri;
         }
 
     }
 
-    // Adapted from Gemini.cs and simplified
     public class Gopher
     {
         const int DefaultPort = 70;
 
         static GopherResponse ReadMessage(Stream stream, Uri uri, int maxSize, int abandonAfterSeconds)
         {
-            // Read the  message sent by the server.
-            // The end of the message is signaled using the
-            // "<EOF>" marker.
             byte[] buffer = new byte[2048];
             int bytes = -1;
 
@@ -72,26 +66,17 @@ namespace SLBr.Protocols
 
         private static string GetMime(Uri uri, string gopherType)
         {
-            //returns application/gopher-menu for search and directories
-            //otherwise something based on the gophertype and URI
-            //as far as possible. Does not sniff the actual content.
-
-            var res = "application/octet-stream";       //default unspecified format
+            var res = "application/octet-stream";
             var ext = Path.GetExtension(uri.AbsolutePath);
 
             if (ext.Length > 0)
             {
-                ext = ext.Substring(1);     //convert ".jpg" to "jpg" etc
+                ext = ext.Substring(1);
             }
             else
             {
                 ext = "";
             }
-
-
-            //was reviewed against this very useful summary of which selectors are actually found in the wild
-            //N.B. type i is never retrieved and type h normally specifies a URL, so again not directly retrieved
-            //https://sunriseprogrammer.blogspot.com/2019/03/directory-entry-says-what-current.html
 
             switch (gopherType)
             {
@@ -112,19 +97,13 @@ namespace SLBr.Protocols
                 case "4":
                 case "5":
                     //binhex and dos binaries
-                    //just stick to application/octet-stream
                     break;
                 case "I":
                 case "s":
                 case "d":
                 case "9":
-
-                    //for these types we look at the extension, if any, as the best guess 
-                    //for the most likely mime type for a number of commonly found file extensions
                     switch (ext)
                     {
-
-                        //common image types
                         case "jpg":
                             res = "image/jpeg";
                             break;
@@ -134,8 +113,6 @@ namespace SLBr.Protocols
                         case "jpeg":
                             res = "image/" + ext;   //for these, the extension is same as sub type
                             break;
-
-                        //common audio types
                         case "mp3":
                             res = "audio/mpeg";
                             break;
@@ -144,8 +121,6 @@ namespace SLBr.Protocols
                         case "flac":
                             res = "audio/" + ext;   //for these, the extension is same as sub type
                             break;
-
-                        //common document types
                         case "pdf":
                             res = "application/pdf";
                             break;
@@ -155,17 +130,12 @@ namespace SLBr.Protocols
                         case "ps":
                             res = "application/postscript";
                             break;
-
-                        //common binary files
                         case "zip":
                             res = "application/zip";
                             break;
 
                     }
                     break;
-
-                    //all others will be interpreted as application/octet-stream
-
             }
 
             return (res);
