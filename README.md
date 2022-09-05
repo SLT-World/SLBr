@@ -27,8 +27,6 @@ CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTM
 - Windows 7 and above
 
 ## Screenshots & Videos
-![SLBr Dark Mode screenshot](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/New%20Dark%20Mode.png)
-![SLBr Youtube Popout](https://github.com/SLT-World/SLBr/blob/main/SLBr/SLBr/Images/Screenshot%20Youtube%20Popout.png)
 
 Video: https://youtu.be/PtmDRjgwmHI
 
