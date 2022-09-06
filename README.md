@@ -28,6 +28,8 @@ CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTM
 
 ## Screenshots & Videos
 
+![Dark mode](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/SLBr%20Dark%20Mode.png)
+
 Video: https://youtu.be/PtmDRjgwmHI
 
 ## Compiling and building SLBr
