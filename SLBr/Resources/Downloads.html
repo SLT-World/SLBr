@@ -10,7 +10,7 @@
         $(document).ready(function () {
             $container = $("#downloads-display");
             $template = $("#template");
-            CefSharp.BindObjectAsync("slbr");
+            CefSharp.BindObjectAsync("internal");
             UpdateList();
             timer = setInterval(UpdateList, 500);
         });
@@ -73,7 +73,7 @@
                 $item.removeAttr("hidden");
                 $item.attr("id", id);
                 $item.find("a.cancel").click(function () {
-                    slbr.cancelDownload(item.Id);
+                    internal.cancelDownload(item.Id);
                 });
                 /*var startTime = new Date(item.StartTime);
                 //$item.find("div.since").text(startTime.format("dd-MM-yyyy"));
@@ -81,6 +81,8 @@
                 //$item.find("div.date").text(startTime.format("hh:mm:ss"));
                 if (item.SuggestedFileName != "")
                     $item.find("span.name").text(item.SuggestedFileName);
+                else
+                    $item.find("span.name").text(item.FullPath.split('\\').pop().split('/').pop());
                 $item.find("a.src-url").attr("href", item.Url).text(item.Url);
                 $item.find("a.cancel").removeAttr("hidden");
             }
@@ -105,7 +107,7 @@
             $item.find("progress.progressbar").attr("value", item.PercentComplete);
         }
         function UpdateList() {
-            slbr.downloads().then(function (res) {
+            internal.downloads().then(function (res) {
                 var list = JSON.parse(res);
                 $.each(list, function (key, item) {
                     UpdateItem(item);
@@ -129,10 +131,6 @@
     </div>-->
     <div id="downloads-display">
         <div id="template" class="download" hidden style="margin: 0 0 15px 0; background: whitesmoke; border-radius: 10px; padding: 15px;">
-        <!--<div class="date-container">
-            <div class="since">Today</div>
-            <div class="date">Jan 24, 2016</div>
-        </div>-->
             <div class="safe">
                 <div class="title-area">
                     <span style="display: block;" class="name">x.zip</span>

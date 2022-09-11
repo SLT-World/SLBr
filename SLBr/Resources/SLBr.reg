@@ -1,0 +1,122 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\SLBr]
+@="SLBr"
+"AppUserModelId"="SLBr"
+
+[HKEY_CLASSES_ROOT\SLBr\Application]
+"AppUserModelId" = "SLBr"
+"ApplicationIcon"="E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe,0"
+"ApplicationName"="SLBr"
+"ApplicationCompany"="SLT World"
+"ApplicationDescription"="Browse the web with a fast, lightweight web browser."
+
+[HKEY_CLASSES_ROOT\SLBr\DefaultIcon]
+@="E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe,0"
+
+[HKEY_CLASSES_ROOT\SLBr\shell]
+
+[HKEY_CLASSES_ROOT\SLBr\shell\open]
+
+[HKEY_CLASSES_ROOT\SLBr\shell\open\command]
+@="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\" % 1"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr]
+@="SLBr"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\Capabilities]
+"ApplicationName"="SLBr"
+"ApplicationIcon"="E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe,0"
+"ApplicationDescription"="SLBr, the browser that prioritizes a faster web"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\Capabilities\FileAssociations]=
+".xhtml"="SLBr"
+".xht"="SLBr"
+".shtml"="SLBr"
+".html"="SLBr"
+".htm"="SLBr"
+".pdf"="SLBr"
+".svg"="SLBr"
+".webp"="SLBr"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\Capabilities\StartMenu]
+"StartMenuInternet"="SLBr"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\Capabilities\URLAssociations]
+"https"="SLBr"
+"http"="SLBr"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\DefaultIcon]
+@="E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe,0"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\InstallInfo]
+"IconsVisible"=dword:00000001
+"ShowIconsCommand"="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\"--show-icons"
+"HideIconsCommand"="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\" --hide-icons"
+"ReinstallCommand"="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\" --make-default-browser"
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\shell]
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\shell\open]
+
+[HKEY_CURRENT_USER\Software\Clients\StartMenuInternet\SLBr\shell\open\command]
+@="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\""
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr]
+@="SLBr"
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\Capabilities]
+"ApplicationName"="SLBr"
+"ApplicationIcon"="E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe,0"
+"ApplicationDescription"="SLBr, the browser that prioritizes a faster web"
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\Capabilities\FileAssociations]=
+".xhtml"="SLBr"
+".xht"="SLBr"
+".shtml"="SLBr"
+".html"="SLBr"
+".htm"="SLBr"
+".pdf"="SLBr"
+".svg"="SLBr"
+".webp"="SLBr"
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\Capabilities\StartMenu]
+"StartMenuInternet"="SLBr"
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\Capabilities\URLAssociations]
+"https"="SLBr"
+"http"="SLBr"
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\DefaultIcon]
+@="E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe,0"
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\InstallInfo]
+"IconsVisible"=dword:00000001
+"ShowIconsCommand"="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\"--show-icons"
+"HideIconsCommand"="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\" --hide-icons"
+"ReinstallCommand"="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\" --make-default-browser"
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\shell]
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\shell\open]
+
+[HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\SLBr\shell\open\command]
+@="\"E:\Visual Studio\SLBr\SLBr\bin\Debug\net6.0-windows\SLBr.exe\""
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell\Associations\UrlAssociations]
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http]
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice]
+"ProgId"="SLBr"
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https]
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice]
+"ProgId"="SLBr"
+
+[HKEY_CURRENT_USER\Software\RegisteredApplications]
+"SLBr"="Software\Clients\StartMenuInternet\SLBr\Capabilities"
+
+[HKEY_LOCAL_MACHINE\Software\RegisteredApplications]
+"SLBr"="Software\Clients\StartMenuInternet\SLBr\Capabilities"

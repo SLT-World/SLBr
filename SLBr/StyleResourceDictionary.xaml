@@ -38,7 +38,6 @@
     </Style>
 
     <Style TargetType="{x:Type Button}">
-        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
@@ -74,7 +73,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBoxBase}">
-                    <Border Background="{DynamicResource PrimaryBrush}" TextBlock.Foreground="{DynamicResource FontBrush}" x:Name="Border" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="5,2">
+                    <Border CornerRadius="10" Background="{DynamicResource PrimaryBrush}" TextBlock.Foreground="{DynamicResource FontBrush}" x:Name="Border" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="5,2">
                         <ScrollViewer x:Name="PART_ContentHost">
                         </ScrollViewer>
                     </Border>
@@ -107,10 +106,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border Name="Border" BorderThickness="1,1,1,0" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5,5,0,0" Margin="0,0">
+                    <Border Name="Border" BorderThickness="1,1,1,0" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5,5,0,0" Margin="0">
                         <StackPanel Orientation="Horizontal">
                             <Button x:Name="CloseTabButton" FontFamily="Segoe MDL2 Assets" FontSize="7.5" Content="&#xE711;" Click="ButtonAction" Tag="5" Width="20" Height="20" Margin="5,0,0,0"/>
-                            <Image RenderOptions.BitmapScalingMode="HighQuality" MaxHeight="15" MaxWidth="15" Stretch="Uniform" Margin="2.5,0" Source ="{Binding Icon}" x:Name="Icon"/>
+                            <Image RenderOptions.BitmapScalingMode="LowQuality" MaxHeight="15" MaxWidth="15" Stretch="Uniform" Margin="2.5,0" Source ="{Binding Icon}" x:Name="Icon"/>
                             <ContentPresenter TextBlock.Foreground="{DynamicResource FontBrush}" Margin="2.5,5,2.5,5" x:Name="ContentSite" ContentSource="Header" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="175" TextBlock.FontFamily="None">
                                 <ContentPresenter.Resources>
                                     <Style TargetType="TextBlock">
@@ -125,6 +124,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="Border" Property="Margin" Value="0,0,0,-1"/>
                             <Setter TargetName="CloseTabButton" Property="Visibility" Value="Visible"/>
                             <Setter TargetName="Icon" Property="Margin" Value="2.5,0"/>
                         </Trigger>
@@ -145,7 +145,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <Style TargetType="TabControl">
+    <Style TargetType="{x:Type local:TabControlEx}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TabControl}">
@@ -154,36 +154,17 @@
 							  ClipToBounds="true">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition x:Name="ColumnDefinition0"/>
-                            <ColumnDefinition x:Name="ColumnDefinition1"
-												  Width="0"/>
+                            <ColumnDefinition x:Name="ColumnDefinition1" Width="0"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition x:Name="RowDefinition0"
-											   Height="Auto"/>
-                            <RowDefinition x:Name="RowDefinition1"
-											   Height="*"/>
+                            <RowDefinition x:Name="RowDefinition0" Height="Auto"/>
+                            <RowDefinition x:Name="RowDefinition1" Height="*"/>
                         </Grid.RowDefinitions>
-                        <local:TabPanel
-									x:Name="HeaderPanel"
-									Panel.ZIndex ="1" 
-									KeyboardNavigation.TabIndex="1"
-									Grid.Column="0"
-									Grid.Row="0"
-									Margin="2,2,2,0"
-									IsItemsHost="true"/>
-                        <Border x:Name="ContentPanel"
-									Background="{TemplateBinding Background}"
-									BorderThickness="0"
-									BorderBrush="{TemplateBinding BorderBrush}"
-									KeyboardNavigation.TabNavigation="Local"
-									KeyboardNavigation.DirectionalNavigation="Contained"
-									KeyboardNavigation.TabIndex="2"
-									Grid.Column="0"
-									Grid.Row="1">
-                            <ContentPresenter x:Name="PART_SelectedContentHost"
-												  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-												  Margin="0"
-												  ContentSource="SelectedContent"/>
+                        <local:TabPanel x:Name="HeaderPanel" Panel.ZIndex ="1" KeyboardNavigation.TabIndex="1" Grid.Column="0" Grid.Row="0" Margin="2,2,2,0" IsItemsHost="true"/>
+                        <Border x:Name="ContentPanel" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}"
+									KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2"
+									Grid.Column="0" Grid.Row="1">
+                            <ContentPresenter x:Name="PART_SelectedContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0" ContentSource="SelectedContent"/>
                         </Border>
                     </Grid>
                 </ControlTemplate>
@@ -256,6 +237,10 @@
             RecognizesAccessKey="True"/>
                     </BulletDecorator>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="Border" Property="Background" Value="Gray"/>
+                        </Trigger>
                         <Trigger Property="IsChecked" Value="false">
                             <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
@@ -338,17 +323,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TabItem}">
                     <!-- Tab item header -->
-                    <Border Name="border" 
-                        SnapsToDevicePixels="True" 
-                        BorderThickness="0" 
-                        Padding="5,7.5,5,7.5"
-                        Margin="0,2.5" CornerRadius="5">
-                        <TextBlock Name="buttonText" 
-                                Margin="5,0" 
-                                FontSize="14" 
-                                Foreground="{DynamicResource FontBrush}" 
-                                Text="{TemplateBinding Header}" 
-                                VerticalAlignment="Center" Width="200"/>
+                    <Border Name="border" SnapsToDevicePixels="True" BorderThickness="0" Padding="5,7.5,5,7.5" Margin="0,2.5" CornerRadius="5">
+                        <TextBlock Name="buttonText" Margin="5,0" FontSize="14" Foreground="{DynamicResource FontBrush}" Text="{TemplateBinding Header}" VerticalAlignment="Center" Width="200"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -383,7 +359,7 @@
 
             <Path Name="Arrow" Grid.Column="1" 
             Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z"
-            HorizontalAlignment="Center" Fill="#444"
+            HorizontalAlignment="Center" Fill="{DynamicResource ControlFontBrush}"
             VerticalAlignment="Center" />
         </Grid>
         <ControlTemplate.Triggers>
@@ -415,23 +391,17 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
-                        <ToggleButton Name="ToggleButton" Grid.Column="2"
-                ClickMode="Press" Focusable="False"
-                IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                Template="{StaticResource ComboBoxToggleButtonTemplate}"/>
+                        <ToggleButton Name="ToggleButton" Grid.Column="2" ClickMode="Press" Focusable="False" IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" Template="{StaticResource ComboBoxToggleButtonTemplate}"/>
 
                         <ContentPresenter Name="ContentSite" Margin="7.5, 2.5, 23, 2.5" IsHitTestVisible="False"
                               HorizontalAlignment="Left" VerticalAlignment="Center"                              
                               Content="{TemplateBinding ComboBox.SelectionBoxItem}" 
                               ContentTemplate="{TemplateBinding ComboBox.SelectionBoxItemTemplate}"
                               ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
-                        <TextBox Name="PART_EditableTextBox" Margin="3, 3, 23, 3" IsReadOnly="{TemplateBinding IsReadOnly}"
-                     Visibility="Hidden" Background="Transparent"
-                     HorizontalAlignment="Left" VerticalAlignment="Center"
-                     Focusable="True" >
+                        <TextBox Name="PART_EditableTextBox" Margin="3, 3, 23, 3" IsReadOnly="{TemplateBinding IsReadOnly}" Visibility="Hidden" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Center" Focusable="True">
                             <TextBox.Template>
                                 <ControlTemplate TargetType="TextBox" >
-                                    <Border Name="PART_ContentHost" Focusable="False" />
+                                    <Border Padding="5,0" Name="PART_ContentHost" Focusable="False" />
                                 </ControlTemplate>
                             </TextBox.Template>
                         </TextBox>
@@ -445,7 +415,7 @@
                     MaxHeight="{TemplateBinding ComboBox.MaxDropDownHeight}">
                                 <Border Name="DropDownBorder" Background="{DynamicResource PrimaryBrush}" Margin="0, 1, 0, 0"
                         BorderThickness="1" 
-                        BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5"/>
+                        BorderBrush="{DynamicResource BorderBrush}" CornerRadius="10"/>
                                 <ScrollViewer Margin="4" SnapsToDevicePixels="True">
                                     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
                                 </ScrollViewer>

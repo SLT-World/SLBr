@@ -1,5 +1,5 @@
 ﻿using CefSharp;
-using CefSharp.Wpf;
+using CefSharp.Wpf.HwndHost;
 using SLBr.Pages;
 using System;
 using System.Security.Cryptography.X509Certificates;
@@ -32,26 +32,14 @@ namespace SLBr.Handlers
 						frame.LoadUrl(Utils.ToMobileWiki(request.Url));
 				}
 			}
-			//if (request.Url.Contains("roblox.com"))
-			//	return true;
-			//if (request.Url != frame.Url)
-			//	return true;
-			if (Utils.CanCheck(request.TransitionType) && !Utils.IsProtocolNotHttp(request.Url) && !Utils.IsProgramUrl(request.Url))//(isRedirect || userGesture || frame.IsMain)
+			if (Utils.IsHttpScheme(request.Url))
 			{
 				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url);
 				SafeBrowsing.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsing.ThreatType.Unknown;
 				if (_ThreatType == SafeBrowsing.ThreatType.Malware || _ThreatType == SafeBrowsing.ThreatType.Unwanted_Software)
-					//chromiumWebBrowser.LoadHtml(File.ReadAllText(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "Malware.html")), request.Url);
-					frame.LoadUrl("slbr://malware"/* + "?url=" + request.Url*/);
+					frame.LoadUrl("slbr://malware");
 				else if (_ThreatType == SafeBrowsing.ThreatType.Social_Engineering)
-					frame.LoadUrl("slbr://deception"/* + "?url=" + request.Url*/);
-				/*else
-                {
-					if (bool.Parse(MainWindow.Instance.MainSave.Get("Weblight")) && !request.Url.Contains("googleweblight.com/?lite_url="))
-                    {
-						frame.LoadUrl(Utils.FixUrl(request.Url, true));
-                    }
-				}*/
+					frame.LoadUrl("slbr://deception");
 				//if (request.Url.EndsWith(".pdf"))
 				//	frame.LoadUrl(request.Url + "#toolbar=0");
 			}
@@ -71,15 +59,6 @@ namespace SLBr.Handlers
 				}));
 				return true;
 			}
-			//         else
-			//{
-			//	if (Utils.IsAboutUrl(targetUrl))
-			//	{
-			//		MessageBox.Show("slbr://" + targetUrl.Substring(6));
-			//		frame.LoadUrl("slbr://" + targetUrl.Substring(6));
-			//		//return true;
-			//	}
-			//}
 			return false;
 		}
 
@@ -102,17 +81,9 @@ namespace SLBr.Handlers
 				Application.Current.Dispatcher.BeginInvoke(new Action(delegate
 				{
 					ChromiumWebBrowser _ChromiumWebBrowser = (ChromiumWebBrowser)browserControl;
-					//MessageBox.Show(browserControl.Address);
-					//_ChromiumWebBrowser.Load($"slbr://renderprocesscrashed?s={browserControl.Address}");
-					_ChromiumWebBrowser.Address = $"slbr://renderprocesscrashed?s={browserControl.Address}";
+					_ChromiumWebBrowser.Address = $"slbr://processcrashed?s={browserControl.Address}";
 				}));
 			}
-			/*browserControl.LoadHtml("<html>renderprocesscrashed</html>");
-
-			Application.Current.Dispatcher.BeginInvoke(new Action(delegate
-			{
-				browserControl.LoadHtml("<html>renderprocesscrashed</html>", browserControl.Address);
-			}));*/
 		}
 
 		public void OnRenderViewReady(IWebBrowser browserControl, IBrowser browser)
@@ -121,8 +92,7 @@ namespace SLBr.Handlers
 
 		public IResourceRequestHandler GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
 		{
-			var _ResourceRequestHandler = new ResourceRequestHandler(AdBlock, TrackerBlock);
-			return _ResourceRequestHandler;
+			return new ResourceRequestHandler(AdBlock, TrackerBlock);
 		}
 
 		public void OnDocumentAvailableInMainFrame(IWebBrowser chromiumWebBrowser, IBrowser browser)

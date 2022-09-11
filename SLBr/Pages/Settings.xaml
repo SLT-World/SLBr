@@ -34,25 +34,72 @@
                                     </Border>
                                 </Border>-->
                                 <Border Tag="Light" CornerRadius="5" Width="100" Height="100" BorderThickness="1" Background="WhiteSmoke" BorderBrush="{DynamicResource BorderBrush}" Margin="5">
-                                    <Border CornerRadius="0,0,4,4" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
-                                        <TextBlock Text="Light" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
-                                    </Border>
+                                    <Grid>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE706;" FontSize="20" Foreground="Black" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
+                                        <Border CornerRadius="0,0,4,4" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                            <TextBlock Text="Light" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
+                                        </Border>
+                                    </Grid>
                                 </Border>
                                 <Border Tag="Dark" CornerRadius="5" Width="100" Height="100" BorderThickness="1" Background="Black" BorderBrush="{DynamicResource BorderBrush}" Margin="5">
-                                    <Border CornerRadius="0,0,4,4" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
-                                        <TextBlock Text="Dark" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
-                                    </Border>
+                                    <Grid>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE708;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
+                                        <Border CornerRadius="0,0,4,4" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                            <TextBlock Text="Dark" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
+                                        </Border>
+                                    </Grid>
                                 </Border>
                             </ListBox>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="DarkWebPageCheckBox" Click="DarkWebPageCheckBox_Click" Margin="5" Content="Force dark webpage"/>
                         </StackPanel>
                     </GroupBox>
+                    <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Background Image"/>
+                    <DockPanel Margin="5">
+                        <TextBox DockPanel.Dock="Right" Width="200" Margin="5,0,0,0" Foreground="{DynamicResource FontBrush}" x:Name="BackgroundImageTextBox" KeyDown="BackgroundImageTextBox_KeyDown"/>
+                        <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="BackgroundImageComboBox"  VerticalAlignment="Top" SelectedIndex="0"/>
+                    </DockPanel>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="RestoreTabsCheckBox" Click="RestoreTabsCheckBox_Click" Margin="5" Content="Restore tabs from previous session"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SearchSuggestionsCheckBox" Click="SearchSuggestionsCheckBox_Click" Margin="5" Content="Search suggestion placeholder"/>
                     <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
                         <GroupBox.Header>
                             Toolbar
                         </GroupBox.Header>
                         <StackPanel>
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="FullAddressCheckBox" Click="FullAddressCheckBox_Click" Margin="5" Content="Show full address"/>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Privacy &amp; Security" Style="{DynamicResource SettingsTab}">
+                <StackPanel MinWidth="515">
+                    <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Privacy &amp; Security</TextBlock>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="TrackerBlockCheckBox" Click="TrackerBlockCheckBox_Click" Margin="5" Content="Block trackers"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="AdBlockCheckBox" Click="AdBlockCheckBox_Click" Margin="5" Content="Block ads"/>
+                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
+                        <GroupBox.Header>
+                            Service improvement
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="5" Content="Help improve SLBr by sending diagnostic reports when the SLBr crashes or freezes"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Margin="5" Content="Allow web notifications"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Search &amp; Services" Style="{DynamicResource SettingsTab}">
+                <StackPanel MinWidth="515">
+                    <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Search &amp; Services</TextBlock>
+                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
+                        <GroupBox.Header>
+                            Manage search providers
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Selected search provider"/>
+                            <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="SearchEngineComboBox" Margin="5"  VerticalAlignment="Top" SelectedIndex="0"/>
+                            <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Add search provider"/>
+                            <TextBox Foreground="{DynamicResource FontBrush}" x:Name="ASEPrefixTextBox" Margin="5" KeyDown="ASEPrefixTextBox_KeyDown" ToolTip="Add the prefix of a search provider"/>
+                            <TextBlock Text="Put {0} in place of the query field" Margin="5" FontSize="10" Foreground="{DynamicResource ControlFontBrush}"/>
+                            <TextBlock Text="Example: https://google.com/search?q={0}" Margin="5" FontSize="10" Foreground="{DynamicResource ControlFontBrush}"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
@@ -74,42 +121,10 @@
                     </GroupBox>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="Security" Style="{DynamicResource SettingsTab}">
-                <StackPanel MinWidth="515">
-                    <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Privacy &amp; Security</TextBlock>
-                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="TrackerBlockCheckBox" Click="TrackerBlockCheckBox_Click" Margin="5" Content="Block trackers"/>
-                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="AdBlockCheckBox" Click="AdBlockCheckBox_Click" Margin="5" Content="Block ads"/>
-                </StackPanel>
-            </TabItem>
-            <TabItem Header="Search" Style="{DynamicResource SettingsTab}">
-                <StackPanel MinWidth="515">
-                    <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Search settings</TextBlock>
-                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
-                        <GroupBox.Header>
-                            Manage search providers
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Selected search provider"/>
-                            <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="SearchEngineComboBox" Margin="5"  VerticalAlignment="Top" SelectedIndex="0"/>
-                            <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Add search provider"/>
-                            <TextBox Foreground="{DynamicResource FontBrush}" x:Name="ASEPrefixTextBox" Margin="5" KeyDown="ASEPrefixTextBox_KeyDown" ToolTip="Add the prefix of a search provider"/>
-                            <TextBlock Text="Put {0} in place of the query field" Margin="5" FontSize="10" Foreground="{DynamicResource ControlFontBrush}"/>
-                            <TextBlock Text="Example: https://google.com/search?q={0}" Margin="5" FontSize="10" Foreground="{DynamicResource ControlFontBrush}"/>
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
-            </TabItem>
             <TabItem Header="Web" Style="{DynamicResource SettingsTab}">
                 <StackPanel MinWidth="515">
                     <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Web</TextBlock>
-                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
-                        <GroupBox.Header>
-                            Design
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ModernWikipediaCheckBox" Click="ModernWikipediaCheckBox_Click" Margin="5" Content="Modern Wikipedia"/>
-                        </StackPanel>
-                    </GroupBox>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ModernWikipediaCheckBox" Click="ModernWikipediaCheckBox_Click" Margin="5" Content="Modern Wikipedia"/>
                     <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
                         <GroupBox.Header>
                             Protocols
@@ -129,9 +144,15 @@
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="TabUnloadingCheckBox" Click="TabUnloadingCheckBox_Click" Margin="5" Content="Unload tabs to save resources"/>
 
                     <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="RenderModeComboBox" Margin="5" VerticalAlignment="Top" SelectedIndex="0"/>
-                    <!--(Data might be lost, use at your own risk)-->
                 </StackPanel>
             </TabItem>
+            <TabItem Header="Internet Explorer" Style="{DynamicResource SettingsTab}">
+                <StackPanel MinWidth="515">
+                    <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Internet Explorer settings</TextBlock>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="IESuppressErrorsCheckBox" Click="IESuppressErrorsCheckBox_Click" Margin="5" Content="Suppress errors"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Height="1" IsEnabled="False" IsHitTestVisible="False"/>
             <TabItem Header="Sandbox" Style="{DynamicResource SettingsTab}">
                 <StackPanel MinWidth="515">
                     <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Sandbox settings</TextBlock>
@@ -142,7 +163,29 @@
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="LocalStorageCheckBox" Margin="5" Content="Local Storage"/>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="DatabasesCheckBox" Margin="5" Content="Databases"/>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="WebGLCheckBox" Margin="5" Content="WebGL"/>
-                    <Button Padding="7.5,1" BorderBrush="{DynamicResource BorderBrush}" Margin="5" HorizontalContentAlignment="Left" Content="Apply Changes" Click="ApplySandboxButton_Click"/>
+                    <Button Height="23" Padding="7.5,1" BorderBrush="{DynamicResource BorderBrush}" Margin="5" HorizontalContentAlignment="Left" Content="Apply Changes" Click="ApplySandboxButton_Click"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Experiments" Style="{DynamicResource SettingsTab}">
+                <StackPanel MinWidth="515">
+                    <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Experiments</TextBlock>
+
+                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
+                        <GroupBox.Header>
+                            V8 Experiments
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="V8LiteModeCheckBox" Margin="5" Content="Lite mode"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="V8SparkplugCheckBox" Margin="5" Content="Sparkplug"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="HardwareAccelerationCheckBox" Margin="5" Content="Hardware Acceleration"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="LowEndDeviceModeCheckBox" Margin="5" Content="Low end device mode"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="PDFViewerExtensionCheckBox" Margin="5" Content="PDF Viewer Extension"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="AutoplayUserGestureRequiredCheckBox" Margin="5" Content="Autoplay user gesture required"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SmoothScrollingCheckBox" Margin="5" Content="Smooth scrolling"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="WebAssemblyCheckBox" Margin="5" Content="WebAssembly (WASM)"/>
+                    <Button Height="23" Padding="7.5,1" BorderBrush="{DynamicResource BorderBrush}" Margin="5" HorizontalContentAlignment="Left" Content="Relaunch with changes" Click="ApplyExperimentsButton_Click"/>
                 </StackPanel>
             </TabItem>
             <TabItem Height="1" IsEnabled="False" IsHitTestVisible="False"/>
@@ -158,14 +201,19 @@
                             </StackPanel>
                         </DockPanel>
                     </Border>
-                    <TextBlock Margin="5">
+                    <TextBlock Margin="5,5,5,0">
                         SLBr is made possible by
-                        <Hyperlink NavigateUri="https://github.com/amaitland/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">
+                        <Hyperlink Foreground="{DynamicResource ControlFontBrush}" NavigateUri="https://github.com/amaitland/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">
                             CefSharp
                         </Hyperlink>
                         and
-                        <Hyperlink NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">
+                        <Hyperlink Foreground="{DynamicResource ControlFontBrush}" NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">
                             other source software
+                        </Hyperlink>.</TextBlock>
+                    <TextBlock Margin="5,0,5,5">
+                        To support SLBr, please star SLBr's github
+                        <Hyperlink Foreground="{DynamicResource ControlFontBrush}" NavigateUri="https://github.com/SLT-World/SLBr" RequestNavigate="Hyperlink_RequestNavigate">
+                            repository
                         </Hyperlink>.</TextBlock>
                     <TextBlock Text="SLBr" Margin="5,10,0,0"/>
                     <TextBlock Text="Copyright © 2022 SLT World. All rights reserved." Margin="5,0,0,0"/>

@@ -2,7 +2,9 @@
 using SLBr.Controls;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -38,26 +40,15 @@ namespace SLBr.Pages
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            /*if (bool.Parse(MainWindow.Instance.MainSave.Get("ShowTabs")))
-            {
-                MainWindow.Instance.AddressBox.Text = "SLBr Settings Tab";
-                MainWindow.Instance.ReloadButton.Content = "\xE72C";
-                MainWindow.Instance.WebsiteLoadingProgressBar.IsEnabled = false;
-                MainWindow.Instance.WebsiteLoadingProgressBar.IsIndeterminate = false;
-            }*/
             foreach (string Url in MainWindow.Instance.SearchEngines)
             {
                 if (!SearchEngineComboBox.Items.Contains(Url))
                     SearchEngineComboBox.Items.Add(Url);
             }
-            //if (MainWindow.Instance.MainSave.Has("Search_Engine"))
-            //{
             string Search_Engine = MainWindow.Instance.MainSave.Get("Search_Engine");
             if (SearchEngineComboBox.Items.Contains(Search_Engine))
                 SearchEngineComboBox.SelectedValue = Search_Engine;
             SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
-            //}
-            //if (MainWindow.Instance.MainSave.Has("Homepage"))
             HomepageTextBox.Text = MainWindow.Instance.MainSave.Get("Homepage");
             DownloadPathTextBox.Text = MainWindow.Instance.MainSave.Get("DownloadPath");
             ScreenshotPathTextBox.Text = MainWindow.Instance.MainSave.Get("ScreenshotPath");
@@ -76,6 +67,22 @@ namespace SLBr.Pages
             GeminiCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("Gemini"));
             GopherCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("Gopher"));
             ModernWikipediaCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("ModernWikipedia"));
+            SendDiagnosticsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("SendDiagnostics"));
+            WebNotificationsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("WebNotifications"));
+
+            HardwareAccelerationCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("HardwareAcceleration"));
+            LowEndDeviceModeCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("LowEndDeviceMode"));
+            PDFViewerExtensionCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("PDFViewerExtension"));
+            AutoplayUserGestureRequiredCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("AutoplayUserGestureRequired"));
+            SmoothScrollingCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("SmoothScrolling"));
+            WebAssemblyCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("WebAssembly"));
+            V8LiteModeCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("V8LiteMode"));
+            V8SparkplugCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("V8Sparkplug"));
+
+            IESuppressErrorsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.IESave.Get("IESuppressErrors"));
+
+            SearchSuggestionsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("SearchSuggestions"));
+
             if (!RenderModeComboBox.Items.Contains("Hardware"))
             {
                 RenderModeComboBox.Items.Add("Hardware");
@@ -83,6 +90,18 @@ namespace SLBr.Pages
             }
             RenderModeComboBox.SelectionChanged += RenderModeComboBox_SelectionChanged;
             RenderModeComboBox.SelectedValue = MainWindow.Instance.MainSave.Get("RenderMode");
+
+            if (!BackgroundImageComboBox.Items.Contains("Unsplash"))
+            {
+                BackgroundImageComboBox.Items.Add("Unsplash");
+                BackgroundImageComboBox.Items.Add("Bing image of the day");
+                BackgroundImageComboBox.Items.Add("Custom");
+                BackgroundImageComboBox.Items.Add("No background");
+            }
+            BackgroundImageComboBox.SelectionChanged += BackgroundImageComboBox_SelectionChanged;
+            BackgroundImageComboBox.SelectedValue = MainWindow.Instance.MainSave.Get("BackgroundImage");
+            BackgroundImageTextBox.Text = MainWindow.Instance.MainSave.Get("CustomBackgroundImage");
+            BackgroundImageTextBox.Visibility = MainWindow.Instance.MainSave.Get("BackgroundImage") == "Custom" ? Visibility.Visible : Visibility.Collapsed;
 
             FramerateTextBox.Text = MainWindow.Instance.Framerate.ToString();
             JavacriptCheckBox.IsChecked = MainWindow.Instance.Javascript.ToBoolean();
@@ -111,8 +130,20 @@ namespace SLBr.Pages
             Resources["BorderBrush"] = new SolidColorBrush(_Theme.BorderColor);
             Resources["UnselectedTabBrush"] = new SolidColorBrush(_Theme.UnselectedTabColor);
             Resources["ControlFontBrush"] = new SolidColorBrush(_Theme.ControlFontColor);
+
+            if (_Theme.DarkWebPage)
+                DarkWebPageCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("DarkWebPage"));
+            DarkWebPageCheckBox.Visibility = _Theme.DarkWebPage ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        private void BackgroundImageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox _ComboBox = (ComboBox)sender;
+            string Value = _ComboBox.SelectedValue.ToString();
+            MainWindow.Instance.MainSave.Set("BackgroundImage", Value);
+            BackgroundImageTextBox.Visibility = Value == "Custom" ? Visibility.Visible : Visibility.Collapsed;
+            //NewMessage("Render mode has been sucessfully changed and saved.", false);
+        }
         private void RenderModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ComboBox _ComboBox = (ComboBox)sender;
@@ -125,19 +156,20 @@ namespace SLBr.Pages
             MainWindow.Instance.MainSave.Set("Search_Engine", _ComboBox.SelectedValue.ToString());
             //NewMessage("The default search provider has been successfully changed and saved.", false);
         }
+        private void BackgroundImageTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && BackgroundImageTextBox.Text.Trim().Length > 0)
+            {
+                if (Utils.IsUrl(BackgroundImageTextBox.Text))
+                    BackgroundImageTextBox.Text = Utils.FixUrl(BackgroundImageTextBox.Text);
+                MainWindow.Instance.MainSave.Set("CustomBackgroundImage", BackgroundImageTextBox.Text);
+            }
+        }
         private void HomepageTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && HomepageTextBox.Text.Trim().Length > 0)
             {
                 HomepageTextBox.Text = Utils.FixUrl(HomepageTextBox.Text);
-                /*if (HomepageTextBox.Text.Contains("."))
-                {
-                    MainWindow.Instance.MainSave.Set("Homepage", HomepageTextBox.Text);
-                }
-                else
-                {
-                    MainWindow.Instance.MainSave.Set("Homepage", new Uri(MainWindow.Instance.MainSave.Get("Search_Engine")).Host);
-                }*/
                 MainWindow.Instance.MainSave.Set("Homepage", HomepageTextBox.Text);
             }
         }
@@ -186,6 +218,11 @@ namespace SLBr.Pages
             var _CheckBox = sender as CheckBox;
             MainWindow.Instance.MainSave.Set("RestoreTabs", _CheckBox.IsChecked.ToString());
         }
+        private void DarkWebPageCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("DarkWebPage", _CheckBox.IsChecked.ToString());
+        }
         private void DownloadPromptCheckBox_Click(object sender, RoutedEventArgs e)
         {
             var _CheckBox = sender as CheckBox;
@@ -228,6 +265,26 @@ namespace SLBr.Pages
             var _CheckBox = sender as CheckBox;
             MainWindow.Instance.MainSave.Set("ModernWikipedia", _CheckBox.IsChecked.ToString());
         }
+        private void SendDiagnosticsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("SendDiagnostics", _CheckBox.IsChecked.ToString());
+        }
+        private void WebNotificationsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("WebNotifications", _CheckBox.IsChecked.ToString());
+        }
+        private void SearchSuggestionsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.MainSave.Set("SearchSuggestions", _CheckBox.IsChecked.ToString());
+        }
+        private void IESuppressErrorsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var _CheckBox = sender as CheckBox;
+            MainWindow.Instance.IESave.Set("IESuppressErrors", _CheckBox.IsChecked.ToString());
+        }
         private void ThemeSelection_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             Border SelectedItem = (Border)ThemeSelection.SelectedItem;
@@ -250,6 +307,28 @@ namespace SLBr.Pages
                     Framerate = 10;
                 FramerateTextBox.Text = Framerate.ToString();
                 MainWindow.Instance.SetSandbox(Framerate, ((bool)JavacriptCheckBox.IsChecked).ToCefState(), ((bool)LoadImagesCheckBox.IsChecked).ToCefState(), ((bool)LocalStorageCheckBox.IsChecked).ToCefState(), ((bool)DatabasesCheckBox.IsChecked).ToCefState(), ((bool)WebGLCheckBox.IsChecked).ToCefState());
+            }));
+        }
+        private void ApplyExperimentsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+            {
+                MainWindow.Instance.ExperimentsSave.Set("HardwareAcceleration", HardwareAccelerationCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("LowEndDeviceMode", LowEndDeviceModeCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("PDFViewerExtension", PDFViewerExtensionCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("AutoplayUserGestureRequired", AutoplayUserGestureRequiredCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("SmoothScrolling", SmoothScrollingCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("WebAssembly", WebAssemblyCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("V8LiteMode", V8LiteModeCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("V8Sparkplug", V8SparkplugCheckBox.IsChecked.ToString());
+                MainWindow.Instance.CloseSLBr();
+                ProcessStartInfo Info = new ProcessStartInfo();
+                Info.Arguments = "/C choice /C Y /N /D Y /T 1 & START \"\" \"" + Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe") + "\"";
+                Info.WindowStyle = ProcessWindowStyle.Hidden;
+                Info.CreateNoWindow = true;
+                Info.FileName = "cmd.exe";
+                Process.Start(Info);
+                Process.GetCurrentProcess().Kill();
             }));
         }
 

@@ -36,14 +36,6 @@ namespace SLBr.Handlers
         {
             return null;
         }
-        //FastHashSet<string> Ads = new FastHashSet<string> { "youtube.com/ads", "google-analytics.com", "analytics.facebook.com", "analytics.pointdrive.linkedin.com", "analytics.pinterest.com", "analytics.tiktok.com", "analytics-sg.tiktok.com", "ads.tiktok.com", "ads-sg.tiktok.com" };
-        //FastHashSet<string> FullAdLinks = new FastHashSet<string> {
-        //"youtube.com/youtubei/v1/player/ad_break", "youtube.com/youtubei/v1/log_event", "youtube.com/pagead/interaction/", "youtube.com/api/stats/ads", "youtube.com/pagead/paralleladview"
-        //, "youtube.com/pagead/adview"/*, "youtube.com/ptracking"*/, "youtube.com/pcs/activeview"
-        //};
-        /*FastHashSet<string> Urls = new FastHashSet<string> {
-            "cse.google.com/adsense"
-        };*/
         FastHashSet<string> HasInLink = new FastHashSet<string> {
             "smartadserver.com", "bidswitch.net", "taboola", "amazon-adsystem.com", "survey.min.js", "survey.js", "social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
             "ad.js", "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
@@ -168,7 +160,7 @@ namespace SLBr.Handlers
                 if (AdBlock || TrackerBlock)
                 {
                     string CleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);//false if check full path
-                    string Host = Utils.Host(CleanedUrl, true, false);
+                    string Host = Utils.Host(CleanedUrl, true);
                     if (request.ResourceType == ResourceType.Script || request.ResourceType == ResourceType.Xhr)
                     {
                         foreach (string Script in HasInLink)
@@ -176,20 +168,7 @@ namespace SLBr.Handlers
                             if (CleanedUrl.Contains(Script.ToLower()))
                                 Continue = false;
                         }
-                        //if (bool.Parse(MainWindow.Instance.MainSave.Get("DoNotTrack")))
-                        //    headers["DNT"] = "1";
                     }
-                    /*if (Scripts.Contains(Path.GetFileName(CleanedUrl)))
-                        Continue = false;
-                    else */
-                    /*if (request.ResourceType == ResourceType.Script)
-                    {
-                        foreach (string Script in Scripts)
-                        {
-                            if (CleanedUrl.Contains(Script.ToLower()))
-                                return CefReturnValue.Cancel;
-                        }
-                    }*/
                     if (Continue)
                     {
                         if (TrackerBlock)
@@ -201,7 +180,7 @@ namespace SLBr.Handlers
                         if (Continue)
                         {
                             if (AdBlock)
-                                if (Ads.Contains(Host))
+                                if (Ads.Contains(Host) || Miners.Contains(Host))
                                 {
                                     Continue = false;
                                     MainWindow.Instance.AdsBlocked++;

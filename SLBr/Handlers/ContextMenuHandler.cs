@@ -1,5 +1,5 @@
 ﻿using CefSharp;
-using CefSharp.Wpf;
+using CefSharp.Wpf.HwndHost;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -88,15 +88,15 @@ namespace SLBr.Handlers
                     model.Remove(CefMenuCommand.Print);
                     model.Remove(CefMenuCommand.ViewSource);
                     model.AddItem(CefMenuCommand.Reload, "Refresh");
-                    /*model.AddSeparator();
-                    model.AddItem((CefMenuCommand)26503, "Zoom In");
-                    model.AddItem((CefMenuCommand)26504, "Zoom Out");
-                    model.AddItem((CefMenuCommand)26505, "Reset Zoom Level");
+
                     model.AddSeparator();
-                    model.AddItem((CefMenuCommand)26506, "Screenshot");
-                    model.AddItem((CefMenuCommand)26511, "Translate to English");*/
+                    IMenuModel ZoomSubMenuModel = model.AddSubMenu(CefMenuCommand.NotFound, "Zoom");
+                    ZoomSubMenuModel.AddItem((CefMenuCommand)26507, "Increment");
+                    ZoomSubMenuModel.AddItem((CefMenuCommand)26508, "Decrement");
+                    ZoomSubMenuModel.AddItem((CefMenuCommand)26509, "Default");
                     model.AddSeparator();
                     model.AddItem(CefMenuCommand.Print, "Print");
+                    model.AddItem((CefMenuCommand)26506, "Take screenshot");
                     model.AddSeparator();
                     model.AddItem((CefMenuCommand)26504, "View page source");
                     model.AddItem((CefMenuCommand)26503, "Inspect");
@@ -133,6 +133,10 @@ namespace SLBr.Handlers
         //26503 Inspector
         //26504 View source
         //26505 Copy Image Url
+        //26506 Take screenshot
+        //26507 Take screenshot
+        //26508 Take screenshot
+        //26509 Take screenshot
 
         public bool OnContextMenuCommand(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags)
         {
@@ -141,7 +145,7 @@ namespace SLBr.Handlers
             bool ToReturn = false;
             if (parameters.IsEditable)
             {
-                    
+                
             }
             else if (!string.IsNullOrEmpty(parameters.SelectionText))
             {
@@ -177,9 +181,29 @@ namespace SLBr.Handlers
                             MainWindow.Instance.NewBrowserTab($"view-source:{chromiumWebBrowser.Address}", 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
                             ToReturn = true;
                         }
-                        if (commandId == (CefMenuCommand)26503)
+                        else if (commandId == (CefMenuCommand)26503)
                         {
                             MainWindow.Instance.Inspect();
+                            ToReturn = true;
+                        }
+                        else if (commandId == (CefMenuCommand)26506)
+                        {
+                            MainWindow.Instance.Screenshot();
+                            ToReturn = true;
+                        }
+                        else if (commandId == (CefMenuCommand)26507)
+                        {
+                            MainWindow.Instance.Zoom(1);
+                            ToReturn = true;
+                        }
+                        else if (commandId == (CefMenuCommand)26508)
+                        {
+                            MainWindow.Instance.Zoom(-1);
+                            ToReturn = true;
+                        }
+                        else if (commandId == (CefMenuCommand)26509)
+                        {
+                            MainWindow.Instance.Zoom(0);
                             ToReturn = true;
                         }
                     }));
@@ -198,7 +222,7 @@ namespace SLBr.Handlers
                         }
                         ToReturn = true;
                     }
-                    if (commandId == (CefMenuCommand)26505)
+                    else if (commandId == (CefMenuCommand)26505)
                     {
                         Clipboard.SetText(parameters.SourceUrl);
                         ToReturn = true;

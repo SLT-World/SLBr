@@ -7,10 +7,13 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Management;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
+using System.Windows.Media.Imaging;
 
 namespace SLBr
 {
@@ -44,16 +47,13 @@ namespace SLBr
             Pictures,
             SavedGames,
         }
-
         private static Guid DownloadsGuid = new Guid("374DE290-123F-4565-9164-39C4925E467B");
         private static Guid DocumentsGuid = new Guid("FDD39AD0-238F-46AF-ADB4-6C85480369C7");
         private static Guid MusicGuid = new Guid("4BD8D571-6D19-48D3-BE97-422220080E43");
         private static Guid PicturesGuid = new Guid("33E28130-4E1E-4676-835A-98395C3BC3BB");
         private static Guid SavedGamesGuid = new Guid("4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4");
-
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         private static extern int SHGetKnownFolderPath(ref Guid id, int flags, IntPtr token, out IntPtr path);
-
         public static string GetFolderPath(FolderGuids FolderGuid)
         {
             if (Environment.OSVersion.Version.Major < 6) throw new NotSupportedException();
@@ -88,6 +88,31 @@ namespace SLBr
             }
         }
 
+        public static BitmapImage BitmapToImageSource(Bitmap bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                memory.Position = 0;
+                BitmapImage bitmapimage = new BitmapImage();
+                bitmapimage.BeginInit();
+                bitmapimage.StreamSource = memory;
+                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapimage.EndInit();
+
+                return bitmapimage;
+            }
+        }
+        public static bool IsAdministrator() =>
+            new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+        public static string GetProcessorID()
+        {
+            ManagementClass mgt = new ManagementClass("Win32_Processor");
+            ManagementObjectCollection procs = mgt.GetInstances();
+            foreach (ManagementObject item in procs)
+                return item.Properties["Name"].Value.ToString();
+            return "Unknown";
+        }
         public static string Between(string Value, string FirstString, string LastString)
         {
             string FinalString;
@@ -230,12 +255,12 @@ namespace SLBr
             return Url;
         }
 
-        public static string Host(string Url, bool RemoveWWW = true, bool _CleanUrl = true)
+        public static string Host(string Url, bool RemoveWWW = true)
         {
-            string Host = _CleanUrl ? CleanUrl(Url) : Url;
-            if (RemoveWWW)
-                Host = Host.Replace("www.", "");
-            return Host.Split('/')[0];
+            string Host = CleanUrl(Url, true, false, true, RemoveWWW);
+            if (!string.IsNullOrEmpty(Url))
+                return Host.Split('/')[0];
+            return Host;
         }
         public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveAnchor = true, bool RemoveWWW = false)
         {

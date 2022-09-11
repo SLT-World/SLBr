@@ -4,26 +4,19 @@
 <head>
     <meta charset="utf-8" />
     <title>New Tab</title>
-    <link rel="stylesheet" type="text/css" href="./style.css">
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" type="text/css" href="./style.css"/>
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
     <script>
-        var ImgAPIs = ["url('https://picsum.photos/1920/1080')",
-        "url('https://source.unsplash.com/1920x1080/?nature')",
-        "url('https://source.unsplash.com/1920x1080/?landscape')",
-        "url('https://source.unsplash.com/1920x1080/?space')",
-        "url('https://source.unsplash.com/1920x1080/?nasa')",
-        "url('https://source.unsplash.com/1920x1080/?earth')",
-        "url('https://source.unsplash.com/1920x1080/?soil')",
-        "url('https://source.unsplash.com/1920x1080/?green-energy')",
-        "url('https://source.unsplash.com/1920x1080/?natural')",
-        "url('https://source.unsplash.com/1920x1080/?environmental')",
-        "url('https://source.unsplash.com/1920x1080/?trees')",
-        "url('https://source.unsplash.com/1920x1080/?travel')",
-        ]
-
+        CefSharp.BindObjectAsync("internal");
         function setBackgroundImage() {
-            document.documentElement.style.backgroundImage = ImgAPIs[Math.floor(Math.random() * ImgAPIs.length)];
-        }
+            setBackgroundImageAsync();
+        };
+        async function setBackgroundImageAsync() {
+            var retval = internal.getBackground();
+            retval.then(function (spp) {
+                document.documentElement.style.backgroundImage = spp;
+            });
+        };
     </script>
 </head>
 <body onload="setBackgroundImage()">
@@ -148,19 +141,12 @@ ul.nav > li > a {
             }
         });
         async function search(value) {
-            var retval = slbr.searchProviderPrefix();
+            var retval = internal.searchProviderPrefix();
 
             retval.then(function (spp) {
-                //alert(spp);
                 window.location.href = spp.replace("{0}", value).replace(" ", "+");
-                //slbr.showMessage(spp.replace("{0}", value).replace(" ", "+"), "", "");
             });
         };
-                /*(async function () {
-        await CefSharp.BindObjectAsync("slbr");
-        //document.getElementById("SearchField").value = "SLBr Hehe";
-        //search(document.getElementById("SearchField").value);
-})();*/
     </script>
 </body>
 </html>

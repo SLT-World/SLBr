@@ -1,5 +1,4 @@
 ﻿using CefSharp;
-using SLBr.Pages;
 using System;
 using System.Windows;
 
@@ -16,8 +15,6 @@ namespace SLBr.Handlers
             {
                 MainWindow.Instance.NewBrowserTab(targetUrl, 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
             }));
-            //Program.Form.Invoke(new Action(() => Program.Form.newPage(targetUrl)));
-            //browser.MainFrame.LoadUrl(targetUrl);
             return true;
         }
 
@@ -27,7 +24,9 @@ namespace SLBr.Handlers
 
         public bool DoClose(IWebBrowser browserControl, IBrowser browser)
         {
-            return false;
+            if (browser.IsPopup)
+                return false;
+            return true;
         }
 
         public void OnBeforeClose(IWebBrowser browserControl, IBrowser browser)

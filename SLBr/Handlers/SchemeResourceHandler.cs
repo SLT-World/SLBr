@@ -65,8 +65,8 @@ namespace SLBr.Handlers
                     using (callback)
                     {
                         try
-                        {
-                            var httpWebRequest = (HttpWebRequest)WebRequest.Create(request.Url.Replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/"));
+                        {//https://cloudflare-ipfs.com/ipfs/
+                            var httpWebRequest = (HttpWebRequest)WebRequest.Create(request.Url.Replace("ipfs://", "https://cf-ipfs.com/ipfs/"));
 
                             var httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
 
@@ -110,7 +110,7 @@ namespace SLBr.Handlers
                     {
                         try
                         {
-                            var httpWebRequest = (HttpWebRequest)WebRequest.Create(request.Url.Replace("ipns://", "https://cloudflare-ipfs.com/ipns/"));
+                            var httpWebRequest = (HttpWebRequest)WebRequest.Create(request.Url.Replace("ipns://", "https://cf-ipfs.com/ipns/"));
 
                             var httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
 
