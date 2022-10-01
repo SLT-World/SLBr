@@ -21,8 +21,8 @@ CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTM
 - Mauve who helped out on the IPFS implementation for SLBr.
 
 ## System Requirements
-- Microsoft Visual C++ 2019
-- .NET 6.0
+- [Microsoft Visual C++ 2019]([https://dotnet.microsoft.com/en-us/download/dotnet/6.0](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170))
+- [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 - Segoe MDL2 Assets
 - Windows 7 and above
 
