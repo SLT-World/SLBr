@@ -1,22 +1,16 @@
 ﻿using CefSharp;
 using SLBr.Controls;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.IO;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace SLBr.Pages
 {
@@ -26,11 +20,32 @@ namespace SLBr.Pages
     public partial class Settings : UserControl
     {
         public static Settings Instance;
+        public BrowserTabItem Tab
+        {
+            get { return _Tab; }
+            set
+            {
+                _Tab = value;
+                if (_Tab != null)
+                    Tab.Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", (MainWindow.Instance.GetTheme().DarkTitleBar ? "White Settings Icon.png" : "Black Settings Icon.png"))));
+            }
+        }
 
-        public Settings()
+        private BrowserTabItem _Tab;
+
+        //public BrowserTabItem Tab;
+
+        public void DisposeCore()
+        {
+            //Instance = null;
+            Tab = null;
+            GC.Collect();
+        }
+        public Settings(BrowserTabItem _Tab)
         {
             InitializeComponent();
             Instance = this;
+            Tab = _Tab;
         }
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
@@ -49,6 +64,7 @@ namespace SLBr.Pages
             if (SearchEngineComboBox.Items.Contains(Search_Engine))
                 SearchEngineComboBox.SelectedValue = Search_Engine;
             SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
+
             HomepageTextBox.Text = MainWindow.Instance.MainSave.Get("Homepage");
             DownloadPathTextBox.Text = MainWindow.Instance.MainSave.Get("DownloadPath");
             ScreenshotPathTextBox.Text = MainWindow.Instance.MainSave.Get("ScreenshotPath");
@@ -70,7 +86,9 @@ namespace SLBr.Pages
             SendDiagnosticsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("SendDiagnostics"));
             WebNotificationsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("WebNotifications"));
 
+            DeveloperModeCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("DeveloperMode"));
             HardwareAccelerationCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("HardwareAcceleration"));
+            ChromeRuntimeCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("ChromeRuntime"));
             LowEndDeviceModeCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("LowEndDeviceMode"));
             PDFViewerExtensionCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("PDFViewerExtension"));
             AutoplayUserGestureRequiredCheckBox.IsChecked = bool.Parse(MainWindow.Instance.ExperimentsSave.Get("AutoplayUserGestureRequired"));
@@ -83,18 +101,19 @@ namespace SLBr.Pages
 
             SearchSuggestionsCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("SearchSuggestions"));
 
-            if (!RenderModeComboBox.Items.Contains("Hardware"))
+            if (RenderModeComboBox.Items.Count == 0)
             {
-                RenderModeComboBox.Items.Add("Hardware");
-                RenderModeComboBox.Items.Add("Software");
+                RenderModeComboBox.Items.Add("Hardware Rendering");
+                RenderModeComboBox.Items.Add("Software Rendering");
             }
             RenderModeComboBox.SelectionChanged += RenderModeComboBox_SelectionChanged;
-            RenderModeComboBox.SelectedValue = MainWindow.Instance.MainSave.Get("RenderMode");
+            RenderModeComboBox.SelectedValue = MainWindow.Instance.MainSave.Get("RenderMode") + " Rendering";
 
-            if (!BackgroundImageComboBox.Items.Contains("Unsplash"))
+            if (BackgroundImageComboBox.Items.Count == 0)
             {
                 BackgroundImageComboBox.Items.Add("Unsplash");
                 BackgroundImageComboBox.Items.Add("Bing image of the day");
+                BackgroundImageComboBox.Items.Add("Lorem Picsum");
                 BackgroundImageComboBox.Items.Add("Custom");
                 BackgroundImageComboBox.Items.Add("No background");
             }
@@ -102,6 +121,15 @@ namespace SLBr.Pages
             BackgroundImageComboBox.SelectedValue = MainWindow.Instance.MainSave.Get("BackgroundImage");
             BackgroundImageTextBox.Text = MainWindow.Instance.MainSave.Get("CustomBackgroundImage");
             BackgroundImageTextBox.Visibility = MainWindow.Instance.MainSave.Get("BackgroundImage") == "Custom" ? Visibility.Visible : Visibility.Collapsed;
+
+            if (ScreenshotFormatComboBox.Items.Count == 0)
+            {
+                ScreenshotFormatComboBox.Items.Add("Jpeg");
+                ScreenshotFormatComboBox.Items.Add("Png");
+                ScreenshotFormatComboBox.Items.Add("WebP");
+            }
+            ScreenshotFormatComboBox.SelectionChanged += ScreenshotFormatComboBox_SelectionChanged;
+            ScreenshotFormatComboBox.SelectedValue = MainWindow.Instance.MainSave.Get("ScreenshotFormat");
 
             FramerateTextBox.Text = MainWindow.Instance.Framerate.ToString();
             JavacriptCheckBox.IsChecked = MainWindow.Instance.Javascript.ToBoolean();
@@ -116,7 +144,6 @@ namespace SLBr.Pages
                 if ((string)((Border)o).Tag == ThemeName)
                 {
                     ThemeSelection.SelectedItem = o;
-                    //ThemeSelection_SelectionChanged(null, null);
                     break;
                 }
             }
@@ -125,11 +152,17 @@ namespace SLBr.Pages
 
         public void ApplyTheme(Theme _Theme)
         {
-            Resources["PrimaryBrush"] = new SolidColorBrush(_Theme.PrimaryColor);
-            Resources["FontBrush"] = new SolidColorBrush(_Theme.FontColor);
-            Resources["BorderBrush"] = new SolidColorBrush(_Theme.BorderColor);
-            Resources["UnselectedTabBrush"] = new SolidColorBrush(_Theme.UnselectedTabColor);
-            Resources["ControlFontBrush"] = new SolidColorBrush(_Theme.ControlFontColor);
+            //Resources["PrimaryBrush"] = new SolidColorBrush(_Theme.PrimaryColor);
+            //Resources["FontBrush"] = new SolidColorBrush(_Theme.FontColor);
+            //Resources["BorderBrush"] = new SolidColorBrush(_Theme.BorderColor);
+            //Resources["UnselectedTabBrush"] = new SolidColorBrush(_Theme.UnselectedTabColor);
+            //Resources["ControlFontBrush"] = new SolidColorBrush(_Theme.ControlFontColor);
+
+            Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
+            Resources["FontBrushColor"] = _Theme.FontColor;
+            Resources["BorderBrushColor"] = _Theme.BorderColor;
+            Resources["UnselectedTabBrushColor"] = _Theme.UnselectedTabColor;
+            Resources["ControlFontBrushColor"] = _Theme.ControlFontColor;
 
             if (_Theme.DarkWebPage)
                 DarkWebPageCheckBox.IsChecked = bool.Parse(MainWindow.Instance.MainSave.Get("DarkWebPage"));
@@ -144,10 +177,17 @@ namespace SLBr.Pages
             BackgroundImageTextBox.Visibility = Value == "Custom" ? Visibility.Visible : Visibility.Collapsed;
             //NewMessage("Render mode has been sucessfully changed and saved.", false);
         }
+        private void ScreenshotFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox _ComboBox = (ComboBox)sender;
+            string Value = _ComboBox.SelectedValue.ToString();
+            MainWindow.Instance.MainSave.Set("ScreenshotFormat", Value);
+            //NewMessage("Render mode has been sucessfully changed and saved.", false);
+        }
         private void RenderModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ComboBox _ComboBox = (ComboBox)sender;
-            MainWindow.Instance.SetRenderMode(_ComboBox.SelectedValue.ToString(), true);
+            MainWindow.Instance.SetRenderMode(_ComboBox.SelectedValue.ToString().Replace(" Rendering", ""), true);
             //NewMessage("Render mode has been sucessfully changed and saved.", false);
         }
         private void SearchEngineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -313,7 +353,9 @@ namespace SLBr.Pages
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
+                MainWindow.Instance.ExperimentsSave.Set("DeveloperMode", DeveloperModeCheckBox.IsChecked.ToString());
                 MainWindow.Instance.ExperimentsSave.Set("HardwareAcceleration", HardwareAccelerationCheckBox.IsChecked.ToString());
+                MainWindow.Instance.ExperimentsSave.Set("ChromeRuntime", ChromeRuntimeCheckBox.IsChecked.ToString());
                 MainWindow.Instance.ExperimentsSave.Set("LowEndDeviceMode", LowEndDeviceModeCheckBox.IsChecked.ToString());
                 MainWindow.Instance.ExperimentsSave.Set("PDFViewerExtension", PDFViewerExtensionCheckBox.IsChecked.ToString());
                 MainWindow.Instance.ExperimentsSave.Set("AutoplayUserGestureRequired", AutoplayUserGestureRequiredCheckBox.IsChecked.ToString());

@@ -8,7 +8,7 @@ namespace SLBr.Handlers
 {
     public class PrivateJsObjectHandler
     {
-        List<string> UnsplashAPI = new List<string> { //"https://picsum.photos/1920/1080",
+        List<string> UnsplashAPI = new List<string> {
         //"https://source.unsplash.com/1920x1080/?space",
         "https://source.unsplash.com/1920x1080/?nasa",
         "https://source.unsplash.com/1920x1080/?mountain-range",
@@ -40,6 +40,8 @@ namespace SLBr.Handlers
                     doc.LoadXml(MainWindow.Instance.TinyDownloader.DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
                     Url = @"http://www.bing.com/" + doc.SelectSingleNode(@"/images/image/url").InnerText;
                 }
+                else if (BackgroundImage == "Lorem Picsum")
+                    Url = "https://picsum.photos/1920/1080";
                 else if (BackgroundImage == "Custom")
                     Url = MainWindow.Instance.MainSave.Get("CustomBackgroundImage");
             }

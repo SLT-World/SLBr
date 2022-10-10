@@ -1,9 +1,11 @@
 ﻿using CefSharp;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace SLBr.Handlers
 {
@@ -53,7 +55,7 @@ namespace SLBr.Handlers
             "coin-hive.com", "coin-have.com", "adminer.com", "ad-miner.com", "coinminerz.com", "coinhive-manager.com", "coinhive.com", "prometheus.phoenixcoin.org", "coinhiveproxy.com", "jsecoin.com", "crypto-loot.com", "cryptonight.wasm", "cloudflare.solutions"
         };//https://v.firebog.net/hosts/static/w3kbl.txt
         FastHashSet<string> Ads = new FastHashSet<string> {
-            "pagead2.googlesyndication.com", "tpc.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "ade.googlesyndication.com", "pagead2.googleadservices.com", "adservice.google.com", "googleadservices.com",
+            "ads.google.com", "pagead2.googlesyndication.com", "tpc.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "ade.googlesyndication.com", "pagead2.googleadservices.com", "adservice.google.com", "googleadservices.com",
             "googleads2.g.doubleclick.net", "googleads3.g.doubleclick.net", "googleads4.g.doubleclick.net", "googleads5.g.doubleclick.net", "googleads6.g.doubleclick.net", "googleads7.g.doubleclick.net", "googleads8.g.doubleclick.net", "googleads9.g.doubleclick.net",
             "doubleclick.net", "stats.g.doubleclick.net", "ad.doubleclick.net", "ads.doubleclick.net", "ad.mo.doubleclick.net", "ad-g.doubleclick.net", "cm.g.doubleclick.net", "static.doubleclick.net", "m.doubleclick.net", "mediavisor.doubleclick.net", "pubads.g.doubleclick.net", "securepubads.g.doubleclick.net", "www3.doubleclick.net",
             "secure-ds.serving-sys.com", "s.innovid.com", "innovid.com", "dts.innovid.com",
@@ -61,7 +63,7 @@ namespace SLBr.Handlers
             "gads.pubmatic.com", "ads.pubmatic.com",// "image6.pubmatic.com",
             "ads.facebook.com", "an.facebook.com",
             "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn"/*, "yt3.ggpht.com"*/,
-            "ads.tiktok.com", "ads-sg.tiktok.com",
+            "ads.tiktok.com", "ads-sg.tiktok.com", "ads.adthrive.com",
             "ads.reddit.com", "d.reddit.com", "rereddit.com", "events.redditmedia.com",
             "ads-twitter.com", "static.ads-twitter.com", "ads-api.twitter.com", "advertising.twitter.com",
             "ads.pinterest.com", "ads-dev.pinterest.com",
@@ -69,7 +71,7 @@ namespace SLBr.Handlers
             "ads.linkedin.com",
             "static.media.net", "media.net", "adservetx.media.net",
             "media.fastclick.net", "cdn.fastclick.net",
-            "global.adserver.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com",
+            "global.adserver.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com", "adserver.yahoo.com",
             "yandexadexchange.net", "adsdk.yandex.ru",
             "files.adform.net",
             "static.adsafeprotected.com", "pixel.adsafeprotected.com",
@@ -85,18 +87,20 @@ namespace SLBr.Handlers
             "scdn.cxense.com",
             "adserver.juicyads.com",
             "a.realsrv.com", "mc.yandex.ru", "a.vdo.ai",
+            "ads.msn.com", "adnxs.com", "adnexus.net", "bingads.microsoft.com",
             "dt.adsafeprotected.com",
-            "z-na.amazon-adsystem.com", "aax-us-east.amazon-adsystem.com", "fls-na.amazon-adsystem.com", "z-na.amazon-adsystem.com",
+            "amazonaax.com", "z-na.amazon-adsystem.com", "aax-us-east.amazon-adsystem.com", "fls-na.amazon-adsystem.com", "z-na.amazon-adsystem.com",
             "ads.betweendigital.com", "rtb.adpone.com", "ads.themoneytizer.com", "bidder.criteo.com", "bidder.criteo.com", "bidder.criteo.com",
             "secure-assets.rubiconproject.com", "eus.rubiconproject.com", "fastlane.rubiconproject.com", "pixel.rubiconproject.com", "prebid-server.rubiconproject.com",
             "ids.ad.gt", "powerad.ai", "hb.brainlyads.com", "pixel.quantserve.com", "ads.anura.io", "static.getclicky.com",
             "ad.turn.com", "rtb.mfadsrvr.com", "ad.mrtnsvr.com", "s.ad.smaato.net", "rtb-csync.smartadserver.com", "ssbsync.smartadserver.com",
             "adpush.technoratimedia.com", "pixel.tapad.com", "secure.adnxs.com", "data.adsrvr.org", "px.adhigh.net",
-            "epnt.ebay.com", "pixel.moatads.com", "mb.moatads.com", "ad.adsrvr.org", "a.ad.gt", "pixels.ad.gt", "z.moatads.com", "px.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
+            "epnt.ebay.com", "yt.moatads.com", "pixel.moatads.com", "mb.moatads.com", "ad.adsrvr.org", "a.ad.gt", "pixels.ad.gt", "z.moatads.com", "px.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
             "btloader.com", "ad-delivery.net",
-            "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com"
+            "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com",
+            "adserver.snapads.com", "euw.adserver.snapads.com", "euc.adserver.snapads.com", "usc.adserver.snapads.com", "ase.adserver.snapads.com"
         };
-        FastHashSet<string> Analytics = new FastHashSet<string> { "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "google-analytics.com", "ssl.google-analytics.com",
+        FastHashSet<string> Analytics = new FastHashSet<string> { "ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "google-analytics.com", "ssl.google-analytics.com",
             "stats.wp.com",
             "analytics.facebook.com", "pixel.facebook.com",
             "analytics.tiktok.com", "analytics-sg.tiktok.com",
@@ -111,6 +115,8 @@ namespace SLBr.Handlers
             "freshmarketer.com",
             "notify.bugsnag.com", "sessions.bugsnag.com", "api.bugsnag.com", "app.bugsnag.com",
             "browser.sentry-cdn.com", "app.getsentry.com",
+            "stats.gc.apple.com", "iadsdk.apple.com", "crashlogs.whatsapp.net",
+            "tr.snapchat.com", "sc-analytics.appspot.com", "app-analytics.snapchat.com",
 
             "luckyorange.com", "cdn.luckyorange.com", "w1.luckyorange.com", "upload.luckyorange.net", "cs.luckyorange.net", "settings.luckyorange.net",
 
@@ -124,6 +130,7 @@ namespace SLBr.Handlers
             "tracking.india.miui.com",
             "tracking.rus.miui.com",
 
+            "metrics.data.hicloud.com",
             "metrics1.data.hicloud.com",
             "metrics5.data.hicloud.com",
             "logservice.hicloud.com",
@@ -144,17 +151,10 @@ namespace SLBr.Handlers
         };
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
-            var headers = request.Headers;
-            //Filter Lists
+            //request.SetHeaderByName("DNT", "1", true);
+            request.SetHeaderByName("Save-Data", "on", true);
+            //request.SetHeaderByName("Device-Memory", "0.25", true);
             bool Continue = true;
-            //if (bool.Parse(MainWindow.Instance.MainSave.Get("LiteMode")))
-            //{
-                //headers["Save-Data"] = "on";
-                headers.Add("Save-Data", "on");
-                headers.Add("Device-Memory", "0.25");
-                //headers["Device-Memory"] = "0.25";
-            //}
-
             if (Utils.IsPossiblyAd(request.ResourceType))
             {
                 if (AdBlock || TrackerBlock)
@@ -189,7 +189,6 @@ namespace SLBr.Handlers
                     }
                 }
             }
-            request.Headers = headers;
             return Continue ? CefReturnValue.Continue : CefReturnValue.Cancel;
         }
 

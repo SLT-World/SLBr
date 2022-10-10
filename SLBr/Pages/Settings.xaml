@@ -80,7 +80,8 @@
                             Service improvement
                         </GroupBox.Header>
                         <StackPanel>
-                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="5" Content="Help improve SLBr by sending diagnostic reports when the SLBr crashes or freezes"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="5" Content="Help improve SLBr by automatically sending usage statistics and crash reports to SLT World"/>
+                            <!--<CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="5" Content="Help improve SLBr by sending diagnostic reports when the SLBr crashes or freezes"/>-->
                         </StackPanel>
                     </GroupBox>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Margin="5" Content="Allow web notifications"/>
@@ -117,6 +118,8 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <TextBox Foreground="{DynamicResource FontBrush}" x:Name="ScreenshotPathTextBox" Margin="5" KeyDown="ScreenshotPathTextBox_KeyDown" ToolTip="Screenshot Path"/>
+                            <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Image type"/>
+                            <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="ScreenshotFormatComboBox" Margin="5" VerticalAlignment="Top" SelectedIndex="0"/>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -143,6 +146,7 @@
                     <TextBlock FontWeight="DemiBold" Foreground="{DynamicResource FontBrush}" Margin="5" FontSize="25">Optimize performance</TextBlock>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="TabUnloadingCheckBox" Click="TabUnloadingCheckBox_Click" Margin="5" Content="Unload tabs to save resources"/>
 
+                    <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="WPF render mode"/>
                     <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="RenderModeComboBox" Margin="5" VerticalAlignment="Top" SelectedIndex="0"/>
                 </StackPanel>
             </TabItem>
@@ -179,7 +183,9 @@
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="V8SparkplugCheckBox" Margin="5" Content="Sparkplug"/>
                         </StackPanel>
                     </GroupBox>
-                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="HardwareAccelerationCheckBox" Margin="5" Content="Hardware Acceleration"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="DeveloperModeCheckBox" Margin="5" Content="Developer Mode"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="HardwareAccelerationCheckBox" Margin="5" Content="Chromium Hardware Acceleration"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ChromeRuntimeCheckBox" Margin="5" Content="Chrome runtime"/>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="LowEndDeviceModeCheckBox" Margin="5" Content="Low end device mode"/>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="PDFViewerExtensionCheckBox" Margin="5" Content="PDF Viewer Extension"/>
                     <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="AutoplayUserGestureRequiredCheckBox" Margin="5" Content="Autoplay user gesture required"/>
@@ -215,8 +221,8 @@
                         <Hyperlink Foreground="{DynamicResource ControlFontBrush}" NavigateUri="https://github.com/SLT-World/SLBr" RequestNavigate="Hyperlink_RequestNavigate">
                             repository
                         </Hyperlink>.</TextBlock>
-                    <TextBlock Text="SLBr" Margin="5,10,0,0"/>
-                    <TextBlock Text="Copyright © 2022 SLT World. All rights reserved." Margin="5,0,0,0"/>
+                    <!--<TextBlock Text="SLBr" Margin="5,10,0,0"/>-->
+                    <TextBlock Text="Copyright © 2022 SLT World. All rights reserved." Margin="5,10,0,0"/>
                     <!--<TextBlock Margin="5">
                         <Hyperlink NavigateUri="slbr://license" RequestNavigate="Hyperlink_RequestNavigate">
                             License

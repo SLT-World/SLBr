@@ -1,5 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
+using SLBr.Controls;
 using SLBr.Pages;
 using System;
 using System.Security.Cryptography.X509Certificates;
@@ -17,8 +18,31 @@ namespace SLBr.Handlers
 
 		public bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
 		{
-			//callback.Continue(Username, Password);
-			return false;
+			bool _Handled = false;
+
+			//Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+			//{
+			CredentialsDialogResult _CredentialsDialogResult = CredentialsDialog.Show($@"Sign in to {host}");
+			if (_CredentialsDialogResult.Accepted == true)
+            {
+                callback.Continue(_CredentialsDialogResult.Username, _CredentialsDialogResult.Password);
+                _Handled = true;
+            }
+			//CredentialsDialogResult _CredentialsDialogResult = CredentialsDialog.Show($"Sign in to {host}");
+			//if (_CredentialsDialogResult.Accepted == true)
+			//{
+			//    callback.Continue(_CredentialsDialogResult.Username, _CredentialsDialogResult.Password);
+			//    _Handled = true;
+			//}
+			//}));
+			//MessageBoxResult dlg = MessageBox.Show("test", "e", MessageBoxButton.OK);
+
+			//if (dlg == MessageBoxResult.OK)
+			//{
+			//	_Handled = true;
+			//}
+
+			return _Handled;
 		}
 
 		public bool OnBeforeBrowse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool userGesture, bool isRedirect)
@@ -43,6 +67,9 @@ namespace SLBr.Handlers
 				//if (request.Url.EndsWith(".pdf"))
 				//	frame.LoadUrl(request.Url + "#toolbar=0");
 			}
+			//MessageBox.Show(request.Url);
+			else if (request.Url.StartsWith("chrome://sandbox"))
+				return true;
 			return false;
 		}
 		public bool OnCertificateError(IWebBrowser browserControl, IBrowser browser, CefErrorCode errorCode, string requestUrl, ISslInfo sslInfo, IRequestCallback callback)
@@ -74,16 +101,20 @@ namespace SLBr.Handlers
 
 		public void OnRenderProcessTerminated(IWebBrowser browserControl, IBrowser browser, CefTerminationStatus status)
 		{
-			if (Utils.CheckForInternetConnection())
-				browser.Reload(true);
-			else
+			try
 			{
-				Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+				if (Utils.CheckForInternetConnection())
+					browser.Reload(true);
+				else
 				{
-					ChromiumWebBrowser _ChromiumWebBrowser = (ChromiumWebBrowser)browserControl;
-					_ChromiumWebBrowser.Address = $"slbr://processcrashed?s={browserControl.Address}";
-				}));
+					Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+					{
+						ChromiumWebBrowser _ChromiumWebBrowser = (ChromiumWebBrowser)browserControl;
+						_ChromiumWebBrowser.Address = $"slbr://processcrashed?s={browserControl.Address}";
+					}));
+				}
 			}
+			catch { }
 		}
 
 		public void OnRenderViewReady(IWebBrowser browserControl, IBrowser browser)

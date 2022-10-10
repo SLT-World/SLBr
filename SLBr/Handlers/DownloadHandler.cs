@@ -38,8 +38,11 @@ namespace SLBr.Handlers
             //OnDownloadUpdatedFired?.Invoke(this, downloadItem);
 
             MainWindow.Instance.UpdateDownloadItem(downloadItem);
-            if (downloadItem.IsInProgress && MainWindow.Instance.CanceledDownloads.Contains(downloadItem.Id))
-                callback.Cancel();
+            if (downloadItem.IsInProgress)
+            {
+                if (MainWindow.Instance.CanceledDownloads.Contains(downloadItem.Id))
+                    callback.Cancel();
+            }
         }
     }
 }

@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:controls="clr-namespace:SLBr.Controls"
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontFamily="Segoe MDL2 Assets">
+    <!--Segoe Fluent Icons-->
     <UserControl.Resources>
         <ResourceDictionary Source="../StyleResourceDictionary.xaml"/>
     </UserControl.Resources>
@@ -25,7 +26,7 @@
                 <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5">
                     <Menu FontFamily="Segoe MDL2 Assets" Margin="0" Height="23" Width="23" Background="Transparent" BorderBrush="Transparent" Foreground="{DynamicResource ControlFontBrush}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <MenuItem ToolTip="More options" Header="&#xE700;" Height="23" Margin="0,2" Foreground="{DynamicResource ControlFontBrush}" BorderThickness="0">
-                            <MenuItem Header="New Tab" FontFamily="Arial" Click="ButtonAction" Tag="4"/>
+                            <MenuItem Header="New Tab" FontFamily="Arial" Click="ButtonAction" Tag="4&lt;,&gt;{Homepage}"/>
                             <Separator/>
                             <MenuItem x:Name="HistoryListMenu" Header="History" FontFamily="Arial">
                                 <MenuItem.ItemContainerStyle>
@@ -63,6 +64,8 @@
                                     <MenuItem Header="Web Speech API Demonstration" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.google.com/intl/en/chrome/demos/speech.html"/>
                                     <MenuItem Header="Web Notifications Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.bennish.net/web-notifications.html"/>
                                     <MenuItem Header="WebAssembly Roadmap" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://webassembly.org/roadmap/"/>
+                                    <MenuItem Header="Jigsaw Demo" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://jigsaw.w3.org/"/>
+                                    <MenuItem Header="BrowserLeaks" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://browserleaks.com/"/>
                                 </MenuItem>
                             </MenuItem>
                             <Separator/>
@@ -161,33 +164,113 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Border>
-                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Grid.Row="3" Height="5" HorizontalAlignment="Stretch">
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Grid.Row="3" Height="5" HorizontalAlignment="Stretch">
                     <ProgressBar Maximum="1" BorderThickness="0" x:Name="WebsiteLoadingProgressBar" IsEnabled="False" IsIndeterminate="False" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource BorderBrush}"/>
                 </Border>
             </Grid>
         </Border>
         <Grid x:Name="WebContainer" Grid.Row="1">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-            <Grid x:Name="CoreContainer" Margin="0,0,0,0"/>
-            <Grid x:Name="InspectorContainer" Visibility="Collapsed" Width="600" Grid.Column="1"/>
+            <Grid x:Name="CoreContainerSizeEmulator" SizeChanged="CoreContainer_SizeChanged" Grid.Column="1" Grid.Row="1" Margin="0,0,0,0" Grid.IsSharedSizeScope="True">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="SizeEmulatorColumn1" SharedSizeGroup="A" Width="Auto" MaxWidth="25"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition x:Name="SizeEmulatorColumn2" SharedSizeGroup="A" Width="Auto" MaxWidth="25"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="SizeEmulatorRow1" SharedSizeGroup="B" Height="Auto" MaxHeight="400"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition x:Name="SizeEmulatorRow2" SharedSizeGroup="B" Height="Auto" MaxHeight="400"/>
+                </Grid.RowDefinitions>
+                <Grid x:Name="CoreContainer" Margin="0,0,0,0" Grid.Column="2" Grid.Row="2"/>
+                <GridSplitter x:Name="SizeEmulatorRowSplitter1" Visibility="Collapsed" Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="5" Background="{DynamicResource BorderBrush}"/>
+                <GridSplitter x:Name="SizeEmulatorRowSplitter2" Visibility="Collapsed" Grid.Row="3" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="5" Background="{DynamicResource BorderBrush}"/>
 
-            <Popup x:Name="QRCodePopup" Focusable="False" AllowsTransparency="True" Placement="Center" Width="250" Height="250" IsOpen="False">
+                <GridSplitter x:Name="SizeEmulatorColumnSplitter1" Visibility="Collapsed" Grid.Column="1" Grid.RowSpan="5" Width="5" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+                <GridSplitter x:Name="SizeEmulatorColumnSplitter2" Visibility="Collapsed" Grid.Column="3" Grid.RowSpan="5" Width="5" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+            </Grid>
+            <Border x:Name="InspectorContainer" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0" Visibility="Collapsed" Width="600" Grid.Column="2" Grid.Row="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <DockPanel LastChildFill="False">
+                            <Button Style="{DynamicResource InspectorCloseButton}" DockPanel.Dock="Right" Click="ButtonAction" Tag="6" Margin="0" Height="25" Width="30" ToolTip="Close inspector" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE711;"/>
+
+                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="16" Margin="0" Height="25" Width="30" ToolTip="Toggle size emulation" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8CC;"/>
+                            <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderBrush}" Margin="0, 4"/>
+
+                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="15&lt;,&gt;{CurrentInspectorUrl}" Margin="0" Height="25" Width="30" ToolTip="Open in seperate window" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8A7;"/>
+
+                            <Button RenderTransformOrigin="0.5,0.5" Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;3" Margin="0" Height="25" Width="30" ToolTip="Dock top" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;">
+                                <Button.RenderTransform>
+                                    <RotateTransform Angle="180" />
+                                </Button.RenderTransform>
+                            </Button>
+                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;2" Margin="0" Height="25" Width="30" ToolTip="Dock bottom" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;"/>
+                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;1" Margin="0" Height="25" Width="30" ToolTip="Dock left" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90C;"/>
+                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;0" Margin="0" Height="25" Width="30" ToolTip="Dock right" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90D;"/>
+                        </DockPanel>
+                    </Border>
+                    <Grid x:Name="InspectorCoreContainer" Grid.Row="1"/>
+                </Grid>
+            </Border>
+
+            <Popup Grid.Row="1" Grid.Column="1" x:Name="QRCodePopup" Focusable="False" AllowsTransparency="True" Placement="Center" Width="250" Height="250" IsOpen="False">
                 <Border Visibility="Visible" Background="{DynamicResource UnselectedTabBrush}" CornerRadius="5">
                     <Image RenderOptions.BitmapScalingMode="LowQuality" x:Name="QRCodeImage" Margin="15"/>
                 </Border>
             </Popup>
 
-            <Border Margin="350,0,0,0" x:Name="StatusBar" Visibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Grid.Row="1" Height="25" Width="Auto" Background="{DynamicResource UnselectedTabBrush}">
+            <Grid Grid.Row="1" Grid.Column="1" IsHitTestVisible="False" Focusable="False" x:Name="StatusBar" Margin="2.5,30" VerticalAlignment="Bottom">
+                <Popup SnapsToDevicePixels="True" x:Name="StatusBarPopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="True">
+                    <Border Background="{DynamicResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                        <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300" Height="25">
+                            <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>
+                        </Grid>
+                    </Border>
+                </Popup>
+            </Grid>
+
+            <!--<Border Margin="0,0,1,0" x:Name="StatusBar" Visibility="Visible" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="1" Height="25" Width="Auto" Background="{DynamicResource UnselectedTabBrush}">
+                <Popup x:Name="StatusBarPopup" Focusable="False" AllowsTransparency="True" Placement="RelativePoint" Width="350" Height="25" IsOpen="False">
+                    <Border Visibility="Visible" Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,1,0,0" CornerRadius="5,0,0,0">
+                        <TextBlock x:Name="StatusMessage" Margin="5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>
+                     </Border>
+                </Popup>
+            </Border>-->
+
+            <!--<Border Margin="0" x:Name="StatusBar" Visibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Grid.Row="1" Height="25" Width="Auto" Background="{DynamicResource UnselectedTabBrush}">
                 <Popup x:Name="StatusBarPopup" Focusable="False" AllowsTransparency="True" Placement="RelativePoint" Width="350" Height="25" IsOpen="False">
                     <Border Visibility="Visible" Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,1,0" CornerRadius="0,5,0,0">
                         <TextBlock x:Name="StatusMessage" Margin="5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>
                     </Border>
                 </Popup>
-            </Border>
+            </Border>-->
+
+            <!--<Border Margin="0" x:Name="StatusBar" Visibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Grid.Row="1" Height="25" Width="Auto" Background="{DynamicResource UnselectedTabBrush}">
+                <Popup x:Name="StatusBarPopup" Focusable="False" AllowsTransparency="True" Placement="Mouse" Width="350" Height="25" IsOpen="False">
+                    <Border Visibility="Visible" Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5">
+                        <TextBlock x:Name="StatusMessage" Margin="5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>
+                    </Border>
+                </Popup>
+            </Border>-->
         </Grid>
     </Grid>
 </UserControl>

@@ -1,5 +1,8 @@
 ﻿using CefSharp;
 using CefSharp.DevTools;
+using CefSharp.DevTools.CacheStorage;
+using CefSharp.DevTools.Debugger;
+using CefSharp.DevTools.Page;
 using CefSharp.Wpf.HwndHost;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
@@ -40,7 +43,7 @@ namespace SLBr.Pages
 
         Saving MainSave;
         IdnMapping _IdnMapping;
-        BrowserTabItem Tab;
+        public BrowserTabItem Tab;
 
         BrowserSettings _BrowserSettings;
 
@@ -79,16 +82,19 @@ namespace SLBr.Pages
             Chromium.Address = Url;
             Chromium.JavascriptObjectRepository.Register("internal", MainWindow.Instance._PrivateJsObjectHandler, BindingOptions.DefaultBinder);
             Chromium.JavascriptObjectRepository.Register("slbr", MainWindow.Instance._PublicJsObjectHandler, BindingOptions.DefaultBinder);
-            Chromium.IsManipulationEnabled = true;
             Chromium.LifeSpanHandler = MainWindow.Instance._LifeSpanHandler;
+            //Chromium.DownloadHandler = new CefSharp.Handler.DownloadHandler();
+            //Chromium.DownloadHandler = new NewDownloadHandler();
+            //Chromium.DownloadHandler = new DownloadHandler();
             Chromium.DownloadHandler = MainWindow.Instance._DownloadHandler;
             Chromium.RequestHandler = MainWindow.Instance._RequestHandler;
             Chromium.MenuHandler = MainWindow.Instance._ContextMenuHandler;
             Chromium.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
             Chromium.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
             Chromium.DisplayHandler = new DisplayHandler(this);
-            Chromium.JavascriptMessageReceived += Chromium_JavascriptMessageReceived;
+            //Chromium.AudioHandler = new AudioHandler();
             Chromium.AllowDrop = true;
+            Chromium.IsManipulationEnabled = true;
             if (CefBrowserSettings != null)
                 _BrowserSettings = CefBrowserSettings;
             else
@@ -101,14 +107,15 @@ namespace SLBr.Pages
                     LocalStorage = MainWindow.Instance.LocalStorage,
                     Databases = MainWindow.Instance.Databases,
                     WebGl = MainWindow.Instance.WebGL,
-                    BackgroundColor = Utils.ColorToUInt(System.Drawing.Color.Black)
+                    BackgroundColor = System.Drawing.Color.Black.ToUInt()
                 };
             }
             Chromium.BrowserSettings = _BrowserSettings;
-            Chromium.TitleChanged += Chromium_TitleChanged;
+            Chromium.JavascriptMessageReceived += Chromium_JavascriptMessageReceived;
             Chromium.LoadingStateChanged += Chromium_LoadingStateChanged;
             Chromium.ZoomLevelIncrement = 0.5f;
             Chromium.FrameLoadEnd += Chromium_FrameLoadEnd;
+            Chromium.TitleChanged += Chromium_TitleChanged;
             Chromium.StatusMessage += Chromium_StatusMessage;
             CoreContainer.Children.Add(Chromium);
 
@@ -118,7 +125,7 @@ namespace SLBr.Pages
             {
                 WebGl = CefState.Disabled,
                 WindowlessFrameRate = 20,
-                BackgroundColor = Utils.ColorToUInt(System.Drawing.Color.Black)
+                BackgroundColor = System.Drawing.Color.Black.ToUInt()
             };
             ChromiumInspector.AllowDrop = true;
             ChromiumInspector.FrameLoadEnd += (sender, args) =>
@@ -143,7 +150,10 @@ namespace SLBr.Pages
                                         {
                                             if (_InspectorObject.type == "page" && _InspectorObject.url == Chromium.Address)
                                             {
-                                                ChromiumInspector.Address = "http://localhost:8089" + _InspectorObject.devtoolsFrontendUrl;
+                                                ChromiumInspector.Address = "http://localhost:8089" + _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html");
+                                                //ChromiumInspector.Address = "http://localhost:8089" + (MainWindow.Instance.DeveloperMode ? _InspectorObject.devtoolsFrontendUrl : _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html"));
+                                                //devtools_app.html?can_dock=true
+                                                //ChromiumInspector.Address = "http://localhost:8089" + _InspectorObject.devtoolsFrontendUrl;
                                                 break;
                                             }
                                         }
@@ -164,7 +174,7 @@ namespace SLBr.Pages
             ChromiumInspector.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
             ChromiumInspector.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
             //ChromiumInspector.StatusMessage += OnWebBrowserStatusMessage;
-            InspectorContainer.Children.Add(ChromiumInspector);
+            InspectorCoreContainer.Children.Add(ChromiumInspector);
 
             RenderOptions.SetBitmapScalingMode(Chromium, BitmapScalingMode.LowQuality);
             RenderOptions.SetBitmapScalingMode(ChromiumInspector, BitmapScalingMode.LowQuality);
@@ -188,8 +198,8 @@ namespace SLBr.Pages
             IE.BrowserCore.Navigated += IE_Navigated;
             CoreContainer.Children.Add(IE.BrowserCore);
 
-            IEInspector = new IEWebBrowser("about:blank");
-            InspectorContainer.Children.Add(IEInspector.BrowserCore);
+            //IEInspector = new IEWebBrowser("about:blank");
+            //InspectorContainer.Children.Add(IEInspector.BrowserCore);
         }
 
         private void IE_Loaded(object sender, RoutedEventArgs e)
@@ -241,18 +251,24 @@ namespace SLBr.Pages
                 };
                 window.Notification = Notification;
                 })();");
+            //Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator.connection, ""saveData"", { get: function() { return true; } });");
+
             //Chromium.ExecuteScriptAsync("window.navigator.vendor = \"SLT World\"");
             //Chromium.ExecuteScriptAsync("window.navigator.deviceMemory = 0.25");
             //if (e.Frame.IsValid && e.Frame.IsMain)
         }
 
-        public void Unload(BrowserSettings _BrowserSettings = null)
+        public void Unload(bool ChangeIcon, BrowserSettings _BrowserSettings = null)
         {
             if (BrowserType == 0)
             {
                 string Url = Chromium.Address;
+                
+                if (ChangeIcon && Tab.Icon != null)
+                    Tab.Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "Green Sustainable Icon.png")));
+                    //Tab.Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", (MainWindow.Instance.GetTheme().DarkTitleBar ? "White Sustainable Icon.png" : "Black Sustainable Icon.png"))));
                 CoreContainer.Children.Clear();
-                InspectorContainer.Children.Clear();
+                InspectorCoreContainer.Children.Clear();
                 Chromium.Dispose();
                 ChromiumInspector.Dispose();
                 CreateChromium(Url, _BrowserSettings);
@@ -260,15 +276,18 @@ namespace SLBr.Pages
             else
             {
                 string Url = IE.BrowserCore.Source.AbsoluteUri;
+                if (ChangeIcon && Tab.Icon != null)
+                    Tab.Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "Green Sustainable Icon.png")));
+                    //Tab.Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", (MainWindow.Instance.GetTheme().DarkTitleBar ? "White Sustainable Icon.png" : "Black Sustainable Icon.png"))));
                 CoreContainer.Children.Clear();
-                InspectorContainer.Children.Clear();
+                InspectorCoreContainer.Children.Clear();
                 IE.Dispose();
-                IEInspector.Dispose();
+                //IEInspector.Dispose();
                 CreateIE(Url);
             }
             GC.Collect();
         }
-        public void Unload(int _Framerate, CefState JSState, CefState LIState, CefState LSState, CefState DBState, CefState WebGLState)
+        public void Unload(bool ChangeIcon, int _Framerate, CefState JSState, CefState LIState, CefState LSState, CefState DBState, CefState WebGLState)
         {
             if (BrowserType == 0)
             {
@@ -280,9 +299,9 @@ namespace SLBr.Pages
                     LocalStorage = LSState,
                     Databases = DBState,
                     WebGl = WebGLState,
-                    BackgroundColor = Utils.ColorToUInt(System.Drawing.Color.Black)
+                    BackgroundColor = System.Drawing.Color.Black.ToUInt()
                 };
-                Unload(_BrowserSettings);
+                Unload(ChangeIcon, _BrowserSettings);
             }
         }
         /*private void Chromium_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -305,7 +324,7 @@ namespace SLBr.Pages
                     dynamic document = IE.BrowserCore.Document;
                     dynamic script = document.createElement("script");
                     script.type = @"text/javascript";
-                    script.src = @"https://lupatec.eu/getfirebug/firebug-lite-compressed.js#startOpened=false,disableWhenFirebugActive=false";
+                    script.src = @"https://lupatec.eu/getfirebug/firebug-lite-compressed.js#startOpened=true,disableWhenFirebugActive=false";
                     document.head.appendChild(script); // Dynamic property head does not exist.
                 }
                 catch { };
@@ -324,7 +343,10 @@ namespace SLBr.Pages
                 if (AddressBox.Text != OutputUrl)
                 {
                     if (CanChangeAddressBox())
+                    {
                         AddressBox.Text = OutputUrl;
+                        AddressBoxPlaceholder.Text = "";
+                    }
                     AddressBox.Tag = e.Uri.AbsoluteUri;
                 }
             }));
@@ -346,7 +368,13 @@ namespace SLBr.Pages
             QRCodePopup.IsOpen = false;
             MainWindow.Instance.AddHistory(Address);
             string Host = Utils.Host(Address);
-            Tab.Icon = new BitmapImage(new Uri("https://www.google.com/s2/favicons?sz=24&domain=" + Host));
+            //if (Tab.Icon == null)
+            //Tab.Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", (MainWindow.Instance.GetTheme().DarkTitleBar ? "White Tab Icon.png" : "Black Tab Icon.png"))));
+            //new BitmapImage(new Uri("https://www.google.com/s2/favicons?sz=24&domain=" + Host));
+            //if (Tab.Icon == null)
+                Tab.Icon = MainWindow.Instance.GetIcon(Address);//new BitmapImage(new Uri("https://www.google.com/s2/favicons?sz=24&domain=" + Host));
+
+
             if (Address.StartsWith("https:"))
             {
                 SSLSymbol.Text = "\xE72E";
@@ -396,6 +424,8 @@ namespace SLBr.Pages
         private void Chromium_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             Tab.Header = Title;
+            if (Tab == MainWindow.Instance.Tabs[MainWindow.Instance.BrowserTabs.SelectedIndex])
+                MainWindow.Instance.Title = Title + " - SLBr";
         }
         private void Chromium_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
         {
@@ -405,23 +435,18 @@ namespace SLBr.Pages
                     return;
                 BrowserLoadChanged(Chromium.Address);
 
-                DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
-                _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(MainWindow.Instance.GetTheme().DarkWebPage ? bool.Parse(MainWindow.Instance.MainSave.Get("DarkWebPage")) : false);
-                ReloadButton.Content = e.IsLoading ? "\xE711" : "\xE72C";
-                //WebsiteLoadingProgressBar.IsEnabled = e.IsLoading;
-                //WebsiteLoadingProgressBar.IsIndeterminate = e.IsLoading;
                 if (!Chromium.IsLoading)
                 {
-                    if (IsUtilityContainerOpen && !ChromiumInspector.Address.StartsWith("http://localhost:8089/devtools/"))
+                    if (IsUtilityContainerOpen && !ChromiumInspector.Address.StartsWith("http://localhost:8089/"))
                         ChromiumInspector.Address = "localhost:8089/json/list";
-                    if (Chromium.Address == "https://github.com/SLT-World/SLBr" || Chromium.Address == "https://github.com/SLT-World/SLBr/")
+                        //if (IsUtilityContainerOpen && !ChromiumInspector.Address.StartsWith("http://localhost:8089/devtools/"))
+                    if (Chromium.Address.EndsWith("github.com/SLT-World/SLBr"))
                         ToastBox.Show("", "Please support SLBr by giving a star to the project.", 10);
                 }
                 else
                 {
-                    if (Chromium.Address.StartsWith("slbr:"))
-                        Chromium.ExecuteScriptAsync("CefSharp.BindObjectAsync(\"internal\");");
-                    Chromium.ExecuteScriptAsync("CefSharp.BindObjectAsync(\"slbr\");");
+                    if (IsUtilityContainerOpen && !ChromiumInspector.Address.StartsWith("http://localhost:8089/"))
+                        ChromiumInspector.Address = "localhost:8089/json/list";
                     Chromium.ExecuteScriptAsync(@"function addStyle(styleString) {
                                                         const style = document.createElement('style');
                                                         style.textContent = styleString;
@@ -429,23 +454,59 @@ namespace SLBr.Pages
                                                     }
 
                                                     addStyle(`
-                                                        ::-webkit-scrollbar{width: 17.5px;}
-                                                    `);
+                                                    ::-webkit-scrollbar {
+                                                        width: 16px;
+                                                    }
 
-                                                    addStyle(`
-                                                        ::-webkit-scrollbar-thumb{background:gainsboro;}
-                                                    `);
+                                                    ::-webkit-scrollbar-thumb {
+                                                        height: 56px;
+                                                        border-radius: 8px;
+                                                        border: 4px solid transparent;
+                                                        background-clip: content-box;
+                                                        background-color: transparent;
+                                                    }
+                                                    body::-webkit-scrollbar-thumb {
+                                                        height: 56px;
+                                                        border-radius: 8px;
+                                                        border: 4px solid transparent;
+                                                        background-clip: content-box;
+                                                        background-color: hsl(0,0%,67%);
+                                                    }
 
-                                                    addStyle(`
-                                                        ::-webkit-scrollbar-thumb:hover{background:lightgray;}
-                                                    `);
-
-                                                    addStyle(`
-                                                        ::-webkit-scrollbar-track{background:whitesmoke;}
+                                                    ::-webkit-scrollbar-corner {background-color: transparent;}
                                                     `);");
+                    //Chromium.ExecuteScriptAsync(@"function addStyle(styleString) {
+                                                    //    const style = document.createElement('style');
+                                                    //    style.textContent = styleString;
+                                                    //    document.head.append(style);
+                                                    //}
+
+                                                    //addStyle(`
+                                                    //    ::-webkit-scrollbar{width: 17.5px;}
+                                                    //`);
+
+                                                    //addStyle(`
+                                                    //    ::-webkit-scrollbar-thumb{background:gainsboro;}
+                                                    //`);
+
+                                                    //addStyle(`
+                                                    //    ::-webkit-scrollbar-thumb:hover{background:lightgray;}
+                                                    //`);
+
+                                                    //addStyle(`
+                                                    //    ::-webkit-scrollbar-track{background:whitesmoke;}
+                                                    //`);");
+                    if (Chromium.Address.StartsWith("slbr:"))
+                        Chromium.ExecuteScriptAsync("CefSharp.BindObjectAsync(\"internal\");");
+                    Chromium.ExecuteScriptAsync("CefSharp.BindObjectAsync(\"slbr\");");
                 }
+                ReloadButton.Content = e.IsLoading ? "\xE711" : "\xE72C";
+                //WebsiteLoadingProgressBar.IsEnabled = e.IsLoading;
+                //WebsiteLoadingProgressBar.IsIndeterminate = e.IsLoading;
                 BackButton.IsEnabled = e.CanGoBack;
                 ForwardButton.IsEnabled = e.CanGoForward;
+                DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
+                _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(MainWindow.Instance.GetTheme().DarkWebPage ? bool.Parse(MainWindow.Instance.MainSave.Get("DarkWebPage")) : false);
             }));
         }
 
@@ -453,7 +514,7 @@ namespace SLBr.Pages
         ChromiumWebBrowser Chromium;
         IEWebBrowser IE;
         ChromiumWebBrowser ChromiumInspector;
-        IEWebBrowser IEInspector;
+        //IEWebBrowser IEInspector;
 
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
@@ -487,10 +548,14 @@ namespace SLBr.Pages
             SwitchBrowser = 11,
             OpenFileExplorer = 12,
             QRCode = 13,
+            SetInspectorDock = 14,
+            OpenAsPopupBrowser = 15,
+            SizeEmulator = 16,
         }
         private void Action(Actions _Action, object sender = null, string V1 = "", string V2 = "", string V3 = "")
         {
             V1 = V1.Replace("{CurrentUrl}", Address);
+            V1 = V1.Replace("{CurrentInspectorUrl}", ChromiumInspector.Address);
             V1 = V1.Replace("{Homepage}", MainSave.Get("Homepage"));
             switch (_Action)
             {
@@ -510,7 +575,7 @@ namespace SLBr.Pages
                     MainWindow.Instance.NewBrowserTab(V1, 0, true);
                     break;
                 case Actions.CloseTab:
-                    MainWindow.Instance.CloseCurrentBrowserTab();
+                    MainWindow.Instance.CloseBrowserTab(int.Parse(V1));
                     break;
                 case Actions.Inspect:
                     Inspect();
@@ -522,10 +587,10 @@ namespace SLBr.Pages
                     SetAudio(!IsAudioMuted);
                     break;
                 case Actions.Settings:
-                    MainWindow.Instance.Settings(true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                    MainWindow.Instance.OpenSettings(true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
                     break;
                 case Actions.UnloadTabs:
-                    MainWindow.Instance.UnloadTabs();
+                    MainWindow.Instance.UnloadTabs(true);
                     break;
                 case Actions.SwitchBrowser:
                     SwitchBrowser(V1);
@@ -536,9 +601,69 @@ namespace SLBr.Pages
                 case Actions.QRCode:
                     QRCode(V1);
                     break;
+                case Actions.SetInspectorDock:
+                    SetInspectorDock(int.Parse(V1));
+                    break;
+                case Actions.OpenAsPopupBrowser:
+                    OpenAsPopupBrowser(V1);
+                    break;
+                case Actions.SizeEmulator:
+                    SizeEmulator();
+                    break;
             }
         }
 
+        bool ActiveSizeEmulation;
+        private void SizeEmulator()
+        {
+            SizeEmulatorColumn1.Width = new GridLength(0);
+            SizeEmulatorColumn2.Width = new GridLength(0);
+            SizeEmulatorRow1.Height = new GridLength(0);
+            SizeEmulatorRow2.Height = new GridLength(0);
+            SizeEmulatorColumnSplitter1.Visibility = ActiveSizeEmulation ? Visibility.Collapsed : Visibility.Visible;
+            SizeEmulatorColumnSplitter2.Visibility = ActiveSizeEmulation ? Visibility.Collapsed : Visibility.Visible;
+            SizeEmulatorRowSplitter1.Visibility = ActiveSizeEmulation ? Visibility.Collapsed : Visibility.Visible;
+            SizeEmulatorRowSplitter2.Visibility = ActiveSizeEmulation ? Visibility.Collapsed : Visibility.Visible;
+            ActiveSizeEmulation = !ActiveSizeEmulation;
+        }
+        private void OpenAsPopupBrowser(string Url)
+        {
+            new PopupBrowser(Url, -1, -1).Show();
+        }
+        private void SetInspectorDock(int DockID)
+        {
+            switch (DockID)
+            {
+                case 0:
+                    Grid.SetColumn(InspectorContainer, 2);
+                    Grid.SetRow(InspectorContainer, 1);
+                    InspectorContainer.Height = Double.NaN;
+                    InspectorContainer.Width = 600;
+                    InspectorContainer.BorderThickness = new Thickness(1, 0, 0, 0);
+                    break;
+                case 1:
+                    Grid.SetColumn(InspectorContainer, 0);
+                    Grid.SetRow(InspectorContainer, 1);
+                    InspectorContainer.Height = Double.NaN;
+                    InspectorContainer.Width = 600;
+                    InspectorContainer.BorderThickness = new Thickness(0, 0, 1, 0);
+                    break;
+                case 2:
+                    Grid.SetColumn(InspectorContainer, 1);
+                    Grid.SetRow(InspectorContainer, 2);
+                    InspectorContainer.Height = 300;
+                    InspectorContainer.Width = Double.NaN;
+                    InspectorContainer.BorderThickness = new Thickness(0, 1, 0, 0);
+                    break;
+                case 3:
+                    Grid.SetColumn(InspectorContainer, 1);
+                    Grid.SetRow(InspectorContainer, 0);
+                    InspectorContainer.Height = 300;
+                    InspectorContainer.Width = Double.NaN;
+                    InspectorContainer.BorderThickness = new Thickness(0, 0, 0, 1);
+                    break;
+            }
+        }
         public void SwitchBrowser(string NewBrowserName)
         {
             int NewBrowserType = 0;
@@ -551,9 +676,9 @@ namespace SLBr.Pages
             {
                 string Url = IE.BrowserCore.Source.AbsoluteUri;
                 CoreContainer.Children.Clear();
-                InspectorContainer.Children.Clear();
+                InspectorCoreContainer.Children.Clear();
                 IE.Dispose();
-                IEInspector.Dispose();
+                //IEInspector.Dispose();
                 CreateChromium(Url);
                 SwitchBrowserButton.Tag = "11<,>IE";
                 SwitchBrowserButton.ToolTip = "Internet Explorer mode";
@@ -563,7 +688,7 @@ namespace SLBr.Pages
             {
                 string Url = Chromium.Address;
                 CoreContainer.Children.Clear();
-                InspectorContainer.Children.Clear();
+                InspectorCoreContainer.Children.Clear();
                 Chromium.Dispose();
                 ChromiumInspector.Dispose();
                 CreateIE(Url);
@@ -715,6 +840,9 @@ namespace SLBr.Pages
                     ChromiumInspector.Address = "localhost:8089/json/list";
                 InspectorContainer.Visibility = IsUtilityContainerOpen ? Visibility.Collapsed : Visibility.Visible;
                 IsUtilityContainerOpen = !IsUtilityContainerOpen;
+
+                if (ActiveSizeEmulation)
+                    SizeEmulator();
             }
             else
             {
@@ -726,21 +854,21 @@ namespace SLBr.Pages
         }
         public void Favourite()
         {
-            string Url;
+            /*string Url;
             string Title;
             bool IsLoaded;
             Url = Address;
             Title = this.Title;
-            IsLoaded = !IsLoading;
-            int FavouriteExistIndex = FavouriteExists(Url);
+            IsLoaded = !IsLoading;*/
+            int FavouriteExistIndex = FavouriteExists(Address);
             if (FavouriteExistIndex != -1)
             {
                 MainWindow.Instance.Favourites.RemoveAt(FavouriteExistIndex);
                 FavouriteButton.Content = "\xEB51";
             }
-            else if (IsLoaded)
+            else if (!IsLoading)
             {
-                MainWindow.Instance.Favourites.Add(new ActionStorage(Title, $"3<,>{Url}", Url));
+                MainWindow.Instance.Favourites.Add(new ActionStorage(this.Title, $"3<,>{Address}", Address));
                 FavouriteButton.Content = "\xEB52";
             }
             if (MainWindow.Instance.Favourites.Count == 0)
@@ -805,25 +933,43 @@ namespace SLBr.Pages
         }
         public async void Screenshot()
         {
-            if (BrowserType == 0)
+            try
             {
-                string ScreenshotPath = MainSave.Get("ScreenshotPath");
-                if (!Directory.Exists(ScreenshotPath))
-                    Directory.CreateDirectory(ScreenshotPath);
-                using (var _DevToolsClient = Chromium.GetDevToolsClient())
+                if (BrowserType == 0)
                 {
+                    string ScreenshotPath = MainSave.Get("ScreenshotPath");
+                    if (!Directory.Exists(ScreenshotPath))
+                        Directory.CreateDirectory(ScreenshotPath);
+                    string _ScreenshotFormat = MainWindow.Instance.MainSave.Get("ScreenshotFormat");
+                    string FileExtension = "jpg";
+                    CaptureScreenshotFormat ScreenshotFormat = CaptureScreenshotFormat.Jpeg;
+                    if (_ScreenshotFormat == "Png")
+                    {
+                        FileExtension = "png";
+                        ScreenshotFormat = CaptureScreenshotFormat.Png;
+                    }
+                    else if (_ScreenshotFormat == "WebP")
+                    {
+                        FileExtension = "webp";
+                        ScreenshotFormat = CaptureScreenshotFormat.Webp;
+                    }
                     DateTime CurrentTime = DateTime.Now;
-                    string Url = $"{Path.Combine(ScreenshotPath, Regex.Replace($"{Chromium.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.jpg", "[^a-zA-Z0-9._ -]", ""))}";
-                    var result = await _DevToolsClient.Page.CaptureScreenshotAsync(CefSharp.DevTools.Page.CaptureScreenshotFormat.Jpeg, null, null, null, false);
-                    File.WriteAllBytes(Url, result.Data);
-                    //Navigate(true, "file:///////" + Url);
+                    string Url = $"{Path.Combine(ScreenshotPath, Regex.Replace($"{Chromium.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", ""))}";
+                    using (var _DevToolsClient = Chromium.GetDevToolsClient())
+                    {
+                        var result = await _DevToolsClient.Page.CaptureScreenshotAsync(ScreenshotFormat, null, null, null, false);
+                        File.WriteAllBytes(Url, result.Data);
+                        //File.SetAttributes(Url, FileAttributes.Normal);
+                        //Navigate(true, "file:///////" + Url);
+                    }
                 }
             }
+            catch { }
         }
         public void QRCode(string Url)
         {
             if (!QRCodePopup.IsOpen)
-                QRCodeImage.Source = Utils.BitmapToImageSource(MainWindow.Instance._QRCodeHandler.GenerateQRCode(Url));
+                QRCodeImage.Source = MainWindow.Instance._QRCodeHandler.GenerateQRCode(Url).ToImageSource();
             QRCodePopup.IsOpen = !QRCodePopup.IsOpen;
         }
         public bool IsAudioMuted;
@@ -836,11 +982,17 @@ namespace SLBr.Pages
 
         public void ApplyTheme(Theme _Theme)
         {
-            Resources["PrimaryBrush"] = new SolidColorBrush(_Theme.PrimaryColor);
-            Resources["FontBrush"] = new SolidColorBrush(_Theme.FontColor);
-            Resources["BorderBrush"] = new SolidColorBrush(_Theme.BorderColor);
-            Resources["UnselectedTabBrush"] = new SolidColorBrush(_Theme.UnselectedTabColor);
-            Resources["ControlFontBrush"] = new SolidColorBrush(_Theme.ControlFontColor);
+            //Resources["PrimaryBrush"] = new SolidColorBrush(_Theme.PrimaryColor);
+            //Resources["FontBrush"] = new SolidColorBrush(_Theme.FontColor);
+            //Resources["BorderBrush"] = new SolidColorBrush(_Theme.BorderColor);
+            //Resources["UnselectedTabBrush"] = new SolidColorBrush(_Theme.UnselectedTabColor);
+            //Resources["ControlFontBrush"] = new SolidColorBrush(_Theme.ControlFontColor);
+
+            Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
+            Resources["FontBrushColor"] = _Theme.FontColor;
+            Resources["BorderBrushColor"] = _Theme.BorderColor;
+            Resources["UnselectedTabBrushColor"] = _Theme.UnselectedTabColor;
+            Resources["ControlFontBrushColor"] = _Theme.ControlFontColor;
         }
 
         bool AddressBoxFocused;
@@ -890,6 +1042,7 @@ namespace SLBr.Pages
                             AddressBoxPlaceholder.Text = "";
                     }*/
                 }
+                AddressBoxPlaceholder.Text = "";
             }
             else
             {
@@ -949,6 +1102,7 @@ namespace SLBr.Pages
             {
                 try
                 {
+                    AddressBoxPlaceholder.Text = "";
                     if (Utils.CleanUrl(AddressBox.Text) == Utils.CleanUrl(AddressBox.Tag.ToString()))
                         AddressBox.Text = Utils.ConvertUrlToReadableUrl(MainWindow.Instance._IdnMapping, bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()));
                 }
@@ -976,6 +1130,7 @@ namespace SLBr.Pages
             {
                 try
                 {
+                    AddressBoxPlaceholder.Text = "";
                     if (Utils.CleanUrl(AddressBox.Text) == Utils.CleanUrl(AddressBox.Tag.ToString()))
                         AddressBox.Text = Utils.ConvertUrlToReadableUrl(MainWindow.Instance._IdnMapping, bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()));
                 }
@@ -998,7 +1153,7 @@ namespace SLBr.Pages
         public void DisposeCore()
         {
             CoreContainer.Children.Clear();
-            InspectorContainer.Children.Clear();
+            InspectorCoreContainer.Children.Clear();
             if (BrowserType == 0)
             {
                 Chromium.Dispose();
@@ -1007,9 +1162,45 @@ namespace SLBr.Pages
             else// if (BrowserType == 2)
             {
                 IE.BrowserCore.Dispose();
-                IEInspector.BrowserCore.Dispose();
+                //IEInspector.BrowserCore.Dispose();
             }
             GC.SuppressFinalize(this);
+        }
+
+        Size MaximizedSize = Size.Empty;
+        Size PreviousSize = Size.Empty;
+        private void CoreContainer_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            Size NewSize = new Size(CoreContainerSizeEmulator.ActualWidth, CoreContainerSizeEmulator.ActualHeight);
+            if (MaximizedSize == Size.Empty)
+                MaximizedSize = NewSize;
+            Size Percentage = new Size(NewSize.Width / MaximizedSize.Width, NewSize.Height / MaximizedSize.Height);
+
+            SizeEmulatorColumn1.MaxWidth = 900 * Percentage.Width;
+            SizeEmulatorColumn2.MaxWidth = 900 * Percentage.Width;
+            SizeEmulatorRow1.MaxHeight = 400 * Percentage.Height;
+            SizeEmulatorRow2.MaxHeight = 400 * Percentage.Height;
+
+            //if (PreviousSize == NewSize)
+            //{
+                SizeEmulatorColumn1.Width = new GridLength(0);
+                SizeEmulatorColumn2.Width = new GridLength(0);
+                SizeEmulatorRow1.Height = new GridLength(0);
+                SizeEmulatorRow2.Height = new GridLength(0);
+            //}
+
+            PreviousSize = NewSize;
+            //ToastBox.Show("", NewSize.ToString() + $" {Percentage}", 10);
+
+            //if (SizeEmulatorColumn1.Width.Value > SizeEmulatorColumn1.MaxWidth)
+            //    SizeEmulatorColumn1.Width = new GridLength(SizeEmulatorColumn1.MaxWidth);
+            //if (SizeEmulatorColumn2.Width.Value > SizeEmulatorColumn2.MaxWidth)
+            //    SizeEmulatorColumn2.Width = new GridLength(SizeEmulatorColumn2.MaxWidth);
+            //if (SizeEmulatorRow1.Height.Value > SizeEmulatorRow1.MaxHeight)
+            //    SizeEmulatorRow1.Height = new GridLength(SizeEmulatorRow1.MaxHeight);
+            //if (SizeEmulatorRow2.Height.Value > SizeEmulatorRow2.MaxHeight)
+            //    SizeEmulatorRow2.Height = new GridLength(SizeEmulatorRow2.MaxHeight);
+            //MessageBox.Show(NewSize.ToString() + $" {Percentage}");
         }
 
         /*private void CoreContainer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

@@ -5,12 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SLBr" xmlns:controls="clr-namespace:SLBr.Controls"
         mc:Ignorable="d"
-        Title="SLBr" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" WindowState="Maximized" Height="450" Width="800" Closing="Window_Closing">
+        Title="SLBr" Loaded="Window_Loaded" StateChanged="Window_StateChanged" WindowStartupLocation="CenterScreen" WindowState="Maximized" Height="450" Width="800" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary Source="StyleResourceDictionary.xaml"/>
     </Window.Resources>
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="TaskbarProgress" ProgressState="Normal" ProgressValue="0"/>
+    </Window.TaskbarItemInfo>
+    <!--#2B2B2B-->
     <Grid Background="{DynamicResource PrimaryBrush}">
-        <controls:TabControlEx BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}" x:Name="BrowserTabs" Padding="0">
+        <controls:TabControlEx SelectionChanged="BrowserTabs_SelectionChanged" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}" x:Name="BrowserTabs" Padding="0">
             <TabControl.ContentTemplate>
                 <DataTemplate>
                     <UserControl Content="{Binding Content}" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />

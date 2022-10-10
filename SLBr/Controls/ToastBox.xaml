@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SLBr.Controls"
         mc:Ignorable="d"
-        Title="Notification Popup" Height="90" Width="300" SizeToContent="Height" WindowStyle="None" ResizeMode="NoResize" Topmost="True" AllowsTransparency="True" Background="Transparent" ShowInTaskbar="False">
+        Title="Notification Popup" HorizontalAlignment="Right" VerticalAlignment="Bottom" Height="90" Width="300" SizeToContent="Height" WindowStyle="None" AllowsTransparency="True" ResizeMode="NoResize" Topmost="True" Background="Transparent" ShowInTaskbar="False">
     <Window.Resources>
         <ResourceDictionary Source="../StyleResourceDictionary.xaml"/>
     </Window.Resources>
     <Grid>
-        <Border Background="{DynamicResource PrimaryBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border Background="{DynamicResource PrimaryBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>

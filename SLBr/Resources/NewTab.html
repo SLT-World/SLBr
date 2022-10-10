@@ -22,51 +22,53 @@
 <body onload="setBackgroundImage()">
     <style>
         html {
-  background-repeat: no-repeat;
-  background-size: auto;
-}
-ul.nav {
-  padding-left: 0px;
-  background-color: transparent;
-  text-align: center;
-  margin-top: 25px;
+            background-repeat: no-repeat;
+            background-size: auto;
+        }
 
-  width: 350px;
-  list-style-position: inside;
-  font-size: 0;
-}
-ul.nav > li {
-  display: inline-block;
+        ul.nav {
+            padding-left: 0px;
+            background-color: transparent;
+            text-align: center;
+            margin-top: 25px;
+            width: 350px;
+            list-style-position: inside;
+            font-size: 0;
+        }
 
-  /*100px*/
-  width: 50px;
-  height: 50px;
+        ul.nav > li {
+            display: inline-block;
+            /*100px*/
+            width: 50px;
+            height: 50px;
+            /*padding: 50px 50px;*/
+            vertical-align: middle;
+            text-align: center;
+            background: #F5F5F5;
+            /*20px*/
+            border-radius: 10px;
+            /*0 7.5px*/
+            margin: 7.5px 7.5px 7.5px 7.5px;
+            font-size: 14px;
+        }
 
-  /*padding: 50px 50px;*/
-  vertical-align: middle;
-  text-align: center;
-  background: #F5F5F5;
-  
-  /*20px*/
-  border-radius: 10px;
-  
-  /*0 7.5px*/
-  margin: 7.5px 7.5px 7.5px 7.5px;
-  font-size: 14px;
-}
-ul.nav > li:hover {
-  background-color: #DDD;
-}
-ul.nav > li > a {
-  color: white;
-  text-decoration: none;
-  vertical-align: middle;
-  text-align: center;
-  height: 100%;
-}
+        ul.nav > li:hover {
+            background-color: #DDD;
+        }
+
+        ul.nav > li > a {
+            color: white;
+            text-decoration: none;
+            vertical-align: middle;
+            text-align: center;
+            height: 100%;
+        }
     </style>
     <div class="Center NewTabSearchContainer">
         <div>
+            <a data-title="Play tetris" href="slbr://tetris" style="position: absolute; left: 0; top: 0; background: transparent; border: none; width: 30px; height: 30px; text-align: center;">
+                <i class="material-icons" style="user-select: none; display: inline-block; vertical-align: middle;">grid_on</i>
+            </a>
             <!--<h1 class="Center">SLBr</h1>-->
             <div class="Center" style="padding-bottom: 25px;">
                 <img class="Center SLBrIcon" style="user-select: none;" src="./SLBr.ico" width="100" height="100" />
@@ -74,62 +76,62 @@ ul.nav > li > a {
             <div class="Search">
                 <div class="SearchInput">
                     <!--<a title="tooltip_text">Contents</a>-->
-                    <span class="material-icons" style="user-select: none;">search</span>
-                    <input type="text" id="SearchField" autocomplete="off"/>
+                    <span data-title="Search" class="material-icons" style="user-select: none;">search</span>
+                    <input type="text" id="SearchField" autocomplete="off" />
                 </div>
             </div>
             <div class="Center">
                 <ul class="nav">
-                  <li>
-                    <a href="https://google.com/gmail" class="Center">
-                        <img style="user-select: none;" src="https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_32dp.png" alt="Google Mail" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://google.com/drive" class="Center">
-                        <img style="user-select: none;" src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" alt="Google Drive" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://youtube.com/" class="Center">
-                        <img style="user-select: none;" src="https://www.youtube.com/s/desktop/e43db149/img/favicon_144x144.png" alt="Youtube" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://reddit.com/" class="Center">
-                        <img style="user-select: none;" src="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png" alt="Reddit" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://twitter.com/" class="Center">
-                        <img style="user-select: none;" src="https://abs.twimg.com/favicons/twitter.ico" alt="Twitter" width="50%" height="50%"/><!--https://abs.twimg.com/errors/logo46x38.png-->
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://facebook.com/" class="Center">
-                        <img style="user-select: none;" src="https://static.xx.fbcdn.net/rsrc.php/yD/r/d4ZIVX-5C-b.ico" alt="Facebook" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://weather.com/" class="Center">
-                        <img style="user-select: none;" src="https://weather.com/daybreak-home/assets/android-icon-192x192.59ccbc.png" alt="Weather Channel" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://wikipedia.org/" class="Center">
-                        <img style="user-select: none;" src="https://www.wikipedia.org/static/favicon/wikipedia.ico" alt="Wikipedia" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://github.com/" class="Center">
-                        <img style="user-select: none;" src="https://github.githubassets.com/pinned-octocat.svg" alt="Github" width="50%" height="50%"/>
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://web.archive.org/" class="Center">
-                        <img style="user-select: none;" src="https://web.archive.org/_static/images/archive.ico" alt="Web Archive" width="50%" height="50%"/>
-                    </a>
-                  </li>
+                    <li>
+                        <a data-title="Google Mail" href="https://google.com/gmail" class="Center">
+                            <img style="user-select: none;" src="https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_32dp.png" alt="Google Mail" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Google Drive" href="https://google.com/drive" class="Center">
+                            <img style="user-select: none;" src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" alt="Google Drive" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Youtube" href="https://youtube.com/" class="Center">
+                            <img style="user-select: none;" src="https://www.youtube.com/s/desktop/e43db149/img/favicon_144x144.png" alt="Youtube" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Reddit" href="https://reddit.com/" class="Center">
+                            <img style="user-select: none;" src="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png" alt="Reddit" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Twitter" href="https://twitter.com/" class="Center">
+                            <img style="user-select: none;" src="https://abs.twimg.com/favicons/twitter.ico" alt="Twitter" width="50%" height="50%" /><!--https://abs.twimg.com/errors/logo46x38.png-->
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Facebook" href="https://facebook.com/" class="Center">
+                            <img style="user-select: none;" src="https://static.xx.fbcdn.net/rsrc.php/yD/r/d4ZIVX-5C-b.ico" alt="Facebook" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Weather Channel" href="https://weather.com/" class="Center">
+                            <img style="user-select: none;" src="https://weather.com/daybreak-home/assets/android-icon-192x192.59ccbc.png" alt="Weather Channel" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Wikipedia" href="https://wikipedia.org/" class="Center">
+                            <img style="user-select: none;" src="https://www.wikipedia.org/static/favicon/wikipedia.ico" alt="Wikipedia" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Github" href="https://github.com/" class="Center">
+                            <img style="user-select: none;" src="https://github.githubassets.com/pinned-octocat.svg" alt="Github" width="50%" height="50%" />
+                        </a>
+                    </li>
+                    <li>
+                        <a data-title="Web Archive" href="https://web.archive.org/" class="Center">
+                            <img style="user-select: none;" src="https://web.archive.org/_static/images/archive.ico" alt="Web Archive" width="50%" height="50%" />
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

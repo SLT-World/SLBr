@@ -1,4 +1,5 @@
 ﻿using CefSharp;
+using CSCore.CoreAudioAPI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,10 +14,82 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using static System.Net.WebRequestMethods;
 
 namespace SLBr
 {
+    public enum DWMWINDOWATTRIBUTE
+    {
+        DWMWA_NCRENDERING_ENABLED = 1,              // [get] Is non-client rendering enabled/disabled
+        DWMWA_USE_HOSTBACKDROPBRUSH,                // [set] BOOL, Allows the use of host backdrop brushes for the window.
+        DWMWA_USE_IMMERSIVE_DARK_MODE = 20,         // [set] BOOL, Allows a window to either use the accent color, or dark, according to the user Color Mode preferences.
+        DWMWA_WINDOW_CORNER_PREFERENCE = 33,        // [set] WINDOW_CORNER_PREFERENCE, Controls the policy that rounds top-level window corners
+        DWMWA_BORDER_COLOR,                         // [set] COLORREF, The color of the thin border around a top-level window
+        DWMWA_CAPTION_COLOR,                        // [set] COLORREF, The color of the caption
+        DWMWA_TEXT_COLOR,                           // [set] COLORREF, The color of the caption text
+        DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,       // [get] UINT, width of the visible border around a thick frame window
+        DWMWA_MICA_EFFECT = 1029,                   // [set] BOOL, undocumented
+        DWMWA_SYSTEMBACKDROP_TYPE = 38,             // [set] INT, undocumented
+        DWMWA_LAST
+    };
+
+    enum DWM_SYSTEMBACKDROP_TYPE
+    {
+        DWMSBT_AUTO = 0,
+        DWMSBT_DISABLE = 1, // None
+        DWMSBT_MAINWINDOW = 2, // Mica
+        DWMSBT_TRANSIENTWINDOW = 3, // Acrylic
+        DWMSBT_TABBEDWINDOW = 4 // Tabbed
+    }
+
+    public static class MonitorMethods
+    {
+        public const Int32 MONITOR_DEFAULTTOPRIMERTY = 0x00000001;
+        public const Int32 MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr MonitorFromWindow(IntPtr handle, Int32 flags);
+
+
+        [DllImport("user32.dll")]
+        public static extern Boolean GetMonitorInfo(IntPtr hMonitor, NativeMonitorInfo lpmi);
+
+
+        [Serializable, StructLayout(LayoutKind.Sequential)]
+        public struct NativeRectangle
+        {
+            public Int32 Left;
+            public Int32 Top;
+            public Int32 Right;
+            public Int32 Bottom;
+
+
+            public NativeRectangle(Int32 left, Int32 top, Int32 right, Int32 bottom)
+            {
+                this.Left = left;
+                this.Top = top;
+                this.Right = right;
+                this.Bottom = bottom;
+            }
+        }
+
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        public sealed class NativeMonitorInfo
+        {
+            public Int32 Size = Marshal.SizeOf(typeof(NativeMonitorInfo));
+            public NativeRectangle Monitor;
+            public NativeRectangle Work;
+            public Int32 Flags;
+        }
+    }
+
     public static class ClassExtensions
     {
         public static CefState ToCefState(this bool self) =>
@@ -31,6 +104,64 @@ namespace SLBr
         }
         public static FastHashSet<TSource> ToFastHashSet<TSource>(this IEnumerable<TSource> collection) =>
             new FastHashSet<TSource>(collection);
+        public static BitmapSource ToBitmapSource(this DrawingImage source)
+        {
+            DrawingVisual drawingVisual = new DrawingVisual();
+            DrawingContext drawingContext = drawingVisual.RenderOpen();
+            drawingContext.DrawImage(source, new Rect(new System.Windows.Point(0, 0), new System.Windows.Size(source.Width, source.Height)));
+            drawingContext.Close();
+
+            RenderTargetBitmap bmp = new RenderTargetBitmap((int)source.Width, (int)source.Height, 96, 96, PixelFormats.Pbgra32);
+            bmp.Render(drawingVisual);
+            return bmp;
+        }
+        public static Bitmap ToBitmap(this BitmapSource bitmapsource)
+        {
+            Bitmap bitmap;
+            using (MemoryStream outStream = new MemoryStream())
+            {
+                BitmapEncoder enc = new BmpBitmapEncoder();
+                enc.Frames.Add(BitmapFrame.Create(bitmapsource));
+                enc.Save(outStream);
+                bitmap = new Bitmap(outStream);
+            }
+            return bitmap;
+        }
+        public static BitmapImage ToImageSource(this Bitmap bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                memory.Position = 0;
+                BitmapImage bitmapimage = new BitmapImage();
+                bitmapimage.BeginInit();
+                bitmapimage.StreamSource = memory;
+                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapimage.EndInit();
+
+                return bitmapimage;
+            }
+        }
+        public static BitmapImage ToBitmapImage(this BitmapSource bitmapsource)
+        {
+            JpegBitmapEncoder encoder = new JpegBitmapEncoder();
+            MemoryStream memoryStream = new MemoryStream();
+            BitmapImage bImg = new BitmapImage();
+
+            encoder.Frames.Add(BitmapFrame.Create(bitmapsource));
+            encoder.Save(memoryStream);
+
+            memoryStream.Position = 0;
+            bImg.BeginInit();
+            bImg.StreamSource = memoryStream;
+            bImg.EndInit();
+
+            memoryStream.Close();
+
+            return bImg;
+        }
+        public static uint ToUInt(this System.Drawing.Color color) =>
+               (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));
         /*public static string[] Split(this string value, string[] seperator)
         {
             return value.Split(seperator, StringSplitOptions.None);
@@ -39,6 +170,55 @@ namespace SLBr
 
     public static class Utils
     {
+        public static MMDevice GetDefaultRenderDevice()
+        {
+            using (var enumerator = new MMDeviceEnumerator())
+            {
+                return enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            }
+        }
+
+        public static bool IsAudioPlayingInDevice(MMDevice device = null)
+        {
+            if (device == null)
+                device = GetDefaultRenderDevice();
+            using (var meter = AudioMeterInformation.FromDevice(device))
+            {
+                return meter.PeakValue > 0.0000001 && meter.PeakValue < 1;
+            }
+
+        }
+        public static Process GetAlreadyRunningInstance()
+        {
+            Process _currentProc = Process.GetCurrentProcess();
+            Process[] _allProcs = Process.GetProcessesByName(_currentProc.ProcessName);
+
+            for (int i = 0; i < _allProcs.Length; i++)
+            {
+                if (_allProcs[i].Id != _currentProc.Id)
+                    return _allProcs[i];
+            }
+            return null;
+        }
+        public static bool CheckInstancesUsingMutex()
+        {
+            Mutex _appMutex = new Mutex(false, MainWindow.Instance.AppUserModelID);
+            if (!_appMutex.WaitOne(1000))
+                return true;
+            return false;
+        }
+        public static bool CheckInstancesFromRunningProcesses()
+        {
+            Process[] _Processes = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName);
+            return _Processes.Length > 1;
+        }
+
+        public static int GenerateRandomId()
+        {
+            Random rnd1 = new Random();
+            return rnd1.Next();
+        }
+
         public enum FolderGuids
         {
             Downloads,
@@ -88,21 +268,32 @@ namespace SLBr
             }
         }
 
-        public static BitmapImage BitmapToImageSource(Bitmap bitmap)
+        public static DrawingImage Utf32ToDrawingImage(int SymbolCode, double SymbolSize = 16, System.Windows.Media.FontFamily _FontFamily = null)
         {
-            using (MemoryStream memory = new MemoryStream())
+            if (_FontFamily == null)
+                _FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets");
+            var textBlock = new TextBlock
             {
-                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-                memory.Position = 0;
-                BitmapImage bitmapimage = new BitmapImage();
-                bitmapimage.BeginInit();
-                bitmapimage.StreamSource = memory;
-                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapimage.EndInit();
+                FontFamily = _FontFamily,
+                Text = char.ConvertFromUtf32(SymbolCode)
+            };
 
-                return bitmapimage;
-            }
+            var brush = new VisualBrush
+            {
+                Visual = textBlock,
+                Stretch = Stretch.Uniform
+            };
+
+            var drawing = new GeometryDrawing
+            {
+                Brush = brush,
+                Geometry = new RectangleGeometry(
+                    new Rect(0, 0, SymbolSize, SymbolSize))
+            };
+
+            return new DrawingImage(drawing);
         }
+
         public static bool IsAdministrator() =>
             new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
         public static string GetProcessorID()
@@ -124,8 +315,6 @@ namespace SLBr
                 FinalString = Value.Substring(Pos1);
             return FinalString;
         }
-        public static uint ColorToUInt(Color color) =>
-               (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));
 
         public static string ToMobileWiki(string Url)
         {
@@ -239,9 +428,9 @@ namespace SLBr
                     string SubstringUrl = Url.Substring(7);
                     if (IsProtocolNotHttp(SubstringUrl))
                     {
-                        if (IsAboutUrl(SubstringUrl))
-                            Url = FixUrl(SubstringUrl.Replace("about://", "slbr://").Replace("about:", "slbr://"));
-                        else
+                        //if (IsAboutUrl(SubstringUrl))
+                        //    Url = FixUrl(SubstringUrl.Replace("about://", "slbr://").Replace("about:", "slbr://"));
+                        //else
                             Url = FixUrl(SubstringUrl);
                     }
                     else if (IsHttpScheme(SubstringUrl))
@@ -251,6 +440,9 @@ namespace SLBr
                 }
                 if (ContinueCheck && Url.StartsWith("search:"))
                     Url = FixUrl(string.Format(SearchEngineUrl, Url.Substring(7)));
+
+                if (Url.EndsWith("youtube.com/watch?v="))
+                    Url = "https://www.youtube.com/watch?v=KMU0tzLwhbE";
             }
             return Url;
         }
@@ -554,22 +746,21 @@ namespace SLBr
             if (!Directory.Exists(SaveFolderPath))
                 Directory.CreateDirectory(SaveFolderPath);
 
-            if (!File.Exists(SaveFilePath))
-                File.Create(SaveFilePath).Close();
+            if (!System.IO.File.Exists(SaveFilePath))
+                System.IO.File.Create(SaveFilePath).Close();
             FastHashSet<string> Contents = new FastHashSet<string>();
             foreach (KeyValuePair<string, string> KVP in Data)
                 Contents.Add(KVP.Key + KeyValueSeparator + KVP.Value);
-            File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
+            System.IO.File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
         }
         public void Load()
         {
             if (!Directory.Exists(SaveFolderPath))
                 Directory.CreateDirectory(SaveFolderPath);
-            if (!File.Exists(SaveFilePath))
-                File.Create(SaveFilePath).Close();
+            if (!System.IO.File.Exists(SaveFilePath))
+                System.IO.File.Create(SaveFilePath).Close();
 
-            //FastHashSet<string> Contents = new FastHashSet<string>(File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None));
-            FastHashSet<string> Contents = File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToFastHashSet();
+            FastHashSet<string> Contents = System.IO.File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToFastHashSet();
             foreach (string Content in Contents)
             {
                 if (string.IsNullOrWhiteSpace(Content))

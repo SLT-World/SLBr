@@ -1,4 +1,5 @@
 ﻿using CefSharp;
+using SLBr.Controls;
 using System;
 using System.Windows;
 
@@ -10,11 +11,21 @@ namespace SLBr.Handlers
             WindowOpenDisposition targetDisposition, bool userGesture, IPopupFeatures popupFeatures, IWindowInfo windowInfo,
             IBrowserSettings browserSettings, ref bool noJavascriptAccess, out IWebBrowser newBrowser)
         {
+            int _Width = popupFeatures.Width != null ? (int)popupFeatures.Width : 600;
+            int _Height = popupFeatures.Height != null ? (int)popupFeatures.Height : 650;
             newBrowser = null;
-            Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+            if (targetDisposition == WindowOpenDisposition.CurrentTab)
+                browser.MainFrame.LoadUrl(targetUrl);
+            else
             {
-                MainWindow.Instance.NewBrowserTab(targetUrl, 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
-            }));
+                Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+                {
+                    if (targetDisposition == WindowOpenDisposition.NewPopup)
+                        new PopupBrowser(targetUrl, _Width, _Height).Show();
+                    else
+                        MainWindow.Instance.NewBrowserTab(targetUrl, 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                }));
+            }
             return true;
         }
 

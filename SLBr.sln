@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SLBr", "SLBr\SLBr.csproj", 
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "SLBr Packaging Project", "SLBr Packaging Project\SLBr Packaging Project.wapproj", "{D4FC58AC-26D9-41C6-8F97-D28A935C18F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utility Service", "Utility Service\Utility Service.csproj", "{01B6FD23-3E66-40DA-A849-45513AEF573D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,26 @@ Global
 		{D4FC58AC-26D9-41C6-8F97-D28A935C18F3}.Release|x86.ActiveCfg = Release|x86
 		{D4FC58AC-26D9-41C6-8F97-D28A935C18F3}.Release|x86.Build.0 = Release|x86
 		{D4FC58AC-26D9-41C6-8F97-D28A935C18F3}.Release|x86.Deploy.0 = Release|x86
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|ARM.Build.0 = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|x64.Build.0 = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Debug|x86.Build.0 = Debug|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|ARM.ActiveCfg = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|ARM.Build.0 = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|ARM64.Build.0 = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|x64.ActiveCfg = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|x64.Build.0 = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|x86.ActiveCfg = Release|Any CPU
+		{01B6FD23-3E66-40DA-A849-45513AEF573D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
