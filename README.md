@@ -13,7 +13,7 @@ Install the latest version of SLBr and open it
 ## Based on CefSharp
 CefSharp is an embedded Chromium browser for .NET apps such as WPF and Winforms. It is a lightweight .NET wrapper for the Chromium Embedded Framework (CEF).
 
-CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTML5 audio/video elements as well as WebGL. CefSharp has basically everything a modern browser would need.
+CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTML5 audio/video elements as well as WebGL. CefSharp has basically everything a modern browser has.
 
 ## Special thanks to
 - The Chromium Embedded Framework (CEF) by Marshall A. Greenblatt.
