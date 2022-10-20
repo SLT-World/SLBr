@@ -15,6 +15,9 @@ CefSharp is an embedded Chromium browser for .NET apps such as WPF and Winforms.
 
 CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTML5 audio/video elements as well as WebGL. CefSharp has basically everything a modern browser has.
 
+## Notes
+If you're having issues with SLBr rendering weirdly (Examples are: controls disappearing, text oversizing, colors changing abnormally), then you're most likely having this [issue](https://github.com/dotnet/wpf/issues/4141). Either switch to software rendering using SLBr's WPF Rendering setting, or disable the nahimic service to resolve the issue.
+
 ## Special thanks to
 - The Chromium Embedded Framework (CEF) by Marshall A. Greenblatt.
 - The CefSharp team, and Amaitland who dedicated himself to the CefSharp project.
