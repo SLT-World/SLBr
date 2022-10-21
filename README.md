@@ -23,7 +23,7 @@ If you're having issues with SLBr rendering weirdly (Examples are: controls disa
 - The CefSharp team, and Amaitland who dedicated himself to the CefSharp project.
 - Mauve who helped out on the IPFS implementation for SLBr.
 
-## System Requirements
+## Requirements
 - [Microsoft Visual C++ 2019](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170)
 - [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 - Segoe Fluent Icons
