@@ -8,20 +8,21 @@
 [![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)](https://github.com/SLT-World/SLBr)
 [![XAML](https://img.shields.io/static/v1?style=for-the-badge&message=XAML&color=0C54C2&logo=XAML&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
 [![.Net](https://img.shields.io/static/v1?style=for-the-badge&message=.NET&color=512BD4&logo=.NET&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
-[![Visual Studio](https://img.shields.io/static/v1?style=for-the-badge&message=Visual+Studio&color=5C2D91&logo=Visual+Studio&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
+[![Visual Studio](https://img.shields.io/static/v1?style=for-the-badge&message=Visual+Studio&color=5C2D91&logo=Visual+Studio&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)<br/>
+[![Latest release](https://img.shields.io/static/v1?style=for-the-badge&message=Latest%20release&color=0092FF&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr/releases/latest)
 </div>
 
-## Based on CefSharp
+## Based on CefSharp/CEF
 CefSharp is an embedded Chromium browser for .NET apps such as WPF and Winforms. It is a lightweight .NET wrapper for the Chromium Embedded Framework (CEF).
 
 CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTML5 audio/video elements as well as WebGL. CefSharp has basically everything a modern browser has.
 
-## Installing SLBr
-Install the latest version of SLBr and open it
+## Using SLBr
+Download the latest version of SLBr and open it
 - https://github.com/SLT-World/SLBr/releases/latest
 
 ## Notes
-If you're having issues with SLBr rendering weirdly (Examples are: controls disappearing, text oversizing, colors changing abnormally), then you're most likely having this [issue](https://github.com/dotnet/wpf/issues/4141). Either switch to software rendering using SLBr's WPF Rendering setting, or disable the nahimic service to resolve the issue.
+If you're encountering issues with SLBr rendering weirdly (Examples are: controls disappearing, text oversizing, colors changing abnormally), then you're most likely encountering this [issue](https://github.com/dotnet/wpf/issues/4141). Either switch to software rendering using SLBr's WPF render mode setting, or disable the nahimic service to resolve the issue.
 
 ## Special thanks to
 - The Chromium Embedded Framework (CEF) by Marshall A. Greenblatt.
