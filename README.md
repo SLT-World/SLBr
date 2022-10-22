@@ -6,6 +6,7 @@
   **Browse the web with a fast, lightweight web browser.**
 
 [![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)](https://github.com/SLT-World/SLBr)
+[![XAML](https://img.shields.io/static/v1?style=for-the-badge&message=XAML&color=0C54C2&logo=XAML&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
 [![.Net](https://img.shields.io/static/v1?style=for-the-badge&message=.NET&color=512BD4&logo=.NET&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
 [![Visual Studio](https://img.shields.io/static/v1?style=for-the-badge&message=Visual+Studio&color=5C2D91&logo=Visual+Studio&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
 </div>
