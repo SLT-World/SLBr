@@ -31,9 +31,15 @@ namespace SLBr.Handlers
         {
             string Url = "";
             {
+                string CustomBackgroundQuery = MainWindow.Instance.MainSave.Get("CustomBackgroundQuery");
                 string BackgroundImage = MainWindow.Instance.MainSave.Get("BackgroundImage");
                 if (BackgroundImage == "Unsplash")
-                    Url = UnsplashAPI[MainWindow.Instance.TinyRandom.Next(UnsplashAPI.Count)];
+                {
+                    if (string.IsNullOrEmpty(CustomBackgroundQuery))
+                        Url = UnsplashAPI[MainWindow.Instance.TinyRandom.Next(UnsplashAPI.Count)];
+                    else
+                        Url = "https://source.unsplash.com/1920x1080/?" + CustomBackgroundQuery;
+                }
                 else if (BackgroundImage == "Bing image of the day")
                 {
                     XmlDocument doc = new XmlDocument();

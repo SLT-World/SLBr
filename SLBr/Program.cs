@@ -13,6 +13,11 @@ namespace SLBr
     static class MessageHelper
     {
         public const int WM_COPYDATA = 0x004A;
+        public const int WM_NCHITTEST = 0x0084;
+        public const int WM_SYSTEMMENU = 0xa4;
+        public const int WP_SYSTEMMENU = 0x02;
+        public const int WM_GETMINMAXINFO = 0x0024;
+        public const int HTMAXBUTTON = 9;
 
         [DllImport("user32", EntryPoint = "SendMessageA")]
         private static extern int SendMessage(IntPtr Hwnd, int wMsg, IntPtr wParam, IntPtr lParam);

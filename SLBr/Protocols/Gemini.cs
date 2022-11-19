@@ -9,6 +9,8 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Windows.Shapes;
 
 namespace SLBr.Protocols
 {
@@ -90,11 +92,33 @@ namespace SLBr.Protocols
             if (!input.StartsWith("&gt; "))
                 return input;
 
+            //string template = "<pre>{0}</pre>";
             string template = "<div class=\"Embed\"><div style=\"display: inline-block; background: gray; width: 2px; height: 12.5px; margin-right: 5px; margin-left: 5px;\"></div>{0}</div>";
 
             input = input.Replace("&gt; ", "");
 
             return string.Format(template, input);
+        }
+
+        public static string DirectlyToString(byte[] rawinput)
+        {
+            string input = Encoding.UTF8.GetString(rawinput);
+            StringBuilder sb = new StringBuilder();
+            foreach (char c in input)
+                sb.Append(c);
+
+            StringWriter output = new StringWriter();
+            using (StringReader reader = new StringReader(Regex.Replace(sb.ToString(), @"[^\u0000-\u007F]+", string.Empty, RegexOptions.Compiled)))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    string lineout = line;
+                    output.WriteLine(lineout);
+                }
+            }
+
+            return output.ToString();
         }
 
         public static string NewFormat(byte[] rawinput, bool IsRaw = false)
@@ -106,9 +130,9 @@ namespace SLBr.Protocols
             sb.Append("<style>" +
                 "body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: repeating-linear-gradient(45deg, black, transparent 100px);}" +
                 "h1, h2, h3 {margin: 0;}" +
-                "pre {background: white; border-radius: 10px; padding: 10px;}" +
+                "pre {background: white; border-radius: 10px; padding: 10px; margin: 12.5px 0;}" +
                 ".Content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}" +
-                ".Embed {background: white; border-radius: 10px; padding: 5px;}" +
+                ".Embed {background: white; border-radius: 10px; padding: 10px; margin: 12.5px 0;}" +//padding: 10px;
                 "</style><body><div class=\"Content\">\r\n");
             foreach (char c in input)
             {

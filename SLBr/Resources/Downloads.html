@@ -4,6 +4,7 @@
     <link rel="stylesheet" type="text/css" href="./style.css">
     <script type="text/javascript" src="jquery-1.10.2.min.js"></script>
     <script type="text/javascript">
+        CefSharp.BindObjectAsync("internal");
         var $container;
         var $template;
         var timer;
@@ -79,14 +80,15 @@
                 //$item.find("div.since").text(startTime.format("dd-MM-yyyy"));
                 $item.find("div.date").text(startTime.format("dd-MM-yyyy"));*/
                 //$item.find("div.date").text(startTime.format("hh:mm:ss"));
-                if (item.SuggestedFileName != "")
-                    $item.find("span.name").text(item.SuggestedFileName);
-                else
-                    $item.find("span.name").text(item.FullPath.split('\\').pop().split('/').pop());
+                //if (item.SuggestedFileName != "")
+                //    $item.find("span.name").text(item.SuggestedFileName);
+                //else
+                $item.find("span.name").text(item.FullPath.split('\\').pop().split('/').pop());
                 $item.find("a.src-url").attr("href", item.Url).text(item.Url);
                 $item.find("a.cancel").removeAttr("hidden");
             }
             var progress = "";
+            $item.find("span.name").text(item.FullPath.split('\\').pop().split('/').pop());
             if (item.IsInProgress)
             {
                 progress = formatBytes(item.CurrentSpeed) + "/s - " + formatBytes(item.ReceivedBytes, 2);

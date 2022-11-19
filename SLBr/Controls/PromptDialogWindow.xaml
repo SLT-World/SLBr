@@ -1,4 +1,4 @@
-﻿<Window x:Class="SLBr.Controls.CredentialsDialogWindow"
+﻿<Window x:Class="SLBr.Controls.PromptDialogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -19,18 +19,16 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Label Name="lblQuestion" Margin="0,5" FontWeight="Medium">Question:</Label>
-            <Grid Margin="5" Grid.Row="1" Height="23">
-                <TextBlock VerticalAlignment="Center">Username</TextBlock>
-                <TextBox Name="UsernameTextBox" Height="23" Margin="60,0,0,0" Grid.Row="1" MinWidth="250"></TextBox>
-            </Grid>
-            <Grid Margin="5" Grid.Row="2" Height="23">
-                <TextBlock VerticalAlignment="Center">Password</TextBlock>
-                <TextBox Name="PasswordTextBox" Height="23" Margin="60,0,0,0" Grid.Row="1" MinWidth="250"></TextBox>
-            </Grid>
+            <Label Name="QuestionText" Margin="0,5" FontWeight="Medium">Question:</Label>
+            <StackPanel Margin="5,0" Grid.Row="1">
+                <Grid Height="23">
+                    <TextBlock x:Name="MessageText" VerticalAlignment="Center">Message</TextBlock>
+                </Grid>
+                <TextBox Name="UserInputTextBox" Height="23" MinWidth="250"></TextBox>
+            </StackPanel>
 
             <WrapPanel Grid.Row="3" HorizontalAlignment="Right" Margin="0,5,5,5">
-                <Button Height="23" BorderBrush="{DynamicResource BorderBrush}" IsDefault="True" Name="btnDialogOk" Click="DialogOk_Click" MinWidth="60" Margin="0,0,5,0">_Sign in</Button>
+                <Button Height="23" BorderBrush="{DynamicResource BorderBrush}" IsDefault="True" Name="btnDialogOk" Click="DialogOk_Click" MinWidth="60" Margin="0,0,5,0">_OK</Button>
                 <Button Height="23" BorderBrush="{DynamicResource BorderBrush}" IsCancel="True" MinWidth="60">_Cancel</Button>
             </WrapPanel>
         </Grid>

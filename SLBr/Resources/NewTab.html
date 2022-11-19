@@ -6,7 +6,7 @@
     <title>New Tab</title>
     <link rel="stylesheet" type="text/css" href="./style.css"/>
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
-    <script>
+    <!--<script>
         CefSharp.BindObjectAsync("internal");
         function setBackgroundImage() {
             setBackgroundImageAsync();
@@ -17,9 +17,10 @@
                 document.documentElement.style.backgroundImage = spp;
             });
         };
-    </script>
+    </script>-->
 </head>
-<body onload="setBackgroundImage()">
+<body>
+    <!--onload="setBackgroundImage()"-->
     <style>
         html {
             background-repeat: no-repeat;
@@ -36,33 +37,33 @@
             font-size: 0;
         }
 
-        ul.nav > li {
-            display: inline-block;
-            /*100px*/
-            width: 50px;
-            height: 50px;
-            /*padding: 50px 50px;*/
-            vertical-align: middle;
-            text-align: center;
-            background: #F5F5F5;
-            /*20px*/
-            border-radius: 10px;
-            /*0 7.5px*/
-            margin: 7.5px 7.5px 7.5px 7.5px;
-            font-size: 14px;
-        }
+            ul.nav > li {
+                display: inline-block;
+                /*100px*/
+                width: 50px;
+                height: 50px;
+                /*padding: 50px 50px;*/
+                vertical-align: middle;
+                text-align: center;
+                background: #F5F5F5;
+                /*20px*/
+                border-radius: 10px;
+                /*0 7.5px*/
+                margin: 7.5px 7.5px 7.5px 7.5px;
+                font-size: 14px;
+            }
 
-        ul.nav > li:hover {
-            background-color: #DDD;
-        }
+                ul.nav > li:hover {
+                    background-color: #DDD;
+                }
 
-        ul.nav > li > a {
-            color: white;
-            text-decoration: none;
-            vertical-align: middle;
-            text-align: center;
-            height: 100%;
-        }
+                ul.nav > li > a {
+                    color: white;
+                    text-decoration: none;
+                    vertical-align: middle;
+                    text-align: center;
+                    height: 100%;
+                }
     </style>
     <div class="Center NewTabSearchContainer">
         <div>
@@ -137,16 +138,22 @@
         </div>
     </div>
     <script type="text/javascript">
+        CefSharp.BindObjectAsync("internal");
+        (async () => {
+            await CefSharp.BindObjectAsync("internal");
+
+            internal.getBackground().then(function (res) {
+                document.documentElement.style.backgroundImage = res;
+            });
+        })();
         document.getElementById('SearchField').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 search(document.getElementById("SearchField").value);
             }
         });
         async function search(value) {
-            var retval = internal.searchProviderPrefix();
-
-            retval.then(function (spp) {
-                window.location.href = spp.replace("{0}", value).replace(" ", "+");
+            internal.searchProviderPrefix().then(function (res) {
+                window.location.href = res.replace("{0}", value).replace(" ", "+");
             });
         };
     </script>

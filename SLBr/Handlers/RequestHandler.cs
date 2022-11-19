@@ -1,4 +1,5 @@
 ﻿using CefSharp;
+using CefSharp.DevTools.CacheStorage;
 using CefSharp.Wpf.HwndHost;
 using SLBr.Controls;
 using SLBr.Pages;
@@ -10,6 +11,13 @@ namespace SLBr.Handlers
 {
 	public class RequestHandler : IRequestHandler
 	{
+		//Browser BrowserView;
+
+        public RequestHandler(/*Browser _BrowserView = null*/)
+		{
+			//BrowserView = _BrowserView;
+        }
+
 		public bool AdBlock;
 		public bool TrackerBlock;
 
@@ -59,10 +67,10 @@ namespace SLBr.Handlers
 			if (Utils.IsHttpScheme(request.Url))
 			{
 				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url);
-				SafeBrowsing.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsing.ThreatType.Unknown;
-				if (_ThreatType == SafeBrowsing.ThreatType.Malware || _ThreatType == SafeBrowsing.ThreatType.Unwanted_Software)
+				SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+				if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software)
 					frame.LoadUrl("slbr://malware");
-				else if (_ThreatType == SafeBrowsing.ThreatType.Social_Engineering)
+				else if (_ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
 					frame.LoadUrl("slbr://deception");
 				//if (request.Url.EndsWith(".pdf"))
 				//	frame.LoadUrl(request.Url + "#toolbar=0");
@@ -93,10 +101,20 @@ namespace SLBr.Handlers
 		{
 		}
 
-		public bool OnQuotaRequest(IWebBrowser browserControl, IBrowser browser, string originUrl, long newSize, IRequestCallback callback)
+        public bool OnQuotaRequest(IWebBrowser browserControl, IBrowser browser, string originUrl, long newSize, IRequestCallback callback)
 		{
-			callback.Continue(true);
-			return true;
+            var infoWindow = new InformationDialogWindow("Permission", $"Allow {Utils.Host(originUrl)} to", "Store files on this device", "Allow", "Block", "\xE8B7");
+            infoWindow.Topmost = true;
+
+            if (infoWindow.ShowDialog() == true)
+            {
+                callback.Continue(true);
+                return true;
+			}
+			return false;
+
+			//callback.Continue(true);
+			//return true;
 		}
 
 		public void OnRenderProcessTerminated(IWebBrowser browserControl, IBrowser browser, CefTerminationStatus status)
@@ -123,12 +141,44 @@ namespace SLBr.Handlers
 
 		public IResourceRequestHandler GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
 		{
-			return new ResourceRequestHandler(AdBlock, TrackerBlock);
+			return new ResourceRequestHandler(/*BrowserView, */AdBlock, TrackerBlock);
 		}
 
 		public void OnDocumentAvailableInMainFrame(IWebBrowser chromiumWebBrowser, IBrowser browser)
-		{
-		}
+        {
+			//Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+			//{
+			//	if (!chromiumWebBrowser.Address.StartsWith("devtools://"))
+					chromiumWebBrowser.ExecuteScriptAsync(@"function addStyle(styleString) {
+																const style = document.createElement('style');
+																style.textContent = styleString;
+																document.head.append(style);
+															}
+
+															addStyle(`
+															::-webkit-scrollbar {
+																width: 16px;
+															}
+
+															::-webkit-scrollbar-thumb {
+																height: 56px;
+																border-radius: 8px;
+																border: 4px solid transparent;
+																background-clip: content-box;
+																background-color: transparent;
+															}
+															body::-webkit-scrollbar-thumb {
+																height: 56px;
+																border-radius: 8px;
+																border: 4px solid transparent;
+																background-clip: content-box;
+																background-color: hsl(0,0%,67%);
+															}
+
+															::-webkit-scrollbar-corner {background-color: transparent;}
+															`);");
+			//}));
+        }
 
         public bool OnSelectClientCertificate(IWebBrowser chromiumWebBrowser, IBrowser browser, bool isProxy, string host, int port, X509Certificate2Collection certificates, ISelectClientCertificateCallback callback)
 		{

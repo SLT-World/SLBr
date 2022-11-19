@@ -15,9 +15,9 @@
     <PackageProjectUrl>https://github.com/SLT-World/SLBr</PackageProjectUrl>
     <IncludeSymbols>False</IncludeSymbols>
     <EnforceCodeStyleInBuild>False</EnforceCodeStyleInBuild>
-    <AssemblyVersion>2022.10.10.0</AssemblyVersion>
-    <FileVersion>2022.10.10.0</FileVersion>
-    <Version>2022.10.10.0</Version>
+    <AssemblyVersion>2022.11.19.0</AssemblyVersion>
+    <FileVersion>2022.11.19.0</FileVersion>
+    <Version>2022.11.19.0</Version>
     <AssemblyOriginatorKeyFile>SLT World</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
@@ -33,12 +33,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="106.0.260" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="107.1.40" />
     <PackageReference Include="CSCore" Version="1.2.1.2" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1418.22" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-    <PackageReference Include="System.Management" Version="6.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+    <PackageReference Include="System.Management" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +50,9 @@
 
   <ItemGroup>
     <None Update="Resources\Black Settings Icon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\CannotConnect.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Unused Resources\Black Sustainable Icon.png">
@@ -112,29 +116,29 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Utility Service.deps.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Utility Service.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Utility Service.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Utility Service.runtimeconfig.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="106.0.26" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="107.1.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="106.0.26" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="107.1.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="106.0.26" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="107.1.5" />
   </ItemGroup>
 
 </Project>

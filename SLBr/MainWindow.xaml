@@ -12,14 +12,128 @@
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo x:Name="TaskbarProgress" ProgressState="Normal" ProgressValue="0"/>
     </Window.TaskbarItemInfo>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}" />
+    </WindowChrome.WindowChrome>
+
     <!--#2B2B2B-->
     <Grid Background="{DynamicResource PrimaryBrush}">
-        <controls:TabControlEx SelectionChanged="BrowserTabs_SelectionChanged" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}" x:Name="BrowserTabs" Padding="0">
-            <TabControl.ContentTemplate>
-                <DataTemplate>
-                    <UserControl Content="{Binding Content}" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-                </DataTemplate>
-            </TabControl.ContentTemplate>
-        </controls:TabControlEx>
+        <Grid.Style>
+            <Style TargetType="{x:Type Grid}">
+                <Style.Triggers>
+                    <!-- Add to avoid border disappearing when window is maximised -->
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                 Value="Maximized">
+                        <Setter Property="Margin" Value="8"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                 Value="Normal">
+                        <Setter Property="Margin" Value="0"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Style>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Image
+		Grid.Column="0"
+		Width="17.5"
+		Height="17.5"
+		Margin="7.5,0,0,0"
+		Source="Resources/SLBr.ico"/>
+        <TextBlock
+		Grid.Column="1"
+		Margin="5 0 0 0"
+		VerticalAlignment="Center"
+		Foreground="{DynamicResource FontBrush}" x:Name="WindowChromeTitle"/>
+
+        <Button
+		Grid.Column="5"
+		Style="{StaticResource UpsideDownTitleBarExternalButtonStyle}" RenderTransformOrigin="0.5, 0.5" Click="ButtonAction" Tag="22&lt;,&gt;Vertical" x:Name="SwitchTabAlignmentButton" ToolTip="Switch to vertical tabs" TextOptions.TextRenderingMode="Grayscale" FontSize="14">
+            <Button.Content>
+                &#xE90d;
+            </Button.Content>
+            <Button.RenderTransform>
+                <RotateTransform Angle="180" />
+            </Button.RenderTransform>
+        </Button>
+        <Button
+		Grid.Column="4"
+		Style="{StaticResource TitleBarExternalButtonStyle}" Click="ButtonAction" Tag="4&lt;,&gt;{Homepage}" ToolTip="New Tab">
+            &#xE710;
+        </Button>
+        <Grid
+		Grid.Column="6">
+            <Button
+		Style="{StaticResource TitleBarExternalButtonStyle}" Click="ButtonAction" Tag="9">
+                &#xe713;
+            </Button>
+            <Border IsHitTestVisible="False" x:Name="SettingsStatus" Width="5" Height="5" Background="Transparent" CornerRadius="50" Margin="15,0,0,15"/>
+            <!--SpringGreen-->
+            <!--DarkOrange-->
+            <!--IndianRed-->
+            <!--CornflowerBlue-->
+            <!--BlueViolet-->
+            <Grid.ToolTip>
+                <ToolTip x:Name="SettingsButtonToolTip">
+                    Settings
+                </ToolTip>
+            </Grid.ToolTip>
+        </Grid>
+        <Button
+		Grid.Column="7"
+		Click="OnMinimizeButtonClick"
+		Style="{StaticResource TitleBarButtonStyle}" ToolTip="Minimize">
+            &#xe921;
+        </Button>
+        <Button Name="MaximizeRestoreButton" Grid.Column="8" Click="OnMaximizeRestoreButtonClick"
+		Style="{StaticResource TitleBarButtonStyle}" ToolTip="Maximize" Content="&#xe922;"/>
+        <!--&#xe923;-->
+        <!--<Button
+		Name="maximizeButton"
+		Grid.Column="7"
+		Click="OnMaximizeRestoreButtonClick"
+		Style="{StaticResource TitleBarButtonStyle}" ToolTip="Maximize">
+            &#xe922;
+        </Button>
+        <Button
+		Name="restoreButton"
+		Grid.Column="8"
+		Click="OnMaximizeRestoreButtonClick"
+		Style="{StaticResource TitleBarButtonStyle}" ToolTip="Restore">
+            &#xe923;
+        </Button>-->
+        <Button
+		Grid.Column="9"
+		Click="OnCloseButtonClick"
+		Style="{StaticResource TitleBarCloseButtonStyle}" ToolTip="Close">
+            &#xe8bb;
+        </Button>
+        <Grid Grid.ColumnSpan="10" Grid.Row="1">
+            <controls:TabControlEx SelectionChanged="BrowserTabs_SelectionChanged" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}" x:Name="BrowserTabs" Padding="0">
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <UserControl Content="{Binding Content}" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </controls:TabControlEx>
+        </Grid>
+        <Grid Grid.RowSpan="100" Grid.ColumnSpan="100" x:Name="FullscreenContainer">
+        </Grid>
     </Grid>
 </Window>

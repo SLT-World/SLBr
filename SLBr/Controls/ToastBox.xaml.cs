@@ -36,28 +36,32 @@ namespace SLBr.Controls
 
         public ToastBox(string _Title, string _Description, int Delay, Theme _Theme = null)
         {
-            InitializeComponent();
-            timer.Tick += new EventHandler(CloseToast);
-
-            //MessageTitle.Text = _Title;
-            Description.Text = _Description;
-            timer.Interval = new TimeSpan(0, 0, Delay);
-            timer.Start();
-            var Monitor = MonitorMethods.MonitorFromWindow(new WindowInteropHelper(MainWindow.Instance).EnsureHandle(), MonitorMethods.MONITOR_DEFAULTTONEAREST);
-            
-            if (Monitor != IntPtr.Zero)
+            try
             {
-                var MonitorInfo = new MonitorMethods.NativeMonitorInfo();
-                MonitorMethods.GetMonitorInfo(Monitor, MonitorInfo);
-                //var desktopWorkingArea = SystemParameters.WorkArea;
-                var desktopWorkingArea = MonitorInfo.Monitor;
-                Left = desktopWorkingArea.Right - this.Width - 2.5;
-                Top = desktopWorkingArea.Bottom - this.Height - 37.5;// + 10
+                InitializeComponent();
+                timer.Tick += new EventHandler(CloseToast);
+
+                //MessageTitle.Text = _Title;
+                Description.Text = _Description;
+                timer.Interval = new TimeSpan(0, 0, Delay);
+                timer.Start();
+                var Monitor = MonitorMethods.MonitorFromWindow(new WindowInteropHelper(MainWindow.Instance).EnsureHandle(), MonitorMethods.MONITOR_DEFAULTTONEAREST);
+
+                if (Monitor != IntPtr.Zero)
+                {
+                    var MonitorInfo = new MonitorMethods.NativeMonitorInfo();
+                    MonitorMethods.GetMonitorInfo(Monitor, MonitorInfo);
+                    //var desktopWorkingArea = SystemParameters.WorkArea;
+                    var desktopWorkingArea = MonitorInfo.Monitor;
+                    Left = desktopWorkingArea.Right - this.Width - 2.5;
+                    Top = desktopWorkingArea.Bottom - this.Height - 37.5;// + 10
+                }
+
+                if (_Theme == null)
+                    _Theme = MainWindow.Instance.GetTheme();
+                ApplyTheme(_Theme);
             }
-            
-            if (_Theme == null)
-                _Theme = MainWindow.Instance.GetTheme();
-            ApplyTheme(_Theme);
+            catch { }
         }
         public void ApplyTheme(Theme _Theme)
         {
@@ -81,7 +85,7 @@ namespace SLBr.Controls
         {
             Close();
         }
-        public static void Show(string _Title, string _Description, int Delay, Theme _Theme = null)
+        public static void Show(string _Title, string _Description, int Delay = 10, Theme _Theme = null)
         {
             new ToastBox(_Title, _Description, Delay, _Theme).Show();
         }

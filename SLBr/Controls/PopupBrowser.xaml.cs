@@ -1,6 +1,7 @@
 ﻿using CefSharp;
 using CefSharp.DevTools;
 using CefSharp.Wpf.HwndHost;
+using SLBr.Handlers;
 using System;
 using System.Runtime.InteropServices;
 using System.Security.Policy;
@@ -86,7 +87,7 @@ namespace SLBr.Controls
 
             _Browser.LifeSpanHandler = MainWindow.Instance._LifeSpanHandler;
             _Browser.DownloadHandler = MainWindow.Instance._DownloadHandler;
-            _Browser.RequestHandler = MainWindow.Instance._RequestHandler;
+            _Browser.RequestHandler = new RequestHandler();
             //_Browser.MenuHandler = MainWindow.Instance._ContextMenuHandler;
             //_Browser.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
             //_Browser.JsDialogHandler = MainWindow.Instance._JsDialogHandler;

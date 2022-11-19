@@ -32,29 +32,72 @@ namespace SLBr
 
         private void TabItem_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            //MessageBox.Show($"{e.Source is string},{(string)e.Source}");
             TabItem tabItem = (TabItem)e.Source;
-            //if (!(e.Source is TabItem tabItem))
-            //    return;
             if (Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
                 DragDrop.DoDragDrop(tabItem, tabItem, DragDropEffects.All);
         }
+        /*private void TabItem_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.All;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.All;
+            }
+            e.Handled = false;
+        }*/
 
         private void TabItem_Drop(object sender, DragEventArgs e)
         {
-            //MessageBox.Show(e.Source.GetType().ToString());
-            if (e.Source is TabItem tabItemTarget && e.Data.GetData(typeof(TabItem)) is TabItem tabItemSource && !tabItemTarget.Equals(tabItemSource) && tabItemTarget.Parent is TabControl tabControl)
-            //Remove the last check if multi tabcontrols
-            {
-                int targetIndex = tabControl.Items.IndexOf(tabItemTarget);
+            //MessageBox.Show(e.Data.GetDataPresent(DataFormats.FileDrop).ToString());//File drop
+            //MessageBox.Show(e.Data.GetDataPresent(DataFormats.Xaml).ToString());
+            //MessageBox.Show(e.Data.GetDataPresent(DataFormats.Html).ToString());//String
+            //MessageBox.Show(e.Data.GetDataPresent(DataFormats.StringFormat).ToString());//String
+            //MessageBox.Show((e.Data.GetData(typeof(TabItem)) != null).ToString());//Tab
 
-                //int targetIndex = MainWindow.Instance.Tabs[tabControl.Items.IndexOf(tabItemTarget)];
-                BrowserTabItem _TabItemSource = MainWindow.Instance.Tabs[targetIndex];
-                MainWindow.Instance.Tabs.Remove(_TabItemSource);
-                MainWindow.Instance.Tabs.Insert(targetIndex, _TabItemSource);
-                tabControl.SelectedIndex = targetIndex;
-                //tabItemSource.IsSelected = true;
+            bool IsTab = e.Data.GetData(typeof(TabItem)) != null;
+            bool IsString = e.Data.GetDataPresent(DataFormats.StringFormat);
+            bool IsFileDrop = e.Data.GetDataPresent(DataFormats.FileDrop);
+
+            if (IsTab)
+            {
+                TabItem TabItemSource = (TabItem)e.Data.GetData(typeof(TabItem));
+                TabItem TabItemTarget = (TabItem)e.Source;
+
+                int TabItemSourceId = int.Parse(TabItemSource.Tag.ToString());
+                int TabItemTargetId = int.Parse(TabItemTarget.Tag.ToString());
+
+                BrowserTabItem BrowserTabItemSource = MainWindow.Instance.GetBrowserTabWithId(TabItemSourceId);
+                BrowserTabItem BrowserTabItemTarget = MainWindow.Instance.GetBrowserTabWithId(TabItemTargetId);
+
+                if (TabItemTargetId != TabItemSourceId)
+                {
+                    int TargetIndex = MainWindow.Instance.Tabs.IndexOf(BrowserTabItemTarget);
+                    bool IsOriginallySelected = TabItemSource.IsSelected;
+
+                    MainWindow.Instance.Tabs.Remove(BrowserTabItemSource);
+                    MainWindow.Instance.Tabs.Insert(TargetIndex, BrowserTabItemSource);
+                    if (IsOriginallySelected)
+                        MainWindow.Instance.BrowserTabs.SelectedIndex = TargetIndex;
+                }
+                e.Handled = true;
             }
+            else if (IsFileDrop)
+            {
+                string[] FileLoadup = (string[])e.Data.GetData(DataFormats.FileDrop);
+                MainWindow.Instance.NewBrowserTab(FileLoadup[0], 0, true);
+                e.Handled = true;
+            }
+            else if (IsString)
+            {
+                string Url = (string)e.Data.GetData(DataFormats.StringFormat);
+                MainWindow.Instance.NewBrowserTab(Utils.FilterUrlForBrowser(Url, MainWindow.Instance.MainSave.Get("Search_Engine")), 0, true);
+                e.Handled = true;
+            }
+
+            //e.Source is TabItem tabItemTarget && e.Data.GetData(typeof(TabItem)) is TabItem tabItemSource && 
         }
     }
 }

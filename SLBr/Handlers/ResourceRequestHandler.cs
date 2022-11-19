@@ -1,10 +1,13 @@
 ﻿using CefSharp;
+using SLBr.Pages;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using static System.Net.WebRequestMethods;
 
 namespace SLBr.Handlers
@@ -13,8 +16,12 @@ namespace SLBr.Handlers
     {
         bool AdBlock;
         bool TrackerBlock;
-        public ResourceRequestHandler(bool _AdBlock, bool _TrackerBlock)
+
+        //Browser BrowserView;
+
+        public ResourceRequestHandler(/*Browser _BrowserView, */bool _AdBlock, bool _TrackerBlock)
         {
+            //BrowserView = _BrowserView;
             AdBlock = _AdBlock;
             TrackerBlock = _TrackerBlock;
         }
@@ -151,42 +158,60 @@ namespace SLBr.Handlers
         };
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
-            //request.SetHeaderByName("DNT", "1", true);
-            request.SetHeaderByName("Save-Data", "on", true);
-            //request.SetHeaderByName("Device-Memory", "0.25", true);
             bool Continue = true;
-            if (Utils.IsPossiblyAd(request.ResourceType))
+            if (bool.Parse(MainWindow.Instance.ExperimentsSave.Get("RedirectAJAXToCDNJS")) && Utils.Host(request.Url) == "ajax.googleapis.com")
             {
-                if (AdBlock || TrackerBlock)
+                request.Url = request.Url.Replace("ajax.googleapis.com", "cdnjs.cloudflare.com");
+                return CefReturnValue.Continue;
+            }
+            //request.SetHeaderByName("DNT", "1", true);
+            //request.SetHeaderByName("Save-Data", "on", true);
+            //request.SetHeaderByName("Device-Memory", "0.25", true);
+            if (Continue)
+            {
+                if (Utils.IsPossiblyAd(request.ResourceType))
                 {
-                    string CleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);//false if check full path
-                    string Host = Utils.Host(CleanedUrl, true);
-                    if (request.ResourceType == ResourceType.Script || request.ResourceType == ResourceType.Xhr)
+                    if (AdBlock || TrackerBlock)
                     {
-                        foreach (string Script in HasInLink)
+                        string CleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);//false if check full path
+                        string Host = Utils.Host(CleanedUrl, true);
+                        if (request.ResourceType == ResourceType.Script || request.ResourceType == ResourceType.Xhr)
                         {
-                            if (CleanedUrl.Contains(Script.ToLower()))
-                                Continue = false;
-                        }
-                    }
-                    if (Continue)
-                    {
-                        if (TrackerBlock)
-                            if (Analytics.Contains(Host))
+                            foreach (string Script in HasInLink)
                             {
-                                Continue = false;
-                                MainWindow.Instance.TrackersBlocked++;
+                                if (CleanedUrl.Contains(Script.ToLower()))
+                                    Continue = false;
                             }
+                        }
                         if (Continue)
                         {
-                            if (AdBlock)
-                                if (Ads.Contains(Host) || Miners.Contains(Host))
+                            if (TrackerBlock)
+                                if (Analytics.Contains(Host))
                                 {
                                     Continue = false;
-                                    MainWindow.Instance.AdsBlocked++;
+                                    MainWindow.Instance.TrackersBlocked++;
                                 }
+                            if (Continue)
+                            {
+                                if (AdBlock)
+                                    if (Ads.Contains(Host) || Miners.Contains(Host))
+                                    {
+                                        Continue = false;
+                                        MainWindow.Instance.AdsBlocked++;
+                                    }
+                            }
                         }
                     }
+                }
+            }
+            if (Continue)
+            {
+                string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url);
+                SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+                if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software || _ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
+                {
+                    //request.Url = "slbr://malware";
+                    Continue = false;
                 }
             }
             return Continue ? CefReturnValue.Continue : CefReturnValue.Cancel;
@@ -207,6 +232,8 @@ namespace SLBr.Handlers
 
         public bool OnResourceResponse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
         {
+            //if (response.StatusCode == 404)
+            //    BrowserView.Prompt($"404, Do you want open the page in the Wayback Machine?", true, "Download", $"24<,>https://web.archive.org/{request.Url}", $"https://web.archive.org/{request.Url}", true, "\xE896");
             return false;
         }
     }

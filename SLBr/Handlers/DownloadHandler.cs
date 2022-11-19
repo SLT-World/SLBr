@@ -1,10 +1,12 @@
 ﻿using CefSharp;
+using CefSharp.DevTools.Network;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace SLBr.Handlers
 {
@@ -15,7 +17,19 @@ namespace SLBr.Handlers
 
         public bool CanDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, string url, string requestMethod)
         {
-            return true;
+            bool DownloadFile = true;
+            string Response = MainWindow.Instance._SafeBrowsing.Response(url);
+            SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+            if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware)
+                DownloadFile = MessageBox.Show("This download contains malware. Are you sure you want to proceed with the download?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
+                //MessageBox.Show($"This download contains malware. Download is blocked.", "Warning");
+
+            else if (_ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software)
+                DownloadFile = MessageBox.Show("This download contains unwanted software. Are you sure you want to proceed with the download?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
+
+            else if (_ThreatType == SafeBrowsingHandler.ThreatType.Potentially_Harmful_Application)
+                DownloadFile = MessageBox.Show("This download can be potentially harmful. Are you sure you want to proceed with the download?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
+            return DownloadFile;
         }
 
         public void OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IBeforeDownloadCallback callback)

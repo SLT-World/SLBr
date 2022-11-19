@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:controls="clr-namespace:SLBr.Controls"
              mc:Ignorable="d" d:DesignHeight="450" d:DesignWidth="800"
-             HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontFamily="Segoe MDL2 Assets">
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontFamily="Segoe Fluent Icons">
     <!--Segoe Fluent Icons-->
     <UserControl.Resources>
         <ResourceDictionary Source="../StyleResourceDictionary.xaml"/>
@@ -23,56 +23,65 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
-                <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5">
-                    <Menu FontFamily="Segoe MDL2 Assets" Margin="0" Height="23" Width="23" Background="Transparent" BorderBrush="Transparent" Foreground="{DynamicResource ControlFontBrush}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <MenuItem ToolTip="More options" Header="&#xE700;" Height="23" Margin="0,2" Foreground="{DynamicResource ControlFontBrush}" BorderThickness="0">
-                            <MenuItem Header="New Tab" FontFamily="Arial" Click="ButtonAction" Tag="4&lt;,&gt;{Homepage}"/>
-                            <Separator/>
-                            <MenuItem x:Name="HistoryListMenu" Header="History" FontFamily="Arial">
-                                <MenuItem.ItemContainerStyle>
-                                    <Style TargetType="MenuItem">
-                                        <Setter Property="Header" Value="{Binding Name}"/>
-                                        <Setter Property="Tag" Value="{Binding Arguments}"/>
-                                        <EventSetter Event="Click" Handler="ButtonAction"/>
-                                    </Style>
-                                </MenuItem.ItemContainerStyle>
-                            </MenuItem>
-                            <MenuItem x:Name="DownloadListMenu" Header="Downloads" FontFamily="Arial">
-                                <MenuItem.ItemContainerStyle>
-                                    <Style TargetType="MenuItem">
-                                        <Setter Property="Header" Value="{Binding Name}"/>
-                                        <Setter Property="Tag" Value="{Binding Arguments}"/>
-                                        <EventSetter Event="Click" Handler="ButtonAction"/>
-                                    </Style>
-                                </MenuItem.ItemContainerStyle>
-                            </MenuItem>
-                            <MenuItem x:Name="FavouriteListMenu" Header="Favourites" FontFamily="Arial">
-                                <MenuItem.ItemContainerStyle>
-                                    <Style TargetType="MenuItem">
-                                        <Setter Property="Header" Value="{Binding Name}"/>
-                                        <Setter Property="Tag" Value="{Binding Arguments}"/>
-                                        <EventSetter Event="Click" Handler="ButtonAction"/>
-                                    </Style>
-                                </MenuItem.ItemContainerStyle>
-                            </MenuItem>
-                            <Separator/>
-                            <MenuItem Header="Tools" FontFamily="Arial">
-                                <MenuItem Header="Inspector" FontFamily="Arial" Click="ButtonAction" Tag="6"/>
-                                <MenuItem x:Name="TestsMenuItem" Header="Tests" FontFamily="Arial">
-                                    <MenuItem Header="SafeBrowsing Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://testsafebrowsing.appspot.com/"/>
-                                    <MenuItem Header="WebRTC Experiments" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.webrtc-experiment.com/"/>
-                                    <MenuItem Header="Web Speech API Demonstration" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.google.com/intl/en/chrome/demos/speech.html"/>
-                                    <MenuItem Header="Web Notifications Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.bennish.net/web-notifications.html"/>
-                                    <MenuItem Header="WebAssembly Roadmap" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://webassembly.org/roadmap/"/>
-                                    <MenuItem Header="Jigsaw Demo" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://jigsaw.w3.org/"/>
-                                    <MenuItem Header="BrowserLeaks" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://browserleaks.com/"/>
+                <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5,5,5,0">
+                    <controls:DropDownButton ToolTip="More options" Content="&#xE700;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:DropDownButton.Menu>
+                            <ContextMenu>
+                                <MenuItem Icon="&#xEC6C;" Header="New Tab" FontFamily="Arial" Click="ButtonAction" Tag="4&lt;,&gt;{Homepage}"/>
+                                <Separator/>
+                                <MenuItem Icon="&#xE81C;" x:Name="HistoryListMenu" Header="History" FontFamily="Arial">
+                                    <MenuItem.ItemContainerStyle>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Header" Value="{Binding Name}"/>
+                                            <Setter Property="Tag" Value="{Binding Arguments}"/>
+                                            <!--<Setter Property="MaxWidth" Value="500"/>
+                                            <Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
+                                            <Setter Property="TextBlock.TextWrapping" Value="NoWrap"/>-->
+                                            <EventSetter Event="Click" Handler="ButtonAction"/>
+                                        </Style>
+                                    </MenuItem.ItemContainerStyle>
                                 </MenuItem>
-                            </MenuItem>
-                            <Separator/>
-                            <MenuItem Header="Settings" FontFamily="Arial" Click="ButtonAction" Tag="9"/>
-                        </MenuItem>
-                    </Menu>
-                    <Button Click="ButtonAction" Tag="4&lt;,&gt;{Homepage}" Content="&#xE710;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" ToolTip="New Tab"/>
+                                <MenuItem Icon="&#xE896;" x:Name="DownloadListMenu" Header="Downloads" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;slbr://downloads/">
+                                    <MenuItem.ItemContainerStyle>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Header" Value="{Binding Name}"/>
+                                            <Setter Property="Tag" Value="{Binding Arguments}"/>
+                                            <EventSetter Event="Click" Handler="ButtonAction"/>
+                                        </Style>
+                                    </MenuItem.ItemContainerStyle>
+                                </MenuItem>
+                                <MenuItem Icon="&#xEB51;" x:Name="FavouriteListMenu" Header="Favourites" FontFamily="Arial">
+                                    <MenuItem.ItemContainerStyle>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Header" Value="{Binding Name}"/>
+                                            <Setter Property="Tag" Value="{Binding Arguments}"/>
+                                            <Setter Property="ToolTip" Value="{Binding Tooltip}"/>
+                                            <EventSetter Event="Click" Handler="ButtonAction"/>
+                                        </Style>
+                                    </MenuItem.ItemContainerStyle>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Icon="&#xE748;" Header="Switch User" FontFamily="Arial" Click="ButtonAction" Tag="18"/>
+                                <MenuItem Icon="None" Header="Tools" FontFamily="Arial">
+                                    <MenuItem Icon="&#xE756;" Header="Inspector" FontFamily="Arial" Click="ButtonAction" Tag="6"/>
+                                    <MenuItem Icon="None" x:Name="TestsMenuItem" Header="Tests" FontFamily="Arial">
+                                        <MenuItem Header="SafeBrowsing Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://testsafebrowsing.appspot.com/"/>
+                                        <MenuItem Header="WebRTC Experiments" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.webrtc-experiment.com/"/>
+                                        <MenuItem Header="Web Speech API Demonstration" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.google.com/intl/en/chrome/demos/speech.html"/>
+                                        <MenuItem Header="Web Notifications Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://www.bennish.net/web-notifications.html"/>
+                                        <MenuItem Header="WebAssembly Roadmap" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://webassembly.org/roadmap/"/>
+                                        <MenuItem Header="Jigsaw Demo" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://jigsaw.w3.org/"/>
+                                        <MenuItem Header="BrowserLeaks" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://browserleaks.com/"/>
+                                        <MenuItem Header="Permissions Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://permission.site/"/>
+                                        <MenuItem Header="All About DNT" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://allaboutdnt.com/"/>
+                                    </MenuItem>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Icon="&#xE713;" Header="Settings" FontFamily="Arial" Click="ButtonAction" Tag="9"/>
+                            </ContextMenu>
+                        </controls:DropDownButton.Menu>
+                    </controls:DropDownButton>
+                    <!--<Button Click="ButtonAction" Tag="4&lt;,&gt;{Homepage}" Content="&#xE710;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" ToolTip="New Tab"/>-->
                     <Button Click="ButtonAction" Tag="0" x:Name="BackButton" ToolTip="Back" Content="&#xE72B;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}"/>
                     <Button Click="ButtonAction" Tag="1" x:Name="ForwardButton" ToolTip="Forward" Content="&#xE72A;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}"/>
                     <Button Click="ButtonAction" Tag="2" x:Name="ReloadButton" Margin="0" Height="23" Width="23" ToolTip="Refresh" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE72C;" Foreground="{DynamicResource ControlFontBrush}"/>
@@ -115,12 +124,6 @@
                             </Border>
                         </Grid>
                     </Button>
-                    <!--<Button Click="ButtonAction" Tag="11&lt;,&gt;IE" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Internet Explorer Mode" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Foreground="{DynamicResource ControlFontBrush}">
-                        <Grid Height="12.5" Width="12.5">
-                            <controls:RadialProgressBar x:Name="_ProgressBar" HorizontalAlignment="Center" VerticalAlignment="Center"
-              Percentage="70" SegmentColor="#026873" StrokeThickness="1"/>
-                        </Grid>
-                    </Button>-->
                     <Button Click="ButtonAction" Tag="10" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Unload tabs" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Foreground="{DynamicResource ControlFontBrush}">
                         <Grid Height="12.5" Width="12.5">
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource ControlFontBrush}">&#xE727;</TextBlock>
@@ -164,9 +167,28 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Border>
-                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Grid.Row="3" Height="5" HorizontalAlignment="Stretch">
+
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Grid.Row="2" Height="5" HorizontalAlignment="Stretch">
                     <ProgressBar Maximum="1" BorderThickness="0" x:Name="WebsiteLoadingProgressBar" IsEnabled="False" IsIndeterminate="False" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource BorderBrush}"/>
                 </Border>
+                <ItemsControl x:Name="PromptsPanel" Grid.Row="3" HorizontalAlignment="Stretch" ItemsSource="{Binding Prompts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{DynamicResource BorderBrush}" Height="33" BorderThickness="0,0,0,1">
+                                <DockPanel Margin="5">
+                                    <TextBlock Visibility="{Binding IconVisibility}" VerticalAlignment="Center" TextAlignment="Center" Text="{Binding IconText}" FontSize="12.5" Foreground="{DynamicResource FontBrush}" Margin="7.5,0">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="{Binding IconRotation}"/>
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                    <Button DockPanel.Dock="Right" Content="&#xE711;" Margin="0" Height="23" Width="23" Foreground="{DynamicResource ControlFontBrush}" Click="ButtonAction" Tag="{Binding CloseButtonTag}" ToolTip="Dismiss"/>
+                                    <Button ToolTip="{Binding ButtonToolTip}" Visibility="{Binding ButtonVisibility}" FontFamily="None" DockPanel.Dock="Right" MinWidth="150" Padding="7.5,1" BorderBrush="{DynamicResource BorderBrush}" Margin="5,0" Style="{DynamicResource AddButton}" Content="{Binding ButtonContent}" Click="ButtonAction" Tag="{Binding ButtonTag}"/>
+                                    <TextBlock Foreground="{DynamicResource FontBrush}" FontFamily="None" Text="{Binding Content}" VerticalAlignment="Center" TextWrapping="NoWrap"/>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </Grid>
         </Border>
         <Grid x:Name="WebContainer" Grid.Row="1">
@@ -213,19 +235,20 @@
                         <DockPanel LastChildFill="False">
                             <Button Style="{DynamicResource InspectorCloseButton}" DockPanel.Dock="Right" Click="ButtonAction" Tag="6" Margin="0" Height="25" Width="30" ToolTip="Close inspector" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE711;"/>
 
-                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="16" Margin="0" Height="25" Width="30" ToolTip="Toggle size emulation" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8CC;"/>
+                            <Button Style="{DynamicResource InspectorButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="16" Margin="0" Height="25" Width="30" ToolTip="Toggle size emulation" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8CC;"/>
                             <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderBrush}" Margin="0, 4"/>
 
-                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="15&lt;,&gt;{CurrentInspectorUrl}" Margin="0" Height="25" Width="30" ToolTip="Open in seperate window" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8A7;"/>
+                            <Button Style="{DynamicResource InspectorButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="15&lt;,&gt;{CurrentInspectorUrl}" Margin="0" Height="25" Width="30" ToolTip="Open in seperate window" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8A7;"/>
 
                             <Button RenderTransformOrigin="0.5,0.5" Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;3" Margin="0" Height="25" Width="30" ToolTip="Dock top" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;">
                                 <Button.RenderTransform>
                                     <RotateTransform Angle="180" />
                                 </Button.RenderTransform>
                             </Button>
-                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;2" Margin="0" Height="25" Width="30" ToolTip="Dock bottom" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;"/>
-                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;1" Margin="0" Height="25" Width="30" ToolTip="Dock left" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90C;"/>
-                            <Button Style="{DynamicResource InspectorButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;0" Margin="0" Height="25" Width="30" ToolTip="Dock right" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90D;"/>
+                            <Button Style="{DynamicResource InspectorButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;2" Margin="0" Height="25" Width="30" ToolTip="Dock bottom" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;"/>
+                            <Button Style="{DynamicResource InspectorButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;1" Margin="0" Height="25" Width="30" ToolTip="Dock left" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90C;"/>
+                            <Button Style="{DynamicResource InspectorButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="14&lt;,&gt;0" Margin="0" Height="25" Width="30" ToolTip="Dock right" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90D;"/>
+                            <ComboBox FontFamily="None" Height="23" Width="250" ToolTip="Browser Emulator" Foreground="{DynamicResource FontBrush}" x:Name="BrowserEmulatorComboBox"  VerticalAlignment="Center" SelectedIndex="0"/>
                         </DockPanel>
                     </Border>
                     <Grid x:Name="InspectorCoreContainer" Grid.Row="1"/>
@@ -239,7 +262,7 @@
             </Popup>
 
             <Grid Grid.Row="1" Grid.Column="1" IsHitTestVisible="False" Focusable="False" x:Name="StatusBar" Margin="2.5,30" VerticalAlignment="Bottom">
-                <Popup SnapsToDevicePixels="True" x:Name="StatusBarPopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="True">
+                <Popup SnapsToDevicePixels="True" x:Name="StatusBarPopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False">
                     <Border Background="{DynamicResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
                         <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300" Height="25">
                             <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>

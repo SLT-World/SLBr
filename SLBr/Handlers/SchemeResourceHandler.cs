@@ -156,7 +156,17 @@ namespace SLBr.Handlers
                 {
                     //MessageBox.Show(GeminiSchemeHandlerFactory.Instance.TextGeminiInstance.Format(resp.Bytes.ToArray()));
                     //Stream = new MemoryStream(Encoding.UTF8.GetBytes(GeminiSchemeHandlerFactory.Instance.TextGeminiInstance.Format(resp.Bytes.ToArray())));
-                    Stream = new MemoryStream(Encoding.UTF8.GetBytes(TextGemini.NewFormat(resp.Bytes.ToArray(), request.Url.EndsWith("?raw=true"))));
+                    string Html = "";
+                    string NoParameterAddress = Utils.CleanUrl(request.Url, true, false, true, true);
+                    if (NoParameterAddress.EndsWith(".gmi") || NoParameterAddress.EndsWith("/") || NoParameterAddress.Substring(NoParameterAddress.LastIndexOf('/') + 1).CountChars('.') == 0)
+                        Html = TextGemini.NewFormat(resp.Bytes.ToArray(), request.Url.EndsWith("?raw=true"));
+                    else
+                        Html = TextGemini.DirectlyToString(resp.Bytes.ToArray());
+                    //if (NoParameterAddress.EndsWith(".html") || NoParameterAddress.EndsWith(".txt") || NoParameterAddress.EndsWith(".xml") || NoParameterAddress.EndsWith(".htm") || NoParameterAddress.EndsWith(".css"))
+                    //    Html = TextGemini.DirectlyToString(resp.Bytes.ToArray());
+                    //else
+                    //    Html = TextGemini.NewFormat(resp.Bytes.ToArray(), request.Url.EndsWith("?raw=true"));
+                    Stream = new MemoryStream(Encoding.UTF8.GetBytes(Html));
 
                     MimeType = resp.Mime.Contains("text/gemini") ? "text/html" : resp.Mime;
 

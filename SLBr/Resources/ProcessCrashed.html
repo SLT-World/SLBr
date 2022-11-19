@@ -22,8 +22,8 @@ Use of this source code is governed by a GNU license that can be found in the LI
             margin-top: 140px;
         }
 
-        .icon{
-            font-family: 'Segoe MDL2 Assets';
+        .icon {
+            font-family: 'Segoe Fluent Icons';
             font-size: 150px;
         }
     </style>
@@ -31,6 +31,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 <body>
     <div id="content">
         <h1 class="icon"></h1>
+        <!--<div style="position: absolute;width: 100%;top: 5.7%;"><h1 class="icon"></h1></div>-->
         <h2>Process Crashed</h2>
         <h5>
             Process crashed while attempting to load content. Undo/Refresh the page to resolve the problem.
@@ -61,6 +62,6 @@ Use of this source code is governed by a GNU license that can be found in the LI
             }
         }
 
-        var Url = GetURLParameter("url");
+        var Url = GetURLParameter("error");
         document.getElementById("Site").innerHTML = new URL(Url).hostname;
     </script>-->

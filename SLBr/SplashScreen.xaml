@@ -18,7 +18,7 @@
                             <Storyboard>
                                 <DoubleAnimation
             Storyboard.TargetProperty="(Rectangle.RenderTransform).(RotateTransform.Angle)"
-            To="360" Duration="0:0:1.25" RepeatBehavior="Forever" />
+            To="360" Duration="0:0:2.00" RepeatBehavior="Forever" />
                             </Storyboard>
                         </BeginStoryboard>
                     </EventTrigger>
