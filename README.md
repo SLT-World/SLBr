@@ -22,7 +22,7 @@ Download the latest version of SLBr and open it
 - https://github.com/SLT-World/SLBr/releases/latest
 
 ## Notes
-If you're encountering issues with SLBr rendering weirdly (Examples are: controls disappearing, text oversizing, colors changing abnormally), then you're most likely encountering this [issue](https://github.com/dotnet/wpf/issues/4141). Either switch to software rendering using SLBr's WPF render mode setting, or disable the nahimic service to resolve the issue.
+If you're encountering an issue of SLBr rendering weirdly (Examples are: controls disappearing, text oversizing, colors changing abnormally), then you're most likely encountering this [issue](https://github.com/dotnet/wpf/issues/4141). Either switch to software rendering using SLBr's WPF render mode setting, or disable the nahimic service to resolve the issue.
 
 ## Special thanks to
 - The Chromium Embedded Framework (CEF) by Marshall A. Greenblatt.
