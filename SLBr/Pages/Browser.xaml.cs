@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Policy;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -33,7 +34,7 @@ using System.Windows.Threading;
 namespace SLBr.Pages
 {
     /// <summary>
-    /// Interaction logic for Blink.xaml
+    /// Interaction logic for Browser.xaml
     /// </summary>
     public partial class Browser : UserControl, INotifyPropertyChanged
     {
@@ -79,10 +80,13 @@ namespace SLBr.Pages
         public WebView2 EdgeInspector;
         IEWebBrowser IE;
         string StartupUrl;
+
         //IEWebBrowser IEInspector;
 
         //RequestHandler _RequestHandler;
         public Prompt ErrorPrompt;
+
+        public bool BrowserInitialized;
 
         /*public void AdBlock(bool Boolean)
         {
@@ -99,19 +103,19 @@ namespace SLBr.Pages
         {
             InitializeComponent();
             StartupUrl = Url;
-            MainSave = MainWindow.Instance.MainSave;
-            _IdnMapping = MainWindow.Instance._IdnMapping;
+            MainSave = App.Instance.MainSave;
+            _IdnMapping = App.Instance._IdnMapping;
             BrowserType = _BrowserType;
-            FavouritesPanel.ItemsSource = MainWindow.Instance.Favourites;
-            FavouriteListMenu.ItemsSource = MainWindow.Instance.Favourites;
-            HistoryListMenu.ItemsSource = MainWindow.Instance.History;
-            DownloadListMenu.ItemsSource = MainWindow.Instance.CompletedDownloads;
+            FavouritesPanel.ItemsSource = App.Instance.Favourites;
+            FavouriteListMenu.ItemsSource = App.Instance.Favourites;
+            HistoryListMenu.ItemsSource = App.Instance.History;
+            DownloadListMenu.ItemsSource = App.Instance.CompletedDownloads;
             PromptsPanel.ItemsSource = Prompts;
             BrowserEmulatorComboBox.Items.Add("Chromium");
             BrowserEmulatorComboBox.Items.Add("Edge");
             BrowserEmulatorComboBox.Items.Add("Internet Explorer");
-            ApplyTheme(MainWindow.Instance.GetTheme());
-            if (MainWindow.Instance.Favourites.Count == 0)
+            ApplyTheme(App.Instance.CurrentTheme);
+            if (App.Instance.Favourites.Count == 0)
             {
                 ToolBarPanel.Margin = new Thickness(5, 5, 5, 0);
                 FavouriteContainer.Height = 1;
@@ -124,9 +128,9 @@ namespace SLBr.Pages
             if (_Tab != null)
                 Tab = _Tab;
             else
-                Tab = MainWindow.Instance.GetTab(this);
+                Tab = Tab.ParentWindow.GetTab(this);
             //_RequestHandler = new RequestHandler(this);
-            Tab.Icon = MainWindow.Instance.GetIcon(Url);
+            Tab.Icon = App.Instance.GetIcon(Url);
             if (BrowserType == 0)
                 CreateChromium(Url, CefBrowserSettings);
             if (BrowserType == 1)
@@ -137,6 +141,7 @@ namespace SLBr.Pages
             SuggestionsTimer.Tick += SuggestionsTimer_Tick;
             SuggestionsTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
             BrowserEmulatorComboBox.SelectionChanged += BrowserEmulatorComboBox_SelectionChanged;
+            BrowserInitialized = true;
             //Prompt(false, "Initialized", true, "Download", $"24<,>https://github.com/SLT-World/SLBr/releases/latest", $"https://github.com/SLT-World/SLBr/releases/latest", true, "\xE899");
         }
 
@@ -145,17 +150,18 @@ namespace SLBr.Pages
             Tab.BrowserCommandsVisibility = Visibility.Collapsed;
             Tab.IsUnloaded = true;
             Chromium = new ChromiumWebBrowser();
-            Chromium.JavascriptObjectRepository.Register("internal", MainWindow.Instance._PrivateJsObjectHandler, BindingOptions.DefaultBinder);
-            Chromium.JavascriptObjectRepository.Register("slbr", MainWindow.Instance._PublicJsObjectHandler, BindingOptions.DefaultBinder);
-            Chromium.Address = Url;
-            Chromium.LifeSpanHandler = MainWindow.Instance._LifeSpanHandler;
-            Chromium.DownloadHandler = MainWindow.Instance._DownloadHandler;
-            Chromium.RequestHandler = MainWindow.Instance._RequestHandler;
-            Chromium.MenuHandler = MainWindow.Instance._ContextMenuHandler;
-            Chromium.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
-            Chromium.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
-            Chromium.PermissionHandler = MainWindow.Instance._PermissionHandler;
+            Chromium.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
+            Chromium.JavascriptObjectRepository.Register("internal", App.Instance._PrivateJsObjectHandler, BindingOptions.DefaultBinder);
+            Chromium.JavascriptObjectRepository.Register("slbr", App.Instance._PublicJsObjectHandler, BindingOptions.DefaultBinder);
+            Chromium.LifeSpanHandler = App.Instance._LifeSpanHandler;
+            Chromium.DownloadHandler = App.Instance._DownloadHandler;
+            Chromium.RequestHandler = App.Instance._RequestHandler;
+            Chromium.MenuHandler = App.Instance._ContextMenuHandler;
+            Chromium.KeyboardHandler = App.Instance._KeyboardHandler;
+            Chromium.JsDialogHandler = App.Instance._JsDialogHandler;
+            Chromium.PermissionHandler = App.Instance._PermissionHandler;
             Chromium.DisplayHandler = new DisplayHandler(this);
+            Chromium.Address = Url;
             //Chromium.AudioHandler = new AudioHandler();
             Chromium.AllowDrop = true;
             Chromium.IsManipulationEnabled = true;
@@ -165,12 +171,12 @@ namespace SLBr.Pages
             {
                 _BrowserSettings = new BrowserSettings
                 {
-                    WindowlessFrameRate = MainWindow.Instance.Framerate,
-                    Javascript = MainWindow.Instance.Javascript,
-                    ImageLoading = MainWindow.Instance.LoadImages,
-                    LocalStorage = MainWindow.Instance.LocalStorage,
-                    Databases = MainWindow.Instance.Databases,
-                    WebGl = MainWindow.Instance.WebGL,
+                    WindowlessFrameRate = App.Instance.Framerate,
+                    Javascript = App.Instance.Javascript,
+                    ImageLoading = App.Instance.LoadImages,
+                    LocalStorage = App.Instance.LocalStorage,
+                    Databases = App.Instance.Databases,
+                    WebGl = App.Instance.WebGL,
                     BackgroundColor = System.Drawing.Color.Black.ToUInt()
                 };
             }
@@ -208,15 +214,18 @@ namespace SLBr.Pages
                                 if (t.Result != null && t.Result.Result != null)
                                 {
                                     List<InspectorObject> InspectorObjects = JsonConvert.DeserializeObject<List<InspectorObject>>(t.Result.Result.ToString());
-                                    foreach (InspectorObject _InspectorObject in InspectorObjects)
+                                    if (InspectorObjects != null)
                                     {
-                                        if (_InspectorObject.type == "page" && _InspectorObject.url == Chromium.Address)
+                                        foreach (InspectorObject _InspectorObject in InspectorObjects)
                                         {
-                                            ChromiumInspector.Address = "http://localhost:8089" + _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html");
-                                            //ChromiumInspector.Address = "http://localhost:8089" + (MainWindow.Instance.DeveloperMode ? _InspectorObject.devtoolsFrontendUrl : _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html"));
-                                            //devtools_app.html?can_dock=true
-                                            //ChromiumInspector.Address = "http://localhost:8089" + _InspectorObject.devtoolsFrontendUrl;
-                                            break;
+                                            if (_InspectorObject.type == "page" && _InspectorObject.url == Chromium.Address)
+                                            {
+                                                ChromiumInspector.Address = "http://localhost:8089" + _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html");
+                                                //ChromiumInspector.Address = "http://localhost:8089" + (MainWindow.Instance.DeveloperMode ? _InspectorObject.devtoolsFrontendUrl : _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html"));
+                                                //devtools_app.html?can_dock=true
+                                                //ChromiumInspector.Address = "http://localhost:8089" + _InspectorObject.devtoolsFrontendUrl;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -225,15 +234,15 @@ namespace SLBr.Pages
                     }
                     else
                     {
-                        ChromiumInspector.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(MainWindow.Instance.GetTheme().DarkWebPage ? bool.Parse(MainWindow.Instance.MainSave.Get("DarkWebPage")) : false);
+                        ChromiumInspector.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(App.Instance.CurrentTheme.DarkWebPage ? bool.Parse(App.Instance.MainSave.Get("DarkWebPage")) : false);
                     }
                 }
             };
-            ChromiumInspector.LifeSpanHandler = MainWindow.Instance._LifeSpanHandler;
+            ChromiumInspector.LifeSpanHandler = App.Instance._LifeSpanHandler;
             //ChromiumInspector.DownloadHandler = MainWindow.Instance._DownloadHandler;
-            ChromiumInspector.RequestHandler = MainWindow.Instance._RequestHandler;
-            ChromiumInspector.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
-            ChromiumInspector.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
+            ChromiumInspector.RequestHandler = App.Instance._RequestHandler;
+            ChromiumInspector.KeyboardHandler = App.Instance._KeyboardHandler;
+            ChromiumInspector.JsDialogHandler = App.Instance._JsDialogHandler;
             //ChromiumInspector.StatusMessage += OnWebBrowserStatusMessage;
             InspectorCoreContainer.Children.Add(ChromiumInspector);
 
@@ -328,48 +337,67 @@ namespace SLBr.Pages
         }
         async void CreateEdge(string Url)
         {
-            Tab.BrowserCommandsVisibility = Visibility.Collapsed;
-            Tab.IsUnloaded = true;
-            Edge = new WebView2();
-            Edge.DefaultBackgroundColor = System.Drawing.Color.Black;
-            Edge.CoreWebView2InitializationCompleted += Edge_CoreWebView2InitializationCompleted;
-            Edge.EnsureCoreWebView2Async(MainWindow.Instance.WebView2Environment);
-            Edge.Source = new Uri(Url);
-            //Chromium.JavascriptObjectRepository.Register("internal", MainWindow.Instance._PrivateJsObjectHandler, BindingOptions.DefaultBinder);
-            //Chromium.JavascriptObjectRepository.Register("slbr", MainWindow.Instance._PublicJsObjectHandler, BindingOptions.DefaultBinder);
-            //Chromium.LifeSpanHandler = MainWindow.Instance._LifeSpanHandler;
-            //Chromium.DownloadHandler = MainWindow.Instance._DownloadHandler;
-            //Chromium.RequestHandler = MainWindow.Instance._RequestHandler;
-            //Chromium.MenuHandler = MainWindow.Instance._ContextMenuHandler;
-            //Chromium.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
-            //Chromium.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
-            //Chromium.PermissionHandler = MainWindow.Instance._PermissionHandler;
-            //Chromium.DisplayHandler = new DisplayHandler(this);
-            //Chromium.AudioHandler = new AudioHandler();
-            Edge.AllowDrop = true;
-            Edge.IsManipulationEnabled = true;
+            if (App.Instance.WebView2Environment == null)
+            {
+                MessageBox.Show("Error: Edge WebView2 Runtime Component not installed on device. SLBr cannot proceed to Edge Mode without WebView2.");
+            }
+            else
+            {
+                Tab.BrowserCommandsVisibility = Visibility.Collapsed;
+                Tab.IsUnloaded = true;
+                Edge = new WebView2();
+                Edge.DefaultBackgroundColor = System.Drawing.Color.Black;
+                Edge.CoreWebView2InitializationCompleted += Edge_CoreWebView2InitializationCompleted;
+                Edge.EnsureCoreWebView2Async(App.Instance.WebView2Environment);
+                Edge.Source = new Uri(Url);
+                //Chromium.JavascriptObjectRepository.Register("internal", MainWindow.Instance._PrivateJsObjectHandler, BindingOptions.DefaultBinder);
+                //Chromium.JavascriptObjectRepository.Register("slbr", MainWindow.Instance._PublicJsObjectHandler, BindingOptions.DefaultBinder);
+                //Chromium.LifeSpanHandler = MainWindow.Instance._LifeSpanHandler;
+                //Chromium.DownloadHandler = MainWindow.Instance._DownloadHandler;
+                //Chromium.RequestHandler = MainWindow.Instance._RequestHandler;
+                //Chromium.MenuHandler = MainWindow.Instance._ContextMenuHandler;
+                //Chromium.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
+                //Chromium.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
+                //Chromium.PermissionHandler = MainWindow.Instance._PermissionHandler;
+                //Chromium.DisplayHandler = new DisplayHandler(this);
+                //Chromium.AudioHandler = new AudioHandler();
+                Edge.AllowDrop = true;
+                Edge.IsManipulationEnabled = true;
 
-            CoreContainer.Children.Add(Edge);
+                CoreContainer.Children.Add(Edge);
 
-            EdgeInspector = new WebView2();
-            EdgeInspector.CoreWebView2InitializationCompleted += EdgeInspector_CoreWebView2InitializationCompleted;
-            EdgeInspector.DefaultBackgroundColor = System.Drawing.Color.Black;
-            EdgeInspector.EnsureCoreWebView2Async(MainWindow.Instance.WebView2Environment);
-            EdgeInspector.Source = new Uri("about:blank");
-            EdgeInspector.AllowDrop = true;
-            InspectorCoreContainer.Children.Add(EdgeInspector);
+                EdgeInspector = new WebView2();
+                EdgeInspector.CoreWebView2InitializationCompleted += EdgeInspector_CoreWebView2InitializationCompleted;
+                EdgeInspector.DefaultBackgroundColor = System.Drawing.Color.Black;
+                EdgeInspector.EnsureCoreWebView2Async(App.Instance.WebView2Environment);
+                EdgeInspector.Source = new Uri("about:blank");
+                EdgeInspector.AllowDrop = true;
+                InspectorCoreContainer.Children.Add(EdgeInspector);
 
-            RenderOptions.SetBitmapScalingMode(Edge, BitmapScalingMode.LowQuality);
-            RenderOptions.SetBitmapScalingMode(EdgeInspector, BitmapScalingMode.LowQuality);
+                RenderOptions.SetBitmapScalingMode(Edge, BitmapScalingMode.LowQuality);
+                RenderOptions.SetBitmapScalingMode(EdgeInspector, BitmapScalingMode.LowQuality);
 
-            SwitchBrowserButton.Tag = "11<,>IE";
-            SwitchBrowserButton.ToolTip = "Internet Explorer mode";
-            SwitchBrowserText.Text = "e";
-            BrowserEmulatorComboBox.SelectedItem = "Edge";
+                SwitchBrowserButton.Tag = "11<,>IE";
+                SwitchBrowserButton.ToolTip = "Internet Explorer mode";
+                SwitchBrowserText.Text = "e";
+                BrowserEmulatorComboBox.SelectedItem = "Edge";
+            }
         }
 
         private void EdgeInspector_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            //Prevents SLBr UI from running
+            /*Dispatcher.Invoke(() =>
+            {
+                if (string.IsNullOrEmpty(MainWindow.Instance.EdgeJSVersion))
+                {
+                    DevToolsProtocolHelper EdgeDevTools = Edge.CoreWebView2.GetDevToolsProtocolHelper();
+                    var Response = EdgeDevTools.Browser.GetVersionAsync();
+                    MainWindow.Instance.EdgeJSVersion = Response.Result.JsVersion;
+                    MainWindow.Instance.EdgeRevision = Response.Result.Revision;
+                }
+            });*/
+            //Task.Run(() => GetEdgeDevToolsInfo());
             try
             {
                 if (EdgeInspector.Source.AbsoluteUri == "http://localhost:9222/json/list")
@@ -378,15 +406,18 @@ namespace SLBr.Pages
                     {
                         Application.Current.Dispatcher.BeginInvoke(new Action(delegate
                         {
-                            string Html = t.Result.Trim('"').Replace("\\n", "").Replace("\\\"", "\"");
+                            string Html = t.Result.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\"");
                             //Html = Regex.Replace(Html, @"\r\n?|\n", "");
                             List<InspectorObject> InspectorObjects = JsonConvert.DeserializeObject<List<InspectorObject>>(Html);
-                            foreach (InspectorObject _InspectorObject in InspectorObjects)
+                            if (InspectorObjects != null)
                             {
-                                if (_InspectorObject.type == "page" && _InspectorObject.url == Edge.Source.AbsoluteUri)
+                                foreach (InspectorObject _InspectorObject in InspectorObjects)
                                 {
-                                    EdgeInspector.CoreWebView2.Navigate("http://localhost:9222" + _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html"));
-                                    break;
+                                    if (_InspectorObject.type == "page" && _InspectorObject.url == Edge.Source.AbsoluteUri)
+                                    {
+                                        EdgeInspector.CoreWebView2.Navigate("http://localhost:9222" + _InspectorObject.devtoolsFrontendUrl.Replace("inspector.html", "devtools_app.html"));
+                                        break;
+                                    }
                                 }
                             }
                         }));
@@ -450,7 +481,7 @@ namespace SLBr.Pages
                     //if (e.NewWindow.targetDisposition == WindowOpenDisposition.NewPopup)
                     //    new PopupBrowser(e.NewWindow.Source, -1, -1).Show();
                     //else
-                        MainWindow.Instance.NewBrowserTab(_Source, 1, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                        Tab.ParentWindow.NewBrowserTab(_Source, 1, true, Tab.ParentWindow.BrowserTabs.SelectedIndex + 1);
                 }));
             }
             e.Handled = true;
@@ -462,8 +493,6 @@ namespace SLBr.Pages
             {
                 BrowserLoadChanged(Edge.Source.AbsoluteUri);
 
-                if (IsUtilityContainerOpen && !EdgeInspector.Source.AbsoluteUri.StartsWith("http://localhost:9222/"))
-                    EdgeInspector.Source = new Uri("http://localhost:9222/json/list");
                 Tab.Header = Title;
                 ReloadButton.Content = "\xE72C";
                 WebsiteLoadingProgressBar.IsEnabled = false;
@@ -481,6 +510,8 @@ namespace SLBr.Pages
                     }
                     AddressBox.Tag = Edge.Source.AbsoluteUri;
                 }
+                if (IsUtilityContainerOpen && !EdgeInspector.Source.AbsoluteUri.StartsWith("http://localhost:9222/"))
+                    EdgeInspector.Source = new Uri("http://localhost:9222/json/list");
             }));
         }
         private void Edge_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
@@ -508,8 +539,8 @@ namespace SLBr.Pages
         private void Edge_TitleChanged(object? sender, object e)
         {
             Tab.Header = Title;
-            if (Tab == MainWindow.Instance.Tabs[MainWindow.Instance.BrowserTabs.SelectedIndex])
-                MainWindow.Instance.Title = Title + " - SLBr";
+            if (Tab == Tab.ParentWindow.Tabs[Tab.ParentWindow.BrowserTabs.SelectedIndex])
+                Tab.ParentWindow.Title = Title + " - SLBr";
         }
         private void Edge_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
@@ -522,7 +553,7 @@ namespace SLBr.Pages
         private void IE_Loaded(object sender, RoutedEventArgs e)
         {
             IE.BrowserCore.Loaded -= IE_Loaded;
-            SuppressIEScriptErrors(bool.Parse(MainWindow.Instance.IESave.Get("IESuppressErrors")));
+            SuppressIEScriptErrors(bool.Parse(App.Instance.IESave.Get("IESuppressErrors")));
         }
         private void SuppressIEScriptErrors(bool Hide)
         {
@@ -557,7 +588,7 @@ namespace SLBr.Pages
                         let packageSet = new Set();
                         packageSet.add(title).add(options);
                         let json_package = JSON.stringify([...packageSet]);
-                        CefSharp.PostMessage(json_package);
+                        engine.PostMessage(json_package);
                         //alert(title);
                     }
                     static requestPermission() {
@@ -589,6 +620,18 @@ namespace SLBr.Pages
                 else if (HttpStatusCode == 418)
                 {
                     ErrorPrompt = Prompt($"I'm a teapot");
+                }
+
+
+                if (string.IsNullOrEmpty(App.Instance.ChromiumJSVersion))
+                {
+                    var Response = e.Browser.GetDevToolsClient().Browser.GetVersionAsync();
+                    App.Instance.ChromiumJSVersion = Response.Result.JsVersion;
+                    App.Instance.ChromiumRevision = Response.Result.Revision;
+                    //MessageBox.Show(Response.Result.Product);
+                    //MessageBox.Show(Response.Result.ProtocolVersion);
+                    //if (MainWindow.Instance.ChromiumRevision.StartsWith("@"))
+                    //    MainWindow.Instance.ChromiumRevision = MainWindow.Instance.ChromiumRevision.Substring(1);
                 }
             }
         }
@@ -767,9 +810,9 @@ namespace SLBr.Pages
         void BrowserLoadChanged(string Address)
         {
             QRCodePopup.IsOpen = false;
-            MainWindow.Instance.AddHistory(Address);
+            App.Instance.AddHistory(Address);
             string Host = Utils.Host(Address);
-            Tab.Icon = MainWindow.Instance.GetIcon(Address);
+            Tab.Icon = App.Instance.GetIcon(Address);
 
             if (Address.StartsWith("https:"))
             {
@@ -817,7 +860,7 @@ namespace SLBr.Pages
                 FavouriteButton.Content = "\xEB51";
                 Tab.FavouriteCommandHeader = "Add from favourites";
             }
-            if (MainWindow.Instance.Favourites.Count == 0)
+            if (App.Instance.Favourites.Count == 0)
             {
                 ToolBarPanel.Margin = new Thickness(5, 5, 5, 0);
                 FavouriteContainer.Height = 1;
@@ -832,8 +875,8 @@ namespace SLBr.Pages
         private void Chromium_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             Tab.Header = Title;
-            if (Tab == MainWindow.Instance.Tabs[MainWindow.Instance.BrowserTabs.SelectedIndex])
-                MainWindow.Instance.Title = Title + " - SLBr";
+            if (Tab == Tab.ParentWindow.Tabs[Tab.ParentWindow.BrowserTabs.SelectedIndex])
+                Tab.ParentWindow.Title = Title + " - SLBr";
         }
         private void Chromium_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
         {
@@ -848,16 +891,16 @@ namespace SLBr.Pages
                     if (IsUtilityContainerOpen && !ChromiumInspector.Address.StartsWith("http://localhost:8089/"))
                         ChromiumInspector.Address = "localhost:8089/json/list";
                         //if (IsUtilityContainerOpen && !ChromiumInspector.Address.StartsWith("http://localhost:8089/devtools/"))
-                    if (Chromium.Address.EndsWith("github.com/SLT-World/SLBr"))
-                        ToastBox.Show("", "Please support SLBr by giving a star to the project.", 10);
+                    //if (Chromium.Address.EndsWith("github.com/SLT-World/SLBr"))
+                    //    ToastBox.Show("", "Please support SLBr by giving a star to the project.", 10);
                 }
                 else
                 {
                     if (IsUtilityContainerOpen && !ChromiumInspector.Address.StartsWith("http://localhost:8089/"))
                         ChromiumInspector.Address = "localhost:8089/json/list";
                     if (Chromium.Address.StartsWith("slbr:"))
-                        Chromium.ExecuteScriptAsync("CefSharp.BindObjectAsync(\"internal\");");
-                    Chromium.ExecuteScriptAsync("CefSharp.BindObjectAsync(\"slbr\");");
+                        Chromium.ExecuteScriptAsync("engine.bindObjectAsync(\"internal\");");
+                    Chromium.ExecuteScriptAsync("engine.bindObjectAsync(\"slbr\");");
                 }
                 ReloadButton.Content = e.IsLoading ? "\xE711" : "\xE72C";
                 //WebsiteLoadingProgressBar.IsEnabled = e.IsLoading;
@@ -865,7 +908,7 @@ namespace SLBr.Pages
                 BackButton.IsEnabled = e.CanGoBack;
                 ForwardButton.IsEnabled = e.CanGoForward;
                 DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
-                _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(MainWindow.Instance.GetTheme().DarkWebPage ? bool.Parse(MainWindow.Instance.MainSave.Get("DarkWebPage")) : false);
+                _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(App.Instance.CurrentTheme.DarkWebPage ? bool.Parse(App.Instance.MainSave.Get("DarkWebPage")) : false);
             }));
         }
 
@@ -908,10 +951,10 @@ namespace SLBr.Pages
                     Navigate(V1);
                     break;
                 case Actions.CreateTab:
-                    MainWindow.Instance.NewBrowserTab(V1, 0, true);
+                    Tab.ParentWindow.NewBrowserTab(V1, 0, true);
                     break;
                 case Actions.CloseTab:
-                    MainWindow.Instance.CloseBrowserTab(int.Parse(V1));
+                    Tab.ParentWindow.CloseBrowserTab(int.Parse(V1), int.Parse(V2));
                     break;
                 case Actions.Inspect:
                     Inspect();
@@ -923,10 +966,10 @@ namespace SLBr.Pages
                     SetAudio(!IsAudioMuted);
                     break;
                 case Actions.Settings:
-                    MainWindow.Instance.OpenSettings(true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                    Tab.ParentWindow.OpenSettings(true, Tab.ParentWindow.BrowserTabs.SelectedIndex + 1);
                     break;
                 case Actions.UnloadTabs:
-                    MainWindow.Instance.UnloadTabs(true);
+                    Tab.ParentWindow.UnloadTabs(true);
                     break;
                 case Actions.SwitchBrowser:
                     SwitchBrowser(V1);
@@ -959,6 +1002,12 @@ namespace SLBr.Pages
                 case Actions.PromptNavigate:
                     Navigate(V1);
                     ClosePrompt(int.Parse(V2));
+                    break;
+                case Actions.NewWindow:
+                    App.Instance.NewWindow();
+                    break;
+                case Actions.Exit:
+                    App.Instance.CloseSLBr(false);
                     break;
             }
         }
@@ -1070,17 +1119,24 @@ namespace SLBr.Pages
             }
             else if (NewBrowserType == 1)//Edge
             {
-                if (BrowserType == 2)
+                if (App.Instance.WebView2Environment == null)
                 {
-                    IE.Dispose();
-                    //IEInspector.Dispose();
+                    MessageBox.Show("Error: Edge WebView2 Runtime Component not installed on device. SLBr cannot proceed to Edge Mode without WebView2.");
                 }
-                else if (BrowserType == 0)
+                else
                 {
-                    Chromium.Dispose();
-                    ChromiumInspector.Dispose();
+                    if (BrowserType == 2)
+                    {
+                        IE.Dispose();
+                        //IEInspector.Dispose();
+                    }
+                    else if (BrowserType == 0)
+                    {
+                        Chromium.Dispose();
+                        ChromiumInspector.Dispose();
+                    }
+                    CreateEdge(Url);
                 }
-                CreateEdge(Url);
             }
             else if (NewBrowserType == 2)//IE
             {
@@ -1103,6 +1159,15 @@ namespace SLBr.Pages
         {
             get
             {
+                /*if (BrowserType == 0 && Chromium != null)
+                    return Chromium.Address;
+                else if (BrowserType == 1 && Edge != null && Edge.Source != null)
+                    return Edge.Source.AbsoluteUri;
+                else if (BrowserType == 2 && IE != null && IE.BrowserCore != null && IE.BrowserCore.Source != null)
+                    try { return IE.BrowserCore.Source.AbsoluteUri; }
+                    catch { return StartupUrl; }
+                else
+                    return StartupUrl;*/
                 if (BrowserType == 0)
                     return Chromium.Address;
                 else if (BrowserType == 1)
@@ -1110,7 +1175,8 @@ namespace SLBr.Pages
                 else if (BrowserType == 2)
                     try { return IE.BrowserCore.Source.AbsoluteUri; }
                     catch { return StartupUrl; }
-                return "????";
+                else
+                    return "??????";
             }
             set
             {
@@ -1310,17 +1376,22 @@ namespace SLBr.Pages
             int FavouriteExistIndex = FavouriteExists(Address);
             if (FavouriteExistIndex != -1)
             {
-                MainWindow.Instance.Favourites.RemoveAt(FavouriteExistIndex);
+                App.Instance.Favourites.RemoveAt(FavouriteExistIndex);
                 FavouriteButton.Content = "\xEB51";
                 Tab.FavouriteCommandHeader = "Add to favourites";
             }
             else if (!IsLoading)
             {
-                MainWindow.Instance.Favourites.Add(new ActionStorage(this.Title, $"3<,>{Address}", Address));
-                FavouriteButton.Content = "\xEB52";
-                Tab.FavouriteCommandHeader = "Remove from favourites";
+                var infoWindow = new PromptDialogWindow("Prompt", $"Add favourite", "Name", Title);
+                infoWindow.Topmost = true;
+                if (infoWindow.ShowDialog() == true)
+                {
+                    App.Instance.Favourites.Add(new ActionStorage(infoWindow.UserInput, $"3<,>{Address}", Address));
+                    FavouriteButton.Content = "\xEB52";
+                    Tab.FavouriteCommandHeader = "Remove from favourites";
+                }
             }
-            if (MainWindow.Instance.Favourites.Count == 0)
+            if (App.Instance.Favourites.Count == 0)
             {
                 ToolBarPanel.Margin = new Thickness(5, 5, 5, 0);
                 FavouriteContainer.Height = 1;
@@ -1334,7 +1405,7 @@ namespace SLBr.Pages
         int FavouriteExists(string Url)
         {
             int ToReturn = -1;
-            string[] FavouriteUrls = MainWindow.Instance.Favourites.Select(item => item.Tooltip).ToArray();
+            string[] FavouriteUrls = App.Instance.Favourites.Select(item => item.Tooltip).ToArray();
             for (int i = 0; i < FavouriteUrls.Length; i++)
             {
                 if (FavouriteUrls[i] == Url)
@@ -1406,7 +1477,7 @@ namespace SLBr.Pages
                     string ScreenshotPath = MainSave.Get("ScreenshotPath");
                     if (!Directory.Exists(ScreenshotPath))
                         Directory.CreateDirectory(ScreenshotPath);
-                    string _ScreenshotFormat = MainWindow.Instance.MainSave.Get("ScreenshotFormat");
+                    string _ScreenshotFormat = App.Instance.MainSave.Get("ScreenshotFormat");
                     string FileExtension = "jpg";
                     CaptureScreenshotFormat ScreenshotFormat = CaptureScreenshotFormat.Jpeg;
                     if (_ScreenshotFormat == "Png")
@@ -1439,7 +1510,7 @@ namespace SLBr.Pages
         public void QRCode(string Url)
         {
             if (!QRCodePopup.IsOpen)
-                QRCodeImage.Source = MainWindow.Instance._QRCodeHandler.GenerateQRCode(Url).ToImageSource();
+                QRCodeImage.Source = App.Instance._QRCodeHandler.GenerateQRCode(Url).ToImageSource();
             QRCodePopup.IsOpen = !QRCodePopup.IsOpen;
         }
         public bool IsAudioMuted;
@@ -1463,6 +1534,9 @@ namespace SLBr.Pages
             Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["UnselectedTabBrushColor"] = _Theme.UnselectedTabColor;
             Resources["ControlFontBrushColor"] = _Theme.ControlFontColor;
+
+            if (BrowserInitialized)
+                Tab.Icon = App.Instance.GetIcon(Address);
         }
 
         bool AddressBoxFocused;
@@ -1524,7 +1598,7 @@ namespace SLBr.Pages
             SuggestionsTimer.Stop();
             try
             {
-                if (!bool.Parse(MainWindow.Instance.MainSave.Get("SearchSuggestions")) || Utils.IsUrl(AddressBox.Text))
+                if (!bool.Parse(App.Instance.MainSave.Get("SearchSuggestions")) || Utils.IsUrl(AddressBox.Text))
                 {
                     AddressBoxPlaceholder.Text = "";
                     return;
@@ -1540,7 +1614,7 @@ namespace SLBr.Pages
                         CurrentText += (char)((int)'0' + (int)(e.Key - Key.NumPad0));
                 }*/
                 string TextToScan = CurrentText.ToLower();
-                var responseText = MainWindow.Instance.TinyDownloader.DownloadString("https://suggestqueries.google.com/complete/search?client=chrome&gl=US&q=" + TextToScan);
+                var responseText = App.Instance.TinyDownloader.DownloadString("https://suggestqueries.google.com/complete/search?client=chrome&gl=US&q=" + TextToScan);
                 var items = (from each in responseText.Split(',') select each.Trim('[', ']', '\"', ':', '{', '}')).ToArray<string>();
                 for (int i = 0; i < items.Length; i++)
                 {
@@ -1574,7 +1648,7 @@ namespace SLBr.Pages
                 {
                     AddressBoxPlaceholder.Text = "";
                     if (Utils.CleanUrl(AddressBox.Text) == Utils.CleanUrl(AddressBox.Tag.ToString()))
-                        AddressBox.Text = Utils.ConvertUrlToReadableUrl(MainWindow.Instance._IdnMapping, bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()));
+                        AddressBox.Text = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()));
                 }
                 catch { }
             }
@@ -1587,7 +1661,7 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    if (AddressBox.Text == Utils.ConvertUrlToReadableUrl(MainWindow.Instance._IdnMapping, (bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()))))
+                    if (AddressBox.Text == Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, (bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()))))
                         AddressBox.Text = AddressBox.Tag.ToString();
                 }
                 catch { }
@@ -1602,7 +1676,7 @@ namespace SLBr.Pages
                 {
                     AddressBoxPlaceholder.Text = "";
                     if (Utils.CleanUrl(AddressBox.Text) == Utils.CleanUrl(AddressBox.Tag.ToString()))
-                        AddressBox.Text = Utils.ConvertUrlToReadableUrl(MainWindow.Instance._IdnMapping, bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()));
+                        AddressBox.Text = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, bool.Parse(MainSave.Get("FullAddress")) ? AddressBox.Tag.ToString() : Utils.CleanUrl(AddressBox.Tag.ToString()));
                 }
                 catch { }
             }

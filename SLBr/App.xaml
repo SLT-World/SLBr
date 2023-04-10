@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:SLBr"
              StartupUri="SplashScreen.xaml" Startup="Application_Startup">
     <Application.Resources>
-         
+        <ResourceDictionary Source="StyleResourceDictionary.xaml"/>
     </Application.Resources>
 </Application>

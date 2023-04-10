@@ -162,7 +162,7 @@ namespace SLBr.Handlers
                     {
                         if (commandId == (CefMenuCommand)26502)
                         {
-                            MainWindow.Instance.NewBrowserTab(SelectedText, 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                            App.Instance.CurrentFocusedWindow().NewBrowserTab(SelectedText, 0, true, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1);
                             ToReturn = true;
                         }
                     }
@@ -170,7 +170,7 @@ namespace SLBr.Handlers
                     {
                         if (commandId == CefMenuCommand.Find)
                         {
-                            MainWindow.Instance.NewBrowserTab(Utils.FixUrl(string.Format(MainWindow.Instance.MainSave.Get("Search_Engine"), SelectedText)), 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1); ;
+                            App.Instance.CurrentFocusedWindow().NewBrowserTab(Utils.FixUrl(string.Format(App.Instance.MainSave.Get("Search_Engine"), SelectedText)), 0, true, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1); ;
                             ToReturn = true;
                         }
                     }
@@ -184,12 +184,12 @@ namespace SLBr.Handlers
                     {
                         if (commandId == (CefMenuCommand)26504)
                         {
-                            MainWindow.Instance.NewBrowserTab($"view-source:{chromiumWebBrowser.Address}", 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                            App.Instance.CurrentFocusedWindow().NewBrowserTab($"view-source:{chromiumWebBrowser.Address}", 0, true, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1);
                             ToReturn = true;
                         }
                         else if (commandId == (CefMenuCommand)26503)
                         {
-                            MainWindow.Instance.Inspect();
+                            App.Instance.CurrentFocusedWindow().Inspect();
                             ToReturn = true;
                         }
                         else if (commandId == (CefMenuCommand)26501)
@@ -199,22 +199,22 @@ namespace SLBr.Handlers
                         }
                         else if (commandId == (CefMenuCommand)26506)
                         {
-                            MainWindow.Instance.Screenshot();
+                            App.Instance.CurrentFocusedWindow().Screenshot();
                             ToReturn = true;
                         }
                         else if (commandId == (CefMenuCommand)26507)
                         {
-                            MainWindow.Instance.Zoom(1);
+                            App.Instance.CurrentFocusedWindow().Zoom(1);
                             ToReturn = true;
                         }
                         else if (commandId == (CefMenuCommand)26508)
                         {
-                            MainWindow.Instance.Zoom(-1);
+                            App.Instance.CurrentFocusedWindow().Zoom(-1);
                             ToReturn = true;
                         }
                         else if (commandId == (CefMenuCommand)26509)
                         {
-                            MainWindow.Instance.Zoom(0);
+                            App.Instance.CurrentFocusedWindow().Zoom(0);
                             ToReturn = true;
                         }
                     }));
@@ -223,7 +223,7 @@ namespace SLBr.Handlers
                 {
                     if (commandId == CefMenuCommand.Copy)
                     {
-                        try { Clipboard.SetDataObject(new Bitmap(new MemoryStream(MainWindow.Instance.TinyDownloader.DownloadData(parameters.SourceUrl)))); }
+                        try { Clipboard.SetDataObject(new Bitmap(new MemoryStream(App.Instance.TinyDownloader.DownloadData(parameters.SourceUrl)))); }
                         catch { Clipboard.SetText(parameters.SourceUrl); }
                         ToReturn = true;
                     }
@@ -252,7 +252,7 @@ namespace SLBr.Handlers
         public bool RunContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model, IRunContextMenuCallback callback)
         {
             if (model.Count == 0) return true;
-            if (MainWindow.Instance.GetTheme().DarkTitleBar == true) return false;
+            if (App.Instance.CurrentTheme.DarkTitleBar == true) return false;
 
             //return false;
             var webBrowser = (ChromiumWebBrowser)chromiumWebBrowser;
@@ -272,7 +272,9 @@ namespace SLBr.Handlers
                 };
 
                 menu.Closed += handler;
-                menu.Style = (Style)MainWindow.Instance.Resources["ContextMenuStyle"];
+                menu.Style = (Style)App.Instance.Resources["ContextMenuStyle"];
+                
+                //menu.ContextMenu.Style = (Style)MainWindow.Instance.Resources["ContextMenuStyle"];
                 menu.OverridesDefaultStyle = true;
 
                 MenuClassToCollection(menuItems, menu.Items, browser, Parameters);
@@ -305,7 +307,11 @@ namespace SLBr.Handlers
             {
                 if (item.CommandId == CefMenuCommand.NotFound && string.IsNullOrWhiteSpace(item.Header))
                 {
-                    _ItemCollection.Add(new Separator());
+                    _ItemCollection.Add(new Separator
+                    { 
+                        //Style = (Style)MainWindow.Instance.Resources["ApplyableSeparatorStyle"],
+                        //OverridesDefaultStyle = true
+                    });
                     continue;
                 }
 
@@ -314,7 +320,12 @@ namespace SLBr.Handlers
                     Header = item.Header.Replace("&", "_"),
                     IsEnabled = item.IsEnabled,
                     Command = GetCommandByCefCommand(browser, item.CommandId, Parameters),
+                    //Style = (Style)MainWindow.Instance.Resources["ApplyableMenuItemStyle"],
+                    //OverridesDefaultStyle = true
                 };
+                _MenuItem.SetResourceReference(Control.ForegroundProperty, "White");
+                //_MenuItem.SetResourceReference(Control.StyleProperty, (Style)MainWindow.Instance.Resources["ApplyableMenuItemStyle"]);
+                //_MenuItem.SetResourceReference(Control.OverridesDefaultStyleProperty, true);
                 if (item.SubMenu != null)
                 {
                     //MessageBox.Show(item.SubMenu.ToString());
@@ -343,7 +354,7 @@ namespace SLBr.Handlers
                         {
                             if (_Command == (CefMenuCommand)26502)
                             {
-                                MainWindow.Instance.NewBrowserTab(SelectedText, 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                                App.Instance.CurrentFocusedWindow().NewBrowserTab(SelectedText, 0, true, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1);
                                 ToStop = true;
                             }
                         }
@@ -351,7 +362,7 @@ namespace SLBr.Handlers
                         {
                             if (_Command == CefMenuCommand.Find)
                             {
-                                MainWindow.Instance.NewBrowserTab(Utils.FixUrl(string.Format(MainWindow.Instance.MainSave.Get("Search_Engine"), SelectedText)), 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1); ;
+                                App.Instance.CurrentFocusedWindow().NewBrowserTab(Utils.FixUrl(string.Format(App.Instance.MainSave.Get("Search_Engine"), SelectedText)), 0, true, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1); ;
                                 ToStop = true;
                             }
                         }
@@ -365,12 +376,12 @@ namespace SLBr.Handlers
                         {
                             if (_Command == (CefMenuCommand)26504)
                             {
-                                MainWindow.Instance.NewBrowserTab($"view-source:{browser.MainFrame.Url}", 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                                App.Instance.CurrentFocusedWindow().NewBrowserTab($"view-source:{browser.MainFrame.Url}", 0, true, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1);
                                 ToStop = true;
                             }
                             else if (_Command == (CefMenuCommand)26503)
                             {
-                                MainWindow.Instance.Inspect();
+                                App.Instance.CurrentFocusedWindow().Inspect();
                                 ToStop = true;
                             }
                             else if (_Command == (CefMenuCommand)26501)
@@ -380,22 +391,22 @@ namespace SLBr.Handlers
                             }
                             else if (_Command == (CefMenuCommand)26506)
                             {
-                                MainWindow.Instance.Screenshot();
+                                App.Instance.CurrentFocusedWindow().Screenshot();
                                 ToStop = true;
                             }
                             else if (_Command == (CefMenuCommand)26507)
                             {
-                                MainWindow.Instance.Zoom(1);
+                                App.Instance.CurrentFocusedWindow().Zoom(1);
                                 ToStop = true;
                             }
                             else if (_Command == (CefMenuCommand)26508)
                             {
-                                MainWindow.Instance.Zoom(-1);
+                                App.Instance.CurrentFocusedWindow().Zoom(-1);
                                 ToStop = true;
                             }
                             else if (_Command == (CefMenuCommand)26509)
                             {
-                                MainWindow.Instance.Zoom(0);
+                                App.Instance.CurrentFocusedWindow().Zoom(0);
                                 ToStop = true;
                             }
                         }));
@@ -404,7 +415,7 @@ namespace SLBr.Handlers
                     {
                         if (_Command == CefMenuCommand.Copy)
                         {
-                            try { Clipboard.SetDataObject(new Bitmap(new MemoryStream(MainWindow.Instance.TinyDownloader.DownloadData(Parameters.SourceUrl)))); }
+                            try { Clipboard.SetDataObject(new Bitmap(new MemoryStream(App.Instance.TinyDownloader.DownloadData(Parameters.SourceUrl)))); }
                             catch { Clipboard.SetText(Parameters.SourceUrl); }
                             ToStop = true;
                         }

@@ -45,7 +45,7 @@ namespace SLBr.Controls
                 Description.Text = _Description;
                 timer.Interval = new TimeSpan(0, 0, Delay);
                 timer.Start();
-                var Monitor = MonitorMethods.MonitorFromWindow(new WindowInteropHelper(MainWindow.Instance).EnsureHandle(), MonitorMethods.MONITOR_DEFAULTTONEAREST);
+                var Monitor = MonitorMethods.MonitorFromWindow(new WindowInteropHelper(App.Instance.CurrentFocusedWindow()).EnsureHandle(), MonitorMethods.MONITOR_DEFAULTTONEAREST);
 
                 if (Monitor != IntPtr.Zero)
                 {
@@ -58,7 +58,7 @@ namespace SLBr.Controls
                 }
 
                 if (_Theme == null)
-                    _Theme = MainWindow.Instance.GetTheme();
+                    _Theme = App.Instance.CurrentTheme;
                 ApplyTheme(_Theme);
             }
             catch { }

@@ -23,7 +23,7 @@ namespace SLBr.Handlers
                     if (targetDisposition == WindowOpenDisposition.NewPopup)
                         new PopupBrowser(targetUrl, _Width, _Height).Show();
                     else
-                        MainWindow.Instance.NewBrowserTab(targetUrl, 0, true, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+                        App.Instance.CurrentFocusedWindow().NewBrowserTab(targetUrl, 0, true, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1);
                 }));
             }
             return true;
@@ -35,6 +35,7 @@ namespace SLBr.Handlers
 
         public bool DoClose(IWebBrowser browserControl, IBrowser browser)
         {
+            //MessageBox.Show("Close");
             if (browser.IsPopup)
                 return false;
             return true;

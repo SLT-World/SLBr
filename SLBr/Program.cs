@@ -18,6 +18,7 @@ namespace SLBr
         public const int WP_SYSTEMMENU = 0x02;
         public const int WM_GETMINMAXINFO = 0x0024;
         public const int HTMAXBUTTON = 9;
+        public const int HWND_BROADCAST = 0xffff;
 
         [DllImport("user32", EntryPoint = "SendMessageA")]
         private static extern int SendMessage(IntPtr Hwnd, int wMsg, IntPtr wParam, IntPtr lParam);
@@ -35,7 +36,9 @@ namespace SLBr
             IntPtr _copyDataBuff = IntPtrAlloc(_copyData);
 
             //Send message to the other process
-            SendMessage(targetProcess.MainWindowHandle, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
+            //NativeMethods.PostMessage((IntPtr)HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
+            SendMessage((IntPtr)HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
+            //SendMessage(targetProcess.MainWindowHandle, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
 
             Marshal.FreeHGlobal(_copyDataBuff);
             Marshal.FreeHGlobal(_stringMessageBuffer);

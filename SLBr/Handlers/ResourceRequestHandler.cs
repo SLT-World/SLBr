@@ -45,9 +45,10 @@ namespace SLBr.Handlers
         {
             return null;
         }
+        //"ad.js" causes reddit to go weird
         FastHashSet<string> HasInLink = new FastHashSet<string> {
             "smartadserver.com", "bidswitch.net", "taboola", "amazon-adsystem.com", "survey.min.js", "survey.js", "social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
-            "ad.js", "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
+            "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
             "admanager.js", "adserver", "smartadserver", "usync.js", "moneybid.js", "miner.js", "prebid", "youtube.com/ptracking", "fls.doubleclick.net", "google.com/ads",
             "advertising.js", "adsense.js", "track", "plusone.js"
         };
@@ -69,7 +70,9 @@ namespace SLBr.Handlers
             "googleads.g.doubleclick.net", "pagead.l.doubleclick.net", "g.doubleclick.net", "fls.doubleclick.net",
             "gads.pubmatic.com", "ads.pubmatic.com",// "image6.pubmatic.com",
             "ads.facebook.com", "an.facebook.com",
-            "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn"/*, "yt3.ggpht.com"*/,
+            "cdn.snigelweb.com", "cdn.connectad.io", //For w3schools
+            "pool.admedo.com", "c.pub.network",
+            "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn",
             "ads.tiktok.com", "ads-sg.tiktok.com", "ads.adthrive.com",
             "ads.reddit.com", "d.reddit.com", "rereddit.com", "events.redditmedia.com",
             "ads-twitter.com", "static.ads-twitter.com", "ads-api.twitter.com", "advertising.twitter.com",
@@ -158,8 +161,11 @@ namespace SLBr.Handlers
         };
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
+            if (!frame.IsValid)
+                return CefReturnValue.Continue;
             bool Continue = true;
-            if (bool.Parse(MainWindow.Instance.ExperimentsSave.Get("RedirectAJAXToCDNJS")) && Utils.Host(request.Url) == "ajax.googleapis.com")
+
+            if (bool.Parse(App.Instance.ExperimentsSave.Get("RedirectAJAXToCDNJS")) && Utils.Host(request.Url) == "ajax.googleapis.com")
             {
                 request.Url = request.Url.Replace("ajax.googleapis.com", "cdnjs.cloudflare.com");
                 return CefReturnValue.Continue;
@@ -169,7 +175,7 @@ namespace SLBr.Handlers
             //request.SetHeaderByName("Device-Memory", "0.25", true);
             if (Continue)
             {
-                if (Utils.IsPossiblyAd(request.ResourceType))
+                if (Utils.Host(request.Url) != "ecosia.org" && Utils.IsPossiblyAd(request.ResourceType))
                 {
                     if (AdBlock || TrackerBlock)
                     {
@@ -189,7 +195,7 @@ namespace SLBr.Handlers
                                 if (Analytics.Contains(Host))
                                 {
                                     Continue = false;
-                                    MainWindow.Instance.TrackersBlocked++;
+                                    App.Instance.TrackersBlocked++;
                                 }
                             if (Continue)
                             {
@@ -197,21 +203,21 @@ namespace SLBr.Handlers
                                     if (Ads.Contains(Host) || Miners.Contains(Host))
                                     {
                                         Continue = false;
-                                        MainWindow.Instance.AdsBlocked++;
+                                        App.Instance.AdsBlocked++;
                                     }
                             }
                         }
                     }
                 }
-            }
-            if (Continue)
-            {
-                string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url);
-                SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
-                if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software || _ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
+                if (Continue && Utils.CanCheckSafeBrowsing(request.ResourceType))
                 {
-                    //request.Url = "slbr://malware";
-                    Continue = false;
+                    string Response = App.Instance._SafeBrowsing.Response(request.Url);
+                    SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? App.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+                    if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software || _ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
+                    {
+                        //request.Url = "slbr://malware";
+                        Continue = false;
+                    }
                 }
             }
             return Continue ? CefReturnValue.Continue : CefReturnValue.Cancel;

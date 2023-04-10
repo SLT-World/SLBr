@@ -57,21 +57,24 @@ namespace SLBr.Handlers
                 dynamic Data = JObject.Parse(_Data);
                 try
                 {
-                    dynamic Matches = Data.matches;
-                    if (Matches[0].threatType == "MALWARE")
-                        _Type = ThreatType.Malware;
-                    if (Matches[0].threatType == "UNWANTED_SOFTWARE")
-                        _Type = ThreatType.Unwanted_Software;
-                    else if (Matches[0].threatType == "SOCIAL_ENGINEERING")
-                        _Type = ThreatType.Social_Engineering;
-                    if (_Type == ThreatType.Unknown)
+                    if (Data.matches != null)
                     {
-                        if (Matches[1].threatType == "MALWARE")
+                        dynamic Matches = Data.matches;
+                        if (Matches[0].threatType == "MALWARE")
                             _Type = ThreatType.Malware;
                         if (Matches[0].threatType == "UNWANTED_SOFTWARE")
                             _Type = ThreatType.Unwanted_Software;
-                        else if (Matches[1].threatType == "SOCIAL_ENGINEERING")
+                        else if (Matches[0].threatType == "SOCIAL_ENGINEERING")
                             _Type = ThreatType.Social_Engineering;
+                        if (_Type == ThreatType.Unknown)
+                        {
+                            if (Matches[1].threatType == "MALWARE")
+                                _Type = ThreatType.Malware;
+                            if (Matches[0].threatType == "UNWANTED_SOFTWARE")
+                                _Type = ThreatType.Unwanted_Software;
+                            else if (Matches[1].threatType == "SOCIAL_ENGINEERING")
+                                _Type = ThreatType.Social_Engineering;
+                        }
                     }
                 }
                 catch { }

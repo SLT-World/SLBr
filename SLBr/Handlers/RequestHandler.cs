@@ -55,7 +55,7 @@ namespace SLBr.Handlers
 
 		public bool OnBeforeBrowse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool userGesture, bool isRedirect)
 		{
-			if (bool.Parse(MainWindow.Instance.MainSave.Get("ModernWikipedia")))
+			if (bool.Parse(App.Instance.MainSave.Get("MobileWikipedia")))
 			{
 				if (request.Url.Contains("wik"))
 				{
@@ -66,8 +66,8 @@ namespace SLBr.Handlers
 			}
 			if (Utils.IsHttpScheme(request.Url))
 			{
-				string Response = MainWindow.Instance._SafeBrowsing.Response(request.Url);
-				SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+				string Response = App.Instance._SafeBrowsing.Response(request.Url);
+				SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? App.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
 				if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software)
 					frame.LoadUrl("slbr://malware");
 				else if (_ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
@@ -90,7 +90,7 @@ namespace SLBr.Handlers
 			{
 				Application.Current.Dispatcher.BeginInvoke(new Action(delegate
 				{
-					MainWindow.Instance.NewBrowserTab(targetUrl, 0, false, MainWindow.Instance.BrowserTabs.SelectedIndex + 1);
+					App.Instance.CurrentFocusedWindow().NewBrowserTab(targetUrl, 0, false, App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex + 1);
 				}));
 				return true;
 			}
@@ -119,20 +119,23 @@ namespace SLBr.Handlers
 
 		public void OnRenderProcessTerminated(IWebBrowser browserControl, IBrowser browser, CefTerminationStatus status)
 		{
-			try
+			if (browser != null)
 			{
-				if (Utils.CheckForInternetConnection())
-					browser.Reload(true);
-				else
+				try
 				{
-					Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+					if (Utils.CheckForInternetConnection())
+						browser.Reload(true);
+					else
 					{
-						ChromiumWebBrowser _ChromiumWebBrowser = (ChromiumWebBrowser)browserControl;
-						_ChromiumWebBrowser.Address = $"slbr://processcrashed?s={browserControl.Address}";
-					}));
+						Application.Current.Dispatcher.BeginInvoke(new Action(delegate
+						{
+							ChromiumWebBrowser _ChromiumWebBrowser = (ChromiumWebBrowser)browserControl;
+							_ChromiumWebBrowser.Address = $"slbr://processcrashed?s={browserControl.Address}";
+						}));
+					}
 				}
+				catch { }
 			}
-			catch { }
 		}
 
 		public void OnRenderViewReady(IWebBrowser browserControl, IBrowser browser)

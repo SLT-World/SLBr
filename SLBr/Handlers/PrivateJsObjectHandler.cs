@@ -21,35 +21,39 @@ namespace SLBr.Handlers
             };
 
         public string SearchProviderPrefix() =>
-            MainWindow.Instance.MainSave.Get("Search_Engine");
+            App.Instance.MainSave.Get("Search_Engine");
         public int BlockedAds() =>
-            MainWindow.Instance.AdsBlocked;
+            App.Instance.AdsBlocked;
         public int BlockedTrackers() =>
-            MainWindow.Instance.TrackersBlocked;
+            App.Instance.TrackersBlocked;
 
         public string GetBackground()
         {
             string Url = "";
             {
-                string CustomBackgroundQuery = MainWindow.Instance.MainSave.Get("CustomBackgroundQuery");
-                string BackgroundImage = MainWindow.Instance.MainSave.Get("BackgroundImage");
+                string CustomBackgroundQuery = App.Instance.MainSave.Get("CustomBackgroundQuery");
+                string BackgroundImage = App.Instance.MainSave.Get("BackgroundImage");
                 if (BackgroundImage == "Unsplash")
                 {
                     if (string.IsNullOrEmpty(CustomBackgroundQuery))
-                        Url = UnsplashAPI[MainWindow.Instance.TinyRandom.Next(UnsplashAPI.Count)];
+                        Url = UnsplashAPI[App.Instance.TinyRandom.Next(UnsplashAPI.Count)];
                     else
                         Url = "https://source.unsplash.com/1920x1080/?" + CustomBackgroundQuery;
                 }
                 else if (BackgroundImage == "Bing image of the day")
                 {
-                    XmlDocument doc = new XmlDocument();
-                    doc.LoadXml(MainWindow.Instance.TinyDownloader.DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
-                    Url = @"http://www.bing.com/" + doc.SelectSingleNode(@"/images/image/url").InnerText;
+                    try
+                    {
+                        XmlDocument doc = new XmlDocument();
+                        doc.LoadXml(App.Instance.TinyDownloader.DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
+                        Url = @"http://www.bing.com/" + doc.SelectSingleNode(@"/images/image/url").InnerText;
+                    }
+                    catch { }
                 }
                 else if (BackgroundImage == "Lorem Picsum")
                     Url = "https://picsum.photos/1920/1080";
                 else if (BackgroundImage == "Custom")
-                    Url = MainWindow.Instance.MainSave.Get("CustomBackgroundImage");
+                    Url = App.Instance.MainSave.Get("CustomBackgroundImage");
             }
             return "url('" + Url + "')";
             //return 
@@ -57,16 +61,16 @@ namespace SLBr.Handlers
 
         public string Downloads()
         {
-            return JsonConvert.SerializeObject(MainWindow.Instance.Downloads);
+            return JsonConvert.SerializeObject(App.Instance.Downloads);
         }
         public string History()
         {
-            return JsonConvert.SerializeObject(MainWindow.Instance.History.Reverse());
+            return JsonConvert.SerializeObject(App.Instance.History.Reverse());
         }
         public bool CancelDownload(int DownloadId)
         {
-            if (!MainWindow.Instance.CanceledDownloads.Contains(DownloadId))
-                MainWindow.Instance.CanceledDownloads.Add(DownloadId);
+            if (!App.Instance.CanceledDownloads.Contains(DownloadId))
+                App.Instance.CanceledDownloads.Add(DownloadId);
             return true;
         }
 

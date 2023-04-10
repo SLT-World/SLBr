@@ -25,7 +25,7 @@ namespace SLBr.Controls
             InitializeComponent();
 
             lblQuestion.Content = Question;
-			ApplyTheme(MainWindow.Instance.GetTheme());
+			ApplyTheme(App.Instance.CurrentTheme);
         }
 
         public void ApplyTheme(Theme _Theme)

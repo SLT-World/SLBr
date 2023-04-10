@@ -452,7 +452,7 @@
                 <ControlTemplate TargetType="TabItem">
                     <Border Name="Border" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" Margin="2.5,0,2.5,5">
                         <StackPanel Name="BorderContent" Orientation="Horizontal" Margin="2.5,2.5,2.5,2.5">
-                            <Button x:Name="CloseTabButton" FontFamily="Segoe MDL2 Assets" FontSize="7.5" Content="&#xE711;" Click="ButtonAction" Tag="{Binding Action}" Width="20" Height="20" Margin="0,0,2.5,0"/>
+                            <Button x:Name="CloseTabButton" FontFamily="Segoe MDL2 Assets" FontSize="7.5" Content="&#xE711;" Click="ButtonAction" Tag="{Binding CloseCommand}" Width="20" Height="20" Margin="0,0,2.5,0"/>
                             <!--<Image VerticalAlignment="Center" ImageFailed="Image_ImageFailed" Tag="{Binding Id}" RenderOptions.BitmapScalingMode="LowQuality" Height="20" Width="20" Stretch="Uniform" Margin="0,0,2.5,0" Source="{Binding Icon}" x:Name="Icon" />-->
                             <Grid VerticalAlignment="Center" Height="20" Width="20" Margin="0,0,2.5,0" x:Name="IconContainer">
 
@@ -1362,10 +1362,10 @@
             </Grid>
         </Border>
         <ControlTemplate.Triggers>
-            <Trigger Property="Header" Value="Cancel">
-                <Setter Property="Icon" Value="&#xe8c6;"/>
+            <!--<Trigger Property="Header" Value="Cancel">
+                <Setter Property="Icon" Value="&#xe8c6;"/>-->
                 <!--<Setter TargetName="Icon" Property="Margin" Value="5,0,0,0"/>-->
-            </Trigger>
+            <!--</Trigger>-->
             <Trigger Property="Header" Value="Cut">
                 <Setter Property="Icon" Value="&#xe8c6;"/>
                 <!--<Setter TargetName="Icon" Property="Margin" Value="5,0,0,0"/>-->

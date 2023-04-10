@@ -18,7 +18,7 @@ namespace SLBr
         {
             int TabId = int.Parse(((Image)sender).Tag.ToString());
             //((Image)sender).Source = new BitmapImage(new Uri("https://example.com/abc.png"));
-            MainWindow.Instance.GetBrowserTabWithId(TabId).Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", (MainWindow.Instance.GetTheme().DarkTitleBar ? "White Tab Icon.png" : "Black Tab Icon.png"))));
+            App.Instance.CurrentFocusedWindow().GetBrowserTabWithId(TabId).Icon = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", (App.Instance.CurrentTheme.DarkTitleBar ? "White Tab Icon.png" : "Black Tab Icon.png"))));
             //((Image)sender).Visibility = Visibility.Collapsed;
         }
 
@@ -26,7 +26,7 @@ namespace SLBr
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
-                MainWindow.Instance.ButtonAction(sender, e);
+                App.Instance.CurrentFocusedWindow().ButtonAction(sender, e);
             }));
         }
 
@@ -69,31 +69,31 @@ namespace SLBr
                 int TabItemSourceId = int.Parse(TabItemSource.Tag.ToString());
                 int TabItemTargetId = int.Parse(TabItemTarget.Tag.ToString());
 
-                BrowserTabItem BrowserTabItemSource = MainWindow.Instance.GetBrowserTabWithId(TabItemSourceId);
-                BrowserTabItem BrowserTabItemTarget = MainWindow.Instance.GetBrowserTabWithId(TabItemTargetId);
+                BrowserTabItem BrowserTabItemSource = App.Instance.CurrentFocusedWindow().GetBrowserTabWithId(TabItemSourceId);
+                BrowserTabItem BrowserTabItemTarget = App.Instance.CurrentFocusedWindow().GetBrowserTabWithId(TabItemTargetId);
 
                 if (TabItemTargetId != TabItemSourceId)
                 {
-                    int TargetIndex = MainWindow.Instance.Tabs.IndexOf(BrowserTabItemTarget);
+                    int TargetIndex = App.Instance.CurrentFocusedWindow().Tabs.IndexOf(BrowserTabItemTarget);
                     bool IsOriginallySelected = TabItemSource.IsSelected;
 
-                    MainWindow.Instance.Tabs.Remove(BrowserTabItemSource);
-                    MainWindow.Instance.Tabs.Insert(TargetIndex, BrowserTabItemSource);
+                    App.Instance.CurrentFocusedWindow().Tabs.Remove(BrowserTabItemSource);
+                    App.Instance.CurrentFocusedWindow().Tabs.Insert(TargetIndex, BrowserTabItemSource);
                     if (IsOriginallySelected)
-                        MainWindow.Instance.BrowserTabs.SelectedIndex = TargetIndex;
+                        App.Instance.CurrentFocusedWindow().BrowserTabs.SelectedIndex = TargetIndex;
                 }
                 e.Handled = true;
             }
             else if (IsFileDrop)
             {
                 string[] FileLoadup = (string[])e.Data.GetData(DataFormats.FileDrop);
-                MainWindow.Instance.NewBrowserTab(FileLoadup[0], 0, true);
+                App.Instance.CurrentFocusedWindow().NewBrowserTab(FileLoadup[0], 0, true);
                 e.Handled = true;
             }
             else if (IsString)
             {
                 string Url = (string)e.Data.GetData(DataFormats.StringFormat);
-                MainWindow.Instance.NewBrowserTab(Utils.FilterUrlForBrowser(Url, MainWindow.Instance.MainSave.Get("Search_Engine")), 0, true);
+                App.Instance.CurrentFocusedWindow().NewBrowserTab(Utils.FilterUrlForBrowser(Url, App.Instance.MainSave.Get("Search_Engine")), 0, true);
                 e.Handled = true;
             }
 

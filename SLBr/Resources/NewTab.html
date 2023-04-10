@@ -4,10 +4,10 @@
 <head>
     <meta charset="utf-8" />
     <title>New Tab</title>
-    <link rel="stylesheet" type="text/css" href="./style.css"/>
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <!--<script>
-        CefSharp.BindObjectAsync("internal");
+        engine.bindObjectAsync("internal");
         function setBackgroundImage() {
             setBackgroundImageAsync();
         };
@@ -138,9 +138,9 @@
         </div>
     </div>
     <script type="text/javascript">
-        CefSharp.BindObjectAsync("internal");
+        engine.bindObjectAsync("internal");
         (async () => {
-            await CefSharp.BindObjectAsync("internal");
+            await engine.bindObjectAsync("internal");
 
             internal.getBackground().then(function (res) {
                 document.documentElement.style.backgroundImage = res;

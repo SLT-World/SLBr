@@ -28,7 +28,7 @@ namespace SLBr.Controls
             QuestionText.Content = Question;
             MessageText.Text = Message;
             UserInputTextBox.Text = DefaultInputText;
-            ApplyTheme(MainWindow.Instance.GetTheme());
+            ApplyTheme(App.Instance.CurrentTheme);
         }
 
         public void ApplyTheme(Theme _Theme)

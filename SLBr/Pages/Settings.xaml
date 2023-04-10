@@ -120,7 +120,7 @@
                             Service improvement
                         </GroupBox.Header>
                         <StackPanel>
-                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="5" Content="Help improve SLBr by automatically sending usage statistics and crash reports to SLT World"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="5" Content="Help improve SLBr by automatically sending usage statistics and crash reports"/>
                             <!--<CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="5" Content="Help improve SLBr by sending diagnostic reports when the SLBr crashes or freezes"/>-->
                         </StackPanel>
                     </GroupBox>
@@ -181,6 +181,7 @@
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="RenderModeCheckBox" Click="RenderModeCheckBox_Click" Margin="5" Content="Enable WPF hardware acceleration"/>
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ChromiumHardwareAccelerationCheckBox" Click="ChromiumHardwareAccelerationCheckBox_Click" Margin="5" Content="Enable Chromium hardware acceleration"/>
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="LowEndDeviceModeCheckBox" Click="LowEndDeviceModeCheckBox_Click" Margin="5" Content="Enable Chromium low end device mode"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SkipLowPriorityTasksCheckBox" Click="SkipLowPriorityTasksCheckBox_Click" Margin="5" Content="Skip low priority tasks"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
@@ -203,10 +204,26 @@
                             Background
                         </GroupBox.Header>
                         <StackPanel>
+                            <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Angle Graphics Backend"/>
+                            <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="AngleGraphicsBackendComboBox" Margin="5" VerticalAlignment="Top" SelectedIndex="0"/>
                             <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="GPU rasterization MSAA sample count"/>
                             <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="MSAASampleCountComboBox" Margin="5" VerticalAlignment="Top" SelectedIndex="0"/>
+                            <TextBlock Margin="5" FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource ControlFontBrush}">
+                                The number of multisample antialiasing samples for GPU rasterization. Requires MSAA support on GPU to have an effect.
+                            </TextBlock>
                             <TextBlock Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Renderer process limit"/>
                             <ComboBox Foreground="{DynamicResource FontBrush}" x:Name="RendererProcessLimitComboBox" Margin="5" VerticalAlignment="Top" SelectedIndex="0"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
+                        <GroupBox.Header>
+                            Prefetching &amp; Prerendering
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="PrintRasterCheckBox" Click="PrintRasterCheckBox_Click" Margin="5" Content="Enable print raster"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="PrerenderCheckBox" Click="PrerenderCheckBox_Click" Margin="5" Content="Enable prerender"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="SpeculativePreconnectCheckBox" Click="SpeculativePreconnectCheckBox_Click" Margin="5" Content="Enable speculative TCP/IP preconnection"/>
+                            <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="PrefetchDNSCheckBox" Click="PrefetchDNSCheckBox_Click" Margin="5" Content="Enable DNS Prefetching"/>
                         </StackPanel>
                     </GroupBox>
 
@@ -236,7 +253,7 @@
                             <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="IESuppressErrorsCheckBox" Click="IESuppressErrorsCheckBox_Click" Margin="5" Content="Suppress script errors"/>
                         </StackPanel>
                     </GroupBox>
-                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="ModernWikipediaCheckBox" Click="ModernWikipediaCheckBox_Click" Margin="5" Content="Mobile Wikipedia view"/>
+                    <CheckBox Foreground="{DynamicResource FontBrush}" x:Name="MobileWikipediaCheckBox" Click="MobileWikipediaCheckBox_Click" Margin="5" Content="Mobile Wikipedia view"/>
                     <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
                         <GroupBox.Header>
                             Protocols
@@ -320,7 +337,7 @@
                             repository
                         </Hyperlink>.</TextBlock>
                     <!--<TextBlock Text="SLBr" Margin="5,10,0,0"/>-->
-                    <TextBlock Text="Copyright © 2022 SLT World. All rights reserved." Margin="5,10,0,0"/>
+                    <TextBlock Text="Copyright © 2022 SLT World. All rights reserved." Margin="5,10,0,5"/>
                     <!--<TextBlock Margin="5">
                         <Hyperlink NavigateUri="slbr://license" RequestNavigate="Hyperlink_RequestNavigate">
                             License
@@ -330,6 +347,27 @@
                             Version
                         </Hyperlink>
                         </TextBlock>-->
+                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
+                        <GroupBox.Header>
+                            Chromium
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="CEFVersion" Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="CEF: "/>
+                            <TextBlock x:Name="ChromiumVersion" Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Version: "/>
+                            <TextBlock x:Name="ChromiumWebkit" Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Webkit: "/>
+                            <TextBlock x:Name="ChromiumJSVersion" Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Javascript: "/>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Foreground="{DynamicResource FontBrush}" Margin="5">
+                        <GroupBox.Header>
+                            Edge
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="EdgeVersion" Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Version: "/>
+                            <!--<TextBlock x:Name="EdgeWebkit" Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Webkit: "/>
+                            <TextBlock x:Name="EdgeJSVersion" Foreground="{DynamicResource FontBrush}" Margin="5" VerticalAlignment="Top" Text="Javascript: "/>-->
+                        </StackPanel>
+                    </GroupBox>
                 </StackPanel>
             </TabItem>
         </TabControl>

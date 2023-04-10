@@ -214,7 +214,7 @@ namespace SLBr
         }
         public static bool CheckInstancesUsingMutex()
         {
-            Mutex _appMutex = new Mutex(false, MainWindow.Instance.AppUserModelID);
+            Mutex _appMutex = new Mutex(false, App.Instance.AppUserModelID);
             if (!_appMutex.WaitOne(1000))
                 return true;
             return false;
@@ -363,8 +363,10 @@ namespace SLBr
             Url.StartsWith("callto:") || Url.StartsWith("mailto:") || Url.StartsWith("news:") || Url.StartsWith("feed:");
         public static bool IsAboutUrl(string Url) =>
             Url.StartsWith("about:");
+        public static bool CanCheckSafeBrowsing(ResourceType _ResourceType) =>
+            _ResourceType == ResourceType.NavigationPreLoadSubFrame || _ResourceType == ResourceType.NavigationPreLoadMainFrame || _ResourceType == ResourceType.MainFrame || _ResourceType == ResourceType.SubFrame;
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
-            _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Image || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame;
+            _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame;
         public static bool CanCheck(TransitionType _TransitionType) =>
             _TransitionType != TransitionType.AutoSubFrame && _TransitionType != TransitionType.Blocked && _TransitionType != TransitionType.FormSubmit;
         public static bool IsHttpScheme(string Url) =>

@@ -41,7 +41,7 @@ namespace SLBr.Handlers
         {
             if (type == KeyType.RawKeyDown)
             {
-                MainWindow.Instance.Dispatcher.BeginInvoke(new Action(delegate
+                App.Current.Dispatcher.BeginInvoke(new Action(delegate
                 {
                     bool HasControl = modifiers == CefEventFlags.ControlDown;
                     bool HasShift = modifiers == CefEventFlags.ShiftDown;

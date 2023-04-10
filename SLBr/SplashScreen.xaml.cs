@@ -43,7 +43,7 @@ namespace SLBr
             ProgressWorker.RunWorkerCompleted += ProgressWorker_RunWorkerCompleted;
             ProgressWorker.RunWorkerAsync();*/
 
-            new MainWindow();
+            //new MainWindow();
             /*_Window = new MainWindow(ProgressWorker);
             var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
             timer.Start();
@@ -59,7 +59,10 @@ namespace SLBr
             ProgressStatus.Text = UserState;
 
             if (ProgressPercentage == 100)
-                MainWindow.Instance.Show();
+            {
+                //App.Instance.CurrentFocusedWindow().Show();
+                Close();
+            }
         }
 
         /*private void ProgressWorker_RunWorkerCompleted(object? sender, RunWorkerCompletedEventArgs e)

@@ -4,7 +4,7 @@
     <link rel="stylesheet" type="text/css" href="./style.css">
     <script type="text/javascript" src="jquery-1.10.2.min.js"></script>
     <script type="text/javascript">
-        CefSharp.BindObjectAsync("internal");
+        engine.bindObjectAsync("internal");
         var $container;
         var $template;
         var timer;
@@ -12,7 +12,7 @@
         $(document).ready(function () {
             $container = $("#downloads-display");
             $template = $("#template");
-            CefSharp.BindObjectAsync("internal");
+            engine.bindObjectAsync("internal");
             UpdateList();
             timer = setInterval(UpdateList, 2500);
         });

@@ -27,7 +27,7 @@ namespace SLBr.Controls
 
             QuestionText.Content = Question;
             DescriptionText.Text = Description;
-            ApplyTheme(MainWindow.Instance.GetTheme());
+            ApplyTheme(App.Instance.CurrentTheme);
 
             FluentIconsText.Text = _FluentIconsText;
 

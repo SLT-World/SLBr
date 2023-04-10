@@ -51,7 +51,7 @@ namespace SLBr.Controls
             {
                 Icon = new BitmapImage(new Uri("https://www.google.com/s2/favicons?sz=24&domain=" + Utils.Host(_Browser.Address)));
                 DevToolsClient _DevToolsClient = _Browser.GetDevToolsClient();
-                _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(CurrentTheme.DarkWebPage ? bool.Parse(MainWindow.Instance.MainSave.Get("DarkWebPage")) : false);
+                _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(CurrentTheme.DarkWebPage ? bool.Parse(App.Instance.MainSave.Get("DarkWebPage")) : false);
             }));
         }
 
@@ -81,12 +81,12 @@ namespace SLBr.Controls
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            ApplyTheme(MainWindow.Instance.GetTheme());
+            ApplyTheme(App.Instance.CurrentTheme);
             _Browser = new ChromiumWebBrowser();
             _Browser.Address = InitialAddress;
 
-            _Browser.LifeSpanHandler = MainWindow.Instance._LifeSpanHandler;
-            _Browser.DownloadHandler = MainWindow.Instance._DownloadHandler;
+            _Browser.LifeSpanHandler = App.Instance._LifeSpanHandler;
+            _Browser.DownloadHandler = App.Instance._DownloadHandler;
             _Browser.RequestHandler = new RequestHandler();
             //_Browser.MenuHandler = MainWindow.Instance._ContextMenuHandler;
             //_Browser.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
@@ -101,12 +101,12 @@ namespace SLBr.Controls
 
             _Browser.BrowserSettings = new BrowserSettings
             {
-                WindowlessFrameRate = MainWindow.Instance.Framerate,
-                Javascript = MainWindow.Instance.Javascript,
-                ImageLoading = MainWindow.Instance.LoadImages,
-                LocalStorage = MainWindow.Instance.LocalStorage,
-                Databases = MainWindow.Instance.Databases,
-                WebGl = MainWindow.Instance.WebGL,
+                WindowlessFrameRate = App.Instance.Framerate,
+                Javascript = App.Instance.Javascript,
+                ImageLoading = App.Instance.LoadImages,
+                LocalStorage = App.Instance.LocalStorage,
+                Databases = App.Instance.Databases,
+                WebGl = App.Instance.WebGL,
                 BackgroundColor = System.Drawing.Color.Black.ToUInt()
             };
 

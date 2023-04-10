@@ -28,6 +28,7 @@
                         <controls:DropDownButton.Menu>
                             <ContextMenu>
                                 <MenuItem Icon="&#xEC6C;" Header="New Tab" FontFamily="Arial" Click="ButtonAction" Tag="4&lt;,&gt;{Homepage}"/>
+                                <MenuItem Icon="&#xEC6C;" Header="New Window" FontFamily="Arial" Click="ButtonAction" Tag="23"/>
                                 <Separator/>
                                 <MenuItem Icon="&#xE81C;" x:Name="HistoryListMenu" Header="History" FontFamily="Arial">
                                     <MenuItem.ItemContainerStyle>
@@ -74,10 +75,13 @@
                                         <MenuItem Header="BrowserLeaks" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://browserleaks.com/"/>
                                         <MenuItem Header="Permissions Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://permission.site/"/>
                                         <MenuItem Header="All About DNT" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;https://allaboutdnt.com/"/>
+                                        <MenuItem Header="Acid3 Test" FontFamily="Arial" Click="ButtonAction" Tag="3&lt;,&gt;http://acid3.acidtests.org/"/>
                                     </MenuItem>
                                 </MenuItem>
                                 <Separator/>
                                 <MenuItem Icon="&#xE713;" Header="Settings" FontFamily="Arial" Click="ButtonAction" Tag="9"/>
+                                <Separator/>
+                                <MenuItem Icon="" Header="Exit" FontFamily="Arial" Click="ButtonAction" Tag="24"/>
                             </ContextMenu>
                         </controls:DropDownButton.Menu>
                     </controls:DropDownButton>
@@ -134,6 +138,7 @@
                     <Button Click="ButtonAction" Tag="8" x:Name="MuteAudioButton" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Mute audio" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE767;" Foreground="{DynamicResource ControlFontBrush}"/>
                     <Button Click="ButtonAction" Tag="13&lt;,&gt;{CurrentUrl}" x:Name="QRCodeButton" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Create QR Code" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xED14;" Foreground="{DynamicResource ControlFontBrush}"/>
                     <Button Click="ButtonAction" Tag="12&lt;,&gt;{CurrentUrl}" Foreground="NavajoWhite" x:Name="OpenFileExplorerButton" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Open in File Explorer" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xEC50;"></Button>
+                    <Button Click="ButtonAction" Tag="3&lt;,&gt;slbr://downloads" Visibility="Collapsed" x:Name="OpenDownloadsButton" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Open Downloads" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE896;"></Button>
                     <Button Click="ButtonAction" Tag="3&lt;,&gt;https://translate.google.com/translate?sl=auto&amp;tl=en&amp;hl=en&amp;u={CurrentUrl}" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Translate to English" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8C1;" Foreground="{DynamicResource ControlFontBrush}"/><!--F2B7-->
                     <Button Click="ButtonAction" Tag="7" DockPanel.Dock="Right" Margin="0" Height="23" Width="23" ToolTip="Add to favourites" x:Name="FavouriteButton" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xEB51;" Foreground="{DynamicResource ControlFontBrush}"/>
                     <Grid Width="auto" Margin="5,0">
@@ -149,12 +154,12 @@
                         </TextBlock>
                     </Grid>
                 </DockPanel>
-                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0" x:Name="FavouriteContainer" Height="33" Grid.Row="1" HorizontalAlignment="Stretch">
+                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0" x:Name="FavouriteContainer" Height="0" Grid.Row="1" HorizontalAlignment="Stretch">
                     <ScrollViewer FontFamily="None" x:Name="FavouriteScrollViewer" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden" PreviewMouseWheel="FavouriteScrollViewer_PreviewMouseWheel">
                         <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <DockPanel IsItemsHost="True" Margin="5" HorizontalAlignment="Left"/>
+                                    <DockPanel IsItemsHost="True" Margin="5,0,5,2.5" HorizontalAlignment="Left"/>
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>

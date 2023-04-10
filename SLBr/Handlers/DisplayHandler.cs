@@ -27,7 +27,7 @@ namespace SLBr.Handlers
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
-                string OutputUrl = Utils.ConvertUrlToReadableUrl(MainWindow.Instance._IdnMapping, bool.Parse(MainWindow.Instance.MainSave.Get("FullAddress")) ? addressChangedArgs.Address : Utils.CleanUrl(addressChangedArgs.Address));
+                string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, bool.Parse(App.Instance.MainSave.Get("FullAddress")) ? addressChangedArgs.Address : Utils.CleanUrl(addressChangedArgs.Address));
                 if (_BrowserView.AddressBox.Text != OutputUrl)
                 {
                     if (_BrowserView.CanChangeAddressBox())
@@ -70,7 +70,7 @@ namespace SLBr.Handlers
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(delegate
             {
-                MainWindow.Instance.Fullscreen(fullscreen);
+                App.Instance.CurrentFocusedWindow().Fullscreen(fullscreen);
             }));
         }
 

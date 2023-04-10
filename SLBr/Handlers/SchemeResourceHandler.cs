@@ -12,7 +12,7 @@ namespace SLBr.Handlers
     {
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
-            if (bool.Parse(MainWindow.Instance.MainSave.Get("Wayback")))
+            if (bool.Parse(App.Instance.MainSave.Get("Wayback")))
             {
                 Task.Run(() =>
                 {
@@ -58,7 +58,7 @@ namespace SLBr.Handlers
     {
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
-            if (bool.Parse(MainWindow.Instance.MainSave.Get("IPFS")))
+            if (bool.Parse(App.Instance.MainSave.Get("IPFS")))
             {
                 Task.Run(() =>
                 {
@@ -102,7 +102,7 @@ namespace SLBr.Handlers
     {
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
-            if (bool.Parse(MainWindow.Instance.MainSave.Get("IPFS")))
+            if (bool.Parse(App.Instance.MainSave.Get("IPFS")))
             {
                 Task.Run(() =>
                 {
@@ -146,7 +146,7 @@ namespace SLBr.Handlers
     {
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
-            if (bool.Parse(MainWindow.Instance.MainSave.Get("Gemini")))
+            if (bool.Parse(App.Instance.MainSave.Get("Gemini")))
             {
                 var uri = new Uri(Utils.CleanUrl(request.Url));
                 //try
@@ -186,7 +186,7 @@ namespace SLBr.Handlers
     {
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
-            if (bool.Parse(MainWindow.Instance.MainSave.Get("Gopher")))
+            if (bool.Parse(App.Instance.MainSave.Get("Gopher")))
             {
                 var uri = new Uri(Utils.CleanUrl(request.Url));
                 //try

@@ -18,8 +18,8 @@ namespace SLBr.Handlers
         public bool CanDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, string url, string requestMethod)
         {
             bool DownloadFile = true;
-            string Response = MainWindow.Instance._SafeBrowsing.Response(url);
-            SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? MainWindow.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+            string Response = App.Instance._SafeBrowsing.Response(url);
+            SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? App.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
             if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware)
                 DownloadFile = MessageBox.Show("This download contains malware. Are you sure you want to proceed with the download?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
                 //MessageBox.Show($"This download contains malware. Download is blocked.", "Warning");
@@ -40,9 +40,9 @@ namespace SLBr.Handlers
             {
                 using (callback)
                 {
-                    string DownloadFilePath = Path.Combine(MainWindow.Instance.MainSave.Get("DownloadPath"), downloadItem.SuggestedFileName);
-                    MainWindow.Instance.UpdateDownloadItem(downloadItem);
-                    callback.Continue(DownloadFilePath, bool.Parse(MainWindow.Instance.MainSave.Get("DownloadPrompt")));
+                    string DownloadFilePath = Path.Combine(App.Instance.MainSave.Get("DownloadPath"), downloadItem.SuggestedFileName);
+                    App.Instance.UpdateDownloadItem(downloadItem);
+                    callback.Continue(DownloadFilePath, bool.Parse(App.Instance.MainSave.Get("DownloadPrompt")));
                 }
             }
         }
@@ -51,10 +51,10 @@ namespace SLBr.Handlers
         {
             //OnDownloadUpdatedFired?.Invoke(this, downloadItem);
 
-            MainWindow.Instance.UpdateDownloadItem(downloadItem);
+            App.Instance.UpdateDownloadItem(downloadItem);
             if (downloadItem.IsInProgress)
             {
-                if (MainWindow.Instance.CanceledDownloads.Contains(downloadItem.Id))
+                if (App.Instance.CanceledDownloads.Contains(downloadItem.Id))
                     callback.Cancel();
             }
         }
