@@ -1,0 +1,315 @@
+﻿<!--Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Credits</title>
+        <link rel="stylesheet" type="text/css" href="./style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+            body {
+                max-width: 1020px;
+            }
+            .page-title {
+                font-weight: bold;
+                font-size: 2em;
+            }
+            .product {
+                background-color: whitesmoke;
+                overflow: auto;
+                margin: 10px 0px;
+                border: 1px solid gainsboro;
+                border-radius: 5px;
+                padding: 7.5px;
+            }
+            .product .title {
+                float: left;
+                font-weight: bold;
+                height: 35px;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                margin-left: 7.5px;
+            }
+            .product .homepage {
+                float: right;
+                text-align: right;
+            }
+            .product .show {
+                float: right;
+                margin-right: 7.5px;
+                text-align: right;
+            }
+            .licence {
+                clear: both;
+                display: none;
+                padding-top: 7.5px;
+            }
+            .licence h3 {
+                margin-top: 0;
+            }
+            .licence pre {
+                white-space: pre-wrap;
+                margin: 0;
+                padding: 7.5px;
+                border: 1px solid gainsboro;
+                border-radius: 5px;
+                background: white;
+            }
+            .dialog #print-link, .dialog .homepage {
+                display: none;
+            }
+            input + label + div {
+                display: none;
+            }
+            input + label::after {
+                content: "";
+                cursor: pointer;
+            }
+            input:checked + label + div {
+                display: block;
+            }
+            input:checked + label::after {
+                content: "";
+                cursor: pointer;
+            }
+            .button_style {
+                background: whitesmoke;
+                height: 35px;
+                text-align: center;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                width: auto;
+                border: 1px solid gainsboro;
+                border-radius: 5px;
+                color: black;
+                transition: 0.5s;
+                user-select: none;
+                font-size: unset;
+                vertical-align: middle;
+            }
+            .button_style > a {
+                color: black;
+                width: 100%;
+                height: 100%;
+                text-align: center;
+                align-content: center;
+            }
+            .list_button {
+                margin: 0 0 0 auto;
+            }
+            .icon_button {
+                width: 35px !important;
+                font-size: 17.5px !important;
+                font-family: "Segoe Fluent Icons" !important;
+            }
+            .button_style:hover {
+                background: gainsboro;
+            }
+        </style>
+    </head>
+    <body>
+        <span class="page-title" style="float:left;">License</span>
+        <div style="clear:both; overflow:auto;">
+            <div class="product">
+                <span class="title">SLBr</span>
+                <span class="homepage button_style icon_button"><a target="_blank" title="Homepage" href="https://github.com/SLT-World/SLBr/"></a></span>
+                <input type="checkbox" hidden id="0" />
+                <label class="show button_style icon_button" for="0" tabindex="0" title="License"></label>
+                <div class="licence">
+<pre>SLBr. The browser that prioritizes a faster web.
+Copyright (c) SLT Softwares
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.</pre>
+                </div>
+            </div>
+        </div>
+
+        <span class="page-title" style="float:left;">Third party software &amp; libraries used</span>
+        <div style="clear:both; overflow:auto;">
+            <div class="product">
+                <span class="title">.NET Runtime</span>
+                <span class="homepage button_style icon_button"><a target="_blank" title="Homepage" href="https://github.com/dotnet/runtime/"></a></span>
+                <input type="checkbox" hidden id="1" />
+                <label class="show button_style icon_button" for="1" tabindex="0" title="License"></label>
+                <div class="licence">
+<pre>The MIT License (MIT)
+
+Copyright (c) .NET Foundation and Contributors
+
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+                </div>
+            </div>
+            <div class="product">
+                <span class="title">Windows Presentation Foundation</span>
+                <span class="homepage button_style icon_button"><a target="_blank" title="Homepage" href="https://docs.microsoft.com/en-us/visualstudio/designers/getting-started-with-wpf/"></a></span>
+                <input type="checkbox" hidden id="2" />
+                <label class="show button_style icon_button" for="2" tabindex="0" title="License"></label>
+                <div class="licence">
+<pre>The MIT License (MIT)
+
+Copyright (c) .NET Foundation and Contributors
+
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+                </div>
+            </div>
+            <div class="product">
+                <span class="title">The Chromium Project</span>
+                <span class="homepage button_style icon_button"><a target="_blank" title="Homepage" href="https://www.chromium.org/"></a></span>
+                <input type="checkbox" hidden id="3" />
+                <label class="show button_style icon_button" for="3" tabindex="0" title="License"></label>
+                <div class="licence">
+<pre>// Copyright 2015 The Chromium Authors
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//    * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//    * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//    * Neither the name of Google LLC nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</pre>
+                </div>
+            </div>
+            <div class="product">
+                <span class="title">CEF</span>
+                <span class="homepage button_style icon_button"><a target="_blank" title="Homepage" href="https://github.com/chromiumembedded/cef/"></a></span>
+                <input type="checkbox" hidden id="4" />
+                <label class="show button_style icon_button" for="4" tabindex="0" title="License"></label>
+                <div class="licence">
+<pre>// Copyright (c) 2008-2020 Marshall A. Greenblatt. Portions Copyright (c)
+// 2006-2009 Google Inc. All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//    * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//    * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//    * Neither the name of Google Inc. nor the name Chromium Embedded
+// Framework nor the names of its contributors may be used to endorse
+// or promote products derived from this software without specific prior
+// written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</pre>
+                </div>
+            </div>
+            <div class="product">
+                <span class="title">CefSharp</span>
+                <span class="homepage button_style icon_button"><a target="_blank" title="Homepage" href="https://cefsharp.github.io/"></a></span>
+                <input type="checkbox" hidden id="5" />
+                <label class="show button_style icon_button" for="5" tabindex="0" title="License"></label>
+                <div class="licence">
+<pre>// Copyright © The CefSharp Authors. All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//    * Redistributions of source code must retain the above copyright
+//      notice, this list of conditions and the following disclaimer.
+//
+//    * Redistributions in binary form must reproduce the above
+//      copyright notice, this list of conditions and the following disclaimer
+//      in the documentation and/or other materials provided with the
+//      distribution.
+//
+//    * Neither the name of Google Inc. nor the name Chromium Embedded
+//      Framework nor the name CefSharp nor the names of its contributors
+//      may be used to endorse or promote products derived from this software
+//      without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</pre>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

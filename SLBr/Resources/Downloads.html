@@ -1,0 +1,334 @@
+﻿<!--Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Downloads</title>
+    <link rel="stylesheet" type="text/css" href="./style.css"/>
+    <script type="text/javascript">
+        (async () => {
+            await engine.bindObjectAsync("internal");
+            UpdateList();
+            setInterval(UpdateList, 500);
+        })();
+        function formatBytes(bytes, decimals) {
+            if (bytes === 0) return '0 Byte';
+            const k = 1000;
+            const dm = decimals + 1 || 3;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toPrecision(dm) + ' ' + sizes[i];
+        }
+        String.prototype.between = function (prefix, suffix) {
+            let s = this;
+            let i = s.indexOf(prefix);
+            if (i >= 0) {
+                s = s.substring(i + prefix.length);
+            } else {
+                return '';
+            }
+            if (suffix) {
+                i = s.indexOf(suffix);
+                if (i >= 0) {
+                    s = s.substring(0, i);
+                } else {
+                    return '';
+                }
+            }
+            return s;
+        }
+        Date.prototype.format = function (format) {
+            const o = {
+                "M+": this.getMonth() + 1,
+                "d+": this.getDate(),
+                "h+": this.getHours(),
+                "m+": this.getMinutes(),
+                "s+": this.getSeconds(),
+                "q+": Math.floor((this.getMonth() + 3) / 3),
+                "S": this.getMilliseconds()
+            }
+            if (/(y+)/.test(format)) format = format.replace(RegExp.$1,
+                (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (const k in o) if (new RegExp("(" + k + ")").test(format))
+                format = format.replace(RegExp.$1,
+                    RegExp.$1.length === 1 ? o[k] :
+                        ("00" + o[k]).substr(("" + o[k]).length));
+            return format;
+        }
+        function UpdateItem(item) {
+            const downloadsDisplay = document.getElementById('downloads-display');
+            let itemId = "d" + item.Id;
+            let newDownload = document.getElementById(itemId);
+            if (!newDownload) {
+                newDownload = document.createElement('div');
+                newDownload.id = itemId;
+                newDownload.classList.add('list_child');
+
+                let titleArea = document.createElement('div');
+                titleArea.classList.add('title_area');
+
+                let title = document.createElement('p');
+                title.classList.add('list_text');
+                title.textContent = item.FullPath.split('\\').pop().split('/').pop();
+
+                let link = document.createElement('a');
+                link.classList.add('file_link');
+                link.setAttribute('target', '_blank');
+                link.setAttribute('focus-type', 'url');
+                link.href = item.Url;
+                link.textContent = item.Url;
+
+                var options = document.createElement('div');
+                options.style.margin = "0 0 0 auto";
+
+                let open = document.createElement('a');
+                open.classList.add('open');
+                open.classList.add('button_style');
+                open.classList.add('list_button');
+                open.classList.add('icon_button');
+                open.setAttribute('is', 'action-link');
+                open.setAttribute('role', 'link');
+                open.setAttribute('focus-type', 'show-retry');
+                open.setAttribute('tabindex', '0');
+                open.setAttribute('hidden', "");
+                open.textContent = '\uE838';
+                open.title = "Show in folder"
+                open.addEventListener('click', function () {
+                    internal.openDownload(item.Id);
+                });
+
+                let cancel = document.createElement('a');
+                cancel.classList.add('cancel');
+                cancel.classList.add('button_style');
+                cancel.classList.add('list_button');
+                cancel.classList.add('icon_button');
+                cancel.setAttribute('is', 'action-link');
+                cancel.setAttribute('role', 'link');
+                cancel.setAttribute('focus-type', 'cancel');
+                cancel.setAttribute('tabindex', '0');
+                cancel.textContent = '\uE71A';
+                cancel.title = "Cancel download"
+                cancel.addEventListener('click', function () {
+                    internal.cancelDownload(item.Id);
+                });
+
+                let icon = document.createElement('p');
+                icon.classList.add('list_icon');
+                icon.textContent = '\uE8A5';
+
+                let statuscontainer = document.createElement('div');
+                let progressbar = document.createElement('progress');
+                progressbar.classList.add('progress_bar');
+                progressbar.max = 100;
+                progressbar.value = 0;
+
+                let status = document.createElement('span');
+                status.classList.add('status');
+                status.textContent = "Status";
+
+                statuscontainer.appendChild(progressbar);
+                statuscontainer.appendChild(status);
+
+                titleArea.appendChild(icon);
+                titleArea.appendChild(title);
+                titleArea.appendChild(link);
+                options.appendChild(open);
+                options.appendChild(cancel);
+                titleArea.appendChild(options);
+                newDownload.appendChild(titleArea);
+                newDownload.appendChild(statuscontainer);
+                downloadsDisplay.appendChild(newDownload);
+            }
+
+            let progress = "";
+            if (item.IsInProgress)
+            {
+                let filename = item.FullPath.split('\\').pop().split('/').pop();
+                newDownload.querySelector("p.list_text").textContent = filename;
+                if (filename.endsWith(".zip") || filename.endsWith(".rar") || filename.endsWith(".7z") || filename.endsWith(".tar.gz") || filename.endsWith(".tgz"))
+                    newDownload.querySelector("p.list_icon").textContent = "\uF012";
+                else if (filename.endsWith(".gif"))
+                    newDownload.querySelector("p.list_icon").textContent = "\uF4A9";
+                else if (filename.endsWith(".txt"))
+                    newDownload.querySelector("p.list_icon").textContent = "\uF000";
+                else if (filename.endsWith(".blend") || filename.endsWith(".obj") || filename.endsWith(".fbx") || filename.endsWith(".max") || filename.endsWith(".stl") || filename.endsWith(".x3d") || filename.endsWith(".3ds") || filename.endsWith(".dae") || filename.endsWith(".glb") || filename.endsWith(".gltf") || filename.endsWith(".ply"))
+                    newDownload.querySelector("p.list_icon").textContent = "\uF158";
+                else if (filename.endsWith(".mp3") || filename.endsWith(".mp2"))
+                    newDownload.querySelector("p.list_icon").textContent = "\uEC4F";
+                else if (filename.endsWith(".mp4") || filename.endsWith(".avi") || filename.endsWith(".ogg") || filename.endsWith(".webm") || filename.endsWith(".mov") || filename.endsWith(".mpej") || filename.endsWith(".wmv") || filename.endsWith(".h264") || filename.endsWith(".mkv"))
+                    newDownload.querySelector("p.list_icon").textContent = "\uE786";
+                else if (filename.endsWith(".pdf"))
+                    newDownload.querySelector("p.list_icon").textContent = '\uEA90';
+                else if (filename.endsWith(".png") || filename.endsWith(".jpg") || filename.endsWith(".jpeg") || filename.endsWith(".avif") || filename.endsWith(".svg") || filename.endsWith(".webp") || filename.endsWith(".jfif") || filename.endsWith(".bmp"))
+                    newDownload.querySelector("p.list_icon").textContent = '\uEA69';
+
+                progress = "(" + item.PercentComplete + "%)";
+                if (item.PercentComplete > 0)
+                    progress += " " + formatBytes(item.CurrentSpeed) + "/s - " + formatBytes(item.ReceivedBytes, 2);
+                if (item.TotalBytes > 0)
+                    progress += " of " + formatBytes(item.TotalBytes, 2);
+            }
+            else
+            {
+                if (item.IsComplete) {
+                    progress = "Complete";
+                    newDownload.querySelector(".open").removeAttribute("hidden");
+                    let filename = item.FullPath.split('\\').pop().split('/').pop();
+                    newDownload.querySelector("p.list_text").textContent = filename;
+                    if (filename.endsWith(".zip") || filename.endsWith(".rar") || filename.endsWith(".7z") || filename.endsWith(".tar.gz") || filename.endsWith(".tgz"))
+                        newDownload.querySelector("p.list_icon").textContent = "\uF012";
+                    else if (filename.endsWith(".gif"))
+                        newDownload.querySelector("p.list_icon").textContent = "\uF4A9";
+                    else if (filename.endsWith(".txt"))
+                        newDownload.querySelector("p.list_icon").textContent = "\uF000";
+                    else if (filename.endsWith(".blend") || filename.endsWith(".obj") || filename.endsWith(".fbx") || filename.endsWith(".max") || filename.endsWith(".stl") || filename.endsWith(".x3d") || filename.endsWith(".3ds") || filename.endsWith(".dae") || filename.endsWith(".glb") || filename.endsWith(".gltf") || filename.endsWith(".ply"))
+                        newDownload.querySelector("p.list_icon").textContent = "\uF158";
+                    else if (filename.endsWith(".mp3") || filename.endsWith(".mp2"))
+                        newDownload.querySelector("p.list_icon").textContent = "\uEC4F";
+                    else if (filename.endsWith(".mp4") || filename.endsWith(".avi") || filename.endsWith(".ogg") || filename.endsWith(".webm") || filename.endsWith(".mov") || filename.endsWith(".mpej") || filename.endsWith(".wmv") || filename.endsWith(".h264") || filename.endsWith(".mkv"))
+                        newDownload.querySelector("p.list_icon").textContent = "\uE786";
+                    else if (filename.endsWith(".pdf"))
+                        newDownload.querySelector("p.list_icon").textContent = '\uEA90';
+                    else if (filename.endsWith(".png") || filename.endsWith(".jpg") || filename.endsWith(".jpeg") || filename.endsWith(".avif") || filename.endsWith(".svg") || filename.endsWith(".webp") || filename.endsWith(".jfif") || filename.endsWith(".bmp"))
+                        newDownload.querySelector("p.list_icon").textContent = '\uE91B';
+                }
+                else if (item.IsCancelled)
+                    progress = "Cancelled";
+                let cancel = newDownload.querySelector(".cancel");
+                if (cancel)
+                    cancel.remove();
+            }
+            newDownload.querySelector("span.status").textContent = progress;
+            newDownload.querySelector("progress.progress_bar").setAttribute("value", item.PercentComplete);
+        }
+        function UpdateList() {
+            internal.downloads().then(function (res) {
+                const list = JSON.parse(res);
+                const currentIds = new Set();
+                const downloadsDisplay = document.getElementById('downloads-display');
+
+                Object.values(list).forEach(item => {
+                    const id = "d" + item.Id;
+                    currentIds.add(id);
+                    UpdateItem(item);
+                });
+
+                Array.from(downloadsDisplay.children).forEach(child => {
+                    if (!currentIds.has(child.id)) {
+                        downloadsDisplay.removeChild(child);
+                    }
+                });
+            });
+        }
+    </script>
+</head>
+    <body>
+        <header>
+            <h1>Downloads</h1>
+        </header>
+        <div class="main">
+            <!--<div class="summary" id="downloads-summary">
+<span id="downloads-summary-text"></span>
+<span id="downloads-actions">
+<a is="action-link" id="open-downloads-folder" i18n-content="openDownloadsFolder" tabindex="0" role="link" hidden>Open downloads folder</a>
+<a is="action-link" id="clear-all" i18n-content="clearAll" tabindex="0" role="link" hidden>Clear all</a>
+</span>
+</div>-->
+            <div id="downloads-display">
+                <div id="template" class="download" hidden style="margin: 0 0 15px 0; background: whitesmoke; border-radius: 10px; padding: 15px;">
+                    <div class="safe">
+                        <div class="title-area">
+                            <span style="display: block;" class="name">x.zip</span>
+                            <a class="src-url" target="_blank" focus-type="url" href="http://x.org/x.zip" tabindex="0">http://x.org/x.zip</a>
+                        </div>
+                        <div class="url-container">
+                            <progress max="100" value="0" class="progressbar"></progress>
+                            <span class="status">Status</span>
+                        </div>
+                        <div class="controls" style="padding: 7.5px 0 0 0;">
+                            <a style="margin: 0 2.5px; cursor: pointer; background: gainsboro; padding: 2.5px 20px; border-radius: 5px;" is="action-link" class="show" focus-type="show-retry" tabindex="0" role="link" hidden="">Show in folder</a>
+                            <a style="margin: 0 2.5px; cursor: pointer; background: gainsboro; padding: 2.5px 20px; border-radius: 5px;" class="retry" focus-type="show-retry" download="" href="http://x.org/x.zip" hidden="" tabindex="0">Retry</a>
+                            <a style="margin: 0 2.5px; cursor: pointer; background: gainsboro; padding: 2.5px 20px; border-radius: 5px;" is="action-link" class="pause" focus-type="pause-resume" tabindex="0" role="link" hidden="">Pause</a>
+                            <a style="margin: 0 2.5px; cursor: pointer; background: gainsboro; padding: 2.5px 20px; border-radius: 5px;" is="action-link" class="resume" focus-type="pause-resume" tabindex="0" role="link" hidden="">Resume</a>
+                            <a style="margin: 0 2.5px; cursor: pointer; background: gainsboro; padding: 2.5px 20px; border-radius: 5px;" is="action-link" class="remove" focus-type="remove-discard" tabindex="0" role="link" hidden>Remove from list</a>
+                            <a style="margin: 0 2.5px; cursor: pointer; background: gainsboro; padding: 2.5px 20px; border-radius: 5px;" is="action-link" class="cancel" focus-type="cancel" tabindex="0" role="link">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+[hidden] {
+    display: none !important;
+}
+.list_child {
+    margin: 0px 0px 10px;
+    background: whitesmoke;
+    border: 1px solid gainsboro;
+    border-radius: 5px;
+    padding: 7.5px 7.5px 7.5px 15px;
+    height: auto;
+    display: block;
+}
+.file_link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 75%;
+}
+.title_area {
+    align-items: center;
+    display: flex;
+    width: 100%;
+    height: 35px;
+}
+.list_icon {
+    width: 25px;
+    height: 25px;
+    margin: 0 10px 0 0;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    font-family: "Segoe Fluent Icons";
+    font-size: 25px;
+    font-weight: lighter;
+    user-select: none;
+}
+.list_text {
+    font-weight: bold;
+    margin-right: 10px;
+}
+.button_style {
+    background: whitesmoke;
+    height: 35px;
+    text-align: center;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 75px;
+    border: 1px solid gainsboro;
+    border-radius: 5px;
+    color: black;
+    transition: 0.5s;
+    user-select: none;
+    font-size: unset;
+    vertical-align: middle;
+}
+.list_button:not(:last-child) {
+    margin-right: 7.5px;
+}
+.icon_button {
+    width: 35px !important;
+    font-size: 17.5px !important;
+    font-family: "Segoe Fluent Icons" !important;
+}
+.button_style:hover {
+    color: black;
+    background: gainsboro;
+}
+.progress_bar {
+    margin-right: 10px;
+}
+        </style>
+    </body>
+</html>

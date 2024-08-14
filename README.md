@@ -9,8 +9,6 @@
 [![XAML](https://img.shields.io/static/v1?style=for-the-badge&message=XAML&color=0C54C2&logo=XAML&logoColor=0C54C2&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
 [![.NET](https://img.shields.io/static/v1?style=for-the-badge&message=.NET&color=512BD4&logo=.NET&logoColor=512BD4&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
 [![Chromium](https://img.shields.io/static/v1?style=for-the-badge&message=Chromium&color=006CFF&logo=GoogleChrome&logoColor=006CFF&label=&labelColor=black)](https://github.com/SLT-World/SLBr)<br/>
-[![Chromium](https://img.shields.io/static/v1?style=for-the-badge&message=Chromium&color=4285F4&logo=GoogleChrome&logoColor=4285F4&label=&labelColor=black)](https://github.com/SLT-World/SLBr)<br/>
-
 
 [![Download](https://img.shields.io/github/downloads/SLT-World/SLBr/total.svg?style=for-the-badge&message=C%23&color=0063FF&label=Downloads&labelColor=0092FF)](https://github.com/SLT-World/SLBr/releases/latest)
 
@@ -52,9 +50,12 @@ SLBr is licensed under the [GNU General Public License v3.0](https://github.com/
 
 ## Screenshots & Videos
 
-![Dark mode](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/SLBr%20Dark%20Mode.png)
+![Browser](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/SLBr%20Browser.png)
+![Performance Settings](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/Performance.png)
+![News Feed](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/News%20Feed.png)
 
-Video: [SLBr in action](https://youtu.be/PtmDRjgwmHI)
+
+Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 
 ## Others
 **Missing class `SECRETS`**
