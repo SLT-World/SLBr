@@ -5,53 +5,71 @@
   **The browser that prioritizes a faster web**<br/>
   **Browse the web with a fast, lightweight web browser.**
 
-[![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)](https://github.com/SLT-World/SLBr)
-[![XAML](https://img.shields.io/static/v1?style=for-the-badge&message=XAML&color=0C54C2&logo=XAML&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
-[![.Net](https://img.shields.io/static/v1?style=for-the-badge&message=.NET&color=512BD4&logo=.NET&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)
-[![Visual Studio](https://img.shields.io/static/v1?style=for-the-badge&message=Visual+Studio&color=5C2D91&logo=Visual+Studio&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr)<br/>
-[![Latest release](https://img.shields.io/static/v1?style=for-the-badge&message=Latest%20release&color=0092FF&logoColor=FFFFFF&label=)](https://github.com/SLT-World/SLBr/releases/latest)
+[![C#](https://img.shields.io/static/v1?style=for-the-badge&message=C%23&color=239120&logo=csharp&logoColor=239120&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
+[![XAML](https://img.shields.io/static/v1?style=for-the-badge&message=XAML&color=0C54C2&logo=XAML&logoColor=0C54C2&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
+[![.NET](https://img.shields.io/static/v1?style=for-the-badge&message=.NET&color=512BD4&logo=.NET&logoColor=512BD4&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
+[![Chromium](https://img.shields.io/static/v1?style=for-the-badge&message=Chromium&color=006CFF&logo=GoogleChrome&logoColor=006CFF&label=&labelColor=black)](https://github.com/SLT-World/SLBr)<br/>
+[![Chromium](https://img.shields.io/static/v1?style=for-the-badge&message=Chromium&color=4285F4&logo=GoogleChrome&logoColor=4285F4&label=&labelColor=black)](https://github.com/SLT-World/SLBr)<br/>
+
+
+[![Download](https://img.shields.io/github/downloads/SLT-World/SLBr/total.svg?style=for-the-badge&message=C%23&color=0063FF&label=Downloads&labelColor=0092FF)](https://github.com/SLT-World/SLBr/releases/latest)
+
 </div>
 
-## Based on CefSharp/CEF
-CefSharp is an embedded Chromium browser for .NET apps such as WPF and Winforms. It is a lightweight .NET wrapper for the Chromium Embedded Framework (CEF).
+## SLBr
+SLBr is an open-source, lightweight web browser based on Chromium. Built using .NET, WPF & CefSharp (CEF), SLBr provides a browsing experience on par with modern web browsers.
 
-CefSharp follows modern web standards, and supports HTML5, JavaScript, CSS3, HTML5 audio/video elements as well as WebGL. CefSharp has basically everything a modern browser has.
+## Notable Features
+- **Modern UI:** A more visually appealing UI compared to older versions.
+- **Ad & Tracker Blocker:** Built-in ad & tracker blocking.
+- **YouTube Auto Ad Skip:** Automatically skips ads on YouTube.
+- **Vertical & Horizontal Tab Alignment:** Align tabs vertically or horizontally in settings.
+- **Tab Unloading:** Frees memory and computer resources by unloading inactive tabs.
+- **AI Chat and Compose:** Copilot AI chat and composition tools.
+- **Omni Box Suggestions:** Suggestions in the omnibox for relevant search results.
+- **Enhanced Browser File Explorer:** Better styled Chromium File Explorer.
 
-## Using SLBr
-Download the latest version of SLBr and open it
-- https://github.com/SLT-World/SLBr/releases/latest
+## Installation
+To install SLBr, follow these steps:
+1. Download the [latest release](https://github.com/SLT-World/SLBr/releases/latest).
+2. Ensure the following requirements are installed:
+    - [Microsoft Visual C++ 2019 Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170)
+    - [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+    - Segoe Fluent Icons
+    - Windows 10 & above
+## Thanks
 
-## Notes
-If you're encountering an issue of SLBr rendering weirdly (Examples are: controls disappearing, text oversizing, colors changing abnormally), then you're most likely encountering this [issue](https://github.com/dotnet/wpf/issues/4141). Either switch to software rendering using SLBr's WPF render mode setting, or disable the nahimic service to resolve the issue.
+- **Chromium Embedded Framework (CEF)**: Thanks to Marshall A. Greenblatt.
+- **CefSharp Team**: Thanks to Amaitland and the CefSharp team.
+- **IPFS Implementation**: Thanks to Ranger Mauve for assisting with the implementation of IPFS in SLBr.
 
-## Special thanks to
-- The Chromium Embedded Framework (CEF) by Marshall A. Greenblatt.
-- The CefSharp team, and Amaitland who dedicated himself to the CefSharp project.
-- Mauve who helped out on the IPFS implementation for SLBr.
+## Contribution
+Feature suggestions and contributions would be much appreciated. Your input helps improve SLBr.
+Or you can also contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
 
-## Requirements
-- [Microsoft Visual C++ 2019](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170)
-- [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
-- Segoe Fluent Icons
-- Segoe MDL2 Assets
-- Windows 7 and above
+## License
+SLBr is licensed under the [GNU General Public License v3.0](https://github.com/SLT-World/SLBr/blob/main/LICENSE).
 
 ## Screenshots & Videos
 
 ![Dark mode](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/SLBr%20Dark%20Mode.png)
 
-Video: https://youtu.be/PtmDRjgwmHI
+Video: [SLBr in action](https://youtu.be/PtmDRjgwmHI)
 
-## Compiling and building SLBr
-This is a guide on how to compile and run the source code.
-**Setup**
+## Others
+**Missing class `SECRETS`**
 
-1. Install and set up [Visual Studio](https://visualstudio.microsoft.com/vs/)
-2. Download SLBr's Source code and unzip it
-3. Find the solution file
-
-**The class "SECRETS" is missing**
-
-The SECRETS file is removed as it contains the API Keys of SLT's SLBr. To fix it, either remove the line of code that is causing the error, which will remove support for SafeBrowsing, www.google.com sign-ins and Geolocation. Or, generate a new C# class called "SECRETS", have string variables named "GOOGLE_API_KEY", "GOOGLE_DEFAULT_CLIENT_ID", "GOOGLE_DEFAULT_CLIENT_SECRET".
-
-SLBr is neither affiliated with Google nor Microsoft.
+The `SECRETS` file is removed as private API keys are stored inside. To fix it, either:
+- Remove the code that is causing the error, which will remove the ability to use Google Safe Browsing & sign in to Google.
+- Generate a new C# class called "SECRETS":
+```
+namespace SLBr
+{
+    class SECRETS
+    {
+        public static string GOOGLE_API_KEY = "";
+        public static string GOOGLE_DEFAULT_CLIENT_ID = "";
+        public static string GOOGLE_DEFAULT_CLIENT_SECRET = "";
+    }
+}
+```

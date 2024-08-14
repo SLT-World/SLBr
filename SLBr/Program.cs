@@ -1,10 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.BrowserSubprocess;
-using CefSharp.Internals;
-using System;
 using System.Diagnostics;
-using System.IO;
-//using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -25,26 +21,20 @@ namespace SLBr
 
         public static void SendDataMessage(Process targetProcess, string msg)
         {
-            //Copy the string message to a global memory area in unicode format
             IntPtr _stringMessageBuffer = Marshal.StringToHGlobalUni(msg);
 
-            //Prepare copy data structure
             COPYDATASTRUCT _copyData = new COPYDATASTRUCT();
             _copyData.dwData = IntPtr.Zero;
             _copyData.lpData = _stringMessageBuffer;
-            _copyData.cbData = msg.Length * 2;//Number of bytes required for marshalling this string as a series of unicode characters
+            _copyData.cbData = msg.Length * 2;
             IntPtr _copyDataBuff = IntPtrAlloc(_copyData);
 
-            //Send message to the other process
-            //NativeMethods.PostMessage((IntPtr)HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
             SendMessage((IntPtr)HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
-            //SendMessage(targetProcess.MainWindowHandle, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
 
             Marshal.FreeHGlobal(_copyDataBuff);
             Marshal.FreeHGlobal(_stringMessageBuffer);
         }
 
-        // Allocate a pointer to an arbitrary structure on the global heap.
         private static IntPtr IntPtrAlloc<T>(T param)
         {
             IntPtr retval = Marshal.AllocHGlobal(Marshal.SizeOf(param));
@@ -56,32 +46,23 @@ namespace SLBr
     [StructLayout(LayoutKind.Sequential)]
     struct COPYDATASTRUCT
     {
-        public IntPtr dwData;    // Any value the sender chooses.  Perhaps its main window handle?
-        public int cbData;       // The count of bytes in the message.
-        public IntPtr lpData;    // The address of the message.
+        public IntPtr dwData;
+        public int cbData;
+        public IntPtr lpData;
     }
 
     internal static class Program
     {
-        //[DllImport("user32.dll")]
-        //static extern int SetWindowText(IntPtr hWnd, string text);
         [STAThread]
         private static int Main(string[] args)
         {
             Environment.SetEnvironmentVariable("DOTNET_gcServer", "1");
             Environment.SetEnvironmentVariable("DOTNET_GCHeapCount", "16");
             Environment.SetEnvironmentVariable("DOTNET_GCConserveMemory", "5");
-            Cef.EnableHighDPISupport();
-            //MessageBox.Show(string.Join(",", args));
+            MinimizeMemory();
             if (args.Length > 0 && args[0].StartsWith("--type=", StringComparison.Ordinal))
             {
-                //Process.GetCurrentProcess().ProcessName;
-                //gpu-process
-                //utility
-                //renderer
-                //SetWindowText(Process.GetCurrentProcess().MainWindowHandle, args[0].Replace("--type=", ""));
-                //MessageBox.Show(args[0]);
-                //Process.Start("E:\\Visual Studio\\SLBr\\Utility Service\\bin\\Debug\\net6.0-windows\\Utility Service.exe", args);
+                //MessageBox.Show(string.Join("|",args));
                 return SelfHost.Main(args);
             }
             else
@@ -92,5 +73,28 @@ namespace SLBr
                 return Environment.ExitCode;
             }
         }
+
+        private static void MinimizeMemory()
+        {
+            Process CurrentProcess = Process.GetCurrentProcess();
+            //CurrentProcess.PriorityClass = ProcessPriorityClass.BelowNormal;
+            //SetCpuAffinity(0x0001);
+            GC.Collect(GC.MaxGeneration);
+            GC.WaitForPendingFinalizers();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                SetProcessWorkingSetSize(CurrentProcess.Handle, -1, -1);
+        }
+
+        [DllImport("kernel32.dll")]
+        private static extern bool SetProcessWorkingSetSize(IntPtr proc, int min, int max);
+
+        /*[DllImport("kernel32.dll")]
+        private static extern bool SetProcessAffinityMask(IntPtr handle, IntPtr affinity);
+
+        public static void SetCpuAffinity(int affinityMask)
+        {
+            Process process = Process.GetCurrentProcess();
+            SetProcessAffinityMask(process.Handle, (IntPtr)affinityMask);
+        }*/
     }
 }

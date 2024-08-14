@@ -1,25 +1,16 @@
 ﻿using CefSharp;
-using CSCore.CoreAudioAPI;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
-using System.Management;
 using System.Net;
-using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
-using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using static System.Net.WebRequestMethods;
 
 namespace SLBr
 {
@@ -92,6 +83,25 @@ namespace SLBr
 
     public static class ClassExtensions
     {
+        public static bool NewLoadHtml(this IWebBrowser browser, string html, string url, Encoding encoding, bool limitedUse = false, int uses = 1, string error = "")
+        {
+            if (!(browser.ResourceRequestHandlerFactory is Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory))
+                throw new Exception("LoadHtml can only be used with the SLBr's IResourceRequestHandlerFactory implementation");
+            if (resourceRequestHandlerFactory.RegisterHandler(url, ResourceHandler.GetByteArray(html, encoding), "text/html", limitedUse, uses, error))
+            {
+                browser.Load(url);
+                return true;
+            }
+            return false;
+        }
+        public static bool NewNoLoadHtml(this IWebBrowser browser, string html, string url, Encoding encoding, bool limitedUse = false, int uses = 1, string error = "")
+        {
+            if (!(browser.ResourceRequestHandlerFactory is Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory))
+                throw new Exception("LoadHtml can only be used with the SLBr's IResourceRequestHandlerFactory implementation");
+            resourceRequestHandlerFactory.RegisterHandler(url, ResourceHandler.GetByteArray(html, encoding), "text/html", limitedUse, uses, error);
+            return true;
+        }
+
         public static int CountChars(this string source, char toFind)
         {
             int count = 0;
@@ -108,12 +118,6 @@ namespace SLBr
             self ? CefState.Enabled : CefState.Disabled;
         public static bool ToBoolean(this CefState self) =>
             self == CefState.Enabled ? true : false;
-        public static T DeepCopy<T>(this T self)
-        {
-            var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
-            var serialized = JsonConvert.SerializeObject(self, settings);
-            return JsonConvert.DeserializeObject<T>(serialized, settings);
-        }
         public static FastHashSet<TSource> ToFastHashSet<TSource>(this IEnumerable<TSource> collection) =>
             new FastHashSet<TSource>(collection);
         public static BitmapSource ToBitmapSource(this DrawingImage source)
@@ -127,32 +131,10 @@ namespace SLBr
             bmp.Render(drawingVisual);
             return bmp;
         }
-        public static Bitmap ToBitmap(this BitmapSource bitmapsource)
-        {
-            Bitmap bitmap;
-            using (MemoryStream outStream = new MemoryStream())
-            {
-                BitmapEncoder enc = new BmpBitmapEncoder();
-                enc.Frames.Add(BitmapFrame.Create(bitmapsource));
-                enc.Save(outStream);
-                bitmap = new Bitmap(outStream);
-            }
-            return bitmap;
-        }
-        public static BitmapImage ToImageSource(this Bitmap bitmap)
-        {
-            using (MemoryStream memory = new MemoryStream())
-            {
-                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
-                memory.Position = 0;
-                BitmapImage bitmapimage = new BitmapImage();
-                bitmapimage.BeginInit();
-                bitmapimage.StreamSource = memory;
-                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapimage.EndInit();
 
-                return bitmapimage;
-            }
+        public static bool IsModal(this Window window)
+        {
+            return (bool)typeof(Window).GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(window);
         }
         public static BitmapImage ToBitmapImage(this BitmapSource bitmapsource)
         {
@@ -174,61 +156,81 @@ namespace SLBr
         }
         public static uint ToUInt(this System.Drawing.Color color) =>
                (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));
-        /*public static string[] Split(this string value, string[] seperator)
-        {
-            return value.Split(seperator, StringSplitOptions.None);
-        }*/
     }
 
     public static class Utils
     {
-        public static MMDevice GetDefaultRenderDevice()
+        public static BitmapImage ConvertBase64ToBitmapImage(string base64String)
         {
-            using (var enumerator = new MMDeviceEnumerator())
+            const string base64Prefix = "data:image/";
+            int base64Start = base64String.IndexOf("base64,");
+            if (base64String.StartsWith(base64Prefix) && base64Start != -1)
+                base64String = base64String.Substring(base64Start + 7);
+
+            byte[] imageBytes = Convert.FromBase64String(base64String);
+
+            using (MemoryStream stream = new MemoryStream(imageBytes))
             {
-                return enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = stream;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
             }
         }
 
-        public static bool IsAudioPlayingInDevice(MMDevice device = null)
+        public static Process GetAlreadyRunningInstance(Process CurrentProcess)
         {
-            if (device == null)
-                device = GetDefaultRenderDevice();
-            using (var meter = AudioMeterInformation.FromDevice(device))
-            {
-                return meter.PeakValue > 0.0000001 && meter.PeakValue < 1;
-            }
+            Process[] AllProcesses = Process.GetProcessesByName(CurrentProcess.ProcessName);
 
-        }
-        public static Process GetAlreadyRunningInstance()
-        {
-            Process _currentProc = Process.GetCurrentProcess();
-            Process[] _allProcs = Process.GetProcessesByName(_currentProc.ProcessName);
-
-            for (int i = 0; i < _allProcs.Length; i++)
+            for (int i = 0; i < AllProcesses.Length; i++)
             {
-                if (_allProcs[i].Id != _currentProc.Id)
-                    return _allProcs[i];
+                if (AllProcesses[i].Id != CurrentProcess.Id)
+                    return AllProcesses[i];
             }
             return null;
         }
-        public static bool CheckInstancesUsingMutex()
+
+
+        public static Process GetMutexOwner(string mutexName)
         {
-            Mutex _appMutex = new Mutex(false, App.Instance.AppUserModelID);
-            if (!_appMutex.WaitOne(1000))
-                return true;
-            return false;
+            IntPtr mutexHandle = OpenMutex(0x001F0001, false, mutexName);
+            if (mutexHandle == IntPtr.Zero)
+                return null;
+
+            uint processId = 0;
+            GetSecurityInfo(mutexHandle, SE_OBJECT_TYPE.SE_KERNEL_OBJECT, SECURITY_INFORMATION.OWNER_SECURITY_INFORMATION, out processId, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            CloseHandle(mutexHandle);
+
+            return Process.GetProcessById((int)processId);
         }
-        public static bool CheckInstancesFromRunningProcesses()
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr OpenMutex(uint dwDesiredAccess, bool bInheritHandle, string lpName);
+
+        [DllImport("advapi32.dll")]
+        private static extern int GetSecurityInfo(IntPtr handle, SE_OBJECT_TYPE objectType, SECURITY_INFORMATION securityInfo, out uint ownerSid, IntPtr owner, IntPtr group, IntPtr dacl);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        private enum SE_OBJECT_TYPE
         {
-            Process[] _Processes = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName);
-            return _Processes.Length > 1;
+            SE_KERNEL_OBJECT = 0
+        }
+
+        [Flags]
+        public enum SECURITY_INFORMATION
+        {
+            OWNER_SECURITY_INFORMATION = 0x00000001
         }
 
         public static int GenerateRandomId()
         {
-            Random rnd1 = new Random();
-            return rnd1.Next();
+            int E = new Random().Next();
+            return E;
         }
 
         public enum FolderGuids
@@ -280,42 +282,8 @@ namespace SLBr
             }
         }
 
-        public static DrawingImage Utf32ToDrawingImage(int SymbolCode, double SymbolSize = 16, System.Windows.Media.FontFamily _FontFamily = null)
-        {
-            if (_FontFamily == null)
-                _FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets");
-            var textBlock = new TextBlock
-            {
-                FontFamily = _FontFamily,
-                Text = char.ConvertFromUtf32(SymbolCode)
-            };
-
-            var brush = new VisualBrush
-            {
-                Visual = textBlock,
-                Stretch = Stretch.Uniform
-            };
-
-            var drawing = new GeometryDrawing
-            {
-                Brush = brush,
-                Geometry = new RectangleGeometry(
-                    new Rect(0, 0, SymbolSize, SymbolSize))
-            };
-
-            return new DrawingImage(drawing);
-        }
-
         public static bool IsAdministrator() =>
             new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-        public static string GetProcessorID()
-        {
-            ManagementClass mgt = new ManagementClass("Win32_Processor");
-            ManagementObjectCollection procs = mgt.GetInstances();
-            foreach (ManagementObject item in procs)
-                return item.Properties["Name"].Value.ToString();
-            return "Unknown";
-        }
         public static string Between(string Value, string FirstString, string LastString)
         {
             string FinalString;
@@ -328,35 +296,13 @@ namespace SLBr
             return FinalString;
         }
 
-        public static string ToMobileWiki(string Url)
+        public static string GetFileExtensionFromUrl(string url)
         {
-            string CleanedUrl = CleanUrl(Url, false, false, false, true);
-            string OutputUrl = Url;
-            if (!CleanedUrl.StartsWith("wikipedia.org") && CleanedUrl.Contains(".wikipedia.org") && !CleanedUrl.Contains(".m.wikipedia.org"))
-                OutputUrl = Url.Replace(".wikipedia.org", ".m.wikipedia.org");
-            else if (!CleanedUrl.StartsWith("wikimedia.org") && CleanedUrl.Contains(".wikimedia.org") && !CleanedUrl.Contains(".m.wikimedia.org") && !CleanedUrl.StartsWith("donate.wikimedia.org") && !CleanedUrl.StartsWith("upload.wikimedia.org"))
-                OutputUrl = Url.Replace("www.", "").Replace(".wikimedia.org", ".m.wikimedia.org");
-            else if (CleanedUrl.StartsWith("mediawiki.org"))
-                OutputUrl = Url.Replace("www.", "").Replace("mediawiki.org", "m.mediawiki.org");
-            else if (CleanedUrl.StartsWith("wikidata.org"))
-                OutputUrl = Url.Replace("www.", "").Replace("wikidata.org", "m.wikidata.org");
-            else if (!CleanedUrl.StartsWith("wikibooks.org") && CleanedUrl.Contains(".wikibooks.org") && !CleanedUrl.Contains(".m.wikibooks.org"))
-                OutputUrl = Url.Replace("www.", "").Replace(".wikibooks.org", ".m.wikibooks.org");
-            else if (!CleanedUrl.StartsWith("wikinews.org") && CleanedUrl.Contains(".wikinews.org") && !CleanedUrl.Contains(".m.wikinews.org"))
-                OutputUrl = Url.Replace("www.", "").Replace(".wikinews.org", ".m.wikinews.org");
-            else if (!CleanedUrl.StartsWith("wiktionary.org") && CleanedUrl.Contains(".wiktionary.org") && !CleanedUrl.Contains(".m.wiktionary.org"))
-                OutputUrl = Url.Replace("www.", "").Replace(".wiktionary.org", ".m.wiktionary.org");
-            else if (!CleanedUrl.StartsWith("wikiquote.org") && CleanedUrl.Contains(".wikiquote.org") && !CleanedUrl.Contains(".m.wikiquote.org"))
-                OutputUrl = Url.Replace("www.", "").Replace(".wikiquote.org", ".m.wikiquote.org");
-            else if (!CleanedUrl.StartsWith("wikiversity.org") && CleanedUrl.Contains(".wikiversity.org") && !CleanedUrl.Contains(".m.wikiversity.org"))
-                OutputUrl = Url.Replace("www.", "").Replace(".wikiversity.org", ".m.wikiversity.org");
-            else if (!CleanedUrl.StartsWith("wikivoyage.org") && CleanedUrl.Contains(".wikivoyage.org") && !CleanedUrl.Contains(".m.wikivoyage.org"))
-                OutputUrl = Url.Replace("www.", "").Replace(".wikivoyage.org", ".m.wikivoyage.org");
-            else if (CleanedUrl.StartsWith("wikisource.org"))
-                OutputUrl = Url.Replace("www.", "").Replace("wikisource.org", "m.wikisource.org");
-            return OutputUrl;
+            url = url.Split('?')[0];
+            url = url.Split('/').Last();
+            return url.Contains('.') ? url.Substring(url.LastIndexOf('.')) : "";
         }
-
+        
         /*public static bool IsSystemUrl(string Url) =>
             (IsInternalUrl(Url) || Url.StartsWith("ws:") || Url.StartsWith("wss:") || Url.StartsWith("javascript:") || Url.StartsWith("file:") || Url.StartsWith("localhost:") || IsAboutUrl(Url) || Url.StartsWith("view-source:") || Url.StartsWith("devtools:") || Url.StartsWith("data:"));*/
         public static bool IsProgramUrl(string Url) =>
@@ -364,15 +310,17 @@ namespace SLBr
         public static bool IsAboutUrl(string Url) =>
             Url.StartsWith("about:");
         public static bool CanCheckSafeBrowsing(ResourceType _ResourceType) =>
-            _ResourceType == ResourceType.NavigationPreLoadSubFrame || _ResourceType == ResourceType.NavigationPreLoadMainFrame || _ResourceType == ResourceType.MainFrame || _ResourceType == ResourceType.SubFrame;
+            _ResourceType == ResourceType.NavigationPreLoadSubFrame || _ResourceType == ResourceType.NavigationPreLoadMainFrame || _ResourceType == ResourceType.SubFrame;
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
-            _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame;
+            _ResourceType == ResourceType.Ping || _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame || _ResourceType == ResourceType.Image;
         public static bool CanCheck(TransitionType _TransitionType) =>
             _TransitionType != TransitionType.AutoSubFrame && _TransitionType != TransitionType.Blocked && _TransitionType != TransitionType.FormSubmit;
         public static bool IsHttpScheme(string Url) =>
             Url.StartsWith("https:") || Url.StartsWith("http:");
-        public static bool IsDomain(string Url) =>
-            !Url.StartsWith(".") && Url.Contains(".");
+        public static bool IsDomain(string Url)
+        {
+            return !Url.StartsWith(".") && Url.Contains(".");
+        }
         public static bool IsProtocolNotHttp(string Url)
         {
             if (IsHttpScheme(Url))
@@ -393,9 +341,17 @@ namespace SLBr
         }
         public static bool IsUrl(string Url)
         {
+            if (!Url.StartsWith("javascript:") && !Uri.IsWellFormedUriString(Url, UriKind.RelativeOrAbsolute))
+                return false;
             if (!IsHttpScheme(Url) && !IsProtocolNotHttp(Url) && !IsDomain(Url) && !Url.EndsWith("/"))
                 return false;
             return true;
+        }
+        public static bool IsCode(string Url)
+        {
+            if (Url.StartsWith("javascript:") || Url.StartsWith("data:"))
+                return true;
+            return false;
         }
 
         public static string RemovePrefix(string Url, string Prefix, bool CaseSensitive = false, bool Back = false, bool ReturnCaseSensitive = true)
@@ -441,22 +397,19 @@ namespace SLBr
                     ContinueCheck = false;
                     string SubstringUrl = Url.Substring(7);
                     if (IsProtocolNotHttp(SubstringUrl))
-                    {
-                        //if (IsAboutUrl(SubstringUrl))
-                        //    Url = FixUrl(SubstringUrl.Replace("about://", "slbr://").Replace("about:", "slbr://"));
-                        //else
-                            Url = FixUrl(SubstringUrl);
-                    }
+                        Url = FixUrl(SubstringUrl);
                     else if (IsHttpScheme(SubstringUrl))
                         Url = FixUrl(SubstringUrl);
                     else
                         Url = FixUrl(SubstringUrl);
                 }
                 if (ContinueCheck && Url.StartsWith("search:"))
-                    Url = FixUrl(string.Format(SearchEngineUrl, Url.Substring(7)));
-
-                if (Url.EndsWith("youtube.com/watch?v="))
-                    Url = "https://www.youtube.com/watch?v=KMU0tzLwhbE";
+                {
+                    if (!string.IsNullOrEmpty(SearchEngineUrl))
+                        Url = FixUrl(string.Format(SearchEngineUrl, Uri.EscapeDataString(Url.Substring(7))));
+                    else
+                        Url = FixUrl(Uri.EscapeDataString(Url.Substring(7)));
+                }
             }
             return Url;
         }
@@ -468,7 +421,7 @@ namespace SLBr
                 return Host.Split('/')[0];
             return Host;
         }
-        public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveAnchor = true, bool RemoveWWW = false)
+        public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveFragment = true, bool RemoveWWW = false, bool RemoveProtocol = true)
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
@@ -478,15 +431,18 @@ namespace SLBr
                 if (ToRemoveIndex >= 0)
                     Url = Url.Substring(0, ToRemoveIndex);
             }
-            if (RemoveAnchor)
+            if (RemoveFragment)
             {
                 int ToRemoveIndex = Url.LastIndexOf("#");
                 if (ToRemoveIndex >= 0)
                     Url = Url.Substring(0, ToRemoveIndex);
             }
-            Url = RemovePrefix(Url, "http://");
-            Url = RemovePrefix(Url, "https://");
-            Url = RemovePrefix(Url, "file:///");
+            if (RemoveProtocol)
+            {
+                Url = RemovePrefix(Url, "http://");
+                Url = RemovePrefix(Url, "https://");
+                Url = RemovePrefix(Url, "file:///");
+            }
             if (RemoveLastSlash)
                 Url = RemovePrefix(Url, "/", false, true);
             if (RemoveWWW)
@@ -497,7 +453,7 @@ namespace SLBr
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
-            Url = Url.Trim().Replace(" ", "%20");
+            Url = Url.Trim();
             if (!IsProtocolNotHttp(Url))
             {
                 if (!Url.StartsWith("https://") && !Url.StartsWith("http://"))
@@ -538,44 +494,6 @@ namespace SLBr
         }
     }
 
-    public class ImageConverter : JsonConverter
-    {
-        public override bool CanConvert(Type objectType)
-        {
-            return objectType == typeof(byte[]);
-        }
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            var str = reader.Value.ToString();
-            var index = reader.Value.ToString().IndexOf("base64,");
-            if (index == -1)
-            {
-                try
-                {
-                    //Task<byte[]> task = App.ImageDownloaderObj.GetImageBytesAsync(new Uri(str));
-                    //task.Wait(500);
-                    //return task.Result;
-                    return new byte[] { };
-                }
-                catch { return new byte[] { }; }
-            }
-            else
-            {
-                var m = new MemoryStream(Convert.FromBase64String(str.Substring(index + 7)));
-                return m.ToArray();
-            }
-            //return (Bitmap)Image.FromStream(m);
-        }
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            Bitmap bmp = (Bitmap)value;
-            MemoryStream m = new MemoryStream();
-            bmp.Save(m, System.Drawing.Imaging.ImageFormat.Png);
-
-            writer.WriteValue(Convert.ToBase64String(m.ToArray()));
-        }
-    }
-
     public class Saving
     {
         string KeySeparator = "<,>";
@@ -595,7 +513,6 @@ namespace SLBr
 
         public bool Has(string Key, bool IsValue = false)
         {
-            //Load();
             if (IsValue)
                 return Data.ContainsValue(Key);
             return Data.ContainsKey(Key);
@@ -633,11 +550,13 @@ namespace SLBr
             string Value = string.Join(ValueSeparator, Value_1, Value_2);
             Set(Key, Value, _Save);
         }
-        public string Get(string Key)
+        public string Get(string Key, string Default = "NOTFOUND")
         {
             if (Has(Key))
                 return Data[Key];
-            return "NOTFOUND";
+            if (Default != "NOTFOUND")
+                Set(Key, Default);
+            return Default;
         }
         public string[] Get(string Key, bool UseListParameter) =>
             Get(Key).Split(new[] { ValueSeparator }, StringSplitOptions.None);
@@ -648,21 +567,21 @@ namespace SLBr
             if (!Directory.Exists(SaveFolderPath))
                 Directory.CreateDirectory(SaveFolderPath);
 
-            if (!System.IO.File.Exists(SaveFilePath))
-                System.IO.File.Create(SaveFilePath).Close();
+            if (!File.Exists(SaveFilePath))
+                File.Create(SaveFilePath).Close();
             FastHashSet<string> Contents = new FastHashSet<string>();
             foreach (KeyValuePair<string, string> KVP in Data)
                 Contents.Add(KVP.Key + KeyValueSeparator + KVP.Value);
-            System.IO.File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
+            File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
         }
         public void Load()
         {
             if (!Directory.Exists(SaveFolderPath))
                 Directory.CreateDirectory(SaveFolderPath);
-            if (!System.IO.File.Exists(SaveFilePath))
-                System.IO.File.Create(SaveFilePath).Close();
+            if (!File.Exists(SaveFilePath))
+                File.Create(SaveFilePath).Close();
 
-            FastHashSet<string> Contents = System.IO.File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToFastHashSet();
+            FastHashSet<string> Contents = File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToFastHashSet();
             foreach (string Content in Contents)
             {
                 if (string.IsNullOrWhiteSpace(Content))
