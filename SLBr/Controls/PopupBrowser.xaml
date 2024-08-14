@@ -1,0 +1,26 @@
+﻿<Window x:Class="SLBr.Controls.PopupBrowser"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SLBr.Controls"
+        mc:Ignorable="d"
+        Title="SLBr" Height="650" WindowStartupLocation="CenterScreen" Width="600" Loaded="Window_Loaded">
+    <Window.Resources>
+        <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
+    </Window.Resources>
+    <Grid>
+        <Grid x:Name="WebContent">
+
+        </Grid>
+        <Grid IsHitTestVisible="False" Focusable="False" x:Name="StatusBar" Margin="5,37.5" VerticalAlignment="Bottom">
+            <Popup SnapsToDevicePixels="True" x:Name="StatusBarPopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
+                <Border Background="{DynamicResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                    <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300">
+                        <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="7.5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>
+                    </Grid>
+                </Border>
+            </Popup>
+        </Grid>
+    </Grid>
+</Window>
