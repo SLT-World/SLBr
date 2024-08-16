@@ -33,7 +33,7 @@ To install SLBr, follow these steps:
 2. Ensure the following requirements are installed:
     - [Microsoft Visual C++ 2019 Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170)
     - [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
-    - Segoe Fluent Icons
+    - [Segoe Fluent Icons](https://aka.ms/SegoeFluentIcons)
     - Windows 10 & above
 ## Thanks
 
