@@ -71,6 +71,7 @@ namespace SLBr
         public static string GOOGLE_API_KEY = "";
         public static string GOOGLE_DEFAULT_CLIENT_ID = "";
         public static string GOOGLE_DEFAULT_CLIENT_SECRET = "";
+        public static string DISCORD_WEBHOOK = "";
     }
 }
 ```
