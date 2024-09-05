@@ -2,6 +2,7 @@
 using CefSharp.Enums;
 using CefSharp.Structs;
 using SLBr.Pages;
+using System.Security.Policy;
 
 namespace SLBr.Handlers
 {
@@ -57,7 +58,9 @@ namespace SLBr.Handlers
                 //System.Windows.MessageBox.Show(string.Join(" | ", urls));
                 App.Current.Dispatcher.Invoke(async () =>
                 {
-                    foreach (string url in urls)
+                    if (Utils.GetFileExtensionFromUrl(urls[0]) != ".svg")
+                        _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address);
+                    /*foreach (string url in urls)
                     {
                         if (Utils.GetFileExtensionFromUrl(url) != ".svg")
                         {
@@ -65,7 +68,7 @@ namespace SLBr.Handlers
                             _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address);
                             break;
                         }
-                    }
+                    }*/
                 });
             }
         }

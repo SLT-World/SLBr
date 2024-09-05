@@ -1,18 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Xml;
 
 namespace SLBr.Pages
@@ -37,18 +26,17 @@ namespace SLBr.Pages
         public void ApplyTheme(Theme _Theme)
         {
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
-            Resources["FontBrushColor"] = _Theme.FontColor;
-            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
+            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["GrayBrushColor"] = _Theme.GrayColor;
+            Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
         }
 
         private void Navigate(object sender, RoutedEventArgs e)
         {
             Button _Button = sender as Button;
-            XmlNode _XmlNode = _Button.Tag as XmlNode;
-            BrowserView.Navigate(_XmlNode.InnerText);
+            BrowserView.Navigate((_Button.Tag as XmlNode).InnerText);
         }
 
         private void SearchTextBox_KeyUp(object sender, KeyEventArgs e)
@@ -59,12 +47,12 @@ namespace SLBr.Pages
                 string Url = "";
                 if (SearchTextBox.Text.Length > 0)
                 {
-                    Url = $"http://news.google.com/rss/search?q={Uri.EscapeDataString(SearchTextBox.Text)}&hl=en-US";
+                    Url = $"http://news.google.com/rss/search?q={Uri.EscapeDataString(SearchTextBox.Text)}";//&hl=en-US
                     BackButton.Visibility = Visibility.Visible;
                 }
                 else
                 {
-                    Url = $"http://news.google.com/rss?hl=en-US";
+                    Url = $"http://news.google.com/rss";//?hl=en-US
                     BackButton.Visibility = Visibility.Collapsed;
                 }
                 NewsXML.Source = new Uri(Url);
@@ -79,7 +67,7 @@ namespace SLBr.Pages
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            NewsXML.Source = new Uri($"http://news.google.com/rss?hl=en-US");
+            NewsXML.Source = new Uri($"http://news.google.com/rss");//?hl=en-US
             SearchTextBox.Text = "";
             Keyboard.ClearFocus();
             BackButton.Visibility = Visibility.Collapsed;
@@ -87,12 +75,9 @@ namespace SLBr.Pages
 
         private void TopicButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender == null)
-                return;
-            Actions _Action;
             var Target = (FrameworkElement)sender;
             string _Tooltip = Target.ToolTip.ToString();
-            NewsXML.Source = new Uri($"http://news.google.com/rss/search?q={_Tooltip}&hl=en-US");
+            NewsXML.Source = new Uri($"http://news.google.com/rss/search?q={_Tooltip}");//&hl=en-US
             BackButton.Visibility = Visibility.Visible;
         }
     }

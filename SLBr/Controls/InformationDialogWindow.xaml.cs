@@ -37,10 +37,10 @@ namespace SLBr.Controls
         public void ApplyTheme(Theme _Theme)
         {
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
-            Resources["FontBrushColor"] = _Theme.FontColor;
-            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
+            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["GrayBrushColor"] = _Theme.GrayColor;
+            Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
         }
 

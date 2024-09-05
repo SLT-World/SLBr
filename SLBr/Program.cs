@@ -2,18 +2,18 @@
 using CefSharp.BrowserSubprocess;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Windows;
+using System.Windows.Threading;
 
 namespace SLBr
 {
     static class MessageHelper
     {
         public const int WM_COPYDATA = 0x004A;
-        public const int WM_NCHITTEST = 0x0084;
+        /*public const int WM_NCHITTEST = 0x0084;
         public const int WM_SYSTEMMENU = 0xa4;
         public const int WP_SYSTEMMENU = 0x02;
         public const int WM_GETMINMAXINFO = 0x0024;
-        public const int HTMAXBUTTON = 9;
+        public const int HTMAXBUTTON = 9;*/
         public const int HWND_BROADCAST = 0xffff;
 
         [DllImport("user32", EntryPoint = "SendMessageA")]
@@ -56,15 +56,14 @@ namespace SLBr
         [STAThread]
         private static int Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("DOTNET_gcServer", "1");
+            //https://github.com/dotnet/runtime/issues/93914
+            //https://learn.microsoft.com/en-us/dotnet/core/runtime-config/garbage-collector
+            /*Environment.SetEnvironmentVariable("DOTNET_gcServer", "1");
             Environment.SetEnvironmentVariable("DOTNET_GCHeapCount", "16");
-            Environment.SetEnvironmentVariable("DOTNET_GCConserveMemory", "5");
+            Environment.SetEnvironmentVariable("DOTNET_GCConserveMemory", "5");*/
             MinimizeMemory();
             if (args.Length > 0 && args[0].StartsWith("--type=", StringComparison.Ordinal))
-            {
-                //MessageBox.Show(string.Join("|",args));
                 return SelfHost.Main(args);
-            }
             else
             {
                 App.Main();
@@ -74,15 +73,28 @@ namespace SLBr
             }
         }
 
+        /*private static void FlushTimer_Tick(object? sender, EventArgs e)
+        {
+            FlushMemory();
+        }
+
+        private static void FlushMemory()
+        {
+            GC.Collect(GC.MaxGeneration);
+            GC.WaitForPendingFinalizers();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+        }*/
+
         private static void MinimizeMemory()
         {
-            Process CurrentProcess = Process.GetCurrentProcess();
+            //Process CurrentProcess = Process.GetCurrentProcess();
             //CurrentProcess.PriorityClass = ProcessPriorityClass.BelowNormal;
             //SetCpuAffinity(0x0001);
             GC.Collect(GC.MaxGeneration);
             GC.WaitForPendingFinalizers();
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                SetProcessWorkingSetSize(CurrentProcess.Handle, -1, -1);
+                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
         }
 
         [DllImport("kernel32.dll")]

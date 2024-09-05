@@ -1,17 +1,8 @@
-﻿using CefSharp;
-using CefSharp.Enums;
-using CefSharp.Structs;
-using Microsoft.VisualBasic;
-using SLBr.Pages;
-using System.Drawing;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Windows;
-using static SLBr.Handlers.AudioHandler;
+﻿
 
 namespace SLBr.Handlers
 {
-    public class AudioHandler : IAudioHandler
+    /*public class AudioHandler : IAudioHandler
     {
         private bool isDisposed;
         public bool IsDisposed
@@ -83,12 +74,12 @@ namespace SLBr.Handlers
 
         public bool GetAudioParameters(IWebBrowser chromiumWebBrowser, IBrowser browser, ref AudioParameters parameters)
         {
-            /*parameters = new AudioParameters
-            {
-                SampleRate = 44100,
-                ChannelLayout = ChannelLayout.LayoutStereo,
-                FramesPerBuffer = 1024,
-            };*/
+            //parameters = new AudioParameters
+            //{
+            //    SampleRate = 44100,
+            //    ChannelLayout = ChannelLayout.LayoutStereo,
+            //    FramesPerBuffer = 1024,
+            //};
             return true;
         }
         public void OnAudioStreamError(IWebBrowser chromiumWebBrowser, IBrowser browser, string errorMessage)
@@ -159,5 +150,5 @@ namespace SLBr.Handlers
             waveOutClose(waveOutHandle);
             BrowserView.SetAudioState(false);
         }
-    }
+    }*/
 }

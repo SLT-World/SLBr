@@ -1,6 +1,5 @@
 ﻿using CefSharp;
 using System.IO;
-using System.Windows;
 
 namespace SLBr.Handlers
 {
@@ -8,11 +7,12 @@ namespace SLBr.Handlers
     {
         public bool CanDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, string url, string requestMethod)
         {
-            bool DownloadFile = true;
-            if (App.Instance.GoogleSafeBrowsing)
+            //Doesn't seem to work?
+            /*if (App.Instance.GoogleSafeBrowsing)
             {
+                bool DownloadFile = true;
                 string Response = App.Instance._SafeBrowsing.Response(url);
-                SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? App.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+                SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(Response);
                 if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware)
                 {
                     MessageBox.Show("This download contains malware.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK);
@@ -22,8 +22,9 @@ namespace SLBr.Handlers
                     DownloadFile = MessageBox.Show("This download contains unwanted software. Are you sure you want to proceed with the download?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
                 else if (_ThreatType == SafeBrowsingHandler.ThreatType.Potentially_Harmful_Application)
                     DownloadFile = MessageBox.Show("This download can be potentially harmful. Are you sure you want to proceed with the download?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
-            }
-            return DownloadFile;
+                return DownloadFile;
+            }*/
+            return true;
         }
 
         public bool OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IBeforeDownloadCallback callback)
@@ -32,9 +33,8 @@ namespace SLBr.Handlers
             {
                 using (callback)
                 {
-                    string DownloadFilePath = Path.Combine(App.Instance.GlobalSave.Get("DownloadPath"), downloadItem.SuggestedFileName);
                     App.Instance.UpdateDownloadItem(downloadItem);
-                    callback.Continue(DownloadFilePath, bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt")));
+                    callback.Continue(Path.Combine(App.Instance.GlobalSave.Get("DownloadPath"), downloadItem.SuggestedFileName), bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt")));
                 }
             }
             return true;

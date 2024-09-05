@@ -12,12 +12,17 @@
     <SignAssembly>False</SignAssembly>
     <ApplicationIcon>Resources\SLBr.ico</ApplicationIcon>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
-    <AssemblyVersion>2024.8.15.0</AssemblyVersion>
-    <FileVersion>2024.8.15.0</FileVersion>
+    <AssemblyVersion>2024.9.5.0</AssemblyVersion>
+    <FileVersion>2024.9.5.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
@@ -25,8 +30,13 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Remove="Resources\SLBr.png" />
+    <None Remove="WinUIControls\5bmhprik.cf5~" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,7 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="126.2.70" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="127.3.50" />
   </ItemGroup>
 
   <ItemGroup>
@@ -94,7 +104,7 @@
     <None Update="Resources\Reader Mode.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\SettingsPlacebo.html">
+    <None Update="Resources\Settings.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\SLBr Browser.png">
@@ -118,15 +128,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="126.2.18" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="127.3.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="126.2.18" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="127.3.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="126.2.18" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="127.3.5" />
   </ItemGroup>
 
 </Project>

@@ -1,16 +1,15 @@
 ﻿using CefSharp;
+using System.Windows;
 
 namespace SLBr.Handlers
 {
     public class ResourceRequestHandler : IResourceRequestHandler
     {
-        bool AdBlock;
-        bool TrackerBlock;
+        RequestHandler Handler;
 
-        public ResourceRequestHandler(bool _AdBlock, bool _TrackerBlock)
+        public ResourceRequestHandler(RequestHandler _Handler)
         {
-            AdBlock = _AdBlock;
-            TrackerBlock = _TrackerBlock;
+            Handler = _Handler;
         }
 
         public void Dispose()
@@ -114,6 +113,8 @@ namespace SLBr.Handlers
             "btloader.com", "ad-delivery.net",
             "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com",
             "adserver.snapads.com", "euw.adserver.snapads.com", "euc.adserver.snapads.com", "usc.adserver.snapads.com", "ase.adserver.snapads.com",
+            "cdn.adsafeprotected.com",
+            "rp.liadm.com",
 
             "h.seznam.cz", "d.seznam.cz", "ssp.seznam.cz",
             "cdn.performax.cz", "dale.performax.cz", "chip.performax.cz"
@@ -149,16 +150,20 @@ namespace SLBr.Handlers
 
             "luckyorange.com", "api.luckyorange.com", "realtime.luckyorange.com", "cdn.luckyorange.com", "w1.luckyorange.com", "upload.luckyorange.net", "cs.luckyorange.net", "settings.luckyorange.net",
 
+
+            "smetrics.samsung.com", "nmetrics.samsung.com", "analytics-api.samsunghealthcn.com",
+            "iot-eu-logser.realme.com", "iot-logser.realme.com",
+            "securemetrics.apple.com", "supportmetrics.apple.com", "metrics.icloud.com", "metrics.mzstatic.com", "books-analytics-events.apple.com", "weather-analytics-events.apple.com", "notes-analytics-events.apple.com",
+
             "tr.snapchat.com", "sc-analytics.appspot.com", "app-analytics.snapchat.com",
-             "crashlogs.whatsapp.net",
+            "crashlogs.whatsapp.net",
+
             "click.a-ads.com",
             "static.criteo.net",
             "www.clarity.ms",
             "u.clarity.ms",
-            "b.6sc.co",
-            "api.bounceexchange.com", "events.bouncex.net",
-
             "claritybt.freshmarketer.com",
+
             "data.mistat.xiaomi.com",
             "data.mistat.intl.xiaomi.com",
             "data.mistat.india.xiaomi.com",
@@ -168,15 +173,6 @@ namespace SLBr.Handlers
             "tracking.intl.miui.com",
             "tracking.india.miui.com",
             "tracking.rus.miui.com",
-            "dsum-sec.casalemedia.com",
-            "s.cdn.turner.com",
-            "logx.optimizely.com",
-            "signal-metrics-collector-beta.s-onetag.com",
-            "connect-metrics-collector.s-onetag.com",
-            "ping.chartbeat.net",
-            "logs.browser-intake-datadoghq.com",
-            "onsiterecs.api.boomtrain.com",
-            "adx.adform.net",
 
             "metrics.data.hicloud.com",
             "metrics1.data.hicloud.com",
@@ -188,9 +184,33 @@ namespace SLBr.Handlers
             "logbak.hicloud.com",
             "grs.hicloud.com",
 
-            "smetrics.samsung.com", "nmetrics.samsung.com", "analytics-api.samsunghealthcn.com",
-            "iot-eu-logser.realme.com", "iot-logser.realme.com",
-            "securemetrics.apple.com", "supportmetrics.apple.com", "metrics.icloud.com", "metrics.mzstatic.com", "books-analytics-events.apple.com", "weather-analytics-events.apple.com", "notes-analytics-events.apple.com",
+            "s.cdn.turner.com",
+            "logx.optimizely.com",
+            "signal-metrics-collector-beta.s-onetag.com",
+            "connect-metrics-collector.s-onetag.com",
+            "ping.chartbeat.net",
+            "logs.browser-intake-datadoghq.com",
+            "onsiterecs.api.boomtrain.com",
+            "adx.adform.net",
+
+            "b.6sc.co",
+            "api.bounceexchange.com", "events.bouncex.net",
+            "assets.adobedtm.com",
+            "static.chartbeat.com",
+            "dsum-sec.casalemedia.com",
+
+            "aa.agkn.com",
+            "material.anonymised.io",
+            "static.anonymised.io",
+            "experience.tinypass.com",
+            "dn.tinypass.com",
+            "dw-usr.userreport.com",
+            "capture-api.reachlocalservices.com",
+            "capture-api.reachlocalservices.com",
+            "discovery.evvnt.com",
+            "mab.chartbeat.com",
+            "sync.sharethis.com",
+            "bcp.crwdcntrl.net",
 
             "prebid.a-mo.net",
             "tpsc-sgc.doubleverify.com", "cdn.doubleverify.com", "onetag-sys.com",
@@ -201,65 +221,59 @@ namespace SLBr.Handlers
             "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
             "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com", "a.pub.network"
         };
+
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
-            bool Continue = true;
-
-            if (Continue)
+            //MessageBox.Show(Utils.Host(frame.Url));
+            if (Utils.IsHttpScheme(request.Url))
             {
-                //string ECleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);
-                if (AdBlock || TrackerBlock)
+                //https://chromium-review.googlesource.com/c/chromium/src/+/1265506/25/third_party/blink/renderer/platform/loader/fetch/resource_loader.cc
+                if (App.Instance.NeverSlowMode && Handler.IsOverBudget(request.ResourceType))
+                    return CefReturnValue.Cancel;
+                if ((App.Instance.AdBlock || App.Instance.TrackerBlock) && !Utils.Host(frame.Url).EndsWith("ecosia.org", StringComparison.Ordinal))
                 {
                     if (request.ResourceType == ResourceType.Ping)
                     {
-                        Continue = false;
                         App.Instance.TrackersBlocked++;
+                        return CefReturnValue.Cancel;
                     }
-                    if (Utils.IsPossiblyAd(request.ResourceType))
+                    else if (Utils.IsPossiblyAd(request.ResourceType))
                     {
                         string CleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);
-                        string Host = Utils.Host(CleanedUrl, true);
                         if (request.ResourceType == ResourceType.Script || request.ResourceType == ResourceType.Xhr)
                         {
                             foreach (string Script in HasInLink)
                             {
-                                if (CleanedUrl.Contains(Script.ToLower()))
-                                    Continue = false;
+                                if (CleanedUrl.AsSpan().IndexOf(Script, StringComparison.Ordinal) >= 0)
+                                    return CefReturnValue.Cancel;
                             }
                         }
-                        if (Continue)
+                        string Host = Utils.Host(CleanedUrl, true);
+                        if (App.Instance.TrackerBlock && Analytics.Contains(Host))
                         {
-                            if (TrackerBlock && Analytics.Contains(Host))
-                            {
-                                Continue = false;
-                                App.Instance.TrackersBlocked++;
-                            }
-                            else if (AdBlock && (Ads.Contains(Host) || Miners.Contains(Host)))
-                            {
-                                Continue = false;
-                                App.Instance.AdsBlocked++;
-                            }
+                            App.Instance.TrackersBlocked++;
+                            return CefReturnValue.Cancel;
+                        }
+                        else if (App.Instance.AdBlock && (Ads.Contains(Host) || Miners.Contains(Host)))
+                        {
+                            App.Instance.AdsBlocked++;
+                            return CefReturnValue.Cancel;
                         }
                     }
                 }
-                if (Continue && App.Instance.GoogleSafeBrowsing && Utils.CanCheckSafeBrowsing(request.ResourceType))
+                if (App.Instance.GoogleSafeBrowsing && Utils.CanCheckSafeBrowsing(request.ResourceType))
                 {
                     string Response = App.Instance._SafeBrowsing.Response(request.Url);
-                    SafeBrowsingHandler.ThreatType _ThreatType = Utils.CheckForInternetConnection() ? App.Instance._SafeBrowsing.GetThreatType(Response) : SafeBrowsingHandler.ThreatType.Unknown;
+                    SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(Response);
                     if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software || _ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
-                        Continue = false;
+                        return CefReturnValue.Cancel;
                 }
-                if (Continue)
-                {
-                    if (bool.Parse(App.Instance.GlobalSave.Get("LiteMode")))
-                    {
-                        request.SetHeaderByName("Save-Data", "on", true);
-                        request.SetHeaderByName("Device-Memory", "0.25", true);
-                    }
-                    //request.SetHeaderByName("DNT", "1", true);
-                }
+                if (bool.Parse(App.Instance.GlobalSave.Get("LiteMode")))
+                    request.SetHeaderByName("Save-Data", "on", true);
+                    //request.SetHeaderByName("Device-Memory", "0.25", true);
+                //request.SetHeaderByName("DNT", "1", true);
             }
-            return Continue ? CefReturnValue.Continue : CefReturnValue.Cancel;
+            return CefReturnValue.Continue;
         }
 
         public bool OnProtocolExecution(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request)
@@ -269,6 +283,8 @@ namespace SLBr.Handlers
 
         public void OnResourceLoadComplete(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, UrlRequestStatus status, long receivedContentLength)
         {
+            if (status == UrlRequestStatus.Success && App.Instance.NeverSlowMode)
+                Handler.DeductFromBudget(request.ResourceType, receivedContentLength);
         }
 
         public void OnResourceRedirect(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, ref string newUrl)
@@ -277,6 +293,8 @@ namespace SLBr.Handlers
 
         public bool OnResourceResponse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
         {
+            //return !Handler.CanLoadUnderBudget(request.ResourceType, receivedContentLength);
+
             //if (response.StatusCode == 404)
             //    BrowserView.Prompt($"404, Do you want open the page in the Wayback Machine?", true, "Download", $"24<,>https://web.archive.org/{request.Url}", $"https://web.archive.org/{request.Url}", true, "\xE896");
             return false;

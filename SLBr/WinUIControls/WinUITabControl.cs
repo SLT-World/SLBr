@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Specialized;
 using System.Windows.Controls.Primitives;
 using System.Windows.Controls;
 using System.Windows;
@@ -22,9 +17,9 @@ namespace WinUI
 
         private void ItemContainerGenerator_StatusChanged(object sender, EventArgs e)
         {
-            if (this.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
+            if (ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
             {
-                this.ItemContainerGenerator.StatusChanged -= ItemContainerGenerator_StatusChanged;
+                ItemContainerGenerator.StatusChanged -= ItemContainerGenerator_StatusChanged;
                 UpdateSelectedItem();
             }
         }
@@ -39,33 +34,29 @@ namespace WinUI
         protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
         {
             base.OnItemsChanged(e);
-
             if (ItemsHolderPanel == null)
                 return;
-
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Reset:
                     ItemsHolderPanel.Children.Clear();
                     break;
-
                 case NotifyCollectionChangedAction.Add:
                 case NotifyCollectionChangedAction.Remove:
                     if (e.OldItems != null)
                     {
-                        foreach (var item in e.OldItems)
+                        foreach (var Item in e.OldItems)
                         {
-                            ContentPresenter cp = FindChildContentPresenter(item);
-                            if (cp != null)
-                                ItemsHolderPanel.Children.Remove(cp);
+                            ContentPresenter _ContentPresenter = FindChildContentPresenter(Item);
+                            if (_ContentPresenter != null)
+                                ItemsHolderPanel.Children.Remove(_ContentPresenter);
                         }
                     }
-
                     UpdateSelectedItem();
                     break;
-
                 case NotifyCollectionChangedAction.Replace:
-                    throw new NotImplementedException("Replace not implemented yet");
+                    //Replace not implemented yet
+                    break;
             }
         }
 
@@ -79,65 +70,55 @@ namespace WinUI
         {
             if (ItemsHolderPanel == null)
                 return;
-
-            TabItem item = GetSelectedTabItem();
-            if (item != null)
-                CreateChildContentPresenter(item);
-
-            foreach (ContentPresenter child in ItemsHolderPanel.Children)
-                child.Visibility = ((child.Tag as TabItem).IsSelected) ? Visibility.Visible : Visibility.Collapsed;
+            TabItem Item = GetSelectedTabItem();
+            if (Item != null)
+                CreateChildContentPresenter(Item);
+            foreach (ContentPresenter Child in ItemsHolderPanel.Children)
+                Child.Visibility = ((Child.Tag as TabItem).IsSelected) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private ContentPresenter CreateChildContentPresenter(object item)
+        private ContentPresenter CreateChildContentPresenter(object Item)
         {
-            if (item == null)
+            if (Item == null)
                 return null;
-            ContentPresenter cp = FindChildContentPresenter(item);
-            if (cp != null)
-                return cp;
+            ContentPresenter _ContentPresenter = FindChildContentPresenter(Item);
+            if (_ContentPresenter != null)
+                return _ContentPresenter;
 
-            cp = new ContentPresenter();
-            cp.Content = (item is TabItem) ? (item as TabItem).Content : item;
-            cp.ContentTemplate = this.SelectedContentTemplate;
-            cp.ContentTemplateSelector = this.SelectedContentTemplateSelector;
-            cp.ContentStringFormat = this.SelectedContentStringFormat;
-            cp.Visibility = Visibility.Collapsed;
-            cp.Tag = (item is TabItem) ? item : (this.ItemContainerGenerator.ContainerFromItem(item));
-            ItemsHolderPanel.Children.Add(cp);
-            return cp;
+            _ContentPresenter = new ContentPresenter();
+            _ContentPresenter.Content = (Item is TabItem) ? (Item as TabItem).Content : Item;
+            _ContentPresenter.ContentTemplate = SelectedContentTemplate;
+            _ContentPresenter.ContentTemplateSelector = SelectedContentTemplateSelector;
+            _ContentPresenter.ContentStringFormat = SelectedContentStringFormat;
+            _ContentPresenter.Visibility = Visibility.Collapsed;
+            _ContentPresenter.Tag = (Item is TabItem) ? Item : (ItemContainerGenerator.ContainerFromItem(Item));
+            ItemsHolderPanel.Children.Add(_ContentPresenter);
+            return _ContentPresenter;
         }
 
-        private ContentPresenter FindChildContentPresenter(object data)
+        private ContentPresenter FindChildContentPresenter(object Data)
         {
-            if (data is TabItem)
-                data = (data as TabItem).Content;
-
-            if (data == null)
-                return null;
-
             if (ItemsHolderPanel == null)
                 return null;
-
-            foreach (ContentPresenter cp in ItemsHolderPanel.Children)
+            if (Data is TabItem)
             {
-                if (cp.Content == data)
-                    return cp;
+                Data = (Data as TabItem).Content;
+                foreach (ContentPresenter _ContentPresenter in ItemsHolderPanel.Children)
+                {
+                    if (_ContentPresenter.Content == Data)
+                        return _ContentPresenter;
+                }
             }
-
             return null;
         }
 
         protected TabItem GetSelectedTabItem()
         {
-            object selectedItem = base.SelectedItem;
-            if (selectedItem == null)
-                return null;
-
-            TabItem item = selectedItem as TabItem;
-            if (item == null)
-                item = base.ItemContainerGenerator.ContainerFromIndex(base.SelectedIndex) as TabItem;
-
-            return item;
+            TabItem _SelectedItem = SelectedItem as TabItem;
+            /*TabItem Item = _SelectedItem as TabItem;
+            if (Item == null)
+                Item = ItemContainerGenerator.ContainerFromIndex(SelectedIndex) as TabItem;*/
+            return _SelectedItem;
         }
     }
 }

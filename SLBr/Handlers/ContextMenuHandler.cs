@@ -1,9 +1,7 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
-using System.Drawing;
 using System.IO;
 using System.Net.Http;
-using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -19,33 +17,27 @@ namespace SLBr.Handlers
             model.Clear();
             if (parameters.IsEditable)
             {
-                if (bool.Parse(App.Instance.GlobalSave.Get("SpellCheck")))
+                if (parameters.DictionarySuggestions.Count != 0 && bool.Parse(App.Instance.GlobalSave.Get("SpellCheck")))
                 {
                     switch (parameters.DictionarySuggestions.Count)
                     {
-                        case 0:
-                            break;
                         case 1:
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
-                            model.AddSeparator();
                             break;
                         case 2:
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
-                            model.AddSeparator();
                             break;
                         case 3:
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
-                            model.AddSeparator();
                             break;
                         case 4:
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
-                            model.AddSeparator();
                             break;
                         case 5:
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
@@ -53,16 +45,16 @@ namespace SLBr.Handlers
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion4, parameters.DictionarySuggestions[4]);
-                            model.AddSeparator();
                             break;
                         default:
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
                             model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
-                            model.AddSeparator();
                             break;
                     }
+                    model.AddItem(CefMenuCommand.AddToDictionary, "Ignore Word");
+                    model.AddSeparator();
                 }
                 model.AddItem((CefMenuCommand)26510, "Emoji");
                 model.AddSeparator();
@@ -198,12 +190,14 @@ namespace SLBr.Handlers
             {
                 if (CommandID >= CefMenuCommand.SpellCheckSuggestion0 && CommandID <= CefMenuCommand.SpellCheckSuggestion4)
                 {
-                    int sugestionIndex = ((int)CommandID) - (int)CefMenuCommand.SpellCheckSuggestion0;
-                    if (sugestionIndex < Parameters.DictionarySuggestions.Count)
-                    {
-                        var suggestion = Parameters.DictionarySuggestions[sugestionIndex];
-                        Browser.ReplaceMisspelling(suggestion);
-                    }
+                    int SuggestionIndex = ((int)CommandID) - (int)CefMenuCommand.SpellCheckSuggestion0;
+                    if (SuggestionIndex < Parameters.DictionarySuggestions.Count)
+                        Browser.ReplaceMisspelling(Parameters.DictionarySuggestions[SuggestionIndex]);
+                    ToReturn = true;
+                }
+                else if (CommandID == CefMenuCommand.AddToDictionary)
+                {
+                    Browser.AddWordToDictionary(Parameters.MisspelledWord);
                     ToReturn = true;
                 }
                 else if (CommandID == CefMenuCommand.Find)
@@ -211,9 +205,9 @@ namespace SLBr.Handlers
                     string SelectedText = Parameters.SelectionText;
                     App.Current.Dispatcher.Invoke(() =>
                     {
-                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.GlobalSave.Get("SearchEngine"), SelectedText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1); ;
-                        ToReturn = true;
+                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.GlobalSave.Get("SearchEngine"), SelectedText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
                     });
+                    ToReturn = true;
                 }
                 else if (CommandID == (CefMenuCommand)26510)
                     CoreInputView.GetForCurrentView().TryShow(CoreInputViewKind.Emoji);
@@ -288,7 +282,8 @@ namespace SLBr.Handlers
                 {
                     if (CommandID == CefMenuCommand.Copy)
                     {
-                        DownloadAndCopyImage(Parameters.SourceUrl);
+                        try { DownloadAndCopyImage(Parameters.SourceUrl); }
+                        catch { Clipboard.SetText(Parameters.SourceUrl); }
                         ToReturn = true;
                     }
                     else if (CommandID == (CefMenuCommand)26505)
@@ -404,37 +399,36 @@ namespace SLBr.Handlers
 
         public bool RunContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model, IRunContextMenuCallback callback)
         {
-            if (model.Count == 0) return true;
-            var webBrowser = (ChromiumWebBrowser)chromiumWebBrowser;
-            var menuItems = GetMenuItemsNew(model).ToList();
-
-            ContextMenuParams Parameters = new ContextMenuParams(parameters);
-
-            webBrowser.Dispatcher.Invoke(() =>
+            if (model.Count != 0)
             {
-                var menu = new ContextMenu { IsOpen = true, Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse };
-                RoutedEventHandler handler = null;
-                handler = (s, e) =>
+                var webBrowser = (ChromiumWebBrowser)chromiumWebBrowser;
+                var menuItems = GetMenuItemsNew(model).ToList();
+                ContextMenuParams Parameters = new ContextMenuParams(parameters);
+
+                webBrowser.Dispatcher.Invoke(() =>
                 {
-                    menu.Closed -= handler;
-                    if (!callback.IsDisposed)
-                        callback.Cancel();
-                };
-
-                menu.Closed += handler;
-                menu.OverridesDefaultStyle = true;
-
-                MenuClassToCollection(menuItems, menu.Items, chromiumWebBrowser, browser, Parameters);
-                webBrowser.ContextMenu = menu;
-            });
-            Parameters.Dispose();
+                    var menu = new ContextMenu { IsOpen = true, Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse };
+                    RoutedEventHandler handler = null;
+                    handler = (s, e) =>
+                    {
+                        menu.Closed -= handler;
+                        if (!callback.IsDisposed)
+                            callback.Cancel();
+                    };
+                    menu.Closed += handler;
+                    menu.OverridesDefaultStyle = true;
+                    MenuClassToCollection(menuItems, menu.Items, chromiumWebBrowser, browser, Parameters);
+                    webBrowser.ContextMenu = menu;
+                });
+                Parameters.Dispose();
+            }
             return true;
         }
         void MenuClassToCollection(IEnumerable<MenuClass> Menu, ItemCollection _ItemCollection, IWebBrowser chromiumWebBrowser, IBrowser browser, ContextMenuParams Parameters)
         {
-            foreach (var item in Menu)
+            foreach (MenuClass Item in Menu)
             {
-                if (item.CommandId == CefMenuCommand.NotFound && string.IsNullOrWhiteSpace(item.Header))
+                if (Item.CommandId == CefMenuCommand.NotFound && string.IsNullOrWhiteSpace(Item.Header))
                 {
                     _ItemCollection.Add(new Separator());
                     continue;
@@ -442,39 +436,45 @@ namespace SLBr.Handlers
                     
                 var _MenuItem = new MenuItem
                 {
-                    Header = item.Header.Replace("&", "_"),
-                    Command = GetCommandByCefCommand(chromiumWebBrowser, browser, item.CommandId, Parameters)
+                    Header = Item.Header.Replace("&", "_"),
+                    Command = GetCommandByCefCommand(chromiumWebBrowser, browser, Item.CommandId, Parameters)
                 };
 
-                if (item.CommandId == CefMenuCommand.Back)
+                if (Item.CommandId == CefMenuCommand.Back)
                     _MenuItem.IsEnabled = chromiumWebBrowser.CanGoBack;
-                else if (item.CommandId == CefMenuCommand.Forward)
+                else if (Item.CommandId == CefMenuCommand.Forward)
                     _MenuItem.IsEnabled = chromiumWebBrowser.CanGoForward;
-                else if (item.CommandId == CefMenuCommand.Delete)
+                else if (Item.CommandId == CefMenuCommand.Delete)
                     _MenuItem.IsEnabled = !string.IsNullOrEmpty(Parameters.SelectionText);
 
-                else if (item.CommandId == CefMenuCommand.Undo)
+                else if (Item.CommandId == CefMenuCommand.Undo)
                     _MenuItem.InputGestureText = "Ctrl+Z";
-                else if (item.CommandId == CefMenuCommand.Redo)
+                else if (Item.CommandId == CefMenuCommand.Redo)
                     _MenuItem.InputGestureText = "Ctrl+Y";
-                else if (item.CommandId == CefMenuCommand.Cut)
+                else if (Item.CommandId == CefMenuCommand.Cut)
                     _MenuItem.InputGestureText = "Ctrl+X";
-                else if (item.CommandId == CefMenuCommand.Copy)
+                else if (Item.CommandId == CefMenuCommand.Copy)
                     _MenuItem.InputGestureText = "Ctrl+C";
-                else if (item.CommandId == CefMenuCommand.Paste)
+                else if (Item.CommandId == CefMenuCommand.Paste)
                     _MenuItem.InputGestureText = "Ctrl+V";
-                else if (item.CommandId == CefMenuCommand.SelectAll)
+                else if (Item.CommandId == CefMenuCommand.SelectAll)
                     _MenuItem.InputGestureText = "Ctrl+A";
-                else if (item.CommandId == (CefMenuCommand)26510)
+                else if (Item.CommandId == (CefMenuCommand)26510)
                     _MenuItem.InputGestureText = "Win+Period";
-                else if (item.Header.StartsWith("Search"))
+                else if (Item.Header.StartsWith("Search"))
                     _MenuItem.Icon = "\uF6Fa";
+                else if (Item.CommandId == CefMenuCommand.SpellCheckSuggestion0 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion1 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion2 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion3 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion4)
+                    _MenuItem.Icon = "\uf87b";
+                else if (Item.CommandId == CefMenuCommand.AddToDictionary)
+                    _MenuItem.Icon = "\uecc9";
+                else if (Item.CommandId == (CefMenuCommand)26503)
+                    _MenuItem.Icon = "\ue929";
 
                 //_MenuItem.SetResourceReference(Control.ForegroundProperty, "White");
                 //_MenuItem.SetResourceReference(Control.StyleProperty, (Style)MainWindow.Instance.Resources["ApplyableMenuItemStyle"]);
                 //_MenuItem.SetResourceReference(Control.OverridesDefaultStyleProperty, true);
-                if (item.SubMenu != null)
-                    MenuClassToCollection(item.SubMenu, _MenuItem.Items, chromiumWebBrowser, browser, Parameters);
+                if (Item.SubMenu != null)
+                    MenuClassToCollection(Item.SubMenu, _MenuItem.Items, chromiumWebBrowser, browser, Parameters);
                 _ItemCollection.Add(_MenuItem);
             }
         }
@@ -500,13 +500,10 @@ namespace SLBr.Handlers
         {
             for (var i = 0; i < model.Count; i++)
             {
-                var header = model.GetLabelAt(i);
-                var commandId = model.GetCommandIdAt(i);
-                var isEnabled = model.IsEnabledAt(i);
                 List<MenuClass> SubMenu = new List<MenuClass>();
                 if (model.GetSubMenuAt(i) != null)
                     SubMenu = GetMenuItemsNew(model.GetSubMenuAt(i)).ToList();
-                yield return new MenuClass(header, commandId, isEnabled, SubMenu);
+                yield return new MenuClass(model.GetLabelAt(i), model.GetCommandIdAt(i), model.IsEnabledAt(i), SubMenu);
             }
         }
 
@@ -529,49 +526,43 @@ namespace SLBr.Handlers
 
     public class RelayCommand : ICommand
     {
-        private readonly Action<object> commandHandler;
-        private readonly Func<object, bool> canExecuteHandler;
+        private readonly Action<object> CommandHandler;
+        private readonly Func<object, bool> CanExecuteHandler;
 
         public event EventHandler CanExecuteChanged;
 
-        public RelayCommand(Action<object> commandHandler, Func<object, bool> canExecuteHandler = null)
+        public RelayCommand(Action<object> _CommandHandler, Func<object, bool> _CanExecuteHandler = null)
         {
-            this.commandHandler = commandHandler;
-            this.canExecuteHandler = canExecuteHandler;
+            CommandHandler = _CommandHandler;
+            CanExecuteHandler = _CanExecuteHandler;
         }
-        public RelayCommand(Action commandHandler, Func<bool> canExecuteHandler = null)
-            : this(_ => commandHandler(), canExecuteHandler == null ? null : new Func<object, bool>(_ => canExecuteHandler()))
+        public RelayCommand(Action commandHandler, Func<bool> canExecuteHandler = null) : this(_ => commandHandler(), canExecuteHandler == null ? null : new Func<object, bool>(_ => canExecuteHandler()))
         {
         }
 
         public void Execute(object parameter)
         {
-            commandHandler(parameter);
+            CommandHandler(parameter);
         }
 
         public bool CanExecute(object parameter)
         {
-            return
-                canExecuteHandler == null ||
-                canExecuteHandler(parameter);
+            return CanExecuteHandler == null || CanExecuteHandler(parameter);
         }
 
         public void RaiseCanExecuteChanged()
         {
             if (CanExecuteChanged != null)
-            {
                 CanExecuteChanged(this, EventArgs.Empty);
-            }
         }
     }
 
-    public class RelayCommand<T> : RelayCommand
+    /*public class RelayCommand<T> : RelayCommand
     {
-        public RelayCommand(Action<T> commandHandler, Func<T, bool> canExecuteHandler = null)
-            : base(o => commandHandler(o is T t ? t : default(T)), canExecuteHandler == null ? null : new Func<object, bool>(o => canExecuteHandler(o is T t ? t : default(T))))
+        public RelayCommand(Action<T> commandHandler, Func<T, bool> canExecuteHandler = null) : base(o => commandHandler(o is T t ? t : default(T)), canExecuteHandler == null ? null : new Func<object, bool>(o => canExecuteHandler(o is T t ? t : default(T))))
         {
         }
-    }
+    }*/
 
     class ContextMenuParams : IContextMenuParams
     {

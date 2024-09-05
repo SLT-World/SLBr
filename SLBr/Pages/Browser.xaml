@@ -10,12 +10,12 @@
     <UserControl.Resources>
         <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
     </UserControl.Resources>
-    <Grid Background="{DynamicResource PrimaryBrush}">
+    <Grid Background="{StaticResource PrimaryBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Border x:Name="ToolBar" Grid.ColumnSpan="3" Grid.Row="0" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}" HorizontalAlignment="Stretch">
+        <Border x:Name="ToolBar" Grid.ColumnSpan="3" Grid.Row="0" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}" HorizontalAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -24,7 +24,7 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5,5,0,0">
-                    <WinUI:DropDownButton ToolTip="Options" BorderThickness="0" Content="&#xE712;" Margin="0,0,5,0" Style="{DynamicResource DropDownIconButton}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <WinUI:DropDownButton ToolTip="Options" BorderThickness="0" Content="&#xE712;" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu>
                                 <MenuItem Icon="&#xEC6C;" Header="New Tab" Click="ButtonAction" Tag="5&lt;,&gt;{Homepage}"/>
@@ -40,7 +40,7 @@
                                         </Style>
                                     </MenuItem.ItemContainerStyle>
                                 </MenuItem>
-                                <MenuItem Icon="&#xE896;" x:Name="DownloadListMenu" Header="Downloads" Click="ButtonAction" Tag="3&lt;,&gt;slbr://downloads/">
+                                <MenuItem Icon="&#xE896;" x:Name="DownloadListMenu" Header="Downloads">
                                     <MenuItem.ItemContainerStyle>
                                         <Style TargetType="MenuItem">
                                             <Setter Property="Icon" Value="&#xe8a5;"/>
@@ -73,6 +73,7 @@
                                 </MenuItem>-->
                                 <Separator/>
                                 <MenuItem Icon="&#xE749;" Header="Print" Click="ButtonAction" Tag="30"/>
+                                <MenuItem Icon="&#xE773;" Header="Find" Click="ButtonAction" Tag="32"/>
                                 <MenuItem x:Name="MuteMenuItem" Icon="&#xe74f;" Header="Mute" Click="ButtonAction" Tag="31"/>
                                 <MenuItem Header="Tools" Icon="&#xe821;">
                                     <MenuItem Header="Reader Mode" Icon="&#xF000;" Click="ButtonAction" Tag="17"/>
@@ -94,10 +95,11 @@
                                         <MenuItem Header="Permissions" Icon="&#xe8d7;" Click="ButtonAction" Tag="4&lt;,&gt;https://permission.site/"/>
                                         <MenuItem Header="Acid3" Icon="&#xe9d2;" Click="ButtonAction" Tag="4&lt;,&gt;http://acid3.acidtests.org/"/>
                                         <MenuItem Header="QUIC" Icon="&#xf159;" Click="ButtonAction" Tag="4&lt;,&gt;https://quic.nginx.org/"/>
-                                        <MenuItem Header="Bad SSL" Icon="&#xe785;" Click="ButtonAction" Tag="12&lt;,&gt;https://badssl.com/"/>
+                                        <MenuItem Header="Bad SSL" Icon="&#xe785;" Click="ButtonAction" Tag="4&lt;,&gt;https://badssl.com/"/>
                                         <MenuItem Header="Stutters &amp; Tearing" Icon="&#xe9d9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.testufo.com/stutter"/>
                                         <MenuItem Header="Show Picker" Icon="&#xef3c;" Click="ButtonAction" Tag="4&lt;,&gt;https://show-picker.glitch.me/demo.html"/>
                                         <MenuItem Header="SmartScreen" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://demo.smartscreen.msft.net/"/>
+                                        <MenuItem Header="Widevine" Icon="&#xe8a6;" Click="ButtonAction" Tag="4&lt;,&gt;https://bitmovin.com/demos/drm/"/>
                                         <Separator/>
                                         <MenuItem Header="WebGL Samples" Icon="&#xec26;">
                                             <MenuItem Header="HexGL" Icon="&#xe709;" Click="ButtonAction" Tag="4&lt;,&gt;https://hexgl.bkcore.com/"/>
@@ -116,6 +118,8 @@
                                         <MenuItem Header="Passive Aggressive Passwords" Icon="&#xe8d7;" Click="ButtonAction" Tag="4&lt;,&gt;https://trypap.com/"/>
                                         <MenuItem Header="🐮" Icon="&#xe767;" Click="ButtonAction" Tag="4&lt;,&gt;https://xn--2o8h.ws/"/>
                                         <MenuItem Header="Endless Horse" Click="ButtonAction" Tag="4&lt;,&gt;https://endless.horse/"/>
+                                        <MenuItem Header="CO2GLE" Click="ButtonAction" Tag="4&lt;,&gt;https://www.janavirgin.com/CO2/"/>
+                                        <MenuItem Header="Deforest" Click="ButtonAction" Tag="4&lt;,&gt;https://www.janavirgin.com/CO2/DEFOOOOOOOOOOOOOOOOOOOOOREST.html"/>
                                     </MenuItem>
                                     <MenuItem Header="Google">
                                         <MenuItem Header="I'm a teapot" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/teapot"/>
@@ -129,31 +133,43 @@
                                         <MenuItem Header="What sound does a dog make?" Icon="&#xe767;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=What+sound+does+a+dog+make"/>
                                         <MenuItem Header="1.2+​(sqrt(​1-​sqrt(​x^​2+​y^​2)^​2)+​1-​x^​2-​y^​2)*​(sin(​10000*​(x*​3+​y/​5+​7))+​1/​4)" Icon="&#xe8ef;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=1.2%2B(sqrt(1-(sqrt(x%5E2%2By%5E2))%5E2)+%2B+1+-+x%5E2-y%5E2)+*+(sin+(10000+*+(x*3%2By/5%2B7))%2B1/4)+from+-1.6+to+1.6"/>
                                         <Separator/>
-                                        <MenuItem Header="Google Sky" Icon="&#xf4a5;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/sky/"/>
-                                        <MenuItem Header="Google Moon" Icon="&#xe708;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/moon/"/>
-                                        <MenuItem Header="Google Mars" Icon="&#xea3a;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/mars/"/>
+                                        <MenuItem Header="Google Moon" Icon="&#xe708;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/maps/space/moon/"/>
+                                        <MenuItem Header="Google Mars" Icon="&#xea3a;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/maps/space/mars/"/>
                                     </MenuItem>
                                 </MenuItem>
                                 <Separator/>
                                 <MenuItem Icon="&#xE748;" Header="Switch User" Click="ButtonAction" Tag="15"/>
-                                <MenuItem Icon="&#xE713;" Header="Settings" Click="ButtonAction" Tag="4&lt;,&gt;slbr://settings"/>
+                                <MenuItem Icon="&#xE713;" Header="Settings" Click="ButtonAction" Tag="5&lt;,&gt;slbr://settings"/>
                                 <Separator/>
                                 <MenuItem Header="Exit" Click="ButtonAction" Tag="0"/>
                             </ContextMenu>
                         </WinUI:DropDownButton.Menu>
                     </WinUI:DropDownButton>
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="1" x:Name="BackButton" ToolTip="Back" Content="&#xE76B;" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}"/>
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="2" x:Name="ForwardButton" ToolTip="Forward" Content="&#xE76C;" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}"/>
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="ReloadButton" ToolTip="Refresh" Content="&#xE72C;" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}"/>
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="4&lt;,&gt;{Homepage}" x:Name="HomeButton" Content="&#xE80F;" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Home"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Tag="1" x:Name="BackButton" ToolTip="Back" Content="&#xE76B;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Tag="2" x:Name="ForwardButton" ToolTip="Forward" Content="&#xE76C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="ReloadButton" ToolTip="Refresh" Content="&#xE72C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Tag="4&lt;,&gt;{Homepage}" x:Name="HomeButton" Content="&#xE80F;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Home"/>
 
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="4&lt;,&gt;slbr://downloads" x:Name="OpenDownloadsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Downloads" Content="&#xE896;"/>
-                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Youtube Ultilities" Content="&#xe786;" Foreground="Red"/>-->
-                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="3" x:Name="ExtensionsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Extensions" Content="&#xEA86;"/>-->
-                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="12&lt;,&gt;{CurrentUrl}" x:Name="OpenFileExplorerButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Open in File Explorer" Content="&#xEC50;"/>-->
+                    <Button Click="ButtonAction" BorderThickness="0" Tag="5&lt;,&gt;slbr://downloads" x:Name="OpenDownloadsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Downloads" Content="&#xE896;"/>
+                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Youtube Ultilities" Content="&#xe786;" Foreground="Red"/>-->
+                    <WinUI:DropDownButton BorderThickness="0" Tag="3" x:Name="ExtensionsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" ToolTip="Extensions" Content="&#xEA86;">
+                        <WinUI:DropDownButton.Menu>
+                            <ContextMenu Width="250" x:Name="ExtensionsMenu">
+                                <ContextMenu.ItemContainerStyle>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Icon" Value="&#xEA86;"/>
+                                        <Setter Property="Header" Value="{Binding Name}"/>
+                                        <Setter Property="Tag" Value="{Binding ID}"/>
+                                        <EventSetter Event="Click" Handler="LoadExtensionPopup"/>
+                                    </Style>
+                                </ContextMenu.ItemContainerStyle>
+                            </ContextMenu>
+                        </WinUI:DropDownButton.Menu>
+                    </WinUI:DropDownButton>
+                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="12&lt;,&gt;{CurrentUrl}" x:Name="OpenFileExplorerButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Open in File Explorer" Content="&#xEC50;"/>-->
 
 
-                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="23" x:Name="RSSFeedButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource IconButton}" ToolTip="RSS Feed" Background="#FC7E00" Content="&#xe874;" FontSize="30">
+                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="23" x:Name="RSSFeedButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource IconButton}" ToolTip="RSS Feed" Background="#FC7E00" Content="&#xe874;" FontSize="30">
                         <Button.Resources>
                             <Style TargetType="{x:Type ContentPresenter}">
                                 <Setter Property="RenderTransformOrigin" Value="0.525,0.525"/>
@@ -165,7 +181,7 @@
                             </Style>
                         </Button.Resources>
                     </Button>-->
-                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="23" x:Name="RSSFeedButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource IconButton}" ToolTip="RSS Feed" Foreground="#FC7E00" Content="&#xe874;" FontSize="30">
+                    <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="23" x:Name="RSSFeedButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource IconButton}" ToolTip="RSS Feed" Foreground="#FC7E00" Content="&#xe874;" FontSize="30">
                         <Button.Resources>
                             <Style TargetType="{x:Type ContentPresenter}">
                                 <Setter Property="RenderTransformOrigin" Value="0.525,0.525"/>
@@ -178,21 +194,21 @@
                         </Button.Resources>
                     </Button>-->
 
-                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="4&lt;,&gt;https://translate.google.com/translate?sl=auto&amp;tl=en&amp;hl=en&amp;u={CurrentUrl}" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Translate" Content="&#xE8C1;"/>
-                    <!--<Button Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="SearchButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Search" Content="&#xE773;"/>-->
-                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="20" x:Name="AIChatButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="AI Chat" Content="&#xe99a;"/>
-                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="17" x:Name="ReaderModeButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Reader Mode" Content="&#xF000;"/>
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="12" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{DynamicResource ToolBarIconButton}" ToolTip="Add to favourites" x:Name="FavouriteButton" Content="&#xEB51;"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="4&lt;,&gt;https://translate.google.com/translate?sl=auto&amp;tl=en&amp;hl=en&amp;u={CurrentUrl}" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Translate" Content="&#xE8C1;"/>
+                    <!--<Button Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="SearchButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Search" Content="&#xE773;"/>-->
+                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="20" x:Name="AIChatButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="AI Chat" Content="&#xe99a;"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="17" x:Name="ReaderModeButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Reader Mode" Content="&#xF000;"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Tag="12" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Add to favourites" x:Name="FavouriteButton" Content="&#xEB51;"/>
 
-                    <Grid Width="Auto" Margin="0,0,5,0" Height="35" x:Name="OmniBoxContainer" MouseEnter="OmniBoxContainer_MouseEnter" MouseLeave="OmniBoxContainer_MouseLeave" Background="{DynamicResource PrimaryBrush}">
+                    <Grid Width="Auto" Margin="0,0,5,0" Height="35" x:Name="OmniBoxContainer" MouseEnter="OmniBoxContainer_MouseEnter" MouseLeave="OmniBoxContainer_MouseLeave" Background="{StaticResource PrimaryBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-                        <Border x:Name="OmniBoxBorder" Grid.ColumnSpan="2" Width="Auto" Margin="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Height="35" Padding="0"/>
-                        <Border x:Name="SiteInformationPanel" Background="{DynamicResource SecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
+                        <Border x:Name="OmniBoxBorder" Grid.ColumnSpan="2" Width="Auto" Margin="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Height="35" Padding="0"/>
+                        <Border x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
                             <DockPanel Margin="4.25">
-                                <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0,0,0,0" Width="16px" FontFamily="Segoe Fluent Icons" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{DynamicResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0,0,0,0" Width="16px" FontFamily="Segoe Fluent Icons" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <TextBlock.RenderTransform>
                                         <RotateTransform x:Name="NoFreeze"/>
                                     </TextBlock.RenderTransform>
@@ -202,15 +218,15 @@
                                         </Storyboard>
                                     </TextBlock.Resources>
                                 </TextBlock>
-                                <TextBlock DockPanel.Dock="Right" x:Name="SiteInformationText" Visibility="Collapsed" Margin="5,0,0,0" Text="-" TextAlignment="Center" Foreground="{DynamicResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Right" x:Name="SiteInformationText" Visibility="Collapsed" Margin="5,0,0,0" Text="-" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </DockPanel>
                         </Border>
-                        <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Search or type a URL" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0" Foreground="{DynamicResource BorderBrush}" x:Name="OmniBoxPlaceholder" Visibility="Visible"/>
-                        <ComboBox IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" Style="{DynamicResource DropDownTextBox}" BorderThickness="0" SelectionChanged="OmniBox_SelectionChanged" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>
-                        <!--<TextBox Style="{DynamicResource NoBorder}" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" GotKeyboardFocus="OmniBox_GotKeyboardFocus" LostKeyboardFocus="OmniBox_LostKeyboardFocus" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>-->
+                        <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Search or type a URL" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0" Foreground="{StaticResource BorderBrush}" x:Name="OmniBoxPlaceholder" Visibility="Visible"/>
+                        <ComboBox VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" Style="{StaticResource DropDownTextBox}" BorderThickness="0" SelectionChanged="OmniBox_SelectionChanged" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>
+                        <!--<TextBox Style="{StaticResource NoBorder}" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" GotKeyboardFocus="OmniBox_GotKeyboardFocus" LostKeyboardFocus="OmniBox_LostKeyboardFocus" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>-->
                     </Grid>
                 </DockPanel>
-                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="Auto" Grid.Row="1" HorizontalAlignment="Stretch">
+                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="Auto" Grid.Row="1" HorizontalAlignment="Stretch">
                     <ScrollViewer FontFamily="None" x:Name="FavouriteScrollViewer" Margin="5,0,5,5" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden" PreviewMouseWheel="FavouriteScrollViewer_PreviewMouseWheel">
                         <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
                             <ItemsControl.ItemsPanel>
@@ -265,31 +281,31 @@
                     <RowDefinition x:Name="SizeEmulatorRow2" SharedSizeGroup="B" Height="Auto" MaxHeight="400"/>
                 </Grid.RowDefinitions>
                 <Grid x:Name="CoreContainer" Margin="0,0,0,0" Grid.Column="2" Grid.Row="2"/>
-                <GridSplitter x:Name="SizeEmulatorRowSplitter1" Visibility="Collapsed" Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="5" Background="{DynamicResource BorderBrush}"/>
-                <GridSplitter x:Name="SizeEmulatorRowSplitter2" Visibility="Collapsed" Grid.Row="3" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="5" Background="{DynamicResource BorderBrush}"/>
+                <GridSplitter x:Name="SizeEmulatorRowSplitter1" Visibility="Collapsed" Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="5" Background="{StaticResource BorderBrush}"/>
+                <GridSplitter x:Name="SizeEmulatorRowSplitter2" Visibility="Collapsed" Grid.Row="3" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="5" Background="{StaticResource BorderBrush}"/>
 
-                <GridSplitter x:Name="SizeEmulatorColumnSplitter1" Visibility="Collapsed" Grid.Column="1" Grid.RowSpan="5" Width="5" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
-                <GridSplitter x:Name="SizeEmulatorColumnSplitter2" Visibility="Collapsed" Grid.Column="3" Grid.RowSpan="5" Width="5" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+                <GridSplitter x:Name="SizeEmulatorColumnSplitter1" Visibility="Collapsed" Grid.Column="1" Grid.RowSpan="5" Width="5" Background="{StaticResource BorderBrush}" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+                <GridSplitter x:Name="SizeEmulatorColumnSplitter2" Visibility="Collapsed" Grid.Column="3" Grid.RowSpan="5" Width="5" Background="{StaticResource BorderBrush}" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
             </Grid>
-            <Border x:Name="SideBar" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0" Visibility="Collapsed" Width="Auto" Height="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Column="2" Grid.Row="1">
+            <Border x:Name="SideBar" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,0,0" Visibility="Collapsed" Width="Auto" Height="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Column="2" Grid.Row="1">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                         <DockPanel LastChildFill="False" Margin="5">
-                            <Button Style="{DynamicResource IconButton}" DockPanel.Dock="Right" Foreground="Red" Click="ButtonAction" Tag="22" Margin="0" ToolTip="Close" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xF78A;"/>
+                            <Button Style="{StaticResource IconButton}" DockPanel.Dock="Right" Foreground="Red" Click="ButtonAction" Tag="22" Margin="0" ToolTip="Close" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xF78A;"/>
                             <DockPanel LastChildFill="False" x:Name="DevToolsToolBar">
-                                <!--<Button Style="{DynamicResource IconButton}" DockPanel.Dock="Right" Click="ButtonAction" Tag="15&lt;,&gt;{CurrentInspectorUrl}" Margin="0,0,5,0" ToolTip="Open in seperate window" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8A7;"/>-->
-                                <Button Style="{DynamicResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="10" Margin="0,0,5,0" ToolTip="Toggle size emulation" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8CC;"/>
-                                <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderBrush}" Margin="0,5,5,5"/>
+                                <!--<Button Style="{StaticResource IconButton}" DockPanel.Dock="Right" Click="ButtonAction" Tag="15&lt;,&gt;{CurrentInspectorUrl}" Margin="0,0,5,0" ToolTip="Open in seperate window" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8A7;"/>-->
+                                <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="10" Margin="0,0,5,0" ToolTip="Toggle size emulation" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8CC;"/>
+                                <Border DockPanel.Dock="Left" Width="1" Background="{StaticResource BorderBrush}" Margin="0,5,5,5"/>
                             </DockPanel>
                             <DockPanel LastChildFill="False" x:Name="AIChatToolBar">
-                                <Button Style="{DynamicResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;0" Margin="0,0,5,0" ToolTip="Chat" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe8bd;"/>
-                                <!--<Button Style="{DynamicResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;1" Margin="0,0,5,0" ToolTip="Mobile Chat" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe7c5;"/>-->
-                                <Button Style="{DynamicResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;2" Margin="0,0,5,0" ToolTip="Compose" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe8ae;"/>
-                                <Border DockPanel.Dock="Left" Width="1" Background="{DynamicResource BorderBrush}" Margin="0,5,5,5"/>
+                                <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;0" Margin="0,0,5,0" ToolTip="Chat" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe8bd;"/>
+                                <!--<Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;1" Margin="0,0,5,0" ToolTip="Mobile Chat" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe7c5;"/>-->
+                                <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;2" Margin="0,0,5,0" ToolTip="Compose" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe8ae;"/>
+                                <Border DockPanel.Dock="Left" Width="1" Background="{StaticResource BorderBrush}" Margin="0,5,5,5"/>
                             </DockPanel>
                             <ComboBox Width="55" SelectedIndex="3" ToolTip="Dock side" x:Name="SideBarDockDropdown" SelectionChanged="InspectorDockDropdown_SelectionChanged">
                                 <ComboBoxItem ToolTip="Top">
@@ -309,15 +325,15 @@
                                     <TextBlock FontFamily="Segoe Fluent Icons" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90D;"/>
                                 </ComboBoxItem>
                             </ComboBox>
-                            <!--<Button RenderTransformOrigin="0.5,0.5" Style="{DynamicResource IconButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;3" Margin="0,0,5,0" ToolTip="Dock top" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;">
+                            <!--<Button RenderTransformOrigin="0.5,0.5" Style="{StaticResource IconButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;3" Margin="0,0,5,0" ToolTip="Dock top" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;">
                                 <Button.RenderTransform>
                                     <RotateTransform Angle="180" />
                                 </Button.RenderTransform>
                             </Button>
-                            <Button Style="{DynamicResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;2" Margin="0,0,5,0" ToolTip="Dock bottom" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;"/>
-                            <Button Style="{DynamicResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;1" Margin="0,0,5,0" ToolTip="Dock left" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90C;"/>
-                            <Button Style="{DynamicResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;0" Margin="0,0,5,0" ToolTip="Dock right" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90D;"/>-->
-                            <!--<ComboBox FontFamily="None" Width="Auto" ToolTip="Browser Emulator" Foreground="{DynamicResource FontBrush}" x:Name="BrowserEmulatorComboBox" VerticalAlignment="Center" SelectedIndex="0"/>-->
+                            <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;2" Margin="0,0,5,0" ToolTip="Dock bottom" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;"/>
+                            <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;1" Margin="0,0,5,0" ToolTip="Dock left" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90C;"/>
+                            <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;0" Margin="0,0,5,0" ToolTip="Dock right" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90D;"/>-->
+                            <!--<ComboBox FontFamily="None" Width="Auto" ToolTip="Browser Emulator" Foreground="{StaticResource FontBrush}" x:Name="BrowserEmulatorComboBox" VerticalAlignment="Center" SelectedIndex="0"/>-->
                         </DockPanel>
                     </Border>
                     <Grid x:Name="SideBarCoreContainer" Grid.Row="1"/>
@@ -330,21 +346,54 @@
 
             <Grid Grid.Row="1" Grid.Column="1" IsHitTestVisible="False" Focusable="False" x:Name="StatusBar" Margin="5,37.5" VerticalAlignment="Bottom">
                 <Popup SnapsToDevicePixels="True" x:Name="StatusBarPopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
-                    <Border Background="{DynamicResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                    <Border Background="{StaticResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
                         <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300">
-                            <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="7.5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{DynamicResource FontBrush}"/>
+                            <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="7.5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{StaticResource FontBrush}"/>
                         </Grid>
                     </Border>
                 </Popup>
             </Grid>
+
+            <!--<Grid Grid.Row="1" Grid.Column="1" IsHitTestVisible="False" Margin="5,5" Focusable="False" x:Name="ExtensionsBar" VerticalAlignment="Top" HorizontalAlignment="Right">
+                <Popup SnapsToDevicePixels="True" x:Name="ExtensionsPopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="True" PopupAnimation="Fade">
+                    <Border Background="{StaticResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
+                        <StackPanel Margin="5" Width="150">
+                            <DockPanel>
+                                <Image RenderOptions.BitmapScalingMode="Fant" VerticalAlignment="Center" HorizontalAlignment="Left" Height="25" Width="25" Margin="1.5,0,0,0" Stretch="Uniform">
+                                    <Image.Source>
+                                        <DrawingImage>
+                                            <DrawingImage.Drawing>
+                                                <GeometryDrawing>
+                                                    <GeometryDrawing.Brush>
+                                                        <VisualBrush Stretch="Uniform">
+                                                            <VisualBrush.Visual>
+                                                                <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xEA86;"/>
+                                                            </VisualBrush.Visual>
+                                                        </VisualBrush>
+                                                    </GeometryDrawing.Brush>
+                                                    <GeometryDrawing.Geometry>
+                                                        <RectangleGeometry Rect="0,0,20,20"/>
+                                                    </GeometryDrawing.Geometry>
+                                                </GeometryDrawing>
+                                            </DrawingImage.Drawing>
+                                        </DrawingImage>-->
+                                        <!--<BitmapImage DecodePixelWidth="50" UriSource="https://weblog.west-wind.com/images/rick175x175.jpg"/>-->
+                                    <!--</Image.Source>
+                                </Image>
+                                <TextBlock Foreground="{StaticResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="Extension" Margin="5,0,0,0"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+            </Grid>-->
             <Grid Grid.Row="1" Grid.Column="1" x:Name="FindBar" Margin="5,5" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Popup SnapsToDevicePixels="True" x:Name="FindPopup" Placement="RelativePoint" AllowsTransparency="True" IsOpen="False" PopupAnimation="Slide">
-                    <Border Background="{DynamicResource PrimaryBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                    <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
                         <DockPanel Margin="5">
                             <TextBox x:Name="FindTextBox" GotKeyboardFocus="FindTextBox_GotKeyboardFocus" KeyUp="FindTextBox_KeyUp" Width="200" Margin="0,0,5,0"/>
-                            <Button x:Name="PreviousFindButton" Click="FindButton_Click" Style="{DynamicResource IconButton}" Content="&#xe70e;" Margin="0,0,5,0" ToolTip="Previous"/>
-                            <Button x:Name="NextFindButton" Click="FindButton_Click" Style="{DynamicResource IconButton}" Content="&#xe70d;" Margin="0,0,5,0" ToolTip="Next"/>
-                            <Button Click="FindButton_Click" Style="{DynamicResource IconButton}" Content="&#xF78A;" ToolTip="Close"/>
+                            <Button x:Name="PreviousFindButton" Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xe70e;" Margin="0,0,5,0" ToolTip="Previous"/>
+                            <Button x:Name="NextFindButton" Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xe70d;" Margin="0,0,5,0" ToolTip="Next"/>
+                            <Button Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xF78A;" ToolTip="Close"/>
                         </DockPanel>
                     </Border>
                 </Popup>

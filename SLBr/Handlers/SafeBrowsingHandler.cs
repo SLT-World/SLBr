@@ -34,8 +34,6 @@ namespace SLBr.Handlers
             Url
         }
 
-        string Payload;
-
         string APIKey;
         string ClientId;
 
@@ -51,10 +49,9 @@ namespace SLBr.Handlers
             if (_Data.Length > 2)
             {
                 //MessageBox.Show(_Data, "Raw Data");
-                dynamic Data = JsonNode.Parse(_Data);
                 try
                 {
-                    if (Data["matches"] is JsonArray Matches)
+                    if (JsonNode.Parse(_Data)["matches"] is JsonArray Matches)
                     {
                         if (Matches[0]["threatType"].ToString() == "MALWARE")
                             _Type = ThreatType.Malware;
@@ -83,34 +80,27 @@ namespace SLBr.Handlers
 
         public string Response(string Url)
         {
-            if (APIKey == string.Empty)
-            {
-                Payload = $@"{{}}";
-                return Payload;
-            }
-            Url = Utils.CleanUrl(Url, false, false, true, false, false);
+            if (string.IsNullOrEmpty(APIKey))
+                return $@"{{}}";
             using (var _HttpClient = new HttpClient())
             {
-                Payload = $@"{{
+                string Payload = $@"{{
     ""client"":{{""clientId"":""{ClientId}"",""clientVersion"":""1.0.0""}},
     ""threatInfo"":{{
         ""threatTypes"":[""THREAT_TYPE_UNSPECIFIED"",""MALWARE"",""SOCIAL_ENGINEERING"",""UNWANTED_SOFTWARE"",""POTENTIALLY_HARMFUL_APPLICATION""],
-        ""platformTypes"":[""CHROME"",""WINDOWS""],
+        ""platformTypes"":[""CHROME""],
         ""threatEntryTypes"":[""URL""],
-        ""threatEntries"":[{{""url"":""{Url}""}}]
+        ""threatEntries"":[{{""url"":""{Utils.CleanUrl(Url, false, false, true, false, false)}""}}]
     }}
-}}";
-                var Content = new StringContent(Payload, Encoding.Default, "application/json");
-                string ResultContent = "";
+}}";//,""WINDOWS"" doesn't seem to work
                 try
                 {
-                    var Response = _HttpClient.PostAsync($"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={APIKey}", Content).Result;
-                    ResultContent = Response.Content.ReadAsStringAsync().Result;
+                    var Response = _HttpClient.PostAsync($"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={APIKey}", new StringContent(Payload, Encoding.Default, "application/json")).Result;
+                    return Response.Content.ReadAsStringAsync().Result;
                 }
                 catch { }
-                return ResultContent;
+                return "ERROR";
             }
         }
     }
-
 }

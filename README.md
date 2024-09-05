@@ -34,9 +34,9 @@ CefSharp is a .NET wrapper for the Chromium Embedded Framework (CEF), providing 
 To install SLBr, follow these steps:
 1. Download the [latest release](https://github.com/SLT-World/SLBr/releases/latest).
 2. Ensure the following requirements are installed:
-    - [Microsoft Visual C++ 2019 Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170)
-    - [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
-    - [Segoe Fluent Icons](https://aka.ms/SegoeFluentIcons)
+    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+    - [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0) - (Launching SLBr without .NET 6.0 will automatically prompt a redirect to a direct download.)
+    - [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts) - [Direct Download](https://aka.ms/SegoeFluentIcons)
     - Windows 10 & above
 ## Thanks
 

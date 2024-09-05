@@ -8,16 +8,19 @@ namespace SLBr.Handlers
     {
         public ConcurrentDictionary<string, SLBrResourceRequestHandlerFactoryItem> Handlers { get; private set; }
 
-        public ResourceRequestHandlerFactory(IEqualityComparer<string> comparer = null)
+        RequestHandler Handler;
+
+        public ResourceRequestHandlerFactory(RequestHandler _Handler, IEqualityComparer<string> comparer = null)
         {
+            Handler = _Handler;
             Handlers = new ConcurrentDictionary<string, SLBrResourceRequestHandlerFactoryItem>(comparer ?? StringComparer.OrdinalIgnoreCase);
         }
 
-        public virtual bool RegisterHandler(string url, byte[] data, string mimeType = ResourceHandler.DefaultMimeType, bool limitedUse = false, int uses = 1, string error = "")
+        public virtual bool RegisterHandler(string url, byte[] data, string mimeType = ResourceHandler.DefaultMimeType/*, bool limitedUse = false*/, int uses = 1, string error = "")
         {
             if (Uri.TryCreate(url, UriKind.Absolute, out Uri URI))
             {
-                var entry = new SLBrResourceRequestHandlerFactoryItem(data, mimeType, limitedUse, uses, error);
+                var entry = new SLBrResourceRequestHandlerFactoryItem(data, mimeType/*, limitedUse*/, uses, error);
                 Handlers.AddOrUpdate(URI.AbsoluteUri, entry, (k, v) => entry);
                 return true;
             }
@@ -43,15 +46,15 @@ namespace SLBr.Handlers
         {
             public byte[] Data;
             public string MimeType;
-            public bool LimitedUse;
+            //public bool LimitedUse;
             public int Uses;
             public string Error;
 
-            public SLBrResourceRequestHandlerFactoryItem(byte[] data, string mimeType, bool limitedUse, int uses = 1, string _Error = "")
+            public SLBrResourceRequestHandlerFactoryItem(byte[] data, string mimeType, /*bool limitedUse, */int uses = 1, string _Error = "")
             {
                 Data = data;
                 MimeType = mimeType;
-                LimitedUse = limitedUse;
+                //LimitedUse = limitedUse;
                 Uses = uses;
                 Error = _Error;
             }
@@ -63,12 +66,14 @@ namespace SLBr.Handlers
             {
                 if (Handlers.TryGetValue(request.Url, out SLBrResourceRequestHandlerFactoryItem Entry))
                 {
-                    Entry.Uses -= 1;
-                    if (Entry.LimitedUse && Entry.Uses == 0)
+                    if (Entry.Uses != -1)
+                        Entry.Uses -= 1;
+                    //if (Entry.LimitedUse && Entry.Uses == 0)
+                    if (Entry.Uses == 0)
                         Handlers.TryRemove(request.Url, out Entry);
                     return new InMemoryResourceRequestHandler(Entry.Data, Entry.MimeType);
                 }
-                return new ResourceRequestHandler(App.Instance._RequestHandler.AdBlock, App.Instance._RequestHandler.TrackerBlock);
+                return new ResourceRequestHandler(Handler);
             }
             finally
             {

@@ -13,25 +13,23 @@
         <Border.Effect>
             <DropShadowEffect Direction="-75" ShadowDepth="1" Opacity="0.5" BlurRadius="15" Color="Gray"/>
         </Border.Effect>
-        <Border Background="{DynamicResource SecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="10">
-            <WinUI:WinUITabControl Style="{DynamicResource WinUITabControl}">
-                <TabItem Header="Question" Width="100" Tag="&#xf142;" BorderBrush="MediumSlateBlue" Style="{DynamicResource ColoredWinUITabItem}">
+        <Border Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="10">
+            <WinUI:WinUITabControl Style="{StaticResource WinUITabControl}">
+                <TabItem Header="Question" Width="100" Tag="&#xf142;" BorderBrush="MediumSlateBlue" Style="{StaticResource ColoredWinUITabItem}">
 
                 </TabItem>
-                <TabItem Header="Feedback" Width="100" Tag="&#xed15;" BorderBrush="PaleGreen" Style="{DynamicResource ColoredWinUITabItem}">
+                <TabItem Header="Feedback" Width="100" Tag="&#xed15;" BorderBrush="PaleGreen" Style="{StaticResource ColoredWinUITabItem}">
                     
                 </TabItem>
-                <TabItem Header="Bug" Width="100" Tag="&#xebe8;" BorderBrush="OrangeRed" Style="{DynamicResource ColoredWinUITabItem}">
+                <TabItem Header="Bug" Width="100" Tag="&#xebe8;" BorderBrush="OrangeRed" Style="{StaticResource ColoredWinUITabItem}">
                     <StackPanel>
                         <StackPanel Margin="10">
                             <RichTextBox Height="120" x:Name="ExplanationRichTextBox" ToolTip="Explanation" Margin="0,0,0,10">
-
                             </RichTextBox>
                             <RichTextBox Height="70" x:Name="STRRichTextBox" ToolTip="Steps to reproduce">
-
                             </RichTextBox>
                         </StackPanel>
-                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"/>
+                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"/>
                         <DockPanel LastChildFill="False" Margin="10">
                             <CheckBox Content="Urgent" x:Name="UrgentCheckBox"/>
                             <Button Content="Report Bug" DockPanel.Dock="Right" Click="ReportBugButton_Click"/>

@@ -1,5 +1,4 @@
-﻿using CefSharp;
-using SLBr.Pages;
+﻿using SLBr.Pages;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -7,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WinUI;
@@ -68,13 +66,6 @@ namespace SLBr
         [DllImport("dwmapi.dll")]
         public static extern int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute dwAttribute, ref int pvAttribute, int cbAttribute);
 
-        [Flags]
-        public enum DwmWindowAttribute : uint
-        {
-            DWMWA_USE_IMMERSIVE_DARK_MODE = 20,
-            DWMWA_MICA_EFFECT = 1029
-        }
-
         public void UpdateMica()
         {
             HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
@@ -119,7 +110,6 @@ namespace SLBr
         public DispatcherTimer GCTimer;
 
         private DateTime GCTimerStartTime;
-        //private DateTime GCTimerCheckTime;
         private int GCTimerDuration;
 
         public void UpdateUnloadTimer()
@@ -167,17 +157,14 @@ namespace SLBr
 
         private void GCCollect_Tick(object sender, EventArgs e)
         {
-            TimeSpan elapsed = DateTime.Now - GCTimerStartTime;
-            double totalSeconds = GCTimerDuration * 60;
-            double progress = (elapsed.TotalSeconds / totalSeconds) * 100;
-
-            if (progress >= 100)
+            TimeSpan Elapsed = DateTime.Now - GCTimerStartTime;
+            double Progress = (Elapsed.TotalSeconds / (GCTimerDuration * 60)) * 1;
+            if (Progress >= 1)
             {
                 GCTimerStartTime = DateTime.Now;
                 UnloadTabs();
             }
-
-            double VisualProgress = Math.Min(progress, 100);
+            double VisualProgress = Math.Min(Progress, 1) * 100;
             foreach (BrowserTabItem _Tab in Tabs)
             {
                 if (!_Tab.IsUnloaded)
@@ -189,32 +176,9 @@ namespace SLBr
                 else
                     _Tab.ProgressBarVisibility = Visibility.Collapsed;
             }
-
-            /*bool CheckForVisibility = false;
-            if (((DateTime.Now - GCTimerCheckTime).TotalSeconds / 5) * 100 >= 100)
-            {
-                GCTimerCheckTime = DateTime.Now;
-                CheckForVisibility = true;
-            }
-            foreach (BrowserTabItem _Tab in Tabs)
-            {
-                if (!_Tab.IsUnloaded)
-                {
-                    _Tab.Progress = VisualProgress;
-                    if (CheckForVisibility)
-                    {
-                        Browser _Browser = GetBrowserView(_Tab);
-                        if (_Browser != null && _Browser.UnloadWatch)
-                            _Tab.ProgressBarVisibility = await _Browser.CanUnload() ? Visibility.Visible : Visibility.Collapsed;
-                    }
-                }
-                else
-                    _Tab.ProgressBarVisibility = Visibility.Collapsed;
-            }*/
         }
         private void GCCollect_EfficientTick(object sender, EventArgs e)
         {
-            //if (bool.Parse(App.Instance.GlobalSave.Get("TabUnloading")))
             UnloadTabs();
         }
 
@@ -232,49 +196,36 @@ namespace SLBr
             }
 
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
-            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
+            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["GrayBrushColor"] = _Theme.GrayColor;
             Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
 
             foreach (BrowserTabItem Tab in Tabs)
             {
-                Browser _Browser = GetBrowserView(Tab);
-                if (_Browser != null)
-                {
-                    _Browser.SetAppearance(_Theme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton);
-                    if (_Browser.Chromium != null && _Browser.Chromium.IsBrowserInitialized && _Browser.Chromium.GetDevToolsClient() != null)
-                        _Browser.Chromium.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(_Theme.DarkWebPage);
-                }
+                if (Tab.Content != null)
+                    Tab.Content.SetAppearance(_Theme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton);
             }
-            WindowStyle = WindowStyle.ThreeDBorderWindow;
-            WindowStyle = WindowStyle.SingleBorderWindow;
+            //Why did I have this?
+            /*WindowStyle = WindowStyle.ThreeDBorderWindow;
+            WindowStyle = WindowStyle.SingleBorderWindow;*/
             UpdateMica();
         }
 
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                if (sender == null)
-                    return;
-                Actions _Action;
-                var Target = (FrameworkElement)sender;
-                string _Tag = Target.Tag.ToString();
-                var Values = _Tag.Split(new string[] { "<,>" }, StringSplitOptions.None);
-                _Action = (Actions)int.Parse(Values[0]);
-                string LastValue = Values.Last();
-                Action(_Action, sender, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
-            }
-            catch { }
+            if (sender == null)
+                return;
+            var Values = ((FrameworkElement)sender).Tag.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
+            Action((Actions)int.Parse(Values[0]), sender, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
         }
 
         private void Action(Actions _Action, object sender = null, string V1 = "", string V2 = "", string V3 = "")
         {
             try
             {
-                Browser _BrowserView = GetBrowserView();
+                Browser _BrowserView = GetTab().Content;
                 if (_BrowserView != null)
                 {
                     V1 = V1.Replace("{CurrentUrl}", _BrowserView.Address);
@@ -333,9 +284,8 @@ namespace SLBr
             if (WindowState != WindowState.Minimized)
             {
                 BrowserTabItem SelectedTab = Tabs[TabsUI.SelectedIndex];
-                Browser BrowserView = GetBrowserView(SelectedTab);
-                if (BrowserView != null)
-                    BrowserView.ReFocus();
+                if (SelectedTab.Content != null)
+                    SelectedTab.Content.ReFocus();
             }
         }
 
@@ -346,18 +296,16 @@ namespace SLBr
             {
                 if (WindowState == WindowState.Minimized || Tab != SelectedTab)
                 {
-                    Browser BrowserView = GetBrowserView(Tab);
-                    if (BrowserView != null)
-                        UnloadTab(BrowserView);
+                    if (Tab.Content != null)
+                        UnloadTab(Tab.Content);
                 }
             }
         }
         public void ForceUnloadTab(int Id)
         {
             BrowserTabItem _Tab = GetBrowserTabWithId(Id);
-            Browser _Browser = GetBrowserView(_Tab);
-            if (_Browser != null)
-                UnloadTab(_Browser, true);
+            if (_Tab.Content != null)
+                UnloadTab(_Tab.Content, true);
         }
         /*private async void UnloadTab(Browser BrowserView, bool Bypass = false)
         {
@@ -380,43 +328,39 @@ namespace SLBr
         public void Favourite(string Id = "")
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
-            Browser _Browser = GetBrowserView(_Tab);
-            if (_Browser == null)
+            if (_Tab.Content == null)
                 return;
-            _Browser.Favourite();
+            _Tab.Content.Favourite();
         }
         public void Undo(string Id = "")
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
-            Browser _Browser = GetBrowserView(_Tab);
-            if (_Browser == null)
+            if (_Tab.Content == null)
                 return;
-            if (_Browser.CanGoBack)
-                _Browser.Back();
+            if (_Tab.Content.CanGoBack)
+                _Tab.Content.Back();
         }
         public void Redo(string Id = "")
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
-            Browser _Browser = GetBrowserView(_Tab);
-            if (_Browser == null)
+            if (_Tab.Content == null)
                 return;
-            if (_Browser.CanGoForward)
-                _Browser.Forward();
+            if (_Tab.Content.CanGoForward)
+                _Tab.Content.Forward();
         }
         public void Refresh(string Id = "", bool IgnoreCache = false)
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
-            Browser _Browser = GetBrowserView(_Tab);
-            if (_Browser == null)
+            if (_Tab.Content == null)
                 return;
-            if (!_Browser.IsLoading)
-                _Browser.Reload(IgnoreCache);
+            if (!_Tab.Content.IsLoading)
+                _Tab.Content.Reload(IgnoreCache);
             else
-                _Browser.Stop();
+                _Tab.Content.Stop();
         }
         public void Navigate(string Url)
         {
-            Browser _Browser = GetBrowserView();
+            Browser _Browser = GetTab().Content;
             if (_Browser == null)
                 return;
             _Browser.Navigate(Url);
@@ -427,7 +371,7 @@ namespace SLBr
             IsFullscreen = Fullscreen;
             if (Fullscreen)
             {
-                Browser BrowserView = GetBrowserView();
+                Browser BrowserView = GetTab().Content;
                 if (BrowserView != null)
                 {
                     BrowserView.CoreContainer.Children.Remove(BrowserView.Chromium);
@@ -442,7 +386,7 @@ namespace SLBr
             else
             {
                 WindowStyle = WindowStyle.SingleBorderWindow;
-                Browser BrowserView = GetBrowserView();
+                Browser BrowserView = GetTab().Content;
                 if (BrowserView != null)
                 {
                     try
@@ -458,10 +402,9 @@ namespace SLBr
         public void DevTools(string Id = "", int XCoord = 0, int YCoord = 0)
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
-            Browser _Browser = GetBrowserView(_Tab);
-            if (_Browser == null)
+            if (_Tab.Content == null)
                 return;
-            _Browser.DevTools();
+            _Tab.Content.DevTools();
         }
         public void NewTab(string Url, bool IsSelected = false, int Index = -1)
         {
@@ -481,9 +424,8 @@ namespace SLBr
         public void SwitchToTab(BrowserTabItem _Tab)
         {
             TabsUI.SelectedIndex = Tabs.IndexOf(_Tab);
-            Browser BrowserView = GetBrowserView(_Tab);
-            if (BrowserView != null)
-                Keyboard.Focus(BrowserView.Chromium);
+            if (_Tab.Content != null)
+                Keyboard.Focus(_Tab.Content.Chromium);
         }
         public BrowserTabItem GetBrowserTabWithId(int Id)
         {
@@ -511,8 +453,7 @@ namespace SLBr
             if (Tabs.Count > 2)
             {
                 bool IsSelected = Id != -1 ? _Tab == Tabs[TabsUI.SelectedIndex] : true;
-                Browser BrowserView = GetBrowserView(_Tab);
-                BrowserView.DisposeCore();
+                _Tab.Content.DisposeCore();
                 if (IsSelected)
                 {
                     if (TabsUI.SelectedIndex > 0)
@@ -521,31 +462,28 @@ namespace SLBr
                         TabsUI.SelectedIndex = TabsUI.SelectedIndex + 1;
                 }
                 Tabs.Remove(_Tab);
-                if (IsSelected)
-                {
-                    if (TabsUI.SelectedIndex > Tabs.Count - 1)
-                        TabsUI.SelectedIndex = Tabs.Count - 1;
-                }
+                if (IsSelected && TabsUI.SelectedIndex > Tabs.Count - 1)
+                    TabsUI.SelectedIndex = Tabs.Count - 1;
             }
             else
                 Close();
         }
         public void Find(string Text = "")
         {
-            Browser BrowserView = GetBrowserView(Tabs[TabsUI.SelectedIndex]);
+            Browser BrowserView = GetTab().Content;
             if (BrowserView != null)
                 BrowserView.Find(Text);
         }
         public void Screenshot()
         {
-            Browser BrowserView = GetBrowserView(Tabs[TabsUI.SelectedIndex]);
+            Browser BrowserView = GetTab().Content;
             if (BrowserView != null)
                 BrowserView.Screenshot();
         }
 
         public void Zoom(int Delta)
         {
-            Browser BrowserView = GetBrowserView(Tabs[TabsUI.SelectedIndex]);
+            Browser BrowserView = GetTab().Content;
             if (BrowserView != null)
                 BrowserView.Zoom(Delta);
         }
@@ -556,7 +494,7 @@ namespace SLBr
             {
                 foreach (BrowserTabItem _Tab in Tabs)
                 {
-                    if (GetBrowserView(_Tab) == _Control)
+                    if (_Tab.Content == _Control)
                         return _Tab;
                 }
                 return null;
@@ -564,17 +502,17 @@ namespace SLBr
             else
                 return Tabs[TabsUI.SelectedIndex];
         }
-        public UserControl GetUserControlView(BrowserTabItem Tab = null)
+        /*public UserControl GetUserControlView(BrowserTabItem Tab = null)
         {
             if (Tab != null)
                 return Tab.Content;
             else
                 return GetTab().Content;
-        }
-        public Browser GetBrowserView(BrowserTabItem Tab = null)
+        }*/
+        /*public Browser GetBrowserView(BrowserTabItem Tab = null)
         {
-            return GetUserControlView(Tab) as Browser;
-        }
+            return Tab.Content;
+        }*/
 
         public void SetDimUnloadedIcon(bool Toggle)
         {
@@ -591,11 +529,10 @@ namespace SLBr
                 else
                 {
                     BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
-                    Browser BrowserView = GetBrowserView(_CurrentTab);
-                    if (BrowserView != null)
+                    if (_CurrentTab.Content != null)
                     {
-                        Keyboard.Focus(BrowserView.Chromium);
-                        BrowserView.ReFocus();
+                        Keyboard.Focus(_CurrentTab.Content.Chromium);
+                        _CurrentTab.Content.ReFocus();
                     }
                     Title = _CurrentTab.Header + (App.Instance.Username == "Default" ? " - SLBr" : $" - {App.Instance.Username} - SLBr");
                 }
@@ -609,7 +546,7 @@ namespace SLBr
         public void ExecuteCloseEvent()
         {
             foreach (BrowserTabItem Tab in Tabs)
-                GetBrowserView(Tab)?.ToggleSideBar(true);
+                Tab.Content?.ToggleSideBar(true);
             if (GCTimer != null)
                 GCTimer.Stop();
             if (App.Instance.AllWindows.Count == 1)
@@ -814,12 +751,11 @@ namespace SLBr
     {
         public override Style SelectStyle(object item, DependencyObject container)
         {
-            var tabItemModel = item as BrowserTabItem;
-            if (tabItemModel != null)
+            var _TabItem = item as BrowserTabItem;
+            if (_TabItem != null)
             {
-                var window = Application.Current.MainWindow;
-                if (window != null)
-                    return tabItemModel.TabStyle;
+                if (Application.Current.MainWindow != null)
+                    return _TabItem.TabStyle;
             }
             return base.SelectStyle(item, container);
         }

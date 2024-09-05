@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Linq.Expressions;
+using System.Net;
 using System.Text.Json;
-using System.Windows;
 using System.Xml;
 
 namespace SLBr.Handlers
@@ -10,15 +11,10 @@ namespace SLBr.Handlers
     {
         public string SearchProviderPrefix() =>
             App.Instance.GlobalSave.Get("SearchEngine");
-        public int BlockedAds() =>
-            App.Instance.AdsBlocked;
-        public int BlockedTrackers() =>
-            App.Instance.TrackersBlocked;
 
         public string GetBackground()
         {
             string Url = "";
-            //string CustomBackgroundQuery = App.Instance.GlobalSave.Get("CustomBackgroundQuery");
             string BackgroundImage = App.Instance.GlobalSave.Get("HomepageBackground");
 
             if (BackgroundImage == "Bing")
@@ -29,28 +25,21 @@ namespace SLBr.Handlers
                     try
                     {
                         XmlDocument doc = new XmlDocument();
-                        doc.LoadXml(App.Instance.TinyDownloader.DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
+                        doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
                         Url = @"http://www.bing.com/" + doc.SelectSingleNode(@"/images/image/url").InnerText;
                     }
                     catch { }
                 }
                 else if (BingBackground == "Random")
-                    Url = "https://bingw.jasonzeng.dev/?index=random";
+                    Url = "http://bingw.jasonzeng.dev/?index=random";
             }
             else if (BackgroundImage == "Picsum")
-                Url = "https://picsum.photos/1920/1080?random";
+                Url = "http://picsum.photos/1920/1080?random";
             else if (BackgroundImage == "Custom")
             {
                 Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
-                if (!Utils.IsHttpScheme(Url))
-                {
-                    if (File.Exists(Url))
-                    {
-                        byte[] imageArray = File.ReadAllBytes(Url);
-                        string base64ImageRepresentation = Convert.ToBase64String(imageArray);
-                        return $"url('data:image/png;base64,{base64ImageRepresentation}')";
-                    }
-                }
+                if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
+                    return $"url('data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}')";
             }
             return $"url('{Url}')";
         }
@@ -72,9 +61,7 @@ namespace SLBr.Handlers
         }
         public bool OpenDownload(int DownloadId)
         {
-            var p = new Process();
-            p.StartInfo = new ProcessStartInfo("explorer.exe", "/select, \"" + App.Instance.Downloads.GetValueOrDefault(DownloadId).FullPath + "\"") { UseShellExecute = true };
-            p.Start();
+            Process.Start(new ProcessStartInfo("explorer.exe", "/select, \"" + App.Instance.Downloads.GetValueOrDefault(DownloadId).FullPath + "\"") { UseShellExecute = true });
             return true;
         }
         public bool CancelDownload(int DownloadId)

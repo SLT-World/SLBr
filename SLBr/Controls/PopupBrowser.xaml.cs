@@ -1,5 +1,4 @@
 ﻿using CefSharp;
-using CefSharp.DevTools;
 using CefSharp.Wpf.HwndHost;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -14,8 +13,8 @@ namespace SLBr.Controls
     /// </summary>
     public partial class PopupBrowser : Window
     {
-        [DllImport("dwmapi.dll", PreserveSig = true)]
-        public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+        [DllImport("dwmapi.dll")]
+        public static extern int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute dwAttribute, ref int pvAttribute, int cbAttribute);
 
         ChromiumWebBrowser _Browser;
         Theme CurrentTheme;
@@ -28,56 +27,10 @@ namespace SLBr.Controls
                 Width = _Width;
             if (_Height != -1)
                 Height = _Height;
-        }
 
-        private void Browser_StatusMessage(object? sender, StatusMessageEventArgs e)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (!string.IsNullOrEmpty(e.Value))
-                    StatusMessage.Text = e.Value;
-                StatusBarPopup.IsOpen = !string.IsNullOrEmpty(e.Value);
-            });
-        }
-
-        private void Browser_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
-        {
-            if (!_Browser.IsBrowserInitialized)
-                return;
-            Dispatcher.Invoke(() =>
-            {
-                if (!e.IsLoading)
-                {
-                    Icon = new BitmapImage(new Uri("https://www.google.com/s2/favicons?sz=24&domain=" + Utils.Host(_Browser.Address)));
-                    DevToolsClient _DevToolsClient = _Browser.GetDevToolsClient();
-                    _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(CurrentTheme.DarkWebPage);
-                }
-            });
-        }
-
-        public void ApplyTheme(Theme _Theme)
-        {
-            CurrentTheme = _Theme;
-            int SetDarkTitleBar = _Theme.DarkTitleBar ? 1 : 0;
-            DwmSetWindowAttribute(new WindowInteropHelper(this).Handle, (int)DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE, ref SetDarkTitleBar, Marshal.SizeOf(true));
-            
-            Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
-            Resources["FontBrushColor"] = _Theme.FontColor;
-            Resources["BorderBrushColor"] = _Theme.BorderColor;
-            Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
-            Resources["GrayBrushColor"] = _Theme.GrayColor;
-            Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
-        }
-
-        private void Browser_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            Title = e.NewValue + App.Instance.Username == "Default" ? " - SLBr" : $" - {App.Instance.Username} - SLBr";
-        }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
             ApplyTheme(App.Instance.CurrentTheme);
             _Browser = new ChromiumWebBrowser();
+            _Browser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
             _Browser.Address = InitialAddress;
 
             _Browser.LifeSpanHandler = App.Instance._LifeSpanHandler;
@@ -93,21 +46,63 @@ namespace SLBr.Controls
             _Browser.StatusMessage += Browser_StatusMessage;
             _Browser.AllowDrop = true;
             _Browser.IsManipulationEnabled = true;
+            _Browser.UseLayoutRounding = true;
 
             _Browser.BrowserSettings = new BrowserSettings
             {
-                /*WindowlessFrameRate = App.Instance.Framerate,
-                Javascript = App.Instance.Javascript,
-                ImageLoading = App.Instance.LoadImages,
-                LocalStorage = App.Instance.LocalStorage,
-                Databases = App.Instance.Databases,
-                WebGl = App.Instance.WebGL,*/
                 BackgroundColor = System.Drawing.Color.Black.ToUInt()
             };
 
             WebContent.Children.Add(_Browser);
-            RenderOptions.SetBitmapScalingMode(_Browser, BitmapScalingMode.LowQuality);
-            _Browser.UseLayoutRounding = true;
+            //RenderOptions.SetBitmapScalingMode(_Browser, BitmapScalingMode.LowQuality);
+
+        }
+
+        private void Browser_StatusMessage(object? sender, StatusMessageEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (!string.IsNullOrEmpty(e.Value))
+                    StatusMessage.Text = e.Value;
+                StatusBarPopup.IsOpen = !string.IsNullOrEmpty(e.Value);
+            });
+        }
+
+        private void Browser_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
+        {
+            if (!e.Browser.IsValid || e.IsLoading)
+                return;
+            Dispatcher.Invoke(() =>
+            {
+                Icon = new BitmapImage(new Uri("http://www.google.com/s2/favicons?sz=24&domain=" + Utils.CleanUrl(_Browser.Address, true, true, true, false, false)));
+                _Browser.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(CurrentTheme.DarkWebPage);
+            });
+        }
+
+        public void ApplyTheme(Theme _Theme)
+        {
+            CurrentTheme = _Theme;
+
+            HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
+            int trueValue = 0x01;
+            int falseValue = 0x00;
+            if (_Theme.DarkTitleBar)
+                DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
+            else
+                DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
+            DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
+
+            Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
+            Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
+            Resources["BorderBrushColor"] = _Theme.BorderColor;
+            Resources["GrayBrushColor"] = _Theme.GrayColor;
+            Resources["FontBrushColor"] = _Theme.FontColor;
+            Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
+        }
+
+        private void Browser_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            Title = e.NewValue + App.Instance.Username == "Default" ? " - SLBr" : $" - {App.Instance.Username} - SLBr";
         }
     }
 }

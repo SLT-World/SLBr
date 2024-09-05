@@ -179,32 +179,44 @@
                         <ContentPresenter x:Name="content" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" RecognizesAccessKey="True"/>
                     </BulletDecorator>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsChecked" Value="True">
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsEnabled" Value="True"/>
+                                <Condition Property="IsChecked" Value="True"/>
+                            </MultiTrigger.Conditions>
                             <Setter TargetName="Checkmark" Property="Opacity" Value="1"/>
-
-                            <Trigger.EnterActions>
+                            <MultiTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="IndicatorBorder" Duration="0:0:0.125" To="1.0" Storyboard.TargetProperty="Opacity"/>
                                     </Storyboard>
                                 </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="IndicatorBorder" Duration="0:0:0.125" To="0.0" Storyboard.TargetProperty="Opacity"/>
                                     </Storyboard>
                                 </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="False">
-                            <Setter TargetName="Checkmark" Property="Opacity" Value="0"/>
-                        </Trigger>
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Border" Property="BorderThickness" Value="1"/>
                             <Setter Property="Background" Value="{DynamicResource SecondaryBrush}"/>
-                            <Setter TargetName="Checkmark" Property="Foreground" Value="{DynamicResource BorderBrush}"/>
+                            <Setter TargetName="Checkmark" Property="Foreground" Value="{DynamicResource SecondaryBrush}"/>
                             <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsEnabled" Value="False"/>
+                                <Condition Property="IsChecked" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Checkmark" Property="Opacity" Value="1"/>
+                            <Setter TargetName="IndicatorBorder" Property="Opacity" Value="0"/>
+                            <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="Checkmark" Property="Opacity" Value="0"/>
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>

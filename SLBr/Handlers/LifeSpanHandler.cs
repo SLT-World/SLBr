@@ -19,7 +19,7 @@ namespace SLBr.Handlers
             if (targetDisposition == WindowOpenDisposition.CurrentTab)
             {
                 if (IsSideBar)
-                    App.Instance.CurrentFocusedWindow().GetBrowserView().Address = targetUrl;
+                    App.Instance.CurrentFocusedWindow().GetTab().Content.Address = targetUrl;
                 else
                     browser.MainFrame.LoadUrl(targetUrl);
             }
@@ -27,14 +27,28 @@ namespace SLBr.Handlers
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
-                    try
-                    {
+                    //try
+                    //{
                         if (targetDisposition == WindowOpenDisposition.NewPopup)
-                            new PopupBrowser(targetUrl, popupFeatures.Width != null ? (int)popupFeatures.Width : 600, popupFeatures.Height != null ? (int)popupFeatures.Height : 650).Show();
+                        {
+                            bool Allow = false;
+                            string Host = Utils.Host(targetUrl);
+                            if (!App.Instance.PopupPermissionHosts.ContainsKey(Host))
+                            {
+                                var infoWindow = new InformationDialogWindow("Permission", $"Allow {Host} to", "Open popup", "\uE8D7", "Allow", "Block", "\xE737");
+                                infoWindow.Topmost = true;
+                                Allow = infoWindow.ShowDialog().ToBool();
+                                App.Instance.PopupPermissionHosts.Add(Host, Allow);
+                            }
+                            else
+                                App.Instance.PopupPermissionHosts.TryGetValue(Host, out Allow);
+                            if (Allow)
+                                new PopupBrowser(targetUrl, popupFeatures.Width != null ? (int)popupFeatures.Width : 600, popupFeatures.Height != null ? (int)popupFeatures.Height : 650).Show();
+                        }
                         else
                             App.Instance.CurrentFocusedWindow().NewTab(targetUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
-                    }
-                    catch { }
+                    //}
+                    //catch { }
                 });
             }
             return true;

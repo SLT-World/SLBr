@@ -16,10 +16,10 @@
             <!--https://www.yahoo.com/news/rss-->
             <!--https://www.latimes.com/local/rss2.0.xml-->
             <!--https://rss.nytimes.com/services/xml/rss/nyt/World.xml-->
-            <XmlDataProvider x:Key="NewsRSSFeed" Source="http://news.google.com/rss?hl=en-US" XPath="rss/channel"/>
+            <XmlDataProvider x:Key="NewsRSSFeed" Source="http://news.google.com/rss" XPath="rss/channel"/>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid Background="{DynamicResource PrimaryBrush}">
+    <Grid Background="{StaticResource PrimaryBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -29,18 +29,18 @@
                 <!--f57e-->
                 <TextBlock Text="&#xe8a1;" FontSize="22" FontWeight="UltraLight" FontFamily="Segoe Fluent Icons" TextAlignment="Center" VerticalAlignment="Center" Margin="5,2.5,7.5,0"/>
                 <TextBlock Text="News" FontSize="16" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,7.5,0"/>
-                <Button Click="RefreshButton_Click" DockPanel.Dock="Right" Style="{DynamicResource IconButton}" Content="&#xE72C;" ToolTip="Refresh"/>
+                <Button Click="RefreshButton_Click" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE72C;" ToolTip="Refresh"/>
                 <TextBox x:Name="SearchTextBox" KeyUp="SearchTextBox_KeyUp" Width="Auto" Margin="0,0,5,0"/>
             </DockPanel>
-            <Separator Background="{DynamicResource BorderBrush}" Margin="5,0"/>
+            <Separator Background="{StaticResource BorderBrush}" Margin="5,0"/>
             <DockPanel Margin="5" LastChildFill="False">
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xE909;" ToolTip="World" Margin="0,0,5,0"/>
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xecaf;" ToolTip="Local" Margin="0,0,5,0"/>
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xeafc;" ToolTip="Business" Margin="0,0,5,0"/>
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xe950;" ToolTip="Technology" Margin="0,0,5,0"/>
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xea69;" ToolTip="Entertainment" Margin="0,0,5,0"/>
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xf272;" ToolTip="Sports" Margin="0,0,5,0"/>
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xe71c;" ToolTip="Science" Margin="0,0,5,0">
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xE909;" ToolTip="World" Margin="0,0,5,0"/>
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xecaf;" ToolTip="Local" Margin="0,0,5,0"/>
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xeafc;" ToolTip="Business" Margin="0,0,5,0"/>
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xe950;" ToolTip="Technology" Margin="0,0,5,0"/>
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xea69;" ToolTip="Entertainment" Margin="0,0,5,0"/>
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xf272;" ToolTip="Sports" Margin="0,0,5,0"/>
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xe71c;" ToolTip="Science" Margin="0,0,5,0">
                     <Button.Resources>
                         <Style TargetType="{x:Type TextBlock}">
                             <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
@@ -52,8 +52,8 @@
                         </Style>
                     </Button.Resources>
                 </Button>
-                <Button Style="{DynamicResource IconButton}" Click="TopicButton_Click" Content="&#xe95e;" ToolTip="Health"/>
-                <Button Click="BackButton_Click" DockPanel.Dock="Right" Style="{DynamicResource IconButton}" Content="&#xE76B;" ToolTip="Back" x:Name="BackButton"/>
+                <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xe95e;" ToolTip="Health"/>
+                <Button Click="BackButton_Click" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE76B;" ToolTip="Back" x:Name="BackButton"/>
             </DockPanel>
         </StackPanel>
         <Grid Grid.Row="1">
@@ -61,13 +61,13 @@
                 <ItemsControl ItemsSource="{Binding Source={StaticResource NewsRSSFeed}, XPath=item}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,5">
+                            <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,5">
                                 <StackPanel Margin="5">
-                                    <TextBlock Foreground="{DynamicResource FontBrush}" Margin="0,0,0,5" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}"/>
+                                    <TextBlock Foreground="{StaticResource FontBrush}" Margin="0,0,0,5" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}"/>
                                     <DockPanel>
-                                        <Button Click="Navigate" Margin="0,0,5,0" Style="{DynamicResource IconButton}" Content="&#xe8ad;" Tag="{Binding XPath=link}" ToolTip="Go"/>
-                                        <TextBlock DockPanel.Dock="Right" ToolTip="Search news" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{DynamicResource GrayBrush}"/>
-                                        <TextBlock ToolTip="Search news" VerticalAlignment="Center" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{DynamicResource GrayBrush}"/>
+                                        <Button Click="Navigate" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8ad;" Tag="{Binding XPath=link}" ToolTip="Go"/>
+                                        <TextBlock DockPanel.Dock="Right" ToolTip="Search news" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                        <TextBlock ToolTip="Search news" VerticalAlignment="Center" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
                                     </DockPanel>
                                 </StackPanel>
                             </Border>

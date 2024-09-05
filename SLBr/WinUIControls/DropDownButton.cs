@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls.Primitives;
+﻿using System.Windows.Controls.Primitives;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows;
@@ -16,7 +11,7 @@ namespace WinUI
         {
             Binding binding = new Binding("Menu.IsOpen");
             binding.Source = this;
-            this.SetBinding(IsCheckedProperty, binding);
+            SetBinding(IsCheckedProperty, binding);
             DataContextChanged += (sender, args) =>
             {
                 if (Menu != null)

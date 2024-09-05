@@ -1,4 +1,5 @@
 ﻿using CefSharp;
+using CefSharp.DevTools.Database;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -38,30 +39,44 @@ namespace SLBr.Pages
             BrowserView = _BrowserView;
         }
 
+        public void Dispose()
+        {
+            PrivateAddableLanguages.Clear();
+            AddableLanguages.Clear();
+        }
+
         Browser BrowserView;
 
         public void RemoveLocale(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (sender == null)
-                    return;
-                var Target = (FrameworkElement)sender;
-                if (App.Instance.Languages.Count == 1)
+                if (sender != null)
                 {
-                    var infoWindow = new InformationDialogWindow("Alert", $"Settings", "You can no longer remove languages because only one language remains.", "\uece4");
-                    infoWindow.Topmost = true;
-                    infoWindow.ShowDialog();
-                    return;
-                }
-                App.Instance.Languages.Remove(App.Instance.Languages.ToList().Find(i => i.Tooltip == Target.Tag.ToString()));
+                    if (App.Instance.Languages.Count == 1)
+                    {
+                        var infoWindow = new InformationDialogWindow("Alert", $"Settings", "You can no longer remove languages because only one language remains.", "\uece4");
+                        infoWindow.Topmost = true;
+                        infoWindow.ShowDialog();
+                        return;
+                    }
+                    ActionStorage _Language = App.Instance.Languages.Where(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString()).First();
+                    App.Instance.Languages.Remove(_Language);
 
-                AddableLanguages.Clear();
-                List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
-                foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
-                {
-                    if (!ISOs.Contains(Locale.Key))
-                        AddableLanguages.Add(new ActionStorage(Locale.Value, GetLocaleIcon(Locale.Key), Locale.Key));
+                    /*If replace all items in the collection and have more than 10 items.
+                     * There is a significant performance improvement to gain used the Clear() -> Add() method.
+                     * The Add() method is very heavy to use - every add operation refreshes the whole layout of program.
+                     * Instead, use INotifyPropertyChanged pattern and simply replace the collection like this:
+                     * MyObservableCollection = new ObservableCollection<T>(ListOfItems);
+                     * MyObservableCollection needs to invoke the PropertyChanged event (or you can do it manually afterwords)
+                     * Doing this can speed up collection renders significantly.*/
+
+                    PrivateAddableLanguages.Add(_Language);
+                    var sortedList = PrivateAddableLanguages.OrderBy(x => x.Tooltip).ToList();
+                    PrivateAddableLanguages.Clear();
+                    foreach (var item in sortedList)
+                        PrivateAddableLanguages.Add(item);
+                    RaisePropertyChanged("AddableLanguages");
                 }
             }
             catch { }
@@ -71,18 +86,11 @@ namespace SLBr.Pages
         {
             try
             {
-                if (sender == null)
-                    return;
-                var Target = (FrameworkElement)sender;
-                string ISO = Target.Tag.ToString();
-                App.Instance.Languages.Add(new ActionStorage(App.Instance.AllLocales.GetValueOrDefault(ISO), "", ISO));
-
-                AddableLanguages.Clear();
-                List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
-                foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
+                if (sender != null)
                 {
-                    if (!ISOs.Contains(Locale.Key))
-                        AddableLanguages.Add(new ActionStorage(Locale.Value, GetLocaleIcon(Locale.Key), Locale.Key));
+                    ActionStorage _Language = AddableLanguages.Where(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString()).First();
+                    App.Instance.Languages.Add(_Language);
+                    AddableLanguages.Remove(_Language);
                 }
             }
             catch { }
@@ -96,11 +104,8 @@ namespace SLBr.Pages
 
         private void HyperlinkButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender == null)
-                return;
-            var Target = (FrameworkElement)sender;
-            string _Tag = Target.Tag.ToString();
-            App.Instance.CurrentFocusedWindow().NewTab(_Tag, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+            if (sender != null)
+                App.Instance.CurrentFocusedWindow().NewTab(((FrameworkElement)sender).Tag.ToString(), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
         }
 
         private void LanguageSelection_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -111,42 +116,19 @@ namespace SLBr.Pages
                     LanguageSelection.SelectedIndex = 0;
                 App.Instance.Locale = App.Instance.Languages[LanguageSelection.SelectedIndex];
 
-                AddableLanguages.Clear();
-                List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
-                foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
-                {
-                    if (!ISOs.Contains(Locale.Key))
-                        AddableLanguages.Add(new ActionStorage(Locale.Value, GetLocaleIcon(Locale.Key), Locale.Key));
-                }
-
                 Cef.UIThreadTaskFactory.StartNew(delegate
                 {
                     var GlobalRequestContext = Cef.GetGlobalRequestContext();
 
                     string Error;
-                    GlobalRequestContext.SetPreference("spellcheck.dictionaries", App.Instance.Languages.Select(i => i.Tooltip), out Error);
-                    GlobalRequestContext.SetPreference("intl.accept_languages", App.Instance.Languages.Select(i => i.Tooltip), out Error);
+                    IEnumerable<string> LocaleStrings = App.Instance.Languages.Select(i => i.Tooltip);
+                    GlobalRequestContext.SetPreference("spellcheck.dictionaries", LocaleStrings, out Error);
+                    GlobalRequestContext.SetPreference("intl.accept_languages", LocaleStrings, out Error);
                 });
             }
         }
 
         bool SettingsInitialized = false;
-
-        string GetLocaleIcon(string ISO)
-        {
-            if (ISO.StartsWith("zh-TW"))
-                return "\xe981";
-            else if (ISO.StartsWith("zh"))
-                return "\xE982";
-            else if (ISO.StartsWith("ja"))
-                return "\xe985";
-            else if (ISO.StartsWith("ko"))
-                return "\xe97d";
-            else if (ISO.StartsWith("en"))
-                return "\xe97e";
-            return "\xf2b7";
-            //return "\xE8C1";
-        }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
@@ -155,8 +137,9 @@ namespace SLBr.Pages
             foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
             {
                 if (!ISOs.Contains(Locale.Key))
-                    AddableLanguages.Add(new ActionStorage(Locale.Value, GetLocaleIcon(Locale.Key), Locale.Key));
+                    AddableLanguages.Add(new ActionStorage(Locale.Value, App.Instance.GetLocaleIcon(Locale.Key), Locale.Key));
             }
+            AddableLanguages = new ObservableCollection<ActionStorage>(AddableLanguages.OrderBy(x => x.Tooltip));
 
             LanguageSelection.ItemsSource = App.Instance.Languages;
             LanguageSelection.SelectedValue = App.Instance.Locale;
@@ -200,8 +183,31 @@ namespace SLBr.Pages
             AdaptiveThemeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme"));
 
 
+            NeverSlowModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NeverSlowMode"));
             AdBlockCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdBlock"));
             TrackerBlockCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TrackerBlock"));
+
+
+
+
+            SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
+            if (VideoQualityComboBox.Items.Count == 0)
+            {
+                VideoQualityComboBox.Items.Add("Auto");
+                VideoQualityComboBox.Items.Add("144p");
+                VideoQualityComboBox.Items.Add("240p");
+                VideoQualityComboBox.Items.Add("360p");
+                VideoQualityComboBox.Items.Add("480p");
+                VideoQualityComboBox.Items.Add("720p");
+                VideoQualityComboBox.Items.Add("1080p");
+                VideoQualityComboBox.Items.Add("1440p");
+                VideoQualityComboBox.Items.Add("2160p");
+                VideoQualityComboBox.Items.Add("4320p");
+            }
+            VideoQualityComboBox.SelectionChanged += VideoQualityComboBox_SelectionChanged;
+            VideoQualityComboBox.SelectedValue = App.Instance.GlobalSave.Get("VideoQuality");
+
+
 
             GoogleSafeBrowsingCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("GoogleSafeBrowsing"));
 
@@ -255,7 +261,6 @@ namespace SLBr.Pages
             ChromiumHardwareAccelerationCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ChromiumHardwareAcceleration"));
             ExperimentalFeaturesCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ExperimentalFeatures"));
             LiteModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("LiteMode"));
-            //PDFViewerExtensionCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PDFViewerExtension"));
             PDFViewerToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PDFViewerExtension"));
 
             if (RenderModeComboBox.Items.Count == 0)
@@ -298,9 +303,12 @@ namespace SLBr.Pages
             }
             HomepageBackgroundComboBox.SelectionChanged += HomepageBackgroundComboBox_SelectionChanged;
             HomepageBackgroundComboBox.SelectedValue = App.Instance.GlobalSave.Get("HomepageBackground");
+
             BackgroundImageTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundImage");
             BackgroundQueryTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundQuery");
             BackgroundImageTextBox.Visibility = App.Instance.GlobalSave.Get("HomepageBackground") == "Custom" ? Visibility.Visible : Visibility.Collapsed;
+            BackgroundQueryTextBox.Visibility = Visibility.Collapsed;
+            BingBackgroundComboBox.Visibility = App.Instance.GlobalSave.Get("HomepageBackground") == "Bing" ? Visibility.Visible : Visibility.Collapsed;
 
             if (ScreenshotFormatComboBox.Items.Count == 0)
             {
@@ -312,11 +320,11 @@ namespace SLBr.Pages
             ScreenshotFormatComboBox.SelectedValue = App.Instance.GlobalSave.Get("ScreenshotFormat");
 
             string ThemeName = App.Instance.GlobalSave.Get("Theme");
-            foreach (object o in ThemeSelection.Items)
+            foreach (Border ThemeItems in ThemeSelection.Items)
             {
-                if ((string)((Border)o).Tag == ThemeName)
+                if ((string)ThemeItems.Tag == ThemeName)
                 {
-                    ThemeSelection.SelectedItem = o;
+                    ThemeSelection.SelectedItem = ThemeItems;
                     break;
                 }
             }
@@ -337,6 +345,9 @@ namespace SLBr.Pages
             TranslateButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TranslateButton"));
             ReaderButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ReaderButton"));
 
+            App.Instance.LoadExtensions();
+            ExtensionsList.ItemsSource = App.Instance.Extensions;
+
             UsernameText.Text = App.Instance.Username;
 
             ApplyTheme(App.Instance.CurrentTheme);
@@ -346,10 +357,10 @@ namespace SLBr.Pages
         public void ApplyTheme(Theme _Theme)
         {
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
-            Resources["FontBrushColor"] = _Theme.FontColor;
-            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
+            Resources["BorderBrushColor"] = _Theme.BorderColor;
             Resources["GrayBrushColor"] = _Theme.GrayColor;
+            Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
         }
 
@@ -406,7 +417,6 @@ namespace SLBr.Pages
             {
                 string TabAlignment = TabAlignmentComboBox.SelectedValue.ToString();
                 App.Instance.GlobalSave.Set("TabAlignment", TabAlignment);
-                //App.Instance.SwitchTabAlignment(TabAlignment);
                 App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
             }
         }
@@ -452,16 +462,35 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("ScreenshotPath", ScreenshotPathTextBox.Text);
         }
+        private void NeverSlowModeCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetNeverSlowMode(NeverSlowModeCheckBox.IsChecked.ToBool());
+        }
         private void AdBlockCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.AdBlock(AdBlockCheckBox.IsChecked.ToBool());
+                App.Instance.SetAdBlock(AdBlockCheckBox.IsChecked.ToBool());
         }
         private void TrackerBlockCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.TrackerBlock(TrackerBlockCheckBox.IsChecked.ToBool());
+                App.Instance.SetTrackerBlock(TrackerBlockCheckBox.IsChecked.ToBool());
         }
+
+
+        private void SkipAdsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetYouTube(SkipAdsCheckBox.IsChecked.ToBool(), VideoQualityComboBox.SelectedValue.ToString());
+        }
+        private void VideoQualityComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetYouTube(SkipAdsCheckBox.IsChecked.ToBool(), VideoQualityComboBox.SelectedValue.ToString());
+        }
+
+
         private void AdaptiveThemeCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -673,10 +702,19 @@ namespace SLBr.Pages
                 if (sender == null)
                     return;
                 var Target = (ToggleButton)sender;
-                string _Tag = Target.Tag.ToString();
-                var Values = _Tag.Split(new string[] { "<,>" }, StringSplitOptions.None);
+                var Values = Target.Tag.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
                 if (Values[0] == "PDF")
-                    App.Instance.GlobalSave.Set("PDFViewerExtension", Target.IsChecked.ToBool().ToString());
+                {
+                    bool PDFViewerExtension = Target.IsChecked.ToBool();
+                    App.Instance.GlobalSave.Set("PDFViewerExtension", PDFViewerExtension.ToString());
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        string Error;
+                        GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !PDFViewerExtension, out Error);
+                        GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !PDFViewerExtension, out Error);
+                    });
+                }
             }
         }
     }

@@ -18,15 +18,15 @@
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo x:Name="TaskbarProgress" ProgressState="Normal" ProgressValue="0"/>
     </Window.TaskbarItemInfo>
-    <Grid Background="{DynamicResource SecondaryBrush}">
-        <WinUI:WinUITabControl x:Name="TabsUI" SelectionChanged="TabsUI_SelectionChanged" Padding="0" Style="{DynamicResource VerticalTabControl}">
+    <Grid Background="{StaticResource SecondaryBrush}">
+        <WinUI:WinUITabControl x:Name="TabsUI" SelectionChanged="TabsUI_SelectionChanged" Padding="0">
             <TabControl.ContentTemplate>
                 <DataTemplate>
                     <UserControl Content="{Binding Content}" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </DataTemplate>
             </TabControl.ContentTemplate>
             <TabControl.ItemContainerStyleSelector>
-                <DynamicResource ResourceKey="TabItemStyleSelector"/>
+                <StaticResource ResourceKey="TabItemStyleSelector"/>
             </TabControl.ItemContainerStyleSelector>
         </WinUI:WinUITabControl>
         <Grid Grid.RowSpan="100" Grid.ColumnSpan="100" x:Name="FullscreenContainer">

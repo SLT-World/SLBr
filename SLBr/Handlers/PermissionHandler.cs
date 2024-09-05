@@ -3,14 +3,13 @@ using SLBr.Controls;
 
 namespace SLBr.Handlers
 {
-    public class PermissionHandler : CefSharp.Handler.PermissionHandler
+    public class PermissionHandler : IPermissionHandler
     {
-        protected override void OnDismissPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, PermissionRequestResult result)
+        public void OnDismissPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, PermissionRequestResult result)
         {
-            base.OnDismissPermissionPrompt(chromiumWebBrowser, browser, promptId, result);
         }
 
-        protected override bool OnRequestMediaAccessPermission(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, string requestingOrigin, MediaAccessPermissionType requestedPermissions, IMediaAccessCallback callback)
+        public bool OnRequestMediaAccessPermission(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, string requestingOrigin, MediaAccessPermissionType requestedPermissions, IMediaAccessCallback callback)
         {
             using (callback)
             {
@@ -43,7 +42,7 @@ namespace SLBr.Handlers
                         PermissionIcons += "\n";
                     }
                 }
-                
+
                 Permissions = Permissions.TrimEnd('\n');
                 PermissionIcons = PermissionIcons.TrimEnd('\n');
                 if (string.IsNullOrEmpty(Permissions))
@@ -60,7 +59,7 @@ namespace SLBr.Handlers
             }
         }
 
-        protected override bool OnShowPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, string requestingOrigin, PermissionRequestType requestedPermissions, IPermissionPromptCallback callback)
+        public bool OnShowPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, string requestingOrigin, PermissionRequestType requestedPermissions, IPermissionPromptCallback callback)
         {
             //Know your location [Geolocation] https://github.com/cefsharp/CefSharp/discussions/3719
             using (callback)
@@ -102,7 +101,7 @@ namespace SLBr.Handlers
                                 break;
 
                             case PermissionRequestType.ProtectedMediaIdentifier:
-                                Permissions += "-";
+                                Permissions += "ProtectedMediaIdentifier";
                                 PermissionIcons += "\xEA69";
                                 break;
                             case PermissionRequestType.MidiSysex:
@@ -117,7 +116,7 @@ namespace SLBr.Handlers
                             case PermissionRequestType.DiskQuota:
                                 break;
                             case PermissionRequestType.LocalFonts:
-                                Permissions += "-";
+                                Permissions += "LocalFonts";
                                 PermissionIcons += "\xE8D2";
                                 break;
                             case PermissionRequestType.Clipboard:

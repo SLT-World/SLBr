@@ -14,14 +14,13 @@
         <Border.Effect>
             <DropShadowEffect Direction="-75" ShadowDepth="1" Opacity="0.5" BlurRadius="15" Color="Gray"/>
         </Border.Effect>
-        <Border Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="10">
+        <Border Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="10">
             <Grid Margin="10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-
                 <DockPanel Margin="0,0,0,10" Grid.Row="0" Height="Auto">
                     <TextBlock x:Name="QuestionIcon" FontSize="18" FontFamily="Segoe Fluent Icons" Margin="0,0,5,0">&#xe946;</TextBlock>
                     <Label Name="QuestionText" Margin="0,0,0,0" Padding="0" FontWeight="Medium" FontSize="14">Question</Label>
@@ -30,10 +29,9 @@
                     <TextBlock x:Name="Icon" FontSize="18" FontFamily="Segoe Fluent Icons" Margin="0,0,5,0">&#xE80F;</TextBlock>
                     <TextBlock x:Name="DescriptionText" VerticalAlignment="Center">Description</TextBlock>
                 </DockPanel>
-
                 <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right">
-                    <Button BorderBrush="{DynamicResource BorderBrush}" IsDefault="True" Name="PositiveButton" Click="DialogOk_Click" MinWidth="60">Yes</Button>
-                    <Button BorderBrush="{DynamicResource BorderBrush}" IsCancel="True" Name="NegativeButton" MinWidth="60" Margin="10,0,0,0">No</Button>
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsDefault="True" Name="PositiveButton" Click="DialogOk_Click" MinWidth="60">Yes</Button>
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsCancel="True" Name="NegativeButton" MinWidth="60" Margin="10,0,0,0">No</Button>
                 </StackPanel>
             </Grid>
         </Border>

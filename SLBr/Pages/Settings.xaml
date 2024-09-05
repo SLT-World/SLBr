@@ -19,14 +19,14 @@
             <XmlDataProvider x:Key="NewsRSSFeed" Source="http://news.google.com/rss?hl=en-US" XPath="rss/channel"/>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid Background="{DynamicResource SecondaryBrush}">
-        <WinUI:WinUITabControl Style="{DynamicResource WinUITabControl}">
+    <Grid Background="{StaticResource SecondaryBrush}">
+        <WinUI:WinUITabControl Style="{StaticResource WinUITabControl}">
             <TabItem Header="Browser" Tag="&#xec6c;">
                 <StackPanel Margin="25" MaxWidth="500">
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Browser</TextBlock>
                     <GroupBox Margin="0,0,0,10">
                         <DockPanel Height="35">
-                            <Border Width="35" Height="35" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" Background="{DynamicResource PrimaryBrush}" Margin="0,0,10,0">
+                            <Border Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE77B;"/>
                             </Border>
                             <Button DockPanel.Dock="Right" Click="SwitchUserButton_Click">
@@ -37,7 +37,7 @@
                             </Button>
                             <StackPanel VerticalAlignment="Center" Margin="0">
                                 <TextBlock x:Name="UsernameText" Text="Username"/>
-                                <!--<TextBlock FontSize="10" Text="Description" Foreground="{DynamicResource GrayBrush}"/>-->
+                                <!--<TextBlock FontSize="10" Text="Description" Foreground="{StaticResource GrayBrush}"/>-->
                             </StackPanel>
                         </DockPanel>
                     </GroupBox>
@@ -68,9 +68,21 @@
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
+                            Youtube
+                        </GroupBox.Header>
                         <StackPanel>
-                            <CheckBox Margin="0,0,0,10" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth Scrolling"/>
-                            <CheckBox x:Name="FlagEmojiCheckBox" Width="Auto" Click="FlagEmojiCheckBox_Click" Content="Country Flag Emojis"/>
+                            <CheckBox x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Margin="0,0,0,10" Content="Skip video ads" Width="Auto"/>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="Desired video quality"/>
+                                <ComboBox x:Name="VideoQualityComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <StackPanel>
+                            <CheckBox Margin="0,0,0,10" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
+                            <CheckBox x:Name="FlagEmojiCheckBox" Width="Auto" Click="FlagEmojiCheckBox_Click" Content="Country flag emojis"/>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -91,7 +103,7 @@
                                 </ListBox.ItemsPanel>
                                 <ListBox.Resources>
                                     <Style TargetType="{x:Type ListBoxItem}">
-                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
                                         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                         <Setter Property="BorderThickness" Value="1"/>
                                         <Setter Property="Template">
@@ -101,7 +113,7 @@
                                                         <Grid>
                                                             <ContentPresenter x:Name="Content" Margin="0"/>
                                                             <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="Transparent"/>
-                                                            <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{DynamicResource IndicatorBrush}" CornerRadius="5"/>
+                                                            <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
                                                         </Grid>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
@@ -128,8 +140,8 @@
                                         </Setter>
                                     </Style>
                                 </ListBox.Resources>
-                                <!--<Border CornerRadius="5" Width="100" Height="100" BorderThickness="1" Background="LightSlateGray" BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,0,10">
-                                    <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                <!--<Border CornerRadius="5" Width="100" Height="100" BorderThickness="1" Background="LightSlateGray" BorderBrush="{StaticResource BorderBrush}" Margin="0,0,0,10">
+                                    <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
                                         <TextBlock Text="" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                     </Border>
                                 </Border>-->
@@ -149,7 +161,7 @@
                                         <Border CornerRadius="0,6,0,0" Background="Black" Grid.Column="1">
                                             <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE708;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
-                                        <Border Grid.Row="1" Grid.ColumnSpan="2" CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                        <Border Grid.Row="1" Grid.ColumnSpan="2" CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
                                             <TextBlock Text="System" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                         </Border>
                                     </Grid>
@@ -157,7 +169,7 @@
                                 <Border Tag="Light" CornerRadius="6" Width="100" Height="100" Background="WhiteSmoke">
                                     <Grid>
                                         <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE706;" FontSize="20" Foreground="Black" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
                                             <TextBlock Text="Light" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                         </Border>
                                     </Grid>
@@ -165,7 +177,7 @@
                                 <Border Tag="Dark" CornerRadius="6" Width="100" Height="100" Background="Black">
                                     <Grid>
                                         <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE708;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
                                             <TextBlock Text="Dark" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                         </Border>
                                     </Grid>
@@ -173,7 +185,7 @@
                                 <Border Tag="Purple" CornerRadius="6" Width="100" Height="100" Background="#251C31">
                                     <Grid>
                                         <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xea3a;" FontSize="20" Foreground="#934CFE" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
                                             <TextBlock Text="Purple" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                         </Border>
                                     </Grid>
@@ -181,19 +193,19 @@
                                 <Border Tag="Green" CornerRadius="6" Width="100" Height="100" Background="#18352B">
                                     <Grid>
                                         <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xe8be;" FontSize="20" Foreground="#3AE872" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{DynamicResource PrimaryBrush}" Padding="5">
+                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
                                             <TextBlock Text="Green" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                         </Border>
                                     </Grid>
                                 </Border>
                             </ListBox>
-                            <CheckBox x:Name="AdaptiveThemeCheckBox" Click="AdaptiveThemeCheckBox_Click" Content="Adaptive Theme" Width="Auto"/>
+                            <CheckBox x:Name="AdaptiveThemeCheckBox" Click="AdaptiveThemeCheckBox_Click" Content="Adaptive theme" Width="Auto"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
                             <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Tab Alignment"/>
+                                <TextBlock VerticalAlignment="Center" Text="Tab alignment"/>
                                 <ComboBox x:Name="TabAlignmentComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                         </StackPanel>
@@ -202,34 +214,34 @@
                         <StackPanel>
                             <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE80F;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource PrimaryBrush}" CornerRadius="5">
+                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE80F;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="Home Button"/>
+                                <TextBlock VerticalAlignment="Center" Text="Home button"/>
                                 <ToggleButton x:Name="HomeButtonToggleButton" Click="HomeButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                             <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xe99a;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource PrimaryBrush}" CornerRadius="5">
+                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xe99a;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="AI Chat Button"/>
+                                <TextBlock VerticalAlignment="Center" Text="AI Chat button"/>
                                 <ToggleButton x:Name="AIButtonToggleButton" Click="AIButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                             <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE8C1;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource PrimaryBrush}" CornerRadius="5">
+                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE8C1;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="Translate Button"/>
+                                <TextBlock VerticalAlignment="Center" Text="Translate button"/>
                                 <ToggleButton x:Name="TranslateButtonToggleButton" Click="TranslateButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                             <DockPanel>
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource PrimaryBrush}" CornerRadius="5">
+                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="Reader Mode Button"/>
+                                <TextBlock VerticalAlignment="Center" Text="Reader Mode button"/>
                                 <ToggleButton x:Name="ReaderButtonToggleButton" Click="ReaderButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                         </StackPanel>
@@ -245,11 +257,11 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <DockPanel Margin="0,0,0,10" LastChildFill="False">
-                                <Border Margin="0,0,10,0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{DynamicResource PrimaryBrush}" Width="50" Height="25">
+                                <Border Margin="0,0,10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Width="50" Height="25">
                                     <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="Ads blocked" Margin="0,0,25,0" VerticalAlignment="Center"/>
-                                <Border Margin="0,0,10,0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{DynamicResource PrimaryBrush}" Width="50" Height="25">
+                                <Border Margin="0,0,10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Width="50" Height="25">
                                     <TextBlock x:Name="TrackersBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock Text="Trackers blocked" Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -264,7 +276,7 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <CheckBox x:Name="GoogleSafeBrowsingCheckBox" Click="GoogleSafeBrowsingCheckBox_Click" Margin="0,0,0,10" Content="Google Safe Browsing" Width="Auto"/>
-                            <TextBlock>
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                 Advisory provided by
                                 <Hyperlink ToolTip="https://developers.google.com/safe-browsing/v4/advisory" NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
                             </TextBlock>
@@ -276,7 +288,7 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Protection Level"/>
+                                <TextBlock VerticalAlignment="Center" Text="Protection level"/>
                                 <ComboBox x:Name="FingerprintProtectionLevelComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                         </StackPanel>
@@ -285,7 +297,7 @@
                         <StackPanel>
                             <DockPanel>
                                 <TextBlock VerticalAlignment="Center" Text="History"/>
-                                <Button Style="{DynamicResource IconButton}" Click="HyperlinkButton_Click" Tag="slbr://history" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
+                                <Button Style="{StaticResource IconButton}" Click="HyperlinkButton_Click" Tag="slbr://history" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -295,7 +307,7 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <CheckBox x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="0,0,0,10" Content="Allow SLBr to send crash reports" Width="Auto"/>
-                            <TextBlock FontSize="10" Foreground="{DynamicResource GrayBrush}">
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                 <Run>SLBr sends diagnostic reports on crashes to help improve SLBr.</Run>
                                 <LineBreak/>
                                 <Run>The reports sent only includes data on the version and the errors in the code.</Run>
@@ -319,7 +331,7 @@
                                 <Button Margin="10,0,0,0" Content="Add" DockPanel.Dock="Right" Click="AddSearchButton_Click"/>
                                 <TextBox x:Name="AddSearchTextBox" DockPanel.Dock="Left" ToolTip="Search engine prefix" Width="Auto"/>
                             </DockPanel>
-                            <TextBlock FontSize="10" Foreground="{DynamicResource GrayBrush}">
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                 Url with {0} in place of query
                             </TextBlock>
                         </StackPanel>
@@ -363,7 +375,12 @@
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Performance</TextBlock>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
-                            <CheckBox x:Name="LiteModeCheckBox" Click="LiteModeCheckBox_Click" Width="Auto" Content="Lite Mode"/>
+                            <CheckBox x:Name="LiteModeCheckBox" Click="LiteModeCheckBox_Click" Margin="0,0,0,10" Content="Lite Mode" Width="Auto"/>
+                            <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Margin="0,0,0,10" Content="Never Slow Mode" Width="Auto"/>
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                <Run>Never Slow Mode limits the size and quantity of stylesheets, scripts, images and fonts</Run>
+                            </TextBlock>
+                            <!--<CheckBox x:Name="ReduceMotionCheckBox" Click="ReduceMotionCheckBox_Click" Width="Auto" Content="Reduce Motion"/>-->
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
@@ -372,10 +389,10 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <ProgressBar x:Name="UnloadProgressBar" Width="Auto" Margin="0,0,0,10" Foreground="#3AE872"/>
-                            <TextBlock FontSize="10" Foreground="{DynamicResource GrayBrush}">
-                                <Run>Unloading tabs frees memory and computer resources from inactive tabs.</Run>
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                <Run>Unloading tabs frees memory and system resources from inactive tabs.</Run>
                                 <LineBreak/>
-                                <Run>Inactive tabs will reactivate when you go back to them.</Run>
+                                <Run>Inactive tabs will automatically reactivate when revisited.</Run>
                             </TextBlock>
                             <DockPanel>
                                 <TextBlock VerticalAlignment="Center" Text="Interval (minute)"/>
@@ -394,16 +411,16 @@
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Languages</TextBlock>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
-                            <CheckBox x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Spell Check"/>
+                            <CheckBox x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Check for spelling errors"/>
                         </StackPanel>
                     </GroupBox>
 
                     <GroupBox Margin="0,0,0,10">
                         <GroupBox.Header>
                             <DockPanel VerticalAlignment="Center" Width="Auto" HorizontalAlignment="Stretch">
-                                <WinUI:DropDownButton Width="25" Height="25" MaxDropDownHeight="500" Padding="1,1,0,0" ToolTip="Add language" DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{DynamicResource DropDownIconButton}" Content="&#xe710;">
+                                <WinUI:DropDownButton Width="25" Height="25" MaxDropDownHeight="500" Padding="1,1,0,0" ToolTip="Add language" DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource DropDownIconButton}" Content="&#xe710;">
                                     <WinUI:DropDownButton.Menu>
-                                        <ContextMenu x:Name="AddLanguageListMenu">
+                                        <ContextMenu x:Name="AddLanguageListMenu" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
                                             <ContextMenu.ItemContainerStyle>
                                                 <Style TargetType="MenuItem">
                                                     <Setter Property="Icon" Value="{Binding Arguments}"/>
@@ -420,7 +437,7 @@
                             </DockPanel>
                         </GroupBox.Header>
                         <StackPanel>
-                            <ListBox SelectedIndex="0" IsSynchronizedWithCurrentItem="True" x:Name="LanguageSelection" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
+                            <ListBox VirtualizingPanel.VirtualizationMode="Recycling" SelectedIndex="0" IsSynchronizedWithCurrentItem="True" x:Name="LanguageSelection" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel/>
@@ -428,7 +445,7 @@
                                 </ListBox.ItemsPanel>
                                 <ListBox.Resources>
                                     <Style TargetType="{x:Type ListBoxItem}">
-                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
                                         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                         <Setter Property="BorderThickness" Value="1"/>
                                         <Setter Property="Template">
@@ -438,7 +455,7 @@
                                                         <Grid>
                                                             <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
                                                             <ContentPresenter x:Name="Content" Margin="0"/>
-                                                            <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{DynamicResource IndicatorBrush}" CornerRadius="5"/>
+                                                            <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
                                                         </Grid>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
@@ -471,7 +488,7 @@
                                             <DockPanel VerticalAlignment="Center" Height="35" Margin="10,0,5,0">
                                                 <!--f2b7-->
                                                 <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xe8c1;" Margin="0,0,10,0" FontSize="18" FontWeight="UltraLight" TextAlignment="Center" VerticalAlignment="Center"/>
-                                                <WinUI:DropDownButton ToolTip="Options" BorderThickness="1" Content="&#xE712;" Margin="0" Style="{DynamicResource DropDownIconButton}" DockPanel.Dock="Right" Width="25" Height="25">
+                                                <WinUI:DropDownButton ToolTip="Options" BorderThickness="1" Content="&#xE712;" Margin="0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Right" Width="25" Height="25">
                                                     <WinUI:DropDownButton.Menu>
                                                         <ContextMenu>
                                                             <MenuItem Icon="&#xe738;" Header="Remove" Click="RemoveLocale" Tag="{Binding Tooltip}"/>
@@ -479,7 +496,7 @@
                                                     </WinUI:DropDownButton.Menu>
                                                 </WinUI:DropDownButton>
                                                 <TextBlock Text="{Binding Name}" TextAlignment="Left" VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto"/>
-                                                <TextBlock Text="{Binding Tooltip}" FontSize="10" Foreground="{DynamicResource GrayBrush}" Margin="5,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Tooltip}" FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="5,0" VerticalAlignment="Center"/>
                                             </DockPanel>
                                         </Border>
                                     </DataTemplate>
@@ -506,7 +523,7 @@
                         <StackPanel>
                             <DockPanel>
                                 <TextBlock VerticalAlignment="Center" Text="Downloads"/>
-                                <Button Style="{DynamicResource IconButton}" Click="HyperlinkButton_Click" Tag="slbr://downloads" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
+                                <Button Style="{StaticResource IconButton}" Click="HyperlinkButton_Click" Tag="slbr://downloads" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -515,12 +532,28 @@
             <TabItem Header="Extensions" Tag="&#xEA86;">
                 <StackPanel Margin="25" MaxWidth="500">
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Extensions</TextBlock>
+                    <GroupBox Margin="0,0,0,10">
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="Chrome Web Store"/>
+                                <Button Style="{StaticResource IconButton}" Click="HyperlinkButton_Click" Tag="http://chromewebstore.google.com" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
+                            </DockPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="Chromium Extensions"/>
+                                <Button Style="{StaticResource IconButton}" Click="HyperlinkButton_Click" Tag="chrome://extensions" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
+                            </DockPanel>
+                        </StackPanel>
+                    </GroupBox>
                     <ScrollViewer Margin="0,0,0,10" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                         <StackPanel>
-                            <Border Height="100" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
+                            <Border Height="100" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
                                 <DockPanel>
-                                    <Border Width="75" Background="{DynamicResource PrimaryBrush}" CornerRadius="4.5,0,0,4.5" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
-                                        <Image RenderOptions.BitmapScalingMode="Fant" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25" Margin="1.5,0,0,0" Stretch="Uniform">
+                                    <Border Width="75" Background="{StaticResource PrimaryBrush}" CornerRadius="4.5,0,0,4.5" BorderThickness="0,0,1,0" BorderBrush="{StaticResource BorderBrush}">
+                                        <Image RenderOptions.BitmapScalingMode="LowQuality" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25" Margin="1.5,0,0,0" Stretch="Uniform">
                                             <Image.Source>
                                                 <DrawingImage>
                                                     <DrawingImage.Drawing>
@@ -538,25 +571,30 @@
                                                         </GeometryDrawing>
                                                     </DrawingImage.Drawing>
                                                 </DrawingImage>
+                                                <!--<BitmapImage DecodePixelWidth="50" UriSource="https://weblog.west-wind.com/images/rick175x175.jpg"/>-->
                                             </Image.Source>
                                         </Image>
                                     </Border>
                                     <Grid Margin="10">
-                                        <TextBlock Foreground="{DynamicResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" TextTrimming="CharacterEllipsis" Text="PDF Viewer"/>
-                                        <TextBlock Text="View and interact with PDF documents directly within the browser" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{DynamicResource GrayBrush}"/>
+                                        <DockPanel VerticalAlignment="Top">
+                                            <TextBlock Foreground="{StaticResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="PDF Viewer" Margin="0,0,5,0"/>
+                                            <TextBlock Text="1.0.0" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                        </DockPanel>
+                                        <TextBlock Text="View and interact with PDF documents directly within the browser" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
                                         <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
+                                            <!--<TextBlock Text="Manifest Version 3" DockPanel.Dock="Left" Height="Auto" VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>-->
                                             <ToggleButton x:Name="PDFViewerToggleButton" Click="ExtensionToggleButton_Click" DockPanel.Dock="Right" Tag="PDF"/>
                                         </DockPanel>
                                     </Grid>
                                 </DockPanel>
                             </Border>
-                            <!--<ItemsControl ItemsSource="{Binding Source={StaticResource NewsRSSFeed}, XPath=item}">
+                            <ItemsControl x:Name="ExtensionsList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Height="100" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
+                                        <Border Height="100" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
                                             <DockPanel>
-                                                <Border Width="75" Background="{DynamicResource PrimaryBrush}" CornerRadius="4.5,0,0,4.5" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
-                                                    <Image RenderOptions.BitmapScalingMode="Fant" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25" Margin="1.5,0,0,0" Stretch="Uniform">
+                                                <Border Width="75" Background="{StaticResource PrimaryBrush}" CornerRadius="4.5,0,0,4.5" BorderThickness="0,0,1,0" BorderBrush="{StaticResource BorderBrush}">
+                                                    <Image RenderOptions.BitmapScalingMode="LowQuality" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25" Margin="1.5,0,0,0" Stretch="Uniform">
                                                         <Image.Source>
                                                             <DrawingImage>
                                                                 <DrawingImage.Drawing>
@@ -573,23 +611,26 @@
                                                                         </GeometryDrawing.Geometry>
                                                                     </GeometryDrawing>
                                                                 </DrawingImage.Drawing>
-                                                            </DrawingImage>-->
+                                                            </DrawingImage>
                                                             <!--<BitmapImage DecodePixelWidth="50" UriSource="https://weblog.west-wind.com/images/rick175x175.jpg"/>-->
-                                                        <!--</Image.Source>
+                                                        </Image.Source>
                                                     </Image>
                                                 </Border>
                                                 <Grid Margin="10">
-                                                    <TextBlock Foreground="{DynamicResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}"/>
-                                                    <TextBlock Text="{Binding XPath=description}" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{DynamicResource GrayBrush}"/>
-                                                    <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
-                                                        <ToggleButton Click="ExtensionToggleButton_Click" DockPanel.Dock="Right" Content="&#xe8ad;" Tag="{Binding XPath=link}"/>
+                                                    <DockPanel VerticalAlignment="Top">
+                                                        <TextBlock Foreground="{StaticResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,5,0"/>
+                                                        <TextBlock Text="{Binding Version}" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
                                                     </DockPanel>
+                                                    <TextBlock Text="{Binding Description}" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                    <!--<DockPanel LastChildFill="False" VerticalAlignment="Bottom">
+                                                        <ToggleButton Click="ExtensionToggleButton_Click" DockPanel.Dock="Right" Content="&#xe8ad;" Tag="{Binding ID}" IsChecked="{Binding IsEnabled}"/>
+                                                    </DockPanel>-->
                                                 </Grid>
                                             </DockPanel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>-->
+                            </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
                 </StackPanel>
@@ -612,8 +653,8 @@
                         <StackPanel>
                             <!--<CheckBox x:Name="PDFViewerExtensionCheckBox" Click="PDFViewerExtensionCheckBox_Click" Content="Open PDF instead of downloading (Enable PDF Viewer Extension)" Width="Auto" Margin="0,0,0,10"/>-->
                             <CheckBox x:Name="ChromiumHardwareAccelerationCheckBox" Click="ChromiumHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>
-                            <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Experimental features"/>
-                            <TextBlock FontSize="10" Foreground="{DynamicResource GrayBrush}">
+                            <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental features"/>
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                 <Run>Restart SLBr for changes to take effect.</Run>
                             </TextBlock>
                         </StackPanel>
@@ -625,8 +666,8 @@
                 <StackPanel Margin="25" MaxWidth="500">
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">About SLBr</TextBlock>
                     <GroupBox Margin="0,0,0,10">
-                        <DockPanel Height="35">
-                            <Image x:Name="Icon" RenderOptions.BitmapScalingMode="HighQuality" RenderTransformOrigin="0.5,0.5" DockPanel.Dock="Left" HorizontalAlignment="Left" Source="pack://application:,,,/Resources/SLBr.png" Margin="0,0,10,0">
+                        <DockPanel Height="40">
+                            <Image x:Name="Icon" RenderOptions.BitmapScalingMode="LowQuality" RenderTransformOrigin="0.5,0.5" DockPanel.Dock="Left" HorizontalAlignment="Left" Source="pack://application:,,,/Resources/SLBr.ico" Margin="0,0,10,0">
                                 <Image.Triggers>
                                     <EventTrigger RoutedEvent="MouseEnter">
                                         <BeginStoryboard>
@@ -649,7 +690,7 @@
                             </Image>
                             <StackPanel VerticalAlignment="Center" Margin="0">
                                 <TextBlock Text="SLBr" FontSize="16" FontWeight="DemiBold"/>
-                                <TextBlock x:Name="AboutVersion" Text="Version" Foreground="{DynamicResource GrayBrush}"/>
+                                <TextBlock x:Name="AboutVersion" Text="Version" Foreground="{StaticResource GrayBrush}"/>
                             </StackPanel>
                         </DockPanel>
                     </GroupBox>

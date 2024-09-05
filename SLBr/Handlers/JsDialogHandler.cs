@@ -46,6 +46,22 @@ namespace SLBr.Handlers
                     return true;
                 }
             }
+            /*var _InfoWindow = null;
+            if (dialogType == CefJsDialogType.Alert)
+                _InfoWindow = new InformationDialogWindow("Alert", $"{Utils.Host(originUrl)}", messageText);
+            else if (dialogType == CefJsDialogType.Confirm)
+                _InfoWindow = new InformationDialogWindow("Confirmation", $"{Utils.Host(originUrl)}", messageText, "OK", "Cancel");
+            else if (dialogType == CefJsDialogType.Prompt)
+                _InfoWindow = new PromptDialogWindow("Prompt", $"{Utils.Host(originUrl)}", messageText, defaultPromptText);
+            _InfoWindow.Topmost = true;
+            if (_InfoWindow.ShowDialog() == true)
+            {
+                if (dialogType == CefJsDialogType.Prompt)
+                    callback.Continue(true, _InfoWindow.UserInput);
+                else
+                    callback.Continue(true);
+                return true;
+            }*/
             suppressMessage = true;
             return false;
         }
