@@ -28,7 +28,9 @@ namespace SLBr.Controls
             WS_CLIPCHILDREN = 0x02000000,
             WM_SIZE = 0x0005,
             SWP_NOMOVE = 0x0002,
-            SWP_NOZORDER = 0x0004;
+            SWP_NOZORDER = 0x0004,
+            WM_SETFOCUS = 0x0007,
+            WM_MOUSEACTIVATE = 0x0021;
 
 
         private IntPtr hwndHost;
@@ -119,9 +121,6 @@ namespace SLBr.Controls
         }
         protected override IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            const int WM_SETFOCUS = 0x0007;
-            const int WM_MOUSEACTIVATE = 0x0021;
-            const int WM_SIZE = 0x0005;
             switch (msg)
             {
                 case WM_SETFOCUS:
@@ -139,11 +138,11 @@ namespace SLBr.Controls
                 InternalDispose(disposing);
             base.Dispose(disposing);
         }
-        int WindowInitialized;
+        //int WindowInitialized;
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void InternalDispose(bool disposing)
         {
-            Interlocked.Exchange(ref WindowInitialized, 0);
+            //Interlocked.Exchange(ref WindowInitialized, 0);
             if (disposing)
             {
                 SizeChanged -= OnSizeChanged;
@@ -197,14 +196,14 @@ namespace SLBr.Controls
                 SetWindowPos(hwndHost, IntPtr.Zero, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE);
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        /*[StructLayout(LayoutKind.Sequential)]
         public struct RECT
         {
             public int Left;
             public int Top;
             public int Right;
             public int Bottom;
-        }
+        }*/
 
         private IntPtr firstChildHwnd = IntPtr.Zero;
         private bool EnumChildProc(IntPtr hWnd, IntPtr lParam)

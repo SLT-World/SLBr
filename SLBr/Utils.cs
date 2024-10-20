@@ -1,15 +1,62 @@
 ﻿using CefSharp;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Net.NetworkInformation;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.Principal;
 using System.Text;
 using System.Windows.Media.Imaging;
 
 namespace SLBr
 {
+    static class MessageHelper
+    {
+        public const int WM_COPYDATA = 0x004A;
+        /*public const int WM_NCHITTEST = 0x0084;
+        public const int WM_SYSTEMMENU = 0xa4;
+        public const int WP_SYSTEMMENU = 0x02;
+        public const int WM_GETMINMAXINFO = 0x0024;
+        public const int HTMAXBUTTON = 9;*/
+        public const int HWND_BROADCAST = 0xffff;
+
+        [DllImport("user32", EntryPoint = "SendMessageA")]
+        private static extern int SendMessage(IntPtr Hwnd, int wMsg, IntPtr wParam, IntPtr lParam);
+
+        public static void SendDataMessage(Process targetProcess, string msg)
+        {
+            IntPtr StringMessageBuffer = Marshal.StringToHGlobalUni(msg);
+
+            COPYDATASTRUCT CopyData = new COPYDATASTRUCT();
+            CopyData.dwData = IntPtr.Zero;
+            CopyData.lpData = StringMessageBuffer;
+            CopyData.cbData = msg.Length * 2;
+            IntPtr CopyDataBuffer = IntPtrAlloc(CopyData);
+
+            SendMessage((IntPtr)HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, CopyDataBuffer);
+
+            Marshal.FreeHGlobal(CopyDataBuffer);
+            Marshal.FreeHGlobal(StringMessageBuffer);
+        }
+
+        private static IntPtr IntPtrAlloc<T>(T param)
+        {
+            IntPtr retval = Marshal.AllocHGlobal(Marshal.SizeOf(param));
+            Marshal.StructureToPtr(param, retval, false);
+            return retval;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct COPYDATASTRUCT
+    {
+        public IntPtr dwData;
+        public int cbData;
+        public IntPtr lpData;
+    }
+
     /*public enum DWMWINDOWATTRIBUTE
     {
         DWMWA_NCRENDERING_ENABLED = 1,              // [get] Is non-client rendering enabled/disabled
@@ -66,34 +113,172 @@ namespace SLBr
             return CHROMIUM_GIT_REVISION;
         }*/
 
-        public static string BuildCpuInfo()
+        /*[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWow64Process2([In] IntPtr hProcess, [Out] ImageFileMachine pProcessMachine, [Out, Optional] ImageFileMachine pNativeMachine);*/
+
+        /*[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern unsafe bool IsWow64Process2(IntPtr hProcess, ImageFileMachine* pProcessMachine, [Optional] ImageFileMachine* pNativeMachine);
+
+        public static unsafe void IsWow64Process2(SafeHandle hProcess, out ImageFileMachine pProcessMachine, out ImageFileMachine pNativeMachine)
         {
-            if (Environment.Is64BitOperatingSystem)
+            bool hProcessAddRef = false;
+            try
             {
-                if (!Environment.Is64BitProcess)
-                    return "WOW64";
-                else
-                    return "Win64; x64";
-                    /*
-        else if (windows_architecture == base::win::OSInfo::IA64_ARCHITECTURE)
-                        cpuinfo = "Win64; IA64";
-                }*/
+                fixed (ImageFileMachine* pProcessMachineLocal = &pProcessMachine)
+                {
+                    fixed (ImageFileMachine* pNativeMachineLocal = &pNativeMachine)
+                    {
+                        IntPtr hProcessLocal;
+                        if (hProcess is object)
+                        {
+                            hProcess.DangerousAddRef(ref hProcessAddRef);
+                            hProcessLocal = hProcess.DangerousGetHandle();
+                            if (IsWow64Process2(hProcessLocal, pProcessMachineLocal, pNativeMachineLocal))
+                                return;
+                            else throw new Win32Exception();
+                        }
+                        else
+                            throw new ArgumentNullException(nameof(hProcess));
+                    }
+                }
             }
-            else
-                return "Win32";
+            finally
+            {
+                if (hProcessAddRef)
+                    hProcess.DangerousRelease();
+            }
+        }*/
+
+        /*[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWow64Process([In] IntPtr hProcess, [Out] out bool wow64Process);
+
+        public static bool IsWow64()
+        {
+            //if (Environment.OSVersion.Version.Major >= 6 || (Environment.OSVersion.Version.Major == 5 && Environment.OSVersion.Version.Minor >= 1))
+            //{
+            if (!IsWow64Process(Process.GetCurrentProcess().Handle, out bool RetVal))
+                return false;
+            return RetVal;
+            //}
+            //return false;
+        }*/
+
+        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool IsWow64Process2(IntPtr process, out ushort processMachine, out ushort nativeMachine);
+
+        public static bool IsIA64()
+        {
+            /*IsWow64Process2(Process.GetCurrentProcess().SafeHandle, out ImageFileMachine pProcessMachine, out ImageFileMachine pNativeMachine);
+            //pProcessMachine.ToString() // IMAGE_FILE_MACHINE_UNKNOWN
+            return pNativeMachine == ImageFileMachine.IA64;*/
+            IsWow64Process2(Process.GetCurrentProcess().Handle, out ushort pProcessMachine, out ushort pNativeMachine);
+            return pNativeMachine == 512;
         }
 
-        public static string GetCpuArchitecture()
+        //https://gist.github.com/BinToss/aa6a269f5eb58088425cdb5a2341e14e
+        //http://zuga.net/articles/cs-is64bitprocess-vs-iswow64process/
+
+        /*public enum ImageFileMachine : ushort
+        {
+            AXP64 = 644,
+            I386 = 332,
+            IA64 = 512,
+            AMD64 = 34404,
+            UNKNOWN = 0,
+            TARGET_HOST = 1,
+            R3000 = 354,
+            R4000 = 358,
+            R10000 = 360,
+            WCEMIPSV2 = 361,
+            ALPHA = 388,
+            SH3 = 418,
+            SH3DSP = 419,
+            SH3E = 420,
+            SH4 = 422,
+            SH5 = 424,
+            ARM = 448,
+            THUMB = 450,
+            ARMNT = 452,
+            AM33 = 467,
+            POWERPC = 496,
+            POWERPCFP = 497,
+            MIPS16 = 614,
+            ALPHA64 = 644,
+            MIPSFPU = 870,
+            MIPSFPU16 = 1126,
+            TRICORE = 1312,
+            CEF = 3311,
+            EBC = 3772,
+            M32R = 36929,
+            ARM64 = 43620,
+            CEE = 49390,
+        }*/
+
+        /*private static bool? PIsWindows11OrGreater;
+
+        internal static bool IsWindows11OrGreater
+        {
+            get
+            {
+                if (PIsWindows11OrGreater.HasValue)
+                    return PIsWindows11OrGreater.Value;
+                PIsWindows11OrGreater = Environment.OSVersion.Version >= new Version(10, 0, 22000);
+                return PIsWindows11OrGreater.Value;
+            }
+        }*/
+
+        public static string BuildCPUInfo()
         {
             if (Environment.Is64BitOperatingSystem)
             {
-                if (!Environment.Is64BitProcess)
-                    return "arm";
+                if (!Environment.Is64BitProcess) //IsWow64()
+                    return "WOW64";
                 else
+                {
+                    if (IsIA64())
+                        return "Win64; x64";
+                    else
+                        return "Win64; IA64";
+                }
+
+                /*if (Environment.Is64BitProcess)
+                    return "Win64; x64";
+                else if (IsIA64())
+                    return "Win64; IA64";
+                else if (IsWow64())
+                    return "WOW64";*/
+            }
+            return "";
+        }
+
+        public static string GetCPUArchitecture()
+        {
+            //return (RuntimeInformation.ProcessArchitecture == Architecture.Arm || (RuntimeInformation.ProcessArchitecture) == Architecture.Arm64) ? "arm" : "x86";
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                case Architecture.X86:
                     return "x86";
+                case Architecture.X64:
+                    return "x86";
+                case Architecture.Arm:
+                case Architecture.Arm64:
+                    return "arm";
+            }
+            return "x86";
+            /*if (Environment.Is64BitOperatingSystem)
+            {
+                if (Environment.Is64BitProcess)
+                    return "x86";
+                else
+                    return "arm";
             }
             else
-                return "x86";
+                return "x86";*/
+            //return Environment.Is64BitOperatingSystem ? (Environment.Is64BitProcess ? "x86" : "arm") : "x86";
         }
 
         /*public static string GetCpuBitness()
@@ -120,15 +305,15 @@ namespace SLBr
 
         public static string BuildOSCpuInfo()
         {
-            return BuildOSCpuInfoFromOSVersionAndCpuType(GetOSVersion(), BuildCpuInfo());
+            return BuildOSCpuInfoFromOSVersionAndCpuType(GetOSVersion(), BuildCPUInfo());
         }
 
-        public static string BuildOSCpuInfoFromOSVersionAndCpuType(string os_version, string cpu_type)
+        public static string BuildOSCpuInfoFromOSVersionAndCpuType(string OSVersion, string CPUType)
         {
-            if (cpu_type.Length == 0)
-                return string.Format("Windows NT {0}", os_version);
+            if (CPUType.Length == 0)
+                return string.Format("Windows NT {0}", OSVersion);
             else
-                return string.Format("Windows NT {0}; {1}", os_version, cpu_type);
+                return string.Format("Windows NT {0}; {1}", OSVersion, CPUType);
         }
 
         /*public static string GetReducedUserAgent(string major_version)
@@ -141,39 +326,41 @@ namespace SLBr
             return BuildUserAgentFromOSAndProduct(GetUnifiedPlatform(), product);
         }*/
 
-        public static string BuildUserAgentFromProduct(string product)
+        public static string BuildUserAgentFromProduct(string Product)
         {
-            return BuildUserAgentFromOSAndProduct(/*GetUserAgentPlatform()+*/BuildOSCpuInfo(), product);
+            return BuildUserAgentFromOSAndProduct(/*GetUserAgentPlatform()+*/BuildOSCpuInfo(), Product);
         }
 
-        public static string BuildUserAgentFromOSAndProduct(string os_info, string product)
+        public static string BuildUserAgentFromOSAndProduct(string OSInfo, string Product)
         {
             /* Derived from Safari's UA string.
              * This is done to expose our product name in a manner that is maximally compatible with Safari, we hope!!*/
-            return $"Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) {product} Safari/537.36";
+            return $"Mozilla/5.0 ({OSInfo}) AppleWebKit/537.36 (KHTML, like Gecko) {Product} Safari/537.36";
         }
     }
 
     public static class ClassExtensions
     {
-        public static bool NewLoadHtml(this IWebBrowser browser, string html, string url, Encoding encoding, /*bool limitedUse = false, */int uses = 1, string error = "")
+        /*public static bool NewLoadHtml(this IWebBrowser browser, string html, string url, Encoding encoding, int uses = 1, string error = "")
         {
-            if (!(browser.ResourceRequestHandlerFactory is Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory))
-                throw new Exception("LoadHtml can only be used with the SLBr's IResourceRequestHandlerFactory implementation");
-            if (resourceRequestHandlerFactory.RegisterHandler(url, ResourceHandler.GetByteArray(html, encoding), "text/html", /*limitedUse, */uses, error))
+            //if (!(browser.ResourceRequestHandlerFactory is Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory))
+            //    throw new Exception("LoadHtml can only be used with the SLBr's IResourceRequestHandlerFactory implementation");
+            Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory = (Handlers.ResourceRequestHandlerFactory)browser.ResourceRequestHandlerFactory;
+            if (resourceRequestHandlerFactory.RegisterHandler(url, ResourceHandler.GetByteArray(html, encoding), "text/html", uses, error))
             {
                 browser.Load(url);
                 return true;
             }
             return false;
-        }
-        public static bool NewNoLoadHtml(this IWebBrowser browser, string html, string url, Encoding encoding, /*bool limitedUse = false, */int uses = 1, string error = "")
+        }*/
+        /*public static bool NewNoLoadHtml(this IWebBrowser browser, string html, string url, Encoding encoding, int uses = 1, string error = "")
         {
-            if (!(browser.ResourceRequestHandlerFactory is Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory))
-                throw new Exception("LoadHtml can only be used with the SLBr's IResourceRequestHandlerFactory implementation");
-            resourceRequestHandlerFactory.RegisterHandler(url, ResourceHandler.GetByteArray(html, encoding), "text/html", /*limitedUse, */uses, error);
+            //if (!(browser.ResourceRequestHandlerFactory is Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory))
+            //    throw new Exception("LoadHtml can only be used with the SLBr's IResourceRequestHandlerFactory implementation");
+            Handlers.ResourceRequestHandlerFactory resourceRequestHandlerFactory = (Handlers.ResourceRequestHandlerFactory)browser.ResourceRequestHandlerFactory;
+            resourceRequestHandlerFactory.RegisterHandler(url, ResourceHandler.GetByteArray(html, encoding), "text/html", uses, error);
             return true;
-        }
+        }*/
 
         /*public static int CountChars(this string source, char toFind)
         {
@@ -186,13 +373,13 @@ namespace SLBr
             return count;
         }*/
         public static bool ToBool(this bool? self) =>
-            self == null || self == false ? false : true;
+            self == true;
         /*public static CefState ToCefState(this bool self) =>
             self ? CefState.Enabled : CefState.Disabled;
         public static bool ToBoolean(this CefState self) =>
             self == CefState.Enabled ? true : false;*/
-        public static FastHashSet<TSource> ToFastHashSet<TSource>(this IEnumerable<TSource> collection) =>
-            new FastHashSet<TSource>(collection);
+        /*public static FastHashSet<TSource> ToFastHashSet<TSource>(this IEnumerable<TSource> collection) =>
+            new FastHashSet<TSource>(collection);*/
         /*public static BitmapSource ToBitmapSource(this DrawingImage source)
         {
             DrawingVisual drawingVisual = new DrawingVisual();
@@ -235,28 +422,24 @@ namespace SLBr
     {
         public static BitmapImage ConvertBase64ToBitmapImage(string base64String)
         {
-            int base64Start = base64String.IndexOf("base64,");
-            if (base64String.StartsWith("data:image/") && base64Start != -1)
+            int base64Start = base64String.IndexOf("base64,", StringComparison.Ordinal);
+            if (base64String.StartsWith("data:image/", StringComparison.Ordinal) && base64Start != -1)
                 base64String = base64String.Substring(base64Start + 7);
-
-            byte[] imageBytes = Convert.FromBase64String(base64String);
-
-            using (MemoryStream stream = new MemoryStream(imageBytes))
+            using (MemoryStream _Stream = new MemoryStream(Convert.FromBase64String(base64String)))
             {
-                BitmapImage bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.StreamSource = stream;
-                bitmap.EndInit();
-                bitmap.Freeze();
-                return bitmap;
+                BitmapImage _Bitmap = new BitmapImage();
+                _Bitmap.BeginInit();
+                _Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                _Bitmap.StreamSource = _Stream;
+                _Bitmap.EndInit();
+                _Bitmap.Freeze();
+                return _Bitmap;
             }
         }
 
         public static Process GetAlreadyRunningInstance(Process CurrentProcess)
         {
             Process[] AllProcesses = Process.GetProcessesByName(CurrentProcess.ProcessName);
-
             for (int i = 0; i < AllProcesses.Length; i++)
             {
                 if (AllProcesses[i].Id != CurrentProcess.Id)
@@ -319,8 +502,8 @@ namespace SLBr
         private static extern int SHGetKnownFolderPath(ref Guid id, int flags, IntPtr token, out IntPtr path);
         public static string GetFolderPath(FolderGuids FolderGuid)
         {
-            if (Environment.OSVersion.Version.Major < 6) throw new NotSupportedException();
-            IntPtr pathPtr = IntPtr.Zero;
+            //if (Environment.OSVersion.Version.Major < 6) throw new NotSupportedException();
+            IntPtr PathPtr = IntPtr.Zero;
             try
             {
                 Guid _FolderGuid = new Guid();
@@ -342,12 +525,12 @@ namespace SLBr
                         _FolderGuid = SavedGamesGuid;
                         break;
                 }
-                SHGetKnownFolderPath(ref _FolderGuid, 0, IntPtr.Zero, out pathPtr);
-                return Marshal.PtrToStringUni(pathPtr);
+                SHGetKnownFolderPath(ref _FolderGuid, 0, IntPtr.Zero, out PathPtr);
+                return Marshal.PtrToStringUni(PathPtr);
             }
             finally
             {
-                Marshal.FreeCoTaskMem(pathPtr);
+                Marshal.FreeCoTaskMem(PathPtr);
             }
         }
 
@@ -365,6 +548,15 @@ namespace SLBr
             return FinalString;
         }*/
 
+        /*public static void LimitMemoryUsage(IntPtr _Process, int MaxMemory)//MB
+        {
+            int MaxMemoryBytes = MaxMemory * 1024 * 1024;
+            SetProcessWorkingSetSize(_Process, MaxMemoryBytes, MaxMemoryBytes);
+        }
+
+        [DllImport("kernel32.dll")]
+        private static extern bool SetProcessWorkingSetSize(IntPtr proc, int min, int max);*/
+
         public static string GetFileExtensionFromUrl(string Url)
         {
             Url = Url.Split('?')[0].Split('/').Last();
@@ -375,8 +567,8 @@ namespace SLBr
             (IsInternalUrl(Url) || Url.StartsWith("ws:") || Url.StartsWith("wss:") || Url.StartsWith("javascript:") || Url.StartsWith("file:") || Url.StartsWith("localhost:") || IsAboutUrl(Url) || Url.StartsWith("view-source:") || Url.StartsWith("devtools:") || Url.StartsWith("data:"));*/
         public static bool IsProgramUrl(string Url) =>
             Url.StartsWith("callto:", StringComparison.Ordinal) || Url.StartsWith("mailto:", StringComparison.Ordinal) || Url.StartsWith("news:", StringComparison.Ordinal) || Url.StartsWith("feed:", StringComparison.Ordinal);
-        public static bool IsAboutUrl(string Url) =>
-            Url.StartsWith("about:", StringComparison.Ordinal);
+        /*public static bool IsAboutUrl(string Url) =>
+            Url.StartsWith("about:", StringComparison.Ordinal);*/
         public static bool CanCheckSafeBrowsing(ResourceType _ResourceType) =>
             _ResourceType == ResourceType.NavigationPreLoadSubFrame || _ResourceType == ResourceType.NavigationPreLoadMainFrame || _ResourceType == ResourceType.SubFrame;
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
@@ -471,8 +663,11 @@ namespace SLBr
         public static string Host(string Url, bool RemoveWWW = true)
         {
             string Host = CleanUrl(Url, true, false, true, RemoveWWW);
-            if (Url.Length != 0)
-                return Host.Split('/')[0];
+            if (IsHttpScheme(Url) || Url.StartsWith("file:///", StringComparison.Ordinal))
+            {
+                if (Url.Length != 0)
+                    return Host.Split('/')[0];
+            }
             return Host;
         }
         public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveFragment = true, bool RemoveWWW = false, bool RemoveProtocol = true)
@@ -544,11 +739,11 @@ namespace SLBr
             int connDescription = default(int);
             return InternetGetConnectedState(ref connDescription, 0);
         }*/
-        public static bool CheckForInternetConnection(int TimeoutMS = 1500)//, string url = null)
+        /*public static bool CheckForInternetConnection(int TimeoutMS = 1500)//, string url = null)
         {
             try
             {
-                /*url = "http://www.gstatic.com/generate_204";
+                url = "http://www.gstatic.com/generate_204";
                 switch (CultureInfo.InstalledUICulture.Name)
                 {
                     case string s when s.StartsWith("fa"):
@@ -562,11 +757,18 @@ namespace SLBr
                 request.KeepAlive = false;
                 request.Timeout = timeoutMs;
                 using (var response = (HttpWebResponse)request.GetResponse())
-                    return true;*/
+                    return true;
+            }
+            catch { return false; }
+        }*/
+        /*public static bool CheckForInternetConnection(int TimeoutMS = 1500)//, string url = null)
+        {
+            try
+            {
                 return new Ping().Send("8.8.8.8", TimeoutMS, new byte[32]).Status == IPStatus.Success;
             }
             catch { return false; }
-        }
+        }*/
     }
 
     public class Saving
@@ -577,7 +779,6 @@ namespace SLBr
         Dictionary<string, string> Data = new Dictionary<string, string>();
         public string SaveFolderPath;
         public string SaveFilePath;
-        public bool UseContinuationIndex;
 
         public Saving(string FileName, string FolderPath)
         {
@@ -586,12 +787,8 @@ namespace SLBr
             Load();
         }
 
-        public bool Has(string Key, bool IsValue = false)
-        {
-            if (IsValue)
-                return Data.ContainsValue(Key);
-            return Data.ContainsKey(Key);
-        }
+        public bool Has(string Key) =>
+            Data.ContainsKey(Key);
         public void Remove(string Key) =>
             Data.Remove(Key);
 
@@ -633,7 +830,7 @@ namespace SLBr
             return Default;
         }
         public string[] Get(string Key, bool UseListParameter) =>
-            Get(Key).Split(new[] { ValueSeparator }, StringSplitOptions.None);
+            Get(Key).Split(ValueSeparator, StringSplitOptions.None);
         public void Clear() =>
             Data.Clear();
         public void Save()
@@ -642,7 +839,7 @@ namespace SLBr
                 Directory.CreateDirectory(SaveFolderPath);
             if (!File.Exists(SaveFilePath))
                 File.Create(SaveFilePath).Close();
-            FastHashSet<string> Contents = new FastHashSet<string>();
+            List<string> Contents = new List<string>();
             foreach (KeyValuePair<string, string> KVP in Data)
                 Contents.Add(KVP.Key + KeyValueSeparator + KVP.Value);
             File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
@@ -653,12 +850,12 @@ namespace SLBr
                 Directory.CreateDirectory(SaveFolderPath);
             if (!File.Exists(SaveFilePath))
                 File.Create(SaveFilePath).Close();
-            FastHashSet<string> Contents = File.ReadAllText(SaveFilePath).Split(new string[] { KeySeparator }, StringSplitOptions.None).ToFastHashSet();
+            string[] Contents = File.ReadAllText(SaveFilePath).Split(KeySeparator, StringSplitOptions.None);
             foreach (string Content in Contents)
             {
                 if (string.IsNullOrWhiteSpace(Content))
                     continue;
-                string[] Values = Content.Split(new string[] { KeyValueSeparator }, 2, StringSplitOptions.None);
+                string[] Values = Content.Split(KeyValueSeparator, 2, StringSplitOptions.None);
                 Data[Values[0]] = Values[1];
             }
         }

@@ -13,6 +13,7 @@ using System.Dynamic;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -56,35 +57,33 @@ namespace SLBr.Pages
         {
             InitializeComponent();
             Tab = _Tab != null ? _Tab : Tab.ParentWindow.GetTab(this);
-            Tab.Icon = App.Instance.GetIcon(Url);
+            Tab.Icon = App.Instance.GetIcon(bool.Parse(App.Instance.GlobalSave.Get("DownloadFavicons")) ? Url : "");
+            Address = Url;
             SetAudioState(false);
-            CreateChromium(Url);
             //BrowserType = _BrowserType;
+            InitializeBrowserComponent();
             FavouritesPanel.ItemsSource = App.Instance.Favourites;
             FavouriteListMenu.ItemsSource = App.Instance.Favourites;
             HistoryListMenu.ItemsSource = App.Instance.GlobalHistory;
-            DownloadListMenu.ItemsSource = App.Instance.CompletedDownloads;
             ExtensionsMenu.ItemsSource = App.Instance.Extensions;
             /*BrowserEmulatorComboBox.Items.Add("Chromium");
             BrowserEmulatorComboBox.Items.Add("Edge");
             BrowserEmulatorComboBox.Items.Add("Internet Explorer");*/
             App.Instance.Favourites.CollectionChanged += Favourites_CollectionChanged;
-            SetAppearance(App.Instance.CurrentTheme, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
-            if (App.Instance.Favourites.Count == 0)
-            {
-                FavouriteScrollViewer.Margin = new Thickness(5, 0, 5, 5);
-                FavouriteContainer.Height = 5;
-            }
-            else
-            {
-                FavouriteScrollViewer.Margin = new Thickness(5, 5, 5, 5);
-                FavouriteContainer.Height = double.NaN;
-            }
+            SetAppearance(App.Instance.CurrentTheme, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
 
             OmniBoxTimer = new DispatcherTimer();
             OmniBoxTimer.Tick += OmniBoxTimer_Tick;
             OmniBoxTimer.Interval = TimeSpan.FromMilliseconds(250);
             //BrowserEmulatorComboBox.SelectionChanged += BrowserEmulatorComboBox_SelectionChanged;
+        }
+
+        public void InitializeBrowserComponent()
+        {
+            if (Chromium == null && Cef.IsInitialized.ToBool())
+                CreateChromium(Address);
+            else
+                BrowserLoadChanged(Address, true);
         }
 
         TextBox OmniTextBox;
@@ -124,8 +123,8 @@ namespace SLBr.Pages
 
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
-            if (sender == null)
-                return;
+            /*if (sender == null)
+                return;*/
             var Values = ((FrameworkElement)sender).Tag.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
             Action((Actions)int.Parse(Values[0]), sender, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
         }
@@ -136,7 +135,7 @@ namespace SLBr.Pages
             switch (_Action)
             {
                 case Actions.Exit:
-                    App.Instance.CloseSLBr(false);
+                    App.Instance.CloseSLBr(true);
                     break;
 
                 case Actions.Undo:
@@ -153,8 +152,12 @@ namespace SLBr.Pages
                     break;
 
                 case Actions.CreateTab:
-                    if (V2 == "CurrentIndex")
-                        Tab.ParentWindow.NewTab(V1, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+                    if (V2 == "Tab")
+                    {
+                        BrowserTabItem _Tab = Tab.ParentWindow.GetBrowserTabWithId(int.Parse(V1));
+                        Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1);
+                        //Tab.ParentWindow.NewTab(V1, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+                    }
                     else
                         Tab.ParentWindow.NewTab(V1, true);
                     break;
@@ -213,12 +216,24 @@ namespace SLBr.Pages
                 case Actions.Find:
                     Find("");
                     break;
+
+                case Actions.ZoomIn:
+                    App.Instance.CurrentFocusedWindow().Zoom(1);
+                    break;
+                case Actions.ZoomOut:
+                    App.Instance.CurrentFocusedWindow().Zoom(-1);
+                    break;
+                case Actions.ZoomReset:
+                    App.Instance.CurrentFocusedWindow().Zoom(0);
+                    break;
             }
         }
         RequestHandler _RequestHandler;
 
         void CreateChromium(string Url)
         {
+            if (Chromium != null && (!Cef.IsInitialized.ToBool()))
+                return;
             Address = Url;
             Tab.IsUnloaded = true;
             Tab.BrowserCommandsVisibility = Visibility.Collapsed;
@@ -237,22 +252,6 @@ namespace SLBr.Pages
             Chromium.JsDialogHandler = App.Instance._JsDialogHandler;
             Chromium.PermissionHandler = App.Instance._PermissionHandler;
             _ResourceRequestHandlerFactory = new Handlers.ResourceRequestHandlerFactory(_RequestHandler);
-
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://settings", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://settings", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://sandbox", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://sandbox", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://apps", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://apps", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://downloads", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://downloads", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://flags", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://flags", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://history", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://history", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://new-tab-page", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://new-tab-page", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://new-tab-page-third-party", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://new-tab-page-third-party", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://bookmarks", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://bookmarks", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://management", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://management", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://bookmarks-side-panel.top-chrome", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://bookmarks-side-panel.top-chrome", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://customize-chrome-side-panel.top-chrome", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://customize-chrome-side-panel.top-chrome", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://read-later.top-chrome", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://read-later.top-chrome", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://support-tool", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://support-tool", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
-            _ResourceRequestHandlerFactory.RegisterHandler("chrome://tab-search.top-chrome", ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect("chrome://tab-search.top-chrome", CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, ((int)CefErrorCode.InvalidUrl).ToString());
 
             Chromium.ResourceRequestHandlerFactory = _ResourceRequestHandlerFactory;
             Chromium.DisplayHandler = new DisplayHandler(this);
@@ -297,11 +296,8 @@ namespace SLBr.Pages
             bool IsMain = e.Frame.IsMain;
             Dispatcher.Invoke(() =>
             {
-                string HTML = App.Instance.GenerateCannotConnect(e.FailedUrl, e.ErrorCode, e.ErrorText);
-                if (IsMain)
-                    Chromium.NewLoadHtml(HTML, e.FailedUrl, Encoding.UTF8, 1, "Code" + ((int)e.ErrorCode).ToString());
-                else
-                    Chromium.NewNoLoadHtml(HTML, e.FailedUrl, Encoding.UTF8, 1, "Code" + ((int)e.ErrorCode).ToString());
+                _ResourceRequestHandlerFactory.RegisterHandler(e.FailedUrl, ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect(e.FailedUrl, e.ErrorCode, e.ErrorText), Encoding.UTF8), "text/html", 1, "");
+                e.Frame.LoadUrl(e.FailedUrl);
             });
         }
 
@@ -314,6 +310,11 @@ namespace SLBr.Pages
                 if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                     Tab.ProgressBarVisibility = Visibility.Visible;
                 Chromium.Focus();
+                using (var DevToolsClient = Chromium.GetDevToolsClient())
+                {
+                    DevToolsClient.Page.SetPrerenderingAllowedAsync(false);
+                    DevToolsClient.Preload.DisableAsync();
+                }
             }
         }
         private void Chromium_StatusMessage(object? sender, StatusMessageEventArgs e)
@@ -420,7 +421,7 @@ namespace SLBr.Pages
                         //Hardware Concurrency 1, 2, 4, 6, 8, 10, 12, 14
                         //Device Memory 2, 3, 4, 6, 7, 8, 15, 16, 31, 32, 64
                         if (App.Instance.GlobalSave.Get("FingerprintLevel") != "Minimal")
-                            Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator, 'getBattery', { get: function() { return new Promise((resolve, reject) => { reject('Battery API is disabled.'); }); }});Object.defineProperty(navigator, 'connection', { get: function() { return null; }});");
+                            Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator,'getBattery',{get:function(){return new Promise((resolve,reject)=>{reject('Battery API is disabled.');});}});Object.defineProperty(navigator,'connection',{get:function(){return null;}});");
                     }
                     else
                     {
@@ -445,7 +446,7 @@ namespace SLBr.Pages
                         var _UserAgentMetadata = new UserAgentMetadata
                         {
                             Brands = Brands,
-                            Architecture = UserAgentGenerator.GetCpuArchitecture(),
+                            Architecture = UserAgentGenerator.GetCPUArchitecture(),
                             Model = "",
                             Platform = "Windows",
                             PlatformVersion = UserAgentGenerator.GetPlatformVersion(),//https://textslashplain.com/2021/09/21/determining-os-platform-version/
@@ -463,26 +464,8 @@ namespace SLBr.Pages
                             Mobile = true
                         };*/
                         //navigator.userAgentData.getHighEntropyValues(["architecture","model","platform","platformVersion","uaFullVersion"]).then(ua =>{console.log(ua)});
-                        _DevToolsClient.Emulation.SetUserAgentOverrideAsync(UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{App.Instance.ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}"), null, null, _UserAgentMetadata);
+                        _DevToolsClient.Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, _UserAgentMetadata);
                     }
-                }
-                string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Address));
-                if (OmniBox.Text != OutputUrl)
-                {
-                    if (IsOmniBoxModifiable())
-                    {
-                        if (Address == "slbr://newtab/")
-                        {
-                            OmniBoxPlaceholder.Visibility = Visibility.Visible;
-                            OmniBox.Text = "";
-                        }
-                        else
-                        {
-                            OmniBoxPlaceholder.Visibility = Visibility.Hidden;
-                            OmniBox.Text = OutputUrl;
-                        }
-                    }
-                    OmniBox.Tag = Address;
                 }
                 BrowserLoadChanged(Address, e.IsLoading);
                 //Chromium.GetDevToolsClient().Emulation.SetEmulatedMediaAsync(null, new List<MediaFeature>() { new MediaFeature() { Name = "prefers-reduced-motion", Value = "reduce" }, new MediaFeature() { Name = "prefers-reduced-data", Value = "reduce" } });
@@ -505,267 +488,161 @@ namespace SLBr.Pages
                     {
                         if (Utils.IsHttpScheme(Address))
                         {
-                            if (Address.AsSpan().IndexOf("youtube.com/watch?v=", StringComparison.Ordinal) >= 0)
+                            if (Address.AsSpan().IndexOf("youtube.com", StringComparison.Ordinal) >= 0)
                             {
-                                if (App.Instance.VideoQuality != "Auto")
-                                    Chromium.ExecuteScriptAsync($@"document.querySelector('.ytp-settings-button').click();
+                                if (App.Instance.SkipAds)
+                                    Chromium.ExecuteScriptAsync(@"var style=document.createElement('style');
+style.textContent=`ytd-action-companion-ad-renderer,ytd-display-ad-renderer,ytd-video-masthead-ad-advertiser-info-renderer,ytd-video-masthead-ad-primary-video-renderer,ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer,yt-about-this-ad-renderer,yt-mealbar-promo-renderer,ytd-statement-banner-renderer,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-banner-promo-renderer-backgroundstatement-banner-style-type-compact,.ytd-video-masthead-ad-v3-renderer,div#root.style-scope.ytd-display-ad-renderer.yt-simple-endpoint,div#sparkles-container.style-scope.ytd-promoted-sparkles-web-renderer,div#main-container.style-scope.ytd-promoted-video-renderer,div#player-ads.style-scope.ytd-watch-flexy,ad-slot-renderer,ytm-promoted-sparkles-web-renderer,masthead-ad,tp-yt-iron-overlay-backdrop,#masthead-ad{display:none !important;}`;
+document.head.appendChild(style);");
+                                if (Address.AsSpan().IndexOf("youtube.com/watch?v=", StringComparison.Ordinal) >= 0)
+                                {
+                                    if (App.Instance.SkipAds)
+                                        Chromium.ExecuteScriptAsync(@"setInterval(()=>{
+    const video=document.querySelector(""div.ad-showing > div.html5-video-container > video"");
+    if (video){
+        video.currentTime=video.duration;
+        setTimeout(()=>{for(const adCloseOverlay of document.querySelectorAll("".ytp-ad-overlay-close-container"")){adCloseOverlay.click();}for (const skipButton of document.querySelectorAll("".ytp-ad-skip-button-modern"")){skipButton.click();}},20);
+    }
+    for(const overlayAd of document.querySelectorAll("".ytp-ad-overlay-slot"")){overlayAd.style.visibility = ""hidden"";}
+},250);
+setInterval(()=>{
+    const modalOverlay=document.querySelector(""tp-yt-iron-overlay-backdrop"");
+    document.body.style.setProperty('overflow-y','auto','important');
+    if (modalOverlay){modalOverlay.removeAttribute(""opened"");modalOverlay.remove();}
+    const popup=document.querySelector("".style-scope ytd-enforcement-message-view-model"");
+    if (popup){
+        const popupButton=document.getElementById(""dismiss-button"");
+        if(popupButton)popupButton.click();
+        popup.remove();
+        setTimeout(() => {if(video.paused)video.play();},500);
+    }
+},1000);");
+                                    if (App.Instance.VideoQuality != "Auto")
+                                        Chromium.ExecuteScriptAsync($@"document.querySelector('.ytp-settings-button').click();
 const qualityMenuItem = Array.from(document.querySelectorAll('.ytp-menuitem')).find(el => el.textContent.includes('Quality'));
 if (qualityMenuItem) qualityMenuItem.click();
 const desiredQualityItem = Array.from(document.querySelectorAll('.ytp-quality-menu .ytp-menuitem')).find(el => el.textContent.includes('{App.Instance.VideoQuality}'));
 if (desiredQualityItem) desiredQualityItem.click();");
-                                if (App.Instance.SkipAds)
-                                    Chromium.ExecuteScriptAsync(@"var skipAd = () => {
-    const video = document.querySelector(""div.ad-showing > div.html5-video-container > video"");
-    if (video) {
-        video.currentTime = video.duration;
-        setTimeout(() => {
-        const adCloseOverlays = document.querySelectorAll("".ytp-ad-overlay-close-container"");
-        for (const adCloseOverlay of adCloseOverlays) { adCloseOverlay.click(); }
-        const skipButtons = document.querySelectorAll("".ytp-ad-skip-button-modern"");
-        for (const skipButton of skipButtons) { skipButton.click(); }
-        }, 20)
-        setTimeout(() => {
-        const adCloseOverlays = document.querySelectorAll("".ytp-ad-overlay-close-container"");
-        for (const adCloseOverlay of adCloseOverlays) { adCloseOverlay.click(); }
-        const skipButtons = document.querySelectorAll("".ytp-ad-skip-button-modern"");
-        for (const skipButton of skipButtons) { skipButton.click(); }
-        }, 50)
-    }
-    const overlayAds = document.querySelectorAll("".ytp-ad-overlay-slot"");
-    for (const overlayAd of overlayAds) { overlayAd.style.visibility = ""hidden""; }
-}
-setInterval(() => { skipAd(); }, 500)");
+                                }
                             }
                             else if (Address.AsSpan().IndexOf("chromewebstore.google.com/detail/", StringComparison.Ordinal) >= 0)
                                 //button.addEventListener('click', function(){ engine.postMessage({ type: ""Extension""});
-                                Chromium.ExecuteScriptAsync(@"function callback() {
+                                Chromium.ExecuteScriptAsync(@"function scanButton(){
 const buttonQueries = ['button span[jsname]:not(:empty)']
-for (const button of document.querySelectorAll(buttonQueries.join(','))) {
-    const text = button.textContent || ''
-    if (text === 'Add to Chrome' || text === 'Remove from Chrome')
-      button.textContent = text.replace('Chrome', 'SLBr')
-    });
+for (const button of document.querySelectorAll(buttonQueries.join(','))){
+    const text=button.textContent||''
+    if (text==='Add to Chrome'||text==='Remove from Chrome')
+      button.textContent=text.replace('Chrome','SLBr')
   }
 }
-callback()
-const observer = new MutationObserver(callback)
-observer.observe(document.body, { attributes: true, childList: true, subtree: true })");
+scanButton();
+new MutationObserver(scanButton).observe(document.body,{attributes:true,childList:true,subtree:true});");
                             //if (bool.Parse(App.Instance.GlobalSave.Get("LiteMode")))
                             //{
                             //Chromium.ExecuteScriptAsync(@"var style = document.createElement('style');style.type ='text/css';style.appendChild(document.createTextNode('*{ transition: none!important;-webkit-transition: none!important; }')); document.getElementsByTagName('head')[0].appendChild(style);");
                             //Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator.connection, 'saveData', { value: true, writable: false });");
                             //}
                             if (bool.Parse(App.Instance.GlobalSave.Get("WebNotifications")))
-                                Chromium.ExecuteScriptAsync(@"(function(){ class Notification {
-    constructor(title, options) {
-        let packageSet = new Set();
+                                Chromium.ExecuteScriptAsync(@"class Notification {
+    constructor(title,options) {
+        let packageSet=new Set();
         packageSet.add(title).add(options);
-        let json_package = JSON.stringify([...packageSet]);
+        let json_package=JSON.stringify([...packageSet]);
         engine.postMessage({type:""Notification"",data:json_package});
     }
-    static requestPermission() { return new Promise((res, rej) => {res('granted');}) }
-};
-window.Notification = Notification;
-})();");
+    static requestPermission(){return new Promise((res,rej)=>{res('granted');})}
+};window.Notification=Notification;");
                         }
                         else if (Address.StartsWith("file:///", StringComparison.Ordinal))
-                            Chromium.ExecuteScriptAsync(@"
-var headerElement = document.getElementById('header');
-if (headerElement)
+                            Chromium.ExecuteScriptAsync(@"document.documentElement.setAttribute('style',""display:table;margin:auto;"")
+document.body.setAttribute('style',""margin:35px auto;font-family:system-ui;"")
+var HeaderElement=document.getElementById('header');
+HeaderElement.setAttribute('style',""border:2px solid grey;border-radius:5px;padding:0 10px;margin:0 0 10px 0;"")
+HeaderElement.textContent=HeaderElement.textContent.replace('Index of ','');
+document.getElementById('nameColumnHeader').setAttribute('style',""text-align:left;padding:7.5px;"");
+document.getElementById('sizeColumnHeader').setAttribute('style',""text-align:center;padding:7.5px;"");
+document.getElementById('dateColumnHeader').setAttribute('style',""text-align:center;padding:7.5px;"");
+var style=document.createElement('style');
+style.type='text/css';
+style.innerHTML=`@media (prefers-color-scheme:light){a{color:black;}tr:nth-child(even){background-color: gainsboro;}#theader{background-color:gainsboro;}}
+@media (prefers-color-scheme:dark){a{color:white;}tr:nth-child(even){background-color:#202225;}#theader{background-color:#202225;}}
+td:first-child,th:first-child{border-radius:5px 0 0 5px;}
+td:last-child,th:last-child{border-radius:0 5px 5px 0;}`;
+document.body.appendChild(style);
+const ParentDir=document.getElementById('parentDirLinkBox');
+if (ParentDir)
 {
-    document.documentElement.setAttribute('style', ""display: table; margin: auto;"")
-    document.body.setAttribute('style', ""margin: 35px auto;font-family: system-ui;"")
-    headerElement.setAttribute('style', ""border:2px solid grey; border-radius:5px; padding:0 10px; margin: 0 0 10px 0;"")
-    headerElement.textContent = headerElement.textContent.replace('Index of ', '');
-    document.getElementById('nameColumnHeader').setAttribute('style', ""text-align: left; padding: 7.5px;"");
-    document.getElementById('sizeColumnHeader').setAttribute('style', ""text-align: center; padding: 7.5px;"");
-    document.getElementById('dateColumnHeader').setAttribute('style', ""text-align: center; padding: 7.5px;"");
-    var style = document.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = `@media (prefers-color-scheme: light) { a { color: black; } tr:nth-child(even) { background-color: gainsboro; } #theader { background-color: gainsboro; } }
-@media (prefers-color-scheme: dark) { a { color: white; } tr:nth-child(even) { background-color: #202225; } #theader { background-color: #202225; } }
-td:first-child, th:first-child { border-radius: 5px 0 0 5px; }
-td:last-child, th:last-child { border-radius: 0 5px 5px 0; }`;
-    document.body.appendChild(style);
-    const parent_dir = document.getElementById('parentDirLinkBox');
-    if (parent_dir)
-    {
-        if (window.getComputedStyle(parent_dir).display === 'block') { parent_dir.setAttribute('style', 'display: block; padding: 7.5px; margin:0 0 10px 0;'); }
-        else { parent_dir.setAttribute('style', 'display: none;'); }
-        parent_dir.querySelector('a.icon.up').setAttribute('style', 'background: none; padding-inline-start: .25em;');
-        var element = document.createElement('p');
-        element.setAttribute('style', ""font-family:'Segoe Fluent Icons'; margin:0; padding:0; display:inline; vertical-align:middle; user-select:none; color:navajowhite;"")
-        element.innerHTML = '';
-        parent_dir.prepend(element);
-        parent_dir.querySelector('#parentDirText').innerHTML = ""Parent Directory"";
-    }
-    document.querySelectorAll('tbody > tr').forEach(row => {
-        const link = row.querySelector('a.icon');
-        if (link) {
-            link.setAttribute('style', 'background: none; padding-inline-start: .5em;');
-            var element = document.createElement('p');
-            if (row.querySelector('a.icon.dir'))
-            {
-                link.textContent = link.textContent.replace(/\/$/, '');
-                element.innerHTML = '';
-                element.setAttribute('style', ""font-family:'Segoe Fluent Icons'; margin:0; padding:0; display:inline; vertical-align:middle; user-select:none; color:navajowhite;"")
-            }
-            else if (row.querySelector('a.icon.file'))
-            {
-                if (link.innerHTML.endsWith("".pdf""))
-                    element.innerHTML = '';
-                else if (link.innerHTML.endsWith("".png"") || link.innerHTML.endsWith("".jpg"") || link.innerHTML.endsWith("".jpeg"") || link.innerHTML.endsWith("".avif"") || link.innerHTML.endsWith("".svg"") || link.innerHTML.endsWith("".webp"") || link.innerHTML.endsWith("".jfif"") || link.innerHTML.endsWith("".bmp""))
-                    element.innerHTML = '';
-                else if (link.innerHTML.endsWith("".mp4"") || link.innerHTML.endsWith("".avi"") || link.innerHTML.endsWith("".ogg"") || link.innerHTML.endsWith("".webm"") || link.innerHTML.endsWith("".mov"") || link.innerHTML.endsWith("".mpej"") || link.innerHTML.endsWith("".wmv"") || link.innerHTML.endsWith("".h264"") || link.innerHTML.endsWith("".mkv""))
-                    element.innerHTML = '';
-                else if (link.innerHTML.endsWith("".zip"") || link.innerHTML.endsWith("".rar"") || link.innerHTML.endsWith("".7z"") || link.innerHTML.endsWith("".tar.gz"") || link.innerHTML.endsWith("".tgz""))
-                    element.innerHTML = '';
-                else if (link.innerHTML.endsWith("".txt""))
-                    element.innerHTML = '';
-                else if (link.innerHTML.endsWith("".mp3"") || link.innerHTML.endsWith("".mp2""))
-                    element.innerHTML = '';
-                else if (link.innerHTML.endsWith("".gif""))
-                    element.innerHTML = '';
-                else if (link.innerHTML.endsWith("".blend"") || link.innerHTML.endsWith("".obj"") || link.innerHTML.endsWith("".fbx"") || link.innerHTML.endsWith("".max"") || link.innerHTML.endsWith("".stl"") || link.innerHTML.endsWith("".x3d"") || link.innerHTML.endsWith("".3ds"") || link.innerHTML.endsWith("".dae"") || link.innerHTML.endsWith("".glb"") || link.innerHTML.endsWith("".gltf"") || link.innerHTML.endsWith("".ply""))
-                    element.innerHTML = '';
-                else
-                    element.innerHTML = '';
-                element.setAttribute('style', ""font-family:'Segoe Fluent Icons'; margin:0; padding:0; display:inline; vertical-align:middle; user-select:none;"")
-            }
-            row.querySelector('td').prepend(element);
-            row.children.item(0).setAttribute('style', ""text-align: left; padding: 7.5px;"");
-            row.children.item(1).setAttribute('style', ""text-align: center; padding: 7.5px;"");
-            row.children.item(2).setAttribute('style', ""text-align: center; padding: 7.5px;"");
-        }
-    });
-}");
-                        //https://issues.chromium.org/issues/40766658
-                        if (bool.Parse(App.Instance.GlobalSave.Get("FlagEmoji")))
-                            // Unicode range generated by: https://wakamaifondue.com/beta/
-                            Chromium.ExecuteScriptAsync(@"var style = document.createElement(""style"");
-style.setAttribute(""type"", ""text/css"");
-style.textContent = `
-  @font-face {font-family:""Twemoji Country Flags"";font-style: normal;src: url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;}
-  @font-face {font-family: ""Twemoji Country Flags"";font-style: italic; /* Defined to prevent italic styled flags */src: url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;}
-`;
-if (document.head != undefined){document.head.appendChild(style);}
-var extentionStyleTagId = ""country-flag-feature"";
-var extractFontFamilyRules = () => 
-{
-  var fontFamilyRules = [];
-  for (var sheet of document.styleSheets) {
-    if (sheet.ownerNode.id == extentionStyleTagId) 
-      continue;
-    var sheetMediaBlacklist = ['print', 'speech', 'aural', 'braille', 'handheld', 'projection', 'tty'];
-    if (sheetMediaBlacklist.includes(sheet.media.mediaText))
-      continue;
-    try {
-      for (var rule of sheet.cssRules) {
-        if (!rule.style || !rule.style?.fontFamily) 
-          continue;
-        var fontFamily = rule.style.fontFamily;
-        if (fontFamily == 'inherit')
-          continue;
-        if (fontFamily.toLowerCase().includes(""Twemoji Country Flags"".toLowerCase())) 
-          continue;
-        var selectorText = rule.selectorText;
-        fontFamilyRules.push({ selectorText, fontFamily });
-      }
-    }
-    catch (e) {
-    }
-  }
-  return fontFamilyRules;
-};
-
-var createNewStyleTag = (fontFamilyRules) => 
-{
-  var style = document.createElement(""style"");
-  style.setAttribute(""type"", ""text/css"");
-  style.setAttribute(""id"", extentionStyleTagId);
-  fontFamilyRules.forEach((rule) => {style.textContent += `${rule.selectorText} { font-family: 'Twemoji Country Flags', ${rule.fontFamily} !important; }\n`;});
-  return style;
-};
-
-var applyCustomFontStyles = () => 
-{
-  var existingSheet = document.getElementById(extentionStyleTagId);
-  if (existingSheet)
-    existingSheet.parentNode.removeChild(existingSheet);
-  if (document.head == null) 
-    return;
-  document.head.appendChild(createNewStyleTag(extractFontFamilyRules()));
-};
-
-var preserveCustomFonts = (element) => 
-{
-  if (element == undefined)
-    return;
-  var inlineStyle = element.getAttribute('style');
-  if (!inlineStyle || !inlineStyle.includes('font-family'))
-    return;
-  var fontFamilyRegex = /font-family\s*:\s*([^;]+?)(\s*!important)?\s*(;|$)/;
-  var match = fontFamilyRegex.exec(inlineStyle);
-  if (!match)
-    return;
-  if (match[2] && match[2].includes('!important'))
-    return;
-  element.style.setProperty('font-family', match[1].trim(), 'important');
+    if (window.getComputedStyle(ParentDir).display === 'block'){ParentDir.setAttribute('style','display:block;padding:7.5px;margin:0 0 10px 0;');}
+    else{ParentDir.setAttribute('style','display:none;');}
+    ParentDir.querySelector('a.icon.up').setAttribute('style','background:none;padding-inline-start:.25em;');
+    var element=document.createElement('p');
+    element.setAttribute('style',""font-family:'Segoe Fluent Icons';margin:0;padding:0;display:inline;vertical-align:middle;user-select:none;color:navajowhite;"")
+    element.innerHTML='';
+    ParentDir.prepend(element);
+    ParentDir.querySelector('#parentDirText').innerHTML=""Parent Directory"";
 }
-
-var lastStyleSheets = new Set(Array.from(document.styleSheets).map(sheet => sheet.href || sheet.ownerNode.textContent));
-var SLBrEmojiObserver = new MutationObserver((mutations) => 
-{
-  mutations.forEach(mutation => 
-  {
-    mutation.addedNodes.forEach(node => 
-    {
-      if (node.id === extentionStyleTagId)
-        return;
-      var isStylesheet = node.nodeName === 'LINK' && node.rel === 'stylesheet';
-      if (!isStylesheet && !(node.nodeName === 'STYLE'))
-        return;
-      var newStylesheetIdentifier = isStylesheet ? node.href : node.textContent;
-      if (lastStyleSheets.has(newStylesheetIdentifier))
-        return;
-      applyCustomFontStyles();
-      lastStyleSheets.add(newStylesheetIdentifier);
-    });
-  });
-  document.querySelectorAll('*').forEach(preserveCustomFonts);
-});
-SLBrEmojiObserver.observe(document, { childList: true, subtree: true });
-applyCustomFontStyles();
-");
+document.querySelectorAll('tbody > tr').forEach(row => {
+    const link=row.querySelector('a.icon');
+    if (link){
+        link.setAttribute('style', 'background: none; padding-inline-start: .5em;');
+        var element=document.createElement('p');
+        if (row.querySelector('a.icon.dir')){
+            link.textContent=link.textContent.replace(/\/$/,'');
+            element.innerHTML='';
+            element.setAttribute('style',""font-family:'Segoe Fluent Icons';margin:0;padding:0;display:inline;vertical-align:middle;user-select:none;color:navajowhite;"")
+        }
+        else if (row.querySelector('a.icon.file')){
+            if (link.innerHTML.endsWith("".pdf""))
+                element.innerHTML='';
+            else if (link.innerHTML.endsWith("".png"")||link.innerHTML.endsWith("".jpg"")||link.innerHTML.endsWith("".jpeg"")||link.innerHTML.endsWith("".avif"")||link.innerHTML.endsWith("".svg"")||link.innerHTML.endsWith("".webp"")||link.innerHTML.endsWith("".jfif"")||link.innerHTML.endsWith("".bmp""))
+                element.innerHTML='';
+            else if (link.innerHTML.endsWith("".mp4"")||link.innerHTML.endsWith("".avi"")||link.innerHTML.endsWith("".ogg"")||link.innerHTML.endsWith("".webm"")||link.innerHTML.endsWith("".mov"")||link.innerHTML.endsWith("".mpej"")||link.innerHTML.endsWith("".wmv"")||link.innerHTML.endsWith("".h264"")||link.innerHTML.endsWith("".mkv""))
+                element.innerHTML='';
+            else if (link.innerHTML.endsWith("".zip"")||link.innerHTML.endsWith("".rar"")||link.innerHTML.endsWith("".7z"")||link.innerHTML.endsWith("".tar.gz"")||link.innerHTML.endsWith("".tgz""))
+                element.innerHTML='';
+            else if (link.innerHTML.endsWith("".txt""))
+                element.innerHTML='';
+            else if (link.innerHTML.endsWith("".mp3"")||link.innerHTML.endsWith("".mp2""))
+                element.innerHTML='';
+            else if (link.innerHTML.endsWith("".gif""))
+                element.innerHTML='';
+            else if (link.innerHTML.endsWith("".blend"")||link.innerHTML.endsWith("".obj"")||link.innerHTML.endsWith("".fbx"")||link.innerHTML.endsWith("".max"")||link.innerHTML.endsWith("".stl"")||link.innerHTML.endsWith("".x3d"")||link.innerHTML.endsWith("".3ds"")||link.innerHTML.endsWith("".dae"")||link.innerHTML.endsWith("".glb"")||link.innerHTML.endsWith("".gltf"")||link.innerHTML.endsWith("".ply""))
+                element.innerHTML='';
+            else
+                element.innerHTML='';
+            element.setAttribute('style',""font-family:'Segoe Fluent Icons';margin:0;padding:0;display:inline;vertical-align:middle;user-select:none;"")
+        }
+        row.querySelector('td').prepend(element);
+        row.children.item(0).setAttribute('style',""text-align:left;padding:7.5px;"");
+        row.children.item(1).setAttribute('style',""text-align:center;padding:7.5px;"");
+        row.children.item(2).setAttribute('style',""text-align:center;padding:7.5px;"");
+    }
+});");
                         App.Instance.AddGlobalHistory(Address, Title);
                     }
                     if (bool.Parse(App.Instance.GlobalSave.Get("TabUnloading")))
-                        Chromium.ExecuteScriptAsync(@"(function() {
-    function SLBrSetupMediaListeners(mediaElement) {
-        if (mediaElement.tagName === 'AUDIO' && (mediaElement.muted || mediaElement.volume === 0)){return;}
-        mediaElement.removeEventListener('play',function(){engine.postMessage({type:""Media"",event:'Started'});});
-        mediaElement.removeEventListener('pause',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-        mediaElement.removeEventListener('ended',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-        mediaElement.addEventListener('play',function(){engine.postMessage({type:""Media"",event:'Started'});});
-        mediaElement.addEventListener('pause',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-        mediaElement.addEventListener('ended',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-    }
-    function SLBrSetupExistingMediaElements() {document.querySelectorAll('video, audio').forEach(function(mediaElement) {SLBrSetupMediaListeners(mediaElement);});}
-    const SLBrObserver = new MutationObserver(function(mutationsList) {
-        for (let mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach(function(node) {
-                    if (node.tagName === 'VIDEO' || node.tagName === 'AUDIO')
-                        SLBrSetupMediaListeners(node);
-                    else if (node.querySelectorAll)
-                        node.querySelectorAll('video, audio').forEach(function(mediaElement) {SLBrSetupMediaListeners(mediaElement);});
-                });
-            }
+                        Chromium.ExecuteScriptAsync(@"function SLBrSetupMediaListeners(mediaElement) {
+    if (mediaElement.tagName==='AUDIO'&&(mediaElement.muted||mediaElement.volume===0)){return;}
+    mediaElement.removeEventListener('play',function(){engine.postMessage({type:""Media"",event:'Started'});});
+    mediaElement.removeEventListener('pause',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
+    mediaElement.removeEventListener('ended',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
+    mediaElement.addEventListener('play',function(){engine.postMessage({type:""Media"",event:'Started'});});
+    mediaElement.addEventListener('pause',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
+    mediaElement.addEventListener('ended',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
+}
+new MutationObserver(function(mutationsList){
+    for (let mutation of mutationsList){
+        if (mutation.type==='childList'){
+            mutation.addedNodes.forEach(function(node) {
+                if (node.tagName==='VIDEO'||node.tagName==='AUDIO')
+                    SLBrSetupMediaListeners(node);
+                else if (node.querySelectorAll)
+                    node.querySelectorAll('video,audio').forEach(function(mediaElement) {SLBrSetupMediaListeners(mediaElement);});
+            });
         }
-    });
-    SLBrObserver.observe(document.body, { childList: true, subtree: true });
-    SLBrSetupExistingMediaElements();
-})();");
+    }
+}).observe(document.body,{childList:true,subtree:true});
+document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetupMediaListeners(mediaElement);});");
                     if (bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme")))
                     {
                         var contentSize = await Chromium.GetContentSizeAsync();
@@ -835,7 +712,7 @@ applyCustomFontStyles();
                                         (byte)Math.Max(0, PrimaryColor.B * 1.95f));
                                 }
                                 SiteTheme.PrimaryColor = PrimaryColor;
-                                SetAppearance(SiteTheme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton);
+                                SetAppearance(SiteTheme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
                                 TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
                                 _TabItem.Foreground = new SolidColorBrush(SiteTheme.FontColor);
                                 _TabItem.Background = new SolidColorBrush(SiteTheme.PrimaryColor);
@@ -849,7 +726,7 @@ applyCustomFontStyles();
 
         public bool CanUnload()
         {
-            return Muted || !AudioPlaying;
+            return (Muted || !AudioPlaying) && Chromium != null && Chromium.IsBrowserInitialized;
         }
 
         public async Task<bool> IsArticle()
@@ -865,11 +742,26 @@ applyCustomFontStyles();
 
         async void BrowserLoadChanged(string Address, bool IsLoading)
         {
+            string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Address));
+            if (OmniBox.Text != OutputUrl)
+            {
+                if (IsOmniBoxModifiable())
+                {
+                    if (Address == "slbr://newtab/")
+                    {
+                        OmniBoxPlaceholder.Visibility = Visibility.Visible;
+                        OmniBox.Text = "";
+                    }
+                    else
+                    {
+                        OmniBoxPlaceholder.Visibility = Visibility.Hidden;
+                        OmniBox.Text = OutputUrl;
+                    }
+                }
+                OmniBox.Tag = Address;
+            }
             if (App.Instance.Favourites.Count == 0)
             {
-                FavouriteScrollViewer.Margin = new Thickness(5, 0, 5, 5);
-                FavouriteContainer.Height = 5;
-
                 FavouriteButton.Content = "\xEB51";
                 FavouriteButton.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 FavouriteButton.ToolTip = "Add from favourites";
@@ -877,8 +769,6 @@ applyCustomFontStyles();
             }
             else
             {
-                FavouriteScrollViewer.Margin = new Thickness(5, 5, 5, 5);
-                FavouriteContainer.Height = double.NaN;
                 if (FavouriteExists(Address) != -1)
                 {
                     FavouriteButton.Content = "\xEB52";
@@ -894,6 +784,7 @@ applyCustomFontStyles();
                     Tab.FavouriteCommandHeader = "Add from favourites";
                 }
             }
+            SetFavouritesBarVisibility();
             AIChatButton.Visibility = AllowAIButton ? Visibility.Visible : Visibility.Collapsed;
             if (Address.StartsWith("slbr://settings"))
             {
@@ -971,6 +862,8 @@ applyCustomFontStyles();
                         SetSiteInfo = "File";
                     else if (Address.StartsWith("slbr:"))
                         SetSiteInfo = "SLBr";
+                    else if (Address.StartsWith("chrome-extension:"))
+                        SetSiteInfo = "Extension";
                     else
                         SetSiteInfo = "Protocol";
                 }
@@ -1011,14 +904,6 @@ applyCustomFontStyles();
                             AIChatButton.Visibility = Visibility.Collapsed;
                         //OpenFileExplorerButton.Visibility = Visibility.Visible;
                         break;
-                    case "Protocol":
-                        SiteInformationIcon.Text = "\xE774";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.CornflowerBlue);
-                        SiteInformationText.Text = $"Protocol";
-                        SiteInformationPanel.ToolTip = $"Network protocol";
-                        TranslateButton.Visibility = Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
-                        break;
                     case "Danger":
                         SiteInformationIcon.Text = "\xE730";
                         SiteInformationIcon.Foreground = new SolidColorBrush(Colors.Red);
@@ -1027,9 +912,25 @@ applyCustomFontStyles();
                         TranslateButton.Visibility = Visibility.Collapsed;
                         //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
                         break;
+                    case "Protocol":
+                        SiteInformationIcon.Text = "\xE774";
+                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.CornflowerBlue);
+                        SiteInformationText.Text = $"Protocol";
+                        SiteInformationPanel.ToolTip = $"Network protocol";
+                        TranslateButton.Visibility = Visibility.Collapsed;
+                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+                        break;
+                    case "Extension":
+                        SiteInformationIcon.Text = "\xEA86";
+                        SiteInformationIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
+                        SiteInformationText.Text = $"Extension";
+                        SiteInformationPanel.ToolTip = $"Extension";
+                        TranslateButton.Visibility = Visibility.Collapsed;
+                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+                        break;
                     case "Teapot":
                         SiteInformationIcon.Text = "\xEC32";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.CornflowerBlue);
+                        SiteInformationIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
                         SiteInformationText.Text = $"Teapot";
                         SiteInformationPanel.ToolTip = $"I'm a teapot";
                         TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
@@ -1051,13 +952,13 @@ applyCustomFontStyles();
                         Tab.ProgressBarVisibility = Visibility.Visible;
                 }*/
             }
-            else
+            else if (SiteInformationText.Text != "Loading")
             {
                 //SiteInformationIcon.Text = "\xED5A";
                 SiteInformationIcon.Text = "\xF16A";
                 SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                SiteInformationText.Text = $"Loading";
-                SiteInformationPanel.ToolTip = $"Loading";
+                SiteInformationText.Text = "Loading";
+                SiteInformationPanel.ToolTip = "Loading";
                 //TranslateButton.Visibility = Visibility.Collapsed;
                 LoadingStoryboard.Begin();
             }
@@ -1146,8 +1047,7 @@ applyCustomFontStyles();
         }
         public void ReFocus()
         {
-            if (Chromium == null)
-                CreateChromium(Address);
+            InitializeBrowserComponent();
             if (Address.StartsWith("slbr://settings"))
             {
                 if (Chromium != null)
@@ -1236,8 +1136,6 @@ applyCustomFontStyles();
 
         private void FindButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender == null)
-                return;
             var Values = ((Button)sender).ToolTip.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
             if (Values[0] == "Close")
                 StopFinding(true);
@@ -1413,6 +1311,7 @@ applyCustomFontStyles();
                 SideBarRowTop.Height = new GridLength(0);
                 if (IsUtilityContainerOpen)
                 {
+                    SideBarCoreContainer.Children.Clear();
                     _NewsFeed = null;
                     AIChatBrowser?.Dispose();
                     AIChatBrowser = null;
@@ -1469,29 +1368,26 @@ applyCustomFontStyles();
             IsReaderMode = !IsReaderMode;
             if (IsReaderMode)
             {
-                var script = @"(function() {
-    const tagsToRemove = ['header', 'footer', 'nav', 'aside', 'ads', 'script'];
-    tagsToRemove.forEach(tag => {
-        const elements = document.getElementsByTagName(tag);
-        while(elements[0]) { elements[0].parentNode.removeChild(elements[0]); }
-    });
-    const selectorsToRemove = ['.ad', '.sidebar', '#ad-container', '.footer', '.nav', '.site-top-menu', '.site-header', '.site-footer', '.sub-headerbar', '.article-left-sidebar', '.article-right-sidebar', '.article_bottom_text', '.read-next-panel', '.article-meta-author-details', '.onopen-discussion-panel', '.author-wrapper', '.follow', '.share-list', '.article-social-share-top', '.recommended-intersection-ref', '.engagement-widgets', '#further-reading', '.trending', '.detailDiscovery', '.globalFooter', '.relatedlinks', '#social_zone', '#user-feedback', '#user-feedback-button', '.feedback-section', '#opinionsListing'];
-    selectorsToRemove.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach(element => { element.parentNode.removeChild(element); });
-    });
-    const article = document.querySelector('article');
-    if (article) {
-        document.body.innerHTML = '';
-        document.body.appendChild(article);
-    } else {
-        const mainContent = document.getElementById('main-content');
-        if (mainContent) {
-            document.body.innerHTML = '';
-            document.body.appendChild(mainContent);
-        }
+                var script = @"const tagsToRemove=['header','footer','nav','aside','ads','script'];
+tagsToRemove.forEach(tag=>{
+    const elements=document.getElementsByTagName(tag);
+    while(elements[0]){elements[0].parentNode.removeChild(elements[0]);}
+});
+const selectorsToRemove=['.ad','.sidebar','#ad-container','.footer','.nav','.site-top-menu','.site-header','.site-footer','.sub-headerbar','.article-left-sidebar','.article-right-sidebar','.article_bottom_text','.read-next-panel','.article-meta-author-details','.onopen-discussion-panel','.author-wrapper','.follow','.share-list','.article-social-share-top','.recommended-intersection-ref','.engagement-widgets','#further-reading','.trending','.detailDiscovery','.globalFooter','.relatedlinks','#social_zone','#user-feedback','#user-feedback-button','.feedback-section','#opinionsListing'];
+selectorsToRemove.forEach(selector=>{
+    document.querySelectorAll(selector).forEach(element=>{element.parentNode.removeChild(element);});
+});
+const article=document.querySelector('article');
+if (article){
+    document.body.innerHTML='';
+    document.body.appendChild(article);
+} else {
+    const mainContent=document.getElementById('main-content');
+    if (mainContent){
+        document.body.innerHTML='';
+        document.body.appendChild(mainContent);
     }
-})();";
+}";
                 Chromium.ExecuteScriptAsync(script);
 
                 var css = @"* {
@@ -1591,7 +1487,7 @@ img {
     height: auto !important;
     border-radius: 10px !important;
 }";
-                Chromium.ExecuteScriptAsync($"var style = document.createElement('style'); style.innerHTML = `{css}`; document.head.appendChild(style);");
+                Chromium.ExecuteScriptAsync($"var style=document.createElement('style');style.innerHTML=`{css}`;document.head.appendChild(style);");
             }
             else
                 Reload();
@@ -1694,7 +1590,7 @@ img {
                 Color _IndicatorColor = (Color)FindResource("IndicatorBrushColor");
                 string IndicatorHex = $"#{_IndicatorColor.R:X2}{_IndicatorColor.G:X2}{_IndicatorColor.B:X2}{_IndicatorColor.A:X2}";
 
-                string ChatJS = $@"const CSSVariables = `body {{
+                string ChatJS = $@"const CSSVariables=`body {{
     --cib-border-radius-circular: 5px;
     --cib-border-radius-extra-large: 5px;
     --cib-border-radius-large: 5px;
@@ -1755,7 +1651,7 @@ elements.forEach(function(element) {{
     element.parentNode.removeChild(element);
 }});";
 
-                string ComposeJS = $@"const CSSVariables = `::-webkit-scrollbar {{
+                string ComposeJS = $@"const CSSVariables=`::-webkit-scrollbar {{
     background: {PrimaryHex} !important;
 }}
 .uds_coauthor_wrapper .sidebar {{
@@ -2059,7 +1955,7 @@ if (insertButton) {{
                     if (AIChatBrowser != null && AIChatBrowser.IsBrowserInitialized)
                     {
                         AIChatBrowser.Visibility = Visibility.Visible;
-                        if (AIChatBrowser.Address.StartsWith("http://edgeservices.bing.com/edgesvc/compose"))
+                        if (AIChatBrowser.Address.StartsWith("https://edgeservices.bing.com/edgesvc/compose", StringComparison.Ordinal))
                             AIChatBrowser.ExecuteScriptAsync(ComposeJS);
                         else
                         {
@@ -2068,11 +1964,11 @@ if (insertButton) {{
                             Task.Factory.StartNew(() => Thread.Sleep(500))
                             .ContinueWith((t) =>
                             {
-                                AIChatBrowser.ExecuteScriptAsync(@"var elements = document.querySelectorAll('.b_wlcmLogo');
-elements.forEach(function(logo) {
-    if (logo.shadowRoot) {
-        const defsElement = logo.shadowRoot.querySelector(""defs"");
-        if (defsElement) {
+                                AIChatBrowser.ExecuteScriptAsync(@"var elements=document.querySelectorAll('.b_wlcmLogo');
+elements.forEach(function(logo){
+    if (logo.shadowRoot){
+        const defsElement=logo.shadowRoot.querySelector(""defs"");
+        if (defsElement){
             defsElement.innerHTML = `<radialGradient id='b' cx='0' cy='0' r='1' gradientUnits='userSpaceOnUse' gradientTransform='matrix(-18.09451 -22.11268 20.79145 -17.01336 58.88 31.274)'>
                     <stop offset='0.0955758' stop-color='#00AEFF'></stop>
                     <stop offset='0.773185' stop-color='#2253CE'></stop>
@@ -2108,57 +2004,41 @@ elements.forEach(function(logo) {
         }
     }
 });
-function applyStyles() {
-    const applyCSS = (element, css) => { const style = document.createElement('style'); style.textContent = css; element.appendChild(style); };
-    var elements = document.querySelectorAll('.b_wlcmPersName');
-    elements.forEach(function(element) { element.parentNode.removeChild(element); });
-    var elements = document.querySelectorAll('.b_wlcmPersDesc');
-    elements.forEach(function(element) { element.parentNode.removeChild(element); });
-    var elements = document.querySelectorAll('.b_wlcmPersAuthorText');
-    elements.forEach(function(element) { element.parentNode.removeChild(element); });
-    var elements = document.querySelectorAll('.b_wlcmCont');
-    elements.forEach(function(element) {
-        if (element.id == 'b_sydWelcomeTemplate_') {
-            var elements = document.querySelectorAll('.b_ziCont');
-            elements.forEach(function(element) { element.parentNode.removeChild(element); });
-        }
-    });
-    const cibSerpMain = document.querySelector('.cib-serp-main');
-    const cibConversation = cibSerpMain.shadowRoot.querySelector('#cib-conversation-main');
-    const cibChatTurns = cibConversation.shadowRoot.querySelectorAll('cib-chat-turn');
-    cibChatTurns.forEach(cibChatTurn=> {
-            const cibMessageGroups = cibChatTurn.shadowRoot.querySelectorAll('cib-message-group');
+function applyStyles(){
+    const applyCSS=(element,css)=>{const style=document.createElement('style');style.textContent=css;element.appendChild(style);};
+    document.querySelectorAll('.b_wlcmPersName').forEach(function(element){element.parentNode.removeChild(element);});
+    document.querySelectorAll('.b_wlcmPersDesc').forEach(function(element){element.parentNode.removeChild(element);});
+    document.querySelectorAll('.b_wlcmPersAuthorText').forEach(function(element){element.parentNode.removeChild(element);});
+    document.querySelectorAll('.b_wlcmCont').forEach(function(element){if (element.id=='b_sydWelcomeTemplate_'){document.querySelectorAll('.b_ziCont').forEach(function(element){element.parentNode.removeChild(element);});}});
+    const cibChatTurns=document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelectorAll('cib-chat-turn');
+    cibChatTurns.forEach(cibChatTurn=>{
+            const cibMessageGroups=cibChatTurn.shadowRoot.querySelectorAll('cib-message-group');
                 cibMessageGroups.forEach(cibMessageGroup => {
-            const cibMessageGroupShadowRoot = cibMessageGroup.shadowRoot;
-            const header = cibMessageGroupShadowRoot.querySelector('.header');
-            const cibMessage = cibMessageGroupShadowRoot.querySelector('cib-message');
-            if (cibMessage) {
-                const cibShared = cibMessage.shadowRoot.querySelector('cib-shared');
-                const footer = cibMessage.shadowRoot.querySelector('.footer');
-                if (cibShared) {
-                        applyCSS(cibMessage.shadowRoot, `:host([source=user]) .text-message-content div {
-    background: var(--cib-color-fill-accent-gradient-primary) !important;
-    border-radius: 5px !important;
-    padding: 15px !important;
-    text-align: right !important;
-    align-self: flex-end;
-    color: white !important;
+            const cibMessageGroupShadowRoot=cibMessageGroup.shadowRoot;
+            const header=cibMessageGroupShadowRoot.querySelector('.header');
+            const cibMessage=cibMessageGroupShadowRoot.querySelector('cib-message');
+            if (cibMessage){
+                const cibShared=cibMessage.shadowRoot.querySelector('cib-shared');
+                const footer=cibMessage.shadowRoot.querySelector('.footer');
+                if (cibShared){
+                    applyCSS(cibMessage.shadowRoot,`:host([source=user]) .text-message-content div{
+    background:var(--cib-color-fill-accent-gradient-primary) !important;
+    border-radius:5px !important;
+    padding:15px !important;
+    text-align:right !important;
+    align-self:flex-end;
+    color:white !important;
 }
-:host([source=user]) .text-message-content[user] img {
-    margin-inline-end: 0px !important;
-    margin-inline-start: auto !important;
-}
-:host([source=user]) .footer {
-    align-self: flex-end !important;
-}`);
+:host([source=user]) .text-message-content[user] img{margin-inline-end:0px !important;margin-inline-start:auto !important;}
+:host([source=user]) .footer{align-self:flex-end !important;}`);
                 }
-                if (footer) {
-                    const cibMessageActions = footer.querySelector('cib-message-actions');
-                    if (cibMessageActions) {
-                        const cibMessageActionsShadowRoot = cibMessageActions.shadowRoot;
+                if (footer){
+                    const cibMessageActions=footer.querySelector('cib-message-actions');
+                    if (cibMessageActions){
+                        const cibMessageActionsShadowRoot=cibMessageActions.shadowRoot;
                         const container = cibMessageActionsShadowRoot.querySelector('.container');
-                        if (container) {
-                            const searchButton = container.querySelector('#search-on-bing-button');
+                        if (container){
+                            const searchButton=container.querySelector('#search-on-bing-button');
                             if (searchButton)
                                 searchButton.remove();
                         }
@@ -2166,21 +2046,20 @@ function applyStyles() {
                 }
             }
             if (header)
-                applyCSS(cibMessageGroupShadowRoot, `:host([source=user]) .header { align-self: flex-end !important; } :host([source=user]) { align-items: flex-end; } `);
+                applyCSS(cibMessageGroupShadowRoot,`:host([source=user]) .header{align-self:flex-end !important;} :host([source=user]){align-items:flex-end;}`);
             });
     });
 }
 applyStyles();
-const observer = new MutationObserver(applyStyles);
-observer.observe(document.body, { attributes: true, childList: true, subtree: true });");
+new MutationObserver(applyStyles).observe(document.body,{attributes:true,childList:true,subtree:true});");
 
-                                if (AIChatBrowser.Address.Contains("mobfull,moblike"))
-                                    AIChatBrowser.ExecuteScriptAsync(@"const LateStyle = document.createElement('style');
-LateStyle.type = 'text/css';
-LateStyle.innerHTML = `.zero_state_item { border-radius: 5px !important; }`;
+                                /*if (AIChatBrowser.Address.Contains("mobfull,moblike"))
+                                    AIChatBrowser.ExecuteScriptAsync(@"const LateStyle=document.createElement('style');
+LateStyle.type='text/css';
+LateStyle.innerHTML=`.zero_state_item{border-radius:5px !important;}`;
 document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.zero_state_wrap').shadowRoot.appendChild(LateStyle);
-document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.zero_state_wrap').shadowRoot.querySelector('.hello_text').innerHTML = ""Suggestions"";
-document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.preview-container').remove();");
+document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.zero_state_wrap').shadowRoot.querySelector('.hello_text').innerHTML=""Suggestions"";
+document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.preview-container').remove();");*/
                             }, syncContextScheduler);
                         }
                     }
@@ -2216,13 +2095,13 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                         if (App.Instance.CurrentTheme.DarkWebPage)
                             AIChatAddress += "&darkschemeovr=1";
                         AIChatBrowser.Address = AIChatAddress;
-                        break; 
-                    case 1:
+                        break;
+                    /*case 1:
                         string AIMobAddress = "http://edgeservices.bing.com/edgesvc/chat?udsframed=1&form=SHORUN&clientscopes=chat,noheader,mobfull,moblike";
                         if (App.Instance.CurrentTheme.DarkWebPage)
                             AIMobAddress += "&darkschemeovr=1";
                         AIChatBrowser.Address = AIMobAddress;
-                        break;
+                        break;*/
                     case 2:
                         string AIComposeAddress = "http://edgeservices.bing.com/edgesvc/compose?udsframed=1&clientscopes=chat,noheader";
                         if (App.Instance.CurrentTheme.DarkWebPage)
@@ -2246,7 +2125,7 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             }
             else if (!IsLoading)
             {
-                var infoWindow = new PromptDialogWindow("Prompt", $"Add favourite", "Name", Title);
+                var infoWindow = new PromptDialogWindow("Prompt", $"Add Favourite", "Name", Title);
                 infoWindow.Topmost = true;
                 if (infoWindow.ShowDialog() == true)
                 {
@@ -2257,28 +2136,40 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                     Tab.FavouriteCommandHeader = "Remove from favourites";
                 }
             }
-            if (App.Instance.Favourites.Count == 0)
+        }
+
+        public void SetFavouritesBarVisibility()
+        {
+            if (ShowFavouritesBar == 0)
             {
-                FavouriteScrollViewer.Margin = new Thickness(5, 0, 5, 5);
-                FavouriteContainer.Height = 5;
+                if (App.Instance.Favourites.Count == 0)
+                {
+                    FavouriteScrollViewer.Margin = new Thickness(0);
+                    FavouriteContainer.Height = 5;
+                }
+                else
+                {
+                    FavouriteScrollViewer.Margin = new Thickness(5, 5, 5, 5);
+                    FavouriteContainer.Height = 41.25f;
+                }
             }
-            else
+            else if (ShowFavouritesBar == 1)
             {
                 FavouriteScrollViewer.Margin = new Thickness(5, 5, 5, 5);
-                FavouriteContainer.Height = double.NaN;
+                FavouriteContainer.Height = 41.25f;
+            }
+            else if (ShowFavouritesBar == 2)
+            {
+                FavouriteScrollViewer.Margin = new Thickness(0);
+                FavouriteContainer.Height = 5;
             }
         }
+
         int FavouriteExists(string Url)
         {
             if (App.Instance.Favourites.Count == 0)
                 return -1;
-            string[] FavouriteUrls = App.Instance.Favourites.Select(item => item.Tooltip).ToArray();
-            for (int i = 0; i < FavouriteUrls.Length; i++)
-            {
-                if (FavouriteUrls[i] == Url)
-                    return i;
-            }
-            return -1;
+            return App.Instance.Favourites.ToList().FindIndex(0, i => i.Tooltip == Url);
         }
         public void Zoom(int Delta)
         {
@@ -2504,14 +2395,18 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
         bool AllowTranslateButton;
         bool AllowAIButton;
         bool AllowReaderModeButton;
+        int ShowExtensionButton;
+        int ShowFavouritesBar;
 
-        public async void SetAppearance(Theme _Theme, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowAIButton, bool _AllowReaderModeButton)
+        public async void SetAppearance(Theme _Theme, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowAIButton, bool _AllowReaderModeButton, int _ShowExtensionButton, int _ShowFavouritesBar)
         {
             AllowHomeButton = _AllowHomeButton;
             AllowTranslateButton = _AllowTranslateButton;
             AllowAIButton = _AllowAIButton;
             AllowReaderModeButton = _AllowReaderModeButton;
-
+            ShowExtensionButton = _ShowExtensionButton;
+            ShowFavouritesBar = _ShowFavouritesBar;
+            SetFavouritesBarVisibility();
             HomeButton.Visibility = AllowHomeButton ? Visibility.Visible : Visibility.Collapsed;
             AIChatButton.Visibility = AllowAIButton ? Visibility.Visible : Visibility.Collapsed;
             if (!IsLoading)
@@ -2539,6 +2434,13 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             }
             else
                 ReaderModeButton.Visibility = Visibility.Collapsed;
+
+            if (ShowExtensionButton == 0)
+                ExtensionsButton.Visibility = App.Instance.Extensions.Any() ? Visibility.Visible : Visibility.Collapsed;
+            else if (ShowExtensionButton == 1)
+                ExtensionsButton.Visibility = Visibility.Visible;
+            else
+                ExtensionsButton.Visibility = Visibility.Collapsed;
 
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
@@ -2761,15 +2663,17 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
         Window ExtensionWindow;
         private void LoadExtensionPopup(object sender, RoutedEventArgs e)
         {
-            if (sender == null)
-                return;
             Extension _Extension = App.Instance.Extensions.ToList().Find(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             ExtensionWindow = new Window();
             ChromiumWebBrowser ExtensionBrowser = new ChromiumWebBrowser(_Extension.Popup);
+            ExtensionBrowser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
+            HwndSource _HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(ExtensionWindow).EnsureHandle());
+            _HwndSource.AddHook(WndProc);
+            int trueValue = 0x01;
             ExtensionBrowser.LoadingStateChanged += (s, args) =>
             {
                 if (!args.IsLoading)
-                    ExtensionBrowser.ExecuteScriptAsync(@"var rect = document.body.getBoundingClientRect();cefSharp.postMessage({ width: rect.width + 16, height: rect.height + 40 });");
+                    ExtensionBrowser.ExecuteScriptAsync(@"var rect=document.body.getBoundingClientRect();engine.postMessage({width:rect.width+16,height:rect.height+40});");
                 /*function getBoundingClientRect(element) {
 var rect = element.getBoundingClientRect();
     return {
@@ -2783,7 +2687,14 @@ var rect = element.getBoundingClientRect();
         y: rect.y
     };
 }*/
+                int trueValue = 0x01;
+                int falseValue = 0x00;
+                if (App.Instance.CurrentTheme.DarkTitleBar)
+                    DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
+                else
+                    DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
             };
+            DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             ExtensionBrowser.JavascriptMessageReceived += ExtensionBrowser_JavascriptMessageReceived;
             ExtensionBrowser.SnapsToDevicePixels = true;
             ExtensionBrowser.MenuHandler = App.Instance._LimitedContextMenuHandler;
@@ -2794,15 +2705,9 @@ var rect = element.getBoundingClientRect();
             ExtensionWindow.Title = _Extension.Name + " - Extension";
             ExtensionWindow.ResizeMode = ResizeMode.NoResize;
             ExtensionWindow.SizeChanged += ExtensionWindow_SizeChanged;
-            ExtensionWindow.SourceInitialized += ExtensionWindow_SourceInitialized;
             ExtensionWindow.MaxHeight = 700;
             ExtensionWindow.MaxWidth = 700;
             ExtensionWindow.ShowDialog();
-        }
-
-        private void ExtensionWindow_SourceInitialized(object? sender, EventArgs e)
-        {
-            HwndSource.FromHwnd(new WindowInteropHelper(ExtensionWindow).Handle).AddHook(WndProc);
         }
         const int WM_SYSCOMMAND = 0x0112;
         const int SC_MOVE = 0xF010;
@@ -2837,14 +2742,6 @@ var rect = element.getBoundingClientRect();
                 ExtensionWindow.Height = data.height;
                 ExtensionWindow.Width = data.width;
                 //MessageBox.Show(JsonSerializer.Serialize(e.Message));
-                HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(ExtensionWindow).EnsureHandle());
-                int trueValue = 0x01;
-                int falseValue = 0x00;
-                if (App.Instance.CurrentTheme.DarkTitleBar)
-                    DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
-                else
-                    DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
-                DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             });
         }
     }

@@ -1,5 +1,7 @@
 ﻿using CefSharp;
+using CefSharp.Handler;
 using CefSharp.Wpf.HwndHost;
+using SLBr.Handlers;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
@@ -34,8 +36,9 @@ namespace SLBr.Controls
             _Browser.Address = InitialAddress;
 
             _Browser.LifeSpanHandler = App.Instance._LifeSpanHandler;
-            _Browser.DownloadHandler = App.Instance._DownloadHandler;
             _Browser.RequestHandler = App.Instance._RequestHandler;
+            _Browser.ResourceRequestHandlerFactory = new Handlers.ResourceRequestHandlerFactory(App.Instance._RequestHandler);
+            _Browser.DownloadHandler = App.Instance._DownloadHandler;
             _Browser.MenuHandler = App.Instance._LimitedContextMenuHandler;
             //_Browser.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
             //_Browser.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
@@ -54,6 +57,8 @@ namespace SLBr.Controls
             };
 
             WebContent.Children.Add(_Browser);
+            int trueValue = 0x01;
+            DwmSetWindowAttribute(HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle()).Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             //RenderOptions.SetBitmapScalingMode(_Browser, BitmapScalingMode.LowQuality);
 
         }
@@ -74,7 +79,7 @@ namespace SLBr.Controls
                 return;
             Dispatcher.Invoke(() =>
             {
-                Icon = new BitmapImage(new Uri("http://www.google.com/s2/favicons?sz=24&domain=" + Utils.CleanUrl(_Browser.Address, true, true, true, false, false)));
+                Icon = App.Instance.GetIcon(_Browser.Address);
                 _Browser.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(CurrentTheme.DarkWebPage);
             });
         }
@@ -90,7 +95,6 @@ namespace SLBr.Controls
                 DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
             else
                 DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
-            DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
 
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;

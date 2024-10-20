@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Linq.Expressions;
 using System.Net;
 using System.Text.Json;
 using System.Xml;
@@ -15,32 +14,35 @@ namespace SLBr.Handlers
         public string GetBackground()
         {
             string Url = "";
-            string BackgroundImage = App.Instance.GlobalSave.Get("HomepageBackground");
-
-            if (BackgroundImage == "Bing")
+            switch (App.Instance.GlobalSave.Get("HomepageBackground"))
             {
-                string BingBackground = App.Instance.GlobalSave.Get("BingBackground");
-                if (BingBackground == "Image of the day")
-                {
-                    try
+                case "Bing":
+                    string BingBackground = App.Instance.GlobalSave.Get("BingBackground");
+                    if (BingBackground == "Image of the day")
                     {
-                        XmlDocument doc = new XmlDocument();
-                        doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
-                        Url = @"http://www.bing.com/" + doc.SelectSingleNode(@"/images/image/url").InnerText;
+                        try
+                        {
+                            XmlDocument doc = new XmlDocument();
+                            doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
+                            Url = @"http://www.bing.com/" + doc.SelectSingleNode(@"/images/image/url").InnerText;
+                        }
+                        catch { }
                     }
-                    catch { }
-                }
-                else if (BingBackground == "Random")
-                    Url = "http://bingw.jasonzeng.dev/?index=random";
+                    else if (BingBackground == "Random")
+                        Url = "http://bingw.jasonzeng.dev/?index=random";
+                    break;
+
+                case "Picsum":
+                    Url = "http://picsum.photos/1920/1080?random";
+                    break;
+
+                case "Custom":
+                    Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
+                    if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
+                        Url = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
+                    break;
             }
-            else if (BackgroundImage == "Picsum")
-                Url = "http://picsum.photos/1920/1080?random";
-            else if (BackgroundImage == "Custom")
-            {
-                Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
-                if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
-                    return $"url('data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}')";
-            }
+
             return $"url('{Url}')";
         }
 
@@ -66,8 +68,7 @@ namespace SLBr.Handlers
         }
         public bool CancelDownload(int DownloadId)
         {
-            if (!App.Instance.CanceledDownloads.Contains(DownloadId))
-                App.Instance.CanceledDownloads.Add(DownloadId);
+            App.Instance._DownloadHandler.CancelDownload(DownloadId);
             return true;
         }
     }

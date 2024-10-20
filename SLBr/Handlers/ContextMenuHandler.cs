@@ -12,51 +12,51 @@ namespace SLBr.Handlers
 {
     public class ContextMenuHandler : IContextMenuHandler
     {
-        public void OnBeforeContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
+        public void OnBeforeContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams Parameters, IMenuModel model)
         {
             model.Clear();
-            if (parameters.IsEditable)
+            if (Parameters.IsEditable)
             {
-                if (parameters.DictionarySuggestions.Count != 0 && bool.Parse(App.Instance.GlobalSave.Get("SpellCheck")))
+                if (Parameters.IsSpellCheckEnabled && Parameters.DictionarySuggestions.Count != 0)
                 {
-                    switch (parameters.DictionarySuggestions.Count)
+                    switch (Parameters.DictionarySuggestions.Count)
                     {
                         case 1:
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, Parameters.DictionarySuggestions[0]);
                             break;
                         case 2:
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, Parameters.DictionarySuggestions[0]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, Parameters.DictionarySuggestions[1]);
                             break;
                         case 3:
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, Parameters.DictionarySuggestions[0]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, Parameters.DictionarySuggestions[1]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, Parameters.DictionarySuggestions[2]);
                             break;
                         case 4:
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, Parameters.DictionarySuggestions[0]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, Parameters.DictionarySuggestions[1]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, Parameters.DictionarySuggestions[2]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion3, Parameters.DictionarySuggestions[3]);
                             break;
                         case 5:
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion4, parameters.DictionarySuggestions[4]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, Parameters.DictionarySuggestions[0]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, Parameters.DictionarySuggestions[1]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, Parameters.DictionarySuggestions[2]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion3, Parameters.DictionarySuggestions[3]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion4, Parameters.DictionarySuggestions[4]);
                             break;
                         default:
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, parameters.DictionarySuggestions[0]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, parameters.DictionarySuggestions[1]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, parameters.DictionarySuggestions[2]);
-                            model.AddItem(CefMenuCommand.SpellCheckSuggestion3, parameters.DictionarySuggestions[3]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion0, Parameters.DictionarySuggestions[0]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion1, Parameters.DictionarySuggestions[1]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion2, Parameters.DictionarySuggestions[2]);
+                            model.AddItem(CefMenuCommand.SpellCheckSuggestion3, Parameters.DictionarySuggestions[3]);
                             break;
                     }
                     model.AddItem(CefMenuCommand.AddToDictionary, "Ignore Word");
                     model.AddSeparator();
                 }
-                model.AddItem((CefMenuCommand)26510, "Emoji");
+                model.AddItem(MenuEmoji, "Emoji");
                 model.AddSeparator();
                 model.AddItem(CefMenuCommand.Undo, "Undo");
                 model.AddItem(CefMenuCommand.Redo, "Redo");
@@ -67,49 +67,56 @@ namespace SLBr.Handlers
                 model.AddItem(CefMenuCommand.Delete, "Delete");
                 model.AddSeparator();
                 model.AddItem(CefMenuCommand.SelectAll, "Select All");
-                if (!string.IsNullOrEmpty(parameters.SelectionText))
+                if (!string.IsNullOrEmpty(Parameters.SelectionText))
                 {
                     model.AddSeparator();
-                    model.AddItem(CefMenuCommand.Find, $"Search \"{parameters.SelectionText}\" in new tab");
+                    model.AddItem(CefMenuCommand.Find, $"Search \"{Parameters.SelectionText}\" in new tab");
                 }
             }
-            else if (!string.IsNullOrEmpty(parameters.LinkUrl))
+            else if (!string.IsNullOrEmpty(Parameters.LinkUrl))
             {
-                model.AddItem((CefMenuCommand)26502, "Open in new tab");
-                model.AddItem(CefMenuCommand.Copy, "Copy link");
+                model.AddItem(MenuOpenNewTab, "Open in new tab");
+                model.AddItem(MenuCopyURL, "Copy link");
             }
-            else if (!string.IsNullOrEmpty(parameters.SelectionText))
+            else if (!string.IsNullOrEmpty(Parameters.SelectionText))
             {
-                model.AddItem(CefMenuCommand.Find, $"Search \"{parameters.SelectionText}\" in new tab");
+                model.AddItem(CefMenuCommand.Find, $"Search \"{Parameters.SelectionText}\" in new tab");
                 model.AddItem(CefMenuCommand.Copy, "Copy");
+                model.AddSeparator();
+                model.AddItem(CefMenuCommand.SelectAll, "Select All");
             }
             else
             {
-                if (parameters.MediaType != ContextMenuMediaType.Image)//parameters.MediaType == ContextMenuMediaType.None
+                if (Parameters.MediaType == ContextMenuMediaType.None)
                 {
                     model.AddItem(CefMenuCommand.Back, "Back");
                     model.AddItem(CefMenuCommand.Forward, "Forward");
                     model.AddItem(CefMenuCommand.Reload, "Refresh");
 
                     model.AddSeparator();
-                    model.AddItem((CefMenuCommand)26501, "Save as");
+                    model.AddItem(MenuSaveAs, "Save as");
                     model.AddItem(CefMenuCommand.Print, "Print");
+                    model.AddItem(CefMenuCommand.SelectAll, "Select All");
                     model.AddSeparator();
 
-                    model.AddItem((CefMenuCommand)26506, "Screenshot");
+                    model.AddItem(MenuTranslate, "Translate");
+                    model.AddItem(MenuScreenshot, "Screenshot");
 
                     IMenuModel ZoomSubMenuModel = model.AddSubMenu(CefMenuCommand.NotFound, "Zoom");
-                    ZoomSubMenuModel.AddItem((CefMenuCommand)26507, "Zoom in");
-                    ZoomSubMenuModel.AddItem((CefMenuCommand)26508, "Zoom out");
-                    ZoomSubMenuModel.AddItem((CefMenuCommand)26509, "Reset");
+                    ZoomSubMenuModel.AddItem(MenuZoomIn, "Zoom in");
+                    ZoomSubMenuModel.AddItem(MenuZoomOut, "Zoom out");
+                    ZoomSubMenuModel.AddItem(MenuZoomReset, "Reset");
                     /*model.AddSeparator();
                     model.AddItem((CefMenuCommand)26507, "Zoom");
                     model.AddItem((CefMenuCommand)26508, "Zoom out");
                     model.AddItem((CefMenuCommand)26509, "Reset zoom");*/
 
                     model.AddSeparator();
-                    model.AddItem(CefMenuCommand.ViewSource, "View page source");
-                    model.AddItem((CefMenuCommand)26503, "Inspect");
+
+                    IMenuModel AdvancedMenuModel = model.AddSubMenu(CefMenuCommand.NotFound, "Advanced");
+                    AdvancedMenuModel.AddItem(CefMenuCommand.ViewSource, "View source");
+                    AdvancedMenuModel.AddItem(MenuInspector, "Inspect");
+
                     /*IMenuModel _EditSubMenuModel = model.AddSubMenu(CefMenuCommand.NotFound, "Edit");
                     _EditSubMenuModel.AddItem(CefMenuCommand.Undo, "Undo");
                     _EditSubMenuModel.AddItem(CefMenuCommand.Redo, "Redo");
@@ -125,28 +132,46 @@ namespace SLBr.Handlers
                     model.AddItem((CefMenuCommand)26509, "Inspect");
                     model.AddSeparator();*/
                 }
-                else
+                else if (Parameters.MediaType == ContextMenuMediaType.Image)
                 {
                     model.AddItem(CefMenuCommand.Copy, "Copy image");
-                    model.AddItem((CefMenuCommand)26505, "Copy image link");
-                    model.AddItem((CefMenuCommand)26501, "Save image as");
+                    model.AddItem(MenuCopyURL, "Copy image link");
+                    model.AddItem(MenuSaveAs, "Save image as");
                     //model.AddItem((CefMenuCommand)26502, "Open in paintbrush");
                 }
+                else if (Parameters.MediaType == ContextMenuMediaType.Video)
+                {
+                    model.AddItem(MenuCopyURL, "Copy video link");
+                    model.AddItem(MenuSaveAs, "Save video as");
+                    /*if (Parameters.MediaStateFlags == ContextMenuMediaState.CanPictureInPicture)
+                        model.AddItem(MenuPictureInPicture, "Picture in picture");*/
+                }
             }
-            /*model.AddSeparator();
-            model.AddItem(CefMenuCommand.NotFound, "Cancel");*/
         }
 
-        private async void DownloadAndCopyImage(string imageUrl)
+        CefMenuCommand MenuSaveAs = (CefMenuCommand)26501;
+        CefMenuCommand MenuOpenNewTab = (CefMenuCommand)26502;
+        CefMenuCommand MenuInspector = (CefMenuCommand)26503;
+        CefMenuCommand MenuCopyURL = (CefMenuCommand)26504;
+        CefMenuCommand MenuScreenshot = (CefMenuCommand)26505;
+        CefMenuCommand MenuEmoji = (CefMenuCommand)26506;
+        CefMenuCommand MenuTranslate = (CefMenuCommand)26507;
+        //CefMenuCommand MenuPictureInPicture = (CefMenuCommand)26507;
+
+        CefMenuCommand MenuZoomReset = (CefMenuCommand)26510;
+        CefMenuCommand MenuZoomIn = (CefMenuCommand)26511;
+        CefMenuCommand MenuZoomOut = (CefMenuCommand)26512;
+
+        private async void DownloadAndCopyImage(string ImageUrl)
         {
             try
             {
-                using (var client = new HttpClient())
+                using (var HttpClient = new HttpClient())
                 {
-                    byte[] imageData = await client.GetByteArrayAsync(imageUrl);
-                    if (imageData != null)
+                    byte[] ImageData = await HttpClient.GetByteArrayAsync(ImageUrl);
+                    if (ImageData != null)
                     {
-                        using (MemoryStream stream = new MemoryStream(imageData))
+                        using (MemoryStream stream = new MemoryStream(ImageData))
                         {
                             BitmapImage bitmap = new BitmapImage();
                             bitmap.BeginInit();
@@ -160,21 +185,8 @@ namespace SLBr.Handlers
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to copy image: {ex.Message}");
-            }
+            catch { }
         }
-
-        //Save as 26501
-        //26502 Open in new Tab
-        //26503 Inspector
-        //26504 View source
-        //26505 Copy Image Url
-        //26506 Take screenshot
-        //26507 Zoom default
-        //26508 Zoom out
-        //26509 Zoom in
 
         public bool OnContextMenuCommand(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags)
         {
@@ -209,19 +221,19 @@ namespace SLBr.Handlers
                     });
                     ToReturn = true;
                 }
-                else if (CommandID == (CefMenuCommand)26510)
+                else if (CommandID == MenuEmoji)
                     CoreInputView.GetForCurrentView().TryShow(CoreInputViewKind.Emoji);
             }
             else if (!string.IsNullOrEmpty(Parameters.LinkUrl))
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
-                    if (CommandID == (CefMenuCommand)26502)
+                    if (CommandID == MenuOpenNewTab)
                     {
                         App.Instance.CurrentFocusedWindow().NewTab(Parameters.LinkUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
                         ToReturn = true;
                     }
-                    else if (CommandID == CefMenuCommand.Copy)
+                    else if (CommandID == MenuCopyURL)
                     {
                         Clipboard.SetText(Parameters.LinkUrl);
                         ToReturn = true;
@@ -242,43 +254,49 @@ namespace SLBr.Handlers
             }
             else
             {
-                if (Parameters.MediaType != ContextMenuMediaType.Image)
+                if (Parameters.MediaType == ContextMenuMediaType.None)
                 {
                     App.Current.Dispatcher.Invoke(() =>
                     {
-                        if (CommandID == (CefMenuCommand)26503)
+                        if (CommandID == MenuInspector)
                         {
-                            App.Instance.CurrentFocusedWindow().DevTools("", Parameters.XCoord, Parameters.YCoord);
+                            App.Instance.CurrentFocusedWindow().DevTools("");//, Parameters.XCoord, Parameters.YCoord);
                             ToReturn = true;
                         }
-                        else if (CommandID == (CefMenuCommand)26501)
+                        else if (CommandID == MenuSaveAs)
                         {
                             Browser.StartDownload(WebBrowser.Address);
                             ToReturn = true;
                         }
-                        else if (CommandID == (CefMenuCommand)26506)
+                        else if (CommandID == MenuTranslate)
+                        {
+                            Pages.Browser BrowserView = App.Instance.CurrentFocusedWindow().GetTab().Content;
+                            BrowserView.Address = $"https://translate.google.com/translate?sl=auto&tl=en&hl=en&u={BrowserView.Address}";
+                            ToReturn = true;
+                        }
+                        else if (CommandID == MenuScreenshot)
                         {
                             App.Instance.CurrentFocusedWindow().Screenshot();
                             ToReturn = true;
                         }
-                        else if (CommandID == (CefMenuCommand)26507)
+                        else if (CommandID == MenuZoomIn)
                         {
                             App.Instance.CurrentFocusedWindow().Zoom(1);
                             ToReturn = true;
                         }
-                        else if (CommandID == (CefMenuCommand)26508)
+                        else if (CommandID == MenuZoomOut)
                         {
                             App.Instance.CurrentFocusedWindow().Zoom(-1);
                             ToReturn = true;
                         }
-                        else if (CommandID == (CefMenuCommand)26509)
+                        else if (CommandID == MenuZoomReset)
                         {
                             App.Instance.CurrentFocusedWindow().Zoom(0);
                             ToReturn = true;
                         }
                     });
                 }
-                else
+                else if (Parameters.MediaType == ContextMenuMediaType.Image)
                 {
                     if (CommandID == CefMenuCommand.Copy)
                     {
@@ -286,12 +304,12 @@ namespace SLBr.Handlers
                         catch { Clipboard.SetText(Parameters.SourceUrl); }
                         ToReturn = true;
                     }
-                    else if (CommandID == (CefMenuCommand)26505)
+                    else if (CommandID == MenuCopyURL)
                     {
                         Clipboard.SetText(Parameters.SourceUrl);
                         ToReturn = true;
                     }
-                    else if (CommandID == (CefMenuCommand)26501)
+                    else if (CommandID == MenuSaveAs)
                     {
                         Browser.StartDownload(Parameters.SourceUrl);
                         ToReturn = true;
@@ -302,6 +320,23 @@ namespace SLBr.Handlers
                         //string DownloadPath = MainWindow.Instance.GlobalSave.Get("DownloadPath");
                         //string FileName = Path.Combine(DownloadPath, Path.GetFileName(parameters.SourceUrl));
                         Process.Start(FileName);
+                    }*/
+                }
+                else if (Parameters.MediaType == ContextMenuMediaType.Video)
+                {
+                    if (CommandID == MenuCopyURL)
+                    {
+                        Clipboard.SetText(Parameters.SourceUrl);
+                        ToReturn = true;
+                    }
+                    else if (CommandID == MenuSaveAs)
+                    {
+                        Browser.StartDownload(Parameters.SourceUrl);
+                        ToReturn = true;
+                    }
+                    /*else if (CommandID == MenuPictureInPicture)
+                    {
+                        ToReturn = true;
                     }*/
                 }
             }
@@ -441,16 +476,55 @@ namespace SLBr.Handlers
                 };
 
                 if (Item.CommandId == CefMenuCommand.Back)
+                {
+                    _MenuItem.Icon = "\uE76B";
                     _MenuItem.IsEnabled = chromiumWebBrowser.CanGoBack;
+                }
                 else if (Item.CommandId == CefMenuCommand.Forward)
+                {
+                    _MenuItem.Icon = "\uE76C";
                     _MenuItem.IsEnabled = chromiumWebBrowser.CanGoForward;
-                else if (Item.CommandId == CefMenuCommand.Delete)
-                    _MenuItem.IsEnabled = !string.IsNullOrEmpty(Parameters.SelectionText);
+                }
+                else if (Item.CommandId == CefMenuCommand.Reload)
+                    _MenuItem.Icon = "\uE72C";
+
+                else if (Item.CommandId == CefMenuCommand.Print)
+                    _MenuItem.Icon = "\uE749";
+                else if (Item.CommandId == CefMenuCommand.ViewSource)
+                    _MenuItem.Icon = "\ue943";
+
+                else if (Item.Header == "Advanced")
+                    _MenuItem.Icon = "\uec7a";
+
+                else if (Item.CommandId == MenuInspector)
+                    _MenuItem.Icon = "\uec7a";
+                //_MenuItem.Icon = "\ue929";
+                else if (Item.CommandId == MenuSaveAs)
+                    _MenuItem.Icon = "\ue792";
+                else if (Item.CommandId == MenuScreenshot)
+                    _MenuItem.Icon = "\uE924";
+                else if (Item.CommandId == MenuZoomIn)
+                    _MenuItem.Icon = "\ue8a3";
+                else if (Item.CommandId == MenuZoomOut)
+                    _MenuItem.Icon = "\ue71f";
+                else if (Item.CommandId == MenuZoomReset)
+                    _MenuItem.Icon = "\ue72c";
+                else if (Item.CommandId == MenuTranslate)
+                {
+                    _MenuItem.Icon = "\uE8C1";
+                    _MenuItem.IsEnabled = Utils.IsHttpScheme(browser.MainFrame.Url);
+                }
+
+                else if (Item.CommandId == MenuOpenNewTab)
+                    _MenuItem.Icon = "\uE8A7";
+                else if (Item.CommandId == MenuCopyURL)
+                    _MenuItem.Icon = "\ue71b";
 
                 else if (Item.CommandId == CefMenuCommand.Undo)
                     _MenuItem.InputGestureText = "Ctrl+Z";
                 else if (Item.CommandId == CefMenuCommand.Redo)
                     _MenuItem.InputGestureText = "Ctrl+Y";
+
                 else if (Item.CommandId == CefMenuCommand.Cut)
                     _MenuItem.InputGestureText = "Ctrl+X";
                 else if (Item.CommandId == CefMenuCommand.Copy)
@@ -459,16 +533,18 @@ namespace SLBr.Handlers
                     _MenuItem.InputGestureText = "Ctrl+V";
                 else if (Item.CommandId == CefMenuCommand.SelectAll)
                     _MenuItem.InputGestureText = "Ctrl+A";
-                else if (Item.CommandId == (CefMenuCommand)26510)
+                else if (Item.CommandId == CefMenuCommand.Delete)
+                    _MenuItem.IsEnabled = !string.IsNullOrEmpty(Parameters.SelectionText);
+
+                else if (Item.CommandId == MenuEmoji)
                     _MenuItem.InputGestureText = "Win+Period";
+
                 else if (Item.Header.StartsWith("Search"))
                     _MenuItem.Icon = "\uF6Fa";
                 else if (Item.CommandId == CefMenuCommand.SpellCheckSuggestion0 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion1 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion2 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion3 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion4)
                     _MenuItem.Icon = "\uf87b";
                 else if (Item.CommandId == CefMenuCommand.AddToDictionary)
                     _MenuItem.Icon = "\uecc9";
-                else if (Item.CommandId == (CefMenuCommand)26503)
-                    _MenuItem.Icon = "\ue929";
 
                 //_MenuItem.SetResourceReference(Control.ForegroundProperty, "White");
                 //_MenuItem.SetResourceReference(Control.StyleProperty, (Style)MainWindow.Instance.Resources["ApplyableMenuItemStyle"]);

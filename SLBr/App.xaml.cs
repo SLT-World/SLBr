@@ -2,7 +2,9 @@
 using CefSharp.SchemeHandler;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Win32;
+using SLBr.Controls;
 using SLBr.Handlers;
+using SLBr.Pages;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -184,27 +186,6 @@ namespace SLBr
                 RaisePropertyChanged("GlobalHistory");
             }
         }
-        private ObservableCollection<ActionStorage> PrivateCompletedDownloads = new ObservableCollection<ActionStorage>();
-        public ObservableCollection<ActionStorage> CompletedDownloads
-        {
-            get { return PrivateCompletedDownloads; }
-            set
-            {
-                PrivateCompletedDownloads = value;
-                /*Dispatcher.Invoke(() =>
-                {
-                    foreach (MainWindow _Window in AllWindows)
-                    {
-                        foreach (BrowserTabItem _Tab in _Window.Tabs)
-                        {
-                            if (_Tab.Content != null)
-                                _Tab.Content.OpenDownloadsButton.Visibility = Visibility.Visible;
-                        }
-                    }
-                });*/
-                RaisePropertyChanged("CompletedDownloads");
-            }
-        }
         private ObservableCollection<Extension> PrivateExtensions = new ObservableCollection<Extension>();
         public ObservableCollection<Extension> Extensions
         {
@@ -212,6 +193,33 @@ namespace SLBr
             set
             {
                 PrivateExtensions = value;
+                Dispatcher.Invoke(() =>
+                {
+                    switch (int.Parse(GlobalSave.Get("ExtensionButton")))
+                    {
+                        case 0:
+                            foreach (MainWindow _Window in AllWindows)
+                            {
+                                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
+                                    BrowserView.ExtensionsButton.Visibility = value.Any() ? Visibility.Visible : Visibility.Collapsed;
+                            }
+                            break;
+                        case 1:
+                            foreach (MainWindow _Window in AllWindows)
+                            {
+                                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
+                                    BrowserView.ExtensionsButton.Visibility = Visibility.Visible;
+                            }
+                            break;
+                        case 2:
+                            foreach (MainWindow _Window in AllWindows)
+                            {
+                                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
+                                    BrowserView.ExtensionsButton.Visibility = Visibility.Collapsed;
+                            }
+                            break;
+                    }
+                });
                 RaisePropertyChanged("Extensions");
             }
         }
@@ -224,24 +232,12 @@ namespace SLBr
                 GlobalHistory.Remove(HistoryEntry);
             GlobalHistory.Insert(0, HistoryEntry);
         }
-        private Dictionary<int, DownloadItem> PrivateDownloads = new Dictionary<int, DownloadItem>();
-        public Dictionary<int, DownloadItem> Downloads
-        {
-            get { return PrivateDownloads; }
-            set
-            {
-                PrivateDownloads = value;
-                RaisePropertyChanged("Downloads");
-            }
-        }
-        public FastHashSet<int> CanceledDownloads = new FastHashSet<int>();
+        public Dictionary<int, DownloadItem> Downloads = new Dictionary<int, DownloadItem>();
         public void UpdateDownloadItem(DownloadItem item)
         {
             Downloads[item.Id] = item;
             Dispatcher.Invoke(() =>
             {
-                if (item.IsComplete)
-                    CompletedDownloads.Add(new ActionStorage(Path.GetFileName(item.FullPath), "5<,>slbr://downloads/", ""));
                 foreach (MainWindow _Window in AllWindows)
                     _Window.TaskbarProgress.ProgressValue = item.IsComplete ? 0 : item.PercentComplete / 100.0;
             });
@@ -258,102 +254,108 @@ namespace SLBr
         [DllImport("shell32.dll", SetLastError = true)]
         static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
 
+        public string UserAgent;
+
         public void LoadExtensions()
         {
-            //Extensions.Clear();
+            Extensions.Clear();
             if (Directory.Exists(ExtensionsPath))
             {
                 var ExtensionsDirectory = Directory.GetDirectories(ExtensionsPath);
                 if (ExtensionsDirectory.Length != 0)
                 {
-                    ObservableCollection<Extension> _Extensions = new ObservableCollection<Extension>();
+                    //ObservableCollection<Extension> _Extensions = new ObservableCollection<Extension>();
                     foreach (var ExtensionParentDirectory in ExtensionsDirectory)
                     {
-                        string ExtensionDirectory = Directory.EnumerateDirectories(ExtensionParentDirectory).FirstOrDefault();
-                        if (Directory.Exists(ExtensionDirectory))
+                        try
                         {
-                            string[] Manifests = Directory.GetFiles(ExtensionDirectory, "manifest.json", SearchOption.TopDirectoryOnly);
-                            foreach (string ManifestFile in Manifests)
+                            string ExtensionDirectory = Directory.EnumerateDirectories(ExtensionParentDirectory).FirstOrDefault();
+                            if (Directory.Exists(ExtensionDirectory))
                             {
-                                JsonElement Manifest = JsonDocument.Parse(File.ReadAllText(ManifestFile)).RootElement;
-
-                                Extension _Extension = new Extension() { ID = Path.GetFileName(ExtensionParentDirectory), Version = Manifest.GetProperty("version").ToString()/*, ManifestVersion = Manifest.GetProperty("manifest_version").ToString()*/ };
-
-                                if (Manifest.TryGetProperty("action", out JsonElement ExtensionAction))
+                                string[] Manifests = Directory.GetFiles(ExtensionDirectory, "manifest.json", SearchOption.TopDirectoryOnly);
+                                foreach (string ManifestFile in Manifests)
                                 {
-                                    if (ExtensionAction.TryGetProperty("default_popup", out JsonElement ExtensionPopup))
-                                        _Extension.Popup = $"chrome-extension://{_Extension.ID}/{ExtensionPopup.GetString()}";
-                                    /*else if (ExtensionAction.TryGetProperty("default_icon", out JsonElement defaultIconValue))
+                                    JsonElement Manifest = JsonDocument.Parse(File.ReadAllText(ManifestFile)).RootElement;
+
+                                    Extension _Extension = new Extension() { ID = Path.GetFileName(ExtensionParentDirectory), Version = Manifest.GetProperty("version").ToString()/*, ManifestVersion = Manifest.GetProperty("manifest_version").ToString()*/ };
+
+                                    if (Manifest.TryGetProperty("action", out JsonElement ExtensionAction))
                                     {
-                                        var firstIcon = defaultIconValue.EnumerateObject().OrderBy(kvp => int.Parse(kvp.Name)).FirstOrDefault();
-                                        _Extension.Icon = $"chrome-extension://{ExtensionID}/{firstIcon.Value.GetString()}";
-                                    }*/
-                                }
-                                List<string> VarsInMessages = new List<string>();
-                                if (Manifest.TryGetProperty("name", out JsonElement ExtensionName))
-                                {
-                                    string Name = ExtensionName.GetString();
-                                    if (Name.StartsWith("__MSG_"))
-                                        VarsInMessages.Add($"Name<|>{Name}");
-                                    else
-                                        _Extension.Name = Name;
-                                }
-                                if (Manifest.TryGetProperty("description", out JsonElement ExtensionDescription))
-                                {
-                                    string Description = ExtensionDescription.GetString();
-                                    if (Description.StartsWith("__MSG_"))
-                                        VarsInMessages.Add($"Description<|>{Description}");
-                                    else
-                                        _Extension.Description = Description;
-                                }
-
-                                foreach (string Var in VarsInMessages)
-                                {
-                                    string _Locale = "en";
-                                    string[] LocalesDirectory = Directory.GetDirectories(Path.Combine(ExtensionDirectory, "_locales"));
-                                    foreach (string LocaleDirectory in LocalesDirectory)
-                                    {
-                                        string CompareLocale = Locale.Name.Replace("-", "_");
-                                        if (Path.GetFileName(LocaleDirectory) == CompareLocale)
+                                        if (ExtensionAction.TryGetProperty("default_popup", out JsonElement ExtensionPopup))
+                                            _Extension.Popup = $"chrome-extension://{_Extension.ID}/{ExtensionPopup.GetString()}";
+                                        /*else if (ExtensionAction.TryGetProperty("default_icon", out JsonElement defaultIconValue))
                                         {
-                                            _Locale = CompareLocale;
-                                            break;
+                                            var firstIcon = defaultIconValue.EnumerateObject().OrderBy(kvp => int.Parse(kvp.Name)).FirstOrDefault();
+                                            _Extension.Icon = $"chrome-extension://{ExtensionID}/{firstIcon.Value.GetString()}";
+                                        }*/
+                                    }
+                                    List<string> VarsInMessages = new List<string>();
+                                    if (Manifest.TryGetProperty("name", out JsonElement ExtensionName))
+                                    {
+                                        string Name = ExtensionName.GetString();
+                                        if (Name.StartsWith("__MSG_"))
+                                            VarsInMessages.Add($"Name<|>{Name}");
+                                        else
+                                            _Extension.Name = Name;
+                                    }
+                                    if (Manifest.TryGetProperty("description", out JsonElement ExtensionDescription))
+                                    {
+                                        string Description = ExtensionDescription.GetString();
+                                        if (Description.StartsWith("__MSG_"))
+                                            VarsInMessages.Add($"Description<|>{Description}");
+                                        else
+                                            _Extension.Description = Description;
+                                    }
+
+                                    foreach (string Var in VarsInMessages)
+                                    {
+                                        string _Locale = "en";
+                                        string[] LocalesDirectory = Directory.GetDirectories(Path.Combine(ExtensionDirectory, "_locales"));
+                                        foreach (string LocaleDirectory in LocalesDirectory)
+                                        {
+                                            string CompareLocale = Locale.Name.Replace("-", "_");
+                                            if (Path.GetFileName(LocaleDirectory) == CompareLocale)
+                                            {
+                                                _Locale = CompareLocale;
+                                                break;
+                                            }
+                                        }
+                                        string[] MessagesFiles = Directory.GetFiles(Path.Combine(ExtensionDirectory, "_locales", _Locale), "messages.json", SearchOption.TopDirectoryOnly);
+                                        foreach (string MessagesFile in MessagesFiles)
+                                        {
+                                            JsonElement Messages = JsonDocument.Parse(File.ReadAllText(MessagesFile)).RootElement;
+                                            string[] Vars = Var.Split("<|>");
+                                            if (Vars[0] == "Description")
+                                            {
+                                                _Extension.Description = Messages.GetProperty(Vars[1].Remove(0, 5).Trim('_')).GetProperty("message").ToString();
+                                                break;
+                                            }
+                                            else if (Vars[0] == "Name")
+                                            {
+                                                _Extension.Name = Messages.GetProperty(Vars[1].Remove(0, 5).Trim('_')).GetProperty("message").ToString();
+                                                break;
+                                            }
                                         }
                                     }
-                                    string[] MessagesFiles = Directory.GetFiles(Path.Combine(ExtensionDirectory, "_locales", _Locale), "messages.json", SearchOption.TopDirectoryOnly);
-                                    foreach (string MessagesFile in MessagesFiles)
-                                    {
-                                        JsonElement Messages = JsonDocument.Parse(File.ReadAllText(MessagesFile)).RootElement;
-                                        string[] Vars = Var.Split("<|>");
-                                        if (Vars[0] == "Description")
-                                        {
-                                            _Extension.Description = Messages.GetProperty(Vars[1].Remove(0, 5).Trim('_')).GetProperty("message").ToString();
-                                            break;
-                                        }
-                                        else if (Vars[0] == "Name")
-                                        {
-                                            _Extension.Name = Messages.GetProperty(Vars[1].Remove(0, 5).Trim('_')).GetProperty("message").ToString();
-                                            break;
-                                        }
-                                    }
-                                }
 
-                                //_Extension.IsEnabled = true;
-                                _Extensions.Add(_Extension);
+                                    //_Extension.IsEnabled = true;
+                                    Extensions.Add(_Extension);
+                                }
                             }
                         }
+                        catch { }
                     }
-                    Extensions = _Extensions;
+                    //Extensions = _Extensions;
                 }
             }
         }
 
         private void InitializeApp()
         {
-            string[] Args = Environment.GetCommandLineArgs().Skip(1).ToArray();
+            IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
             string AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30}";
             string CommandLineUrl = "";
-            if (Args.Length > 0)
+            if (Args.Any())
             {
                 foreach (string Flag in Args)
                 {
@@ -384,10 +386,10 @@ namespace SLBr
             }
             else
             {
-                Process _otherInstance = Utils.GetAlreadyRunningInstance(Process.GetCurrentProcess());
-                if (_otherInstance != null)
+                Process OtherInstance = Utils.GetAlreadyRunningInstance(Process.GetCurrentProcess());
+                if (OtherInstance != null)
                 {
-                    MessageHelper.SendDataMessage(_otherInstance, CommandLineUrl);
+                    MessageHelper.SendDataMessage(OtherInstance, CommandLineUrl);
                     Shutdown(1);
                     Environment.Exit(0);
                     return;
@@ -409,22 +411,23 @@ namespace SLBr
             ExecutablePath = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
             ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
 
+            UserAgent = UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}");
+
             InitializeSaves();
-            InitializeCEF();
             InitializeUISaves(CommandLineUrl);
 
             if (Utils.IsAdministrator())
             {
-                using (var checkkey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\RegisteredApplications", true))
+                using (var CheckKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\RegisteredApplications", true))
                 {
-                    if (checkkey.GetValue("SLBr") == null)
+                    if (CheckKey.GetValue("SLBr") == null)
                     {
-                        using (var key = Registry.ClassesRoot.CreateSubKey("SLBr", true))
+                        using (var Key = Registry.ClassesRoot.CreateSubKey("SLBr", true))
                         {
-                            key.SetValue(null, "SLBr Document");
-                            key.SetValue("AppUserModelId", "SLBr");
+                            Key.SetValue(null, "SLBr Document");
+                            Key.SetValue("AppUserModelId", "SLBr");
 
-                            RegistryKey ApplicationRegistry = key.CreateSubKey("Application", true);
+                            RegistryKey ApplicationRegistry = Key.CreateSubKey("Application", true);
                             ApplicationRegistry.SetValue("AppUserModelId", "SLBr");
                             ApplicationRegistry.SetValue("ApplicationIcon", $"{ExecutablePath},0");
                             ApplicationRegistry.SetValue("ApplicationName", "SLBr");
@@ -432,20 +435,20 @@ namespace SLBr
                             ApplicationRegistry.SetValue("ApplicationDescription", "Browse the web with a fast, lightweight web browser.");
                             ApplicationRegistry.Close();
 
-                            RegistryKey IconRegistry = key.CreateSubKey("DefaultIcon", true);
+                            RegistryKey IconRegistry = Key.CreateSubKey("DefaultIcon", true);
                             IconRegistry.SetValue(null, $"{ExecutablePath},0");
                             ApplicationRegistry.Close();
 
-                            RegistryKey CommandRegistry = key.CreateSubKey("shell\\open\\command", true);
+                            RegistryKey CommandRegistry = Key.CreateSubKey("shell\\open\\command", true);
                             CommandRegistry.SetValue(null, $"\"{ExecutablePath}\" \"%1\"");
                             CommandRegistry.Close();
                         }
-                        using (var key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Clients\\StartMenuInternet", true).CreateSubKey("SLBr", true))
+                        using (var Key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Clients\\StartMenuInternet", true).CreateSubKey("SLBr", true))
                         {
-                            if (key.GetValue(null) as string != "SLBr")
-                                key.SetValue(null, "SLBr");
+                            if (Key.GetValue(null) as string != "SLBr")
+                                Key.SetValue(null, "SLBr");
 
-                            RegistryKey CapabilitiesRegistry = key.CreateSubKey("Capabilities", true);
+                            RegistryKey CapabilitiesRegistry = Key.CreateSubKey("Capabilities", true);
                             CapabilitiesRegistry.SetValue("ApplicationDescription", "Browse the web with a fast, lightweight web browser.");
                             CapabilitiesRegistry.SetValue("ApplicationIcon", $"{ExecutablePath},0");
                             CapabilitiesRegistry.SetValue("ApplicationName", $"SLBr");
@@ -471,18 +474,19 @@ namespace SLBr
 
                             CapabilitiesRegistry.Close();
 
-                            RegistryKey DefaultIconRegistry = key.CreateSubKey("DefaultIcon", true);
+                            RegistryKey DefaultIconRegistry = Key.CreateSubKey("DefaultIcon", true);
                             DefaultIconRegistry.SetValue(null, $"{ExecutablePath},0");
                             DefaultIconRegistry.Close();
 
-                            RegistryKey CommandRegistry = key.CreateSubKey("shell\\open\\command", true);
+                            RegistryKey CommandRegistry = Key.CreateSubKey("shell\\open\\command", true);
                             CommandRegistry.SetValue(null, $"\"{ExecutablePath}\"");
                             CommandRegistry.Close();
                         }
-                        checkkey.SetValue("SLBr", "Software\\Clients\\StartMenuInternet\\SLBr\\Capabilities");
+                        CheckKey.SetValue("SLBr", "Software\\Clients\\StartMenuInternet\\SLBr\\Capabilities");
                     }
                 }
             }
+            InitializeCEF();
             AppInitialized = true;
         }
 
@@ -496,19 +500,20 @@ namespace SLBr
         {
             
             if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
-                DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, (Environment.Is64BitProcess ? "x64" : "x86"), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
+                DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
 
             //e.SetObserved();
-            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, (Environment.Is64BitProcess ? "x64" : "x86"), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
+            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            //MessageBox.Show(e.ExceptionObject.ToString());
             Exception _Exception = e.ExceptionObject as Exception;
             if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
-                DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, (Environment.Is64BitProcess ? "x64" : "x86"), _Exception.Message, _Exception.Source, _Exception.TargetSite, _Exception.StackTrace, _Exception.InnerException));
+                DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), _Exception.Message, _Exception.Source, _Exception.TargetSite, _Exception.StackTrace, _Exception.InnerException));
 
-            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, (Environment.Is64BitProcess ? "x64" : "x86"), _Exception.Message, _Exception.Source, _Exception.TargetSite, _Exception.StackTrace, _Exception.InnerException));
+            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), _Exception.Message, _Exception.Source, _Exception.TargetSite, _Exception.StackTrace, _Exception.InnerException));
         }
 
         string ExceptionText = @"[SLBr] {0}
@@ -537,9 +542,9 @@ Inner Exception: ```{7} ```";
         private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
-                DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, (Environment.Is64BitProcess ? "x64" : "x86"), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
+                DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
 
-            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, (Environment.Is64BitProcess ? "x64" : "x86"), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
+            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
         }
         public int TrackersBlocked;
         public int AdsBlocked;
@@ -597,7 +602,7 @@ Inner Exception: ```{7} ```";
             set
             {
                 PrivateLanguages = value;
-                RaisePropertyChanged("CompletedDownloads");
+                RaisePropertyChanged("Languages");
             }
         }
         public ActionStorage Locale;
@@ -776,7 +781,8 @@ Inner Exception: ```{7} ```";
                     "http://duckduckgo.com/?q={0}",
                     /*"http://search.brave.com/search?q={0}",
                     "http://search.yahoo.com/search?p={0}",
-                    "http://yandex.com/search/?text={0}",*/
+                    "http://yandex.com/search/?text={0}",
+                    "https://www.qwant.com/?q="*/
                 };
 
             if (LanguagesSave.Has("Count") && int.Parse(LanguagesSave.Get("Count")) != 0)
@@ -809,8 +815,6 @@ Inner Exception: ```{7} ```";
 
             if (!GlobalSave.Has("Homepage"))
                 GlobalSave.Set("Homepage", "slbr://newtab");
-            if (!GlobalSave.Has("Theme"))
-                GlobalSave.Set("Theme", "Auto");
             TrackersBlocked = int.Parse(StatisticsSave.Get("BlockedTrackers", "0"));
             AdsBlocked = int.Parse(StatisticsSave.Get("BlockedAds", "0"));
 
@@ -848,8 +852,10 @@ Inner Exception: ```{7} ```";
             if (!GlobalSave.Has("ScreenshotFormat"))
                 GlobalSave.Set("ScreenshotFormat", "Jpeg");
 
-            if (!GlobalSave.Has("RestoreTabs"))
-                GlobalSave.Set("RestoreTabs", true);
+            //if (!GlobalSave.Has("RestoreTabs"))
+            //    GlobalSave.Set("RestoreTabs", true);
+            if (!GlobalSave.Has("DownloadFavicons"))
+                GlobalSave.Set("DownloadFavicons", true);
             if (!GlobalSave.Has("SmoothScroll"))
                 GlobalSave.Set("SmoothScroll", true);
 
@@ -876,9 +882,6 @@ Inner Exception: ```{7} ```";
             if (!GlobalSave.Has("FingerprintLevel"))
                 GlobalSave.Set("FingerprintLevel", "Minimal");
 
-            if (!GlobalSave.Has("FlagEmoji"))
-                GlobalSave.Set("FlagEmoji", false);
-
             /*if (!GlobalSave.Has("DefaultBrowserEngine"))
                 GlobalSave.Set("DefaultBrowserEngine", 0);*/
             try
@@ -890,7 +893,6 @@ Inner Exception: ```{7} ```";
             {
                 Themes.Add(new Theme("Auto", Themes[1]));
             }
-            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.Get("TabAlignment", "Horizontal"), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("AIButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", false.ToString())));
         }
         private void InitializeUISaves(string CommandLineUrl = "")
         {
@@ -908,25 +910,27 @@ Inner Exception: ```{7} ```";
                     Favourites.Add(new ActionStorage(Value[1], $"4<,>{Value[0]}", Value[0]));
                 }
             }
-            if (bool.Parse(GlobalSave.Get("RestoreTabs")))
+            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.Get("TabAlignment", "Horizontal"), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("AIButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", false.ToString())), int.Parse(GlobalSave.Get("ExtensionButton", "0")), int.Parse(GlobalSave.Get("FavouritesBar", "0")));
+            if (bool.Parse(GlobalSave.Get("RestoreTabs", true.ToString())))
             {
                 for (int t = 0; t < WindowsSaves.Count; t++)
                 {
-                    Saving TabsSave = WindowsSaves[t];
                     MainWindow _Window = new MainWindow();
+                    _Window.Show();
+                    Saving TabsSave = WindowsSaves[t];
                     if (int.Parse(TabsSave.Get("Count", "0")) > 0)
                     {
                         for (int i = 0; i < int.Parse(TabsSave.Get("Count")); i++)
                         {
                             string Url = TabsSave.Get(i.ToString());
-                            if (Url != "NOTFOUND")
-                                _Window.NewTab(Url);
+                            //if (Url != "NOTFOUND")
+                            _Window.NewTab(Url);
                         }
                         _Window.TabsUI.SelectedIndex = int.Parse(TabsSave.Get("Selected", 0.ToString()));
                     }
                     else
                         _Window.NewTab(GlobalSave.Get("Homepage"));
-                    _Window.Show();
+                    _Window.TabsUI.Visibility = Visibility.Visible;
                 }
             }
             if (!string.IsNullOrEmpty(CommandLineUrl))
@@ -988,6 +992,7 @@ Inner Exception: ```{7} ```";
 
         private void InitializeCEF()
         {
+            //return;
             _LifeSpanHandler = new LifeSpanHandler(false);
             _DownloadHandler = new DownloadHandler();
             _RequestHandler = new RequestHandler();
@@ -1073,14 +1078,13 @@ Inner Exception: ```{7} ```";
                 });
             }
 
-            bool ChromeRuntime = true;
-            Settings.ChromeRuntime = ChromeRuntime;
             CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Chrome;
             Cef.Initialize(Settings);
             Cef.UIThreadTaskFactory.StartNew(delegate
             {
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
                 bool PDFViewerExtension = bool.Parse(GlobalSave.Get("PDFViewerExtension"));
+
                 /*string _Preferences = "";
                 foreach (KeyValuePair<string, object> e in GlobalRequestContext.GetAllPreferences(true))
                     _Preferences = GetPreferencesString(_Preferences, "", e);
@@ -1089,54 +1093,61 @@ Inner Exception: ```{7} ```";
                     outputFile.Write(_Preferences);*/
 
                 string Error;
-                if (ChromeRuntime)
-                {
-                    GlobalRequestContext.SetPreference("download_bubble_enabled", false, out Error);
-                    GlobalRequestContext.SetPreference("shopping_list_enabled.enabled", false, out Error);
-                    //GlobalRequestContext.SetPreference("browser_labs_enabled", false, out Error);
-                    //GlobalRequestContext.SetPreference("allow_dinosaur_easter_egg", false, out Error);
-                    //GlobalRequestContext.SetPreference("feedback_allowed", false, out Error);
-                    //GlobalRequestContext.SetPreference("ntp.promo_visible", false, out Error);
-                    //GlobalRequestContext.SetPreference("ntp.shortcust_visible", false, out Error);
-                    //GlobalRequestContext.SetPreference("ntp_snippets.enable", false, out Error);
-                    //GlobalRequestContext.SetPreference("ntp_snippets_by_dse.enable", false, out Error);
-                    //GlobalRequestContext.SetPreference("search.suggest_enabled", false, out Error);
-                    //GlobalRequestContext.SetPreference("side_search.enabled", false, out Error);
+                GlobalRequestContext.SetPreference("autofill.credit_card_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("autofill.profile_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("autofill.enabled", false, out Error);
+                GlobalRequestContext.SetPreference("payments.can_make_payment_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("credentials_enable_service", false, out Error);
 
-                    //GlobalRequestContext.SetPreference("https_only_mode_enabled", true, out Error);
-                }
+                //GlobalRequestContext.SetPreference("scroll_to_text_fragment_enabled", false, out Error);
+                //GlobalRequestContext.SetPreference("url_keyed_anonymized_data_collection.enabled", false, out Error);
+
+                GlobalRequestContext.SetPreference("download_bubble_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("download_bubble.partial_view_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("download_duplicate_file_prompt_enabled", false, out Error);
+                //GlobalRequestContext.SetPreference("profile.default_content_setting_values.automatic_downloads", 1, out Error);
+
+                GlobalRequestContext.SetPreference("shopping_list_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("browser_labs_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("allow_dinosaur_easter_egg", false, out Error);
+                GlobalRequestContext.SetPreference("feedback_allowed", false, out Error);
+                GlobalRequestContext.SetPreference("policy.feedback_surveys_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("ntp.promo_visible", false, out Error);
+                GlobalRequestContext.SetPreference("ntp.shortcust_visible", false, out Error);
+                GlobalRequestContext.SetPreference("ntp_snippets.enable", false, out Error);
+                GlobalRequestContext.SetPreference("ntp_snippets_by_dse.enable", false, out Error);
+                GlobalRequestContext.SetPreference("search.suggest_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("side_search.enabled", false, out Error);
+                GlobalRequestContext.SetPreference("translate.enabled", false, out Error);
+                GlobalRequestContext.SetPreference("history.saving_disabled", false, out Error);
+                GlobalRequestContext.SetPreference("media_router.enable_media_router", false, out Error);
+                GlobalRequestContext.SetPreference("documentsuggest.enabled", false, out Error);
+                GlobalRequestContext.SetPreference("alternate_error_pages.enabled", false, out Error);
+                //GlobalRequestContext.SetPreference("https_only_mode_enabled", true, out Error);
                 //GlobalRequestContext.SetPreference("enable_do_not_track", bool.Parse(GlobalSave.Get("DoNotTrack")), out errorMessage);
-
                 //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/preloading/preloading_prefs.h
                 GlobalRequestContext.SetPreference("net.network_prediction_options", 2, out Error);
-
-                //GlobalRequestContext.SetPreference("safebrowsing.enabled", false, out Error);
+                GlobalRequestContext.SetPreference("safebrowsing.enabled", false, out Error);
                 //GlobalRequestContext.SetPreference("browser.theme.follows_system_colors", false, out Error);
 
                 GlobalRequestContext.SetPreference("browser.enable_spellchecking", bool.Parse(GlobalSave.Get("SpellCheck")), out Error);
+                //GlobalRequestContext.SetPreference("spellcheck.use_spelling_service", false, out Error);
                 GlobalRequestContext.SetPreference("spellcheck.dictionaries", Languages.Select(i => i.Tooltip), out Error);
-                GlobalRequestContext.SetPreference("background_mode.enabled", false, out Error);
+                GlobalRequestContext.SetPreference("intl.accept_languages", Languages.Select(i => i.Tooltip), out Error);
 
                 GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !PDFViewerExtension, out Error);
                 GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !PDFViewerExtension, out Error);
 
-                //GlobalRequestContext.SetPreference("profile.default_content_setting_values.automatic_downloads", 1, out Error);
-
-                //GlobalRequestContext.SetPreference("download_bubble.partial_view_enabled", false, out Error);
-
                 if (bool.Parse(GlobalSave.Get("BlockFingerprint")))
                     GlobalRequestContext.SetPreference("webrtc.ip_handling_policy", "disable_non_proxied_udp", out Error);
-
                 //GlobalRequestContext.SetPreference("profile.content_settings.enable_quiet_permission_ui.geolocation", false, out Error);
-
-                //profile.block_third_party_cookies
-                //cefSettings.CefCommandLineArgs.Add("ssl-version-min", "tls1.2");
-
-                //webkit.webprefs.encrypted_media_enabled : True
-
-                //GlobalRequestContext.SetPreference("extensions.storage.garbagecollect", true, out errorMessage);
             });
             LoadExtensions();
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
+                    BrowserView?.InitializeBrowserComponent();
+            }
         }
 
         /*public string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
@@ -1202,7 +1213,7 @@ Inner Exception: ```{7} ```";
             return HTML;
         }
 
-        public string Cannot_Connect_Error = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2 id=""title"">Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin: 0 0 0 0; color: #646464;"">{Error}</h5></div></body></html>";
+        public string Cannot_Connect_Error = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2 id=""title"">Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
         public string Process_Crashed_Error = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process Crashed</h2><h5>Process crashed while attempting to load content. Undo / Refresh the page to resolve the problem.</h5><a href=""slbr://newtab"">Return to homepage</a></div></body></html>";
         public string Deception_Error = @"<html><head><title>Site access denied</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Site Access Denied</h2><h5>The site ahead was detected to contain deceptive content.</h5><a href=""slbr://newtab"">Return to homepage</a></div></body></html>";
         public string Malware_Error = @"<html><head><title>Site access denied</title><style>html{background:darkred;}body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Site Access Denied</h2><h5>The site ahead was detected to contain unwanted software / malware.</h5><a href=""slbr://newtab"">Return to homepage</a></div></body></html>";
@@ -1236,16 +1247,12 @@ Inner Exception: ```{7} ```";
             //Settings.CefCommandLineArgs.Add("disable-client-side-phishing-detection");
             Settings.CefCommandLineArgs.Add("disable-domain-reliability");
 
-            Settings.CefCommandLineArgs.Add("hide-crash-restore-bubble");
-            Settings.CefCommandLineArgs.Add("disable-chrome-login-prompt");
 
             Settings.CefCommandLineArgs.Add("disable-chrome-tracing-computation");
-            Settings.CefCommandLineArgs.Add("disable-search-engine-choice-screen");
             //Settings.CefCommandLineArgs.Add("disable-scroll-to-text-fragment");
 
             //Settings.CefCommandLineArgs.Add("disable-ntp-other-sessions-menu");
             Settings.CefCommandLineArgs.Add("disable-default-apps");
-            Settings.CefCommandLineArgs.Add("disable-prompt-on-repost");
 
             Settings.CefCommandLineArgs.Add("disable-modal-animations");
             //Settings.CefCommandLineArgs.Add("material-design-ink-drop-animation-speed", "fast");
@@ -1254,6 +1261,7 @@ Inner Exception: ```{7} ```";
 
             Settings.CefCommandLineArgs.Add("disable-login-animations");
             Settings.CefCommandLineArgs.Add("disable-stack-profiler");
+            Settings.CefCommandLineArgs.Add("disable-system-font-check");
             //Settings.CefCommandLineArgs.Add("disable-infobars");
             Settings.CefCommandLineArgs.Add("disable-breakpad");
             Settings.CefCommandLineArgs.Add("disable-crash-reporter");
@@ -1275,6 +1283,20 @@ Inner Exception: ```{7} ```";
             //Settings.CefCommandLineArgs.Add("oobe-skip-new-user-check-for-testing");
 
             //Settings.CefCommandLineArgs.Add("disable-gaia-services"); // https://source.chromium.org/chromium/chromium/src/+/main:ash/constants/ash_switches.cc
+            
+            Settings.CefCommandLineArgs.Add("wm-window-animations-disabled");
+            Settings.CefCommandLineArgs.Add("animation-duration-scale", "0");
+            Settings.CefCommandLineArgs.Add("disable-histogram-customizer");
+
+            //REMOVE MOST CHROMIUM POPUPS
+            Settings.CefCommandLineArgs.Add("suppress-message-center-popups");
+            Settings.CefCommandLineArgs.Add("disable-prompt-on-repost");
+            Settings.CefCommandLineArgs.Add("propagate-iph-for-testing");
+            Settings.CefCommandLineArgs.Add("disable-search-engine-choice-screen");
+            Settings.CefCommandLineArgs.Add("ash-no-nudges");
+            Settings.CefCommandLineArgs.Add("noerrdialogs");
+            //Settings.CefCommandLineArgs.Add("hide-crash-restore-bubble");
+            //Settings.CefCommandLineArgs.Add("disable-chrome-login-prompt");
         }
 
         private void SetFrameworkFlags(CefSettings Settings)
@@ -1334,6 +1356,7 @@ Inner Exception: ```{7} ```";
             //Settings.CefCommandLineArgs.Add("enable-raster-side-dark-mode-for-images");
 
             Settings.CefCommandLineArgs.Add("process-per-site");
+            Settings.CefCommandLineArgs.Add("password-store", "basic");
 
             if (bool.Parse(GlobalSave.Get("LiteMode")))
             {
@@ -1349,37 +1372,38 @@ Inner Exception: ```{7} ```";
                 Settings.CefCommandLineArgs.Add("force-prefers-reduced-motion");
                 Settings.CefCommandLineArgs.Add("disable-logging");
 
-                //https://source.chromium.org/chromium/chromium/src/+/main:components/optimization_guide/core/optimization_guide_switches.cc
-                //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/optimization_guide/hints_fetcher_browsertest.cc
-                //https://source.chromium.org/chromium/chromium/src/+/main:components/optimization_guide/core/optimization_guide_features.cc
-                Settings.CefCommandLineArgs.Add("disable-fetching-hints-at-navigation-start");
-                Settings.CefCommandLineArgs.Add("disable-model-download-verification");
-                Settings.CefCommandLineArgs.Add("disable-component-update");
+                Settings.CefCommandLineArgs.Add("max-web-media-player-count", "1");
+
                 Settings.CefCommandLineArgs.Add("gpu-program-cache-size-kb", $"{128 * 1024}");
                 Settings.CefCommandLineArgs.Add("gpu-disk-cache-size-kb", $"{128 * 1024}");
 
                 Settings.CefCommandLineArgs.Add("force-effective-connection-type", "Slow-2G");
-                Settings.CefCommandLineArgs.Add("num-raster-threads", "4"); //RETIRED FLAG
+                //Settings.CefCommandLineArgs.Add("num-raster-threads", "4"); //RETIRED FLAG
                 Settings.CefCommandLineArgs.Add("renderer-process-limit", "4");
 
-                Settings.CefCommandLineArgs.Add("component-updater", "disable-background-downloads,disable-delta-updates"); //https://source.chromium.org/chromium/chromium/src/+/main:components/component_updater/component_updater_command_line_config_policy.cc
             }
             else
             {
                 Settings.CefCommandLineArgs.Add("gpu-program-cache-size-kb", $"{2 * 1024 * 1024}");
                 Settings.CefCommandLineArgs.Add("gpu-disk-cache-size-kb", $"{2 * 1024 * 1024}");
-                Settings.CefCommandLineArgs.Add("component-updater", "fast-update");
+                //Settings.CefCommandLineArgs.Add("component-updater", "fast-update");
                 if (!bool.Parse(GlobalSave.Get("ChromiumHardwareAcceleration")))
                     Settings.CefCommandLineArgs.Add("enable-low-res-tiling");
             }
 
-            //https://www.mail-archive.com/chromium-dev@googlegroups.com/msg05368.html
-            //Settings.CefCommandLineArgs.Add("memory-model", "low"); //DEPRECATED
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/optimization_guide/core/optimization_guide_switches.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/optimization_guide/hints_fetcher_browsertest.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/optimization_guide/core/optimization_guide_features.cc
+            Settings.CefCommandLineArgs.Add("disable-fetching-hints-at-navigation-start");
+            Settings.CefCommandLineArgs.Add("disable-model-download-verification");
+            Settings.CefCommandLineArgs.Add("disable-component-update");
+            Settings.CefCommandLineArgs.Add("component-updater", "disable-background-downloads,disable-delta-updates"); //https://source.chromium.org/chromium/chromium/src/+/main:components/component_updater/component_updater_command_line_config_policy.cc
+
             Settings.CefCommandLineArgs.Add("back-forward-cache");
 
-            Settings.CefCommandLineArgs.Add("disable-highres-timer");
             //This change makes it so when EnableHighResolutionTimer(true) which is on AC power the timer is 1ms and EnableHighResolutionTimer(false) is 4ms.
             //https://bugs.chromium.org/p/chromium/issues/detail?id=153139
+            Settings.CefCommandLineArgs.Add("disable-highres-timer");
 
             //https://github.com/portapps/brave-portable/issues/26
             //https://github.com/chromium/chromium/blob/2ca8c5037021c9d2ecc00b787d58a31ed8fc8bcb/third_party/blink/renderer/bindings/core/v8/v8_cache_options.h
@@ -1391,25 +1415,16 @@ Inner Exception: ```{7} ```";
             //Settings.CefCommandLineArgs.Add("quick-intensive-throttling-after-loading"); //Causes memory to be 100 MB more than if disabled when minimized
             //Settings.CefCommandLineArgs.Add("intensive-wake-up-throttling-policy", "1");
 
-            //Settings.CefCommandLineArgs.Add("private-aggregation-developer-mode"); //Causes the Private Aggregation API to run without reporting delays.
             //Settings.CefCommandLineArgs.Add("font-cache-shared-handle"); //Increases memory by 5 MB
 
             Settings.CefCommandLineArgs.Add("disable-mipmap-generation"); // Disables mipmap generation in Skia. Used a workaround for select low memory devices
 
             Settings.CefCommandLineArgs.Add("enable-parallel-downloading");
-
-            Settings.CefCommandLineArgs.Add("wm-window-animations-disabled");
-            Settings.CefCommandLineArgs.Add("animation-duration-scale", "0");
-            Settings.CefCommandLineArgs.Add("disable-histogram-customizer");
         }
 
         /*NEVER SLOW MODE FLAGS
-        num-raster-threads
-        renderer-process-limit
-        force-effective-connection-type
-
         // The adapter selecting strategy related to GPUPowerPreference.
-        https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/service/service_utils.cc;
+        https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/service/service_utils.cc
         none = WebGPUPowerPreference::kNone
         default-low-power = WebGPUPowerPreference::kDefaultLowPower;
         default-high-performance = WebGPUPowerPreference::kDefaultHighPerformance;
@@ -1499,7 +1514,6 @@ Inner Exception: ```{7} ```";
             else
             {
                 Settings.CefCommandLineArgs.Add("disable-gpu");
-                //Settings.CefCommandLineArgs.Add("disable-d3d11");
                 Settings.CefCommandLineArgs.Add("disable-gpu-compositing");
                 Settings.CefCommandLineArgs.Add("disable-gpu-vsync");
                 Settings.CefCommandLineArgs.Add("disable-gpu-shader-disk-cache");
@@ -1609,7 +1623,12 @@ Inner Exception: ```{7} ```";
              * https://source.chromium.org/chromium/chromium/src/+/main:android_webview/common/aw_features.cc
              * https://source.chromium.org/chromium/chromium/src/+/main:content/public/common/content_features.cc
              * https://source.chromium.org/chromium/chromium/src/+/main:components/page_image_service/features.cc
+             * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/scheduler/main_thread/memory_purge_manager.cc
+             * https://source.chromium.org/chromium/chromium/src/+/main:content/browser/loader/navigation_url_loader_impl.cc
+             * https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/android/util/features.cc
+             * https://source.chromium.org/chromium/chromium/src/+/main:components/js_injection/renderer/js_communication.cc
              * 
+             * https://source.chromium.org/chromium/chromium/src/+/main:android_webview/java/src/org/chromium/android_webview/common/ProductionSupportedFlagList.java
              * https://chromium.googlesource.com/chromium/src/+/efa55ec49b91438d5a9c0930ef19038d517914d1
              * 
              * BackForwardCacheWithKeepaliveRequest ReduceGpuPriorityOnBackground ProcessHtmlDataImmediately SetLowPriorityForBeacon
@@ -1662,11 +1681,13 @@ Inner Exception: ```{7} ```";
 
             string JsFlags = "--max-old-space-size=512,--optimize-gc-for-battery,--memory-reducer-favors-memory,--efficiency-mode,--battery-saver-mode";// "--always-opt,--gc-global,--gc-experiment-reduce-concurrent-marking-tasks";
 
-            string EnableFeatures = "AutofillDisableShadowHeuristics,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,stop-in-background,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
-            string DisableFeatures = "PrivateAggregationApi,PrintCompositorLPAC,CalculateNativeWinOcclusion,CrashReporting,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints,SegmentationPlatform,WebFontsCacheAwareTimeoutAdaption,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,InstalledApp,BrowsingTopics,Fledge,MemoryCacheStrongReference,Prerender2NoVarySearch,Prerender2,InterestFeedContentSuggestions";
+            //DEFAULT ENABLED: MemoryPurgeInBackground, stop-in-background
+            //ANDROID: InputStreamOptimizations
+            string EnableFeatures = "QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,ReduceCpuUtilization2,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
+            string DisableFeatures = "Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,LoadingPredictorPrefetch,WebBluetooth,MediaRouter,LiveCaption,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints,SegmentationPlatform,WebFontsCacheAwareTimeoutAdaption,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,InstalledApp,BrowsingTopics,Fledge,MemoryCacheStrongReference,Prerender2NoVarySearch,Prerender2,InterestFeedContentSuggestions";
 
-            string EnableBlinkFeatures = "StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility,SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
-            string DisableBlinkFeatures = "Prerender2";
+            string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility,SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
+            string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI,DocumentPictureInPictureAPI,Prerender2";
 
             try
             {
@@ -1716,8 +1737,39 @@ Inner Exception: ```{7} ```";
 
         protected override void OnExit(ExitEventArgs e)
         {
-            CloseSLBr(false);
+            CloseSLBr(true);
             base.OnExit(e);
+        }
+
+        public void ClearAllData()
+        {
+            AdsBlocked = 0;
+            TrackersBlocked = 0;
+            Cef.GetGlobalCookieManager().DeleteCookies(string.Empty, string.Empty);
+            Cef.GetGlobalRequestContext().ClearHttpAuthCredentialsAsync();
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
+                {
+                    if (BrowserView != null && BrowserView.Chromium != null && BrowserView.Chromium.IsBrowserInitialized)
+                    {
+                        if (BrowserView.Chromium.CanExecuteJavascriptInMainFrame)
+                            BrowserView.Chromium.ExecuteScriptAsync("localStorage.clear();sessionStorage.clear();");
+                        using (var DevToolsClient = BrowserView.Chromium.GetDevToolsClient())
+                        {
+                            //https://github.com/cefsharp/CefSharp/issues/1234
+                            DevToolsClient.Storage.ClearDataForOriginAsync("*", "all");
+                            DevToolsClient.Page.ClearCompilationCacheAsync();
+                            DevToolsClient.Page.ResetNavigationHistoryAsync();
+                            DevToolsClient.Network.ClearBrowserCookiesAsync();
+                            DevToolsClient.Network.ClearBrowserCacheAsync();
+                        }
+                    }
+                }
+            }
+            var infoWindow = new InformationDialogWindow("Alert", $"Settings", "All browsing data has been cleared", "\ue713");
+            infoWindow.Topmost = true;
+            infoWindow.ShowDialog();
         }
 
         public void CloseSLBr(bool ExecuteCloseEvents = true)
@@ -1744,28 +1796,23 @@ Inner Exception: ```{7} ```";
                     LanguagesSave.Set($"{i}", Languages[i].Tooltip, false);
                 LanguagesSave.Save();
 
+                foreach (FileInfo _File in new DirectoryInfo(UserApplicationWindowsPath).GetFiles())
+                    _File.Delete();
                 if (bool.Parse(GlobalSave.Get("RestoreTabs")))
                 {
-                    foreach (FileInfo _File in new DirectoryInfo(UserApplicationWindowsPath).GetFiles())
-                        _File.Delete();
                     foreach (MainWindow _Window in AllWindows)
                     {
                         Saving TabsSave = WindowsSaves[AllWindows.IndexOf(_Window)];
                         TabsSave.Clear();
 
-                        int Count = 0;
                         for (int i = 0; i < _Window.Tabs.Count; i++)
                         {
                             BrowserTabItem Tab = _Window.Tabs[i];
                             if (Tab.ParentWindow != null)
-                            {
-                                TabsSave.Set(Count.ToString(), Tab.Content.Address, false);
-                                if (i == _Window.TabsUI.SelectedIndex)
-                                    TabsSave.Set("Selected", Count.ToString());
-                                Count++;
-                            }
+                                TabsSave.Set(i.ToString(), Tab.Content.Address, false);
                         }
-                        TabsSave.Set("Count", Count.ToString());
+                        TabsSave.Set("Selected", _Window.TabsUI.SelectedIndex.ToString());
+                        TabsSave.Set("Count", (_Window.Tabs.Count - 1).ToString());
                     }
                 }
             }
@@ -1875,7 +1922,7 @@ Inner Exception: ```{7} ```";
             foreach (MainWindow _Window in AllWindows)
                 _Window.SetDimUnloadedIcon(Toggle);
         }
-        public void SetAppearance(Theme _Theme, string TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowAIButton, bool AllowReaderModeButton)
+        public void SetAppearance(Theme _Theme, string TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowAIButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
         {
             GlobalSave.Set("TabAlignment", TabAlignment);
 
@@ -1883,6 +1930,8 @@ Inner Exception: ```{7} ```";
             GlobalSave.Set("TranslateButton", AllowTranslateButton);
             GlobalSave.Set("HomeButton", AllowHomeButton);
             GlobalSave.Set("ReaderButton", AllowReaderModeButton);
+            GlobalSave.Set("ExtensionButton", ShowExtensionButton);
+            GlobalSave.Set("FavouritesBar", ShowFavouritesBar);
 
             CurrentTheme = _Theme;
             GlobalSave.Set("Theme", CurrentTheme.Name);
@@ -2029,7 +2078,7 @@ Inner Exception: ```{7} ```";
             }
 
             foreach (MainWindow _Window in AllWindows)
-                _Window.SetAppearance(_Theme, TabAlignment, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton);
+                _Window.SetAppearance(_Theme, TabAlignment, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
         }
     }
 
@@ -2106,6 +2155,10 @@ Inner Exception: ```{7} ```";
         Print = 30,
         Mute = 31,
         Find = 32,
+
+        ZoomIn = 40,
+        ZoomOut = 41,
+        ZoomReset = 42,
     }
 
     public class ActionStorage : INotifyPropertyChanged

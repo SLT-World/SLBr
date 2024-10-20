@@ -821,6 +821,20 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu>
+                    <MenuItem Header="Undo" Command="ApplicationCommands.Undo"/>
+                    <MenuItem Header="Redo" Command="ApplicationCommands.Redo"/>
+                    <Separator/>
+                    <MenuItem Header="Cut" Command="ApplicationCommands.Cut"/>
+                    <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
+                    <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
+                    <Separator/>
+                    <MenuItem Header="Select All" Command="ApplicationCommands.SelectAll"/>
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type PasswordBox}">
@@ -1022,6 +1036,7 @@ Margin="{TemplateBinding Padding}"/>
     </Style>
     <Style TargetType="{x:Type Button}" x:Key="HyperlinkButton" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Height" Value="35"/>
+        <Setter Property="Padding" Value="10"/>
         <Setter Property="Width" Value="Auto"/>
         <Setter Property="Foreground" Value="{DynamicResource IndicatorBrush}"/>
         <Setter Property="Template">
@@ -1089,7 +1104,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <TextBlock Margin="{TemplateBinding Padding}" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1596,55 +1611,12 @@ Margin="{TemplateBinding Padding}"/>
             </Grid>
         </Border>
         <ControlTemplate.Triggers>
-            <Trigger Property="Header" Value="Back">
-                <Setter Property="Icon" Value="&#xE76B;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Forward">
-                <Setter Property="Icon" Value="&#xE76C;"/>
-            </Trigger>
-            <!--<Trigger Property="Header" Value="Back">
-                <Setter Property="Icon" Value="&#xE72B;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Forward">
-                <Setter Property="Icon" Value="&#xE72A;"/>
-            </Trigger>-->
-            <Trigger Property="Header" Value="Refresh">
-                <Setter Property="Icon" Value="&#xE72C;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Print">
-                <Setter Property="Icon" Value="&#xE749;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Save as">
-                <Setter Property="Icon" Value="&#xE792;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Open in new tab">
-                <Setter Property="Icon" Value="&#xE8A7;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Zoom in">
-                <Setter Property="Icon" Value="&#xe8a3;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Zoom out">
-                <Setter Property="Icon" Value="&#xe71f;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Screenshot">
-                <Setter Property="Icon" Value="&#xE924;"/>
-            </Trigger>
             <Trigger Property="Header" Value="Snip">
                 <Setter Property="Icon" Value="&#xe924;"/>
             </Trigger>
 
-            <Trigger Property="Header" Value="Copy link">
-                <Setter Property="Icon" Value="&#xe71b;"/>
-            </Trigger>
-
             <Trigger Property="Header" Value="Copy image">
                 <Setter Property="Icon" Value="&#xe8b9;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Copy image link">
-                <Setter Property="Icon" Value="&#xe71b;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Save image as">
-                <Setter Property="Icon" Value="&#xe792;"/>
             </Trigger>
 
             <Trigger Property="Header" Value="Emoji">
@@ -1668,6 +1640,10 @@ Margin="{TemplateBinding Padding}"/>
             <Trigger Property="Header" Value="Delete">
                 <Setter Property="Icon" Value="&#xe74d;"/>
             </Trigger>
+            <Trigger Property="Header" Value="Select All">
+                <Setter Property="Icon" Value="&#xe8b3;"/>
+            </Trigger>
+            
             <Trigger Property="Icon" Value="{x:Null}">
                 <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
             </Trigger>
@@ -2122,7 +2098,8 @@ Margin="{TemplateBinding Padding}"/>
     <ContextMenu x:Key="TabItemContextMenu">
         <!--"&#xE737;"-->
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
-        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="5&lt;,&gt;{CurrentUrl}&lt;,&gt;CurrentIndex"/>
+        <!--<MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="5&lt;,&gt;{CurrentUrl}&lt;,&gt;CurrentIndex"/>-->
+        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="{Binding DuplicateCommand}"/>
         <Separator/>
         <MenuItem Icon="&#xe72c;" Visibility="{Binding BrowserCommandsVisibility}" Click="ButtonAction" Header="Refresh" Tag="{Binding RefreshCommand}"/>
         <MenuItem Icon="&#xec0a;" Visibility="{Binding BrowserCommandsVisibility}" Click="ButtonAction" Header="Unload" Tag="{Binding UnloadCommand}"/>

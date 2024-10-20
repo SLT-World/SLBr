@@ -19,7 +19,7 @@
         <TaskbarItemInfo x:Name="TaskbarProgress" ProgressState="Normal" ProgressValue="0"/>
     </Window.TaskbarItemInfo>
     <Grid Background="{StaticResource SecondaryBrush}">
-        <WinUI:WinUITabControl x:Name="TabsUI" SelectionChanged="TabsUI_SelectionChanged" Padding="0">
+        <WinUI:WinUITabControl x:Name="TabsUI" SelectionChanged="TabsUI_SelectionChanged" Padding="0" Visibility="Hidden" SelectedIndex="-1">
             <TabControl.ContentTemplate>
                 <DataTemplate>
                     <UserControl Content="{Binding Content}" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>

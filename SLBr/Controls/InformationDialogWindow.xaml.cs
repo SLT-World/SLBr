@@ -20,8 +20,8 @@ namespace SLBr.Controls
             DescriptionText.Text = Description;
             ApplyTheme(App.Instance.CurrentTheme);
 
-            Icon.Text = _FluentIconsText;
-            Icon.Visibility = string.IsNullOrEmpty(_FluentIconsText) ? Visibility.Collapsed : Visibility.Visible;
+            IconText.Text = _FluentIconsText;
+            IconText.Visibility = string.IsNullOrEmpty(_FluentIconsText) ? Visibility.Collapsed : Visibility.Visible;
 
             PositiveButton.Visibility = string.IsNullOrEmpty(PositiveText) ? Visibility.Collapsed : Visibility.Visible;
             PositiveButton.Content = PositiveText;

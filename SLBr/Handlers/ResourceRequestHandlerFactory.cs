@@ -10,26 +10,26 @@ namespace SLBr.Handlers
 
         RequestHandler Handler;
 
-        public ResourceRequestHandlerFactory(RequestHandler _Handler, IEqualityComparer<string> comparer = null)
+        public ResourceRequestHandlerFactory(RequestHandler _Handler, IEqualityComparer<string> Comparer = null)
         {
             Handler = _Handler;
-            Handlers = new ConcurrentDictionary<string, SLBrResourceRequestHandlerFactoryItem>(comparer ?? StringComparer.OrdinalIgnoreCase);
+            Handlers = new ConcurrentDictionary<string, SLBrResourceRequestHandlerFactoryItem>(Comparer ?? StringComparer.OrdinalIgnoreCase);
         }
 
-        public virtual bool RegisterHandler(string url, byte[] data, string mimeType = ResourceHandler.DefaultMimeType/*, bool limitedUse = false*/, int uses = 1, string error = "")
+        public virtual bool RegisterHandler(string Url, byte[] Data, string MimeType = ResourceHandler.DefaultMimeType/*, bool limitedUse = false*/, int Uses = 1, string Error = "")
         {
-            if (Uri.TryCreate(url, UriKind.Absolute, out Uri URI))
+            if (Uri.TryCreate(Url, UriKind.Absolute, out Uri URI))
             {
-                var entry = new SLBrResourceRequestHandlerFactoryItem(data, mimeType/*, limitedUse*/, uses, error);
-                Handlers.AddOrUpdate(URI.AbsoluteUri, entry, (k, v) => entry);
+                var _Entry = new SLBrResourceRequestHandlerFactoryItem(Data, MimeType/*, limitedUse*/, Uses, Error);
+                Handlers.AddOrUpdate(URI.AbsoluteUri, _Entry, (k, v) => _Entry);
                 return true;
             }
             return false;
         }
 
-        public virtual bool UnregisterHandler(string url)
+        public virtual bool UnregisterHandler(string Url)
         {
-            return Handlers.TryRemove(url, out _);
+            return Handlers.TryRemove(Url, out _);
         }
 
         bool IResourceRequestHandlerFactory.HasHandlers
@@ -50,12 +50,12 @@ namespace SLBr.Handlers
             public int Uses;
             public string Error;
 
-            public SLBrResourceRequestHandlerFactoryItem(byte[] data, string mimeType, /*bool limitedUse, */int uses = 1, string _Error = "")
+            public SLBrResourceRequestHandlerFactoryItem(byte[] _Data, string _MimeType, /*bool limitedUse, */int _Uses = 1, string _Error = "")
             {
-                Data = data;
-                MimeType = mimeType;
+                Data = _Data;
+                MimeType = _MimeType;
                 //LimitedUse = limitedUse;
-                Uses = uses;
+                Uses = _Uses;
                 Error = _Error;
             }
         }
@@ -67,10 +67,11 @@ namespace SLBr.Handlers
                 if (Handlers.TryGetValue(request.Url, out SLBrResourceRequestHandlerFactoryItem Entry))
                 {
                     if (Entry.Uses != -1)
+                    {
                         Entry.Uses -= 1;
-                    //if (Entry.LimitedUse && Entry.Uses == 0)
-                    if (Entry.Uses == 0)
-                        Handlers.TryRemove(request.Url, out Entry);
+                        if (Entry.Uses == 0)
+                            Handlers.TryRemove(request.Url, out Entry);
+                    }
                     return new InMemoryResourceRequestHandler(Entry.Data, Entry.MimeType);
                 }
                 return new ResourceRequestHandler(Handler);

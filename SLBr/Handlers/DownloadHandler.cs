@@ -32,26 +32,22 @@ namespace SLBr.Handlers
             if (!callback.IsDisposed)
             {
                 using (callback)
-                {
-                    App.Instance.UpdateDownloadItem(downloadItem);
                     callback.Continue(Path.Combine(App.Instance.GlobalSave.Get("DownloadPath"), downloadItem.SuggestedFileName), bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt")));
-                }
             }
             return true;
         }
 
+        private Dictionary<int, IDownloadItemCallback> DownloadCallbacks = new Dictionary<int, IDownloadItemCallback>();
+
         public void OnDownloadUpdated(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IDownloadItemCallback callback)
         {
             App.Instance.UpdateDownloadItem(downloadItem);
-
-            App.Current.Dispatcher.Invoke(() =>
+            if (downloadItem.IsInProgress)
+                DownloadCallbacks[downloadItem.Id] = callback;
+            else
             {
-                if (downloadItem.IsInProgress)
-                {
-                    if (App.Instance.CanceledDownloads.Contains(downloadItem.Id))
-                        callback.Cancel();
-                }
-                else
+                DownloadCallbacks.Remove(downloadItem.Id);
+                App.Current.Dispatcher.Invoke(() =>
                 {
                     if (!browser.HasDocument)
                     {
@@ -73,8 +69,14 @@ namespace SLBr.Handlers
                             }
                         }*/
                     }
-                }
-            });
+                });
+            }
+        }
+
+        public void CancelDownload(int DownloadID)
+        {
+            if (DownloadCallbacks.TryGetValue(DownloadID, out IDownloadItemCallback _Callback))
+                _Callback.Cancel();
         }
     }
 }

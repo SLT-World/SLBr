@@ -1,4 +1,6 @@
-﻿namespace SLBr.Controls
+﻿/*using System.Windows;
+
+namespace SLBr.Controls
 {
     public class CredentialsDialogResult
     {
@@ -6,9 +8,9 @@
         public string Username;
         public string Password;
 
-        public CredentialsDialogResult(bool? _Accepted, string _Username, string _Password)
+        public CredentialsDialogResult(bool _Accepted, string _Username, string _Password)
         {
-            Accepted = (bool)_Accepted;
+            Accepted = _Accepted;
             Username = _Username;
             Password = _Password;
         }
@@ -17,9 +19,19 @@
     {
         public static CredentialsDialogResult Show(string Question)
         {
-            CredentialsDialogWindow _CredentialsDialogWindow = new CredentialsDialogWindow(Question, "\uec19");
-            _CredentialsDialogWindow.Topmost = true;
-            return new CredentialsDialogResult(_CredentialsDialogWindow.ShowDialog(), _CredentialsDialogWindow.Username, _CredentialsDialogWindow.Password);
+            CredentialsDialogWindow _CredentialsDialogWindow;
+            bool DialogResult = false;
+            string Username = "";
+            string Password = "";
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                _CredentialsDialogWindow = new CredentialsDialogWindow(Question, "\uec19");
+                _CredentialsDialogWindow.Topmost = true;
+                DialogResult = _CredentialsDialogWindow.ShowDialog().ToBool();
+                Username = _CredentialsDialogWindow.Username;
+                Password = _CredentialsDialogWindow.Password;
+            });
+            return new CredentialsDialogResult(DialogResult, Username, Password);
         }
     }
-}
+}*/

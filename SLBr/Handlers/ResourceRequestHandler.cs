@@ -41,16 +41,16 @@ namespace SLBr.Handlers
 
             "google.com/ads", "play.google.com/log"/*, "youtube.com/ptracking", "youtube.com/pagead/adview", "youtube.com/api/stats/ads", "youtube.com/pagead/interaction",*/
         };
-        FastHashSet<string> MinersFiles = new FastHashSet<string> {
+        FastHashSet<string> MinersFiles = new FastHashSet<string> {//https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
             "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",
             "worker-asmjs.min.js", "miner.js", "webmr4.js", "webmr.js", "webxmr.js",
             "lib/crypta.js", "static/js/tpb.js", "bitrix/js/main/core/core_tasker.js", "bitrix/js/main/core/core_loader.js", "vbb/me0w.js", "lib/crlt.js", "pool/direct.js",
             "plugins/wp-monero-miner-pro", "plugins/ajcryptominer", "plugins/aj-cryptominer",
             "?perfekt=wss://", "?proxy=wss://", "?proxy=ws://"
-        };//https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
-        FastHashSet<string> Miners = new FastHashSet<string> {
+        };
+        FastHashSet<string> Miners = new FastHashSet<string> {//https://v.firebog.net/hosts/static/w3kbl.txt
             "coin-hive.com", "coin-have.com", "adminer.com", "ad-miner.com", "coinminerz.com", "coinhive-manager.com", "coinhive.com", "prometheus.phoenixcoin.org", "coinhiveproxy.com", "jsecoin.com", "crypto-loot.com", "cryptonight.wasm", "cloudflare.solutions"
-        };//https://v.firebog.net/hosts/static/w3kbl.txt
+        };
         FastHashSet<string> Ads = new FastHashSet<string> {
             "ads.google.com", "pagead2.googlesyndication.com", "afs.googlesyndication.com", "tpc.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "ade.googlesyndication.com", "pagead2.googleadservices.com", "adservice.google.com", "googleadservices.com",
             "app-measurement.com", "googleads2.g.doubleclick.net", "googleads3.g.doubleclick.net", "googleads4.g.doubleclick.net", "googleads5.g.doubleclick.net", "googleads6.g.doubleclick.net", "googleads7.g.doubleclick.net", "googleads8.g.doubleclick.net", "googleads9.g.doubleclick.net",
@@ -59,7 +59,7 @@ namespace SLBr.Handlers
             "googleads.g.doubleclick.net", "pagead.l.doubleclick.net", "g.doubleclick.net", "fls.doubleclick.net",
             "gads.pubmatic.com", "ads.pubmatic.com", "ogads-pa.clients6.google.com",// "image6.pubmatic.com",
             "ads.facebook.com", "an.facebook.com",
-            "cdn.snigelweb.com", "cdn.connectad.io", //For w3schools
+            "cdn.snigelweb.com", "cdn.connectad.io",
             "pool.admedo.com", "c.pub.network",
             "media.ethicalads.io",
             "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn",
@@ -86,7 +86,7 @@ namespace SLBr.Handlers
             "adsfs.oppomobile.com", "adx.ads.oppomobile.com", "ck.ads.oppomobile.com", "data.ads.oppomobile.com",
             "t.adx.opera.com",
             "bdapi-ads.realmemobile.com", "bdapi-in-ads.realmemobile.com",
-            "business.samsungusa.com", "samsungads.com", "ad.samsungadhub.com", "config.samsungads.com", "samsung-com.112.2o7.net",
+            "business.samsungusa.com", "samsungads.com", "ad.samsungadhub.com", "config.samsungads.com", "samsung-com.112.2o7.net", "ads.samsung.com",
             "click.oneplus.com", "click.oneplus.cn", "open.oneplus.net",
             "asadcdn.com",
             "ads.yieldmo.com", "match.adsrvr.org", "ads.servenobid.com", "e3.adpushup.com", "c1.adform.net",
@@ -99,6 +99,7 @@ namespace SLBr.Handlers
             "js.adscale.de",
             "gum.criteo.com",
             "js.hsadspixel.net",
+            "ad.mopub.com",
             "adserver.juicyads.com",
             "a.realsrv.com", "mc.yandex.ru", "a.vdo.ai", "adfox.yandex.ru", "adfstat.yandex.ru", "offerwall.yandex.net",
             "ads.msn.com", "adnxs.com", "adnexus.net", "bingads.microsoft.com",
@@ -115,6 +116,12 @@ namespace SLBr.Handlers
             "adserver.snapads.com", "euw.adserver.snapads.com", "euc.adserver.snapads.com", "usc.adserver.snapads.com", "ase.adserver.snapads.com",
             "cdn.adsafeprotected.com",
             "rp.liadm.com",
+
+            "adx.adform.net",
+            "prebid.a-mo.net",
+            "a.pub.network",
+            "widgets.outbrain.com",
+            "hb.adscale.de", "bitcasino.io",
 
             "h.seznam.cz", "d.seznam.cz", "ssp.seznam.cz",
             "cdn.performax.cz", "dale.performax.cz", "chip.performax.cz"
@@ -191,7 +198,6 @@ namespace SLBr.Handlers
             "ping.chartbeat.net",
             "logs.browser-intake-datadoghq.com",
             "onsiterecs.api.boomtrain.com",
-            "adx.adform.net",
 
             "b.6sc.co",
             "api.bounceexchange.com", "events.bouncex.net",
@@ -212,26 +218,25 @@ namespace SLBr.Handlers
             "sync.sharethis.com",
             "bcp.crwdcntrl.net",
 
-            "prebid.a-mo.net",
             "tpsc-sgc.doubleverify.com", "cdn.doubleverify.com", "onetag-sys.com",
             "id5-sync.com", "bttrack.com", "idsync.rlcdn.com", "u.openx.net", "sync-t1.taboola.com", "x.bidswitch.net", "rtd-tm.everesttech.net", "usermatch.krxd.net", "visitor.omnitagjs.com", "ping.chartbeat.net",
-            "sync.outbrain.com", "widgets.outbrain.com",
+            "sync.outbrain.com",
             "collect.mopinion.com", "pb-server.ezoic.com",
-            "hb.adscale.de",
             "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
-            "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com", "a.pub.network"
+            "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com"
         };
 
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
-            //MessageBox.Show(Utils.Host(frame.Url));
             if (Utils.IsHttpScheme(request.Url))
             {
                 //https://chromium-review.googlesource.com/c/chromium/src/+/1265506/25/third_party/blink/renderer/platform/loader/fetch/resource_loader.cc
                 if (App.Instance.NeverSlowMode && Handler.IsOverBudget(request.ResourceType))
                     return CefReturnValue.Cancel;
-                if ((App.Instance.AdBlock || App.Instance.TrackerBlock) && !Utils.Host(frame.Url).EndsWith("ecosia.org", StringComparison.Ordinal))
+                if (App.Instance.AdBlock || App.Instance.TrackerBlock)
                 {
+                    if (Utils.Host(browser.FocusedFrame.Url).EndsWith("ecosia.org", StringComparison.Ordinal))
+                        return CefReturnValue.Continue;
                     if (request.ResourceType == ResourceType.Ping)
                     {
                         App.Instance.TrackersBlocked++;
@@ -239,16 +244,16 @@ namespace SLBr.Handlers
                     }
                     else if (Utils.IsPossiblyAd(request.ResourceType))
                     {
-                        string CleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);
                         if (request.ResourceType == ResourceType.Script || request.ResourceType == ResourceType.Xhr)
                         {
+                            string CleanedUrl = Utils.CleanUrl(request.Url, true, true, true, true);
                             foreach (string Script in HasInLink)
                             {
                                 if (CleanedUrl.AsSpan().IndexOf(Script, StringComparison.Ordinal) >= 0)
                                     return CefReturnValue.Cancel;
                             }
                         }
-                        string Host = Utils.Host(CleanedUrl, true);
+                        string Host = Utils.Host(request.Url, true);
                         if (App.Instance.TrackerBlock && Analytics.Contains(Host))
                         {
                             App.Instance.TrackersBlocked++;
@@ -263,8 +268,7 @@ namespace SLBr.Handlers
                 }
                 if (App.Instance.GoogleSafeBrowsing && Utils.CanCheckSafeBrowsing(request.ResourceType))
                 {
-                    string Response = App.Instance._SafeBrowsing.Response(request.Url);
-                    SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(Response);
+                    SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(App.Instance._SafeBrowsing.Response(request.Url));
                     if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software || _ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
                         return CefReturnValue.Cancel;
                 }

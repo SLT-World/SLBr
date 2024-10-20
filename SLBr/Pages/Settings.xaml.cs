@@ -55,7 +55,7 @@ namespace SLBr.Pages
                 {
                     if (App.Instance.Languages.Count == 1)
                     {
-                        var infoWindow = new InformationDialogWindow("Alert", $"Settings", "You can no longer remove languages because only one language remains.", "\uece4");
+                        var infoWindow = new InformationDialogWindow("Alert", $"Settings", "Unable to remove languages", "\uece4");
                         infoWindow.Topmost = true;
                         infoWindow.ShowDialog();
                         return;
@@ -98,14 +98,13 @@ namespace SLBr.Pages
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            App.Instance.CurrentFocusedWindow().NewTab(e.Uri.ToString(), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+            BrowserView.Tab.ParentWindow.NewTab(e.Uri.ToString(), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
             e.Handled = true;
         }
 
         private void HyperlinkButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender != null)
-                App.Instance.CurrentFocusedWindow().NewTab(((FrameworkElement)sender).Tag.ToString(), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+            App.Instance.CurrentFocusedWindow().NewTab(((FrameworkElement)sender).Tag.ToString(), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
         }
 
         private void LanguageSelection_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -134,12 +133,15 @@ namespace SLBr.Pages
         {
             SettingsInitialized = false;
             List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
-            foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
+            if (AddableLanguages.Count == 0)
             {
-                if (!ISOs.Contains(Locale.Key))
-                    AddableLanguages.Add(new ActionStorage(Locale.Value, App.Instance.GetLocaleIcon(Locale.Key), Locale.Key));
+                foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
+                {
+                    if (!ISOs.Contains(Locale.Key))
+                        AddableLanguages.Add(new ActionStorage(Locale.Value, App.Instance.GetLocaleIcon(Locale.Key), Locale.Key));
+                }
+                AddableLanguages = new ObservableCollection<ActionStorage>(AddableLanguages.OrderBy(x => x.Tooltip));
             }
-            AddableLanguages = new ObservableCollection<ActionStorage>(AddableLanguages.OrderBy(x => x.Tooltip));
 
             LanguageSelection.ItemsSource = App.Instance.Languages;
             LanguageSelection.SelectedValue = App.Instance.Locale;
@@ -167,8 +169,8 @@ namespace SLBr.Pages
             ScreenshotPathTextBox.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
 
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
+            DownloadFaviconsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadFavicons"));
             SmoothScrollCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll"));
-            FlagEmojiCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("FlagEmoji"));
             SpellCheckCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SpellCheck"));
             DownloadPromptCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt"));
 
@@ -329,13 +331,9 @@ namespace SLBr.Pages
                 }
             }
 
-
             AboutVersion.Text = $"Version {App.Instance.ReleaseVersion}";
             CEFVersion.Text = $"CEF: {(Cef.CefVersion.StartsWith("r") ? Cef.CefVersion.Substring(1, Cef.CefVersion.IndexOf("-") - 10) : Cef.CefVersion.Substring(0, Cef.CefVersion.IndexOf("-") - 10))}";
             ChromiumVersion.Text = $"Version: {Cef.ChromiumVersion}";
-
-            //ChromiumJSVersion.Text = $"Javascript: V8 ({App.Instance.ChromiumJSVersion})";
-            //ChromiumWebkit.Text = $"Webkit: 537.36 ({App.Instance.ChromiumRevision})";
 
             AdsBlocked.Text = App.Instance.AdsBlocked.ToString();
             TrackersBlocked.Text = App.Instance.TrackersBlocked.ToString();
@@ -344,6 +342,24 @@ namespace SLBr.Pages
             AIButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AIButton"));
             TranslateButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TranslateButton"));
             ReaderButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ReaderButton"));
+
+            if (ExtensionButtonComboBox.Items.Count == 0)
+            {
+                ExtensionButtonComboBox.Items.Add("Show automatically");
+                ExtensionButtonComboBox.Items.Add("Always show");
+                ExtensionButtonComboBox.Items.Add("Never show");
+            }
+            ExtensionButtonComboBox.SelectionChanged += ExtensionButtonComboBox_SelectionChanged;
+            ExtensionButtonComboBox.SelectedIndex = int.Parse(App.Instance.GlobalSave.Get("ExtensionButton"));
+
+            if (FavouritesBarComboBox.Items.Count == 0)
+            {
+                FavouritesBarComboBox.Items.Add("Show automatically");
+                FavouritesBarComboBox.Items.Add("Always show");
+                FavouritesBarComboBox.Items.Add("Never show");
+            }
+            FavouritesBarComboBox.SelectionChanged += FavouritesBarComboBox_SelectionChanged;
+            FavouritesBarComboBox.SelectedIndex = int.Parse(App.Instance.GlobalSave.Get("FavouritesBar"));
 
             App.Instance.LoadExtensions();
             ExtensionsList.ItemsSource = App.Instance.Extensions;
@@ -417,7 +433,25 @@ namespace SLBr.Pages
             {
                 string TabAlignment = TabAlignmentComboBox.SelectedValue.ToString();
                 App.Instance.GlobalSave.Set("TabAlignment", TabAlignment);
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
+            }
+        }
+        private void ExtensionButtonComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                int ExtensionButton = ExtensionButtonComboBox.SelectedIndex;
+                App.Instance.GlobalSave.Set("ExtensionButton", ExtensionButton);
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), ExtensionButton, int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
+            }
+        }
+        private void FavouritesBarComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                int FavouritesBar = FavouritesBarComboBox.SelectedIndex;
+                App.Instance.GlobalSave.Set("FavouritesBar", FavouritesBar);
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), FavouritesBar);
             }
         }
 
@@ -501,15 +535,15 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("RestoreTabs", RestoreTabsCheckBox.IsChecked.ToBool().ToString());
         }
+        private void DownloadFaviconsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("DownloadFavicons", DownloadFaviconsCheckBox.IsChecked.ToBool().ToString());
+        }
         private void SmoothScrollCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("SmoothScroll", SmoothScrollCheckBox.IsChecked.ToBool().ToString());
-        }
-        private void FlagEmojiCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("FlagEmoji", FlagEmojiCheckBox.IsChecked.ToBool().ToString());
         }
         private void SpellCheckCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -629,7 +663,7 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 App.Instance.GlobalSave.Set("AIButton", AIButtonToggleButton.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
             }
         }
         private void TranslateButtonToggleButton_Click(object sender, RoutedEventArgs e)
@@ -637,20 +671,20 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 App.Instance.GlobalSave.Set("TranslateButton", TranslateButtonToggleButton.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
             }
         }
         private void HomeButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             App.Instance.GlobalSave.Set("HomeButton", HomeButtonToggleButton.IsChecked.ToBool().ToString());
-            App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
+            App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
         }
         private void ReaderButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
             {
                 App.Instance.GlobalSave.Set("ReaderButton", ReaderButtonToggleButton.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
             }
         }
 
@@ -664,7 +698,7 @@ namespace SLBr.Pages
                 Theme _Theme = App.Instance.GetTheme(Text);
                 if (_Theme == null)
                     return;
-                App.Instance.SetAppearance(_Theme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")));
+                App.Instance.SetAppearance(_Theme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
                 //App.Instance.ApplyTheme(_Theme);
                 ApplyTheme(_Theme);
             }
@@ -695,12 +729,19 @@ namespace SLBr.Pages
             BrowserView.Action(Actions.SwitchUserPopup);
         }
 
+        private void ClearAllDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            var infoWindow = new InformationDialogWindow("Confirmation", "Settings", "Clear all browsing data permanently?", "\uea99", "Yes", "No");
+            infoWindow.Topmost = true;
+
+            if (infoWindow.ShowDialog() == true)
+                App.Instance.ClearAllData();
+        }
+
         private void ExtensionToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
             {
-                if (sender == null)
-                    return;
                 var Target = (ToggleButton)sender;
                 var Values = Target.Tag.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
                 if (Values[0] == "PDF")

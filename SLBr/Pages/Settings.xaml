@@ -8,16 +8,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Loaded="Page_Loaded">
     <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-            <!--https://www.cbsnews.com/latest/rss/world-->
-            <!--https://www.yahoo.com/news/rss-->
-            <!--https://www.latimes.com/local/rss2.0.xml-->
-            <!--https://rss.nytimes.com/services/xml/rss/nyt/World.xml-->
-            <XmlDataProvider x:Key="NewsRSSFeed" Source="http://news.google.com/rss?hl=en-US" XPath="rss/channel"/>
-        </ResourceDictionary>
+        <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
     </UserControl.Resources>
     <Grid Background="{StaticResource SecondaryBrush}">
         <WinUI:WinUITabControl Style="{StaticResource WinUITabControl}">
@@ -64,25 +55,13 @@
                             Start
                         </GroupBox.Header>
                         <StackPanel>
-                            <CheckBox x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            Youtube
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <CheckBox x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Margin="0,0,0,10" Content="Skip video ads" Width="Auto"/>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Desired video quality"/>
-                                <ComboBox x:Name="VideoQualityComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
+                            <CheckBox Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
+                            <CheckBox x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
-                            <CheckBox Margin="0,0,0,10" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
-                            <CheckBox x:Name="FlagEmojiCheckBox" Width="Auto" Click="FlagEmojiCheckBox_Click" Content="Country flag emojis"/>
+                            <CheckBox x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -204,9 +183,13 @@
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
-                            <DockPanel>
+                            <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" Text="Tab alignment"/>
                                 <ComboBox x:Name="TabAlignmentComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                            </DockPanel>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="Favourites bar"/>
+                                <ComboBox x:Name="FavouritesBarComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -236,13 +219,21 @@
                                 <TextBlock VerticalAlignment="Center" Text="Translate button"/>
                                 <ToggleButton x:Name="TranslateButtonToggleButton" Click="TranslateButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
-                            <DockPanel>
+                            <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;" Margin="0,0,10,0"/>
                                 <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
                                 <TextBlock VerticalAlignment="Center" Text="Reader Mode button"/>
                                 <ToggleButton x:Name="ReaderButtonToggleButton" Click="ReaderButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                            </DockPanel>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEA86;" Margin="0,0,10,0"/>
+                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
+                                </Border>-->
+                                <TextBlock VerticalAlignment="Center" Text="Extension button"/>
+                                <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -281,6 +272,26 @@
                                 <Hyperlink ToolTip="https://developers.google.com/safe-browsing/v4/advisory" NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
                             </TextBlock>
                         </StackPanel>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
+                            Privacy
+                        </GroupBox.Header>
+                        <DockPanel Height="35">
+                            <!--<Border Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
+                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xea99;"/>
+                            </Border>-->
+                            <Button DockPanel.Dock="Right" Click="ClearAllDataButton_Click">
+                                <DockPanel VerticalAlignment="Center">
+                                    <TextBlock Text="&#xea99;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                    <TextBlock TextAlignment="Center" Text="Clear" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </Button>
+                            <StackPanel VerticalAlignment="Center" Margin="0">
+                                <TextBlock Text="Clear browsing data"/>
+                                <TextBlock FontSize="10" Text="Clear history, cookies, cache, and more" Foreground="{StaticResource GrayBrush}"/>
+                            </StackPanel>
+                        </DockPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <GroupBox.Header>
@@ -357,6 +368,18 @@
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <GroupBox.Header>
+                            YouTube
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <CheckBox x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Margin="0,0,0,10" Content="Skip video ads" Width="Auto"/>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="Desired video quality"/>
+                                <ComboBox x:Name="VideoQualityComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
                             Screenshot
                         </GroupBox.Header>
                         <StackPanel>
@@ -378,7 +401,7 @@
                             <CheckBox x:Name="LiteModeCheckBox" Click="LiteModeCheckBox_Click" Margin="0,0,0,10" Content="Lite Mode" Width="Auto"/>
                             <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Margin="0,0,0,10" Content="Never Slow Mode" Width="Auto"/>
                             <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                <Run>Never Slow Mode limits the size and quantity of stylesheets, scripts, images and fonts</Run>
+                                <Run>Never Slow Mode limits the size and quantity of sub frames, stylesheets, scripts, images and fonts</Run>
                             </TextBlock>
                             <!--<CheckBox x:Name="ReduceMotionCheckBox" Click="ReduceMotionCheckBox_Click" Width="Auto" Content="Reduce Motion"/>-->
                         </StackPanel>
@@ -655,7 +678,7 @@
                             <CheckBox x:Name="ChromiumHardwareAccelerationCheckBox" Click="ChromiumHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>
                             <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental features"/>
                             <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                <Run>Restart SLBr for changes to take effect.</Run>
+                                <Run>Restart SLBr for changes to take effect</Run>
                             </TextBlock>
                         </StackPanel>
                     </GroupBox>
@@ -694,14 +717,19 @@
                             </StackPanel>
                         </DockPanel>
                     </GroupBox>
+                    <TextBlock Text="Copyright © 2022-2024 SLT Softwares. All rights reserved." Margin="0"/>
+                    <TextBlock Margin="0,0,0,10">
+                        Licensed under the
+                        <Hyperlink ToolTip="slbr://license" NavigateUri="slbr://license" RequestNavigate="Hyperlink_RequestNavigate">GNU General Public License v3.0</Hyperlink>.
+                    </TextBlock>
                     <TextBlock Margin="0,0,0,0">
                         Made possible by
                         <Hyperlink ToolTip="https://github.com/cefsharp/CefSharp" NavigateUri="https://github.com/cefsharp/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">
                             CefSharp
                         </Hyperlink>
-                        and
+                        and other
                         <Hyperlink ToolTip="slbr://credits" NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">
-                            other open-source software
+                            open-source software
                         </Hyperlink>.
                     </TextBlock>
                     <TextBlock Margin="0,0,0,10">
@@ -713,11 +741,22 @@
                             CefSharp
                         </Hyperlink>.
                     </TextBlock>
-                    <TextBlock Text="Copyright © 2022-2024 SLT Softwares. All rights reserved." Margin="0" FontWeight="DemiBold"/>
-                    <TextBlock Margin="0,0,0,10">
-                        Licensed under the
-                        <Hyperlink ToolTip="slbr://license" NavigateUri="slbr://license" RequestNavigate="Hyperlink_RequestNavigate">GNU General Public License v3.0</Hyperlink>.
-                    </TextBlock>
+                    <GroupBox Margin="0,0,0,10">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,10">
+                                <StackPanel VerticalAlignment="Center" Margin="0">
+                                    <TextBlock Text="GitHub"/>
+                                    <TextBlock FontSize="10" Text="Suggest a new feature or report a bug" Foreground="{StaticResource GrayBrush}"/>
+                                </StackPanel>
+                                <Button Style="{StaticResource IconButton}" Click="HyperlinkButton_Click" Tag="https://github.com/SLT-World/SLBr" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
+                            </DockPanel>
+                            <DockPanel LastChildFill="False">
+                                <Button Style="{DynamicResource HyperlinkButton}" Margin="0,0,5,0" Click="HyperlinkButton_Click" Tag="https://github.com/SLT-World/SLBr" Width="Auto" HorizontalAlignment="Center">SLBr</Button>
+                                <Button Style="{DynamicResource HyperlinkButton}" Margin="0,0,5,0" Click="HyperlinkButton_Click" Tag="https://github.com/cefsharp/CefSharp" Width="Auto" HorizontalAlignment="Center">CefSharp</Button>
+                                <Button Style="{DynamicResource HyperlinkButton}" Margin="0,0,5,0" Click="HyperlinkButton_Click" Tag="https://github.com/chromiumembedded/cef" Width="Auto" HorizontalAlignment="Center">Chromium Embedded Framework</Button>
+                            </DockPanel>
+                        </StackPanel>
+                    </GroupBox>
 
                     <GroupBox Margin="0,0,0,10">
                         <GroupBox.Header>

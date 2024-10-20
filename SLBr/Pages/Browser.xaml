@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SLBr.Pages"
+             xmlns:SLBr="clr-namespace:SLBr"
              xmlns:WinUI="clr-namespace:WinUI"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" GotFocus="Browser_GotFocus" Loaded="Browser_Loaded">
@@ -40,16 +41,7 @@
                                         </Style>
                                     </MenuItem.ItemContainerStyle>
                                 </MenuItem>
-                                <MenuItem Icon="&#xE896;" x:Name="DownloadListMenu" Header="Downloads">
-                                    <MenuItem.ItemContainerStyle>
-                                        <Style TargetType="MenuItem">
-                                            <Setter Property="Icon" Value="&#xe8a5;"/>
-                                            <Setter Property="Header" Value="{Binding Name}"/>
-                                            <Setter Property="Tag" Value="{Binding Arguments}"/>
-                                            <EventSetter Event="Click" Handler="ButtonAction"/>
-                                        </Style>
-                                    </MenuItem.ItemContainerStyle>
-                                </MenuItem>
+                                <MenuItem Icon="&#xE896;" Header="Downloads" Click="ButtonAction" Tag="5&lt;,&gt;slbr://downloads/"/>
                                 <MenuItem Icon="&#xEB51;" x:Name="FavouriteListMenu" Header="Favourites">
                                     <MenuItem.ItemContainerStyle>
                                         <Style TargetType="MenuItem">
@@ -73,14 +65,20 @@
                                 </MenuItem>-->
                                 <Separator/>
                                 <MenuItem Icon="&#xE749;" Header="Print" Click="ButtonAction" Tag="30"/>
-                                <MenuItem Icon="&#xE773;" Header="Find" Click="ButtonAction" Tag="32"/>
+                                <MenuItem Icon="&#xE773;" Header="Find" Click="ButtonAction" Tag="32" InputGestureText="Ctrl+F"/>
                                 <MenuItem x:Name="MuteMenuItem" Icon="&#xe74f;" Header="Mute" Click="ButtonAction" Tag="31"/>
+                                <MenuItem Icon="&#xe71e;" Header="Zoom" Click="ButtonAction" Tag="31">
+                                    <MenuItem Icon="&#xe8a3;" Header="Zoom in" Click="ButtonAction" Tag="40"/>
+                                    <MenuItem Icon="&#xe71f;" Header="Zoom out" Click="ButtonAction" Tag="41"/>
+                                    <MenuItem Icon="&#xe72c;" Header="Reset" Click="ButtonAction" Tag="42"/>
+                                </MenuItem>
                                 <MenuItem Header="Tools" Icon="&#xe821;">
                                     <MenuItem Header="Reader Mode" Icon="&#xF000;" Click="ButtonAction" Tag="17"/>
                                     <MenuItem Header="AI Chat" Icon="&#xe99a;" Click="ButtonAction" Tag="20"/>
                                     <MenuItem Header="News Feed" Icon="&#xe8a1;" Click="ButtonAction" Tag="23"/>
                                     <Separator/>
-                                    <MenuItem Header="Developer Tools" Icon="&#xe943;" Click="ButtonAction" Tag="9" InputGestureText="F12"/>
+                                    <MenuItem Header="Developer Tools" Icon="&#xec7a;" Click="ButtonAction" Tag="9" InputGestureText="F12"/>
+                                    <MenuItem Header="Validate HTML" Icon="&#xe943;" Click="ButtonAction" Tag="5&lt;,&gt;https://validator.nu/?doc={CurrentUrl}"/>
                                     <MenuItem Header="Tests" Icon="&#xebe8;">
                                         <MenuItem Header="HTML5 Test" Icon="&#xe81e;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.html5test.co/"/>
                                         <MenuItem Header="CSS3 Test" Icon="&#xf4a5;" Click="ButtonAction" Tag="4&lt;,&gt;https://css3test.com/"/>
@@ -100,6 +98,7 @@
                                         <MenuItem Header="Show Picker" Icon="&#xef3c;" Click="ButtonAction" Tag="4&lt;,&gt;https://show-picker.glitch.me/demo.html"/>
                                         <MenuItem Header="SmartScreen" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://demo.smartscreen.msft.net/"/>
                                         <MenuItem Header="Widevine" Icon="&#xe8a6;" Click="ButtonAction" Tag="4&lt;,&gt;https://bitmovin.com/demos/drm/"/>
+                                        <MenuItem Header="Google Service Worker Demo" Icon="&#xec7a;" Click="ButtonAction" Tag="4&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
                                         <Separator/>
                                         <MenuItem Header="WebGL Samples" Icon="&#xec26;">
                                             <MenuItem Header="HexGL" Icon="&#xe709;" Click="ButtonAction" Tag="4&lt;,&gt;https://hexgl.bkcore.com/"/>
@@ -122,7 +121,7 @@
                                         <MenuItem Header="Deforest" Click="ButtonAction" Tag="4&lt;,&gt;https://www.janavirgin.com/CO2/DEFOOOOOOOOOOOOOOOOOOOOOREST.html"/>
                                     </MenuItem>
                                     <MenuItem Header="Google">
-                                        <MenuItem Header="I'm a teapot" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/teapot"/>
+                                        <MenuItem Header="I'm a teapot" Icon="&#xEC32;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/teapot"/>
                                         <MenuItem Header="PAC-MAN" Icon="&#xe91f;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/logos/2010/pacman10-i.html"/>
                                         <Separator/>
                                         <MenuItem Header="Do a barrel roll" Icon="&#xe895;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Do+a+barrel+roll"/>
@@ -131,7 +130,7 @@
                                         <MenuItem Header="Festivus" Icon="&#xe784;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Festivus"/>
                                         <MenuItem Header="Google in 1998" Icon="&#xe81c;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Google+in+1998"/>
                                         <MenuItem Header="What sound does a dog make?" Icon="&#xe767;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=What+sound+does+a+dog+make"/>
-                                        <MenuItem Header="1.2+​(sqrt(​1-​sqrt(​x^​2+​y^​2)^​2)+​1-​x^​2-​y^​2)*​(sin(​10000*​(x*​3+​y/​5+​7))+​1/​4)" Icon="&#xe8ef;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=1.2%2B(sqrt(1-(sqrt(x%5E2%2By%5E2))%5E2)+%2B+1+-+x%5E2-y%5E2)+*+(sin+(10000+*+(x*3%2By/5%2B7))%2B1/4)+from+-1.6+to+1.6"/>
+                                        <!--<MenuItem Header="1.2+​(sqrt(​1-​sqrt(​x^​2+​y^​2)^​2)+​1-​x^​2-​y^​2)*​(sin(​10000*​(x*​3+​y/​5+​7))+​1/​4)" Icon="&#xe8ef;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=1.2%2B(sqrt(1-(sqrt(x%5E2%2By%5E2))%5E2)+%2B+1+-+x%5E2-y%5E2)+*+(sin+(10000+*+(x*3%2By/5%2B7))%2B1/4)+from+-1.6+to+1.6"/>-->
                                         <Separator/>
                                         <MenuItem Header="Google Moon" Icon="&#xe708;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/maps/space/moon/"/>
                                         <MenuItem Header="Google Mars" Icon="&#xea3a;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/maps/space/mars/"/>
@@ -226,7 +225,8 @@
                         <!--<TextBox Style="{StaticResource NoBorder}" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" GotKeyboardFocus="OmniBox_GotKeyboardFocus" LostKeyboardFocus="OmniBox_LostKeyboardFocus" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>-->
                     </Grid>
                 </DockPanel>
-                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="Auto" Grid.Row="1" HorizontalAlignment="Stretch">
+                <!--<Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="Auto" Grid.Row="1" HorizontalAlignment="Stretch">-->
+                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="41.25" Grid.Row="1" HorizontalAlignment="Stretch">
                     <ScrollViewer FontFamily="None" x:Name="FavouriteScrollViewer" Margin="5,0,5,5" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden" PreviewMouseWheel="FavouriteScrollViewer_PreviewMouseWheel">
                         <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
                             <ItemsControl.ItemsPanel>
@@ -235,7 +235,7 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate><!--DataType="{x:Type SLBr:ActionStorage}">-->
                                     <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
                                         <Button.Resources>
                                             <Style TargetType="TextBlock">
@@ -245,6 +245,16 @@
                                         </Button.Resources>
                                     </Button>
                                 </DataTemplate>
+                                <!--<DataTemplate DataType="{x:Type SLBr:ActionStorage}">
+                                    <WinUI:DropDownButton MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
+                                        <WinUI:DropDownButton.Resources>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"></Setter>
+                                                <Setter Property="MaxWidth" Value="150"></Setter>
+                                            </Style>
+                                        </WinUI:DropDownButton.Resources>
+                                    </WinUI:DropDownButton>
+                                </DataTemplate>-->
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>

@@ -26,7 +26,7 @@
                     <Label Name="QuestionText" Margin="0,0,0,0" Padding="0" FontWeight="Medium" FontSize="14">Question</Label>
                 </DockPanel>
                 <DockPanel Margin="0,0,0,10" Grid.Row="1" Height="Auto">
-                    <TextBlock x:Name="Icon" FontSize="18" FontFamily="Segoe Fluent Icons" Margin="0,0,5,0">&#xE80F;</TextBlock>
+                    <TextBlock x:Name="IconText" FontSize="18" FontFamily="Segoe Fluent Icons" Margin="0,0,5,0">&#xE80F;</TextBlock>
                     <TextBlock x:Name="DescriptionText" VerticalAlignment="Center">Description</TextBlock>
                 </DockPanel>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right">

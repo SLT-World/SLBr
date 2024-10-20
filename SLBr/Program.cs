@@ -1,56 +1,13 @@
 ﻿using CefSharp;
 using CefSharp.BrowserSubprocess;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
 
 namespace SLBr
 {
-    static class MessageHelper
-    {
-        public const int WM_COPYDATA = 0x004A;
-        /*public const int WM_NCHITTEST = 0x0084;
-        public const int WM_SYSTEMMENU = 0xa4;
-        public const int WP_SYSTEMMENU = 0x02;
-        public const int WM_GETMINMAXINFO = 0x0024;
-        public const int HTMAXBUTTON = 9;*/
-        public const int HWND_BROADCAST = 0xffff;
-
-        [DllImport("user32", EntryPoint = "SendMessageA")]
-        private static extern int SendMessage(IntPtr Hwnd, int wMsg, IntPtr wParam, IntPtr lParam);
-
-        public static void SendDataMessage(Process targetProcess, string msg)
-        {
-            IntPtr _stringMessageBuffer = Marshal.StringToHGlobalUni(msg);
-
-            COPYDATASTRUCT _copyData = new COPYDATASTRUCT();
-            _copyData.dwData = IntPtr.Zero;
-            _copyData.lpData = _stringMessageBuffer;
-            _copyData.cbData = msg.Length * 2;
-            IntPtr _copyDataBuff = IntPtrAlloc(_copyData);
-
-            SendMessage((IntPtr)HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, _copyDataBuff);
-
-            Marshal.FreeHGlobal(_copyDataBuff);
-            Marshal.FreeHGlobal(_stringMessageBuffer);
-        }
-
-        private static IntPtr IntPtrAlloc<T>(T param)
-        {
-            IntPtr retval = Marshal.AllocHGlobal(Marshal.SizeOf(param));
-            Marshal.StructureToPtr(param, retval, false);
-            return retval;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct COPYDATASTRUCT
-    {
-        public IntPtr dwData;
-        public int cbData;
-        public IntPtr lpData;
-    }
-
     internal static class Program
     {
         [STAThread]
@@ -66,39 +23,97 @@ namespace SLBr
                 return SelfHost.Main(args);
             else
             {
+                /*DispatcherTimer FlushTimer = new DispatcherTimer();
+                FlushTimer.Interval = new TimeSpan(500);
+                FlushTimer.Tick += FlushTimer_Tick;*/
+                BackgroundWorker worker = new BackgroundWorker();
+                worker.DoWork += worker_DoWork;
+                worker.RunWorkerAsync();
                 App.Main();
 
                 Cef.Shutdown();
                 return Environment.ExitCode;
             }
         }
-
-        /*private static void FlushTimer_Tick(object? sender, EventArgs e)
+        private static void worker_DoWork(object sender, DoWorkEventArgs e)
         {
-            FlushMemory();
+            OptimizeMemoryUsage();
         }
+        private static void OptimizeMemoryUsage()
+        {
+            while (true)
+            {
+                try
+                {
+                    FlushMemory();
+                    MinimizeFootprint();
+                }
+                finally
+                {
+                    Thread.Sleep(60000);
+                }
+            }
+        }
+
+        /*[DllImport("kernel32.dll", EntryPoint = "SetProcessWorkingSetSize")]
+        static extern bool SetProcessWorkingSetSize32(IntPtr pProcess, int dwMinimumWorkingSetSize, int dwMaximumWorkingSetSize);
+
+        [DllImport("kernel32.dll", EntryPoint = "SetProcessWorkingSetSize")]
+        static extern bool SetProcessWorkingSetSize64(IntPtr pProcess, long dwMinimumWorkingSetSize, long dwMaximumWorkingSetSize);*/
+
+        [DllImport("kernel32.dll")]
+        private static extern bool SetProcessWorkingSetSize(IntPtr proc, int min, int max);
+        [DllImport("psapi.dll")]
+        static extern int EmptyWorkingSet(IntPtr hwProc);
 
         private static void FlushMemory()
         {
-            GC.Collect(GC.MaxGeneration);
+            GC.Collect(2, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+            /*if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                if (IntPtr.Size == 8)
+                    SetProcessWorkingSetSize64(Process.GetCurrentProcess().Handle, -1, -1);
+                else
+                    SetProcessWorkingSetSize32(Process.GetCurrentProcess().Handle, -1, -1);
+            }*/
+        }
+
+        private static void MinimizeFootprint()
+        {
+            EmptyWorkingSet(Process.GetCurrentProcess().Handle);
+        }
+
+        /*private static void FlushTimer_Tick(object? sender, EventArgs e)
+        {
+            Process[] SubProcesses = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName);
+            foreach (Process SubProcess in SubProcesses)
+            {
+                int CurrentMemoryUsage = (int)SubProcess.WorkingSet64;
+                int CurrentMemoryMB = (CurrentMemoryUsage / 1024 / 1024);
+                int MaxMemoryUsage = (int)Math.Round(CurrentMemoryMB * 0.3f);
+                Utils.LimitMemoryUsage(SubProcess.Handle, MaxMemoryUsage);
+            }
+            Utils.LimitMemoryUsage(Process.GetCurrentProcess().Handle, 10);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            Chromium.ExecuteScriptAsync("window.gc();");
         }*/
 
         private static void MinimizeMemory()
         {
-            //Process CurrentProcess = Process.GetCurrentProcess();
-            //CurrentProcess.PriorityClass = ProcessPriorityClass.BelowNormal;
+            Process CurrentProcess = Process.GetCurrentProcess();
             //SetCpuAffinity(0x0001);
-            GC.Collect(GC.MaxGeneration);
-            GC.WaitForPendingFinalizers();
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
-        }
+            /*CurrentProcess.PriorityBoostEnabled = false;
+            CurrentProcess.PriorityClass = ProcessPriorityClass.Idle;
+            Thread.CurrentThread.Priority = ThreadPriority.Lowest;*/
 
-        [DllImport("kernel32.dll")]
-        private static extern bool SetProcessWorkingSetSize(IntPtr proc, int min, int max);
+            //GC.Collect(GC.MaxGeneration);
+            //GC.WaitForPendingFinalizers();
+            //if (Environment.OSVersion.Platform == PlatformID.Win32NT) //It will only run on Windows regardless
+            SetProcessWorkingSetSize(CurrentProcess.Handle, -1, -1);
+            //EmptyWorkingSet(CurrentProcess.Handle);
+        }
 
         /*[DllImport("kernel32.dll")]
         private static extern bool SetProcessAffinityMask(IntPtr handle, IntPtr affinity);
