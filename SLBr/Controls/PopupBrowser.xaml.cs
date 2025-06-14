@@ -1,12 +1,8 @@
 ﻿using CefSharp;
-using CefSharp.Handler;
 using CefSharp.Wpf.HwndHost;
-using SLBr.Handlers;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace SLBr.Controls
 {
@@ -29,7 +25,6 @@ namespace SLBr.Controls
                 Width = _Width;
             if (_Height != -1)
                 Height = _Height;
-
             ApplyTheme(App.Instance.CurrentTheme);
             _Browser = new ChromiumWebBrowser();
             _Browser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
@@ -40,9 +35,9 @@ namespace SLBr.Controls
             _Browser.ResourceRequestHandlerFactory = new Handlers.ResourceRequestHandlerFactory(App.Instance._RequestHandler);
             _Browser.DownloadHandler = App.Instance._DownloadHandler;
             _Browser.MenuHandler = App.Instance._LimitedContextMenuHandler;
-            //_Browser.KeyboardHandler = MainWindow.Instance._KeyboardHandler;
             //_Browser.JsDialogHandler = MainWindow.Instance._JsDialogHandler;
 
+            _Browser.IsBrowserInitializedChanged += Browser_IsBrowserInitializedChanged;
             _Browser.TitleChanged += Browser_TitleChanged;
             _Browser.LoadingStateChanged += Browser_LoadingStateChanged;
             _Browser.ZoomLevelIncrement = 0.5f;
@@ -53,14 +48,18 @@ namespace SLBr.Controls
 
             _Browser.BrowserSettings = new BrowserSettings
             {
-                BackgroundColor = System.Drawing.Color.Black.ToUInt()
+                BackgroundColor = 0x000000
             };
-
+            WebContent.Visibility = Visibility.Collapsed;
             WebContent.Children.Add(_Browser);
             int trueValue = 0x01;
             DwmSetWindowAttribute(HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle()).Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
-            //RenderOptions.SetBitmapScalingMode(_Browser, BitmapScalingMode.LowQuality);
+        }
 
+        private void Browser_IsBrowserInitializedChanged(object? sender, EventArgs e)
+        {
+            if (_Browser.IsBrowserInitialized)
+                WebContent.Visibility = Visibility.Visible;
         }
 
         private void Browser_StatusMessage(object? sender, StatusMessageEventArgs e)
@@ -75,12 +74,12 @@ namespace SLBr.Controls
 
         private void Browser_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
         {
-            if (!e.Browser.IsValid || e.IsLoading)
+            if (!e.Browser.IsValid)
                 return;
+            e.Browser.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(CurrentTheme.DarkWebPage);
             Dispatcher.Invoke(() =>
             {
                 Icon = App.Instance.GetIcon(_Browser.Address);
-                _Browser.GetDevToolsClient().Emulation.SetAutoDarkModeOverrideAsync(CurrentTheme.DarkWebPage);
             });
         }
 

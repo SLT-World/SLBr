@@ -81,7 +81,7 @@ namespace SLBr.Handlers
         public string Response(string Url)
         {
             if (string.IsNullOrEmpty(APIKey))
-                return $@"{{}}";
+                return "{}";
             using (var _HttpClient = new HttpClient())
             {
                 string Payload = $@"{{

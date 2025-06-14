@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SLBr.Controls"
         mc:Ignorable="d"
-        Title="SLBr" Height="650" WindowStartupLocation="CenterScreen" Width="600">
+        Title="SLBr" Height="650" WindowStartupLocation="CenterScreen" Width="600" Background="{StaticResource PrimaryBrush}">
     <Window.Resources>
         <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
     </Window.Resources>

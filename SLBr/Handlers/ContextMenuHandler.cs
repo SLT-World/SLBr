@@ -143,8 +143,8 @@ namespace SLBr.Handlers
                 {
                     model.AddItem(MenuCopyURL, "Copy video link");
                     model.AddItem(MenuSaveAs, "Save video as");
-                    /*if (Parameters.MediaStateFlags == ContextMenuMediaState.CanPictureInPicture)
-                        model.AddItem(MenuPictureInPicture, "Picture in picture");*/
+                    //if (Parameters.MediaStateFlags == ContextMenuMediaState.CanPictureInPicture)
+                    model.AddItem(MenuPictureInPicture, "Picture in picture");
                 }
             }
         }
@@ -156,7 +156,7 @@ namespace SLBr.Handlers
         CefMenuCommand MenuScreenshot = (CefMenuCommand)26505;
         CefMenuCommand MenuEmoji = (CefMenuCommand)26506;
         CefMenuCommand MenuTranslate = (CefMenuCommand)26507;
-        //CefMenuCommand MenuPictureInPicture = (CefMenuCommand)26507;
+        CefMenuCommand MenuPictureInPicture = (CefMenuCommand)26508;
 
         CefMenuCommand MenuZoomReset = (CefMenuCommand)26510;
         CefMenuCommand MenuZoomIn = (CefMenuCommand)26511;
@@ -334,10 +334,11 @@ namespace SLBr.Handlers
                         Browser.StartDownload(Parameters.SourceUrl);
                         ToReturn = true;
                     }
-                    /*else if (CommandID == MenuPictureInPicture)
+                    else if (CommandID == MenuPictureInPicture)
                     {
+                        Browser.ExecuteScriptAsync("(async()=>{let playingVideo=Array.from(document.querySelectorAll('video')).find(v=>!v.paused&&!v.ended&&v.readyState>2);if (!playingVideo){playingVideo=document.querySelector('video');}if (playingVideo&&document.pictureInPictureEnabled){await playingVideo.requestPictureInPicture();}})();");
                         ToReturn = true;
-                    }*/
+                    }
                 }
             }
             if (!ToReturn)
@@ -509,6 +510,8 @@ namespace SLBr.Handlers
                     _MenuItem.Icon = "\ue71f";
                 else if (Item.CommandId == MenuZoomReset)
                     _MenuItem.Icon = "\ue72c";
+                else if (Item.CommandId == MenuPictureInPicture)
+                    _MenuItem.Icon = "\uee49";
                 else if (Item.CommandId == MenuTranslate)
                 {
                     _MenuItem.Icon = "\uE8C1";
@@ -539,7 +542,7 @@ namespace SLBr.Handlers
                 else if (Item.CommandId == MenuEmoji)
                     _MenuItem.InputGestureText = "Win+Period";
 
-                else if (Item.Header.StartsWith("Search"))
+                else if (Item.Header.StartsWith("Search", StringComparison.Ordinal))
                     _MenuItem.Icon = "\uF6Fa";
                 else if (Item.CommandId == CefMenuCommand.SpellCheckSuggestion0 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion1 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion2 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion3 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion4)
                     _MenuItem.Icon = "\uf87b";

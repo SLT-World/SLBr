@@ -29,7 +29,7 @@
                 <StaticResource ResourceKey="TabItemStyleSelector"/>
             </TabControl.ItemContainerStyleSelector>
         </WinUI:WinUITabControl>
-        <Grid Grid.RowSpan="100" Grid.ColumnSpan="100" x:Name="FullscreenContainer">
+        <Grid x:Name="FullscreenContainer" Visibility="Collapsed">
         </Grid>
     </Grid>
 </Window>

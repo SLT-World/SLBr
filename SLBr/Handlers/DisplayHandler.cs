@@ -16,7 +16,7 @@ namespace SLBr.Handlers
 
         public void OnAddressChanged(IWebBrowser chromiumWebBrowser, AddressChangedEventArgs addressChangedArgs)
         {
-            /*if (!addressChangedArgs.Address.StartsWith("devtools://devtools/"))
+            /*if (!addressChangedArgs.Address.StartsWith("devtools://devtools/", StringComparison.Ordinal))
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
@@ -52,7 +52,7 @@ namespace SLBr.Handlers
 
         public void OnFaviconUrlChange(IWebBrowser chromiumWebBrowser, IBrowser browser, IList<string> urls)
         {
-            if (urls.Count != 0)
+            if (urls.Count != 0 && bool.Parse(App.Instance.GlobalSave.Get("Favicons")))
             {
                 urls = urls.OrderBy(url => url.EndsWith(".ico") ? 0 : url.EndsWith(".png") ? 1 : 2).ToList();
                 //System.Windows.MessageBox.Show(string.Join(" | ", urls));

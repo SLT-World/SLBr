@@ -108,22 +108,14 @@ ul.nav > li > a {
         </div>
     </div>
     <script type="text/javascript">
-        engine.bindObjectAsync("internal");
-        (async () => {
-            await engine.bindObjectAsync("internal");
-            internal.getBackground().then(function (res) {
-                document.documentElement.style.backgroundImage = res;
-            });
-        })();
+        internal.background();
         document.getElementById('SearchField').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 search(document.getElementById("SearchField").value);
             }
         });
         async function search(value) {
-            internal.searchProviderPrefix().then(function (res) {
-                window.location.href = res.replace("{0}", value).replace(" ", "+");
-            });
+            internal.search(value);
         };
     </script>
 </body>

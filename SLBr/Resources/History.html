@@ -14,7 +14,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
         <div class="main">
             <div class="summary" style="margin-bottom: 10px">
                 <div id="actions" style="display: inline;">
-                    <button class="button_style icon_button" onclick="UpdateList()" title="Refresh list" style="margin-right: 5px;"></button>
+                    <button class="button_style icon_button" onclick="NotifyUpdateList()" title="Refresh list" style="margin-right: 5px;"></button>
                     <button class="button_style" onclick="ClearAll()" style="margin-right: 5px;">Clear all</button>
                 </div>
             </div>
@@ -87,124 +87,122 @@ Use of this source code is governed by a GNU license that can be found in the LI
             }
         </style>
         <script type="text/javascript">
-            (async () => {
-                await engine.bindObjectAsync("internal");
-                UpdateList();
-            })();
+            NotifyUpdateList();
             var timer;
             /*window.onload = function (e) {
                 timer = setInterval(UpdateList, 2500);
             }*/
-            function UpdateList() {
+            function NotifyUpdateList() {
+                internal.history();
+            }
+            function UpdateList(res) {
                 downloadsDisplay = document.getElementById('downloads-display')
-                internal.history().then(function (res) {
-                    let list = JSON.parse(res);
-                    let currentIds = new Set();
+                let list = JSON.parse(res);
+                let currentIds = new Set();
 
-                    for (let i = 0; i < list.length; i++) {
-                        currentIds.add(i.toString());
+                for (let i = 0; i < list.length; i++) {
+                    currentIds.add(i.toString());
+                }
+
+                let children = downloadsDisplay.children;
+                for (let i = 0; i < children.length; i++) {
+                    let id = children[i].id;
+                    if (!currentIds.has(id)) {
+                        downloadsDisplay.removeChild(children[i]);
                     }
+                }
 
-                    let children = downloadsDisplay.children;
-                    for (let i = 0; i < children.length; i++) {
-                        let id = children[i].id;
-                        if (!currentIds.has(id)) {
-                            downloadsDisplay.removeChild(children[i]);
-                        }
-                    }
+                for (let i = 0; i < list.length; i++) {
+                    let key = i.toString();
+                    let existingDownload = document.getElementById(key);
+                    if (!existingDownload) {
+                        let newDownload = document.createElement('div');
+                        newDownload.id = key;
+                        newDownload.classList.add('list_child');
 
-                    for (let i = 0; i < list.length; i++) {
-                        let key = i.toString();
-                        let existingDownload = document.getElementById(key);
-                        if (!existingDownload) {
-                            let newDownload = document.createElement('div');
-                            newDownload.id = key;
-                            newDownload.classList.add('list_child');
+                        let titleArea = document.createElement('div');
+                        titleArea.classList.add('title_area');
 
-                            let titleArea = document.createElement('div');
-                            titleArea.classList.add('title_area');
+                        let title = document.createElement('p');
+                        title.classList.add('list_text');
+                        title.textContent = list[i].Name;
 
-                            let title = document.createElement('p');
-                            title.classList.add('list_text');
-                            title.textContent = list[i].Name;
+                        let link = document.createElement('a');
+                        link.classList.add('button_style');
+                        link.classList.add('list_button');
+                        link.classList.add('icon_button');
+                        link.setAttribute('target', '_blank');
+                        link.setAttribute('focus-type', 'url');
+                        link.href = list[i].Tooltip;
+                        link.setAttribute('tabindex', '0');
+                        //link.textContent = "Open";
+                        link.textContent = '\uE8A7';
+                        link.title = "Open in new tab"
 
-                            let link = document.createElement('a');
-                            link.classList.add('button_style');
-                            link.classList.add('list_button');
-                            link.classList.add('icon_button');
-                            link.setAttribute('target', '_blank');
-                            link.setAttribute('focus-type', 'url');
-                            link.href = list[i].Tooltip;
-                            link.setAttribute('tabindex', '0');
-                            //link.textContent = "Open";
-                            link.textContent = '\uE8A7';
-                            link.title = "Open in new tab"
+                        let icon = document.createElement('object');
+                        icon.classList.add('list_icon');
+                        icon.data = "https://icons.duckduckgo.com/ip3/" + link.hostname + ".ico";
+                        icon.type = "image/png";
 
-                            let icon = document.createElement('object');
-                            icon.classList.add('list_icon');
-                            icon.data = "https://icons.duckduckgo.com/ip3/" + link.hostname + ".ico";
-                            icon.type = "image/png";
-
-                            let errorText = document.createElement('p');
-                            errorText.classList.add('list_icon_backup');
-                            if (list[i].Tooltip.startsWith('slbr://'))
-                            {
-                                if (list[i].Tooltip.startsWith('slbr://history'))
-                                    errorText.textContent = '\ue81c';
-                                else if (list[i].Tooltip.startsWith('slbr://downloads'))
-                                    errorText.textContent = '\ue896';
-                                else
-                                    errorText.textContent = '\ue713';
-                            }
+                        let errorText = document.createElement('p');
+                        errorText.classList.add('list_icon_backup');
+                        if (list[i].Tooltip.startsWith('slbr://'))
+                        {
+                            if (list[i].Tooltip.startsWith('slbr://history'))
+                                errorText.textContent = '\ue81c';
+                            else if (list[i].Tooltip.startsWith('slbr://downloads'))
+                                errorText.textContent = '\ue896';
                             else
-                                errorText.textContent = '\uEC6C';
-
-                            icon.appendChild(errorText);
-                            titleArea.appendChild(icon);
-                            titleArea.appendChild(title);
-                            titleArea.appendChild(link);
-                            newDownload.appendChild(titleArea);
-                            downloadsDisplay.appendChild(newDownload);
+                                errorText.textContent = '\ue713';
                         }
-                        else {
-                            link = existingDownload.querySelector('.list_text').textContent = list[i].Name;
-                            link = existingDownload.querySelector(".icon_button");
-                            link.href = list[i].Tooltip
+                        else
+                            errorText.textContent = '\uEC6C';
 
-                            let icon = document.createElement('object');
-                            icon.classList.add('list_icon');
-                            icon.data = "https://icons.duckduckgo.com/ip3/" + link.hostname + ".ico";
-                            icon.type = "image/png";
-
-                            let errorText = document.createElement('p');
-                            errorText.classList.add('list_icon_backup');
-
-                            if (list[i].Tooltip.startsWith('slbr://'))
-                            {
-                                if (list[i].Tooltip.startsWith('slbr://history'))
-                                    errorText.textContent = '\ue81c';
-                                else if (list[i].Tooltip.startsWith('slbr://downloads'))
-                                    errorText.textContent = '\ue896';
-                                else
-                                    errorText.textContent = '\ue713';
-                            }
-                            else
-                                errorText.textContent = '\uEC6C';
-
-                            icon.appendChild(errorText);
-
-                            existingDownload.querySelector(".list_icon").replaceWith(icon);
-                        }
+                        icon.appendChild(errorText);
+                        titleArea.appendChild(icon);
+                        titleArea.appendChild(title);
+                        titleArea.appendChild(link);
+                        newDownload.appendChild(titleArea);
+                        downloadsDisplay.appendChild(newDownload);
                     }
-                    if (downloadsDisplay.innerHTML.trim() == "")
-                        clearInterval(timer);
-                });
+                    else {
+                        link = existingDownload.querySelector('.list_text').textContent = list[i].Name;
+                        link = existingDownload.querySelector(".icon_button");
+                        link.href = list[i].Tooltip
+
+                        let icon = document.createElement('object');
+                        icon.classList.add('list_icon');
+                        icon.data = "https://icons.duckduckgo.com/ip3/" + link.hostname + ".ico";
+                        icon.type = "image/png";
+
+                        let errorText = document.createElement('p');
+                        errorText.classList.add('list_icon_backup');
+
+                        if (list[i].Tooltip.startsWith('slbr://'))
+                        {
+                            if (list[i].Tooltip.startsWith('slbr://history'))
+                                errorText.textContent = '\ue81c';
+                            else if (list[i].Tooltip.startsWith('slbr://downloads'))
+                                errorText.textContent = '\ue896';
+                            else
+                                errorText.textContent = '\ue713';
+                        }
+                        else
+                            errorText.textContent = '\uEC6C';
+
+                        icon.appendChild(errorText);
+
+                        existingDownload.querySelector(".list_icon").replaceWith(icon);
+                    }
+                }
+                if (downloadsDisplay.innerHTML.trim() == "")
+                    clearInterval(timer);
             }
 
             function ClearAll() {
                 //clearInterval(timer);
-                internal.clearAllHistory();
-                timer = setInterval(UpdateList, 250);
+                internal.clearHistory();
+                timer = setInterval(NotifyUpdateList, 250);
             }
         </script>
     </body>

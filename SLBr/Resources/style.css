@@ -223,13 +223,6 @@ a:hover {
 .Search {
     border: 1px solid transparent;
 }
-/*.Search:hover {
-    border: 0px solid transparent;
-}
-
-.Search:hover > .SearchInput {
-    border: 2px solid #3399FF;
-}*/
 
 .Search:focus-within {
     border: 0px solid transparent;

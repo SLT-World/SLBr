@@ -78,12 +78,12 @@
                                     <MenuItem Header="News Feed" Icon="&#xe8a1;" Click="ButtonAction" Tag="23"/>
                                     <Separator/>
                                     <MenuItem Header="Developer Tools" Icon="&#xec7a;" Click="ButtonAction" Tag="9" InputGestureText="F12"/>
-                                    <MenuItem Header="Validate HTML" Icon="&#xe943;" Click="ButtonAction" Tag="5&lt;,&gt;https://validator.nu/?doc={CurrentUrl}"/>
+                                    <!--<MenuItem Header="Validate HTML" Icon="&#xe943;" Click="ButtonAction" Tag="5&lt;,&gt;https://validator.nu/?doc={CurrentUrl}"/>-->
                                     <MenuItem Header="Tests" Icon="&#xebe8;">
                                         <MenuItem Header="HTML5 Test" Icon="&#xe81e;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.html5test.co/"/>
                                         <MenuItem Header="CSS3 Test" Icon="&#xf4a5;" Click="ButtonAction" Tag="4&lt;,&gt;https://css3test.com/"/>
                                         <MenuItem Header="SafeBrowsing" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://testsafebrowsing.appspot.com/"/>
-                                        <MenuItem Header="WebRTC Experiments" Icon="&#xe714;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.webrtc-experiment.com/"/>
+                                        <MenuItem Header="WebRTC" Icon="&#xe714;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.webrtc-experiment.com/"/>
                                         <MenuItem Header="Web Speech API" Icon="&#xefa9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/intl/en/chrome/demos/speech.html"/>
                                         <MenuItem Header="Web Notifications" Icon="&#xea8f;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.bennish.net/web-notifications.html"/>
                                         <MenuItem Header="WebGL" Icon="&#xf158;" Click="ButtonAction" Tag="4&lt;,&gt;https://get.webgl.org/"/>
@@ -96,9 +96,10 @@
                                         <MenuItem Header="Bad SSL" Icon="&#xe785;" Click="ButtonAction" Tag="4&lt;,&gt;https://badssl.com/"/>
                                         <MenuItem Header="Stutters &amp; Tearing" Icon="&#xe9d9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.testufo.com/stutter"/>
                                         <MenuItem Header="Show Picker" Icon="&#xef3c;" Click="ButtonAction" Tag="4&lt;,&gt;https://show-picker.glitch.me/demo.html"/>
-                                        <MenuItem Header="SmartScreen" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://demo.smartscreen.msft.net/"/>
+                                        <!--<MenuItem Header="SmartScreen" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://demo.smartscreen.msft.net/"/>-->
                                         <MenuItem Header="Widevine" Icon="&#xe8a6;" Click="ButtonAction" Tag="4&lt;,&gt;https://bitmovin.com/demos/drm/"/>
-                                        <MenuItem Header="Google Service Worker Demo" Icon="&#xec7a;" Click="ButtonAction" Tag="4&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
+                                        <MenuItem Header="Service Worker" Icon="&#xec7a;" Click="ButtonAction" Tag="4&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
+                                        <MenuItem Header="Prerender" Icon="&#xe8ff;" Click="ButtonAction" Tag="4&lt;,&gt;https://prerender-demos.glitch.me/"/>
                                         <Separator/>
                                         <MenuItem Header="WebGL Samples" Icon="&#xec26;">
                                             <MenuItem Header="HexGL" Icon="&#xe709;" Click="ButtonAction" Tag="4&lt;,&gt;https://hexgl.bkcore.com/"/>
@@ -116,7 +117,7 @@
                                         <MenuItem Header="Old Net Navigator" Icon="&#xec6c;" Click="ButtonAction" Tag="4&lt;,&gt;https://theoldnet.com/browser/"/>
                                         <MenuItem Header="Passive Aggressive Passwords" Icon="&#xe8d7;" Click="ButtonAction" Tag="4&lt;,&gt;https://trypap.com/"/>
                                         <MenuItem Header="🐮" Icon="&#xe767;" Click="ButtonAction" Tag="4&lt;,&gt;https://xn--2o8h.ws/"/>
-                                        <MenuItem Header="Endless Horse" Click="ButtonAction" Tag="4&lt;,&gt;https://endless.horse/"/>
+                                        <MenuItem Header="Endless Horse" Click="ButtonAction" Tag="4&lt;,&gt;http://endless.horse/"/>
                                         <MenuItem Header="CO2GLE" Click="ButtonAction" Tag="4&lt;,&gt;https://www.janavirgin.com/CO2/"/>
                                         <MenuItem Header="Deforest" Click="ButtonAction" Tag="4&lt;,&gt;https://www.janavirgin.com/CO2/DEFOOOOOOOOOOOOOOOOOOOOOREST.html"/>
                                     </MenuItem>
@@ -146,7 +147,16 @@
                     </WinUI:DropDownButton>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="1" x:Name="BackButton" ToolTip="Back" Content="&#xE76B;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="2" x:Name="ForwardButton" ToolTip="Forward" Content="&#xE76C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="ReloadButton" ToolTip="Refresh" Content="&#xE72C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
+                    <Button ContextMenuService.Placement="Bottom" Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="ReloadButton" ToolTip="Refresh" Content="&#xE72C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}">
+                        <Button.ContextMenu>
+                            <ContextMenu OverridesDefaultStyle="False">
+                                <MenuItem Icon="&#xE72C;" Header="Normal Reload" Click="ButtonAction" Tag="3"/>
+                                <Separator/>
+                                <MenuItem Icon="&#xE9F3;" Header="Hard Reload" Click="ButtonAction" Tag="50"/>
+                                <MenuItem Icon="&#xE8F7;" Header="Empty Cache &amp; Hard Reload" Click="ButtonAction" Tag="51"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="4&lt;,&gt;{Homepage}" x:Name="HomeButton" Content="&#xE80F;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Home"/>
 
                     <Button Click="ButtonAction" BorderThickness="0" Tag="5&lt;,&gt;slbr://downloads" x:Name="OpenDownloadsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Downloads" Content="&#xE896;"/>
@@ -205,20 +215,79 @@
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
                         <Border x:Name="OmniBoxBorder" Grid.ColumnSpan="2" Width="Auto" Margin="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Height="35" Padding="0"/>
-                        <Border x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
-                            <DockPanel Margin="4.25">
-                                <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0,0,0,0" Width="16px" FontFamily="Segoe Fluent Icons" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock.RenderTransform>
-                                        <RotateTransform x:Name="NoFreeze"/>
-                                    </TextBlock.RenderTransform>
-                                    <TextBlock.Resources>
-                                        <Storyboard x:Key="LoadingAnimation" Storyboard.TargetName="SiteInformationIcon">
-                                            <DoubleAnimation Storyboard.TargetProperty="(TextBlock.RenderTransform).(RotateTransform.Angle)" To="360" Duration="0:0:2" RepeatBehavior="Forever" />
-                                        </Storyboard>
-                                    </TextBlock.Resources>
-                                </TextBlock>
-                                <TextBlock DockPanel.Dock="Right" x:Name="SiteInformationText" Visibility="Collapsed" Margin="5,0,0,0" Text="-" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </DockPanel>
+                        <Border MouseDown="SiteInformation_MouseDown" x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
+                            <Grid>
+                                <DockPanel Margin="4.25">
+                                    <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0,0,0,0" Width="16px" FontFamily="Segoe Fluent Icons" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock.RenderTransform>
+                                            <RotateTransform x:Name="NoFreeze"/>
+                                        </TextBlock.RenderTransform>
+                                        <TextBlock.Resources>
+                                            <Storyboard x:Key="LoadingAnimation" Storyboard.TargetName="SiteInformationIcon">
+                                                <DoubleAnimation Storyboard.TargetProperty="(TextBlock.RenderTransform).(RotateTransform.Angle)" To="360" Duration="0:0:2" RepeatBehavior="Forever" />
+                                            </Storyboard>
+                                        </TextBlock.Resources>
+                                    </TextBlock>
+                                    <TextBlock DockPanel.Dock="Right" x:Name="SiteInformationText" Visibility="Collapsed" Margin="5,0,0,0" Text="-" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </DockPanel>
+                                <Popup x:Name="SiteInformationPopup" IsOpen="False" PopupAnimation="Fade" VerticalOffset="7.5" AllowsTransparency="True" SnapsToDevicePixels="True">
+                                    <Border Width="300" Padding="10" Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <!--<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE72E;" Margin="0,0,10,0"/>-->
+                                                <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                                    <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE72E;"/>
+                                                </Border>
+                                                <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText" Text="Connection is secure"/>
+                                            </DockPanel>
+                                            <StackPanel Margin="0,10,0,0" x:Name="SiteInformationCertificate">
+                                                <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
+                                                <DockPanel>
+                                                    <!--<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEB95;" Margin="0,0,10,0"/>-->
+                                                    <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
+                                                    </Border>
+                                                    <TextBlock x:Name="CertificateValidation" VerticalAlignment="Center" Text="Certificate is valid"/>
+                                                </DockPanel>
+                                                <GroupBox x:Name="CertificateInfo" Margin="0,10,0,0">
+                                                    <GroupBox.Header>
+                                                        Certificate
+                                                    </GroupBox.Header>
+                                                    <StackPanel>
+                                                        <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued to" FontWeight="Bold"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                            <TextBlock Text="Common Name (CN):" Width="125"/>
+                                                            <TextBlock x:Name="IssueToCommonName" Text="google.com"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                            <TextBlock Text="Company (O):" Width="125"/>
+                                                            <TextBlock x:Name="IssueToCompany" Text=""/>
+                                                        </StackPanel>
+                                                        <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued by" FontWeight="Bold"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                            <TextBlock Text="Common Name (CN):" Width="125"/>
+                                                            <TextBlock x:Name="IssueByCommonName" Text="WR2"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                            <TextBlock Text="Company (O):" Width="125"/>
+                                                            <TextBlock x:Name="IssueByCompany" Text="Google Trust Services"/>
+                                                        </StackPanel>
+                                                        <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Validity period" FontWeight="Bold"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                            <TextBlock Text="Start:" Width="125"/>
+                                                            <TextBlock x:Name="CertificateStart" Text="12/09/2024"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                            <TextBlock Text="End:" Width="125"/>
+                                                            <TextBlock x:Name="CertificateEnd" Text="03/03/2025"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </GroupBox>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+                            </Grid>
                         </Border>
                         <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Search or type a URL" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0" Foreground="{StaticResource BorderBrush}" x:Name="OmniBoxPlaceholder" Visibility="Visible"/>
                         <ComboBox VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" Style="{StaticResource DropDownTextBox}" BorderThickness="0" SelectionChanged="OmniBox_SelectionChanged" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>
@@ -396,7 +465,7 @@
                     </Border>
                 </Popup>
             </Grid>-->
-            <Grid Grid.Row="1" Grid.Column="1" x:Name="FindBar" Margin="5,5" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <Grid Grid.Row="1" Grid.Column="1" x:Name="FindBar" Margin="5" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Popup SnapsToDevicePixels="True" x:Name="FindPopup" Placement="RelativePoint" AllowsTransparency="True" IsOpen="False" PopupAnimation="Slide">
                     <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
                         <DockPanel Margin="5">

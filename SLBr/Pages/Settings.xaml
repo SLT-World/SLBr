@@ -37,9 +37,9 @@
                             Home
                         </GroupBox.Header>
                         <StackPanel>
-                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Homepage Url"/>
+                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Url"/>
                             <TextBox Margin="0,0,0,10" x:Name="HomepageTextBox" Width="Auto" KeyDown="HomepageTextBox_KeyUp"/>
-                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Homepage background"/>
+                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Background"/>
                             <DockPanel LastChildFill="True">
                                 <ComboBox x:Name="HomepageBackgroundComboBox" VerticalAlignment="Top" DockPanel.Dock="Left" SelectedIndex="0" Width="100px"/>
                                 <Grid Margin="5,0,0,0">
@@ -61,7 +61,8 @@
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
-                            <CheckBox x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
+                            <CheckBox Margin="0,0,0,10" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
+                            <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -321,7 +322,7 @@
                             <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                 <Run>SLBr sends diagnostic reports on crashes to help improve SLBr.</Run>
                                 <LineBreak/>
-                                <Run>The reports sent only includes data on the version and the errors in the code.</Run>
+                                <Run>Reports only include the version and the error.</Run>
                             </TextBlock>
                         </StackPanel>
                     </GroupBox>
@@ -371,11 +372,7 @@
                             YouTube
                         </GroupBox.Header>
                         <StackPanel>
-                            <CheckBox x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Margin="0,0,0,10" Content="Skip video ads" Width="Auto"/>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Desired video quality"/>
-                                <ComboBox x:Name="VideoQualityComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
+                            <CheckBox x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Content="Skip video ads" Width="Auto"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
@@ -383,8 +380,13 @@
                             Screenshot
                         </GroupBox.Header>
                         <StackPanel>
-                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Location"/>
-                            <TextBox x:Name="ScreenshotPathTextBox" Margin="0,0,0,10" KeyDown="ScreenshotPathTextBox_KeyDown" ToolTip="Screenshot location" Width="Auto"/>
+                            <DockPanel LastChildFill="True" Margin="0,0,0,10">
+                                <Button Margin="10,0,0,0" Content="Change" DockPanel.Dock="Right" Click="ChangeScreenshotPathButton_Click"/>
+                                <Grid>
+                                    <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Location"/>
+                                    <TextBlock Text="C://" x:Name="ScreenshotPathText" DockPanel.Dock="Left" Width="Auto" VerticalAlignment="Bottom" Foreground="{StaticResource GrayBrush}"/>
+                                </Grid>
+                            </DockPanel>
                             <DockPanel>
                                 <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Image type"/>
                                 <ComboBox x:Name="ScreenshotFormatComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
@@ -537,8 +539,13 @@
                             Downloads
                         </GroupBox.Header>
                         <StackPanel>
-                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Location"/>
-                            <TextBox x:Name="DownloadPathTextBox" Margin="0,0,0,10" KeyDown="DownloadPathTextBox_KeyDown" ToolTip="Download location" Width="Auto"/>
+                            <DockPanel LastChildFill="True" Margin="0,0,0,10">
+                                <Button Margin="10,0,0,0" Content="Change" DockPanel.Dock="Right" Click="ChangeDownloadPathButton_Click"/>
+                                <Grid>
+                                    <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Location"/>
+                                    <TextBlock Text="C://" x:Name="DownloadPathText" DockPanel.Dock="Left" Width="Auto" VerticalAlignment="Bottom" Foreground="{StaticResource GrayBrush}"/>
+                                </Grid>
+                            </DockPanel>
                             <CheckBox x:Name="DownloadPromptCheckBox" Click="DownloadPromptCheckBox_Click" Content="Ask before downloading" Width="Auto"/>
                         </StackPanel>
                     </GroupBox>
@@ -555,6 +562,14 @@
             <TabItem Header="Extensions" Tag="&#xEA86;">
                 <StackPanel Margin="25" MaxWidth="500">
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Extensions</TextBlock>
+                    <GroupBox x:Name="ExtensionWarning" Visibility="Collapsed" Margin="0,0,0,10" BorderBrush="Red" Background="DarkRed">
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock Foreground="White" FontSize="18" FontWeight="UltraLight" FontFamily="Segoe Fluent Icons" VerticalAlignment="Center" Text="&#xe7ba;" Margin="0,0,5,0"/>
+                                <TextBlock Foreground="White" VerticalAlignment="Center" Text="Chrome runtime style required"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
                             <DockPanel>
@@ -675,11 +690,20 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <!--<CheckBox x:Name="PDFViewerExtensionCheckBox" Click="PDFViewerExtensionCheckBox_Click" Content="Open PDF instead of downloading (Enable PDF Viewer Extension)" Width="Auto" Margin="0,0,0,10"/>-->
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Runtime Style"/>
+                                <ComboBox x:Name="RuntimeStyleComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                            </DockPanel>
                             <CheckBox x:Name="ChromiumHardwareAccelerationCheckBox" Click="ChromiumHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>
                             <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental features"/>
-                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                <Run>Restart SLBr for changes to take effect</Run>
-                            </TextBlock>
+                            <GroupBox BorderBrush="DarkOrange" Background="Orange">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <TextBlock FontSize="18" FontWeight="UltraLight" FontFamily="Segoe Fluent Icons" VerticalAlignment="Center" Text="&#xe946;" Margin="0,0,5,0"/>
+                                        <TextBlock VerticalAlignment="Center" Text="Restart for changes to take effect"/>
+                                    </DockPanel>
+                                </StackPanel>
+                            </GroupBox>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -717,7 +741,7 @@
                             </StackPanel>
                         </DockPanel>
                     </GroupBox>
-                    <TextBlock Text="Copyright © 2022-2024 SLT Softwares. All rights reserved." Margin="0"/>
+                    <TextBlock Text="Copyright © 2022-2025 SLT Softwares. All rights reserved." Margin="0"/>
                     <TextBlock Margin="0,0,0,10">
                         Licensed under the
                         <Hyperlink ToolTip="slbr://license" NavigateUri="slbr://license" RequestNavigate="Hyperlink_RequestNavigate">GNU General Public License v3.0</Hyperlink>.

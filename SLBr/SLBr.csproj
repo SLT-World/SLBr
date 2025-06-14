@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.17763</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -12,8 +12,8 @@
     <SignAssembly>False</SignAssembly>
     <ApplicationIcon>Resources\SLBr.ico</ApplicationIcon>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
-    <AssemblyVersion>2024.10.20.0</AssemblyVersion>
-    <FileVersion>2024.10.20.0</FileVersion>
+    <AssemblyVersion>2025.06.15.0</AssemblyVersion>
+    <FileVersion>2025.06.15.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
@@ -35,6 +35,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="App.xaml.cs~RF3366dde.TMP" />
     <None Remove="Resources\SLBr.png" />
     <None Remove="WinUIControls\5bmhprik.cf5~" />
   </ItemGroup>
@@ -49,7 +50,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="129.0.110" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="137.0.100" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.5" />
   </ItemGroup>
 
   <ItemGroup>
@@ -128,15 +130,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="129.0.11" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="137.0.10" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="129.0.11" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="137.0.10" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="129.0.11" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="137.0.10" />
   </ItemGroup>
 
 </Project>

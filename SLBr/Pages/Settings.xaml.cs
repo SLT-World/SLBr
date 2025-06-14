@@ -1,5 +1,5 @@
 ﻿using CefSharp;
-using CefSharp.DevTools.Database;
+using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -159,18 +159,19 @@ namespace SLBr.Pages
                 SearchEngineComboBox.SelectedValue = SearchEngine;
 
             HomepageTextBox.Text = App.Instance.GlobalSave.Get("Homepage");
-            bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab");
+            bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab", StringComparison.Ordinal);
             HomepageBackgroundComboBox.IsEnabled = IsNewTab;
             BingBackgroundComboBox.IsEnabled = IsNewTab;
             BackgroundImageTextBox.IsEnabled = IsNewTab;
             BackgroundQueryTextBox.IsEnabled = IsNewTab;
 
-            DownloadPathTextBox.Text = App.Instance.GlobalSave.Get("DownloadPath");
-            ScreenshotPathTextBox.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
+            DownloadPathText.Text = App.Instance.GlobalSave.Get("DownloadPath");
+            ScreenshotPathText.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
 
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
-            DownloadFaviconsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadFavicons"));
+            DownloadFaviconsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
             SmoothScrollCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll"));
+            QuickImageCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("QuickImage"));
             SpellCheckCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SpellCheck"));
             DownloadPromptCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt"));
 
@@ -193,23 +194,6 @@ namespace SLBr.Pages
 
 
             SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
-            if (VideoQualityComboBox.Items.Count == 0)
-            {
-                VideoQualityComboBox.Items.Add("Auto");
-                VideoQualityComboBox.Items.Add("144p");
-                VideoQualityComboBox.Items.Add("240p");
-                VideoQualityComboBox.Items.Add("360p");
-                VideoQualityComboBox.Items.Add("480p");
-                VideoQualityComboBox.Items.Add("720p");
-                VideoQualityComboBox.Items.Add("1080p");
-                VideoQualityComboBox.Items.Add("1440p");
-                VideoQualityComboBox.Items.Add("2160p");
-                VideoQualityComboBox.Items.Add("4320p");
-            }
-            VideoQualityComboBox.SelectionChanged += VideoQualityComboBox_SelectionChanged;
-            VideoQualityComboBox.SelectedValue = App.Instance.GlobalSave.Get("VideoQuality");
-
-
 
             GoogleSafeBrowsingCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("GoogleSafeBrowsing"));
 
@@ -253,7 +237,6 @@ namespace SLBr.Pages
                 SuggestionsSourceComboBox.Items.Add("DuckDuckGo");
                 SuggestionsSourceComboBox.Items.Add("Yahoo");
                 SuggestionsSourceComboBox.Items.Add("Wikipedia");
-                SuggestionsSourceComboBox.Items.Add("YouTube");
             }
             SuggestionsSourceComboBox.SelectionChanged += SuggestionsSourceComboBox_SelectionChanged;
             SuggestionsSourceComboBox.SelectedValue = App.Instance.GlobalSave.Get("SuggestionsSource");
@@ -263,7 +246,7 @@ namespace SLBr.Pages
             ChromiumHardwareAccelerationCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ChromiumHardwareAcceleration"));
             ExperimentalFeaturesCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ExperimentalFeatures"));
             LiteModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("LiteMode"));
-            PDFViewerToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PDFViewerExtension"));
+            PDFViewerToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PDF"));
 
             if (RenderModeComboBox.Items.Count == 0)
             {
@@ -306,6 +289,17 @@ namespace SLBr.Pages
             HomepageBackgroundComboBox.SelectionChanged += HomepageBackgroundComboBox_SelectionChanged;
             HomepageBackgroundComboBox.SelectedValue = App.Instance.GlobalSave.Get("HomepageBackground");
 
+            if (RuntimeStyleComboBox.Items.Count == 0)
+            {
+                RuntimeStyleComboBox.Items.Add("Chrome");
+                RuntimeStyleComboBox.Items.Add("Alloy");
+            }
+            RuntimeStyleComboBox.SelectionChanged += RuntimeStyleComboBox_SelectionChanged;
+            string RuntimeStyle = App.Instance.GlobalSave.Get("ChromiumRuntimeStyle");
+            RuntimeStyleComboBox.SelectedValue = RuntimeStyle;
+            if (RuntimeStyle != "Chrome")
+                ExtensionWarning.Visibility = Visibility.Visible;
+
             BackgroundImageTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundImage");
             BackgroundQueryTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundQuery");
             BackgroundImageTextBox.Visibility = App.Instance.GlobalSave.Get("HomepageBackground") == "Custom" ? Visibility.Visible : Visibility.Collapsed;
@@ -332,7 +326,7 @@ namespace SLBr.Pages
             }
 
             AboutVersion.Text = $"Version {App.Instance.ReleaseVersion}";
-            CEFVersion.Text = $"CEF: {(Cef.CefVersion.StartsWith("r") ? Cef.CefVersion.Substring(1, Cef.CefVersion.IndexOf("-") - 10) : Cef.CefVersion.Substring(0, Cef.CefVersion.IndexOf("-") - 10))}";
+            CEFVersion.Text = $"CEF: {(Cef.CefVersion.StartsWith("r", StringComparison.Ordinal) ? Cef.CefVersion.Substring(1, Cef.CefVersion.IndexOf("-") - 10) : Cef.CefVersion.Substring(0, Cef.CefVersion.IndexOf("-") - 10))}";
             ChromiumVersion.Text = $"Version: {Cef.ChromiumVersion}";
 
             AdsBlocked.Text = App.Instance.AdsBlocked.ToString();
@@ -393,6 +387,12 @@ namespace SLBr.Pages
                 //BackgroundQueryTextBox.Visibility = Value == "Unsplash" ? Visibility.Visible : Visibility.Collapsed;
             }
         }
+
+        private void RuntimeStyleComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("ChromiumRuntimeStyle", RuntimeStyleComboBox.SelectedValue.ToString());
+        }
         private void ScreenshotFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
@@ -405,7 +405,7 @@ namespace SLBr.Pages
         }
         private void RenderModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            App.Instance.SetRenderMode(RenderModeComboBox.SelectedValue.ToString(), true);
+            App.Instance.SetRenderMode(RenderModeComboBox.SelectedValue.ToString());
         }
         private void BingBackgroundComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -479,22 +479,12 @@ namespace SLBr.Pages
             {
                 HomepageTextBox.Text = Utils.FixUrl(HomepageTextBox.Text);
                 App.Instance.GlobalSave.Set("Homepage", HomepageTextBox.Text);
-                bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab");
+                bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab", StringComparison.Ordinal);
                 HomepageBackgroundComboBox.IsEnabled = IsNewTab;
                 BingBackgroundComboBox.IsEnabled = IsNewTab;
                 BackgroundImageTextBox.IsEnabled = IsNewTab;
                 BackgroundQueryTextBox.IsEnabled = IsNewTab;
             }
-        }
-        private void DownloadPathTextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("DownloadPath", DownloadPathTextBox.Text);
-        }
-        private void ScreenshotPathTextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("ScreenshotPath", ScreenshotPathTextBox.Text);
         }
         private void NeverSlowModeCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -516,12 +506,7 @@ namespace SLBr.Pages
         private void SkipAdsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetYouTube(SkipAdsCheckBox.IsChecked.ToBool(), VideoQualityComboBox.SelectedValue.ToString());
-        }
-        private void VideoQualityComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.SetYouTube(SkipAdsCheckBox.IsChecked.ToBool(), VideoQualityComboBox.SelectedValue.ToString());
+                App.Instance.SetYouTube(SkipAdsCheckBox.IsChecked.ToBool());
         }
 
 
@@ -538,12 +523,17 @@ namespace SLBr.Pages
         private void DownloadFaviconsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("DownloadFavicons", DownloadFaviconsCheckBox.IsChecked.ToBool().ToString());
+                App.Instance.GlobalSave.Set("Favicons", DownloadFaviconsCheckBox.IsChecked.ToBool().ToString());
         }
         private void SmoothScrollCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("SmoothScroll", SmoothScrollCheckBox.IsChecked.ToBool().ToString());
+        }
+        private void QuickImageCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("QuickImage", QuickImageCheckBox.IsChecked.ToBool().ToString());
         }
         private void SpellCheckCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -647,11 +637,6 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("ExperimentalFeatures", ExperimentalFeaturesCheckBox.IsChecked.ToBool().ToString());
         }
-        /*private void PDFViewerExtensionCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("PDFViewerExtension", PDFViewerExtensionCheckBox.IsChecked.ToBool().ToString());
-        }*/
         private void LiteModeCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -723,6 +708,34 @@ namespace SLBr.Pages
                 }
             }
         }
+        
+        private void ChangeDownloadPathButton_Click(object sender, RoutedEventArgs e)
+        {
+            var FolderDialog = new OpenFolderDialog
+            {
+                Title = "Select Folder",
+                InitialDirectory = DownloadPathText.Text
+            };
+            if (FolderDialog.ShowDialog() == true)
+            {
+                DownloadPathText.Text = FolderDialog.FolderName;
+                App.Instance.GlobalSave.Set("DownloadPath", FolderDialog.FolderName);
+            }
+        }
+        
+        private void ChangeScreenshotPathButton_Click(object sender, RoutedEventArgs e)
+        {
+            var FolderDialog = new OpenFolderDialog
+            {
+                Title = "Select Folder",
+                InitialDirectory = ScreenshotPathText.Text
+            };
+            if (FolderDialog.ShowDialog() == true)
+            {
+                ScreenshotPathText.Text = FolderDialog.FolderName;
+                App.Instance.GlobalSave.Set("ScreenshotPath", FolderDialog.FolderName);
+            }
+        }
 
         private void SwitchUserButton_Click(object sender, RoutedEventArgs e)
         {
@@ -747,7 +760,7 @@ namespace SLBr.Pages
                 if (Values[0] == "PDF")
                 {
                     bool PDFViewerExtension = Target.IsChecked.ToBool();
-                    App.Instance.GlobalSave.Set("PDFViewerExtension", PDFViewerExtension.ToString());
+                    App.Instance.GlobalSave.Set("PDF", PDFViewerExtension);
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();

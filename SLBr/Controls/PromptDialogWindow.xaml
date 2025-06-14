@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SLBr.Controls"
         mc:Ignorable="d"
-        Title="Credentials" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen"
+        Title="Prompt" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen"
         ContentRendered="Window_ContentRendered" WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent" MinWidth="400">
     <Window.Resources>
         <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>

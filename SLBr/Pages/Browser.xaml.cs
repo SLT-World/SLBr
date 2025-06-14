@@ -1,6 +1,5 @@
 ﻿using CefSharp;
 using CefSharp.DevTools;
-using CefSharp.DevTools.Autofill;
 using CefSharp.DevTools.Emulation;
 using CefSharp.DevTools.Page;
 using CefSharp.Wpf.HwndHost;
@@ -13,7 +12,6 @@ using System.Dynamic;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -24,7 +22,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Xml;
 using Windows.UI.Notifications;
@@ -57,15 +54,15 @@ namespace SLBr.Pages
         {
             InitializeComponent();
             Tab = _Tab != null ? _Tab : Tab.ParentWindow.GetTab(this);
-            Tab.Icon = App.Instance.GetIcon(bool.Parse(App.Instance.GlobalSave.Get("DownloadFavicons")) ? Url : "");
+            Tab.Icon = App.Instance.GetIcon(bool.Parse(App.Instance.GlobalSave.Get("Favicons")) ? Url : "");
             Address = Url;
             SetAudioState(false);
             //BrowserType = _BrowserType;
             InitializeBrowserComponent();
             FavouritesPanel.ItemsSource = App.Instance.Favourites;
             FavouriteListMenu.ItemsSource = App.Instance.Favourites;
-            HistoryListMenu.ItemsSource = App.Instance.GlobalHistory;
-            ExtensionsMenu.ItemsSource = App.Instance.Extensions;
+            HistoryListMenu.ItemsSource = App.Instance.History;
+            ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working for no reason so I turned it into a list
             /*BrowserEmulatorComboBox.Items.Add("Chromium");
             BrowserEmulatorComboBox.Items.Add("Edge");
             BrowserEmulatorComboBox.Items.Add("Internet Explorer");*/
@@ -74,16 +71,16 @@ namespace SLBr.Pages
 
             OmniBoxTimer = new DispatcherTimer();
             OmniBoxTimer.Tick += OmniBoxTimer_Tick;
-            OmniBoxTimer.Interval = TimeSpan.FromMilliseconds(250);
+            OmniBoxTimer.Interval = TimeSpan.FromMilliseconds(200);
             //BrowserEmulatorComboBox.SelectionChanged += BrowserEmulatorComboBox_SelectionChanged;
         }
 
-        public void InitializeBrowserComponent()
+        public void InitializeBrowserComponent(bool First = true)
         {
             if (Chromium == null && Cef.IsInitialized.ToBool())
                 CreateChromium(Address);
             else
-                BrowserLoadChanged(Address, true);
+                BrowserLoadChanged(Address);
         }
 
         TextBox OmniTextBox;
@@ -147,6 +144,12 @@ namespace SLBr.Pages
                 case Actions.Refresh:
                     Refresh();
                     break;
+                case Actions.HardRefresh:
+                    Refresh(true);
+                    break;
+                case Actions.ClearCacheHardRefresh:
+                    Refresh(true, true);
+                    break;
                 case Actions.Navigate:
                     Navigate(V1);
                     break;
@@ -156,7 +159,6 @@ namespace SLBr.Pages
                     {
                         BrowserTabItem _Tab = Tab.ParentWindow.GetBrowserTabWithId(int.Parse(V1));
                         Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1);
-                        //Tab.ParentWindow.NewTab(V1, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1);
                     }
                     else
                         Tab.ParentWindow.NewTab(V1, true);
@@ -218,13 +220,13 @@ namespace SLBr.Pages
                     break;
 
                 case Actions.ZoomIn:
-                    App.Instance.CurrentFocusedWindow().Zoom(1);
+                    Zoom(1);
                     break;
                 case Actions.ZoomOut:
-                    App.Instance.CurrentFocusedWindow().Zoom(-1);
+                    Zoom(-1);
                     break;
                 case Actions.ZoomReset:
-                    App.Instance.CurrentFocusedWindow().Zoom(0);
+                    Zoom(0);
                     break;
             }
         }
@@ -241,7 +243,6 @@ namespace SLBr.Pages
             Chromium = new ChromiumWebBrowser(Url);
             Chromium.Address = Url;
             Chromium.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
-            Chromium.JavascriptObjectRepository.Register("internal", App.Instance._PrivateJsObjectHandler, BindingOptions.DefaultBinder);
             //Chromium.JavascriptObjectRepository.Register("slbr", App.Instance._PublicJsObjectHandler, BindingOptions.DefaultBinder);
             Chromium.LifeSpanHandler = App.Instance._LifeSpanHandler;
             Chromium.DownloadHandler = App.Instance._DownloadHandler;
@@ -251,8 +252,8 @@ namespace SLBr.Pages
             Chromium.KeyboardHandler = App.Instance._KeyboardHandler;
             Chromium.JsDialogHandler = App.Instance._JsDialogHandler;
             Chromium.PermissionHandler = App.Instance._PermissionHandler;
+            Chromium.DialogHandler = App.Instance._DialogHandler;
             _ResourceRequestHandlerFactory = new Handlers.ResourceRequestHandlerFactory(_RequestHandler);
-
             Chromium.ResourceRequestHandlerFactory = _ResourceRequestHandlerFactory;
             Chromium.DisplayHandler = new DisplayHandler(this);
             Chromium.AllowDrop = true;
@@ -261,11 +262,11 @@ namespace SLBr.Pages
             Color _PrimaryColor = (Color)FindResource("PrimaryBrushColor");
             BrowserSettings _BrowserSettings = new BrowserSettings
             {
-                BackgroundColor = System.Drawing.Color.FromArgb(_PrimaryColor.A, _PrimaryColor.R, _PrimaryColor.G, _PrimaryColor.B).ToUInt()
+                BackgroundColor = (uint)((_PrimaryColor.A << 24) | (_PrimaryColor.R << 16) | (_PrimaryColor.G << 8) | (_PrimaryColor.B << 0))
             };
             Chromium.BrowserSettings = _BrowserSettings;
             Chromium.IsBrowserInitializedChanged += Chromium_IsBrowserInitializedChanged;
-
+            Chromium.FrameLoadStart += Chromium_FrameLoadStart;
             Chromium.LoadingStateChanged += Chromium_LoadingStateChanged;
             Chromium.ZoomLevelIncrement = 0.5f;
             Chromium.TitleChanged += Chromium_TitleChanged;
@@ -273,12 +274,48 @@ namespace SLBr.Pages
             Chromium.LoadError += Chromium_LoadError;
             Chromium.PreviewMouseWheel += Chromium_PreviewMouseWheel;
             Chromium.JavascriptMessageReceived += Chromium_JavascriptMessageReceived;
-
+            CoreContainer.Visibility = Visibility.Collapsed;
             CoreContainer.Children.Add(Chromium);
 
             //RenderOptions.SetBitmapScalingMode(Chromium, BitmapScalingMode.LowQuality);
 
             //BrowserEmulatorComboBox.SelectedItem = "Chromium";
+        }
+
+        public void ReFocus()
+        {
+            InitializeBrowserComponent(false);
+            if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
+            {
+                if (Chromium != null)
+                    Chromium.Visibility = Visibility.Collapsed;
+                if (_Settings == null)
+                {
+                    _Settings = new Settings(this);
+                    CoreContainer.Children.Add(_Settings);
+                }
+                _Settings.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                if (Chromium != null)
+                    Chromium.Visibility = Visibility.Visible;
+                if (_Settings != null)
+                {
+                    CoreContainer.Children.Remove(_Settings);
+                    _Settings?.Dispose();
+                    _Settings = null;
+                }
+            }
+        }
+
+        private void Chromium_FrameLoadStart(object? sender, FrameLoadStartEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (Address.StartsWith("slbr:", StringComparison.Ordinal))
+                    Chromium.ExecuteScriptAsync(App.InternalJavascriptFunction);
+            });
         }
 
         private void Chromium_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -293,7 +330,6 @@ namespace SLBr.Pages
         {
             if (e.ErrorCode == CefErrorCode.Aborted)
                 return;
-            bool IsMain = e.Frame.IsMain;
             Dispatcher.Invoke(() =>
             {
                 _ResourceRequestHandlerFactory.RegisterHandler(e.FailedUrl, ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect(e.FailedUrl, e.ErrorCode, e.ErrorText), Encoding.UTF8), "text/html", 1, "");
@@ -305,6 +341,7 @@ namespace SLBr.Pages
         {
             if (Chromium.IsBrowserInitialized)
             {
+                CoreContainer.Visibility = Visibility.Visible;
                 Tab.IsUnloaded = false;
                 Tab.BrowserCommandsVisibility = Visibility.Visible;
                 if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
@@ -341,7 +378,68 @@ namespace SLBr.Pages
                 switch (Message["type"].ToString())
                 {
                     case "Media":
-                        SetAudioState(Message["event"].ToString() == "Started");
+                        SetAudioState(Message["event"].ToString() == "1");
+                        break;
+                    case "Internal":
+                        switch (Message["function"])
+                        {
+                            case "Downloads":
+                                Chromium.ExecuteScriptAsync($"internal.receive(\"downloads={JsonSerializer.Serialize(App.Instance.Downloads).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
+                                break;
+                            case "History":
+                                Chromium.ExecuteScriptAsync($"internal.receive(\"history={JsonSerializer.Serialize(App.Instance.History).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
+                                break;
+                            case "Background":
+                                string Url = "";
+                                switch (App.Instance.GlobalSave.Get("HomepageBackground"))
+                                {
+                                    case "Bing":
+                                        string BingBackground = App.Instance.GlobalSave.Get("BingBackground");
+                                        if (BingBackground == "Image of the day")
+                                        {
+                                            try
+                                            {
+                                                XmlDocument doc = new XmlDocument();
+                                                doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
+                                                Url = "http://www.bing.com/" + doc.SelectSingleNode("/images/image/url").InnerText;
+                                            }
+                                            catch { }
+                                        }
+                                        else if (BingBackground == "Random")
+                                            Url = "http://bingw.jasonzeng.dev/?index=random";
+                                        break;
+
+                                    case "Picsum":
+                                        Url = "http://picsum.photos/1920/1080?random";
+                                        break;
+
+                                    case "Custom":
+                                        Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
+                                        if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
+                                            Url = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
+                                        break;
+                                }
+                                Chromium.ExecuteScriptAsync($"internal.receive(\"background={$"url('{Url}')".Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
+                                break;
+                            case "OpenDownload":
+                                Process.Start(new ProcessStartInfo("explorer.exe", "/select, \"" + App.Instance.Downloads.GetValueOrDefault((int)Message["variable"]).FullPath + "\"") { UseShellExecute = true });
+                                break;
+                            case "CancelDownload":
+                                Dispatcher.Invoke(() =>
+                                {
+                                    App.Instance._DownloadHandler.CancelDownload((int)Message["variable"]);
+                                });
+                                break;
+                            case "ClearHistory":
+                                Dispatcher.Invoke(App.Instance.History.Clear);
+                                break;
+                            case "Search":
+                                Dispatcher.Invoke(() =>
+                                {
+                                    Address = Utils.FilterUrlForBrowser(Message["variable"].ToString(), App.Instance.GlobalSave.Get("SearchEngine"));
+                                });
+                                break;
+                        }
                         break;
                     /*case "Extension":
                         App.Instance.LoadExtensions();
@@ -350,19 +448,7 @@ namespace SLBr.Pages
                         var Data = JsonSerializer.Deserialize<List<object>>((string)Message["data"]);
                         if (Data != null && Data.Count == 2)
                         {
-                            string _Title = Data[0].ToString();
-                            string Body = ((IDictionary<string, object>)JsonSerializer.Deserialize<ExpandoObject>(((JsonElement)Data[1]).GetRawText()))["body"].ToString();
-
                             var ToastXML = new Windows.Data.Xml.Dom.XmlDocument();
-                            var XML = @$"<toast>
-    <visual>
-        <binding template=""ToastText04"">
-            <text id=""1"">{_Title}</text>
-            <text id=""2"">{Body}</text>
-            <text id=""3"">{Utils.Host(e.Frame.Url, false)}</text>
-        </binding>
-    </visual>
-</toast>";
                             /*Uri uri = new Uri(e.Frame.Url);
                             string BaseURL = $"{uri.Scheme}://{uri.Host}";
                             var xml = @$"<toast>
@@ -375,13 +461,23 @@ namespace SLBr.Pages
                                     </binding>
                                 </visual>
                             </toast>";*/
-                            ToastXML.LoadXml(XML);
+                            ToastXML.LoadXml(@$"<toast>
+    <visual>
+        <binding template=""ToastText04"">
+            <text id=""1"">{Data[0].ToString()}</text>
+            <text id=""2"">{((IDictionary<string, object>)JsonSerializer.Deserialize<ExpandoObject>(((JsonElement)Data[1]).GetRawText()))["body"].ToString()}</text>
+            <text id=""3"">{Utils.Host(e.Frame.Url, false)}</text>
+        </binding>
+    </visual>
+</toast>");
                             ToastNotificationManager.CreateToastNotifier("SLBr").Show(new ToastNotification(ToastXML));
                         }
                         break;
                 }
             }
         }
+
+        bool IsCustomTheme = false;
 
         private void Chromium_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
         {
@@ -396,7 +492,7 @@ namespace SLBr.Pages
                 ForwardButton.IsEnabled = e.CanGoForward;
                 ReloadButton.Content = e.IsLoading ? "\xF78A" : "\xE72C";
                 DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
-                _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(App.Instance.CurrentTheme.DarkWebPage);
+                await _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(App.Instance.CurrentTheme.DarkWebPage);
                 if (e.Browser.IsValid)
                 {
                     if (bool.Parse(App.Instance.GlobalSave.Get("BlockFingerprint")))
@@ -404,7 +500,7 @@ namespace SLBr.Pages
                         switch (App.Instance.GlobalSave.Get("FingerprintLevel"))
                         {
                             case "Balanced":
-                                _DevToolsClient.Emulation.SetHardwareConcurrencyOverrideAsync(12);
+                                await _DevToolsClient.Emulation.SetHardwareConcurrencyOverrideAsync(12);
                                 break;
                             case "Random" or "Strict":
                                 //https://data.firefox.com/dashboard/hardware
@@ -412,8 +508,8 @@ namespace SLBr.Pages
                                 //https://source.chromium.org/chromium/chromium/deps/icu.git/+/chromium/m120:source/data/misc/metaZones.txt
                                 List<string> FingerprintTimeZones = new List<string>() { "Africa/Monrovia", "Europe/London", "America/New_York", "Asia/Seoul", "Asia/Singapore", "Asia/Taipei" };
                                 Random _Random = new Random();
-                                _DevToolsClient.Emulation.SetHardwareConcurrencyOverrideAsync(FingerprintHardwareConcurrencies[_Random.Next(FingerprintHardwareConcurrencies.Count)]);
-                                _DevToolsClient.Emulation.SetTimezoneOverrideAsync(FingerprintTimeZones[_Random.Next(FingerprintTimeZones.Count)]);
+                                await _DevToolsClient.Emulation.SetHardwareConcurrencyOverrideAsync(FingerprintHardwareConcurrencies[_Random.Next(FingerprintHardwareConcurrencies.Count)]);
+                                await _DevToolsClient.Emulation.SetTimezoneOverrideAsync(FingerprintTimeZones[_Random.Next(FingerprintTimeZones.Count)]);
                                 break;
                             default:
                                 break;
@@ -431,11 +527,6 @@ namespace SLBr.Pages
                             {
                                 Brand = "SLBr",
                                 Version = App.Instance.ReleaseVersion.Split('.')[0]
-                            },
-                            new UserAgentBrandVersion
-                            {
-                                Brand = "Not(A:Brand",
-                                Version = "8"
                             },
                             new UserAgentBrandVersion
                             {
@@ -464,7 +555,7 @@ namespace SLBr.Pages
                             Mobile = true
                         };*/
                         //navigator.userAgentData.getHighEntropyValues(["architecture","model","platform","platformVersion","uaFullVersion"]).then(ua =>{console.log(ua)});
-                        _DevToolsClient.Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, _UserAgentMetadata);
+                        await _DevToolsClient.Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, _UserAgentMetadata);
                     }
                 }
                 BrowserLoadChanged(Address, e.IsLoading);
@@ -477,193 +568,74 @@ namespace SLBr.Pages
 
                     var mediaQueries = await devToolsClient.CSS.SetMediaTextAsync("prefers-reduced-motion", new SourceRange(), "reduce");
                 }*/
-                if (e.IsLoading)
-                {
-                    if (Address.StartsWith("slbr:", StringComparison.Ordinal))
-                        Chromium.ExecuteScriptAsync("engine.bindObjectAsync(\"internal\");");
-                }
-                else
+                if (!e.IsLoading)
                 {
                     if (!Address.StartsWith("slbr:", StringComparison.Ordinal))
                     {
-                        if (Utils.IsHttpScheme(Address))
+                        if (Chromium.CanExecuteJavascriptInMainFrame)
                         {
-                            if (Address.AsSpan().IndexOf("youtube.com", StringComparison.Ordinal) >= 0)
+                            if (Utils.IsHttpScheme(Address))
                             {
                                 if (App.Instance.SkipAds)
-                                    Chromium.ExecuteScriptAsync(@"var style=document.createElement('style');
-style.textContent=`ytd-action-companion-ad-renderer,ytd-display-ad-renderer,ytd-video-masthead-ad-advertiser-info-renderer,ytd-video-masthead-ad-primary-video-renderer,ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer,yt-about-this-ad-renderer,yt-mealbar-promo-renderer,ytd-statement-banner-renderer,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-banner-promo-renderer-backgroundstatement-banner-style-type-compact,.ytd-video-masthead-ad-v3-renderer,div#root.style-scope.ytd-display-ad-renderer.yt-simple-endpoint,div#sparkles-container.style-scope.ytd-promoted-sparkles-web-renderer,div#main-container.style-scope.ytd-promoted-video-renderer,div#player-ads.style-scope.ytd-watch-flexy,ad-slot-renderer,ytm-promoted-sparkles-web-renderer,masthead-ad,tp-yt-iron-overlay-backdrop,#masthead-ad{display:none !important;}`;
-document.head.appendChild(style);");
-                                if (Address.AsSpan().IndexOf("youtube.com/watch?v=", StringComparison.Ordinal) >= 0)
                                 {
-                                    if (App.Instance.SkipAds)
-                                        Chromium.ExecuteScriptAsync(@"setInterval(()=>{
-    const video=document.querySelector(""div.ad-showing > div.html5-video-container > video"");
-    if (video){
-        video.currentTime=video.duration;
-        setTimeout(()=>{for(const adCloseOverlay of document.querySelectorAll("".ytp-ad-overlay-close-container"")){adCloseOverlay.click();}for (const skipButton of document.querySelectorAll("".ytp-ad-skip-button-modern"")){skipButton.click();}},20);
-    }
-    for(const overlayAd of document.querySelectorAll("".ytp-ad-overlay-slot"")){overlayAd.style.visibility = ""hidden"";}
-},250);
-setInterval(()=>{
-    const modalOverlay=document.querySelector(""tp-yt-iron-overlay-backdrop"");
-    document.body.style.setProperty('overflow-y','auto','important');
-    if (modalOverlay){modalOverlay.removeAttribute(""opened"");modalOverlay.remove();}
-    const popup=document.querySelector("".style-scope ytd-enforcement-message-view-model"");
-    if (popup){
-        const popupButton=document.getElementById(""dismiss-button"");
-        if(popupButton)popupButton.click();
-        popup.remove();
-        setTimeout(() => {if(video.paused)video.play();},500);
-    }
-},1000);");
-                                    if (App.Instance.VideoQuality != "Auto")
-                                        Chromium.ExecuteScriptAsync($@"document.querySelector('.ytp-settings-button').click();
-const qualityMenuItem = Array.from(document.querySelectorAll('.ytp-menuitem')).find(el => el.textContent.includes('Quality'));
-if (qualityMenuItem) qualityMenuItem.click();
-const desiredQualityItem = Array.from(document.querySelectorAll('.ytp-quality-menu .ytp-menuitem')).find(el => el.textContent.includes('{App.Instance.VideoQuality}'));
-if (desiredQualityItem) desiredQualityItem.click();");
+                                    if (Address.AsSpan().IndexOf("youtube.com", StringComparison.Ordinal) >= 0)
+                                    {
+                                        Chromium.ExecuteScriptAsync(Scripts.YouTubeHideAdScript);
+                                        if (Address.AsSpan().IndexOf("/watch?v=", StringComparison.Ordinal) >= 0)
+                                            Chromium.ExecuteScriptAsync(Scripts.YouTubeSkipAdScript);
+                                    }
                                 }
+                                if (Address.AsSpan().IndexOf("chromewebstore.google.com/detail", StringComparison.Ordinal) >= 0)
+                                    Chromium.ExecuteScriptAsync(Scripts.WebStoreScript);
+                                //if (bool.Parse(App.Instance.GlobalSave.Get("LiteMode")))
+                                //{
+                                //Chromium.ExecuteScriptAsync(@"var style = document.createElement('style');style.type ='text/css';style.appendChild(document.createTextNode('*{ transition: none!important;-webkit-transition: none!important; }')); document.getElementsByTagName('head')[0].appendChild(style);");
+                                //Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator.connection, 'saveData', { value: true, writable: false });");
+                                //}
+                                if (bool.Parse(App.Instance.GlobalSave.Get("WebNotifications")))
+                                    /*Chromium.ExecuteScriptAsync(@"const nativeRequestPermission = Notification?.requestPermission?.bind(Notification);
+    const nativePermission = Object.getOwnPropertyDescriptor(Notification, 'permission')?.get;
+    class Notification {
+    constructor(title, options = {}) {
+        if(Notification.permission!=='granted'){throw new Error(""Notification permission not granted."");}
+            this.onclick = null;
+            this.onshow = null;
+            this.onclose = null;
+            this.onerror = null;
+            if(typeof engine !== 'undefined' && typeof engine.postMessage === 'function') {
+                let packageSet=new Set();packageSet.add(title).add(options);
+                engine.postMessage({type:""Notification"",data:JSON.stringify([...packageSet])});
+            }
+            setTimeout(() => {if(typeof this.onshow==='function')this.onshow();},0);
+            if(Notification.autoClose){setTimeout(()=>this.close(),Notification.autoClose);}
+        }
+        close(){if(typeof this.onclose==='function')this.onclose();}
+        static requestPermission(callback){
+            if(nativeRequestPermission){return nativeRequestPermission(callback);}
+            else{if(callback)callback('granted');return Promise.resolve('granted');}
+        }
+        static get permission(){return nativePermission?nativePermission():'granted';}
+    }
+    Notification.autoClose = 7000;
+    window.Notification = Notification;");*/
+                                    Chromium.ExecuteScriptAsync(Scripts.NotificationPolyfill);
                             }
-                            else if (Address.AsSpan().IndexOf("chromewebstore.google.com/detail/", StringComparison.Ordinal) >= 0)
-                                //button.addEventListener('click', function(){ engine.postMessage({ type: ""Extension""});
-                                Chromium.ExecuteScriptAsync(@"function scanButton(){
-const buttonQueries = ['button span[jsname]:not(:empty)']
-for (const button of document.querySelectorAll(buttonQueries.join(','))){
-    const text=button.textContent||''
-    if (text==='Add to Chrome'||text==='Remove from Chrome')
-      button.textContent=text.replace('Chrome','SLBr')
-  }
-}
-scanButton();
-new MutationObserver(scanButton).observe(document.body,{attributes:true,childList:true,subtree:true});");
-                            //if (bool.Parse(App.Instance.GlobalSave.Get("LiteMode")))
-                            //{
-                            //Chromium.ExecuteScriptAsync(@"var style = document.createElement('style');style.type ='text/css';style.appendChild(document.createTextNode('*{ transition: none!important;-webkit-transition: none!important; }')); document.getElementsByTagName('head')[0].appendChild(style);");
-                            //Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator.connection, 'saveData', { value: true, writable: false });");
-                            //}
-                            if (bool.Parse(App.Instance.GlobalSave.Get("WebNotifications")))
-                                Chromium.ExecuteScriptAsync(@"class Notification {
-    constructor(title,options) {
-        let packageSet=new Set();
-        packageSet.add(title).add(options);
-        let json_package=JSON.stringify([...packageSet]);
-        engine.postMessage({type:""Notification"",data:json_package});
-    }
-    static requestPermission(){return new Promise((res,rej)=>{res('granted');})}
-};window.Notification=Notification;");
+                            else if (Address.StartsWith("file:///", StringComparison.Ordinal))
+                                Chromium.ExecuteScriptAsync(Scripts.FileScript);
                         }
-                        else if (Address.StartsWith("file:///", StringComparison.Ordinal))
-                            Chromium.ExecuteScriptAsync(@"document.documentElement.setAttribute('style',""display:table;margin:auto;"")
-document.body.setAttribute('style',""margin:35px auto;font-family:system-ui;"")
-var HeaderElement=document.getElementById('header');
-HeaderElement.setAttribute('style',""border:2px solid grey;border-radius:5px;padding:0 10px;margin:0 0 10px 0;"")
-HeaderElement.textContent=HeaderElement.textContent.replace('Index of ','');
-document.getElementById('nameColumnHeader').setAttribute('style',""text-align:left;padding:7.5px;"");
-document.getElementById('sizeColumnHeader').setAttribute('style',""text-align:center;padding:7.5px;"");
-document.getElementById('dateColumnHeader').setAttribute('style',""text-align:center;padding:7.5px;"");
-var style=document.createElement('style');
-style.type='text/css';
-style.innerHTML=`@media (prefers-color-scheme:light){a{color:black;}tr:nth-child(even){background-color: gainsboro;}#theader{background-color:gainsboro;}}
-@media (prefers-color-scheme:dark){a{color:white;}tr:nth-child(even){background-color:#202225;}#theader{background-color:#202225;}}
-td:first-child,th:first-child{border-radius:5px 0 0 5px;}
-td:last-child,th:last-child{border-radius:0 5px 5px 0;}`;
-document.body.appendChild(style);
-const ParentDir=document.getElementById('parentDirLinkBox');
-if (ParentDir)
-{
-    if (window.getComputedStyle(ParentDir).display === 'block'){ParentDir.setAttribute('style','display:block;padding:7.5px;margin:0 0 10px 0;');}
-    else{ParentDir.setAttribute('style','display:none;');}
-    ParentDir.querySelector('a.icon.up').setAttribute('style','background:none;padding-inline-start:.25em;');
-    var element=document.createElement('p');
-    element.setAttribute('style',""font-family:'Segoe Fluent Icons';margin:0;padding:0;display:inline;vertical-align:middle;user-select:none;color:navajowhite;"")
-    element.innerHTML='';
-    ParentDir.prepend(element);
-    ParentDir.querySelector('#parentDirText').innerHTML=""Parent Directory"";
-}
-document.querySelectorAll('tbody > tr').forEach(row => {
-    const link=row.querySelector('a.icon');
-    if (link){
-        link.setAttribute('style', 'background: none; padding-inline-start: .5em;');
-        var element=document.createElement('p');
-        if (row.querySelector('a.icon.dir')){
-            link.textContent=link.textContent.replace(/\/$/,'');
-            element.innerHTML='';
-            element.setAttribute('style',""font-family:'Segoe Fluent Icons';margin:0;padding:0;display:inline;vertical-align:middle;user-select:none;color:navajowhite;"")
-        }
-        else if (row.querySelector('a.icon.file')){
-            if (link.innerHTML.endsWith("".pdf""))
-                element.innerHTML='';
-            else if (link.innerHTML.endsWith("".png"")||link.innerHTML.endsWith("".jpg"")||link.innerHTML.endsWith("".jpeg"")||link.innerHTML.endsWith("".avif"")||link.innerHTML.endsWith("".svg"")||link.innerHTML.endsWith("".webp"")||link.innerHTML.endsWith("".jfif"")||link.innerHTML.endsWith("".bmp""))
-                element.innerHTML='';
-            else if (link.innerHTML.endsWith("".mp4"")||link.innerHTML.endsWith("".avi"")||link.innerHTML.endsWith("".ogg"")||link.innerHTML.endsWith("".webm"")||link.innerHTML.endsWith("".mov"")||link.innerHTML.endsWith("".mpej"")||link.innerHTML.endsWith("".wmv"")||link.innerHTML.endsWith("".h264"")||link.innerHTML.endsWith("".mkv""))
-                element.innerHTML='';
-            else if (link.innerHTML.endsWith("".zip"")||link.innerHTML.endsWith("".rar"")||link.innerHTML.endsWith("".7z"")||link.innerHTML.endsWith("".tar.gz"")||link.innerHTML.endsWith("".tgz""))
-                element.innerHTML='';
-            else if (link.innerHTML.endsWith("".txt""))
-                element.innerHTML='';
-            else if (link.innerHTML.endsWith("".mp3"")||link.innerHTML.endsWith("".mp2""))
-                element.innerHTML='';
-            else if (link.innerHTML.endsWith("".gif""))
-                element.innerHTML='';
-            else if (link.innerHTML.endsWith("".blend"")||link.innerHTML.endsWith("".obj"")||link.innerHTML.endsWith("".fbx"")||link.innerHTML.endsWith("".max"")||link.innerHTML.endsWith("".stl"")||link.innerHTML.endsWith("".x3d"")||link.innerHTML.endsWith("".3ds"")||link.innerHTML.endsWith("".dae"")||link.innerHTML.endsWith("".glb"")||link.innerHTML.endsWith("".gltf"")||link.innerHTML.endsWith("".ply""))
-                element.innerHTML='';
-            else
-                element.innerHTML='';
-            element.setAttribute('style',""font-family:'Segoe Fluent Icons';margin:0;padding:0;display:inline;vertical-align:middle;user-select:none;"")
-        }
-        row.querySelector('td').prepend(element);
-        row.children.item(0).setAttribute('style',""text-align:left;padding:7.5px;"");
-        row.children.item(1).setAttribute('style',""text-align:center;padding:7.5px;"");
-        row.children.item(2).setAttribute('style',""text-align:center;padding:7.5px;"");
-    }
-});");
-                        App.Instance.AddGlobalHistory(Address, Title);
+                        App.Instance.AddHistory(Address, Title);
                     }
                     if (bool.Parse(App.Instance.GlobalSave.Get("TabUnloading")))
-                        Chromium.ExecuteScriptAsync(@"function SLBrSetupMediaListeners(mediaElement) {
-    if (mediaElement.tagName==='AUDIO'&&(mediaElement.muted||mediaElement.volume===0)){return;}
-    mediaElement.removeEventListener('play',function(){engine.postMessage({type:""Media"",event:'Started'});});
-    mediaElement.removeEventListener('pause',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-    mediaElement.removeEventListener('ended',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-    mediaElement.addEventListener('play',function(){engine.postMessage({type:""Media"",event:'Started'});});
-    mediaElement.addEventListener('pause',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-    mediaElement.addEventListener('ended',function(){engine.postMessage({type:""Media"",event:'Stopped'});});
-}
-new MutationObserver(function(mutationsList){
-    for (let mutation of mutationsList){
-        if (mutation.type==='childList'){
-            mutation.addedNodes.forEach(function(node) {
-                if (node.tagName==='VIDEO'||node.tagName==='AUDIO')
-                    SLBrSetupMediaListeners(node);
-                else if (node.querySelectorAll)
-                    node.querySelectorAll('video,audio').forEach(function(mediaElement) {SLBrSetupMediaListeners(mediaElement);});
-            });
-        }
-    }
-}).observe(document.body,{childList:true,subtree:true});
-document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetupMediaListeners(mediaElement);});");
+                        Chromium.ExecuteScriptAsync(Scripts.TabUnloadScript);
                     if (bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme")))
                     {
-                        var contentSize = await Chromium.GetContentSizeAsync();
-                        if (contentSize.Width != 0 && contentSize.Height != 0)
+                        JavascriptResponse? Task = await Chromium.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content");
+                        if (Task.Success && Task.Result is string HexColor)
                         {
-                            var result = await _DevToolsClient.Page.CaptureScreenshotAsync(null, null, new Viewport { Width = contentSize.Width, Height = 2, }, null, true, true);
-                            using (var ms = new MemoryStream(result.Data))
+                            try
                             {
-                                var bitmapImage = new BitmapImage();
-                                bitmapImage.BeginInit();
-                                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                                bitmapImage.StreamSource = ms;
-                                bitmapImage.EndInit();
-                                var writeableBitmap = new WriteableBitmap(bitmapImage);
-                                writeableBitmap.Lock();
-
-                                IntPtr pixelAddress = writeableBitmap.BackBuffer + 1 * writeableBitmap.BackBufferStride + ((int)contentSize.Width / 2) * ((writeableBitmap.Format.BitsPerPixel + 7) / 8);
-                                byte[] ColorBytes = BitConverter.GetBytes(Marshal.ReadInt32(pixelAddress));
-
-                                Color PrimaryColor = Color.FromArgb(ColorBytes[3], ColorBytes[2], ColorBytes[1], ColorBytes[0]);
-                                FavouriteContainer.BorderThickness = new Thickness(0);
+                                IsCustomTheme = true;
+                                Color PrimaryColor = Utils.ParseThemeColor(HexColor);
                                 double a = 1 - (0.299 * PrimaryColor.R + 0.587 * PrimaryColor.G + 0.114 * PrimaryColor.B) / 255;
                                 Theme SiteTheme = null;
                                 if (a < 0.4)
@@ -718,6 +690,24 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
                                 _TabItem.Background = new SolidColorBrush(SiteTheme.PrimaryColor);
                                 _TabItem.BorderBrush = new SolidColorBrush(SiteTheme.BorderColor);
                             }
+                            catch
+                            {
+                                IsCustomTheme = false;
+                                SetAppearance(App.Instance.CurrentTheme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                                TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
+                                _TabItem.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.FontColor);
+                                _TabItem.Background = new SolidColorBrush(App.Instance.CurrentTheme.PrimaryColor);
+                                _TabItem.BorderBrush = new SolidColorBrush(App.Instance.CurrentTheme.BorderColor);
+                            }
+                        }
+                        else if (IsCustomTheme)
+                        {
+                            IsCustomTheme = false;
+                            SetAppearance(App.Instance.CurrentTheme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                            TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
+                            _TabItem.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.FontColor);
+                            _TabItem.Background = new SolidColorBrush(App.Instance.CurrentTheme.PrimaryColor);
+                            _TabItem.BorderBrush = new SolidColorBrush(App.Instance.CurrentTheme.BorderColor);
                         }
                     }
                 }
@@ -733,21 +723,21 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
         {
             if (Chromium != null && Chromium.IsBrowserInitialized && Chromium.CanExecuteJavascriptInMainFrame)
             {
-                var response = await Chromium.EvaluateScriptAsync(@"(function(){var metaTags=document.getElementsByTagName('meta');for(var i=0;i<metaTags.length;i++){if (metaTags[i].getAttribute('property')==='og:type'&&metaTags[i].getAttribute('content')==='article'){return true;}if (metaTags[i].getAttribute('name')==='article:author'){return true;}}return false;})();");
-                if (response.Success && response.Result is bool isArticle)
-                    return isArticle;
+                var Response = await Chromium.EvaluateScriptAsync(Scripts.ArticleScript);
+                if (Response.Success && Response.Result is bool IsArticle)
+                    return IsArticle;
             }
             return false;
         }
 
-        async void BrowserLoadChanged(string Address, bool IsLoading)
+        async void BrowserLoadChanged(string Address, bool? IsLoading = null)
         {
             string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Address));
             if (OmniBox.Text != OutputUrl)
             {
                 if (IsOmniBoxModifiable())
                 {
-                    if (Address == "slbr://newtab/")
+                    if (Address.StartsWith("slbr://newtab", StringComparison.Ordinal))
                     {
                         OmniBoxPlaceholder.Visibility = Visibility.Visible;
                         OmniBox.Text = "";
@@ -760,33 +750,23 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
                 }
                 OmniBox.Tag = Address;
             }
-            if (App.Instance.Favourites.Count == 0)
+            if (FavouriteExists(Address) != -1)
+            {
+                FavouriteButton.Content = "\xEB52";
+                FavouriteButton.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
+                FavouriteButton.ToolTip = "Remove from favourites";
+                Tab.FavouriteCommandHeader = "Remove from favourites";
+            }
+            else
             {
                 FavouriteButton.Content = "\xEB51";
                 FavouriteButton.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 FavouriteButton.ToolTip = "Add from favourites";
                 Tab.FavouriteCommandHeader = "Add from favourites";
             }
-            else
-            {
-                if (FavouriteExists(Address) != -1)
-                {
-                    FavouriteButton.Content = "\xEB52";
-                    FavouriteButton.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
-                    FavouriteButton.ToolTip = "Remove from favourites";
-                    Tab.FavouriteCommandHeader = "Remove from favourites";
-                }
-                else
-                {
-                    FavouriteButton.Content = "\xEB51";
-                    FavouriteButton.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                    FavouriteButton.ToolTip = "Add from favourites";
-                    Tab.FavouriteCommandHeader = "Add from favourites";
-                }
-            }
-            SetFavouritesBarVisibility();
+            //SetFavouritesBarVisibility();
             AIChatButton.Visibility = AllowAIButton ? Visibility.Visible : Visibility.Collapsed;
-            if (Address.StartsWith("slbr://settings"))
+            if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
             {
                 if (Chromium != null)
                     Chromium.Visibility = Visibility.Collapsed;
@@ -808,159 +788,183 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
                     _Settings = null;
                 }
             }
-
-            Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-            if (!IsLoading)
+            SiteInformationPopup.IsOpen = false;
+            if (IsLoading != null)
             {
-                string SetSiteInfo = "Process";
-                if (_ResourceRequestHandlerFactory.Handlers.TryGetValue(Address, out Handlers.ResourceRequestHandlerFactory.SLBrResourceRequestHandlerFactoryItem Item))
+                Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
+                if (!IsLoading.ToBool())
                 {
-                    if (!string.IsNullOrEmpty(Item.Error))
+                    string SetSiteInfo = "Process";
+                    if (_ResourceRequestHandlerFactory.Handlers.TryGetValue(Address, out Handlers.ResourceRequestHandlerFactory.SLBrResourceRequestHandlerFactoryItem Item))
                     {
-                        if (Item.Error.StartsWith("Malware") || Item.Error.StartsWith("Potentially_Harmful_Application") || Item.Error.StartsWith("Social_Engineering") || Item.Error.StartsWith("Unwanted_Software"))
-                            SetSiteInfo = "Danger";
-                    }
-                }
-                string _Host = Utils.Host(Address);
-                if (SetSiteInfo == "Process")
-                {
-                    if (Utils.IsHttpScheme(Address))
-                    {
-                        if (Chromium != null && Chromium.IsBrowserInitialized)
+                        if (!string.IsNullOrEmpty(Item.Error))
                         {
-                            /*bool IsSecureConnection = await Cef.UIThreadTaskFactory.StartNew(() =>
+                            if (Item.Error.StartsWith("Malware") || Item.Error.StartsWith("Potentially_Harmful_Application") || Item.Error.StartsWith("Social_Engineering") || Item.Error.StartsWith("Unwanted_Software"))
+                                SetSiteInfo = "Danger";
+                        }
+                    }
+                    if (SetSiteInfo == "Process")
+                    {
+                        if (Utils.IsHttpScheme(Address))
+                        {
+                            SiteInformationCertificate.Visibility = Visibility.Visible;
+                            if (Chromium != null && Chromium.IsBrowserInitialized)
                             {
-                                return Chromium.GetVisibleNavigationEntryAsync().GetBrowserHost().GetVisibleNavigationEntry().SslStatus.IsSecureConnection;
-                            });*/
-                            CefSharp.NavigationEntry _NavigationEntry = await Chromium.GetVisibleNavigationEntryAsync();
-                            SetSiteInfo = _NavigationEntry.SslStatus.IsSecureConnection ? (_NavigationEntry.HttpStatusCode == 418 ? "Teapot" : "Secure") : "Insecure";
+                                CefSharp.NavigationEntry _NavigationEntry = await Chromium.GetVisibleNavigationEntryAsync();
+                                SetSiteInfo = _NavigationEntry.SslStatus.IsSecureConnection ? (_NavigationEntry.HttpStatusCode == 418 ? "Teapot" : "Secure") : "Insecure";
+                                CertificateValidation.Text = _NavigationEntry.SslStatus.IsSecureConnection ? "Certificate is valid" : "Certificate is invalid";
+                                await Cef.UIThreadTaskFactory.StartNew(delegate
+                                {
+                                    SslStatus _SSL = Chromium.GetBrowserHost().GetVisibleNavigationEntry().SslStatus;
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        if (_SSL.X509Certificate != null)
+                                        {
+                                            CertificateInfo.Visibility = Visibility.Visible;
+                                            var IssuedTo = Utils.ParseCertificateIssue(_SSL.X509Certificate.Subject);
+                                            IssueToCommonName.Text = IssuedTo.Item1;
+                                            IssueToCompany.Text = IssuedTo.Item2;
+                                            var IssuedBy = Utils.ParseCertificateIssue(_SSL.X509Certificate.Issuer);
+                                            IssueByCommonName.Text = IssuedBy.Item1;
+                                            IssueByCompany.Text = IssuedBy.Item2;
+                                            CertificateStart.Text = _SSL.X509Certificate.NotBefore.Date.ToShortDateString();
+                                            CertificateEnd.Text = _SSL.X509Certificate.NotAfter.Date.ToShortDateString();
+                                        }
+                                        else
+                                            CertificateInfo.Visibility = Visibility.Collapsed;
+                                    });
+                                });
+                            }
+                            else
+                            {
+                                if (Address.StartsWith("https:", StringComparison.Ordinal))
+                                    SetSiteInfo = "Secure";
+                                else if (Address.StartsWith("http:", StringComparison.Ordinal))
+                                    SetSiteInfo = "Insecure";
+                            }
                         }
                         else
                         {
-                            if (Address.StartsWith("https:"))
-                                SetSiteInfo = "Secure";
-                            else if (Address.StartsWith("http:"))
-                                SetSiteInfo = "Insecure";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            if (Address.StartsWith("file:", StringComparison.Ordinal))
+                                SetSiteInfo = "File";
+                            else if (Address.StartsWith("slbr:", StringComparison.Ordinal))
+                                SetSiteInfo = "SLBr";
+                            else if (Address.StartsWith("chrome-extension:", StringComparison.Ordinal))
+                                SetSiteInfo = "Extension";
+                            else
+                                SetSiteInfo = "Protocol";
                         }
-                        /*if (Chromium == null && Chromium.IsBrowserInitialized)
-                        {
-                            Cef.UIThreadTaskFactory.StartNew(delegate
-                            {*/
-                        //SslStatus _SSL = Chromium.GetBrowserHost().GetVisibleNavigationEntry().SslStatus;
-                        /*MessageBox.Show(_SSL.SslVersion.ToString());
-                        MessageBox.Show(_SSL.ContentStatus.ToString());
-                        MessageBox.Show(_SSL.IsSecureConnection.ToString());
-                        if (_SSL.X509Certificate != null)
-                        {
-                            MessageBox.Show(_SSL.X509Certificate.ToString());
-                            MessageBox.Show(_SSL.CertStatus.ToString());
-                        }*/
-                        /*});
-                    }*/
                     }
-                    else if (Address.StartsWith("file:"))
-                        SetSiteInfo = "File";
-                    else if (Address.StartsWith("slbr:"))
-                        SetSiteInfo = "SLBr";
-                    else if (Address.StartsWith("chrome-extension:"))
-                        SetSiteInfo = "Extension";
-                    else
-                        SetSiteInfo = "Protocol";
-                }
 
-                switch (SetSiteInfo)
-                {
-                    case "Secure":
-                        SiteInformationIcon.Text = "\xE72E";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.LimeGreen);
-                        SiteInformationText.Text = $"Secure";
-                        SiteInformationPanel.ToolTip = $"Connection to {_Host} is secure";
-                        TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
-                        break;
-                    case "Insecure":
-                        SiteInformationIcon.Text = "\xE785";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.Red);
-                        SiteInformationText.Text = $"Insecure";
-                        SiteInformationPanel.ToolTip = $"Connection to {_Host} is not secure";
-                        TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
-                        break;
-                    case "File":
-                        SiteInformationIcon.Text = "\xE8B7";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.NavajoWhite);
-                        SiteInformationText.Text = $"File";
-                        SiteInformationPanel.ToolTip = $"Local or shared file";
-                        TranslateButton.Visibility = Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Visible;
-                        break;
-                    case "SLBr":
-                        SiteInformationIcon.Text = "\xF8B0";
-                        SiteInformationIcon.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0092FF"));
-                        SiteInformationText.Text = $"SLBr";
-                        SiteInformationPanel.ToolTip = $"Secure SLBr page";
-                        TranslateButton.Visibility = Visibility.Collapsed;
-                        if (Address.StartsWith("slbr://settings"))
-                            AIChatButton.Visibility = Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Visible;
-                        break;
-                    case "Danger":
-                        SiteInformationIcon.Text = "\xE730";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.Red);
-                        SiteInformationText.Text = $"Danger";
-                        SiteInformationPanel.ToolTip = $"Dangerous site";
-                        TranslateButton.Visibility = Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
-                        break;
-                    case "Protocol":
-                        SiteInformationIcon.Text = "\xE774";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(Colors.CornflowerBlue);
-                        SiteInformationText.Text = $"Protocol";
-                        SiteInformationPanel.ToolTip = $"Network protocol";
-                        TranslateButton.Visibility = Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
-                        break;
-                    case "Extension":
-                        SiteInformationIcon.Text = "\xEA86";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
-                        SiteInformationText.Text = $"Extension";
-                        SiteInformationPanel.ToolTip = $"Extension";
-                        TranslateButton.Visibility = Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
-                        break;
-                    case "Teapot":
-                        SiteInformationIcon.Text = "\xEC32";
-                        SiteInformationIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
-                        SiteInformationText.Text = $"Teapot";
-                        SiteInformationPanel.ToolTip = $"I'm a teapot";
-                        TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                        //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
-                        break;
-                }
-                LoadingStoryboard.Seek(TimeSpan.Zero);
-                LoadingStoryboard.Stop();
-                if (AllowReaderModeButton && Utils.IsHttpScheme(Address) && Chromium.CanExecuteJavascriptInMainFrame)
-                    ReaderModeButton.Visibility = (await IsArticle()) ? Visibility.Visible : Visibility.Collapsed;
-                else
-                    ReaderModeButton.Visibility = Visibility.Collapsed;
-                /*if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
-                {
-                    UnloadWatch = await HasBlockedUnloadElements();
-                    if (UnloadWatch)
-                        Tab.ProgressBarVisibility = (await CanUnload()) ? Visibility.Visible : Visibility.Collapsed;
+                    switch (SetSiteInfo)
+                    {
+                        case "Secure":
+                            SiteInformationIcon.Text = "\xE72E";
+                            SiteInformationIcon.Foreground = new SolidColorBrush(Colors.LimeGreen);
+                            SiteInformationText.Text = $"Secure";
+                            TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+                            SiteInformationPopupIcon.Text = "\xE72E";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush(Colors.LimeGreen);
+                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is secure";
+                            break;
+                        case "Insecure":
+                            SiteInformationIcon.Text = "\xE785";
+                            SiteInformationIcon.Foreground = new SolidColorBrush(Colors.Red);
+                            SiteInformationText.Text = $"Insecure";
+                            TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+                            SiteInformationPopupIcon.Text = "\xE785";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush(Colors.Red);
+                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is insecure";
+                            break;
+                        case "File":
+                            SiteInformationIcon.Text = "\xE8B7";
+                            SiteInformationIcon.Foreground = new SolidColorBrush(Colors.NavajoWhite);
+                            SiteInformationText.Text = $"File";
+                            TranslateButton.Visibility = Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Visible;
+                            SiteInformationPopupIcon.Text = "\xE8B7";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush(Colors.NavajoWhite);
+                            SiteInformationPopupText.Text = $"Local or shared file";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            break;
+                        case "SLBr":
+                            SiteInformationIcon.Text = "\xF8B0";
+                            SiteInformationIcon.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0092FF"));
+                            SiteInformationText.Text = $"SLBr";
+                            TranslateButton.Visibility = Visibility.Collapsed;
+                            if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
+                                AIChatButton.Visibility = Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Visible;
+                            SiteInformationPopupIcon.Text = "\xF8B0";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0092FF"));
+                            SiteInformationPopupText.Text = $"Secure SLBr page";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            break;
+                        case "Danger":
+                            SiteInformationIcon.Text = "\xE730";
+                            SiteInformationIcon.Foreground = new SolidColorBrush(Colors.Red);
+                            SiteInformationText.Text = $"Danger";
+                            TranslateButton.Visibility = Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+                            SiteInformationPopupIcon.Text = "\xE730";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush(Colors.Red);
+                            SiteInformationPopupText.Text = $"Dangerous site";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            break;
+                        case "Protocol":
+                            SiteInformationIcon.Text = "\xE774";
+                            SiteInformationIcon.Foreground = new SolidColorBrush(Colors.CornflowerBlue);
+                            SiteInformationText.Text = $"Protocol";
+                            TranslateButton.Visibility = Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+                            SiteInformationPopupIcon.Text = "\xE774";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush(Colors.CornflowerBlue);
+                            SiteInformationPopupText.Text = $"Network protocol";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            break;
+                        case "Extension":
+                            SiteInformationIcon.Text = "\xEA86";
+                            SiteInformationIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
+                            SiteInformationText.Text = $"Extension";
+                            TranslateButton.Visibility = Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+                            SiteInformationPopupIcon.Text = "\xEA86";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
+                            SiteInformationPopupText.Text = $"Extension";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            break;
+                        case "Teapot":
+                            SiteInformationIcon.Text = "\xEC32";
+                            SiteInformationIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
+                            SiteInformationText.Text = $"Teapot";
+                            TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
+                            //OpenFileExplorerButton.Visibility = Visibility.Collapsed;
+
+                            SiteInformationPopupIcon.Text = "\xEC32";
+                            SiteInformationPopupIcon.Foreground = new SolidColorBrush(App.Instance.GetTheme().FontColor);
+                            SiteInformationPopupText.Text = "I'm a teapot";
+                            break;
+                    }
+                    LoadingStoryboard?.Seek(TimeSpan.Zero);
+                    LoadingStoryboard?.Stop();
+                    if (AllowReaderModeButton && Utils.IsHttpScheme(Address))
+                        ReaderModeButton.Visibility = (await IsArticle()) ? Visibility.Visible : Visibility.Collapsed;
                     else
-                        Tab.ProgressBarVisibility = Visibility.Visible;
-                }*/
-            }
-            else if (SiteInformationText.Text != "Loading")
-            {
-                //SiteInformationIcon.Text = "\xED5A";
-                SiteInformationIcon.Text = "\xF16A";
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                SiteInformationText.Text = "Loading";
-                SiteInformationPanel.ToolTip = "Loading";
-                //TranslateButton.Visibility = Visibility.Collapsed;
-                LoadingStoryboard.Begin();
+                        ReaderModeButton.Visibility = Visibility.Collapsed;
+                }
+                else if (SiteInformationText.Text != "Loading")
+                {
+                    //SiteInformationIcon.Text = "\xED5A";
+                    SiteInformationIcon.Text = "\xF16A";
+                    SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                    SiteInformationText.Text = "Loading";
+                    //SiteInformationPanel.ToolTip = "Loading";
+                    //TranslateButton.Visibility = Visibility.Collapsed;
+                    LoadingStoryboard?.Begin();
+                }
             }
         }
 
@@ -1045,32 +1049,6 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
             GC.Collect(GC.MaxGeneration);
             GC.WaitForPendingFinalizers();
         }
-        public void ReFocus()
-        {
-            InitializeBrowserComponent();
-            if (Address.StartsWith("slbr://settings"))
-            {
-                if (Chromium != null)
-                    Chromium.Visibility = Visibility.Collapsed;
-                if (_Settings == null)
-                {
-                    _Settings = new Settings(this);
-                    CoreContainer.Children.Add(_Settings);
-                }
-                _Settings.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                if (Chromium != null)
-                    Chromium.Visibility = Visibility.Visible;
-                if (_Settings != null)
-                {
-                    CoreContainer.Children.Remove(_Settings);
-                    _Settings?.Dispose();
-                    _Settings = null;
-                }
-            }
-        }
         private void Browser_GotFocus(object sender, RoutedEventArgs e)
         {
             ReFocus();
@@ -1090,10 +1068,20 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
             if (Chromium != null && Chromium.IsBrowserInitialized)
                 Chromium.Forward();
         }
-        public void Refresh()
+        public void Refresh(bool IgnoreCache = false, bool ClearCache = false)
         {
             if (!IsLoading)
-                Reload();
+            {
+                if (ClearCache)
+                {
+                    using (var DevToolsClient = Chromium.GetDevToolsClient())
+                    {
+                        DevToolsClient.Page.ClearCompilationCacheAsync();
+                        DevToolsClient.Network.ClearBrowserCacheAsync();
+                    }
+                }
+                Reload(IgnoreCache);
+            }
             else
                 Stop();
         }
@@ -1136,7 +1124,7 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
 
         private void FindButton_Click(object sender, RoutedEventArgs e)
         {
-            var Values = ((Button)sender).ToolTip.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
+            var Values = ((Button)sender).ToolTip.ToString().Split("<,>");
             if (Values[0] == "Close")
                 StopFinding(true);
             else if (Values[0] == "Previous")
@@ -1187,7 +1175,7 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
 
         private void SwitchUserPopup()
         {
-            var infoWindow = new PromptDialogWindow("Prompt", $"Switch User Profile", "Enter username for the new user profile to switch to:", "Default", "\xE77B");
+            var infoWindow = new PromptDialogWindow("Prompt", $"Switch Profile", "Enter username for the profile to switch to:", "Default", "\xE77B");
             infoWindow.Topmost = true;
             if (infoWindow.ShowDialog() == true && infoWindow.UserInput != App.Instance.Username)
                 Process.Start(new ProcessStartInfo() { FileName = App.Instance.ExecutablePath, Arguments = $"--user={infoWindow.UserInput}" });
@@ -1293,7 +1281,7 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
         private static extern bool DestroyWindow(IntPtr hWnd);
 
         bool IsUtilityContainerOpen;
-        IWindowInfo windowInfo;
+        IWindowInfo SideBarWindowInfo;
         HwndHoster Host;
         public void ToggleSideBar(bool ForceClose = false)
         {
@@ -1317,11 +1305,12 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
                     AIChatBrowser = null;
                     if (Host != null)
                     {
+                        Chromium.BrowserCore.CloseDevTools();
                         DestroyWindow(Host.Handle);
-                        Host.Dispose();
+                        Host?.Dispose();
                         Host = null;
                     }
-                    windowInfo?.Dispose();
+                    SideBarWindowInfo?.Dispose();
                     IsUtilityContainerOpen = false;
                 }
             }
@@ -1353,10 +1342,10 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
                 {
                     if (Host != null)
                     {
-                        windowInfo = WindowInfo.Create();
-                        windowInfo.SetAsChild(Host.Handle);
+                        SideBarWindowInfo = WindowInfo.Create();
+                        SideBarWindowInfo.SetAsChild(Host.Handle);
                         if (Chromium != null && Chromium.BrowserCore != null)
-                            Chromium.BrowserCore.ShowDevTools(windowInfo, XCoord, YCoord);
+                            Chromium.BrowserCore.ShowDevTools(SideBarWindowInfo, XCoord, YCoord);
                     }
                 };
             }
@@ -1368,126 +1357,8 @@ document.querySelectorAll('video,audio').forEach(function(mediaElement){SLBrSetu
             IsReaderMode = !IsReaderMode;
             if (IsReaderMode)
             {
-                var script = @"const tagsToRemove=['header','footer','nav','aside','ads','script'];
-tagsToRemove.forEach(tag=>{
-    const elements=document.getElementsByTagName(tag);
-    while(elements[0]){elements[0].parentNode.removeChild(elements[0]);}
-});
-const selectorsToRemove=['.ad','.sidebar','#ad-container','.footer','.nav','.site-top-menu','.site-header','.site-footer','.sub-headerbar','.article-left-sidebar','.article-right-sidebar','.article_bottom_text','.read-next-panel','.article-meta-author-details','.onopen-discussion-panel','.author-wrapper','.follow','.share-list','.article-social-share-top','.recommended-intersection-ref','.engagement-widgets','#further-reading','.trending','.detailDiscovery','.globalFooter','.relatedlinks','#social_zone','#user-feedback','#user-feedback-button','.feedback-section','#opinionsListing'];
-selectorsToRemove.forEach(selector=>{
-    document.querySelectorAll(selector).forEach(element=>{element.parentNode.removeChild(element);});
-});
-const article=document.querySelector('article');
-if (article){
-    document.body.innerHTML='';
-    document.body.appendChild(article);
-} else {
-    const mainContent=document.getElementById('main-content');
-    if (mainContent){
-        document.body.innerHTML='';
-        document.body.appendChild(mainContent);
-    }
-}";
-                Chromium.ExecuteScriptAsync(script);
-
-                var css = @"* {
-    box-shadow: none !important;
-}
-body {
-    max-width: 800px !important;
-    margin: 0 auto !important;
-    padding: 20px !important;
-    background-color: #f4f4f4 !important;
-    color: #333 !important;
-    font-family: 'Arial', sans-serif !important;
-    line-height: 1.6 !important;
-    font-size: 18px !important;
-    border: none !important;
-}
-div {
-    background: none !important;
-    font-family: 'Arial', sans-serif !important;
-    border: none !important;
-}
-article {
-    background: none !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0;
-    font-family: 'Arial', sans-serif !important;
-}
-section {
-    background: none !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0;
-    font-family: 'Arial', sans-serif !important;
-}
-h1, h2, h3, h4 {
-    font-family: 'Arial', sans-serif !important;
-    font-weight: bold !important;
-    color: #333 !important;
-    margin-top: 50px !important;
-    margin-bottom: 6.25px !important;
-    padding: 0 0 6.25px !important;
-    border-radius: 0 !important;
-    border-top: none !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-bottom: 2.5px solid gainsboro !important;
-}
-span {
-    color: #333 !important;
-    padding: 0 !important;
-    background: none !important;
-}
-p {
-    color: #333 !important;
-    padding: 0 !important;
-    background: none !important;
-}
-a {
-    color: cornflowerblue !important;
-    text-decoration: none !important;
-    background: none !important;
-}
-a:hover {
-    filter: brightness(75%) !important;
-}
-pre {
-    border-radius: 10px !important;
-    background: white !important;
-    border: 2.5px solid gainsboro !important;
-    padding: 10px !important;
-}
-blockquote {
-    padding: 25px !important;
-    border-radius: 10px !important;
-    background: gainsboro !important;
-    margin: 0 !important;
-    border: none !important;
-}
-blockquote {
-    border-radius: 10px !important;
-    background: white !important;
-    border: 2.5px solid gainsboro !important;
-}
-figure {
-    width: 100% !important;
-}
-video {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto !important;
-    border-radius: 10px !important;
-}
-img {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto !important;
-    border-radius: 10px !important;
-}";
-                Chromium.ExecuteScriptAsync($"var style=document.createElement('style');style.innerHTML=`{css}`;document.head.appendChild(style);");
+                Chromium.ExecuteScriptAsync(Scripts.ReaderScript);
+                Chromium.ExecuteScriptAsync($"var style=document.createElement('style');style.innerHTML=`{Scripts.ReaderCSS}`;document.head.appendChild(style);");
             }
             else
                 Reload();
@@ -1536,7 +1407,7 @@ img {
                 AIChatBrowser.BrowserSettings = new BrowserSettings
                 {
                     WebGl = CefState.Disabled,
-                    BackgroundColor = System.Drawing.Color.FromArgb(_PrimaryColor.A, _PrimaryColor.R, _PrimaryColor.G, _PrimaryColor.B).ToUInt()
+                    BackgroundColor = (uint)((_PrimaryColor.A << 24) | (_PrimaryColor.R << 16) | (_PrimaryColor.G << 8) | (_PrimaryColor.B << 0))
                 };
                 AIChatBrowser.ZoomLevelIncrement = 0.5f;
                 //RenderOptions.SetBitmapScalingMode(AIChatBrowser, BitmapScalingMode.LowQuality);
@@ -1559,10 +1430,7 @@ img {
         private void AIChatBrowser_IsBrowserInitializedChanged(object? sender, EventArgs e)
         {
             if (AIChatBrowser.IsBrowserInitialized)
-            {
-                using (DevToolsClient DTC = AIChatBrowser.GetDevToolsClient())
-                    DTC.Emulation.SetUserAgentOverrideAsync($"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{Cef.ChromiumVersion} Safari/537.36 Edg/{Cef.ChromiumVersion}");
-            }
+                AIChatBrowser.GetDevToolsClient().Emulation.SetUserAgentOverrideAsync($"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{Cef.ChromiumVersion} Safari/537.36 Edg/{Cef.ChromiumVersion}");
         }
 
         private void AIChatBrowser_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
@@ -1952,19 +1820,17 @@ if (insertButton) {{
                 }}`;*/
                 Dispatcher.Invoke(() =>
                 {
-                    if (AIChatBrowser != null && AIChatBrowser.IsBrowserInitialized)
+                    AIChatBrowser.Visibility = Visibility.Visible;
+                    if (AIChatBrowser.Address.StartsWith("https://edgeservices.bing.com/edgesvc/compose", StringComparison.Ordinal))
+                        AIChatBrowser.ExecuteScriptAsync(ComposeJS);
+                    else
                     {
-                        AIChatBrowser.Visibility = Visibility.Visible;
-                        if (AIChatBrowser.Address.StartsWith("https://edgeservices.bing.com/edgesvc/compose", StringComparison.Ordinal))
-                            AIChatBrowser.ExecuteScriptAsync(ComposeJS);
-                        else
+                        AIChatBrowser.ExecuteScriptAsync(ChatJS);
+                        TaskScheduler syncContextScheduler = (SynchronizationContext.Current != null) ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current;
+                        Task.Factory.StartNew(() => Thread.Sleep(500))
+                        .ContinueWith((t) =>
                         {
-                            AIChatBrowser.ExecuteScriptAsync(ChatJS);
-                            TaskScheduler syncContextScheduler = (SynchronizationContext.Current != null) ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current;
-                            Task.Factory.StartNew(() => Thread.Sleep(500))
-                            .ContinueWith((t) =>
-                            {
-                                AIChatBrowser.ExecuteScriptAsync(@"var elements=document.querySelectorAll('.b_wlcmLogo');
+                            AIChatBrowser.ExecuteScriptAsync(@"var elements=document.querySelectorAll('.b_wlcmLogo');
 elements.forEach(function(logo){
     if (logo.shadowRoot){
         const defsElement=logo.shadowRoot.querySelector(""defs"");
@@ -2053,15 +1919,14 @@ function applyStyles(){
 applyStyles();
 new MutationObserver(applyStyles).observe(document.body,{attributes:true,childList:true,subtree:true});");
 
-                                /*if (AIChatBrowser.Address.Contains("mobfull,moblike"))
-                                    AIChatBrowser.ExecuteScriptAsync(@"const LateStyle=document.createElement('style');
+                            /*if (AIChatBrowser.Address.Contains("mobfull,moblike"))
+                                AIChatBrowser.ExecuteScriptAsync(@"const LateStyle=document.createElement('style');
 LateStyle.type='text/css';
 LateStyle.innerHTML=`.zero_state_item{border-radius:5px !important;}`;
 document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.zero_state_wrap').shadowRoot.appendChild(LateStyle);
 document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.zero_state_wrap').shadowRoot.querySelector('.hello_text').innerHTML=""Suggestions"";
 document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.preview-container').remove();");*/
-                            }, syncContextScheduler);
-                        }
+                        }, syncContextScheduler);
                     }
                 });
             }
@@ -2075,13 +1940,6 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             MuteMenuItem.Icon = Muted ? "\xe767" : "\xe74f";
             MuteMenuItem.Header = Muted ? "Unmute" : "Mute";
             SetAudioState(null);
-        }
-
-        private string GetHexColorFromResource(string resourceKey)
-        {
-            if (Resources[resourceKey] is Color color)
-                return $"#{color.R:X2}{color.G:X2}{color.B:X2}{color.A:X2}";
-            return null;
         }
 
         public void AIChatFeature(int Feature)
@@ -2136,6 +1994,7 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                     Tab.FavouriteCommandHeader = "Remove from favourites";
                 }
             }
+            SetFavouritesBarVisibility();
         }
 
         public void SetFavouritesBarVisibility()
@@ -2197,21 +2056,15 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                     FileExtension = "webp";
                     ScreenshotFormat = CaptureScreenshotFormat.Webp;
                 }
-                DateTime CurrentTime = DateTime.Now;
                 string ScreenshotPath = App.Instance.GlobalSave.Get("ScreenshotPath");
                 if (!Directory.Exists(ScreenshotPath))
                     Directory.CreateDirectory(ScreenshotPath);
+                DateTime CurrentTime = DateTime.Now;
                 string Url = $"{Path.Combine(ScreenshotPath, Regex.Replace($"{Chromium.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", ""))}";
                 using (var _DevToolsClient = Chromium.GetDevToolsClient())
                 {
                     var contentSize = await Chromium.GetContentSizeAsync();
-                    var viewPort = new Viewport
-                    {
-                        Width = contentSize.Width,
-                        Height = contentSize.Height,
-                    };
-
-                    var result = await _DevToolsClient.Page.CaptureScreenshotAsync(ScreenshotFormat, null, viewPort, null, true, true);
+                    var result = await _DevToolsClient.Page.CaptureScreenshotAsync(ScreenshotFormat, null, new Viewport { Width = contentSize.Width, Height = contentSize.Height }, null, true, true);
                     File.WriteAllBytes(Url, result.Data);
                 }
                 Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true });
@@ -2251,71 +2104,66 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             {
                 if (e.Key == Key.Return)
                 {
-                    Keyboard.ClearFocus();
-                    Chromium.Focus();
                     string Url = Utils.FilterUrlForBrowser(OmniBox.Text, App.Instance.GlobalSave.Get("SearchEngine"));
-                    if (Url.StartsWith("javascript:"))
+                    if (Url.StartsWith("javascript:", StringComparison.Ordinal))
                     {
                         Chromium.ExecuteScriptAsync(Url.Substring(11));
                         OmniBox.Text = OmniBox.Tag.ToString();
                     }
                     else if (!Utils.IsProgramUrl(Url))
                         Address = Url;
+                    Keyboard.ClearFocus();
+                    Chromium.Focus();
                 }
                 else
                 {
                     if (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right || e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl || e.Key == Key.LeftShift || e.Key == Key.RightShift)
                         return;
-                    if ((Keyboard.Modifiers) == ModifierKeys.Control ||  (Keyboard.Modifiers) == ModifierKeys.Alt || (Keyboard.Modifiers) == ModifierKeys.Shift)
+                    if (Keyboard.Modifiers == ModifierKeys.Control || Keyboard.Modifiers == ModifierKeys.Alt || Keyboard.Modifiers == ModifierKeys.Shift)
                         return;
 
                     if (e.Key == Key.Back || !char.IsControl((char)KeyInterop.VirtualKeyFromKey(e.Key)))
                     {
                         Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-                        LoadingStoryboard.Seek(TimeSpan.Zero);
-                        LoadingStoryboard.Stop();
-                        if (OmniBox.Text.StartsWith("search:"))
+                        LoadingStoryboard?.Seek(TimeSpan.Zero);
+                        LoadingStoryboard?.Stop();
+                        if (OmniBox.Text.StartsWith("search:", StringComparison.Ordinal))
                         {
                             SiteInformationIcon.Text = "\xE721";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = $"Search";
                             SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text.Substring(7).Trim()}";
                         }
-                        else if (OmniBox.Text.StartsWith("domain:"))
+                        else if (OmniBox.Text.StartsWith("domain:", StringComparison.Ordinal))
                         {
                             SiteInformationIcon.Text = "\xE71B";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = $"Address";
-                            SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text}";
+                            SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text.Substring(7).Trim()}";
                         }
                         else if (Utils.IsProgramUrl(OmniBox.Text))
                         {
                             SiteInformationIcon.Text = "\xE756";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = $"Program";
                             SiteInformationPanel.ToolTip = $"Open program: {OmniBox.Text}";
                         }
                         else if (Utils.IsCode(OmniBox.Text))
                         {
                             SiteInformationIcon.Text = "\xE943";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = $"Code";
                             SiteInformationPanel.ToolTip = $"Code: {OmniBox.Text}";
                         }
                         else if (Utils.IsUrl(OmniBox.Text))
                         {
                             SiteInformationIcon.Text = "\xE71B";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = $"Address";
                             SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text}";
                         }
                         else
                         {
                             SiteInformationIcon.Text = "\xE721";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = $"Search";
                             SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text}";
                         }
+                        SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
 
                         PreviousOmniBoxText = OmniTextBox.Text;
                         CaretIndex = OmniTextBox.CaretIndex;
@@ -2415,12 +2263,12 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                 //MessageBox.Show(CoAddress);
                 if (Utils.IsHttpScheme(Address))
                     TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                else if (Address.StartsWith("file:"))
+                else if (Address.StartsWith("file:", StringComparison.Ordinal))
                     TranslateButton.Visibility = Visibility.Collapsed;
-                else if (Address.StartsWith("slbr:"))
+                else if (Address.StartsWith("slbr:", StringComparison.Ordinal))
                 {
                     TranslateButton.Visibility = Visibility.Collapsed;
-                    if (Address.StartsWith("slbr://settings"))
+                    if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
                         AIChatButton.Visibility = Visibility.Collapsed;
                 }
                 else
@@ -2484,163 +2332,118 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
         int SelectionStart;
         int SelectionLength;
 
-        private void OmniBoxTimer_Tick(object? sender, EventArgs e)
+        private async void OmniBoxTimer_Tick(object? sender, EventArgs e)
         {
             OmniBoxTimer.Stop();
+            string Text = OmniBox.Text;
             Suggestions.Clear();
             if (!bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
             {
                 OmniBox.IsDropDownOpen = false;
                 return;
             }
+            OmniBox.Text = Text;
             if (OmniBox.Text.Trim().Length > 0)
             {
-                Dispatcher.Invoke(async () =>
+                try
                 {
+                    string SuggestionSource = App.Instance.GlobalSave.Get("SuggestionsSource");
+                    string SuggestionsUrl = "";
+                    if (SuggestionSource == "Google")
+                        SuggestionsUrl = "http://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q=" + OmniBox.Text;
+                    else if (SuggestionSource == "Bing")
+                        SuggestionsUrl = "http://api.bing.com/osjson.aspx?query=" + OmniBox.Text;
+                    else if (SuggestionSource == "Brave Search")
+                        SuggestionsUrl = "http://search.brave.com/api/suggest?q=" + OmniBox.Text;
+                    //else if (SuggestionSource == "Ecosia")
+                    //    SuggestionsUrl = "http://ac.ecosia.org/autocomplete?type=list&q=" + OmniBox.Text;
+                    else if (SuggestionSource == "DuckDuckGo")
+                        SuggestionsUrl = "http://duckduckgo.com/ac/?type=list&q=" + OmniBox.Text;
+                    else if (SuggestionSource == "Yahoo")
+                        SuggestionsUrl = "http://ff.search.yahoo.com/gossip?output=fxjson&command=" + OmniBox.Text;
+                    else if (SuggestionSource == "Wikipedia")
+                        SuggestionsUrl = "http://en.wikipedia.org/w/api.php?action=opensearch&format=json&search=" + OmniBox.Text;
+
+                    HttpWebRequest Request = (HttpWebRequest)WebRequest.Create(SuggestionsUrl);
                     try
                     {
-                        string SuggestionSource = App.Instance.GlobalSave.Get("SuggestionsSource");
-                        string SuggestionsUrl = "";
-                        if (SuggestionSource == "Google")
-                            SuggestionsUrl = "http://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q=" + OmniBox.Text;
-                        else if (SuggestionSource == "Bing")
-                            SuggestionsUrl = "http://api.bing.com/qsml.aspx?query=" + OmniBox.Text;
-                        else if (SuggestionSource == "Brave Search")
-                            SuggestionsUrl = "http://search.brave.com/api/suggest?q=" + OmniBox.Text;
-                        //else if (SuggestionSource == "Ecosia")
-                        //    SuggestionsUrl = "http://ac.ecosia.org/autocomplete?type=list&q=" + OmniBox.Text;
-                        else if (SuggestionSource == "DuckDuckGo")
-                            SuggestionsUrl = "http://duckduckgo.com/ac/?q=" + OmniBox.Text;
-                        else if (SuggestionSource == "Yahoo")
-                            SuggestionsUrl = "http://search.yahoo.com/sugg/gossip/gossip-us-ura/?output=sd1&command=" + OmniBox.Text;
-                        else if (SuggestionSource == "Wikipedia")
-                            SuggestionsUrl = "http://en.wikipedia.org/w/api.php?action=opensearch&format=json&search=" + OmniBox.Text;
-                        else if (SuggestionSource == "YouTube")
-                            SuggestionsUrl = "http://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=" + OmniBox.Text;
-
-                        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(SuggestionsUrl);
-                        try
+                        HttpWebResponse Response = (HttpWebResponse)await Request.GetResponseAsync();
+                        string ResponseText = new StreamReader(Response.GetResponseStream()).ReadToEnd();
+                        using (JsonDocument Document = JsonDocument.Parse(ResponseText))
                         {
-                            HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync();
-                            string responseText = new StreamReader(response.GetResponseStream()).ReadToEnd();
-
-                            if (SuggestionSource == "Google" || SuggestionSource == "Brave Search"/* || SuggestionSource == "Ecosia"*/ || SuggestionSource == "Wikipedia")
-                            {
-                                using (JsonDocument doc = JsonDocument.Parse(responseText))
-                                {
-                                    JsonElement root = doc.RootElement;
-                                    foreach (JsonElement suggestion in root[1].EnumerateArray())
-                                        Suggestions.Add(suggestion.GetString());
-                                }
-                            }
-                            else if (SuggestionSource == "Bing")
-                            {
-                                XmlDocument doc = new XmlDocument();
-                                doc.LoadXml(responseText);
-                                XmlElement root = doc.DocumentElement;
-                                XmlNodeList itemNodes = root.GetElementsByTagName("Text");
-                                foreach (XmlNode node in itemNodes)
-                                    Suggestions.Add(node.InnerText);
-                            }
-                            else if (SuggestionSource == "YouTube")
-                            {
-                                responseText = responseText.Replace("window.google.ac.h", "").Substring(1, responseText.Length - 2);
-                                foreach (Match match in Regex.Matches(responseText, @"(\"".+?\"")"))
-                                    Suggestions.Add(Regex.Unescape(match.Value.Trim('"')));
-                                Suggestions.RemoveAt(0);
-                                Suggestions.RemoveAt(Suggestions.Count - 1);
-                                Suggestions.RemoveAt(Suggestions.Count - 1);
-                                Suggestions.RemoveAt(Suggestions.Count - 1);
-                            }
-                            else if (SuggestionSource == "DuckDuckGo")
-                            {
-                                using (JsonDocument document = JsonDocument.Parse(responseText))
-                                {
-                                    JsonElement root = document.RootElement;
-                                    foreach (JsonElement element in root.EnumerateArray())
-                                    {
-                                        if (element.TryGetProperty("phrase", out JsonElement phraseElement))
-                                            Suggestions.Add(phraseElement.GetString());
-                                    }
-                                }
-                            }
-                            else if (SuggestionSource == "Yahoo")
-                            {
-                                using (JsonDocument doc = JsonDocument.Parse(responseText))
-                                {
-                                    JsonElement root = doc.RootElement;
-                                    JsonElement rElement;
-                                    if (root.TryGetProperty("r", out rElement))
-                                    {
-                                        foreach (JsonElement element in rElement.EnumerateArray())
-                                        {
-                                            if (element.TryGetProperty("k", out JsonElement kElement))
-                                                Suggestions.Add(kElement.GetString());
-                                        }
-                                    }
-                                }
-                            }
+                            foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
+                                Suggestions.Add(Suggestion.GetString());
                         }
-                        catch { }
-                        OmniBox.IsDropDownOpen = OmniBox.Text.Trim().Length > 0 && Suggestions.Count > 0;
+                    }
+                    catch { }
+                    OmniBox.IsDropDownOpen = OmniBox.Text.Trim().Length > 0 && Suggestions.Count > 0;
                 }
                 catch { }
-                });
             }
+            Keyboard.Focus(OmniBox);
+            OmniBox.Focus();
         }
 
         private void OmniBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-            LoadingStoryboard.Seek(TimeSpan.Zero);
-            LoadingStoryboard.Stop();
+            if (e.AddedItems.Count != 0)
+                OmniBox.Text = e.AddedItems[0].ToString();
+            /*Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
+            LoadingStoryboard?.Seek(TimeSpan.Zero);
+            LoadingStoryboard?.Stop();
             if (OmniBox.Text.StartsWith("search:"))
             {
                 SiteInformationIcon.Text = "\xE721";
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 SiteInformationText.Text = $"Search";
                 SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text.Substring(7).Trim()}";
             }
             else if (OmniBox.Text.StartsWith("domain:"))
             {
                 SiteInformationIcon.Text = "\xE71B";
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 SiteInformationText.Text = $"Address";
-                SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text}";
+                SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text.Substring(7).Trim()}";
             }
             else if (Utils.IsProgramUrl(OmniBox.Text))
             {
                 SiteInformationIcon.Text = "\xE756";
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 SiteInformationText.Text = $"Program";
                 SiteInformationPanel.ToolTip = $"Open program: {OmniBox.Text}";
             }
             else if (Utils.IsCode(OmniBox.Text))
             {
                 SiteInformationIcon.Text = "\xE943";
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 SiteInformationText.Text = $"Code";
                 SiteInformationPanel.ToolTip = $"Code: {OmniBox.Text}";
             }
             else if (Utils.IsUrl(OmniBox.Text))
             {
                 SiteInformationIcon.Text = "\xE71B";
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 SiteInformationText.Text = $"Address";
                 SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text}";
             }
             else
             {
                 SiteInformationIcon.Text = "\xE721";
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 SiteInformationText.Text = $"Search";
                 SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text}";
             }
+            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");*/
+
+            string Url = Utils.FilterUrlForBrowser(OmniBox.Text, App.Instance.GlobalSave.Get("SearchEngine"));
+            if (Url.StartsWith("javascript:", StringComparison.Ordinal))
+            {
+                Chromium.ExecuteScriptAsync(Url.Substring(11));
+                OmniBox.Text = OmniBox.Tag.ToString();
+            }
+            else if (!Utils.IsProgramUrl(Url))
+                Address = Url;
+            Keyboard.ClearFocus();
+            Chromium.Focus();
         }
 
         private void OmniBox_DropDownOpened(object sender, EventArgs e)
         {
-            OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 4 + 4);
+            OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);// + 4 + 4
             OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
             OmniTextBox.Text = PreviousOmniBoxText;
             if (SelectionLength == 0)
@@ -2654,6 +2457,7 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
 
         private void Browser_Loaded(object sender, RoutedEventArgs e)
         {
+            Loaded -= Browser_Loaded;
             OmniTextBox = OmniBox.Template.FindName("PART_EditableTextBox", OmniBox) as TextBox;
             OmniBoxPopup = OmniBox.Template.FindName("Popup", OmniBox) as Popup;
             OmniBoxPopupDropDown = OmniBox.Template.FindName("DropDown", OmniBox) as Grid;
@@ -2669,11 +2473,10 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             ExtensionBrowser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
             HwndSource _HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(ExtensionWindow).EnsureHandle());
             _HwndSource.AddHook(WndProc);
-            int trueValue = 0x01;
             ExtensionBrowser.LoadingStateChanged += (s, args) =>
             {
                 if (!args.IsLoading)
-                    ExtensionBrowser.ExecuteScriptAsync(@"var rect=document.body.getBoundingClientRect();engine.postMessage({width:rect.width+16,height:rect.height+40});");
+                    ExtensionBrowser.ExecuteScriptAsync(Scripts.ExtensionScript);
                 /*function getBoundingClientRect(element) {
 var rect = element.getBoundingClientRect();
     return {
@@ -2687,13 +2490,10 @@ var rect = element.getBoundingClientRect();
         y: rect.y
     };
 }*/
-                int trueValue = 0x01;
-                int falseValue = 0x00;
-                if (App.Instance.CurrentTheme.DarkTitleBar)
-                    DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
-                else
-                    DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
             };
+            int trueValue = 0x01;
+            int falseValue = 0x00;
+            DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref App.Instance.CurrentTheme.DarkTitleBar ? ref trueValue : ref falseValue, Marshal.SizeOf(typeof(int)));
             DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             ExtensionBrowser.JavascriptMessageReceived += ExtensionBrowser_JavascriptMessageReceived;
             ExtensionBrowser.SnapsToDevicePixels = true;
@@ -2737,12 +2537,15 @@ var rect = element.getBoundingClientRect();
             Dispatcher.Invoke(() =>
             {
                 dynamic data = e.Message;
-                /*MessageBox.Show(Convert.ToString(data.height));
-                MessageBox.Show(Convert.ToString(data.width));*/
                 ExtensionWindow.Height = data.height;
                 ExtensionWindow.Width = data.width;
-                //MessageBox.Show(JsonSerializer.Serialize(e.Message));
             });
+        }
+
+        private void SiteInformation_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (SiteInformationText.Text != "Loading")
+                SiteInformationPopup.IsOpen = !SiteInformationPopup.IsOpen;
         }
     }
 }

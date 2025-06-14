@@ -403,7 +403,7 @@ namespace SLBr.Handlers
                 else if (Item.CommandId == MenuEmoji)
                     _MenuItem.InputGestureText = "Win+Period";
 
-                else if (Item.Header.StartsWith("Search"))
+                else if (Item.Header.StartsWith("Search", StringComparison.Ordinal))
                     _MenuItem.Icon = "\uF6Fa";
                 else if (Item.CommandId == CefMenuCommand.SpellCheckSuggestion0 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion1 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion2 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion3 || Item.CommandId == CefMenuCommand.SpellCheckSuggestion4)
                     _MenuItem.Icon = "\uf87b";

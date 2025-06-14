@@ -104,7 +104,7 @@ namespace SLBr.Controls
                             0, 0,
                             (int)ActualWidth, (int)ActualHeight,
                             hwndParent.Handle,
-                            (IntPtr)HOST_ID,
+                            HOST_ID,
                             IntPtr.Zero,
                             0);
                 //if (GetWindowRect(firstChildHwnd, out rect))

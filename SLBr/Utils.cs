@@ -1,14 +1,13 @@
 ﻿using CefSharp;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Security.Principal;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
+using DColor = System.Drawing.Color;
+using MColor = System.Windows.Media.Color;
 
 namespace SLBr
 {
@@ -35,7 +34,7 @@ namespace SLBr
             CopyData.cbData = msg.Length * 2;
             IntPtr CopyDataBuffer = IntPtrAlloc(CopyData);
 
-            SendMessage((IntPtr)HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, CopyDataBuffer);
+            SendMessage(HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, CopyDataBuffer);
 
             Marshal.FreeHGlobal(CopyDataBuffer);
             Marshal.FreeHGlobal(StringMessageBuffer);
@@ -372,8 +371,14 @@ namespace SLBr
             }
             return count;
         }*/
+        public static MColor ToMediaColor(this DColor color) =>
+            MColor.FromArgb(color.A, color.R, color.G, color.B);
         public static bool ToBool(this bool? self) =>
             self == true;
+        public static bool ToBool(this int self) =>
+            self == 1 ? true : false;
+        public static int ToInt(this bool self) =>
+            self == true ? 1 : 0;
         /*public static CefState ToCefState(this bool self) =>
             self ? CefState.Enabled : CefState.Disabled;
         public static bool ToBoolean(this CefState self) =>
@@ -414,12 +419,39 @@ namespace SLBr
 
             return bImg;
         }*/
-        public static uint ToUInt(this System.Drawing.Color color) =>
-               (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));
+        /*public static uint ToUInt(this System.Drawing.Color color) =>
+               (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));*/
     }
 
     public static class Utils
     {
+        public static MColor ParseThemeColor(string ColorString)
+        {
+            if (ColorString.StartsWith("rgb", StringComparison.Ordinal))
+            {
+                var Numbers = Regex.Matches(ColorString, @"\d+").Cast<Match>().Select(m => byte.Parse(m.Value)).ToArray();
+
+                byte r = Numbers[0];
+                byte g = Numbers[1];
+                byte b = Numbers[2];
+
+                return MColor.FromRgb(r, g, b);
+            }
+            else
+            {
+                return System.Drawing.ColorTranslator.FromHtml(ColorString).ToMediaColor();
+            }
+        }
+
+        [DllImport("wininet.dll")]
+        private extern static bool InternetGetConnectedState(out int description, int reservedValue);
+
+        public static bool IsInternetAvailable()
+        {
+            int description;
+            return InternetGetConnectedState(out description, 0);
+        }
+
         public static BitmapImage ConvertBase64ToBitmapImage(string base64String)
         {
             int base64Start = base64String.IndexOf("base64,", StringComparison.Ordinal);
@@ -557,6 +589,28 @@ namespace SLBr
         [DllImport("kernel32.dll")]
         private static extern bool SetProcessWorkingSetSize(IntPtr proc, int min, int max);*/
 
+        public static (string, string) ParseCertificateIssue(string Certificate)
+        {
+            string CN = "";
+            string O = "";
+            Certificate = Certificate.Trim();
+            List<string> InfoList = Certificate.Split(",").ToList();
+            foreach (string s in InfoList)
+            {
+                string[] Info = s.Split("=");
+                switch (Info[0].Trim())
+                {
+                    case "CN":
+                        CN = Info[1].Trim();
+                        break;
+                    case "O":
+                        O = Info[1].Trim();
+                        break;
+                }
+            }
+            return (CN, O);
+        }
+
         public static string GetFileExtensionFromUrl(string Url)
         {
             Url = Url.Split('?')[0].Split('/').Last();
@@ -571,8 +625,16 @@ namespace SLBr
             Url.StartsWith("about:", StringComparison.Ordinal);*/
         public static bool CanCheckSafeBrowsing(ResourceType _ResourceType) =>
             _ResourceType == ResourceType.NavigationPreLoadSubFrame || _ResourceType == ResourceType.NavigationPreLoadMainFrame || _ResourceType == ResourceType.SubFrame;
+        public static readonly HashSet<ResourceType> PossibleAdResourceTypes = new HashSet<ResourceType>
+        {
+            ResourceType.Xhr,
+            ResourceType.Media,
+            ResourceType.Script,
+            ResourceType.SubFrame,
+            ResourceType.Image
+        };
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
-            _ResourceType == ResourceType.Ping || _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame || _ResourceType == ResourceType.Image;
+             PossibleAdResourceTypes.Contains(_ResourceType);
         /*public static bool CanCheck(TransitionType _TransitionType) =>
             _TransitionType != TransitionType.AutoSubFrame && _TransitionType != TransitionType.Blocked && _TransitionType != TransitionType.FormSubmit;*/
         public static bool IsHttpScheme(string Url) =>
@@ -583,6 +645,10 @@ namespace SLBr
         {
             if (IsHttpScheme(Url))
                 return false;
+            return IsProtocol(Url);
+        }
+        public static bool IsProtocol(string Url)
+        {
             int Colon = Url.IndexOf(":", StringComparison.Ordinal);
             if (Colon >= 0)
             {
@@ -598,7 +664,7 @@ namespace SLBr
         {
             if (!Url.StartsWith("javascript:", StringComparison.Ordinal) && !Uri.IsWellFormedUriString(Url, UriKind.RelativeOrAbsolute))
                 return false;
-            if (!IsHttpScheme(Url) && !IsProtocolNotHttp(Url) && !IsDomain(Url) && !Url.EndsWith("/", StringComparison.Ordinal))
+            if (!IsProtocol(Url) && !IsDomain(Url) && !Url.EndsWith("/", StringComparison.Ordinal))
                 return false;
             return true;
         }
@@ -611,11 +677,11 @@ namespace SLBr
         {
             string NewUrl = CaseSensitive ? Url : Url.ToLower();
             string NewPrefix = CaseSensitive ? Prefix : Prefix.ToLower();
-            if (Back ? NewUrl.EndsWith(NewPrefix) : NewUrl.StartsWith(NewPrefix))
+            if (Back ? NewUrl.EndsWith(NewPrefix, StringComparison.Ordinal) : NewUrl.StartsWith(NewPrefix, StringComparison.Ordinal))
             {
                 if (ReturnCaseSensitive)
-                    return (Back ? Url.Substring(0, Url.Length - Prefix.Length) : Url.Substring(Prefix.Length));
-                return (Back ? NewUrl.Substring(0, NewUrl.Length - Prefix.Length) : NewUrl.Substring(Prefix.Length));
+                    return Back ? Url.Substring(0, Url.Length - Prefix.Length) : Url.Substring(Prefix.Length);
+                return Back ? NewUrl.Substring(0, NewUrl.Length - Prefix.Length) : NewUrl.Substring(Prefix.Length);
             }
             return Url;
         }
@@ -638,6 +704,8 @@ namespace SLBr
                         Process.Start(Url);
                         return Url;
                     }
+                    else if (IsCode(Url))
+                        return Url;
                     else if (IsUrl(Url))
                         return FixUrl(Url);
                     else
@@ -659,7 +727,27 @@ namespace SLBr
             }
             return Url;
         }
-
+        public static string FastHost(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return url;
+            ReadOnlySpan<char> span = url.AsSpan();
+            int protoIdx = span.IndexOf("://");
+            if (protoIdx != -1)
+                span = span.Slice(protoIdx + 3);
+            if (span.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+                span = span.Slice(4);
+            int slashIndex = span.IndexOf('/');
+            if (slashIndex != -1)
+                span = span.Slice(0, slashIndex);
+            int fragIndex = span.IndexOf('#');
+            if (fragIndex != -1)
+                span = span.Slice(0, fragIndex);
+            int queryIndex = span.IndexOf('?');
+            if (queryIndex != -1)
+                span = span.Slice(0, queryIndex);
+            return span.ToString();
+        }
         public static string Host(string Url, bool RemoveWWW = true)
         {
             string Host = CleanUrl(Url, true, false, true, RemoveWWW);
@@ -704,11 +792,8 @@ namespace SLBr
             Url = Url.Trim();
             if (Url.Length == 0)
                 return Url;
-            if (!IsProtocolNotHttp(Url))
-            {
-                if (!Url.StartsWith("https://") && !Url.StartsWith("http://"))
-                    return "https://" + Url;
-            }
+            if (!IsProtocol(Url))
+                return "https://" + Url;
             return Url;
         }
         public static string ConvertUrlToReadableUrl(IdnMapping _IdnMapping, string Url)
@@ -823,8 +908,8 @@ namespace SLBr
         }
         public string Get(string Key, string Default = "NOTFOUND")
         {
-            if (Has(Key))
-                return Data[Key];
+            if (Data.TryGetValue(Key, out var value))
+                return value;
             if (Default != "NOTFOUND")
                 Set(Key, Default);
             return Default;
@@ -839,24 +924,37 @@ namespace SLBr
                 Directory.CreateDirectory(SaveFolderPath);
             if (!File.Exists(SaveFilePath))
                 File.Create(SaveFilePath).Close();
-            List<string> Contents = new List<string>();
+
+            using var writer = new StreamWriter(SaveFilePath, false);
+            foreach (var kv in Data)
+            {
+                writer.Write(kv.Key);
+                writer.Write(KeyValueSeparator);
+                writer.Write(kv.Value);
+                writer.Write(KeySeparator);
+            }
+            /*List<string> Contents = new List<string>();
             foreach (KeyValuePair<string, string> KVP in Data)
                 Contents.Add(KVP.Key + KeyValueSeparator + KVP.Value);
-            File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));
+            File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));*/
         }
         public void Load()
         {
-            if (!Directory.Exists(SaveFolderPath))
-                Directory.CreateDirectory(SaveFolderPath);
             if (!File.Exists(SaveFilePath))
-                File.Create(SaveFilePath).Close();
-            string[] Contents = File.ReadAllText(SaveFilePath).Split(KeySeparator, StringSplitOptions.None);
-            foreach (string Content in Contents)
             {
-                if (string.IsNullOrWhiteSpace(Content))
-                    continue;
-                string[] Values = Content.Split(KeyValueSeparator, 2, StringSplitOptions.None);
-                Data[Values[0]] = Values[1];
+                Directory.CreateDirectory(SaveFolderPath);
+                File.Create(SaveFilePath).Close();
+                return;
+            }
+            var Content = File.ReadAllText(SaveFilePath);
+            if (string.IsNullOrWhiteSpace(Content))
+                return;
+
+            foreach (var Entry in Content.Split(KeySeparator, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string[] Values = Entry.Split(KeyValueSeparator, 2, StringSplitOptions.None);
+                if (Values.Length == 2)
+                    Data[Values[0]] = Values[1];
             }
         }
     }

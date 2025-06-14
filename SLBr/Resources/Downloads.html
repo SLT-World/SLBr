@@ -7,11 +7,8 @@ Use of this source code is governed by a GNU license that can be found in the LI
     <title>Downloads</title>
     <link rel="stylesheet" type="text/css" href="./style.css"/>
     <script type="text/javascript">
-        (async () => {
-            await engine.bindObjectAsync("internal");
-            UpdateList();
-            setInterval(UpdateList, 500);
-        })();
+        NotifyUpdateList();
+        setInterval(NotifyUpdateList, 500);
         function formatBytes(bytes, decimals) {
             if (bytes === 0) return '0 Byte';
             const k = 1000;
@@ -202,23 +199,24 @@ Use of this source code is governed by a GNU license that can be found in the LI
             newDownload.querySelector("span.status").textContent = progress;
             newDownload.querySelector("progress.progress_bar").setAttribute("value", item.PercentComplete);
         }
-        function UpdateList() {
-            internal.downloads().then(function (res) {
-                const list = JSON.parse(res);
-                const currentIds = new Set();
-                const downloadsDisplay = document.getElementById('downloads-display');
+        function NotifyUpdateList() {
+            internal.downloads();
+        }
+        function UpdateList(res) {
+            const list = JSON.parse(res);
+            const currentIds = new Set();
+            const downloadsDisplay = document.getElementById('downloads-display');
 
-                Object.values(list).forEach(item => {
-                    const id = "d" + item.Id;
-                    currentIds.add(id);
-                    UpdateItem(item);
-                });
+            Object.values(list).forEach(item => {
+                const id = "d" + item.Id;
+                currentIds.add(id);
+                UpdateItem(item);
+            });
 
-                Array.from(downloadsDisplay.children).forEach(child => {
-                    if (!currentIds.has(child.id)) {
-                        downloadsDisplay.removeChild(child);
-                    }
-                });
+            Array.from(downloadsDisplay.children).forEach(child => {
+                if (!currentIds.has(child.id)) {
+                    downloadsDisplay.removeChild(child);
+                }
             });
         }
     </script>

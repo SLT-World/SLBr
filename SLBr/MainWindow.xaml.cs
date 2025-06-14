@@ -53,7 +53,15 @@ namespace SLBr
             {
                 case MessageHelper.WM_COPYDATA:
                     COPYDATASTRUCT _dataStruct = Marshal.PtrToStructure<COPYDATASTRUCT>(lParam);
-                    NewTab(Marshal.PtrToStringUni(_dataStruct.lpData, _dataStruct.cbData / 2), true);
+                    string Data = Marshal.PtrToStringUni(_dataStruct.lpData, _dataStruct.cbData / 2);
+                    List<string> Datas = Data.Split("<|>").ToList();
+                    if (Datas[0] == "Url")
+                        NewTab(Datas[1], true);
+                    else if (Datas[0] == "Start")
+                    {
+                        if (App.Instance.Background)
+                            App.Instance.ContinueBackgroundInitialization();
+                    }
                     SetForegroundWindow(new WindowInteropHelper(this).Handle);
                     handled = true;
                     break;
@@ -79,9 +87,9 @@ namespace SLBr
             InitializeComponent();
             UpdateUnloadTimer();
             Tabs.Add(new BrowserTabItem(null)
-            /*{
-                TabStyle = (Style)FindResource("VerticalIconTabButton")
-            }*/);
+            {
+                TabStyle = (Style)FindResource("IconTabButton")
+            });
             TabsUI.ItemsSource = Tabs;
         }
 
@@ -359,6 +367,7 @@ namespace SLBr
                     {
                         BrowserView.CoreContainer.Children.Remove(BrowserView.Chromium);
                         FullscreenContainer.Children.Add(BrowserView.Chromium);
+                        FullscreenContainer.Visibility = Visibility.Visible;
                         Keyboard.Focus(BrowserView.Chromium);
                     }
                     WindowStyle = WindowStyle.None;
@@ -368,6 +377,7 @@ namespace SLBr
                 {
                     if (BrowserView.Chromium != null)
                     {
+                        FullscreenContainer.Visibility = Visibility.Collapsed;
                         FullscreenContainer.Children.Remove(BrowserView.Chromium);
                         BrowserView.CoreContainer.Children.Add(BrowserView.Chromium);
                         Keyboard.Focus(BrowserView.Chromium);
@@ -383,7 +393,7 @@ namespace SLBr
         }
         public void NewTab(string Url, bool IsSelected = false, int Index = -1)
         {
-            if (WindowState == WindowState.Minimized)
+            if (!App.Instance.Background && WindowState == WindowState.Minimized)
             {
                 WindowState = WindowState.Normal;
                 Activate();
@@ -500,6 +510,13 @@ namespace SLBr
                 else
                 {
                     BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
+                    /*foreach (BrowserTabItem _Tab in Tabs)
+                    {
+                        if (_Tab != _CurrentTab)
+                        {
+                            _CurrentTab.Content.UnFocus();
+                        }
+                    }*/
                     if (_CurrentTab.Content != null)
                     {
                         Keyboard.Focus(_CurrentTab.Content.Chromium);
