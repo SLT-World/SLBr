@@ -12,8 +12,8 @@
     <SignAssembly>False</SignAssembly>
     <ApplicationIcon>Resources\SLBr.ico</ApplicationIcon>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
-    <AssemblyVersion>2025.06.15.0</AssemblyVersion>
-    <FileVersion>2025.06.15.0</FileVersion>
+    <AssemblyVersion>2025.6.15.1</AssemblyVersion>
+    <FileVersion>2025.6.15.1</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
