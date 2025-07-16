@@ -12,7 +12,7 @@ namespace SLBr.Handlers
         }
         protected virtual bool OnFileDialog(IWebBrowser chromiumWebBrowser, IBrowser browser, CefFileDialogMode mode, string title, string defaultFilePath, IReadOnlyCollection<string> acceptFilters, IReadOnlyCollection<string> acceptExtensions, IReadOnlyCollection<string> acceptDescriptions, IFileDialogCallback callback)
         {
-            if (bool.Parse(App.Instance.GlobalSave.Get("QuickImage")) && acceptFilters.FirstOrDefault() == "image/*")
+            if (mode == CefFileDialogMode.Open && bool.Parse(App.Instance.GlobalSave.Get("QuickImage")) && acceptFilters.FirstOrDefault() == "image/*")
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {

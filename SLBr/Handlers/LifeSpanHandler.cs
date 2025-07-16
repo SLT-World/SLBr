@@ -1,5 +1,7 @@
 ﻿using CefSharp;
+using CefSharp.Enums;
 using SLBr.Controls;
+using System.Windows;
 
 namespace SLBr.Handlers
 {
@@ -25,7 +27,7 @@ namespace SLBr.Handlers
             }
             else
             {
-                App.Current.Dispatcher.Invoke(() =>
+                /*App.Current.Dispatcher.Invoke(() =>
                 {
                     //try
                     //{
@@ -49,6 +51,49 @@ namespace SLBr.Handlers
                             App.Instance.CurrentFocusedWindow().NewTab(targetUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
                     //}
                     //catch { }
+                });*/
+                var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                string TargetOrigin = Utils.GetOrigin(targetUrl);
+                string TopLevelOrigin = Utils.GetOrigin(browser.MainFrame.Url);
+                ContentSettingValues Value = GlobalRequestContext.GetContentSetting(TopLevelOrigin, TopLevelOrigin, ContentSettingTypes.Popups);
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    if (targetDisposition == WindowOpenDisposition.NewPopup)
+                    {
+                        //System.Windows.MessageBox.Show(Value.ToString());
+                        bool Allow = false;
+                        if (Value == ContentSettingValues.Allow || Value == ContentSettingValues.SessionOnly)
+                            Allow = true;
+                        else if (Value == ContentSettingValues.Block)
+                            Allow = false;
+                        else
+                        {
+                            InformationDialogWindow InfoWindow = new InformationDialogWindow("Permission", $"Allow {Utils.Host(browser.MainFrame.Url)} to", "Open popup", "\uE8D7", "Allow", "Block", "\xE737");
+                            InfoWindow.Topmost = true;
+                            Allow = InfoWindow.ShowDialog().ToBool();
+                            //if (Value != ContentSettingValues.Ask)
+                            //{
+                                if (Allow)
+                                {
+                                    Cef.UIThreadTaskFactory.StartNew(delegate
+                                    {
+                                        GlobalRequestContext.SetContentSetting(TopLevelOrigin, TopLevelOrigin, ContentSettingTypes.Popups, ContentSettingValues.Allow);
+                                    });
+                                }
+                                else
+                                {
+                                    Cef.UIThreadTaskFactory.StartNew(delegate
+                                    {
+                                        GlobalRequestContext.SetContentSetting(TopLevelOrigin, TopLevelOrigin, ContentSettingTypes.Popups, ContentSettingValues.Block);
+                                    });
+                                }
+                            //}
+                        }
+                        if (Allow)
+                            new PopupBrowser(targetUrl, popupFeatures.Width ?? 600, popupFeatures.Height ?? 650).Show();
+                    }
+                    else
+                        App.Instance.CurrentFocusedWindow().NewTab(targetUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
                 });
             }
             return true;
@@ -60,6 +105,7 @@ namespace SLBr.Handlers
 
         public bool DoClose(IWebBrowser browserControl, IBrowser browser)
         {
+            //RuntimeStyle Chrome does not run this DoClose
             if (browser.IsPopup)
                 return false;
             return true;

@@ -176,16 +176,18 @@ namespace SLBr.Protocols
                 Resp.Bytes.AddRange(Buffer.Take(Bytes));
 
                 if (Resp.Bytes.Count > MaxSizeBytes)
-                    throw new Exception("Abort due to resource exceeding max size (" + axSize + "Kb)");
+                    return Resp;
+                //throw new Exception("Abort due to resource exceeding max size (" + axSize + "Kb)");
                 if (DateTime.Now >= AbandonTime)
-                    throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
+                    return Resp;
+                //throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
             }
             return Resp;
         }
 
-        private static string GetMime(Uri URI)//, string GopherType
+        private static string GetMime(Uri URI)
         {
-            var Response = "text/html";//"application/octet-stream";
+            var Response = "text/html";
             var ExtensionFull = Path.GetExtension(URI.AbsolutePath);
             string Extension = (ExtensionFull.Length > 0) ? ExtensionFull.Substring(1) : "";
             if (ExtensionFull.Length > 0)
@@ -212,31 +214,11 @@ namespace SLBr.Protocols
                     case "flac":
                         Response = "audio/" + Extension;
                         break;
-                    /*case "pdf":
-                        res = "application/pdf";
-                        break;
-                    case "doc":
-                        res = "application/msword";
-                        break;
-                    case "ps":
-                        res = "application/postscript";
-                        break;
-
-                    case "zip":
-                        res = "application/zip";
-                        break;*/
                     default:
                         Response = $"application/{Extension}";
                         break;
                 }
             }
-            /*switch (GopherType)
-            {
-                case "H":
-                    res = "text/plain";
-                    break;
-            }*/
-            //MessageBox.Show(GopherType);
             return Response;
         }
 
@@ -259,14 +241,10 @@ namespace SLBr.Protocols
 
             Stream Stream = _Client.GetStream();
 
-            //var GopherType = "1";
             var TrimmedUrl = HostURL.AbsolutePath;
 
             if (HostURL.AbsolutePath.Length > 1)
-            //{
-                //GopherType = TrimmedUrl[1].ToString();
                 TrimmedUrl = TrimmedUrl.Substring(1);
-            //}
 
             byte[] Message = Encoding.UTF8.GetBytes(Uri.UnescapeDataString(TrimmedUrl) + "\r\n");
             Stream.Write(Message, 0, Message.Count());
@@ -274,7 +252,7 @@ namespace SLBr.Protocols
             GopherResponse Response = ReadMessage(Stream, HostURL, AbandonReadSizeKb, AbandonReadTimes);
             _Client.Close();
 
-            Response.Mime = GetMime(HostURL);//, gopherType);
+            Response.Mime = GetMime(HostURL);
 
             return Response;
         }

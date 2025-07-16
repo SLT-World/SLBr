@@ -68,7 +68,7 @@ namespace SLBr
             else if (e.Data.GetDataPresent(DataFormats.StringFormat))
             {
                 string Url = (string)e.Data.GetData(DataFormats.StringFormat);
-                FocusedWindow.NewTab(Utils.FilterUrlForBrowser(Url, App.Instance.GlobalSave.Get("SearchEngine")), true, TargetIndex + 1);
+                FocusedWindow.NewTab(Utils.FilterUrlForBrowser(Url, App.Instance.DefaultSearchProvider.SearchUrl), true, TargetIndex + 1);
                 e.Handled = true;
             }
         }

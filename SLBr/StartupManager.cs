@@ -19,10 +19,10 @@ namespace SLBr
             key.DeleteValue("SLBr", false);
         }
 
-        public static bool IsStartupEnabled()
+        /*public static bool IsStartupEnabled()
         {
             using RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, false);
             return key?.GetValue("SLBr") != null;
-        }
+        }*/
     }
 }

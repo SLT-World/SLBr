@@ -2,9 +2,9 @@
 using CefSharp.BrowserSubprocess;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Reflection.Metadata;
+using System.IO;
+using System.Runtime;
 using System.Runtime.InteropServices;
-using System.Windows.Threading;
 
 namespace SLBr
 {
@@ -18,6 +18,20 @@ namespace SLBr
             /*Environment.SetEnvironmentVariable("DOTNET_gcServer", "1");
             Environment.SetEnvironmentVariable("DOTNET_GCHeapCount", "16");
             Environment.SetEnvironmentVariable("DOTNET_GCConserveMemory", "5");*/
+
+            /*string Username = "Default";
+            IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
+            foreach (string Flag in Args)
+            {
+                if (Flag.StartsWith("--user=", StringComparison.Ordinal))
+                {
+                    Username = Flag.Replace("--user=", "").Replace(" ", "-");
+                    System.Windows.MessageBox.Show(File.ReadAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", Username, "Save.bin")).Contains("Performance<:>2").ToString());
+                }
+            }
+            */
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
             MinimizeMemory();
             if (args.Length > 0 && args[0].StartsWith("--type=", StringComparison.Ordinal))
                 return SelfHost.Main(args);
@@ -26,16 +40,16 @@ namespace SLBr
                 /*DispatcherTimer FlushTimer = new DispatcherTimer();
                 FlushTimer.Interval = new TimeSpan(500);
                 FlushTimer.Tick += FlushTimer_Tick;*/
-                BackgroundWorker worker = new BackgroundWorker();
-                worker.DoWork += worker_DoWork;
-                worker.RunWorkerAsync();
+                BackgroundWorker Worker = new BackgroundWorker();
+                Worker.DoWork += Worker_DoWork;
+                Worker.RunWorkerAsync();
                 App.Main();
 
                 Cef.Shutdown();
                 return Environment.ExitCode;
             }
         }
-        private static void worker_DoWork(object sender, DoWorkEventArgs e)
+        private static void Worker_DoWork(object sender, DoWorkEventArgs e)
         {
             OptimizeMemoryUsage();
         }

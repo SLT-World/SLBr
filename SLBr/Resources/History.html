@@ -8,25 +8,22 @@ Use of this source code is governed by a GNU license that can be found in the LI
         <link rel="stylesheet" type="text/css" href="./style.css">
     </head>
     <body>
-        <header>
-            <h1>History</h1>
+        <header class="card">
+            <p class="font-icon"></p>
+            <p>History</p>
         </header>
         <div class="main">
             <div class="summary" style="margin-bottom: 10px">
                 <div id="actions" style="display: inline;">
-                    <button class="button_style icon_button" onclick="NotifyUpdateList()" title="Refresh list" style="margin-right: 5px;"></button>
+                    <button class="button_style icon_button" onclick="NotifyUpdateList()" title="Refresh" style="margin-right: 5px;"></button>
                     <button class="button_style" onclick="ClearAll()" style="margin-right: 5px;">Clear all</button>
                 </div>
             </div>
-            <div id="downloads-display">
-            </div>
+            <div id="downloads-display"></div>
         </div>
         <style>
             .list_child {
                 margin: 0px 0px 10px;
-                background: whitesmoke;
-                border: 1px solid gainsboro;
-                border-radius: 5px;
                 padding: 0 7.5px 0 15px;
                 height: 50px;
                 display: flex;
@@ -54,7 +51,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 user-select: none;
             }
             .list_text {
-                font-weight: bold;
+                font-weight: 500;
                 margin-right: 10px;
             }
             .button_style {
@@ -76,11 +73,6 @@ Use of this source code is governed by a GNU license that can be found in the LI
             .list_button {
                 margin: 0 0 0 auto;
             }
-            .icon_button {
-                width: 35px !important;
-                font-size: 17.5px !important;
-                font-family: "Segoe Fluent Icons" !important;
-            }
             .button_style:hover {
                 color: black;
                 background: gainsboro;
@@ -99,103 +91,81 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 downloadsDisplay = document.getElementById('downloads-display')
                 let list = JSON.parse(res);
                 let currentIds = new Set();
-
-                for (let i = 0; i < list.length; i++) {
-                    currentIds.add(i.toString());
+                if (list.length === 0) {
+                    downloadsDisplay.innerHTML = '<div class="card list_child"><div class="title_area"><p class="list_text">No history</p></div></div>';
                 }
-
-                let children = downloadsDisplay.children;
-                for (let i = 0; i < children.length; i++) {
-                    let id = children[i].id;
-                    if (!currentIds.has(id)) {
-                        downloadsDisplay.removeChild(children[i]);
+                else {
+                    for (let i = 0; i < list.length; i++) {
+                        currentIds.add(i.toString());
                     }
-                }
 
-                for (let i = 0; i < list.length; i++) {
-                    let key = i.toString();
-                    let existingDownload = document.getElementById(key);
-                    if (!existingDownload) {
-                        let newDownload = document.createElement('div');
-                        newDownload.id = key;
-                        newDownload.classList.add('list_child');
-
-                        let titleArea = document.createElement('div');
-                        titleArea.classList.add('title_area');
-
-                        let title = document.createElement('p');
-                        title.classList.add('list_text');
-                        title.textContent = list[i].Name;
-
-                        let link = document.createElement('a');
-                        link.classList.add('button_style');
-                        link.classList.add('list_button');
-                        link.classList.add('icon_button');
-                        link.setAttribute('target', '_blank');
-                        link.setAttribute('focus-type', 'url');
-                        link.href = list[i].Tooltip;
-                        link.setAttribute('tabindex', '0');
-                        //link.textContent = "Open";
-                        link.textContent = '\uE8A7';
-                        link.title = "Open in new tab"
-
-                        let icon = document.createElement('object');
-                        icon.classList.add('list_icon');
-                        icon.data = "https://icons.duckduckgo.com/ip3/" + link.hostname + ".ico";
-                        icon.type = "image/png";
-
-                        let errorText = document.createElement('p');
-                        errorText.classList.add('list_icon_backup');
-                        if (list[i].Tooltip.startsWith('slbr://'))
-                        {
-                            if (list[i].Tooltip.startsWith('slbr://history'))
-                                errorText.textContent = '\ue81c';
-                            else if (list[i].Tooltip.startsWith('slbr://downloads'))
-                                errorText.textContent = '\ue896';
-                            else
-                                errorText.textContent = '\ue713';
+                    let children = downloadsDisplay.children;
+                    for (let i = 0; i < children.length; i++) {
+                        let id = children[i].id;
+                        if (!currentIds.has(id)) {
+                            downloadsDisplay.removeChild(children[i]);
                         }
-                        else
-                            errorText.textContent = '\uEC6C';
-
-                        icon.appendChild(errorText);
-                        titleArea.appendChild(icon);
-                        titleArea.appendChild(title);
-                        titleArea.appendChild(link);
-                        newDownload.appendChild(titleArea);
-                        downloadsDisplay.appendChild(newDownload);
                     }
-                    else {
-                        link = existingDownload.querySelector('.list_text').textContent = list[i].Name;
-                        link = existingDownload.querySelector(".icon_button");
-                        link.href = list[i].Tooltip
 
-                        let icon = document.createElement('object');
-                        icon.classList.add('list_icon');
-                        icon.data = "https://icons.duckduckgo.com/ip3/" + link.hostname + ".ico";
-                        icon.type = "image/png";
+                    for (let i = 0; i < list.length; i++) {
+                        let key = i.toString();
+                        let existingDownload = document.getElementById(key);
+                        if (!existingDownload) {
+                            let icon = '\uEC6C'
+                            if (list[i].Tooltip.startsWith('slbr://')) {
+                                if (list[i].Tooltip.startsWith('slbr://history'))
+                                    icon = '\ue81c';
+                                else if (list[i].Tooltip.startsWith('slbr://downloads'))
+                                    icon = '\ue896';
+                                else
+                                    icon = '\ue713';
+                            }
 
-                        let errorText = document.createElement('p');
-                        errorText.classList.add('list_icon_backup');
-
-                        if (list[i].Tooltip.startsWith('slbr://'))
-                        {
-                            if (list[i].Tooltip.startsWith('slbr://history'))
-                                errorText.textContent = '\ue81c';
-                            else if (list[i].Tooltip.startsWith('slbr://downloads'))
-                                errorText.textContent = '\ue896';
-                            else
-                                errorText.textContent = '\ue713';
+                            let link = document.createElement('a');
+                            link.href = list[i].Tooltip;
+                            let entry = `<div id="${key}" class="card list_child">
+                            <div class="title_area">
+                            <object class="list_icon" data="https://icons.duckduckgo.com/ip3/${link.hostname}.ico" type="image/png">
+                            <p class="list_icon_backup">${icon}</p>
+                            </object>
+                            <p class="list_text">${list[i].Name}</p>
+                            <a class="button_style list_button icon_button" target="_blank" focus-type="url"
+                            href="${list[i].Tooltip}"
+                            tabindex="0" title="Open in new tab"></a>
+                            </div></div>`;
+                            downloadsDisplay.innerHTML += entry;
                         }
-                        else
-                            errorText.textContent = '\uEC6C';
+                        else {
+                            link = existingDownload.querySelector('.list_text').textContent = list[i].Name;
+                            link = existingDownload.querySelector(".icon_button");
+                            link.href = list[i].Tooltip
 
-                        icon.appendChild(errorText);
+                            let icon = document.createElement('object');
+                            icon.classList.add('list_icon');
+                            icon.data = "https://icons.duckduckgo.com/ip3/" + link.hostname + ".ico";
+                            icon.type = "image/png";
 
-                        existingDownload.querySelector(".list_icon").replaceWith(icon);
+                            let errorText = document.createElement('p');
+                            errorText.classList.add('list_icon_backup');
+
+                            if (list[i].Tooltip.startsWith('slbr://')) {
+                                if (list[i].Tooltip.startsWith('slbr://history'))
+                                    errorText.textContent = '\ue81c';
+                                else if (list[i].Tooltip.startsWith('slbr://downloads'))
+                                    errorText.textContent = '\ue896';
+                                else
+                                    errorText.textContent = '\ue713';
+                            }
+                            else
+                                errorText.textContent = '\uEC6C';
+
+                            icon.appendChild(errorText);
+
+                            existingDownload.querySelector(".list_icon").replaceWith(icon);
+                        }
                     }
                 }
-                if (downloadsDisplay.innerHTML.trim() == "")
+                if (list.length === 0)
                     clearInterval(timer);
             }
 

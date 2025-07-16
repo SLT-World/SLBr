@@ -10,7 +10,6 @@ namespace SLBr.Protocols
 {
     public class TextGemini
     {
-        bool is_literal = false;
         private static string FormatLineAsTitle(string input)
         {
             int level = 0;
@@ -179,8 +178,8 @@ namespace SLBr.Protocols
         {
             byte[] statusText = { (byte)'4', (byte)'1' };
             var statusBytes = responseStream.Read(statusText, 0, 2);
-            if (statusBytes != 2)
-                throw new Exception("malformed Gemini response - no status");
+            //if (statusBytes != 2)
+            //    throw new Exception("malformed Gemini response - no status");
 
             var status = Encoding.UTF8.GetChars(statusText);
             CodeMajor = status[0];
@@ -188,8 +187,8 @@ namespace SLBr.Protocols
 
             byte[] space = { 0 };
             var spaceBytes = responseStream.Read(space, 0, 1);
-            if (spaceBytes != 1 || space[0] != (byte)' ')
-                throw new Exception("malformed Gemini response - missing space after status");
+            //if (spaceBytes != 1 || space[0] != (byte)' ')
+            //    throw new Exception("malformed Gemini response - missing space after status");
 
             List<byte> metaBuffer = new List<byte>();
             byte[] tempMetaBuffer = { 0 };
@@ -201,8 +200,8 @@ namespace SLBr.Protocols
                 {
                     responseStream.Read(tempMetaBuffer, 0, 1);
                     currentChar = tempMetaBuffer[0];
-                    if (currentChar != (byte)'\n')
-                        throw new Exception("malformed Gemini header - missing LF after CR");
+                    //if (currentChar != (byte)'\n')
+                    //    throw new Exception("malformed Gemini header - missing LF after CR");
                     break;
                 }
                 metaBuffer.Add(currentChar);
@@ -250,9 +249,11 @@ namespace SLBr.Protocols
                 Bytes = SSLStream.Read(Buffer, 0, Buffer.Length);
 
                 if (Response.Bytes.Count > maxSizeBytes)
-                    throw new Exception("Abort due to resource exceeding max size (" + MaxSize + "Kb)");
+                    return Response;
+                //throw new Exception("Abort due to resource exceeding max size (" + MaxSize + "Kb)");
                 if (DateTime.Now >= AbandonTime)
-                    throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
+                    return Response;
+                //throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
             }
             return Response;
         }
@@ -260,8 +261,8 @@ namespace SLBr.Protocols
         {
             int refetchCount = 0;
         Refetch:
-            if (refetchCount >= 5)
-                throw new Exception(string.Format("Too many redirects!"));
+            //if (refetchCount >= 5)
+            //    throw new Exception(string.Format("Too many redirects!"));
             refetchCount += 1;
 
             var ServerHost = HostURL.Host;
@@ -312,7 +313,7 @@ namespace SLBr.Protocols
             {
                 SSLStream.Close();
                 _Client.Close();
-                throw new Exception(Error.Message);
+                //throw new Exception(Error.Message);
             }
             finally
             {
@@ -332,8 +333,8 @@ namespace SLBr.Protocols
                 case '3':
                     Uri redirectUri;
                     redirectUri = resp.Meta.Contains("://") ? new Uri(resp.Meta) : new Uri(HostURL, resp.Meta);
-                    if (redirectUri.Scheme != HostURL.Scheme)
-                        throw new Exception("Cannot redirect to a URI with a different scheme: " + redirectUri.Scheme);
+                    //if (redirectUri.Scheme != HostURL.Scheme)
+                    //    throw new Exception("Cannot redirect to a URI with a different scheme: " + redirectUri.Scheme);
                     HostURL = redirectUri;
                     goto Refetch;
                 case '4':
@@ -341,8 +342,8 @@ namespace SLBr.Protocols
                 case '6':
                     resp.Bytes = Encoding.UTF8.GetBytes(resp.ToString()).ToList();
                     break;
-                default:
-                    throw new Exception(string.Format("Invalid response code {0}", resp.CodeMajor));
+                //default:
+                //    throw new Exception(string.Format("Invalid response code {0}", resp.CodeMajor));
             }
 
             return resp;

@@ -74,6 +74,8 @@ namespace SLBr
         private void InitializeWindow()
         {
             Title = App.Instance.Username == "Default" ? "SLBr" : $"{App.Instance.Username} - SLBr";
+            if (App.Instance.Icon != null)
+                Icon = App.Instance.Icon;
             ID = Utils.GenerateRandomId();
 
             HwndSource HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
@@ -98,11 +100,140 @@ namespace SLBr
             ExecuteCloseEvent();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        /*static readonly string[] TestUrls = {
+            "https://ads.google.com/pagead.js",
+            "https://example.com/js/ads.js",
+            "https://googleads.g.doubleclick.net/pagead/js/ads.js",
+            "https://safe.site.com/script.js",
+            "https://cdn.doubleclick.net/script.js"
+        };
+
+        static readonly string[] AdIndicators = {
+            "survey.min.js", "/survey.js", "/social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
+            "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
+            "admanager.js", "usync.js", "moneybid.js", "miner.js", "prebid",
+            "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
+            "google.com/ads", "play.google.com/log"
+        };
+
+        static readonly FastHashSet<string> HasInLink = new FastHashSet<string> {
+            "survey.min.js", "/survey.js", "/social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
+            "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
+            "admanager.js", "usync.js", "moneybid.js", "miner.js", "prebid",
+            "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
+            "google.com/ads", "play.google.com/log"
+        };
+
+        static readonly HashSet<string> HasInLinkSlow = new HashSet<string> {
+            "survey.min.js", "/survey.js", "/social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
+            "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
+            "admanager.js", "usync.js", "moneybid.js", "miner.js", "prebid",
+            "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
+            "google.com/ads", "play.google.com/log"
+        };
+
+
+        static bool IndexOfOrdinalMethod(string url)
         {
-            SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.Get("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
+            foreach (var pattern in AdIndicators)
+                if (url.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            return false;
         }
 
+        static bool ContainsOrdinalMethod(string url)
+        {
+            foreach (var pattern in AdIndicators)
+                if (url.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
+
+        static bool IndexOfMethod(string url)
+        {
+            foreach (var pattern in AdIndicators)
+                if (url.IndexOf(pattern) >= 0)
+                    return true;
+            return false;
+        }
+
+        static bool ContainsMethod(string url)
+        {
+            foreach (var pattern in AdIndicators)
+                if (url.Contains(pattern))
+                    return true;
+            return false;
+        }
+
+        static bool LowercaseContains(string url)//Fastest in Release mode
+        {
+            string lower = url.ToLowerInvariant();
+            foreach (var pattern in AdIndicators)
+                if (lower.Contains(pattern))
+                    return true;
+            return false;
+        }
+
+        static bool HashSetContains(string url)
+        {
+            foreach (var pattern in HasInLinkSlow)
+                if (url.Contains(pattern))
+                    return true;
+            return false;
+        }
+
+        static bool FastHashSetContains(string url)
+        {
+            foreach (var pattern in HasInLink)
+                if (url.Contains(pattern))
+                    return true;
+            return false;
+        }*/
+        //const int Iterations = 5_000_000;
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
+
+            //Benchmark.Clear();
+            /*Benchmark.Run("FastHost", Iterations, () =>
+            {
+                _ = Utils.FastHost("https://googleads.g.doubleclick.net/pagead/js/ads.js");
+            });
+            Benchmark.Run("Host", Iterations, () =>
+            {
+                _ = Utils.Host("https://googleads.g.doubleclick.net/pagead/js/ads.js");
+            });*/
+            /*Benchmark.Run("IndexOf OrdinalIgnoreCase", Iterations, () =>
+            {
+                _ = IndexOfOrdinalMethod(TestUrls[3]);
+            });
+            Benchmark.Run("Contains OrdinalIgnoreCase", Iterations, () =>
+            {
+                _ = ContainsOrdinalMethod(TestUrls[3]);
+            });
+            Benchmark.Run("IndexOf", Iterations, () =>
+            {
+                _ = IndexOfMethod(TestUrls[3]);
+            });
+            Benchmark.Run("Contains", Iterations, () =>
+            {
+                _ = ContainsMethod(TestUrls[3]);
+            });
+            Benchmark.Run("Lowercase + contains", Iterations, () =>
+            {
+                _ = LowercaseContains(TestUrls[3]);
+            });
+            Benchmark.Run("HashSet", Iterations, () =>
+            {
+                _ = HashSetContains(TestUrls[3]);
+            });
+            Benchmark.Run("FastHashSet", Iterations, () =>
+            {
+                _ = FastHashSetContains(TestUrls[3]);
+            });*/
+            //MessageBox.Show(Benchmark.Report());
+        }
         public DispatcherTimer GCTimer;
 
         private DateTime GCTimerStartTime;
@@ -113,7 +244,7 @@ namespace SLBr
             if (bool.Parse(App.Instance.GlobalSave.Get("TabUnloading")))
             {
                 GCTimer?.Stop();
-                GCTimerDuration = int.Parse(App.Instance.GlobalSave.Get("TabUnloadingTime"));
+                GCTimerDuration = App.Instance.GlobalSave.GetInt("TabUnloadingTime");
                 GCTimer = new DispatcherTimer();
 
                 if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
@@ -178,17 +309,17 @@ namespace SLBr
             UnloadTabs();
         }
 
-        public void SetAppearance(Theme _Theme, string TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowAIButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
+        public void SetAppearance(Theme _Theme, int TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
         {
-            if (TabAlignment == "Vertical")
-            {
-                TabsUI.Style = Resources["VerticalTabControl"] as Style;
-                Tabs[Tabs.Count - 1].TabStyle = (Style)FindResource("VerticalIconTabButton");
-            }
-            else if (TabAlignment == "Horizontal")
+            if (TabAlignment == 0)
             {
                 TabsUI.Style = FindResource(typeof(WinUITabControl)) as Style;
                 Tabs[Tabs.Count - 1].TabStyle = (Style)FindResource("IconTabButton");
+            }
+            else if (TabAlignment == 1)
+            {
+                TabsUI.Style = Resources["VerticalTabControl"] as Style;
+                Tabs[Tabs.Count - 1].TabStyle = (Style)FindResource("VerticalIconTabButton");
             }
 
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
@@ -199,7 +330,7 @@ namespace SLBr
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
 
             foreach (BrowserTabItem Tab in Tabs)
-                Tab.Content?.SetAppearance(_Theme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                Tab.Content?.SetAppearance(_Theme, AllowHomeButton, AllowTranslateButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
 
             HwndSource HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
             int trueValue = 0x01;
@@ -212,7 +343,7 @@ namespace SLBr
 
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
-            var Values = ((FrameworkElement)sender).Tag.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
+            var Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>", StringSplitOptions.None);
             Action((Actions)int.Parse(Values[0]), sender, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
         }
 
@@ -247,6 +378,10 @@ namespace SLBr
                     {
                         BrowserTabItem _Tab = GetBrowserTabWithId(int.Parse(V1));
                         NewTab(_Tab.Content.Address, true, Tabs.IndexOf(_Tab) + 1);
+                    }
+                    else if (V2 == "Private")
+                    {
+                        NewTab(V1, true, -1, true);
                     }
                     else
                         NewTab(V1, true);
@@ -355,10 +490,11 @@ namespace SLBr
             GetTab().Content?.Navigate(Url);
         }
         public bool IsFullscreen;
-        public void Fullscreen(bool Fullscreen)
+        public void Fullscreen(bool Fullscreen, Browser BrowserView = null)
         {
             IsFullscreen = Fullscreen;
-            Browser BrowserView = GetTab().Content;
+            if (BrowserView == null)
+                BrowserView = GetTab().Content;
             if (BrowserView != null)
             {
                 if (Fullscreen)
@@ -391,7 +527,7 @@ namespace SLBr
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             _Tab.Content?.DevTools();//(false, XCoord, YCoord);
         }
-        public void NewTab(string Url, bool IsSelected = false, int Index = -1)
+        public void NewTab(string Url, bool IsSelected = false, int Index = -1, bool IsPrivate = false)
         {
             if (!App.Instance.Background && WindowState == WindowState.Minimized)
             {
@@ -399,7 +535,7 @@ namespace SLBr
                 Activate();
             }
             BrowserTabItem _Tab = new BrowserTabItem(this) { Header = Utils.CleanUrl(Url, true, true, true, true), BrowserCommandsVisibility = Visibility.Collapsed };
-            _Tab.Content = new Browser(Url, _Tab);
+            _Tab.Content = new Browser(Url, _Tab, IsPrivate);
             Tabs.Insert(Index != -1 ? Index : Tabs.Count - 1, _Tab);
             if (IsSelected)
                 TabsUI.SelectedIndex = Tabs.IndexOf(_Tab);
@@ -510,18 +646,13 @@ namespace SLBr
                 else
                 {
                     BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
-                    /*foreach (BrowserTabItem _Tab in Tabs)
+                    foreach (BrowserTabItem _Tab in Tabs)
                     {
                         if (_Tab != _CurrentTab)
-                        {
-                            _CurrentTab.Content.UnFocus();
-                        }
-                    }*/
-                    if (_CurrentTab.Content != null)
-                    {
-                        Keyboard.Focus(_CurrentTab.Content.Chromium);
-                        _CurrentTab.Content.ReFocus();
+                            _Tab.Content?.UnFocus();
                     }
+                    if (_CurrentTab.Content != null)
+                        Keyboard.Focus(_CurrentTab.Content.Chromium);
                     Title = _CurrentTab.Header + (App.Instance.Username == "Default" ? " - SLBr" : $" - {App.Instance.Username} - SLBr");
                 }
             }

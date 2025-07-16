@@ -2,7 +2,6 @@
 using CefSharp.Enums;
 using CefSharp.Structs;
 using SLBr.Pages;
-using System.Security.Policy;
 
 namespace SLBr.Handlers
 {
@@ -16,26 +15,9 @@ namespace SLBr.Handlers
 
         public void OnAddressChanged(IWebBrowser chromiumWebBrowser, AddressChangedEventArgs addressChangedArgs)
         {
-            /*if (!addressChangedArgs.Address.StartsWith("devtools://devtools/", StringComparison.Ordinal))
-            {
-                App.Current.Dispatcher.Invoke(() =>
-                {
-                    _BrowserView.AddNavigationEntry(addressChangedArgs.Address, ((ChromiumWebBrowser)chromiumWebBrowser).Title, _BrowserView.CurrentNavigationEntry);
-                    /*string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, bool.Parse(App.Instance.GlobalSave.Get("FullAddress")) ? addressChangedArgs.Address : Utils.CleanUrl(addressChangedArgs.Address));
-                    if (_BrowserView.OmniBox.Text != OutputUrl)
-                    {
-                        if (_BrowserView.IsOmniBoxModifiable())
-                        {
-                            _BrowserView.OmniBox.Text = OutputUrl;
-                            _BrowserView.OmniBoxPlaceholder.Visibility = Visibility.Hidden;
-                        }
-                        _BrowserView.OmniBox.Tag = addressChangedArgs.Address;
-                    }*/
-            //});
-            //}
         }
 
-        public bool OnAutoResize(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.Structs.Size newSize)
+        public bool OnAutoResize(IWebBrowser chromiumWebBrowser, IBrowser browser, Size newSize)
         {
             return false;
         }
@@ -55,21 +37,22 @@ namespace SLBr.Handlers
             if (urls.Count != 0 && bool.Parse(App.Instance.GlobalSave.Get("Favicons")))
             {
                 urls = urls.OrderBy(url => url.EndsWith(".ico") ? 0 : url.EndsWith(".png") ? 1 : 2).ToList();
-                //System.Windows.MessageBox.Show(string.Join(" | ", urls));
-                App.Current.Dispatcher.Invoke(async () =>
+                if (Utils.GetFileExtension(urls[0]) != ".svg")
                 {
-                    if (Utils.GetFileExtensionFromUrl(urls[0]) != ".svg")
-                        _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address);
-                    /*foreach (string url in urls)
+                    App.Current.Dispatcher.Invoke(async () =>
                     {
-                        if (Utils.GetFileExtensionFromUrl(url) != ".svg")
+                        _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address, _BrowserView.Private);
+                        /*foreach (string url in urls)
                         {
-                            //MessageBox.Show(urls[0]);
-                            _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address);
-                            break;
-                        }
-                    }*/
-                });
+                            if (Utils.GetFileExtensionFromUrl(url) != ".svg")
+                            {
+                                //MessageBox.Show(urls[0]);
+                                _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address);
+                                break;
+                            }
+                        }*/
+                    });
+                }
             }
         }
 
@@ -77,7 +60,7 @@ namespace SLBr.Handlers
         {
             App.Current.Dispatcher.Invoke(() =>
             {
-                App.Instance.CurrentFocusedWindow().Fullscreen(fullscreen);
+                App.Instance.CurrentFocusedWindow().Fullscreen(fullscreen, _BrowserView);
             });
         }
 

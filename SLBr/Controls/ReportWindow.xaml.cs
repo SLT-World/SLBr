@@ -35,7 +35,7 @@ namespace SLBr.Controls
         {
             if (string.IsNullOrWhiteSpace(new TextRange(ExplanationRichTextBox.Document.ContentStart, ExplanationRichTextBox.Document.ContentEnd).Text.Trim()))
                 return;
-            App.Instance.DiscordWebhookSendInfo($"**Bug Report**\n" +
+            await App.DiscordWebhookSendInfo($"**Bug Report**\n" +
                 $"> - Version: `{App.Instance.ReleaseVersion}`\n\n" +
                 $"Urgent: `{UrgentCheckBox.IsChecked.ToBool()}`\n\n" +
                 $"Message: ```{new TextRange(ExplanationRichTextBox.Document.ContentStart, ExplanationRichTextBox.Document.ContentEnd).Text.Trim()} ```\n" +

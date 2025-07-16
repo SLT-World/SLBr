@@ -10,11 +10,11 @@ namespace SLBr.Handlers
         {
             Unknown,
             Malware,
-            Potentially_Harmful_Application,
+            //Potentially_Harmful_Application,
             Social_Engineering,
             Unwanted_Software,
         }
-        enum PlatformType
+        /*enum PlatformType
         {
             Unknown,
             All,
@@ -32,41 +32,46 @@ namespace SLBr.Handlers
             Executable,
             IpAddressRange,
             Url
-        }
+        }*/
 
         string APIKey;
-        string ClientId;
+        string ClientID;
 
-        public SafeBrowsingHandler(string API_Key, string Client_Id)
+        public SafeBrowsingHandler(string _APIKey, string _ClientID)
         {
-            APIKey = API_Key;
-            ClientId = Client_Id;
+            APIKey = _APIKey;
+            ClientID = _ClientID;
         }
 
-        public ThreatType GetThreatType(string _Data)
+        public ThreatType GetThreatType(string Data)
         {
             ThreatType _Type = ThreatType.Unknown;
-            if (_Data.Length > 2)
+            if (Data.Length > 2)
             {
-                //MessageBox.Show(_Data, "Raw Data");
                 try
                 {
-                    if (JsonNode.Parse(_Data)["matches"] is JsonArray Matches)
+                    if (JsonNode.Parse(Data)["matches"] is JsonArray Matches)
                     {
-                        if (Matches[0]["threatType"].ToString() == "MALWARE")
+                        string FirstThreatType = Matches[0]["threatType"].ToString();
+                        if (FirstThreatType == "MALWARE")
                             _Type = ThreatType.Malware;
-                        else if (Matches[0]["threatType"].ToString() == "UNWANTED_SOFTWARE")
+                        else if (FirstThreatType == "UNWANTED_SOFTWARE")
                             _Type = ThreatType.Unwanted_Software;
-                        else if (Matches[0]["threatType"].ToString() == "SOCIAL_ENGINEERING")
+                        else if (FirstThreatType == "SOCIAL_ENGINEERING")
                             _Type = ThreatType.Social_Engineering;
-                        if (_Type == ThreatType.Unknown && Matches.Count > 1)
+                        /*else if (FirstThreatType == "POTENTIALLY_HARMFUL_APPLICATION")
+                            _Type = ThreatType.Potentially_Harmful_Application;*/
+                        else if (Matches.Count > 1)
                         {
-                            if (Matches[1]["threatType"].ToString() == "MALWARE")
+                            string SecondThreatType = Matches[1]["threatType"].ToString();
+                            if (SecondThreatType == "MALWARE")
                                 _Type = ThreatType.Malware;
-                            else if (Matches[0]["threatType"].ToString() == "UNWANTED_SOFTWARE")
+                            else if (SecondThreatType == "UNWANTED_SOFTWARE")
                                 _Type = ThreatType.Unwanted_Software;
-                            else if (Matches[1]["threatType"].ToString() == "SOCIAL_ENGINEERING")
+                            else if (SecondThreatType == "SOCIAL_ENGINEERING")
                                 _Type = ThreatType.Social_Engineering;
+                            /*else if (SecondThreatType == "POTENTIALLY_HARMFUL_APPLICATION")
+                                _Type = ThreatType.Potentially_Harmful_Application;*/
                         }
                     }
                 }
@@ -82,20 +87,21 @@ namespace SLBr.Handlers
         {
             if (string.IsNullOrEmpty(APIKey))
                 return "{}";
-            using (var _HttpClient = new HttpClient())
+            using (HttpClient Client = new HttpClient())
             {
+                //,""POTENTIALLY_HARMFUL_APPLICATION""
                 string Payload = $@"{{
-    ""client"":{{""clientId"":""{ClientId}"",""clientVersion"":""1.0.0""}},
+    ""client"":{{""clientId"":""{ClientID}"",""clientVersion"":""1.0.0""}},
     ""threatInfo"":{{
-        ""threatTypes"":[""THREAT_TYPE_UNSPECIFIED"",""MALWARE"",""SOCIAL_ENGINEERING"",""UNWANTED_SOFTWARE"",""POTENTIALLY_HARMFUL_APPLICATION""],
+        ""threatTypes"":[""THREAT_TYPE_UNSPECIFIED"",""MALWARE"",""SOCIAL_ENGINEERING"",""UNWANTED_SOFTWARE""],
         ""platformTypes"":[""CHROME""],
         ""threatEntryTypes"":[""URL""],
         ""threatEntries"":[{{""url"":""{Utils.CleanUrl(Url, false, false, true, false, false)}""}}]
     }}
-}}";//,""WINDOWS"" doesn't seem to work
+}}";
                 try
                 {
-                    var Response = _HttpClient.PostAsync($"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={APIKey}", new StringContent(Payload, Encoding.Default, "application/json")).Result;
+                    var Response = Client.PostAsync($"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={APIKey}", new StringContent(Payload, Encoding.Default, "application/json")).Result;
                     return Response.Content.ReadAsStringAsync().Result;
                 }
                 catch { }

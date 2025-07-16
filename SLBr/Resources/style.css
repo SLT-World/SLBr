@@ -21,20 +21,23 @@ html {
     background: white;
 }
 
-body {
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+body {
+    padding: 10px;
 }
 
 table {
     border-collapse: collapse;
     width: 100%;
-    /*margin-right: auto;
-            margin-left: auto;*/
 }
 
 td, th {
-    /*text-align: left;*/
-    /*border: 1px solid #F5F5F5;*/
     padding: 8px;
 }
 
@@ -50,36 +53,6 @@ tr:nth-child(even) {
     background-color: #F5F5F5;
 }
 
-/*tr:hover {
-            background-color: #DDD;
-        }*/
-
-/*#checkboxes {
-    float: left;
-}*/
-
-#checkboxes ul {
-    /*margin: 0;*/
-    padding: 0;
-    list-style: none;
-    /*float: left;*/
-}
-
-#checkboxes ul li input {
-    vertical-align: -1px;
-    padding: 0;
-    margin-right: 7.5px;
-    /*vertical-align: middle;*/
-    overflow: visible;
-}
-
-#checkboxes ul li p {
-    padding: 0;
-    margin: 0;
-    margin-left: 5px;
-    overflow: visible;
-}
-
 h3 {
     margin: 7.5px 0px;
 }
@@ -93,7 +66,6 @@ h4 {
     padding: 75px;
     text-align: center;
     background: lightsteelblue;
-    /*whitesmoke*/
     font-size: 25px;
     border-radius: 25px;
     overflow-y: hidden;
@@ -126,7 +98,6 @@ a:hover {
 }
 
 .NewTabSearchContainer {
-    /*margin-top: 20%;*/
     position: absolute;
     top: 0;
     left: 0;
@@ -136,10 +107,6 @@ a:hover {
 }
 
 .Center {
-    /*position: absolute;
-    top: 50%;
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);*/
     display: flex;
     align-items: center;
     justify-content: center;
@@ -153,61 +120,10 @@ a:hover {
     transform: rotate(180deg);
 }
 
-.Acrylic {
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, .5);
-}
-/*.Acrylic {
-    backdrop-filter: blur(25px);
-    text-align: center;
-    width: 300px;
-    height: 40px;
-    border: none;
-    outline: none;
-    font-size: 15px;
-    padding: 0 10px;
-    border-radius: 20px;
-    background-color: var(rgba(255, 255, 255, 0.6));
-    transition: outline 0.1s var(ease), width 0.2s var(ease);
-    box-shadow: #00000030 0px 0px 8px 0px;
-    color: var(rgb(0, 0, 0));
-}*/
-/*.Acrylic {
-    background-blend-mode: exclusion;
-    -webkit-filter: blur(1px);
-    filter: blur(1px);
-    background-color: rgba(255,255,255,.1);
-    z-index: -1000000;
-}*/
-/*.Acrylic {
-    backdrop-filter: blur(25px);
-}*/
-
-/*.Arcylic {
-    z-index: -1000000;
-    background-size: 100% 100%;
-    -webkit-filter: blur(60px);
-    filter: blur(60px);
-    transform: scale(3);
-    transition: left 0.2s ease, top 0.2s ease, opacity 0.2s ease;
-    background-blend-mode: exclusion;
-    background-color: rgba(#fff, .2);
-}*/
-
-/*.Acrylic::before {
-    background-blend-mode: exclusion;
-    -webkit-filter: blur(1px);
-    filter: blur(1px);
-}
-
-.Acrylic::after {
-    background-color: rgba(#fff, .2);
-}*/
-
 .SearchInput {
     display: flex;
     align-items: center;
-    border: 1px solid gainsboro;
+    outline: 1px solid gainsboro;
     height: 35px;
     padding: 2.5px 10px;
     border-radius: 1000px;
@@ -215,20 +131,10 @@ a:hover {
     margin: 0 auto;
     max-width: 560px;
     background: white;
-    /*background-blend-mode: exclusion;*/
-    /*-webkit-backdrop-filter: blur(20px) saturate(125%);
-    backdrop-filter: blur(20px) saturate(125%);*/
 }
 
-.Search {
-    border: 1px solid transparent;
-}
-
-.Search:focus-within {
-    border: 0px solid transparent;
-}
-.Search:focus-within > .SearchInput {
-    border: 2px solid #3399FF;
+.SearchInput:focus-within {
+    outline: 2px solid #3399FF;
 }
 
 .SearchInput input {
@@ -239,15 +145,48 @@ a:hover {
     background: transparent;
 }
 
-.SearchInput .material-icons {
-    color: gray;
+.SearchInput .font-icon {
+    color: darkgray;
+}
+
+.font-icon {
+    user-select: none;
+    font-family: 'Segoe Fluent Icons';
+    font-size: 20px;
+}
+.icon_button {
+    width: 35px !important;
+    font-size: 17.5px !important;
+    font-family: "Segoe Fluent Icons" !important;
+}
+.icon_button * {
+    font-family: 'Segoe Fluent Icons';
+}
+
+.card {
+    padding: 5px;
+    background: whitesmoke;
+    border-radius: 5px;
+    border: 1px solid gainsboro;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 5px 10px !important;
+    font-size: 30px;
+    font-weight: 400;
+}
+header .font-icon {
+    font-size: 25px;
 }
 
 .List ul {
     margin: 0;
     padding: 0;
     list-style: none;
-    /*float: left;*/
 }
 
 .List ul li {

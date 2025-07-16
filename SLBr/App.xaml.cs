@@ -1,4 +1,7 @@
 ﻿using CefSharp;
+using CefSharp.DevTools;
+using CefSharp.DevTools.CSS;
+using CefSharp.DevTools.Emulation;
 using CefSharp.Enums;
 using CefSharp.SchemeHandler;
 using CefSharp.Wpf.HwndHost;
@@ -14,9 +17,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -24,6 +30,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Xml.Linq;
 using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
 
@@ -129,6 +136,21 @@ namespace SLBr
         }*/
     }
 
+    public class SearchProvider
+    {
+        public string Name;
+        public string Host;
+        public string SearchUrl;
+        public string SuggestUrl;
+    }
+
+    public class OmniSuggestion
+    {
+        public string Text { get; set; }
+        public string Result { get; set; }
+        public string Icon { get; set; }
+    }
+
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
@@ -136,8 +158,11 @@ namespace SLBr
     {
         public static App Instance;
 
+        //public const string AMPEndpoint = "https://acceleratedmobilepageurl.googleapis.com/v1/ampUrls:batchGet";
+
         public List<MainWindow> AllWindows = new List<MainWindow>();
-        public List<string> SearchEngines = new List<string>();
+        public List<SearchProvider> SearchEngines = new List<SearchProvider>();
+        public SearchProvider DefaultSearchProvider;
         public List<Theme> Themes = new List<Theme>()
         {
             new Theme("Light", Colors.White, Colors.WhiteSmoke, Colors.Gainsboro, Colors.Gray, Colors.Black, (Color)ColorConverter.ConvertFromString("#3399FF"), false, false),
@@ -145,6 +170,7 @@ namespace SLBr
             new Theme("Purple", (Color)ColorConverter.ConvertFromString("#191025"), (Color)ColorConverter.ConvertFromString("#251C31"), (Color)ColorConverter.ConvertFromString("#2B2237"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#934CFE"), true, true),
             new Theme("Green", (Color)ColorConverter.ConvertFromString("#163C2C"), (Color)ColorConverter.ConvertFromString("#18352B"), (Color)ColorConverter.ConvertFromString("#1A3029"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#3AE872"), true, true)
         };
+        public DomainList AdBlockAllowList = new DomainList();
 
         public IdnMapping _IdnMapping = new IdnMapping();
 
@@ -153,6 +179,7 @@ namespace SLBr
         public Saving SearchSave;
         public Saving StatisticsSave;
         public Saving LanguagesSave;
+        public Saving AllowListSave;
 
         public List<Saving> WindowsSaves = new List<Saving>();
 
@@ -161,6 +188,8 @@ namespace SLBr
         public string UserApplicationDataPath;
         public string ExecutablePath;
         public string ExtensionsPath;
+        public string ResourcesPath;
+        public string CdnPath;
 
         bool AppInitialized;
 
@@ -196,7 +225,7 @@ namespace SLBr
             set
             {
                 PrivateExtensions = value;
-                switch (int.Parse(GlobalSave.Get("ExtensionButton")))
+                switch (GlobalSave.GetInt("ExtensionButton"))
                 {
                     case 0:
                         foreach (MainWindow _Window in AllWindows)
@@ -261,6 +290,7 @@ namespace SLBr
         static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
 
         public string UserAgent;
+        public UserAgentMetadata UserAgentData;
 
         public void LoadExtensions()
         {
@@ -356,11 +386,201 @@ namespace SLBr
             }
         }
 
+        public static OmniSuggestion GenerateSuggestion(string Text, string Type)
+        {
+            OmniSuggestion Suggestion = new OmniSuggestion { Text = Text };
+            switch (Type)
+            {
+                case "S":
+                    Suggestion.Icon = "\xE721";
+                    break;
+                case "W":
+                    Suggestion.Icon = "\xE71B";
+                    break;
+                case "P":
+                    Suggestion.Icon = "\xE756";
+                    break;
+                case "C":
+                    Suggestion.Icon = "\xE943";
+                    break;
+                case "F":
+                    Suggestion.Icon = "\xe838";//e8b7
+                    break;
+            }
+            return Suggestion;
+        }
+
+        /*public static string GetSearchType(string Text)
+        {
+            if (Text.StartsWith("search:"))
+                return "Search";
+            else if (Text.StartsWith("domain:"))
+                return "Url";
+            else if (Utils.IsProgramUrl(Text))
+                return "Program";
+            else if (Utils.IsCode(Text))
+                return "Code";
+            else if (Text.StartsWith("file:///", StringComparison.Ordinal))
+                return "File";
+            else if (Utils.IsUrl(Text))
+                return "Url";
+            return "Search";
+        }*/
+
+        public static string GetMiniSearchType(string Text)
+        {
+            if (Text.StartsWith("search:", StringComparison.Ordinal))
+                return "S";
+            else if (Text.StartsWith("domain:", StringComparison.Ordinal))
+                return "W";
+            else if (Utils.IsProgramUrl(Text))
+                return "P";
+            else if (Utils.IsCode(Text))
+                return "C";
+            else if (Text.StartsWith("file:///", StringComparison.Ordinal))
+                return "F";
+            else if (Utils.IsUrl(Text))
+                return "W";
+            return "S";
+        }
+
+        public static string GetSmartType(string Text)
+        {
+            if (Regex.IsMatch(Text, @"^[\d\s\.\+\-\*/%\(\)]+$"))
+                return "Math";
+            else if (Text.StartsWith("define ", StringComparison.OrdinalIgnoreCase))
+                return "Define";
+            else if (Text.StartsWith("weather ", StringComparison.OrdinalIgnoreCase))
+                return "Weather";
+            else if (Text.StartsWith("translate ", StringComparison.OrdinalIgnoreCase))
+                return "Translate";
+            else if (Regex.IsMatch(Text, @"\b\d+(?:\.\d+)?\s+[a-zA-Z]{3}\s+(?:to|in)\s+[a-zA-Z]{3}\b"))
+                return "Currency";
+            return "None";
+        }
+
+        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, string Type, CancellationToken Token)
+        {
+            OmniSuggestion Suggestion = new OmniSuggestion { Text = Text };
+
+            Suggestion.Icon = "\xE721";
+            switch (Type)
+            {
+                case "Math":
+                    try
+                    {
+                        var result = new DataTable().Compute(Text, null)?.ToString();
+                        Suggestion.Result = $"= {result}";
+                        Suggestion.Icon = "\uE8EF";
+                    }
+                    catch { }
+                    break;
+                case "Define":
+                    try
+                    {
+                        string Json = await MiniHttpClient.GetStringAsync($"https://api.dictionaryapi.dev/api/v2/entries/en/{Text.Substring(7).Trim()}");
+                        JsonDocument _JsonDocument = JsonDocument.Parse(Json);
+                        string Result = _JsonDocument.RootElement[0].GetProperty("meanings")[0].GetProperty("definitions")[0].GetProperty("definition").GetString();
+                        Suggestion.Result = $"- {Result}";
+                        Suggestion.Icon = "\uE82D";
+                    }
+                    catch { }
+                    break;
+                case "Translate":
+                    Match TranslateMatch = Regex.Match(Text, @"^translate\s+(?<Phrase>.+?)\s+to\s+(?<Lang>.+)", RegexOptions.IgnoreCase);
+                    if (TranslateMatch.Success)
+                    {
+                        Suggestion.Result = "- Unavailable";
+                        Suggestion.Icon = "\uE8C1";
+                        string LanguageInput = TranslateMatch.Groups["Lang"].Value.Trim().ToLowerInvariant();
+
+                        string LanguageCode = "";
+                        if (LanguageInput.Length == 2)
+                            LanguageCode = LanguageInput;
+                        else
+                            LanguageCode = AllLocales.FirstOrDefault(x => x.Value.Contains(LanguageInput, StringComparison.OrdinalIgnoreCase)).Key;
+
+                        if (!string.IsNullOrEmpty(LanguageCode))
+                        {
+                            try
+                            {
+                                string Response = await MiniHttpClient.GetStringAsync($"https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl={LanguageCode}&q={Uri.EscapeDataString(TranslateMatch.Groups["Phrase"].Value.Trim())}");
+                                Suggestion.Result = $"- {JsonDocument.Parse(Response).RootElement[0][0][0].GetString()}";
+                            }
+                            catch { }
+                        }
+                    }
+                    break;
+                case "Currency":
+                    Match CurrencyMatch = Regex.Match(Text, @"(?<Amount>\d+(\.\d+)?)\s+(?<From>[A-Za-z]{3})\s+(?:to|in)\s+(?<To>[A-Za-z]{3})");
+                    if (CurrencyMatch.Success)
+                    {
+                        Suggestion.Result = "- Unavailable";
+                        Suggestion.Icon = "\ue8ee";
+                        string Amount = CurrencyMatch.Groups["Amount"].Value;
+                        string From = CurrencyMatch.Groups["From"].Value.ToUpper();
+                        string To = CurrencyMatch.Groups["To"].Value.ToUpper();
+                        try
+                        {
+                            string Response = await MiniHttpClient.GetStringAsync($"https://api.frankfurter.app/latest?amount={Amount}&from={From}&to={To}");
+
+                            using JsonDocument _JsonDocument = JsonDocument.Parse(Response);
+                            JsonElement Root = _JsonDocument.RootElement;
+
+                            if (Root.TryGetProperty("rates", out JsonElement Rates) && Rates.TryGetProperty(To, out JsonElement Output))
+                                Suggestion.Result = $"- {Amount} {From} ≈ {Output.GetDouble():0.00} {To}";
+                        }
+                        catch { }
+                    }
+                    break;
+
+                case "Weather":
+                    Suggestion.Icon = "\uE9CA";
+                    string Location = Regex.Replace(Text, @"^weather(\s+in)?\s+", "", RegexOptions.IgnoreCase).Trim();
+                    try
+                    {
+                        using HttpResponseMessage Response = await MiniHttpClient.GetAsync($"https://wttr.in/{Uri.EscapeDataString(Location)}?format=1", Token);
+                        string Result = (await Response.Content.ReadAsStringAsync()).Trim();
+                        Token.ThrowIfCancellationRequested();
+                        if (Result.Length > 0)
+                        {
+                            Match TemperatureMatch = Regex.Match(Result, @"[-+]?\d+\s*°C");
+                            string Temperature = TemperatureMatch.Success ? TemperatureMatch.Value : "";
+                            string Description = Result switch
+                            {
+                                string s when s.StartsWith("🌤", StringComparison.Ordinal) => "Mostly sunny",
+                                string s when s.StartsWith("☀️", StringComparison.Ordinal) => "Sunny",
+                                string s when s.StartsWith("⛅", StringComparison.Ordinal) => "Partly cloudy",
+                                string s when s.StartsWith("☁️", StringComparison.Ordinal) => "Cloudy",
+                                string s when s.StartsWith("🌧", StringComparison.Ordinal) => "Rainy",
+                                string s when s.StartsWith("🌨", StringComparison.Ordinal) => "Snowy",
+                                string s when s.StartsWith("🌪", StringComparison.Ordinal) => "Storm",
+                                _ => "Weather"
+                            };
+
+                            Suggestion.Result = $"{Temperature} | {Description}";
+                        }
+                        else
+                        {
+                            Suggestion.Result = $"- No data";
+                        }
+                    }
+                    catch (OperationCanceledException) { }
+                    catch { Suggestion.Result = "- Unavailable"; }
+                    break;
+            }
+
+            return Suggestion;
+        }
+
         public bool Background = false;
+
+        public BitmapFrame Icon;
+        public static HttpClient MiniHttpClient = new HttpClient();
+        public static Random MiniRandom = new Random();
 
         private void InitializeApp()
         {
-            StartupManager.EnableStartup();
             IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
             string AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30}";
             string CommandLineUrl = "";
@@ -384,6 +604,7 @@ namespace SLBr
                 }
             }
             SetCurrentProcessExplicitAppUserModelID(AppUserModelID);
+
             _Mutex = new Mutex(true, AppUserModelID);
             if (string.IsNullOrEmpty(CommandLineUrl))
             {
@@ -409,6 +630,9 @@ namespace SLBr
                 }
             }
 
+            MiniHttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentGenerator.BuildChromeBrand());
+            MiniHttpClient.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xml,*/*");
+
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             DispatcherUnhandledException += App_DispatcherUnhandledException;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
@@ -423,8 +647,19 @@ namespace SLBr
             UserApplicationWindowsPath = Path.Combine(UserApplicationDataPath, "Windows");
             ExecutablePath = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
             ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
+            ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
+            CdnPath = Path.Combine(ResourcesPath, "cdn");
 
-            UserAgent = UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}");
+            if (Username != "Default")
+            {
+                string IconPath = Path.Combine(UserApplicationDataPath, $"Icon.png");
+                if (!File.Exists(IconPath))
+                {
+                    ImageSource IconImage = GenerateProfileIcon("pack://application:,,,/Resources/SLBr.ico", Username.Substring(0, 1).ToUpper());
+                    SaveImageSourceToFile(IconImage, IconPath);
+                }
+                Icon = BitmapFrame.Create(new Uri(IconPath, UriKind.Absolute));
+            }
 
             InitializeSaves();
             InitializeUISaves(CommandLineUrl);
@@ -514,7 +749,7 @@ namespace SLBr
                 _Window.Show();
                 _Window.Activate();
             }
-            if (Utils.IsInternetAvailable())
+            if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("CheckUpdate")))
             {
                 using (WebClient _WebClient = new WebClient())
                 {
@@ -536,10 +771,21 @@ namespace SLBr
             Background = false;
         }
 
-        public void DiscordWebhookSendInfo(string Content)
+        public static async Task DiscordWebhookSendInfo(string Content)
         {
-            try { new WebClient().UploadValues(SECRETS.DISCORD_WEBHOOK, new NameValueCollection { { "content", Content }, { "username", "SLBr Diagnostics" } }); }
-            catch { }
+            var Payload = new
+            {
+                content = Content,
+                username = "SLBr Diagnostics"
+            };
+
+            //var Response = 
+            await MiniHttpClient.PostAsync(SECRETS.DISCORD_WEBHOOK, new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json"));
+            /*if (!Response.IsSuccessStatusCode)
+            {
+                string responseBody = await Response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[Webhook Error] {Response.StatusCode}: {responseBody}");
+            }*/
         }
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
@@ -548,8 +794,13 @@ namespace SLBr
             if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
                 DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
 
-            //e.SetObserved();
-            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
+            if (bool.Parse(GlobalSave.Get("SuppressError")))
+            {
+                Save();
+                e.SetObserved();
+            }
+            else
+                MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -559,7 +810,10 @@ namespace SLBr
             if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
                 DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), _Exception.Message, _Exception.Source, _Exception.TargetSite, _Exception.StackTrace, _Exception.InnerException));
 
-            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), _Exception.Message, _Exception.Source, _Exception.TargetSite, _Exception.StackTrace, _Exception.InnerException));
+            if (bool.Parse(GlobalSave.Get("SuppressError")))
+                Save();
+            else
+                MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), _Exception.Message, _Exception.Source, _Exception.TargetSite, _Exception.StackTrace, _Exception.InnerException));
         }
 
         public const string InternalJavascriptFunction = @"window.internal = {
@@ -629,18 +883,31 @@ Inner Exception: ```{7} ```";
             if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
                 DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
 
-            MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
+            if (bool.Parse(GlobalSave.Get("SuppressError")))
+            {
+                Save();
+                e.Handled = true;
+            }
+            else
+                MessageBox.Show(string.Format(ExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
         }
         public int TrackersBlocked;
         public int AdsBlocked;
 
-        public bool AdBlock;
-        public bool TrackerBlock;
+        public int AdBlock;
+        public bool AMP;
 
         //https://chromium-review.googlesource.com/c/chromium/src/+/1265506
         public bool NeverSlowMode;
 
         public bool SkipAds;
+        public bool ExternalFonts;
+
+        public void SetExternalFonts(bool _ExternalFonts)
+        {
+            GlobalSave.Set("ExternalFonts", _ExternalFonts.ToString());
+            ExternalFonts = _ExternalFonts;
+        }
 
         public void SetYouTube(bool _SkipAds)
         {
@@ -652,29 +919,47 @@ Inner Exception: ```{7} ```";
             GlobalSave.Set("NeverSlowMode", Boolean.ToString());
             NeverSlowMode = Boolean;
         }
-        public void SetAdBlock(bool Boolean)
+        public void SetAdBlock(int Type)
         {
             /*Cef.UIThreadTaskFactory.StartNew(delegate
             {
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
                 GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Ads, Boolean ? ContentSettingValues.Block : ContentSettingValues.Default);
             });*/
-            GlobalSave.Set("AdBlock", Boolean.ToString());
-            AdBlock = Boolean;
+            GlobalSave.Set("AdBlock", Type);
+            AdBlock = Type;
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                {
+                    if (BrowserView.Chromium != null && BrowserView.Chromium.IsBrowserInitialized && BrowserView.Chromium.CanExecuteJavascriptInMainFrame)
+                    {
+                        using (var DevToolsClient = BrowserView.Chromium.GetDevToolsClient())
+                        {
+                            //DevToolsClient.Page.SetAdBlockingEnabledAsync(AdBlock != 0);
+                            /*if (AdBlock == 2)
+                                BrowserView.ToggleEfficientAdBlock(DevToolsClient, AdBlockAllowList.Has(Utils.FastHost(BrowserView.Address)));
+                            else
+                                BrowserView.ToggleEfficientAdBlock(DevToolsClient, false);*/
+                            BrowserView.ToggleEfficientAdBlock(DevToolsClient, AdBlock == 2);
+                        }
+                    }
+                }
+            }
         }
-        public void SetTrackerBlock(bool Boolean)
+        public void SetAMP(bool Toggle)
         {
             /*Cef.UIThreadTaskFactory.StartNew(delegate
             {
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.TrackingProtection, Boolean ? ContentSettingValues.Allow : ContentSettingValues.Default);
+                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Ads, Boolean ? ContentSettingValues.Block : ContentSettingValues.Default);
             });*/
-            GlobalSave.Set("TrackerBlock", Boolean.ToString());
-            TrackerBlock = Boolean;
+            GlobalSave.Set("AMP", Toggle.ToString());
+            AMP = Toggle;
         }
-        public void SetRenderMode(string Mode)
+        public void SetRenderMode(int Mode)
         {
-            RenderOptions.ProcessRenderMode = (Mode == "Hardware") ? RenderMode.Default : RenderMode.SoftwareOnly;
+            RenderOptions.ProcessRenderMode = Mode == 0 ? RenderMode.Default : RenderMode.SoftwareOnly;
             GlobalSave.Set("RenderMode", Mode);
         }
         public void UpdateTabUnloadingTimer(int Time = -1)
@@ -685,7 +970,42 @@ Inner Exception: ```{7} ```";
                 _Window.UpdateUnloadTimer();
         }
 
-        public Dictionary<string, bool> PopupPermissionHosts = new Dictionary<string, bool>();
+        public void SaveOpenSearch(string Name, string Url)
+        {
+            try
+            {
+                if (SearchEngines.Find(x => x.Name == Name) != null)
+                    return;
+                string Response = MiniHttpClient.GetStringAsync(Url).Result;
+                XDocument XML = XDocument.Parse(Response);
+                XNamespace Namespace = "http://a9.com/-/spec/opensearch/1.1/";
+                var SearchProviderInfo = new SearchProvider
+                {
+                    Name = string.IsNullOrEmpty(Name) ? XML.Root.Element(Namespace + "ShortName")?.Value : Name,
+                    //FaviconUrl = doc.Root.Element(ns + "Image")?.Value
+                };
+
+
+                foreach (XElement? Urls in XML.Root.Elements(Namespace + "Url"))
+                {
+                    string Type = Urls.Attribute("type")?.Value;
+                    string Template = Urls.Attribute("template")?.Value.Replace("{searchTerms}", "{0}");
+
+                    if (Type == "application/x-suggestions+json")
+                        SearchProviderInfo.SuggestUrl = Template;
+                    else if (Type == "text/html")
+                        SearchProviderInfo.SearchUrl = Template;
+                }
+                if (SearchProviderInfo.SearchUrl.Length > 0)
+                {
+                    SearchProviderInfo.Host = Utils.FastHost(SearchProviderInfo.SearchUrl);
+                    SearchEngines.Add(SearchProviderInfo);
+                }
+            }
+            catch { }
+        }
+
+        //public Dictionary<string, bool> PopupPermissionHosts = new Dictionary<string, bool>();
 
         private ObservableCollection<ActionStorage> PrivateLanguages = new ObservableCollection<ActionStorage>();
         public ObservableCollection<ActionStorage> Languages
@@ -835,6 +1155,9 @@ Inner Exception: ```{7} ```";
             //return "\xE8C1";
         }
 
+        public bool LiteMode;
+        public bool HighPerformanceMode;
+
         private void InitializeSaves()
         {
             GlobalSave = new Saving("Save.bin", UserApplicationDataPath);
@@ -842,6 +1165,13 @@ Inner Exception: ```{7} ```";
             SearchSave = new Saving("Search.bin", UserApplicationDataPath);
             StatisticsSave = new Saving("Statistics.bin", UserApplicationDataPath);
             LanguagesSave = new Saving("Languages.bin", UserApplicationDataPath);
+            AllowListSave = new Saving("AllowList.bin", UserApplicationDataPath);
+
+            if (!GlobalSave.Has("StartupBoost"))
+            {
+                StartupManager.EnableStartup();
+                GlobalSave.Set("StartupBoost", true.ToString());
+            }
 
             if (!Directory.Exists(UserApplicationWindowsPath))
             {
@@ -860,24 +1190,75 @@ Inner Exception: ```{7} ```";
                     WindowsSaves.Add(new Saving($"Window_0.bin", UserApplicationWindowsPath));
             }
 
-            int SearchCount = int.Parse(SearchSave.Get("Count", "0"));
+            int SearchCount = SearchSave.GetInt("Count", 0);
             if (SearchCount != 0)
             {
                 for (int i = 0; i < SearchCount; i++)
-                    SearchEngines.Add(SearchSave.Get($"{i}"));
+                {
+                    SearchProvider _SearchProvider = new SearchProvider();
+                    var Values = SearchSave.Get($"{i}").Split("<#>");
+                    if (Values.Length != 3)
+                    {
+                        DefaultSearchProvider = new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" };
+                        SearchEngines = new List<SearchProvider>
+                        {
+                            new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" },
+                            new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
+                            DefaultSearchProvider,
+                            new SearchProvider { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
+                            new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
+                            new SearchProvider { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p=e{0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
+                        };
+                        break;
+                    }
+                    else
+                    {
+                        _SearchProvider.Name = Values[0];
+                        _SearchProvider.Host = Utils.FastHost(Values[1]);
+                        _SearchProvider.SearchUrl = Values[1];
+                        _SearchProvider.SuggestUrl = Values[2];
+                    }
+                    SearchEngines.Add(_SearchProvider);
+                }
             }
             else
-                SearchEngines = new List<string>() {
+            {
+                DefaultSearchProvider = new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" };
+                SearchEngines = new List<SearchProvider>
+                {
+                    new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" },
+                    new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
+                    DefaultSearchProvider,
+                    new SearchProvider { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
+                    new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
+                    new SearchProvider { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p=e{0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
+                };
+
+                /*SearchEngines = new List<string>() {
                     "https://google.com/search?q={0}",
                     "https://bing.com/search?q={0}",
                     "https://www.ecosia.org/search?q={0}",
                     "https://duckduckgo.com/?q={0}",
-                    /*"https://search.brave.com/search?q={0}",
-                    "https://search.yahoo.com/search?p={0}",
-                    "https://yandex.com/search/?text={0}","*/
-                };
+                    //"https://search.brave.com/search?q={0}",
+                    //"https://search.yahoo.com/search?p={0}",
+                    //"https://yandex.com/search/?text={0}","
+                };*/
+            }
+            string SearchEngineName = GlobalSave.Get("SearchEngine", "Ecosia");
+            DefaultSearchProvider = SearchEngines.Find(i => i.Name == SearchEngineName);
+            if (DefaultSearchProvider == null)
+                DefaultSearchProvider = SearchEngines.Find(i => i.SearchUrl.Contains("ecosia.org", StringComparison.Ordinal));
 
-            int LanguageCount = int.Parse(LanguagesSave.Get("Count", "0"));
+            int AllowListCount = AllowListSave.GetInt("Count", -1);
+            if (AllowListCount != -1)
+            {
+                for (int i = 0; i < AllowListCount; i++)
+                    AdBlockAllowList.Add(AllowListSave.Get($"{i}"));
+            }
+            else
+                AdBlockAllowList.Add("ecosia.org");
+
+            int LanguageCount = LanguagesSave.GetInt("Count", 0);
             if (LanguageCount != 0)
             {
                 for (int i = 0; i < LanguageCount; i++)
@@ -886,7 +1267,7 @@ Inner Exception: ```{7} ```";
                     if (AllLocales.TryGetValue(ISO, out string Name))
                         Languages.Add(new ActionStorage(Name, GetLocaleIcon(ISO), ISO));
                 }
-                Locale = Languages[int.Parse(LanguagesSave.Get("Selected"))];
+                Locale = Languages[LanguagesSave.GetInt("Selected", 0)];
             }
             else
             {
@@ -896,22 +1277,29 @@ Inner Exception: ```{7} ```";
             }
 
             SetGoogleSafeBrowsing(bool.Parse(GlobalSave.Get("GoogleSafeBrowsing", true.ToString())));
+            SetMobileView(bool.Parse(GlobalSave.Get("MobileView", false.ToString())));
 
+            if (!GlobalSave.Has("CheckUpdate"))
+                GlobalSave.Set("CheckUpdate", true);
             if (!GlobalSave.Has("QuickImage"))
                 GlobalSave.Set("QuickImage", true);
+            if (!GlobalSave.Has("SuppressError"))
+                GlobalSave.Set("SuppressError", true);
+            if (!GlobalSave.Has("EnhanceImage"))
+                GlobalSave.Set("EnhanceImage", false);
+            if (!GlobalSave.Has("OpenSearch"))
+                GlobalSave.Set("OpenSearch", false);
             if (!GlobalSave.Has("SearchSuggestions"))
                 GlobalSave.Set("SearchSuggestions", true);
-            if (!GlobalSave.Has("SuggestionsSource"))
-                GlobalSave.Set("SuggestionsSource", "Google");
+            if (!GlobalSave.Has("SmartSuggestions"))
+                GlobalSave.Set("SmartSuggestions", true);
             if (!GlobalSave.Has("SpellCheck"))
                 GlobalSave.Set("SpellCheck", true);
-            if (!GlobalSave.Has("SearchEngine"))
-                GlobalSave.Set("SearchEngine", SearchEngines.Find(i => i.Contains("ecosia.org", StringComparison.Ordinal)));
 
             if (!GlobalSave.Has("Homepage"))
                 GlobalSave.Set("Homepage", "slbr://newtab");
-            TrackersBlocked = int.Parse(StatisticsSave.Get("BlockedTrackers", "0"));
-            AdsBlocked = int.Parse(StatisticsSave.Get("BlockedAds", "0"));
+            TrackersBlocked = StatisticsSave.GetInt("BlockedTrackers", 0);
+            AdsBlocked = StatisticsSave.GetInt("BlockedAds", 0);
 
             if (!GlobalSave.Has("TabUnloading"))
                 GlobalSave.Set("TabUnloading", true.ToString());
@@ -921,7 +1309,7 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("DimUnloadedIcon", true);
             if (!GlobalSave.Has("ShowUnloadedIcon"))
                 GlobalSave.Set("ShowUnloadedIcon", true);
-            UpdateTabUnloadingTimer(int.Parse(GlobalSave.Get("TabUnloadingTime", "10")));
+            UpdateTabUnloadingTimer(GlobalSave.GetInt("TabUnloadingTime", 10));
             /*if (!GlobalSave.Has("IPFS"))
                 GlobalSave.Set("IPFS", true);
             if (!GlobalSave.Has("Wayback"))
@@ -945,7 +1333,7 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("AdaptiveTheme", false);
 
             if (!GlobalSave.Has("ScreenshotFormat"))
-                GlobalSave.Set("ScreenshotFormat", "JPG");
+                GlobalSave.Set("ScreenshotFormat", 0);
 
             if (!GlobalSave.Has("Favicons"))
                 GlobalSave.Set("Favicons", true);
@@ -956,19 +1344,37 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("ChromiumHardwareAcceleration", (RenderCapability.Tier >> 16) != 0);
             if (!GlobalSave.Has("ExperimentalFeatures"))
                 GlobalSave.Set("ExperimentalFeatures", false);
-            if (!GlobalSave.Has("LiteMode"))
-                GlobalSave.Set("LiteMode", false);
+            if (!GlobalSave.Has("Performance"))
+                GlobalSave.Set("Performance", 1);
+            LiteMode = GlobalSave.GetInt("Performance") == 0;
+            HighPerformanceMode = GlobalSave.GetInt("Performance") == 2;
+
+            if (!GlobalSave.Has("JIT"))
+                GlobalSave.Set("JIT", true);
             if (!GlobalSave.Has("PDF"))
                 GlobalSave.Set("PDF", true);
 
             if (!GlobalSave.Has("HomepageBackground"))
                 GlobalSave.Set("HomepageBackground", "Custom");
             if (!GlobalSave.Has("BingBackground"))
-                GlobalSave.Set("BingBackground", "Image of the day");
+                GlobalSave.Set("BingBackground", 0);
             if (!GlobalSave.Has("CustomBackgroundQuery"))
                 GlobalSave.Set("CustomBackgroundQuery", "");
             if (!GlobalSave.Has("CustomBackgroundImage"))
                 GlobalSave.Set("CustomBackgroundImage", "");
+
+            if (!GlobalSave.Has("AntiTamper"))
+                GlobalSave.Set("AntiTamper", false);
+            if (!GlobalSave.Has("AntiInspectDetect"))
+                GlobalSave.Set("AntiInspectDetect", true);
+            if (!GlobalSave.Has("BypassSiteMenu"))
+                GlobalSave.Set("BypassSiteMenu", false);
+            if (!GlobalSave.Has("TextSelection"))
+                GlobalSave.Set("TextSelection", true);
+            if (!GlobalSave.Has("RemoveFilter"))
+                GlobalSave.Set("RemoveFilter", true);
+            if (!GlobalSave.Has("RemoveOverlay"))
+                GlobalSave.Set("RemoveOverlay", false);
 
             if (!GlobalSave.Has("BlockFingerprint"))
                 GlobalSave.Set("BlockFingerprint", false);
@@ -989,18 +1395,20 @@ Inner Exception: ```{7} ```";
         }
         private void InitializeUISaves(string CommandLineUrl = "")
         {
+            SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
             SetYouTube(bool.Parse(GlobalSave.Get("SkipAds", false.ToString())));
             SetNeverSlowMode(bool.Parse(GlobalSave.Get("NeverSlowMode", false.ToString())));
-            SetAdBlock(bool.Parse(GlobalSave.Get("AdBlock", true.ToString())));
-            SetTrackerBlock(bool.Parse(GlobalSave.Get("TrackerBlock", true.ToString())));
-            SetRenderMode(GlobalSave.Get("RenderMode", (RenderCapability.Tier >> 16) == 0 ? "Software" : "Hardware"));
+            SetAdBlock(GlobalSave.GetInt("AdBlock", 1));
+            SetAMP(bool.Parse(GlobalSave.Get("AMP", false.ToString())));
+            SetRenderMode(GlobalSave.GetInt("RenderMode", (RenderCapability.Tier >> 16) == 0 ? 1 : 0));
             
-            for (int i = 0; i < int.Parse(FavouritesSave.Get("Favourite_Count", "0")); i++)
+            for (int i = 0; i < FavouritesSave.GetInt("Count", 0); i++)
             {
-                string[] Value = FavouritesSave.Get($"Favourite_{i}", true);
+                string[] Value = FavouritesSave.Get(i.ToString(), true);
                 Favourites.Add(new ActionStorage(Value[1], $"4<,>{Value[0]}", Value[0]));
             }
-            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.Get("TabAlignment", "Horizontal"), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("AIButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", false.ToString())), int.Parse(GlobalSave.Get("ExtensionButton", "0")), int.Parse(GlobalSave.Get("FavouritesBar", "0")));
+            Favourites.CollectionChanged += Favourites_CollectionChanged;
+            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", false.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0));
             if (bool.Parse(GlobalSave.Get("RestoreTabs", true.ToString())))
             {
                 for (int t = 0; t < WindowsSaves.Count; t++)
@@ -1014,12 +1422,12 @@ Inner Exception: ```{7} ```";
                     else
                         _Window.Show();
                     Saving TabsSave = WindowsSaves[t];
-                    int TabCount = int.Parse(TabsSave.Get("Count", "0"));
+                    int TabCount = TabsSave.GetInt("Count", 0);
                     if (TabCount != 0)
                     {
                         for (int i = 0; i < TabCount; i++)
                             _Window.NewTab(TabsSave.Get(i.ToString(), "slbr://newtab"));
-                        _Window.TabsUI.SelectedIndex = int.Parse(TabsSave.Get("Selected", 0.ToString()));
+                        _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0);
                     }
                     else
                         _Window.NewTab(GlobalSave.Get("Homepage"), true);
@@ -1028,6 +1436,694 @@ Inner Exception: ```{7} ```";
             }
             if (!string.IsNullOrEmpty(CommandLineUrl))
                 CurrentFocusedWindow().NewTab(CommandLineUrl, true);
+
+            Color _PrimaryColor = (Color)FindResource("PrimaryBrushColor");
+            string PrimaryHex = $"#{_PrimaryColor.R:X2}{_PrimaryColor.G:X2}{_PrimaryColor.B:X2}{_PrimaryColor.A:X2}";
+            Color _SecondaryColor = (Color)FindResource("SecondaryBrushColor");
+            string SecondaryHex = $"#{_SecondaryColor.R:X2}{_SecondaryColor.G:X2}{_SecondaryColor.B:X2}{_SecondaryColor.A:X2}";
+            Color _BorderColor = (Color)FindResource("BorderBrushColor");
+            string BorderHex = $"#{_BorderColor.R:X2}{_BorderColor.G:X2}{_BorderColor.B:X2}{_BorderColor.A:X2}";
+            Color _GrayColor = (Color)FindResource("GrayBrushColor");
+            string GrayHex = $"#{_GrayColor.R:X2}{_GrayColor.G:X2}{_GrayColor.B:X2}{_GrayColor.A:X2}";
+            Color _FontColor = (Color)FindResource("FontBrushColor");
+            string FontHex = $"#{_FontColor.R:X2}{_FontColor.G:X2}{_FontColor.B:X2}{_FontColor.A:X2}";
+
+            Color _IndicatorColor = (Color)FindResource("IndicatorBrushColor");
+            string IndicatorHex = $"#{_IndicatorColor.R:X2}{_IndicatorColor.G:X2}{_IndicatorColor.B:X2}{_IndicatorColor.A:X2}";
+            DevToolCSS = $@":root {{
+  /* Colors begin */
+
+  /* Chrome Desktop Design System */
+
+  /* Use on all surfaces */
+
+  --sys-color-on-surface: {FontHex};
+  --sys-color-on-surface-subtle: {FontHex};
+  --sys-color-on-surface-secondary: {FontHex};
+  --sys-color-on-surface-primary: {FontHex};
+
+  /* Universal surfaces */
+
+  --sys-color-surface: {PrimaryHex};
+  --sys-color-surface-variant: {PrimaryHex};
+
+  /* Containers */
+
+  --sys-color-tonal-container: color-mix(in srgb, {SecondaryHex} 14%, {BorderHex});
+  --sys-color-on-tonal-container: {IndicatorHex};
+  --sys-color-tertiary-container: var(--ref-palette-tertiary90);
+  --sys-color-on-tertiary-container: var(--ref-palette-tertiary10);
+  --sys-color-error-container: var(--ref-palette-error90);
+  --sys-color-on-error-container: {FontHex};
+  --sys-color-neutral-container: {SecondaryHex};
+  --sys-color-omnibox-container: {PrimaryHex};
+
+  /* Prominent accent colors */
+
+  --sys-color-primary: {IndicatorHex};
+  --sys-color-on-primary: var(--ref-palette-primary100);
+  --sys-color-secondary: var(--ref-palette-secondary40);
+  --sys-color-on-secondary: var(--ref-palette-secondary100);
+  --sys-color-tertiary: var(--ref-palette-tertiary40);
+  --sys-color-on-tertiary: var(--ref-palette-tertiary100);
+  --sys-color-error: var(--ref-palette-error40);
+  --sys-color-on-error: var(--ref-palette-error100);
+
+  /* Chrome base surface */
+
+  --sys-color-base: {SecondaryHex};
+--sys-color-base-container: {PrimaryHex};
+  --sys-color-base-container-elevated: {PrimaryHex};
+
+  /* Corresponding base on colors */
+
+  --sys-color-on-base: var(--ref-palette-neutral10);
+  --sys-color-on-base-divider: var(--ref-palette-primary90);
+  /* Inverse */
+
+  --sys-color-inverse-surface: var(--ref-palette-neutral20);
+  --sys-color-inverse-primary: var(--ref-palette-primary80);
+  --sys-color-inverse-on-surface: var(--ref-palette-neutral95);
+
+  /* Outlines */
+
+  --sys-color-outline: {BorderHex};
+  --sys-color-tonal-outline: {BorderHex};
+  --sys-color-neutral-outline: {BorderHex};
+  --sys-color-yellow-outline: var(--ref-palette-yellow70);
+  --sys-color-error-outline: var(--ref-palette-error80);
+  --sys-color-divider: {BorderHex};
+  --sys-color-divider-on-tonal-container: {BorderHex};
+  --sys-color-divider-prominent: {BorderHex};
+
+  /* States */
+
+  --sys-color-state-hover-on-prominent: color-mix(in srgb, var(--ref-palette-neutral99) 10%, transparent);
+  --sys-color-state-hover-on-subtle: color-mix(in srgb, var(--ref-palette-neutral10) 6%, transparent);
+  --sys-color-state-hover-dim-blend-protection: rgb(6 46 111 / 18%);
+  --sys-color-state-hover-bright-blend-protection: rgb(31 31 31 / 6%);
+  --sys-color-state-ripple-neutral-on-prominent: color-mix(in srgb, var(--ref-palette-neutral99) 16%, transparent);
+  --sys-color-state-ripple-neutral-on-subtle: color-mix(in srgb, var(--ref-palette-neutral10) 8%, transparent);
+  --sys-color-state-ripple-primary: color-mix(in srgb, var(--ref-palette-primary70) 32%, transparent);
+  --sys-color-state-focus-ring: var(--ref-palette-primary40);
+  --sys-color-state-focus-select: var(--ref-palette-primary80);
+  --sys-color-state-focus-highlight: rgb(31 31 31 / 6%);
+  --sys-color-state-disabled: rgb(31 31 31 / 38%);
+  --sys-color-state-disabled-container: rgb(31 31 31 / 12%);
+  --sys-color-state-header-hover: var(--ref-palette-primary80);
+  --sys-color-state-on-header-hover: var(--ref-palette-primary20);
+  --sys-color-state-text-highlight: var(--ref-palette-primary40);
+  --sys-color-state-on-text-highlight: var(--ref-palette-neutral-variant100);
+  --sys-color-state-scrim: rgb(0 0 0 / 60%);
+
+  /* Surfaces */
+
+  --sys-color-surface5: {SecondaryHex};
+  --sys-color-surface4: {SecondaryHex};
+  --sys-color-surface3: {SecondaryHex};
+  --sys-color-surface2: {SecondaryHex};
+  --sys-color-surface1: {SecondaryHex};
+
+  /* Header surfaces */
+  --sys-color-header-container: green;
+
+  /* Chrome DevTools Design System */
+
+  /* Prominent accent colors for icons */
+
+  --sys-color-primary-bright: var(--ref-palette-primary50);
+  --sys-color-blue-bright: var(--ref-palette-blue50);
+  --sys-color-green-bright: var(--ref-palette-green60);
+  --sys-color-error-bright: var(--ref-palette-error50);
+  --sys-color-orange-bright: var(--ref-palette-orange60);
+  --sys-color-yellow-bright: var(--ref-palette-yellow60);
+  --sys-color-cyan-bright: var(--ref-palette-cyan50);
+  --sys-color-purple-bright: var(--ref-palette-purple50);
+  --sys-color-neutral-bright: var(--ref-palette-neutral70);
+  --sys-color-pink-bright: var(--ref-palette-pink60);
+
+  /* Prominent accent colors for text */
+
+  --sys-color-blue: var(--ref-palette-blue40);
+  --sys-color-on-blue: var(--ref-palette-blue100);
+  --sys-color-green: var(--ref-palette-green40);
+  --sys-color-on-green: var(--ref-palette-green100);
+  --sys-color-orange: var(--ref-palette-orange40);
+  --sys-color-on-orange: var(--ref-palette-orange100);
+  --sys-color-yellow: var(--ref-palette-yellow40);
+  --sys-color-on-yellow: var(--ref-palette-yellow100);
+  --sys-color-cyan: var(--ref-palette-cyan40);
+  --sys-color-on-cyan: var(--ref-palette-cyan100);
+  --sys-color-purple: var(--ref-palette-purple40);
+  --sys-color-on-purple: var(--ref-palette-purple100);
+  --sys-color-pink: var(--ref-palette-pink40);
+  --sys-color-on-pink: var(--ref-palette-pink100);
+
+  /* Containers */
+
+  --sys-color-yellow-container: var(--ref-palette-yellow90);
+  --sys-color-on-yellow-container: var(--ref-palette-yellow10);
+
+  /* Universal surfaces */
+
+  --sys-color-cdt-base: var(--sys-color-base-container);
+  --sys-color-cdt-base-container: {PrimaryHex};
+
+  /* Tinted surfaces */
+
+  --sys-color-surface-yellow: rgb(254 246 213 / 100%);
+  --sys-color-surface-yellow-high: rgb(253 240 185 / 100%);
+  --sys-color-surface-error: rgb(252 235 235 / 100%);
+  --sys-color-surface-green: rgb(219 243 226 / 100%);
+
+  /* Corresponding on colors */
+
+  --sys-color-on-surface-yellow: var(--ref-palette-yellow20);
+  --sys-color-on-surface-error: var(--ref-palette-error30);
+  --sys-color-on-surface-green: var(--ref-palette-green20);
+
+  /* Syntax highlighting */
+
+  --sys-color-token-variable: var(--sys-color-on-surface);
+  --sys-color-token-property: var(--sys-color-on-surface);
+  --sys-color-token-property-special: var(--ref-palette-error50);
+  --sys-color-token-type: var(--ref-palette-green50);
+  --sys-color-token-definition: var(--ref-palette-blue30);
+  --sys-color-token-variable-special: var(--ref-palette-blue30);
+  --sys-color-token-builtin: var(--ref-palette-blue20);
+  --sys-color-token-keyword: var(--ref-palette-pink40);
+  --sys-color-token-number: var(--ref-palette-blue40);
+  --sys-color-token-string: var(--ref-palette-error40);
+  --sys-color-token-string-special: var(--ref-palette-error50);
+  --sys-color-token-atom: var(--ref-palette-blue20);
+  --sys-color-token-tag: var(--ref-palette-pink30);
+  --sys-color-token-attribute: var(--ref-palette-orange40);
+  --sys-color-token-attribute-value: var(--ref-palette-blue30);
+  --sys-color-token-comment: var(--ref-palette-green40);
+  --sys-color-token-meta: var(--ref-palette-neutral60);
+  --sys-color-token-deleted: var(--ref-palette-error50);
+  --sys-color-token-inserted: var(--ref-palette-green60);
+  --sys-color-token-pseudo-element: var(--ref-palette-blue40);
+  --sys-color-token-subtle: var(--ref-palette-neutral60);
+
+  /**
+  * Gradients
+  */
+  --sys-color-gradient-primary: var(--ref-palette-primary90);
+  --sys-color-gradient-tertiary: var(--ref-palette-tertiary95);
+
+&.theme-with-dark-background {{
+    /* States */
+    --sys-color-state-hover-on-prominent: color-mix(in srgb, var(--ref-palette-neutral10) 6%, transparent);
+    --sys-color-state-hover-on-subtle: color-mix(in srgb, var(--ref-palette-neutral99) 10%, transparent);
+    --sys-color-state-hover-dim-blend-protection: rgb(31 31 31 / 10%);
+    --sys-color-state-hover-bright-blend-protection: rgb(31 31 31 / 16%);
+    --sys-color-state-ripple-neutral-on-prominent: color-mix(in srgb, var(--ref-palette-neutral10) 12%, transparent);
+    --sys-color-state-ripple-neutral-on-subtle: color-mix(in srgb, var(--ref-palette-neutral99) 16%, transparent);
+    --sys-color-state-ripple-primary: color-mix(in srgb, var(--ref-palette-primary60) 32%, transparent);
+    --sys-color-state-focus-ring: var(--ref-palette-primary80);
+    --sys-color-state-focus-select: var(--ref-palette-secondary50);
+    --sys-color-state-focus-highlight: rgb(253 252 251 / 10%);
+    --sys-color-state-disabled: rgb(227 227 227 / 38%);
+    --sys-color-state-disabled-container: rgb(227 227 227 / 12%);
+    --sys-color-state-header-hover: var(--ref-palette-secondary30);
+    --sys-color-state-on-header-hover: var(--ref-palette-secondary90);
+    --sys-color-state-text-highlight: var(--ref-palette-primary80);
+    --sys-color-state-on-text-highlight: var(--ref-palette-neutral-variant0);
+
+    /* Header surface */
+    --sys-color-header-container: var(--ref-palette-neutral25);
+
+    /* Chrome DevTools Design System */
+
+    /* Prominent accent colors for icons */
+
+    --sys-color-primary-bright: var(--ref-palette-primary70);
+    --sys-color-blue-bright: var(--ref-palette-blue70);
+    --sys-color-green-bright: var(--ref-palette-green70);
+    --sys-color-error-bright: var(--ref-palette-error60);
+    --sys-color-orange-bright: var(--ref-palette-orange70);
+    --sys-color-yellow-bright: var(--ref-palette-yellow70);
+    --sys-color-cyan-bright: var(--ref-palette-cyan70);
+    --sys-color-purple-bright: var(--ref-palette-purple70);
+    --sys-color-neutral-bright: var(--ref-palette-neutral50);
+    --sys-color-pink-bright: var(--ref-palette-pink70);
+
+    /* Prominent accent colors for text */
+
+    --sys-color-blue: var(--ref-palette-blue80);
+    --sys-color-on-blue: var(--ref-palette-blue20);
+    --sys-color-green: var(--ref-palette-green80);
+    --sys-color-on-green: var(--ref-palette-green20);
+    --sys-color-orange: var(--ref-palette-orange80);
+    --sys-color-on-orange: var(--ref-palette-orange20);
+    --sys-color-yellow: var(--ref-palette-yellow80);
+    --sys-color-on-yellow: var(--ref-palette-yellow20);
+    --sys-color-cyan: var(--ref-palette-cyan80);
+    --sys-color-on-cyan: var(--ref-palette-cyan20);
+    --sys-color-purple: var(--ref-palette-purple80);
+    --sys-color-on-purple: var(--ref-palette-purple20);
+    --sys-color-pink: var(--ref-palette-pink80);
+    --sys-color-on-pink: var(--ref-palette-pink20);
+
+    /* Containers */
+
+    --sys-color-yellow-container: var(--ref-palette-yellow30);
+    --sys-color-on-yellow-container: var(--ref-palette-yellow90);
+
+    /* Universal surfaces */
+
+    --sys-color-cdt-base: var(--sys-color-base);
+    --sys-color-cdt-base-container: var(--sys-color-base-container);
+
+    /* Tinted surfaces */
+
+    --sys-color-surface-yellow: rgb(65 60 38 / 100%);
+    --sys-color-surface-yellow-high: rgb(76 68 37 / 100%);
+    --sys-color-surface-error: rgb(78 53 52 / 100%);
+    --sys-color-surface-green: rgb(43 70 51 / 100%);
+
+    /* Corresponding on colors */
+
+    --sys-color-on-surface-yellow: var(--ref-palette-yellow90);
+    --sys-color-on-surface-error: var(--ref-palette-error90);
+    --sys-color-on-surface-green: var(--ref-palette-green90);
+
+
+    /* Syntax highlighting */
+
+    --sys-color-token-variable: var(--ref-palette-neutral80);
+    --sys-color-token-property: var(--ref-palette-yellow70);
+    --sys-color-token-property-special: var(--ref-palette-cyan80);
+    --sys-color-token-type: var(--ref-palette-blue70);
+    --sys-color-token-definition: var(--ref-palette-blue70);
+    --sys-color-token-variable-special: var(--ref-palette-blue40);
+    --sys-color-token-builtin: var(--ref-palette-blue80);
+    --sys-color-token-keyword: var(--ref-palette-purple60);
+    --sys-color-token-number: var(--ref-palette-green90);
+    --sys-color-token-string: var(--ref-palette-orange70);
+    --sys-color-token-string-special: var(--ref-palette-orange70);
+    --sys-color-token-atom: var(--ref-palette-green90);
+    --sys-color-token-tag: var(--ref-palette-blue70);
+    --sys-color-token-attribute: var(--ref-palette-blue80);
+    --sys-color-token-attribute-value: var(--ref-palette-orange70);
+    --sys-color-token-comment: var(--ref-palette-neutral70);
+    --sys-color-token-meta: var(--ref-palette-neutral60);
+    --sys-color-token-deleted: var(--ref-palette-error50);
+    --sys-color-token-inserted: var(--ref-palette-green60);
+    --sys-color-token-pseudo-element: var(--ref-palette-pink70);
+    --sys-color-token-subtle: var(--ref-palette-neutral60);
+
+    /**
+    * Gradients
+    */
+    --sys-color-gradient-primary: var(--ref-palette-primary30);
+    --sys-color-gradient-tertiary: var(--ref-palette-tertiary30);
+  }}
+
+  /* Colors end */
+
+  /* Sizes begin */
+
+  --sys-size-1: 1px;
+  --sys-size-2: 2px;
+  --sys-size-3: 4px;
+  --sys-size-4: 6px;
+  --sys-size-5: 8px;
+  --sys-size-6: 12px;
+  --sys-size-7: 14px;
+  --sys-size-8: 16px;
+  --sys-size-9: 20px;
+  --sys-size-10: 22px;
+  --sys-size-11: 24px;
+  --sys-size-12: 28px;
+  --sys-size-13: 32px;
+  --sys-size-14: 40px;
+  --sys-size-15: 44px;
+  --sys-size-16: 48px;
+  --sys-size-17: 56px;
+  --sys-size-18: 64px;
+  --sys-size-19: 80px;
+  --sys-size-20: 112px;
+  --sys-size-21: 128px;
+  --sys-size-22: 144px;
+  --sys-size-23: 160px;
+  --sys-size-24: 176px;
+  --sys-size-25: 192px;
+  --sys-size-26: 208px;
+  --sys-size-27: 224px;
+  --sys-size-28: 240px;
+  --sys-size-29: 256px;
+  --sys-size-30: 288px;
+  --sys-size-31: 320px;
+  --sys-size-32: 384px;
+  --sys-size-33: 448px;
+  --sys-size-34: 512px;
+  --sys-size-35: 576px;
+  --sys-size-36: 672px;
+  --sys-size-37: 768px;
+  --sys-size-38: 896px;
+  --sys-size-39: 1024px;
+  --sys-size-40: 1152px;
+  --sys-size-41: 1280px;
+
+  /* Sizes end */
+
+  /* Typography begin */
+
+  /* This will be overridden by the platform-X classes that get
+   * added to the html tag on load, but is here as a safe
+   * fallback
+   */
+  --default-font-family: "".SFNSDisplay-Regular"", ""Helvetica Neue"", ""Lucida Grande"", sans-serif;
+  --monospace-font-size: 10px;
+  --monospace-font-family: monospace;
+  --source-code-font-size: 11px;
+  --source-code-font-family: monospace;
+
+  /* Default fonts */
+  &.platform-linux {{
+    --default-font-family: ""Google Sans Text"", ""Google Sans"", system-ui, sans-serif;
+    --monospace-font-size: 11px;
+    --monospace-font-family: ""Noto Sans Mono"", ""DejaVu Sans Mono"", monospace;
+    --source-code-font-size: 11px;
+    --source-code-font-family: ""Noto Sans Mono"", ""DejaVu Sans Mono"", monospace;
+  }}
+
+  &.platform-mac {{
+    --default-font-family: system-ui, sans-serif;
+    --monospace-font-size: 11px;
+    --monospace-font-family: monospace;
+    --source-code-font-size: 11px;
+    --source-code-font-family: monospace;
+  }}
+
+  &.platform-windows {{
+    --default-font-family: system-ui, sans-serif;
+    --monospace-font-size: var(--sys-size-6);
+    --monospace-font-family: monospace;
+    --source-code-font-size: var(--sys-size-6);
+    --source-code-font-family: monospace;
+  }}
+
+  &.platform-screenshot-test {{
+    --default-font-family: roboto;
+    --monospace-font-family: roboto;
+    --source-code-font-family: roboto;
+  }}
+
+  --ref-typeface-weight-regular: 400;
+  --ref-typeface-weight-medium: 500;
+  --ref-typeface-weight-bold: 700;
+  --sys-typescale-headline1: var(--ref-typeface-weight-medium) var(--sys-typescale-headline1-size) / var(--sys-typescale-headline1-line-height) var(--default-font-family);
+  --sys-typescale-headline2: var(--ref-typeface-weight-medium) var(--sys-typescale-headline2-size) / var(--sys-typescale-headline2-line-height) var(--default-font-family);
+  --sys-typescale-headline3: var(--ref-typeface-weight-medium) var(--sys-typescale-headline3-size) / var(--sys-typescale-headline3-line-height) var(--default-font-family);
+  --sys-typescale-headline4: var(--ref-typeface-weight-medium) var(--sys-typescale-headline4-size) / var(--sys-typescale-headline4-line-height) var(--default-font-family);
+  --sys-typescale-headline5: var(--ref-typeface-weight-medium) var(--sys-typescale-headline5-size) / var(--sys-typescale-headline5-line-height) var(--default-font-family);
+  --sys-typescale-body1-regular: var(--ref-typeface-weight-regular) var(--sys-typescale-body1-size) / var(--sys-typescale-body1-line-height) var(--default-font-family);
+  --sys-typescale-body2-regular: var(--ref-typeface-weight-regular) var(--sys-typescale-body2-size) / var(--sys-typescale-body2-line-height) var(--default-font-family);
+  --sys-typescale-body3-regular: var(--ref-typeface-weight-regular) var(--sys-typescale-body3-size) / var(--sys-typescale-body3-line-height) var(--default-font-family);
+  --sys-typescale-body4-regular: var(--ref-typeface-weight-regular) var(--sys-typescale-body4-size) / var(--sys-typescale-body4-line-height) var(--default-font-family);
+  --sys-typescale-body5-regular: var(--ref-typeface-weight-regular) var(--sys-typescale-body5-size) / var(--sys-typescale-body5-line-height) var(--default-font-family);
+  --sys-typescale-body1-medium: var(--ref-typeface-weight-medium) var(--sys-typescale-body1-size) / var(--sys-typescale-body1-line-height) var(--default-font-family);
+  --sys-typescale-body2-medium: var(--ref-typeface-weight-medium) var(--sys-typescale-body2-size) / var(--sys-typescale-body2-line-height) var(--default-font-family);
+  --sys-typescale-body3-medium: var(--ref-typeface-weight-medium) var(--sys-typescale-body3-size) / var(--sys-typescale-body3-line-height) var(--default-font-family);
+  --sys-typescale-body4-medium: var(--ref-typeface-weight-medium) var(--sys-typescale-body4-size) / var(--sys-typescale-body4-line-height) var(--default-font-family);
+  --sys-typescale-body5-medium: var(--ref-typeface-weight-medium) var(--sys-typescale-body5-size) / var(--sys-typescale-body5-line-height) var(--default-font-family);
+  --sys-typescale-body1-bold: var(--ref-typeface-weight-bold) var(--sys-typescale-body1-size) / var(--sys-typescale-body1-line-height) var(--default-font-family);
+  --sys-typescale-body2-bold: var(--ref-typeface-weight-bold) var(--sys-typescale-body2-size) / var(--sys-typescale-body2-line-height) var(--default-font-family);
+  --sys-typescale-body3-bold: var(--ref-typeface-weight-bold) var(--sys-typescale-body3-size) / var(--sys-typescale-body3-line-height) var(--default-font-family);
+  --sys-typescale-body4-bold: var(--ref-typeface-weight-bold) var(--sys-typescale-body4-size) / var(--sys-typescale-body4-line-height) var(--default-font-family);
+  --sys-typescale-body5-bold: var(--ref-typeface-weight-bold) var(--sys-typescale-body5-size) / var(--sys-typescale-body5-line-height) var(--default-font-family);
+  --sys-typescale-monospace-regular: var(--ref-typeface-weight-regular) var(--sys-typescale-monospace-size) / var(--sys-typescale-monospace-line-height) var(--monospace-font-family);
+  --sys-typescale-monospace-bold: var(--ref-typeface-weight-bold) var(--sys-typescale-monospace-size) / var(--sys-typescale-monospace-line-height) var(--monospace-font-family);
+  --sys-typescale-headline1-size: 24px;
+  --sys-typescale-headline2-size: 20px;
+  --sys-typescale-headline3-size: 18px;
+  --sys-typescale-headline4-size: 16px;
+  --sys-typescale-headline5-size: 14px;
+  --sys-typescale-body1-size: 16px;
+  --sys-typescale-body2-size: 14px;
+  --sys-typescale-body3-size: 13px;
+  --sys-typescale-body4-size: 12px;
+  --sys-typescale-body5-size: 11px;
+  --sys-typescale-monospace-size: 11px;
+  --sys-typescale-headline1-line-height: 32px;
+  --sys-typescale-headline2-line-height: 24px;
+  --sys-typescale-headline3-line-height: 24px;
+  --sys-typescale-headline4-line-height: 24px;
+  --sys-typescale-headline5-line-height: 20px;
+  --sys-typescale-body1-line-height: 24px;
+  --sys-typescale-body2-line-height: 20px;
+  --sys-typescale-body3-line-height: 20px;
+  --sys-typescale-body4-line-height: 16px;
+  --sys-typescale-body5-line-height: 16px;
+  --sys-typescale-monospace-line-height: 1.2;
+
+  /* Typography end */
+
+  /* Elevation begin */
+
+  --sys-elevation-level1: 0 1px 2px 0 rgb(0 0 0 / 30%), 0 1px 3px 1px rgb(0 0 0 / 15%);
+  --sys-elevation-level2: 0 1px 2px 0 rgb(0 0 0 / 30%), 0 2px 6px 2px rgb(0 0 0 / 15%);
+  --sys-elevation-level3: 0 4px 8px 3px rgb(0 0 0 / 15%), 0 1px 3px 0 rgb(0 0 0 / 30%);
+  --sys-elevation-level4: 0 6px 10px 4px rgb(0 0 0 / 15%), 0 2px 3px 0 rgb(0 0 0 / 30%);
+  --sys-elevation-level5: 0 8px 12px 6px rgb(0 0 0 / 15%), 0 4px 4px 0 rgb(0 0 0 / 30%);
+
+  /* Elevation end */
+
+  /* Shape begin */
+
+  --sys-shape-corner-extra-small: 4px;
+  --sys-shape-corner-small: 8px;
+  --sys-shape-corner-medium-small: 12px;
+  --sys-shape-corner-medium: 16px;
+  --sys-shape-corner-large: 24px;
+  --sys-shape-corner-full: 9999px;
+
+  /* Shape end */
+
+  /* Motion begin */
+
+  --sys-motion-curve-spatial: cubic-bezier(0.27, 1.06, 0.18, 1.00);
+  --sys-motion-duration-short4: 200ms;
+  --sys-motion-duration-medium2: 300ms;
+  --sys-motion-duration-long2: 500ms;
+  --sys-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Motion end */
+
+  /**
+    * Reference colors. Reference colors are a set of base colors that get updated on Chrome
+    * color theme changes and should not be directly used (except when defining system or
+    * application colors).
+    *
+    * DON'T CHANGE AND DON'T USE THEM DIRECTLY IN CODE.
+    * More info: https://chromium.googlesource.com/devtools/devtools-frontend/+/main/docs/styleguide/ux/styles.md#colors
+   **/
+   --ref-palette-primary0: var(--color-ref-primary0, rgb(0 0 0 / 100%));
+   --ref-palette-primary10: var(--color-ref-primary10, rgb(4 30 73 / 100%));
+   --ref-palette-primary20: var(--color-ref-primary20, rgb(6 46 111 / 100%));
+   --ref-palette-primary30: var(--color-ref-primary30, rgb(8 66 160 / 100%));
+   --ref-palette-primary40: var(--color-ref-primary40, rgb(11 87 208 / 100%));
+   --ref-palette-primary50: var(--color-ref-primary50, rgb(27 110 243 / 100%));
+   --ref-palette-primary60: var(--color-ref-primary60, rgb(76 141 246 / 100%));
+   --ref-palette-primary70: {IndicatorHex};
+   --ref-palette-primary80: var(--color-ref-primary80, rgb(168 199 250 / 100%));
+   --ref-palette-primary90: var(--color-ref-primary90, rgb(211 227 253 / 100%));
+   --ref-palette-primary95: var(--color-ref-primary95, rgb(236 243 254 / 100%));
+   --ref-palette-primary99: var(--color-ref-primary99, rgb(250 251 255 / 100%));
+   --ref-palette-primary100: var(--color-ref-primary100, rgb(255 255 255 / 100%));
+   --ref-palette-secondary0: var(--color-ref-secondary0, rgb(0 0 0 / 100%));
+   --ref-palette-secondary10: var(--color-ref-secondary10, rgb(0 29 53 / 100%));
+   --ref-palette-secondary15: var(--color-ref-secondary15, rgb(0 40 69 / 100%));
+   --ref-palette-secondary20: var(--color-ref-secondary20, rgb(0 51 85 / 100%));
+   --ref-palette-secondary25: var(--color-ref-secondary25, rgb(0 63 102 / 100%));
+   --ref-palette-secondary30: var(--color-ref-secondary30, rgb(0 74 119 / 100%));
+   --ref-palette-secondary35: var(--color-ref-secondary35, rgb(0 87 137 / 100%));
+   --ref-palette-secondary40: var(--color-ref-secondary40, rgb(0 99 155 / 100%));
+   --ref-palette-secondary50: var(--color-ref-secondary50, rgb(4 125 183 / 100%));
+   --ref-palette-secondary60: var(--color-ref-secondary60, rgb(57 152 211 / 100%));
+   --ref-palette-secondary70: var(--color-ref-secondary70, rgb(90 179 240 / 100%));
+   --ref-palette-secondary80: var(--color-ref-secondary80, rgb(127 207 255 / 100%));
+   --ref-palette-secondary90: var(--color-ref-secondary90, rgb(223 243 255 / 100%));
+   --ref-palette-secondary95: var(--color-ref-secondary95, rgb(223 243 255 / 100%));
+   --ref-palette-secondary99: var(--color-ref-secondary99, rgb(247 252 255 / 100%));
+   --ref-palette-secondary100: var(--color-ref-secondary100, rgb(255 255 255 / 100%));
+   --ref-palette-tertiary0: var(--color-ref-tertiary0, rgb(0 0 0 / 100%));
+   --ref-palette-tertiary10: var(--color-ref-tertiary10, rgb(7 39 17 / 100%));
+   --ref-palette-tertiary20: var(--color-ref-tertiary20, rgb(10 56 24 / 100%));
+   --ref-palette-tertiary30: var(--color-ref-tertiary30, rgb(15 82 35 / 100%));
+   --ref-palette-tertiary40: var(--color-ref-tertiary40, rgb(20 108 46 / 100%));
+   --ref-palette-tertiary50: var(--color-ref-tertiary50, rgb(25 134 57 / 100%));
+   --ref-palette-tertiary60: var(--color-ref-tertiary60, rgb(30 164 70 / 100%));
+   --ref-palette-tertiary70: var(--color-ref-tertiary70, rgb(55 190 95 / 100%));
+   --ref-palette-tertiary80: var(--color-ref-tertiary80, rgb(109 213 140 / 100%));
+   --ref-palette-tertiary90: var(--color-ref-tertiary90, rgb(196 238 208 / 100%));
+   --ref-palette-tertiary95: var(--color-ref-tertiary95, rgb(231 248 237 / 100%));
+   --ref-palette-tertiary99: var(--color-ref-tertiary99, rgb(242 255 238 / 100%));
+   --ref-palette-tertiary100: var(--color-ref-tertiary100, rgb(255 255 255 / 100%));
+   --ref-palette-error0: var(--color-ref-error0, rgb(0 0 0 / 100%));
+   --ref-palette-error10: var(--color-ref-error10, rgb(65 14 11 / 100%));
+   --ref-palette-error20: var(--color-ref-error20, rgb(96 20 16 / 100%));
+   --ref-palette-error30: var(--color-ref-error30, rgb(140 29 24 / 100%));
+   --ref-palette-error40: var(--color-ref-error40, rgb(179 38 30 / 100%));
+   --ref-palette-error50: var(--color-ref-error50, rgb(220 54 46 / 100%));
+   --ref-palette-error60: var(--color-ref-error60, rgb(228 105 98 / 100%));
+   --ref-palette-error70: var(--color-ref-error70, rgb(236 146 142 / 100%));
+   --ref-palette-error80: var(--color-ref-error80, rgb(242 184 181 / 100%));
+   --ref-palette-error90: var(--color-ref-error90, rgb(249 222 220 / 100%));
+   --ref-palette-error95: var(--color-ref-error95, rgb(231 248 237 / 100%));
+   --ref-palette-error99: var(--color-ref-error99, rgb(242 255 238 / 100%));
+   --ref-palette-error100: var(--color-ref-error100, rgb(255 255 255 / 100%));
+   --ref-palette-neutral0: var(--color-ref-neutral0, rgb(0 0 0 / 100%));
+   --ref-palette-neutral10: var(--color-ref-neutral10, rgb(31 31 31 / 100%));
+   --ref-palette-neutral15: var(--color-ref-neutral15, rgb(40 40 40 / 100%));
+   --ref-palette-neutral20: var(--color-ref-neutral20, rgb(48 48 48 / 100%));
+   --ref-palette-neutral25: var(--color-ref-neutral25, rgb(60 60 60 / 100%));
+   --ref-palette-neutral30: var(--color-ref-neutral30, rgb(71 71 71 / 100%));
+   --ref-palette-neutral40: var(--color-ref-neutral40, rgb(94 94 94 / 100%));
+   --ref-palette-neutral50: var(--color-ref-neutral50, rgb(117 117 117 / 100%));
+   --ref-palette-neutral60: var(--color-ref-neutral60, rgb(143 143 143 / 100%));
+   --ref-palette-neutral70: var(--color-ref-neutral70, rgb(171 171 171 / 100%));
+   --ref-palette-neutral80: var(--color-ref-neutral80, rgb(199 199 199 / 100%));
+   --ref-palette-neutral90: var(--color-ref-neutral90, rgb(227 227 227 / 100%));
+   --ref-palette-neutral94: var(--color-ref-neutral94, rgb(239 237 237 / 100%));
+   --ref-palette-neutral95: var(--color-ref-neutral95, rgb(242 242 242 / 100%));
+   --ref-palette-neutral98: var(--color-ref-neutral98, rgb(250 249 248 / 100%));
+   --ref-palette-neutral99: var(--color-ref-neutral99, rgb(253 252 251 / 100%));
+   --ref-palette-neutral100: var(--color-ref-neutral100, rgb(255 255 255 / 100%));
+   --ref-palette-neutral-variant0: var(--color-ref-neutral-variant0, rgb(0 0 0 / 100%));
+   --ref-palette-neutral-variant10: var(--color-ref-neutral-variant10, rgb(25 29 28 / 100%));
+   --ref-palette-neutral-variant20: var(--color-ref-neutral-variant20, rgb(45 49 47 / 100%));
+   --ref-palette-neutral-variant30: var(--color-ref-neutral-variant30, rgb(68 71 70 / 100%));
+   --ref-palette-neutral-variant40: var(--color-ref-neutral-variant40, rgb(92 95 94 / 100%));
+   --ref-palette-neutral-variant50: var(--color-ref-neutral-variant50, rgb(116 119 117 / 100%));
+   --ref-palette-neutral-variant60: var(--color-ref-neutral-variant60, rgb(142 145 143 / 100%));
+   --ref-palette-neutral-variant70: var(--color-ref-neutral-variant70, rgb(169 172 170 / 100%));
+   --ref-palette-neutral-variant80: var(--color-ref-neutral-variant80, rgb(196 199 197 / 100%));
+   --ref-palette-neutral-variant90: var(--color-ref-neutral-variant90, rgb(225 227 225 / 100%));
+   --ref-palette-neutral-variant95: var(--color-ref-neutral-variant95, rgb(239 242 239 / 100%));
+   --ref-palette-neutral-variant99: var(--color-ref-neutral-variant99, rgb(250 253 251 / 100%));
+   --ref-palette-neutral-variant100: var(--color-ref-neutral-variant100, rgb(255 255 255 / 100%));
+
+   /* Additional fixed colors */
+   --ref-palette-blue0: rgb(0 0 0 / 100%);
+   --ref-palette-blue10: rgb(4 30 73 / 100%);
+   --ref-palette-blue20: rgb(6 46 111 / 100%);
+   --ref-palette-blue30: rgb(8 66 160 / 100%);
+   --ref-palette-blue40: rgb(11 87 208 / 100%);
+   --ref-palette-blue50: rgb(27 110 243 / 100%);
+   --ref-palette-blue60: rgb(76 141 246 / 100%);
+   --ref-palette-blue70: rgb(124 172 248 / 100%);
+   --ref-palette-blue80: rgb(168 199 250 / 100%);
+   --ref-palette-blue90: rgb(211 227 253 / 100%);
+   --ref-palette-blue95: rgb(236 243 254 / 100%);
+   --ref-palette-blue99: rgb(250 251 255 / 100%);
+   --ref-palette-blue100: rgb(255 255 255 / 100%);
+   --ref-palette-green0: rgb(0 0 0 / 100%);
+   --ref-palette-green10: rgb(7 39 17 / 100%);
+   --ref-palette-green20: rgb(10 56 24 / 100%);
+   --ref-palette-green30: rgb(15 82 35 / 100%);
+   --ref-palette-green40: rgb(20 108 46 / 100%);
+   --ref-palette-green50: rgb(25 134 57 / 100%);
+   --ref-palette-green60: rgb(30 164 70 / 100%);
+   --ref-palette-green70: rgb(55 190 95 / 100%);
+   --ref-palette-green80: rgb(109 213 140 / 100%);
+   --ref-palette-green90: rgb(196 238 208 / 100%);
+   --ref-palette-green95: rgb(231 248 237 / 100%);
+   --ref-palette-green99: rgb(242 255 238 / 100%);
+   --ref-palette-green100: rgb(255 255 255 / 100%);
+   --ref-palette-orange0: rgb(0 0 0 / 100%);
+   --ref-palette-orange10: rgb(53 16 2 / 100%);
+   --ref-palette-orange20: rgb(85 32 5 / 100%);
+   --ref-palette-orange30: rgb(121 50 11 / 100%);
+   --ref-palette-orange40: rgb(159 67 18 / 100%);
+   --ref-palette-orange50: rgb(198 85 26 / 100%);
+   --ref-palette-orange60: rgb(233 103 37 / 100%);
+   --ref-palette-orange70: rgb(254 141 89 / 100%);
+   --ref-palette-orange80: rgb(254 183 150 / 100%);
+   --ref-palette-orange90: rgb(255 220 204 / 100%);
+   --ref-palette-orange95: rgb(255 236 230 / 100%);
+   --ref-palette-orange99: rgb(255 251 255 / 100%);
+   --ref-palette-orange100: rgb(255 255 255 / 100%);
+   --ref-palette-yellow0: rgb(0 0 0 / 100%);
+   --ref-palette-yellow10: rgb(36 26 0 / 100%);
+   --ref-palette-yellow20: rgb(62 47 0 / 100%);
+   --ref-palette-yellow30: rgb(92 67 0 / 100%);
+   --ref-palette-yellow40: rgb(151 103 0 / 100%);
+   --ref-palette-yellow50: rgb(202 138 4 / 100%);
+   --ref-palette-yellow60: rgb(234 179 8 / 100%);
+   --ref-palette-yellow70: rgb(250 204 21 / 100%);
+   --ref-palette-yellow80: rgb(253 224 71 / 100%);
+   --ref-palette-yellow90: rgb(253 243 170 / 100%);
+   --ref-palette-yellow95: rgb(252 248 210 / 100%);
+   --ref-palette-yellow99: rgb(255 251 235 / 100%);
+   --ref-palette-yellow100: rgb(255 255 255 / 100%);
+   --ref-palette-cyan0: rgb(0 0 0 / 100%);
+   --ref-palette-cyan10: rgb(0 31 40 / 100%);
+   --ref-palette-cyan20: rgb(0 53 67 / 100%);
+   --ref-palette-cyan30: rgb(0 78 96 / 100%);
+   --ref-palette-cyan40: rgb(0 103 127 / 100%);
+   --ref-palette-cyan50: rgb(0 130 159 / 100%);
+   --ref-palette-cyan60: rgb(0 157 193 / 100%);
+   --ref-palette-cyan70: rgb(56 185 222 / 100%);
+   --ref-palette-cyan80: rgb(92 213 251 / 100%);
+   --ref-palette-cyan90: rgb(183 234 255 / 100%);
+   --ref-palette-cyan95: rgb(221 245 255 / 100%);
+   --ref-palette-cyan99: rgb(249 253 255 / 100%);
+   --ref-palette-cyan100: rgb(255 255 255 / 100%);
+   --ref-palette-purple0: rgb(0 0 0 / 100%);
+   --ref-palette-purple10: rgb(47 0 77 / 100%);
+   --ref-palette-purple20: rgb(77 0 122 / 100%);
+   --ref-palette-purple30: rgb(110 0 171 / 100%);
+   --ref-palette-purple40: rgb(140 30 211 / 100%);
+   --ref-palette-purple50: rgb(167 67 238 / 100%);
+   --ref-palette-purple60: rgb(191 103 255 / 100%);
+   --ref-palette-purple70: rgb(209 144 255 / 100%);
+   --ref-palette-purple80: rgb(226 182 255 / 100%);
+   --ref-palette-purple90: rgb(243 218 255 / 100%);
+   --ref-palette-purple95: rgb(251 236 255 / 100%);
+   --ref-palette-purple99: rgb(255 251 255 / 100%);
+   --ref-palette-purple100: rgb(255 255 255 / 100%);
+   --ref-palette-pink0: rgb(0 0 0 / 100%);
+   --ref-palette-pink10: rgb(62 0 29 / 100%);
+   --ref-palette-pink20: rgb(101 0 51 / 100%);
+   --ref-palette-pink30: rgb(142 0 75 / 100%);
+   --ref-palette-pink40: rgb(185 0 99 / 100%);
+   --ref-palette-pink50: rgb(223 35 125 / 100%);
+   --ref-palette-pink55: rgb(255 72 150 / 100%);
+   --ref-palette-pink60: rgb(255 72 150 / 100%);
+   --ref-palette-pink70: rgb(255 132 175 / 100%);
+   --ref-palette-pink80: rgb(255 177 200 / 100%);
+   --ref-palette-pink90: rgb(255 217 226 / 100%);
+   --ref-palette-pink95: rgb(255 236 240 / 100%);
+   --ref-palette-pink99: rgb(255 251 255 / 100%);
+   --ref-palette-pink100: rgb(255 255 255 / 100%);
+   --ref-palette-indigo0: rgb(0 0 0 / 100%);
+   --ref-palette-indigo10: rgb(23 0 101 / 100%);
+   --ref-palette-indigo20: rgb(41 0 159 / 100%);
+   --ref-palette-indigo30: rgb(63 28 203 / 100%);
+   --ref-palette-indigo40: rgb(88 64 227 / 100%);
+   --ref-palette-indigo50: rgb(113 93 253 / 100%);
+   --ref-palette-indigo60: rgb(141 127 255 / 100%);
+   --ref-palette-indigo70: rgb(170 160 255 / 100%);
+   --ref-palette-indigo80: rgb(199 191 255 / 100%);
+   --ref-palette-indigo90: rgb(228 223 255 / 100%);
+   --ref-palette-indigo95: rgb(243 238 255 / 100%);
+   --ref-palette-indigo99: rgb(255 251 255 / 100%);
+   --ref-palette-indigo100: rgb(255 255 255 / 100%);
+}}";
+
+        }
+
+        private void Favourites_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
+                    BrowserView?.Favourites_CollectionChanged();
+            }
         }
 
         public MainWindow CurrentFocusedWindow()
@@ -1070,28 +2166,12 @@ Inner Exception: ```{7} ```";
             _Window.NewTab(GlobalSave.Get("Homepage"), true);
         }
 
-        //"ad.js" causes reddit to go weird
-        public static readonly Trie HasInLink = Trie.FromList([
-            "survey.min.js", "survey.js", "social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
-            "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
-            "admanager.js", "usync.js", "moneybid.js", "miner.js", "prebid",
-            "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
-            "google.com/ads", "play.google.com/log"/*, "youtube.com/ptracking", "youtube.com/pagead/adview", "youtube.com/api/stats/ads", "youtube.com/pagead/interaction",*/
-        ]);
-        /*public static readonly Trie MinersFiles = new Trie {//https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
-            "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",
-            "worker-asmjs.min.js", "miner.js", "webmr4.js", "webmr.js", "webxmr.js",
-            "lib/crypta.js", "static/js/tpb.js", "bitrix/js/main/core/core_tasker.js", "bitrix/js/main/core/core_loader.js", "vbb/me0w.js", "lib/crlt.js", "pool/direct.js",
-            "plugins/wp-monero-miner-pro", "plugins/ajcryptominer", "plugins/aj-cryptominer",
-            "?perfekt=wss://", "?proxy=wss://", "?proxy=ws://"
-        };*/
-        public static readonly DomainList Miners = new DomainList {//https://v.firebog.net/hosts/static/w3kbl.txt
-            "coin-hive.com", "coin-have.com", "adminer.com", "ad-miner.com", "coinminerz.com", "coinhive-manager.com", "coinhive.com", "prometheus.phoenixcoin.org", "coinhiveproxy.com", "jsecoin.com", "crypto-loot.com", "cryptonight.wasm", "cloudflare.solutions"
-        };
-        public static readonly DomainList Ads = new DomainList {
-            "ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com", "googleadservices.com",
+        public static readonly Regex AMPRegex = new(@"<link\s[^>]*rel=['""]amphtml['""][^>]*href=['""]([^'"">]+)['""]", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-            "*.doubleclick.net",
+        public static FastHashSet<string> FailedScripts = new();
+        public static readonly string[] BlockedAdPatterns = ["ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
+                        "googleadservices.com", "doubleclick.net", "google-analytics.com",
+                        "syndicatedsearch.goog", "*.doubleclick.net", "*.g.doubleclick.net",
             "gads.pubmatic.com", "ads.pubmatic.com", "ogads-pa.clients6.google.com",
             "ads.facebook.com", "an.facebook.com",
             "cdn.snigelweb.com", "cdn.connectad.io",
@@ -1107,24 +2187,20 @@ Inner Exception: ```{7} ```";
             "ads.pinterest.com", "ads-dev.pinterest.com",
             "adtago.s3.amazonaws.com", "advice-ads.s3.amazonaws.com", "advertising-api-eu.amazon.com", "amazonclix.com",
             "ads.linkedin.com",
-            "*.media.net", "media.net",
+            "*.dianomi.com",
+            "*.media.net",
             "media.fastclick.net", "cdn.fastclick.net",
             "global.adserver.yahoo.com", "advertising.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com", "adserver.yahoo.com", "partnerads.ysm.yahoo.com", "adtech.yahooinc.com", "advertising.yahooinc.co",
             "api-adservices.apple.com", "advertising.apple.com", "tr.iadsdk.apple.com",
             "yandexadexchange.net", "adsdk.yandex.ru", "advertising.yandex.ru", "an.yandex.ru",
 
-            "secure-ds.serving-sys.com", "*.innovid.com", "innovid.com",
-
+            "secure-ds.serving-sys.com", "*.innovid.com",
+            "*.outbrain.com.",
             "*.adcolony.com",
             "adm.hotjar.com",
             "files.adform.net",
             "static.adsafeprotected.com", "pixel.adsafeprotected.com",
-            "*.ad.xiaomi.com", "*.ad.intl.xiaomi.com",
-            "adsfs.oppomobile.com", "*.ads.oppomobile.com",
             "t.adx.opera.com",
-            "bdapi-ads.realmemobile.com", "bdapi-in-ads.realmemobile.com",
-            "business.samsungusa.com", "samsungads.com", "ad.samsungadhub.com", "config.samsungads.com", "samsung-com.112.2o7.net", "ads.samsung.com",
-            "click.oneplus.com", "click.oneplus.cn", "open.oneplus.net",
             "asadcdn.com",
             "ads.yieldmo.com", "ads.servenobid.com", "e3.adpushup.com", "c1.adform.net",
             "ib.adnxs.com",
@@ -1151,7 +2227,196 @@ Inner Exception: ```{7} ```";
             "epnt.ebay.com", "*.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
             "btloader.com", "ad-delivery.net",
             "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com",
-            "adserver.snapads.com", "*.adserver.snapads.com",
+            "*.adserver.snapads.com",
+            "cdn.adsafeprotected.com",
+            "rp.liadm.com",
+
+            "adx.adform.net",
+            "prebid.a-mo.net",
+            "a.pub.network",
+            "widgets.outbrain.com",
+            "hb.adscale.de", "bitcasino.io",
+
+            "h.seznam.cz", "d.seznam.cz", "ssp.seznam.cz",
+            "cdn.performax.cz", "dale.performax.cz", "chip.performax.cz","ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "*.google-analytics.com",
+            "analytics.google.com", "*.googleanalytics.com", "*.admobclick.com", "firebaselogging-pa.googleapis.com",
+            "sp.ecosia.org",
+            "analytics.facebook.com", "pixel.facebook.com",
+            "analytics.tiktok.com", "analytics-sg.tiktok.com", "log.byteoversea.com",
+            "analytics.pinterest.com", "widgets.pinterest.com", "log.pinterest.com", "trk.pinterest.com",
+            "analytics.pointdrive.linkedin.com",
+            "analyticsengine.s3.amazonaws.com", "affiliationjs.s3.amazonaws.com", "analytics.s3.amazonaws.com",
+            "analytics.mobile.yandex.net", "appmetrica.yandex.com", "extmaps-api.yandex.net", "appmetrica.yandex.ru", "metrika.yandex.ru",
+            "analytics.yahoo.com", "ups.analytics.yahoo.com", "analytics.query.yahoo.com", "log.fc.yahoo.com", "geo.yahoo.com", "udc.yahoo.com", "udcm.yahoo.com", "gemini.yahoo.com",
+            "metrics.apple.com",
+            "*.bugsnag.com",
+            "*.sentry-cdn.com", "app.getsentry.com",
+            "stats.gc.apple.com", "iadsdk.apple.com",
+            "collector.github.com",
+            "cloudflareinsights.com",
+            "*.hotjar.com",
+            "hotjar-analytics.com",
+            "mouseflow.com", "*.mouseflow.com",
+            "stats.wp.com",
+            "*.datatrics.com",
+            "*.ero-advertising.com",
+            "analytics.archive.org",
+            "*.freshmarketer.com", "freshmarketer.com",
+            "openbid.pubmatic.com", "prebid.media.net", "hbopenbid.pubmatic.com",
+            "collector.cdp.cnn.com", "smetrics.cnn.com", "mybbc-analytics.files.bbci.co.uk", "a1.api.bbc.co.uk", "xproxy.api.bbc.com",
+            "*.dotmetrics.net", "scripts.webcontentassessor.com",
+            "collector.brandmetrics.com", "sb.scorecardresearch.com",
+            "queue.simpleanalyticscdn.com",
+            "cdn.permutive.com", "api.permutive.com",
+
+            "luckyorange.com", "*.luckyorange.com", "*.luckyorange.net",
+
+            "securemetrics.apple.com", "supportmetrics.apple.com", "metrics.icloud.com",
+
+            "tr.snapchat.com", "sc-analytics.appspot.com", "app-analytics.snapchat.com",
+            "crashlogs.whatsapp.net",
+            "metrics.mzstatic.com",
+
+            "click.a-ads.com",
+            "static.criteo.net",
+            "www.clarity.ms",
+            "u.clarity.ms",
+
+            "s.cdn.turner.com",
+            "logx.optimizely.com",
+            "signal-metrics-collector-beta.s-onetag.com",
+            "connect-metrics-collector.s-onetag.com",
+            "ping.chartbeat.net",
+            "logs.browser-intake-datadoghq.com",
+            "onsiterecs.api.boomtrain.com",
+
+            "b.6sc.co",
+            "api.bounceexchange.com", "events.bouncex.net",
+            "assets.adobedtm.com",
+            "static.chartbeat.com",
+            "dsum-sec.casalemedia.com",
+
+            "aa.agkn.com",
+            "material.anonymised.io",
+            "static.anonymised.io",
+            "*.tinypass.com",
+            "dw-usr.userreport.com",
+            "capture-api.reachlocalservices.com",
+            "discovery.evvnt.com",
+            "mab.chartbeat.com",
+            "sync.sharethis.com",
+            "bcp.crwdcntrl.net",
+
+            "*.doubleverify.com", "onetag-sys.com",
+            "id5-sync.com", "bttrack.com", "idsync.rlcdn.com", "u.openx.net", "sync-t1.taboola.com", "x.bidswitch.net", "rtd-tm.everesttech.net", "usermatch.krxd.net", "visitor.omnitagjs.com", "ping.chartbeat.net",
+            "sync.outbrain.com",
+            "collect.mopinion.com", "pb-server.ezoic.com",
+            "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
+            "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com"];
+
+        public static readonly string[] HasInLink = {
+            //https://github.com/the-advoid/ad-void/blob/main/AdVoid.Full.txt
+            //https://github.com/hoshsadiq/adblock-nocoin-list/blob/master/nocoin.txt
+            "/ads.js", "/ads.min.js", "/ad.js", "/ad.min.js", "/pagead.js",
+            "/async-ads.js", "/admanager.js", "/ad-manager.js",
+            "/analytics.js", "/analytics.min.js", "/tracker.js", "/tracker.min.js",
+            "/ad-provider.js", "/adframe.js", "/adsbygoogle.js", "/advertising.js", "/advertisers.js", "/advertisement.min.js",
+            "/gtag.js", "/insight.js", "/insight.min.js", "/tag.js", "/tag.min.js",
+            "/trace.js", "/track.js", "/track.min.js", "/tracking.js", "/tracking.min.js",
+            "/prebid.js", "/moneybid.js",
+            "/webcoin.js", "/webcoin.min.js",
+            "miner.js", "miner.min.js", //Don't add / for these miners so they cover deepminer and etc
+            "/outbrain.js"
+            //"cryptonight.wasm"
+            ///disable-devtool.min.js
+            //jsdelivr.net/npm/disable-devtool$script
+            //redditstatic.com/ads/$script
+            //redditstatic.com/ads/pixel.js^$script
+
+            /*"survey.min.js", "/survey.js", "/social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
+            "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
+            "admanager.js", "usync.js", "moneybid.js", "miner.js", "prebid",
+            "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
+            "google.com/ads", "play.google.com/log"*//*, "youtube.com/ptracking", "youtube.com/pagead/adview", "youtube.com/api/stats/ads", "youtube.com/pagead/interaction",*/
+        };
+        /*public static readonly Trie MinersFiles = new Trie {
+         //https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
+            "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",
+            "worker-asmjs.min.js", "miner.js", "webmr4.js", "webmr.js", "webxmr.js",
+            "lib/crypta.js", "static/js/tpb.js", "bitrix/js/main/core/core_tasker.js", "bitrix/js/main/core/core_loader.js", "vbb/me0w.js", "lib/crlt.js", "pool/direct.js",
+            "plugins/wp-monero-miner-pro", "plugins/ajcryptominer", "plugins/aj-cryptominer",
+            "?perfekt=wss://", "?proxy=wss://", "?proxy=ws://"
+        };*/
+        /*public static readonly DomainList Miners = new DomainList {
+            //https://v.firebog.net/hosts/static/w3kbl.txt
+            //https://github.com/hoshsadiq/adblock-nocoin-list/blob/master/hosts.txt
+            "jsecoin.com", "crypto-loot.com", "minerad.com"
+        };*/
+        public static readonly DomainList Ads = new DomainList {
+            "ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
+
+            "syndicatedsearch.goog", "*.doubleclick.net", "*.g.doubleclick.net",
+            "gads.pubmatic.com", "ads.pubmatic.com", "ogads-pa.clients6.google.com",
+            "ads.facebook.com", "an.facebook.com",
+            "cdn.snigelweb.com", "cdn.connectad.io",
+            "pool.admedo.com", "c.pub.network",
+            "media.ethicalads.io",
+            "app-measurement.com",
+            "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn",
+            "prod.di.api.cnn.io", "get.s-onetag.com", "assets.bounceexchange.com", "gn-web-assets.api.bbc.com", "pub.doubleverify.com",
+            "events.reddit.com",
+            "ads.tiktok.com", "ads-sg.tiktok.com", "ads.adthrive.com", "ads-api.tiktok.com", "business-api.tiktok.com",
+            "ads.reddit.com", "d.reddit.com", "rereddit.com", "events.redditmedia.com",
+            "ads-twitter.com", "static.ads-twitter.com", "ads-api.twitter.com", "advertising.twitter.com",
+            "ads.pinterest.com", "ads-dev.pinterest.com",
+            "adtago.s3.amazonaws.com", "advice-ads.s3.amazonaws.com", "advertising-api-eu.amazon.com", "amazonclix.com",
+            "ads.linkedin.com",
+            "*.dianomi.com",
+            "*.media.net",
+            "media.fastclick.net", "cdn.fastclick.net",
+            "global.adserver.yahoo.com", "advertising.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com", "adserver.yahoo.com", "partnerads.ysm.yahoo.com", "adtech.yahooinc.com", "advertising.yahooinc.co",
+            "api-adservices.apple.com", "advertising.apple.com", "tr.iadsdk.apple.com",
+            "yandexadexchange.net", "adsdk.yandex.ru", "advertising.yandex.ru", "an.yandex.ru",
+
+            "secure-ds.serving-sys.com", "*.innovid.com",
+            "*.outbrain.com.",
+            "*.adcolony.com",
+            "adm.hotjar.com",
+            "files.adform.net",
+            "static.adsafeprotected.com", "pixel.adsafeprotected.com",
+            //"*.ad.xiaomi.com", "*.ad.intl.xiaomi.com",
+            //"adsfs.oppomobile.com", "*.ads.oppomobile.com",
+            "t.adx.opera.com",
+            //"bdapi-ads.realmemobile.com", "bdapi-in-ads.realmemobile.com",
+            //"business.samsungusa.com", "*.samsungads.com", "*.samsungadhub.com", "samsung-com.112.2o7.net", "ads.samsung.com",
+            //"click.oneplus.com", "click.oneplus.cn", "open.oneplus.net",
+            "asadcdn.com",
+            "ads.yieldmo.com", "ads.servenobid.com", "e3.adpushup.com", "c1.adform.net",
+            "ib.adnxs.com",
+            "*.smartadserver.com", "ad.a-ads.com",
+            "cdn.carbonads.com", "px.ads.linkedin.com",
+            "*.adsrvr.org",
+            "scdn.cxense.com",
+            "acdn.adnxs.com",
+            "js.adscale.de",
+            "js.hsadspixel.net",
+            "ad.mopub.com",
+            "*.juicyads.com",
+            "a.realsrv.com", "mc.yandex.ru", "a.vdo.ai", "adfox.yandex.ru", "adfstat.yandex.ru", "offerwall.yandex.net",
+            "ads.msn.com", "adnxs.com", "adnexus.net", "bingads.microsoft.com",
+            "dt.adsafeprotected.com",
+            "amazonaax.com", "*.amazon-adsystem.com",
+            "ads.betweendigital.com", "rtb.adpone.com", "ads.themoneytizer.com", "*.criteo.com",
+
+            "*.rubiconproject.com",
+
+            "*.ad.gt", "powerad.ai", "hb.brainlyads.com", "pixel.quantserve.com", "ads.anura.io", "static.getclicky.com",
+            "ad.turn.com", "rtb.mfadsrvr.com", "ad.mrtnsvr.com", "s.ad.smaato.net",
+            "adpush.technoratimedia.com", "pixel.tapad.com", "secure.adnxs.com", "px.adhigh.net",
+            "epnt.ebay.com", "*.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
+            "btloader.com", "ad-delivery.net",
+            "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com",
+            "*.adserver.snapads.com",
             "cdn.adsafeprotected.com",
             "rp.liadm.com",
 
@@ -1164,9 +2429,9 @@ Inner Exception: ```{7} ```";
             "h.seznam.cz", "d.seznam.cz", "ssp.seznam.cz",
             "cdn.performax.cz", "dale.performax.cz", "chip.performax.cz"
         };
-        public static readonly DomainList Analytics = new DomainList { "ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "google-analytics.com", "ssl.google-analytics.com",
-            "stats.wp.com",
-            "analytics.google.com", "click.googleanalytics.com",
+        public static readonly DomainList Analytics = new DomainList { "ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "*.google-analytics.com",
+            "analytics.google.com", "*.googleanalytics.com", "*.admobclick.com", "firebaselogging-pa.googleapis.com",
+            "sp.ecosia.org",
             "analytics.facebook.com", "pixel.facebook.com",
             "analytics.tiktok.com", "analytics-sg.tiktok.com", "log.byteoversea.com",
             "analytics.pinterest.com", "widgets.pinterest.com", "log.pinterest.com", "trk.pinterest.com",
@@ -1175,15 +2440,19 @@ Inner Exception: ```{7} ```";
             "analytics.mobile.yandex.net", "appmetrica.yandex.com", "extmaps-api.yandex.net", "appmetrica.yandex.ru", "metrika.yandex.ru",
             "analytics.yahoo.com", "ups.analytics.yahoo.com", "analytics.query.yahoo.com", "log.fc.yahoo.com", "geo.yahoo.com", "udc.yahoo.com", "udcm.yahoo.com", "gemini.yahoo.com",
             "metrics.apple.com",
-            "*.hotjar.com",
-            "mouseflow.com", "*.mouseflow.com",
-            "freshmarketer.com",
             "*.bugsnag.com",
             "*.sentry-cdn.com", "app.getsentry.com",
             "stats.gc.apple.com", "iadsdk.apple.com",
             "collector.github.com",
             "cloudflareinsights.com",
-
+            "*.hotjar.com",
+            "hotjar-analytics.com",
+            "mouseflow.com", "*.mouseflow.com",
+            "stats.wp.com",
+            "*.datatrics.com",
+            "*.ero-advertising.com",
+            "analytics.archive.org",
+            "*.freshmarketer.com",
             "openbid.pubmatic.com", "prebid.media.net", "hbopenbid.pubmatic.com",
             "collector.cdp.cnn.com", "smetrics.cnn.com", "mybbc-analytics.files.bbci.co.uk", "a1.api.bbc.co.uk", "xproxy.api.bbc.com",
             "*.dotmetrics.net", "scripts.webcontentassessor.com",
@@ -1192,22 +2461,22 @@ Inner Exception: ```{7} ```";
             "cdn.permutive.com", "api.permutive.com",
 
             "luckyorange.com", "*.luckyorange.com", "*.luckyorange.net",
-            "hotjar-analytics.com",
 
-            "smetrics.samsung.com", "nmetrics.samsung.com", "analytics-api.samsunghealthcn.com", "analytics.samsungknox.com",
-            "iot-eu-logser.realme.com", "iot-logser.realme.com",
-            "securemetrics.apple.com", "supportmetrics.apple.com", "metrics.icloud.com", "metrics.mzstatic.com", "books-analytics-events.apple.com", "weather-analytics-events.apple.com", "notes-analytics-events.apple.com",
+            //"smetrics.samsung.com", "nmetrics.samsung.com", "analytics-api.samsunghealthcn.com", "analytics.samsungknox.com",
+            //"iot-eu-logser.realme.com", "iot-logser.realme.com",
+            "securemetrics.apple.com", "supportmetrics.apple.com", "metrics.icloud.com",
+            //"books-analytics-events.apple.com", "weather-analytics-events.apple.com", "notes-analytics-events.apple.com",
 
             "tr.snapchat.com", "sc-analytics.appspot.com", "app-analytics.snapchat.com",
             "crashlogs.whatsapp.net",
+            "metrics.mzstatic.com",
 
             "click.a-ads.com",
             "static.criteo.net",
             "www.clarity.ms",
             "u.clarity.ms",
-            "claritybt.freshmarketer.com",
 
-            "data.mistat.xiaomi.com",
+            /*"data.mistat.xiaomi.com",
             "data.mistat.intl.xiaomi.com",
             "data.mistat.india.xiaomi.com",
             "data.mistat.rus.xiaomi.com",
@@ -1217,7 +2486,7 @@ Inner Exception: ```{7} ```";
             "tracking.india.miui.com",
             "tracking.rus.miui.com",
 
-            "*.hicloud.com",
+            "*.hicloud.com",*/
 
             "s.cdn.turner.com",
             "logx.optimizely.com",
@@ -1265,6 +2534,8 @@ Inner Exception: ```{7} ```";
 
         public string ReleaseVersion;
 
+        public string DevToolCSS;
+
         private void InitializeCEF()
         {
             _LifeSpanHandler = new LifeSpanHandler(false);
@@ -1290,7 +2561,9 @@ Inner Exception: ```{7} ```";
 
             Settings.Locale = Locale.Tooltip;
             Settings.AcceptLanguageList = string.Join(",", Languages.Select(i => i.Tooltip));
+            //Settings.UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/604.1";
             Settings.UserAgentProduct = $"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}";
+            //Settings.UserAgent = UserAgent;
 
             string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
             Settings.LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log"));
@@ -1322,7 +2595,6 @@ Inner Exception: ```{7} ```";
             });*/
 
             string[] SLBrURLs = ["Credits", "License", "NewTab", "Downloads", "History", "Settings", "Tetris", "WhatsNew"];
-            string SLBrSchemeRootFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             foreach (string _Scheme in SLBrURLs)
             {
                 string Lower = _Scheme.ToLower();
@@ -1330,7 +2602,7 @@ Inner Exception: ```{7} ```";
                 {
                     SchemeName = "slbr",
                     DomainName = Lower,
-                    SchemeHandlerFactory = new FolderSchemeHandlerFactory(SLBrSchemeRootFolder, hostName: Lower, defaultPage: $"{_Scheme}.html"),
+                    SchemeHandlerFactory = new FolderSchemeHandlerFactory(ResourcesPath, hostName: Lower, defaultPage: $"{_Scheme}.html"),
                     IsSecure = true,
                     IsLocal = true,
                     IsStandard = true,
@@ -1338,7 +2610,7 @@ Inner Exception: ```{7} ```";
                 });
             }
 
-            CefSharpSettings.RuntimeStyle = GlobalSave.Get("ChromiumRuntimeStyle", "Alloy") == "Alloy" ? CefRuntimeStyle.Alloy : CefRuntimeStyle.Chrome;
+            CefSharpSettings.RuntimeStyle = GlobalSave.GetInt("ChromiumRuntimeStyle", 1) == 1 ? CefRuntimeStyle.Alloy : CefRuntimeStyle.Chrome;
             //Alloy: No bottom chrome status bar, No chrome permission popups, Pointer lock broken, 
             //Chrome: Find broken, Has "Esc" popup prompts for Fullscreen & Pointer Locks
 
@@ -1347,8 +2619,10 @@ Inner Exception: ```{7} ```";
             {
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
                 GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Geolocation, ContentSettingValues.Block);
-                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.JavascriptOptimizer, ContentSettingValues.Allow);
+                //GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.JavascriptOptimizer, ContentSettingValues.Allow);
                 GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.AdsData, ContentSettingValues.Block);
+                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Notifications, ContentSettingValues.Ask);
+                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Popups, ContentSettingValues.Ask);
                 bool PDFViewerExtension = bool.Parse(GlobalSave.Get("PDF"));
 
                 /*string _Preferences = "";
@@ -1382,6 +2656,7 @@ Inner Exception: ```{7} ```";
                 GlobalRequestContext.SetPreference("download_bubble.partial_view_enabled", false, out Error);
                 GlobalRequestContext.SetPreference("download_duplicate_file_prompt_enabled", false, out Error);
                 //GlobalRequestContext.SetPreference("profile.default_content_setting_values.automatic_downloads", 1, out Error);
+                //GlobalRequestContext.SetPreference("profile.default_content_setting_values.notifications", 2, out Error);
 
                 GlobalRequestContext.SetPreference("shopping_list_enabled", false, out Error);
                 GlobalRequestContext.SetPreference("browser_labs_enabled", false, out Error);
@@ -1399,10 +2674,10 @@ Inner Exception: ```{7} ```";
                 GlobalRequestContext.SetPreference("media_router.enable_media_router", false, out Error);
                 GlobalRequestContext.SetPreference("documentsuggest.enabled", false, out Error);
                 GlobalRequestContext.SetPreference("alternate_error_pages.enabled", false, out Error);
-                //GlobalRequestContext.SetPreference("https_only_mode_enabled", true, out Error);
+                GlobalRequestContext.SetPreference("https_first_balanced_mode_enabled", true, out Error);
                 //GlobalRequestContext.SetPreference("enable_do_not_track", bool.Parse(GlobalSave.Get("DoNotTrack")), out errorMessage);
                 //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/preloading/preloading_prefs.h
-                GlobalRequestContext.SetPreference("net.network_prediction_options", 2, out Error);
+                GlobalRequestContext.SetPreference("net.network_prediction_options", HighPerformanceMode ? 0 : 2, out Error);
                 GlobalRequestContext.SetPreference("safebrowsing.enabled", false, out Error);
                 //GlobalRequestContext.SetPreference("browser.theme.follows_system_colors", false, out Error);
 
@@ -1426,9 +2701,10 @@ Inner Exception: ```{7} ```";
             }
         }
 
-        /*public string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
+/*#if DEBUG
+        public string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
         {
-            if (ObjectPair.Value is ExpandoObject expando)
+            if (ObjectPair.Value is System.Dynamic.ExpandoObject expando)
             {
                 foreach (KeyValuePair<string, object> property in (IDictionary<string, object>)expando)
                     _String = $"{GetPreferencesString(_String, Parents + $"[{ObjectPair.Key}]", property)}";
@@ -1444,7 +2720,8 @@ Inner Exception: ```{7} ```";
                 _String += $"{ObjectPair.Key}: {ObjectPair.Value}\n";
             }
             return _String;
-        }*/
+        }
+#endif*/
 
         public string GenerateCannotConnect(string Url, CefErrorCode ErrorCode, string ErrorText)
         {
@@ -1489,10 +2766,10 @@ Inner Exception: ```{7} ```";
             return HTML;
         }
 
-        public const string Cannot_Connect_Error = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2 id=""title"">Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
-        public const string Process_Crashed_Error = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process Crashed</h2><h5>Process crashed while attempting to load content. Undo / Refresh the page to resolve the problem.</h5><a href=""slbr://newtab"">Return to homepage</a></div></body></html>";
-        public const string Deception_Error = @"<html><head><title>Site access denied</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Site Access Denied</h2><h5>The site ahead was detected to contain deceptive content.</h5><a href=""slbr://newtab"">Return to homepage</a></div></body></html>";
-        public const string Malware_Error = @"<html><head><title>Site access denied</title><style>html{background:darkred;}body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;};</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Site Access Denied</h2><h5>The site ahead was detected to contain unwanted software / malware.</h5><a href=""slbr://newtab"">Return to homepage</a></div></body></html>";
+        public const string Cannot_Connect_Error = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
+        public const string Process_Crashed_Error = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
+        public const string Deception_Error = @"<html><head><title>Deceptive site ahead</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Deceptive site ahead</h2><h5>The site may contain deceptive content that may trick you into installing software or revealing personal information.</h5></div></body></html>";
+        public const string Malware_Error = @"<html><head><title>Dangerous site ahead</title><style>html{background:darkred;}body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>The site may install harmful and malicious software that may manipulate or steal personal information.</h5></div></body></html>";
 
         private void SetCEFFlags(CefSettings Settings)
         {
@@ -1504,18 +2781,70 @@ Inner Exception: ```{7} ```";
             SetMediaFlags(Settings);
             SetSecurityFlags(Settings);
             SetFeatureFlags(Settings);
+            SetUrlFlags(Settings);
             //force-gpu-mem-available-mb https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/service/gpu_switches.cc
             //disable-file-system Disable FileSystem API.
+        }
+        public const string DummyUrl = "dummy.invalid";
+        private void SetUrlFlags(CefSettings Settings)
+        {
+            //https://github.com/melo936/ChromiumHardening/blob/main/flags/chrome-command-line.md
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:google_apis/gaia/gaia_switches.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:chromecast/net/net_switches.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:google_apis/gcm/engine/gservices_switches.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/google/core/common/google_switches.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/policy/core/common/policy_switches.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/chrome_switches.cc
+            Settings.CefCommandLineArgs.Add("connectivity-check-url", "https://cp.cloudflare.com/generate_204");
+            Settings.CefCommandLineArgs.Add("sync-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("gaia-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("gcm-checkin-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("gcm-mcs-endpoint", DummyUrl);
+            Settings.CefCommandLineArgs.Add("gcm-registration-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("google-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("google-apis-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("google-base-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("lso-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("model-quality-service-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("oauth-account-manager-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("secure-connect-api-url", DummyUrl);
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/variations/variations_switches.cc
+            Settings.CefCommandLineArgs.Add("variations-server-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("variations-insecure-server-url", DummyUrl);
+
+            Settings.CefCommandLineArgs.Add("device-management-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("realtime-reporting-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("encrypted-reporting-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("file-storage-server-upload-url", DummyUrl);
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/search_provider_logos/switches.cc
+            Settings.CefCommandLineArgs.Add("google-doodle-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("third-party-doodle-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("search-provider-logo-url", DummyUrl);
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/translate/core/common/translate_switches.cc
+            Settings.CefCommandLineArgs.Add("translate-script-url", DummyUrl);
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/autofill/core/common/autofill_features.cc
+            Settings.CefCommandLineArgs.Add("autofill-server-url", DummyUrl);
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:chromecast/base/chromecast_switches.cc
+            Settings.CefCommandLineArgs.Add("override-metrics-upload-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("crash-server-url", DummyUrl);
+            Settings.CefCommandLineArgs.Add("ignore-google-port-numbers");
         }
 
         private void SetChromeFlags(CefSettings Settings)
         {
             //https://source.chromium.org/chromium/chromium/src/+/main:tools/perf/testdata/crossbench_output/speedometer_3.0/speedometer_3.0.json?q=disable-component-update&ss=chromium%2Fchromium%2Fsrc
             //Settings.CefCommandLineArgs.Add("disable-crashpad-for-testing");
-            /*Settings.CefCommandLineArgs.Add("disable-sync");
+            //Settings.CefCommandLineArgs.Add("disable-sync");
             Settings.CefCommandLineArgs.Add("disable-translate");
+            Settings.CefCommandLineArgs.Add("disable-variations-seed-fetch");
 
-            Settings.CefCommandLineArgs.Add("disable-fre");*/
+            //Settings.CefCommandLineArgs.Add("disable-fre");
             Settings.CefCommandLineArgs.Add("no-default-browser-check");
             Settings.CefCommandLineArgs.Add("no-first-run");
             //Settings.CefCommandLineArgs.Add("disable-first-run-ui");
@@ -1541,6 +2870,7 @@ Inner Exception: ```{7} ```";
             //Settings.CefCommandLineArgs.Add("disable-infobars");
             Settings.CefCommandLineArgs.Add("disable-breakpad");
             Settings.CefCommandLineArgs.Add("disable-crash-reporter");
+            Settings.CefCommandLineArgs.Add("disable-crashpad-forwarding");
 
             Settings.CefCommandLineArgs.Add("disable-top-sites");
             //Settings.CefCommandLineArgs.Add("disable-minimum-show-duration");
@@ -1558,7 +2888,7 @@ Inner Exception: ```{7} ```";
             Settings.CefCommandLineArgs.Add("disable-dinosaur-easter-egg"); //enable-dinosaur-easter-egg-alt-images
             //Settings.CefCommandLineArgs.Add("oobe-skip-new-user-check-for-testing");
 
-            //Settings.CefCommandLineArgs.Add("disable-gaia-services"); // https://source.chromium.org/chromium/chromium/src/+/main:ash/constants/ash_switches.cc
+            //Settings.CefCommandLineArgs.Add("disable-gaia-services"); //https://source.chromium.org/chromium/chromium/src/+/main:ash/constants/ash_switches.cc
             
             Settings.CefCommandLineArgs.Add("wm-window-animations-disabled");
             Settings.CefCommandLineArgs.Add("animation-duration-scale", "0");
@@ -1571,22 +2901,20 @@ Inner Exception: ```{7} ```";
             Settings.CefCommandLineArgs.Add("disable-search-engine-choice-screen");
             Settings.CefCommandLineArgs.Add("ash-no-nudges");
             Settings.CefCommandLineArgs.Add("noerrdialogs");
+            Settings.CefCommandLineArgs.Add("disable-notifications");
             //Settings.CefCommandLineArgs.Add("hide-crash-restore-bubble");
             //Settings.CefCommandLineArgs.Add("disable-chrome-login-prompt");
         }
 
         private void SetFrameworkFlags(CefSettings Settings)
         {
-            if (!bool.Parse(GlobalSave.Get("LiteMode")))
+            if (!LiteMode)
             {
                 Settings.CefCommandLineArgs.Add("enable-webassembly-baseline");
                 Settings.CefCommandLineArgs.Add("enable-webassembly-tiering");
                 Settings.CefCommandLineArgs.Add("enable-webassembly-lazy-compilation");
                 Settings.CefCommandLineArgs.Add("enable-webassembly-memory64");
             }
-
-            /*if (!(int.Parse(GlobalSave.Get("PDF")).ToBool()))
-                Settings.CefCommandLineArgs.Add("disable-pdf-extension");*/
 
             if (bool.Parse(GlobalSave.Get("ExperimentalFeatures")))
             {
@@ -1619,7 +2947,8 @@ Inner Exception: ```{7} ```";
             //DISABLES ECOSIA SEARCHBOX
             //Settings.CefCommandLineArgs.Add("headless"); //Run in headless mode without a UI or display server dependencies.
 
-            //https://chromium.googlesource.com/chromium/src/+/refs/tags/77.0.3865.0/third_party/blink/renderer/platform/graphics/dark_mode_settings.h
+            //https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/dark_mode_settings_builder.cc
+            //https://chromium.googlesource.com/chromium/src/+/refs/heads/main/third_party/blink/renderer/platform/graphics/dark_mode_settings.h
             Settings.CefCommandLineArgs.Add("dark-mode-settings", "ImagePolicy=1");//,ImageClassifierPolicy=0,InversionAlgorithm=2
 
             //Disabling site isolation somehow increases memory usage by 10 MB
@@ -1633,13 +2962,22 @@ Inner Exception: ```{7} ```";
 
             Settings.CefCommandLineArgs.Add("process-per-site");
             Settings.CefCommandLineArgs.Add("password-store", "basic");
+            Settings.CefCommandLineArgs.Add("disable-mipmap-generation"); // Disables mipmap generation in Skia. Used a workaround for select low memory devices
 
-            if (bool.Parse(GlobalSave.Get("LiteMode")))
+            //This change makes it so when EnableHighResolutionTimer(true) which is on AC power the timer is 1ms and EnableHighResolutionTimer(false) is 4ms.
+            //https://bugs.chromium.org/p/chromium/issues/detail?id=153139
+            Settings.CefCommandLineArgs.Add("disable-highres-timer");
+
+
+            //Settings.CefCommandLineArgs.Add("enable-throttle-display-none-and-visibility-hidden-cross-origin-iframes"); //Causes memory to be 100 MB more than if disabled when minimized
+            //Settings.CefCommandLineArgs.Add("quick-intensive-throttling-after-loading"); //Causes memory to be 100 MB more than if disabled when minimized
+            Settings.CefCommandLineArgs.Add("intensive-wake-up-throttling-policy", "1");
+            if (LiteMode)
             {
                 //Turns device memory into 0.5
                 Settings.CefCommandLineArgs.Add("enable-low-end-device-mode"); //Causes memory to be 20 MB more when minimized, but reduces 80 MB when not minimized
 
-                Settings.CefCommandLineArgs.Add("disable-best-effort-tasks"); //PREVENTS GOOGLE LOGIN
+                Settings.CefCommandLineArgs.Add("disable-best-effort-tasks"); //NO LONGER PREVENTS GOOGLE LOGIN IN 27/6/2025
 
                 Settings.CefCommandLineArgs.Add("disable-smooth-scrolling");
 
@@ -1649,6 +2987,8 @@ Inner Exception: ```{7} ```";
                 Settings.CefCommandLineArgs.Add("disable-logging");
 
                 Settings.CefCommandLineArgs.Add("max-web-media-player-count", "1");
+                // 75 for desktop browsers and 40 for mobile browsers
+                //https://chromium-review.googlesource.com/c/chromium/src/+/2816118
 
                 Settings.CefCommandLineArgs.Add("gpu-program-cache-size-kb", $"{128 * 1024}");
                 Settings.CefCommandLineArgs.Add("gpu-disk-cache-size-kb", $"{128 * 1024}");
@@ -1656,15 +2996,38 @@ Inner Exception: ```{7} ```";
                 Settings.CefCommandLineArgs.Add("force-effective-connection-type", "Slow-2G");
                 //Settings.CefCommandLineArgs.Add("num-raster-threads", "4"); //RETIRED FLAG
                 Settings.CefCommandLineArgs.Add("renderer-process-limit", "4");
-
+                //Settings.CefCommandLineArgs.Add("use-mobile-user-agent");
             }
             else
             {
-                Settings.CefCommandLineArgs.Add("gpu-program-cache-size-kb", $"{2 * 1024 * 1024}");
-                Settings.CefCommandLineArgs.Add("gpu-disk-cache-size-kb", $"{2 * 1024 * 1024}");
-                //Settings.CefCommandLineArgs.Add("component-updater", "fast-update");
                 if (!bool.Parse(GlobalSave.Get("ChromiumHardwareAcceleration")))
                     Settings.CefCommandLineArgs.Add("enable-low-res-tiling");
+                if (HighPerformanceMode)
+                {
+                    Settings.CefCommandLineArgs.Add("no-pre-read-main-dll");
+                    Settings.CefCommandLineArgs.Remove("disable-mipmap-generation");
+                    Settings.CefCommandLineArgs.Remove("disable-highres-timer");
+                    Settings.CefCommandLineArgs.Remove("intensive-wake-up-throttling-policy");
+                    Settings.CefCommandLineArgs.Add("disable-ipc-flooding-protection");
+                    Settings.CefCommandLineArgs.Add("disable-renderer-backgrounding");
+                    Settings.CefCommandLineArgs.Add("disable-background-timer-throttling");
+                    Settings.CefCommandLineArgs.Add("disable-extensions-http-throttling");
+                    Settings.CefCommandLineArgs.Add("allow-http-background-page");
+
+                    Settings.CefCommandLineArgs.Add("enable-benchmarking");
+                    //Settings.CefCommandLineArgs.Add("enable-benchmarking-api");
+                    Settings.CefCommandLineArgs.Add("enable-net-benchmarking");
+
+                    Settings.CefCommandLineArgs.Add("scheduler-configuration");
+                    Settings.CefCommandLineArgs.Add("font-cache-shared-handle"); //Increases memory by 5 MB
+                    //audio-process-high-priority
+                }
+                else
+                {
+                    Settings.CefCommandLineArgs.Add("gpu-program-cache-size-kb", $"{2 * 1024 * 1024}");
+                    Settings.CefCommandLineArgs.Add("gpu-disk-cache-size-kb", $"{2 * 1024 * 1024}");
+                    //Settings.CefCommandLineArgs.Add("component-updater", "fast-update");
+                }
             }
 
             //https://source.chromium.org/chromium/chromium/src/+/main:components/optimization_guide/core/optimization_guide_switches.cc
@@ -1675,11 +3038,6 @@ Inner Exception: ```{7} ```";
             Settings.CefCommandLineArgs.Add("disable-component-update");
             Settings.CefCommandLineArgs.Add("component-updater", "disable-background-downloads,disable-delta-updates"); //https://source.chromium.org/chromium/chromium/src/+/main:components/component_updater/component_updater_command_line_config_policy.cc
 
-            Settings.CefCommandLineArgs.Add("back-forward-cache");
-
-            //This change makes it so when EnableHighResolutionTimer(true) which is on AC power the timer is 1ms and EnableHighResolutionTimer(false) is 4ms.
-            //https://bugs.chromium.org/p/chromium/issues/detail?id=153139
-            Settings.CefCommandLineArgs.Add("disable-highres-timer");
 
             //https://github.com/portapps/brave-portable/issues/26
             //https://github.com/chromium/chromium/blob/2ca8c5037021c9d2ecc00b787d58a31ed8fc8bcb/third_party/blink/renderer/bindings/core/v8/v8_cache_options.h
@@ -1687,13 +3045,6 @@ Inner Exception: ```{7} ```";
 
             //Settings.CefCommandLineArgs.Add("disable-v8-idle-tasks");
 
-            //Settings.CefCommandLineArgs.Add("enable-throttle-display-none-and-visibility-hidden-cross-origin-iframes"); //Causes memory to be 100 MB more than if disabled when minimized
-            //Settings.CefCommandLineArgs.Add("quick-intensive-throttling-after-loading"); //Causes memory to be 100 MB more than if disabled when minimized
-            //Settings.CefCommandLineArgs.Add("intensive-wake-up-throttling-policy", "1");
-
-            //Settings.CefCommandLineArgs.Add("font-cache-shared-handle"); //Increases memory by 5 MB
-
-            Settings.CefCommandLineArgs.Add("disable-mipmap-generation"); // Disables mipmap generation in Skia. Used a workaround for select low memory devices
 
             Settings.CefCommandLineArgs.Add("enable-parallel-downloading");
         }
@@ -1782,7 +3133,7 @@ Inner Exception: ```{7} ```";
                 //if (MainSave.Get("AngleGraphicsBackend").ToLower() != "default")
                 //    Settings.CefCommandLineArgs.Add("use-angle", MainSave.Get("AngleGraphicsBackend"));
                 Settings.CefCommandLineArgs.Add("enable-accelerated-2d-canvas");
-                /*if (bool.Parse(GlobalSave.Get("LiteMode")))
+                /*if (LiteMode)
                     Settings.CefCommandLineArgs.Add("use-webgpu-power-preference", "force-low-power");
                 else
                     Settings.CefCommandLineArgs.Add("use-webgpu-power-preference", "default-low-power");*/
@@ -1851,7 +3202,8 @@ Inner Exception: ```{7} ```";
             Settings.CefCommandLineArgs.Add("disable-image-animation-resync");
             Settings.CefCommandLineArgs.Add("disable-checker-imaging");
 
-            //Settings.CefCommandLineArgs.Add("enable-lite-video");
+            if (LiteMode)
+                Settings.CefCommandLineArgs.Add("enable-lite-video");
             //Settings.CefCommandLineArgs.Add("lite-video-force-override-decision");
 
             //FLAG SEEMS TO NOT EXIST BUT IT DOES WORK
@@ -1909,6 +3261,7 @@ Inner Exception: ```{7} ```";
              * 
              * BackForwardCacheWithKeepaliveRequest ReduceGpuPriorityOnBackground ProcessHtmlDataImmediately SetLowPriorityForBeacon
              * ImageService ImageServiceSuggestPoweredImages ImageServiceOptimizationGuideSalientImages
+             * BackgroundResourceFetch
              */
 
             /*[js-flags]
@@ -1954,16 +3307,26 @@ Inner Exception: ```{7} ```";
 
             //https://source.chromium.org/chromium/chromium/src/+/main:components/network_session_configurator/browser/network_session_configurator.cc
             Settings.CefCommandLineArgs.Add("force-fieldtrials", "SimpleCacheTrial/ExperimentYes/");
-
-            string JsFlags = "--max-old-space-size=512,--optimize-gc-for-battery,--memory-reducer-favors-memory,--efficiency-mode,--battery-saver-mode";// "--always-opt,--gc-global,--gc-experiment-reduce-concurrent-marking-tasks";
+            
+            string JsFlags = "";
+            if (HighPerformanceMode)
+                JsFlags = "";
+            else
+                JsFlags = "--max-old-space-size=512,--optimize-gc-for-battery,--memory-reducer-favors-memory,--efficiency-mode,--battery-saver-mode";// "--always-opt,--gc-global,--gc-experiment-reduce-concurrent-marking-tasks";
 
             //DEFAULT ENABLED: MemoryPurgeInBackground, stop-in-background
             //ANDROID: InputStreamOptimizations
-            string EnableFeatures = "QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,ReduceCpuUtilization2,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
-            string DisableFeatures = "Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,LoadingPredictorPrefetch,WebBluetooth,MediaRouter,LiveCaption,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints,SegmentationPlatform,WebFontsCacheAwareTimeoutAdaption,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,InstalledApp,BrowsingTopics,Fledge,MemoryCacheStrongReference,Prerender2NoVarySearch,Prerender2,InterestFeedContentSuggestions";
-
-            string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility,SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
-            string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI,DocumentPictureInPictureAPI,Prerender2";
+            //MemorySaverModeRenderTuning
+            //MemoryPurgeOnFreezeLimit
+            //DevToolsImprovedNetworkError
+            //MHTML_Improvements, OptimizeHTMLElementUrls,WebFontsCacheAwareTimeoutAdaption, EstablishGpuChannelAsync
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/download/public/common/download_features.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/features.cc
+            string EnableFeatures = "HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
+            string DisableFeatures = "KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
+            //WebBluetooth,MediaRouter,
+            string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
+            string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI,DocumentPictureInPictureAPI";
 
             try
             {
@@ -1980,24 +3343,52 @@ Inner Exception: ```{7} ```";
                 Settings.CefCommandLineArgs["disable-blink-features"] += "," + DisableBlinkFeatures;
             }
 
-            Settings.CefCommandLineArgs.Add("blink-settings", "dataSaverEnabled=true,hyperlinkAuditingEnabled=false,lowPriorityIframesThreshold=5,smoothScrollForFindEnabled=true,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false,disallowFetchForDocWrittenScriptsInMainFrame=true,disallowFetchForDocWrittenScriptsInMainFrameIfEffectively2G=true,disallowFetchForDocWrittenScriptsInMainFrameOnSlowConnections=true");
-            
-            if (bool.Parse(GlobalSave.Get("LiteMode")))
+            //https://github.com/Alex313031/thorium/blob/main/src/chrome/browser/chrome_content_browser_client.cc
+            //https://chromium.googlesource.com/chromium/src/third_party/+/master/blink/renderer/core/frame/settings.json5
+            //https://chromium.googlesource.com/chromium/src/+/HEAD/third_party/blink/public/platform/web_effective_connection_type.h
+            Settings.CefCommandLineArgs.Add("blink-settings", "hyperlinkAuditingEnabled=false,smoothScrollForFindEnabled=true,disallowFetchForDocWrittenScriptsInMainFrame=true");
+
+            if (HighPerformanceMode)
             {
-                //https://github.com/cypress-io/cypress/issues/22622
-                //https://issues.chromium.org/issues/40220332
-                Settings.CefCommandLineArgs["disable-features"] += ",LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
-                Settings.CefCommandLineArgs["enable-features"] += ",ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
-                Settings.CefCommandLineArgs["enable-blink-features"] += ",PrefersReducedData";//ForceReduceMotion
-                Settings.CefCommandLineArgs["blink-settings"] += ",imageAnimationPolicy=1,prefersReducedTransparency=true";
-                JsFlags += ",--max-lazy,--lite-mode,--noexpose_wasm,--optimize-for-size";
+                JsFlags += ",--fast-math";
+                Settings.CefCommandLineArgs["blink-settings"] += ",lazyLoadEnabled=false";
+                //https://www.aboutchromebooks.com/chrome-flagsscheduler-configuration/
+                Settings.CefCommandLineArgs["enable-features"] += ",SchedulerConfiguration:scheduler_configuration/enabled";
             }
             else
+            {
+                Settings.CefCommandLineArgs["blink-settings"] += ",lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
+                Settings.CefCommandLineArgs["enable-features"] += ",LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
+                Settings.CefCommandLineArgs["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
+
+                Settings.CefCommandLineArgs["enable-blink-features"] += ",SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
+                Settings.CefCommandLineArgs["disable-blink-features"] += ",Prerender2";
+
+                if (LiteMode)
+                {
+                    //https://github.com/cypress-io/cypress/issues/22622
+                    //https://issues.chromium.org/issues/40220332
+                    Settings.CefCommandLineArgs["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
+                    Settings.CefCommandLineArgs["enable-features"] += ",AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
+                    Settings.CefCommandLineArgs["enable-blink-features"] += ",PrefersReducedData,ForceReduceMotion";//
+                    Settings.CefCommandLineArgs["blink-settings"] += ",imageAnimationPolicy=1,prefersReducedTransparency=true,prefersReducedMotion=true,lazyLoadingFrameMarginPxUnknown=0,lazyLoadingFrameMarginPxOffline=0,lazyLoadingFrameMarginPxSlow2G=0,lazyLoadingFrameMarginPx2G=0,lazyLoadingFrameMarginPx3G=0,lazyLoadingFrameMarginPx4G=0,lazyLoadingImageMarginPxUnknown=0,lazyLoadingImageMarginPxOffline=0,lazyLoadingImageMarginPxSlow2G=0,lazyLoadingImageMarginPx2G=0,lazyLoadingImageMarginPx3G=0,lazyLoadingImageMarginPx4G=0";
+                    JsFlags += ",--max-lazy,--lite-mode,--noexpose-wasm,--optimize-for-size";
+                }
+                else
+                {
+                    Settings.CefCommandLineArgs["blink-settings"] += ",lazyLoadingFrameMarginPxUnknown=250,lazyLoadingFrameMarginPxOffline=500,lazyLoadingFrameMarginPxSlow2G=500,lazyLoadingFrameMarginPx2G=400,lazyLoadingFrameMarginPx3G=300,lazyLoadingFrameMarginPx4G=200,lazyLoadingImageMarginPxUnknown=250,lazyLoadingImageMarginPxOffline=500,lazyLoadingImageMarginPxSlow2G=500,lazyLoadingImageMarginPx2G=400,lazyLoadingImageMarginPx3G=300,lazyLoadingImageMarginPx4G=200";
+                }
+                //https://chromium.googlesource.com/v8/v8/+/master/src/flags/flag-definitions.h
+                JsFlags += "--efficiency-mode,--battery-saver-mode,--memory-saver-mode";
+            }
+            if (!LiteMode)
             {
                 JsFlags += "--enable-experimental-regexp-engine-on-excessive-backtracks,--expose-wasm,--wasm-lazy-compilation,--asm-wasm-lazy-compilation,--wasm-lazy-validation,--experimental-wasm-gc,--wasm-async-compilation,--wasm-opt,--experimental-wasm-branch-hinting,--experimental-wasm-instruction-tracing";
                 if (bool.Parse(GlobalSave.Get("ExperimentalFeatures")))
                     JsFlags += ",--experimental-wasm-jspi,--experimental-wasm-memory64,--experimental-wasm-type-reflection";
             }
+            if (!bool.Parse(GlobalSave.Get("JIT")))
+                JsFlags += ",--jitless";
             Settings.JavascriptFlags = JsFlags;
         }
 
@@ -2028,10 +3419,9 @@ Inner Exception: ```{7} ```";
             {
                 foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
                 {
-                    if (BrowserView != null && BrowserView.Chromium != null && BrowserView.Chromium.IsBrowserInitialized)
+                    if (BrowserView != null && BrowserView.Chromium != null && BrowserView.Chromium.IsBrowserInitialized && BrowserView.Chromium.CanExecuteJavascriptInMainFrame)
                     {
-                        if (BrowserView.Chromium.CanExecuteJavascriptInMainFrame)
-                            BrowserView.Chromium.ExecuteScriptAsync("localStorage.clear();sessionStorage.clear();");
+                        BrowserView.Chromium.ExecuteScriptAsync("localStorage.clear();sessionStorage.clear();");
                         using (var DevToolsClient = BrowserView.Chromium.GetDevToolsClient())
                         {
                             //https://github.com/cefsharp/CefSharp/issues/1234
@@ -2049,6 +3439,72 @@ Inner Exception: ```{7} ```";
             InfoWindow.ShowDialog();
         }
 
+        public void Save()
+        {
+            StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
+            StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
+
+            FavouritesSave.Clear();
+            FavouritesSave.Set("Count", Favourites.Count.ToString(), false);
+            for (int i = 0; i < Favourites.Count; i++)
+                FavouritesSave.Set(i.ToString(), Favourites[i].Tooltip, Favourites[i].Name, false);
+            FavouritesSave.Save();
+
+            SearchSave.Clear();
+            SearchSave.Set("Count", SearchEngines.Count.ToString(), false);
+            for (int i = 0; i < SearchEngines.Count; i++)
+            {
+                SearchProvider _SearchProvider = SearchEngines[i];
+                string SearchString = $"{_SearchProvider.Name}<#>{_SearchProvider.SearchUrl}<#>{_SearchProvider.SuggestUrl}";
+                SearchSave.Set(i.ToString(), SearchString, false);
+            }
+            SearchSave.Save();
+
+            AllowListSave.Clear();
+            AllowListSave.Set("Count", AdBlockAllowList.AllDomains.Count().ToString(), false);
+            int d = 0;
+            foreach (string Domain in AdBlockAllowList.AllDomains)
+            {
+                AllowListSave.Set(d.ToString(), Domain, false);
+                d++;
+            }
+            AllowListSave.Save();
+
+            LanguagesSave.Clear();
+            LanguagesSave.Set("Count", Languages.Count.ToString(), false);
+            LanguagesSave.Set("Selected", Languages.IndexOf(Locale), false);
+            for (int i = 0; i < Languages.Count; i++)
+                LanguagesSave.Set(i.ToString(), Languages[i].Tooltip, false);
+            LanguagesSave.Save();
+
+            foreach (FileInfo _File in new DirectoryInfo(UserApplicationWindowsPath).GetFiles())
+                _File.Delete();
+            if (bool.Parse(GlobalSave.Get("RestoreTabs")))
+            {
+                foreach (MainWindow _Window in AllWindows)
+                {
+                    Saving TabsSave = WindowsSaves[AllWindows.IndexOf(_Window)];
+                    TabsSave.Clear();
+                    int Count = 0;
+                    int SelectedIndex = 0;
+                    int OriginalSelectedIndex = _Window.TabsUI.SelectedIndex;
+                    for (int i = 0; i < _Window.Tabs.Count; i++)
+                    {
+                        BrowserTabItem Tab = _Window.Tabs[i];
+                        if (Tab.ParentWindow != null && !Tab.Content.Private)
+                        {
+                            TabsSave.Set(Count.ToString(), Tab.Content.Address, false);
+                            if (i == OriginalSelectedIndex)
+                                SelectedIndex = Count;
+                            Count++;
+                        }
+                    }
+                    TabsSave.Set("Selected", SelectedIndex.ToString());
+                    TabsSave.Set("Count", Count.ToString());
+                }
+            }
+        }
+
         public void CloseSLBr(bool ExecuteCloseEvents = true)
         {
             new Thread(() => {
@@ -2058,70 +3514,34 @@ Inner Exception: ```{7} ```";
             }) { IsBackground = true }.Start();
             if (AppInitialized)
             {
-                StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
-                StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
-
-                FavouritesSave.Clear();
-                FavouritesSave.Set("Favourite_Count", Favourites.Count.ToString(), false);
-                for (int i = 0; i < Favourites.Count; i++)
-                    FavouritesSave.Set($"Favourite_{i}", Favourites[i].Tooltip, Favourites[i].Name, false);
-                FavouritesSave.Save();
-
-                SearchSave.Set("Count", SearchEngines.Count.ToString(), false);
-                for (int i = 0; i < SearchEngines.Count; i++)
-                    SearchSave.Set($"{i}", SearchEngines[i], false);
-                SearchSave.Save();
-
-                LanguagesSave.Set("Count", Languages.Count.ToString(), false);
-                LanguagesSave.Set("Selected", Languages.IndexOf(Locale), false);
-                for (int i = 0; i < Languages.Count; i++)
-                    LanguagesSave.Set($"{i}", Languages[i].Tooltip, false);
-                LanguagesSave.Save();
-
-                foreach (FileInfo _File in new DirectoryInfo(UserApplicationWindowsPath).GetFiles())
-                    _File.Delete();
-                if (bool.Parse(GlobalSave.Get("RestoreTabs")))
-                {
-                    foreach (MainWindow _Window in AllWindows)
-                    {
-                        Saving TabsSave = WindowsSaves[AllWindows.IndexOf(_Window)];
-                        TabsSave.Clear();
-
-                        for (int i = 0; i < _Window.Tabs.Count; i++)
-                        {
-                            BrowserTabItem Tab = _Window.Tabs[i];
-                            if (Tab.ParentWindow != null)
-                                TabsSave.Set(i.ToString(), Tab.Content.Address, false);
-                        }
-                        TabsSave.Set("Selected", _Window.TabsUI.SelectedIndex.ToString());
-                        TabsSave.Set("Count", (_Window.Tabs.Count - 1).ToString());
-                    }
-                }
+                Save();
             }
             if (ExecuteCloseEvents)
             {
                 for (int i = 0; i < AllWindows.Count; i++)
                     AllWindows[i].Close();
             }
+            MiniHttpClient.Dispose();
             AppInitialized = false;
             Cef.Shutdown();
             Shutdown();
         }
 
         public BitmapImage TabIcon;
+        public BitmapImage PrivateIcon;
         public BitmapImage PDFTabIcon;
         public BitmapImage SettingsTabIcon;
         public BitmapImage HistoryTabIcon;
         public BitmapImage DownloadsTabIcon;
         public BitmapImage UnloadedIcon;
 
-        public BitmapImage GetIcon(string Url)
+        public BitmapImage GetIcon(string Url, bool IsPrivate = false)
         {
-            if (Utils.GetFileExtensionFromUrl(Url) != ".pdf")
+            if (Utils.GetFileExtension(Url) != ".pdf")
             {
                 if (Utils.IsHttpScheme(Url))
                 {
-                    BitmapImage _Image = new BitmapImage(new Uri("http://www.google.com/s2/favicons?sz=24&domain=" + Utils.CleanUrl(Url, true, true, true, false, false)));
+                    BitmapImage _Image = new BitmapImage(new Uri("http://static1.brave.com/s2/favicons?sz=24&domain=" + Utils.CleanUrl(Url, true, true, true, false, false)));
                     if (_Image.CanFreeze)
                         _Image.Freeze();
                     return _Image;
@@ -2132,15 +3552,104 @@ Inner Exception: ```{7} ```";
                     return HistoryTabIcon;
                 else if (Url.StartsWith("slbr://downloads", StringComparison.Ordinal))
                     return DownloadsTabIcon;
-                return TabIcon;
+                return IsPrivate ? PrivateIcon : TabIcon;
             }
             else
                 return PDFTabIcon;
         }
 
-        public async Task<BitmapImage> SetIcon(string IconUrl, string Url = "")
+        public static void SaveImageSourceToFile(ImageSource imageSource, string filePath)
         {
-            if (Utils.GetFileExtensionFromUrl(Url) != ".pdf")
+            if (imageSource is RenderTargetBitmap bmp)
+            {
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bmp));
+                using (var stream = File.Open(filePath, FileMode.Create))
+                {
+                    encoder.Save(stream);
+                }
+            }
+        }
+
+        public static Brush GetContrastBrush(Color bgColor)
+        {
+            return (0.299 * bgColor.R + 0.587 * bgColor.G + 0.114 * bgColor.B) / 255 > 0.6 ? Brushes.Black : Brushes.White;
+        }
+        /*public enum ProfileIconStyle
+        {
+            Default, //Chrome-like
+            CircleOverlay,
+            Flat,
+            Square,
+        }*/
+        public static ImageSource GenerateProfileIcon(string BaseIconPath, string Initial, int Size = 64)//,ProfileIconStyle IconStyle = ProfileIconStyle.Default
+        {
+            BitmapImage BaseBitmap = new BitmapImage(new Uri(BaseIconPath));
+            var BaseImage = new Image
+            {
+                Source = BaseBitmap,
+                Width = Size,
+                Height = Size
+            };
+
+            DrawingVisual Visual = new DrawingVisual();
+            using (var Context = Visual.RenderOpen())
+            {
+                Context.DrawImage(BaseBitmap, new Rect(0, 0, Size, Size));
+
+                int BadgeSize = Size / 2;
+                SolidColorBrush BadgeColor = new SolidColorBrush(Color.FromRgb((byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255)));
+                Rect BadgeRect = new Rect(Size - BadgeSize, Size - BadgeSize, BadgeSize, BadgeSize);
+                Point BadgeCenter = new Point(BadgeRect.X + BadgeSize / 2, BadgeRect.Y + BadgeSize / 2);
+                Context.DrawEllipse(BadgeColor, null, BadgeCenter, BadgeSize / 2, BadgeSize / 2);
+                /*switch (IconStyle)
+                {
+                    case ProfileIconStyle.CircleOverlay:
+                        Context.DrawEllipse(BadgeColor, null, BadgeCenter, BadgeSize, BadgeSize);
+                        break;
+                    case ProfileIconStyle.Flat:
+                        Context.DrawRectangle(BadgeColor, null, new Rect(0, 0, Size, Size));
+                        break;
+                    case ProfileIconStyle.Square:
+                        Context.DrawRectangle(BadgeColor, null, BadgeRect);
+                        break;
+                    default:
+                        Context.DrawEllipse(BadgeColor, null, BadgeCenter, BadgeSize / 2, BadgeSize / 2);
+                        break;
+                }*/
+
+                FormattedText FormattedText = new FormattedText(
+                    Initial,
+                    CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface("Segoe UI Bold"),
+                    BadgeSize / 1.25,
+                    GetContrastBrush(BadgeColor.Color),
+                    1.25
+                );
+
+                /*Point Location = IconStyle switch
+                {
+                    ProfileIconStyle.Flat => new Point((Size - FormattedText.Width) / 2, (Size - FormattedText.Height) / 2),
+                    ProfileIconStyle.CircleOverlay => new Point((Size - FormattedText.Width) / 2, (Size - FormattedText.Height) / 2),
+                    _ => new Point(BadgeRect.X + (BadgeSize - FormattedText.Width) / 2, BadgeRect.Y + (BadgeSize - FormattedText.Height) / 2)
+                };
+                Context.DrawText(FormattedText, Location);*/
+
+                Point Location = new Point(BadgeRect.X + (BadgeSize - FormattedText.Width) / 2, BadgeRect.Y + (BadgeSize - FormattedText.Height) / 2);
+                Context.DrawText(FormattedText, Location);
+            }
+
+            RenderTargetBitmap Bitmap = new RenderTargetBitmap(Size, Size, 96, 96, PixelFormats.Pbgra32);
+            Bitmap.Render(Visual);
+            if (Bitmap.CanFreeze)
+                Bitmap.Freeze();
+            return Bitmap;
+        }
+
+        public async Task<BitmapImage> SetIcon(string IconUrl, string Url = "", bool IsPrivate = false)
+        {
+            if (Utils.GetFileExtension(Url) != ".pdf")
             {
                 if (Utils.IsHttpScheme(IconUrl))
                 {
@@ -2162,9 +3671,9 @@ Inner Exception: ```{7} ```";
                             return Bitmap;
                         }
                         else
-                            return TabIcon;
+                            return IsPrivate ? PrivateIcon : TabIcon;
                     }
-                    catch { return TabIcon; }
+                    catch { return IsPrivate ? PrivateIcon : TabIcon; }
                 }
                 else if (IconUrl.StartsWith("data:image/", StringComparison.Ordinal))
                     return Utils.ConvertBase64ToBitmapImage(IconUrl);
@@ -2174,7 +3683,7 @@ Inner Exception: ```{7} ```";
                     return HistoryTabIcon;
                 else if (Url.StartsWith("slbr://downloads", StringComparison.Ordinal))
                     return DownloadsTabIcon;
-                return TabIcon;
+                return IsPrivate ? PrivateIcon : TabIcon;
             }
             else
                 return PDFTabIcon;
@@ -2194,11 +3703,52 @@ Inner Exception: ```{7} ```";
         }
 
         public bool GoogleSafeBrowsing;
+        public bool MobileView;
 
         public void SetGoogleSafeBrowsing(bool Toggle)
         {
             GoogleSafeBrowsing = Toggle;
             GlobalSave.Set("GoogleSafeBrowsing", Toggle);
+        }
+
+        public void SetMobileView(bool Toggle)
+        {
+            UserAgent = Toggle ? UserAgentGenerator.BuildMobileUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}") : UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}");
+            MobileView = Toggle;
+            UserAgentData = new UserAgentMetadata
+            {
+                Brands = new List<UserAgentBrandVersion>
+                    {
+                        new UserAgentBrandVersion
+                        {
+                            Brand = "SLBr",
+                            Version = ReleaseVersion.Split('.')[0]
+                        },
+                        new UserAgentBrandVersion
+                        {
+                            Brand = "Chromium",
+                            Version = Cef.ChromiumVersion.Split('.')[0]
+                        }
+                    },
+                Architecture = Toggle ? "arm" : UserAgentGenerator.GetCPUArchitecture(),
+                Model = "",
+                Platform = Toggle ? "Android" : "Windows",
+                PlatformVersion = Toggle ? "10" : UserAgentGenerator.GetPlatformVersion(),//https://textslashplain.com/2021/09/21/determining-os-platform-version/
+                FullVersion = Cef.ChromiumVersion,
+                Mobile = Toggle
+            };
+            GlobalSave.Set("MobileView", Toggle);
+            if (!bool.Parse(GlobalSave.Get("BlockFingerprint")))
+            {
+                foreach (MainWindow _Window in AllWindows)
+                {
+                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                    {
+                        if (BrowserView.Chromium != null && BrowserView.Chromium.IsBrowserInitialized)
+                            BrowserView.Chromium.GetDevToolsClient().Emulation.SetUserAgentOverrideAsync(UserAgent, null, null, UserAgentData);
+                    }
+                }
+            }
         }
 
         public void SetDimUnloadedIcon(bool Toggle)
@@ -2207,11 +3757,10 @@ Inner Exception: ```{7} ```";
             foreach (MainWindow _Window in AllWindows)
                 _Window.SetDimUnloadedIcon(Toggle);
         }
-        public void SetAppearance(Theme _Theme, string TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowAIButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
+        public void SetAppearance(Theme _Theme, int TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
         {
             GlobalSave.Set("TabAlignment", TabAlignment);
 
-            GlobalSave.Set("AIButton", AllowAIButton);
             GlobalSave.Set("TranslateButton", AllowTranslateButton);
             GlobalSave.Set("HomeButton", AllowHomeButton);
             GlobalSave.Set("ReaderButton", AllowReaderModeButton);
@@ -2279,6 +3828,29 @@ Inner Exception: ```{7} ```";
                     bitmapImage.Freeze();
 
                 PDFTabIcon = bitmapImage;
+            }
+
+            textBlock.Text = "\uE727";
+            renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            textBlock.Measure(new Size(IconSize, IconSize));
+            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            renderBitmap.Render(textBlock);
+            encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
+            using (MemoryStream stream = new MemoryStream())
+            {
+                encoder.Save(stream);
+                stream.Seek(0, SeekOrigin.Begin);
+
+                BitmapImage bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.StreamSource = stream;
+                bitmapImage.EndInit();
+                if (bitmapImage.CanFreeze)
+                    bitmapImage.Freeze();
+
+                PrivateIcon = bitmapImage;
             }
 
             textBlock.Text = "\uE713";
@@ -2375,7 +3947,7 @@ Inner Exception: ```{7} ```";
             }
 
             foreach (MainWindow _Window in AllWindows)
-                _Window.SetAppearance(_Theme, TabAlignment, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                _Window.SetAppearance(_Theme, TabAlignment, AllowHomeButton, AllowTranslateButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
         }
     }
 
@@ -2443,9 +4015,7 @@ Inner Exception: ```{7} ```";
         ReaderMode = 17,
 
         //SwitchBrowser = 11,
-
-        AIChat = 20,
-        AIChatFeature = 21,
+        
         CloseSideBar = 22,
         NewsFeed = 23,
 
@@ -2522,6 +4092,34 @@ Inner Exception: ```{7} ```";
         private string DTooltip { get; set; }
         private bool DToggle { get; set; }
     }
+
+    /*public struct CdnEntry
+    {
+        public readonly string Prefix;
+        public readonly string Suffix;
+        public readonly string LocalPath;
+
+        public CdnEntry(string _Prefix, string _Suffix, string _LocalPath)
+        {
+            Prefix = _Prefix;
+            Suffix = _Suffix;
+            LocalPath = _LocalPath;
+        }
+
+        public bool TryMatch(string Url, out string? ResolvedPath)
+        {
+            ResolvedPath = null;
+            if (!Url.StartsWith(Prefix, StringComparison.Ordinal)) return false;
+            if (!Url.EndsWith(Suffix, StringComparison.Ordinal)) return false;
+            int VersionStart = Prefix.Length;
+            int VersionEnd = Url.Length - Suffix.Length;
+            if (VersionEnd <= VersionStart) return false;
+
+            string Version = Url.Substring(VersionStart, VersionEnd - VersionStart);
+            ResolvedPath = string.Format(LocalPath, Version);
+            return true;
+        }
+    }*/
 
     public static class Scripts
     {
@@ -2674,14 +4272,14 @@ HeaderElement.textContent=HeaderElement.textContent.replace('Index of ','');
 document.getElementById('nameColumnHeader').setAttribute('style',""text-align:left;padding:7.5px;"");
 document.getElementById('sizeColumnHeader').setAttribute('style',""text-align:center;padding:7.5px;"");
 document.getElementById('dateColumnHeader').setAttribute('style',""text-align:center;padding:7.5px;"");
-var style=document.createElement('style');
-style.type='text/css';
-style.innerHTML=`@media (prefers-color-scheme:light){a{color:black;}tr:nth-child(even){background-color: gainsboro;}#theader{background-color:gainsboro;}}
+var fstyle=document.createElement('style');
+fstyle.type='text/css';
+fstyle.innerHTML=`@media (prefers-color-scheme:light){a{color:black;}tr:nth-child(even){background-color: gainsboro;}#theader{background-color:gainsboro;}}
 @media (prefers-color-scheme:dark){a{color:white;}tr:nth-child(even){background-color:#202225;}#theader{background-color:#202225;}}
 td:first-child,th:first-child{border-radius:5px 0 0 5px;}
 td:last-child,th:last-child{border-radius:0 5px 5px 0;}
 table{width:100%;}`;
-document.body.appendChild(style);
+document.body.appendChild(fstyle);
 const ParentDir=document.getElementById('parentDirLinkBox');
 if (ParentDir)
 {
@@ -2761,31 +4359,98 @@ for (const button of document.querySelectorAll(buttonQueries.join(','))){
 }
 scanButton();
 new MutationObserver(scanButton).observe(document.body,{attributes:true,childList:true,subtree:true});";
-        public const string YouTubeSkipAdScript = @"setInterval(()=>{
-    const video=document.querySelector(""div.ad-showing > div.html5-video-container > video"");
-    if (video){
-        video.currentTime=video.duration;
-        setTimeout(()=>{for(const adCloseOverlay of document.querySelectorAll("".ytp-ad-overlay-close-container"")){adCloseOverlay.click();}for (const skipButton of document.querySelectorAll("".ytp-ad-skip-button-modern"")){skipButton.click();}},20);
-    }
-    for(const overlayAd of document.querySelectorAll("".ytp-ad-overlay-slot"")){overlayAd.style.visibility = ""hidden"";}
-},250);
-setInterval(()=>{
-    const modalOverlay=document.querySelector(""tp-yt-iron-overlay-backdrop"");
-    document.body.style.setProperty('overflow-y','auto','important');
-    if (modalOverlay){modalOverlay.removeAttribute(""opened"");modalOverlay.remove();}
-    const popup=document.querySelector("".style-scope ytd-enforcement-message-view-model"");
-    if (popup){
-        const popupButton=document.getElementById(""dismiss-button"");
-        if(popupButton)popupButton.click();
-        popup.remove();
-        setTimeout(() => {if(video.paused)video.play();},500);
-    }
-},1000);";
-        public const string YouTubeHideAdScript = "var style=document.createElement('style');style.textContent=`ytd-action-companion-ad-renderer,ytd-display-ad-renderer,ytd-video-masthead-ad-advertiser-info-renderer,ytd-video-masthead-ad-primary-video-renderer,ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer,yt-about-this-ad-renderer,yt-mealbar-promo-renderer,ytd-statement-banner-renderer,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-banner-promo-renderer-backgroundstatement-banner-style-type-compact,.ytd-video-masthead-ad-v3-renderer,div#root.style-scope.ytd-display-ad-renderer.yt-simple-endpoint,div#sparkles-container.style-scope.ytd-promoted-sparkles-web-renderer,div#main-container.style-scope.ytd-promoted-video-renderer,div#player-ads.style-scope.ytd-watch-flexy,ad-slot-renderer,ytm-promoted-sparkles-web-renderer,masthead-ad,tp-yt-iron-overlay-backdrop,#masthead-ad{display:none !important;}`;document.head.appendChild(style);";
-        public const string ScrollCSS = "var style=document.createElement('style');style.textContent=`::-webkit-scrollbar {width:15px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color: whitesmoke;}::-webkit-scrollbar-thumb {height:56px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color: gainsboro;transition:background-color 0.5s;}::-webkit-scrollbar-thumb:hover{background-color:gray;transition:background-color 0.5s;}::-webkit-scrollbar-corner{background-color:transparent;}`;document.head.append(style);";
+        public const string YouTubeSkipAdScript = @"(function() {
+    let lastSkipTime = 0;
+    const adObserver = new MutationObserver(() => {
+        const now = Date.now();
+        const skipButtons = document.querySelectorAll('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
+        for (const btn of skipButtons) {
+            btn.click();
+        }
+        if (now - lastSkipTime < 2000) return;
+        const adVideo = document.querySelector('div.ad-showing video');
+        if (adVideo && adVideo.duration && adVideo.currentTime < adVideo.duration - 0.5) {
+            adVideo.currentTime = adVideo.duration;
+            lastSkipTime = now;
+        }
+    });
+
+    const ABinterval = setInterval(() => {
+        if (document.readyState === ""complete"" && document.body) {
+            adObserver.observe(document.body, { childList: true, subtree: true });
+            clearInterval(ABinterval);
+        }
+    }, 500);
+})();";
+        //public const string YouTubeHideAdScript = "var style=document.createElement('style');style.textContent=`ytd-action-companion-ad-renderer,ytd-display-ad-renderer,ytd-video-masthead-ad-advertiser-info-renderer,ytd-video-masthead-ad-primary-video-renderer,ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer,yt-about-this-ad-renderer,yt-mealbar-promo-renderer,ytd-statement-banner-renderer,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-banner-promo-renderer-backgroundstatement-banner-style-type-compact,.ytd-video-masthead-ad-v3-renderer,div#root.style-scope.ytd-display-ad-renderer.yt-simple-endpoint,div#sparkles-container.style-scope.ytd-promoted-sparkles-web-renderer,div#main-container.style-scope.ytd-promoted-video-renderer,div#player-ads.style-scope.ytd-watch-flexy,ad-slot-renderer,ytm-promoted-sparkles-web-renderer,masthead-ad,tp-yt-iron-overlay-backdrop,#masthead-ad{display:none !important;}`;document.head.appendChild(style);";
+        public const string ScrollCSS = "var scstyle=document.createElement('style');scstyle.textContent=`::-webkit-scrollbar {width:15px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color: whitesmoke;}::-webkit-scrollbar-thumb {height:56px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color: gainsboro;transition:background-color 0.5s;}::-webkit-scrollbar-thumb:hover{background-color:gray;transition:background-color 0.5s;}::-webkit-scrollbar-corner{background-color:transparent;}`;document.head.append(scstyle);";
         public const string ScrollScript = @"!function(){var s,i,c,a,o={frameRate:150,animationTime:400,stepSize:100,pulseAlgorithm:!0,pulseScale:4,pulseNormalize:1,accelerationDelta:50,accelerationMax:3,keyboardSupport:!0,arrowScroll:50,fixedBackground:!0,excluded:""""},p=o,u=!1,d=!1,l={x:0,y:0},f=!1,m=document.documentElement,h=[],v={left:37,up:38,right:39,down:40,spacebar:32,pageup:33,pagedown:34,end:35,home:36},y={37:1,38:1,39:1,40:1};function b(){if(!f&&document.body){f=!0;var e=document.body,t=document.documentElement,o=window.innerHeight,n=e.scrollHeight;if(m=0<=document.compatMode.indexOf(""CSS"")?t:e,s=e,p.keyboardSupport&&Y(""keydown"",D),top!=self)d=!0;else if(o<n&&(e.offsetHeight<=o||t.offsetHeight<=o)){var r,a=document.createElement(""div"");a.style.cssText=""position:absolute; z-index:-10000; top:0; left:0; right:0; height:""+m.scrollHeight+""px"",document.body.appendChild(a),c=function(){r||(r=setTimeout(function(){u||(a.style.height=""0"",a.style.height=m.scrollHeight+""px"",r=null)},500))},setTimeout(c,10),Y(""resize"",c);if((i=new R(c)).observe(e,{attributes:!0,childList:!0,characterData:!1}),m.offsetHeight<=o){var l=document.createElement(""div"");l.style.clear=""both"",e.appendChild(l)}}p.fixedBackground||u||(e.style.backgroundAttachment=""scroll"",t.style.backgroundAttachment=""scroll"")}}var g=[],S=!1,x=Date.now();function k(d,f,m){var e,t;if(e=0<(e=f)?1:-1,t=0<(t=m)?1:-1,(l.x!==e||l.y!==t)&&(l.x=e,l.y=t,g=[],x=0),1!=p.accelerationMax){var o=Date.now()-x;if(o<p.accelerationDelta){var n=(1+50/o)/2;1<n&&(n=Math.min(n,p.accelerationMax),f*=n,m*=n)}x=Date.now()}if(g.push({x:f,y:m,lastX:f<0?.99:-.99,lastY:m<0?.99:-.99,start:Date.now()}),!S){var r=q(),h=d===r||d===document.body;null==d.$scrollBehavior&&function(e){var t=M(e);if(null==B[t]){var o=getComputedStyle(e,"""")[""scroll-behavior""];B[t]=""smooth""==o}return B[t]}(d)&&(d.$scrollBehavior=d.style.scrollBehavior,d.style.scrollBehavior=""auto"");var w=function(e){for(var t=Date.now(),o=0,n=0,r=0;r<g.length;r++){var a=g[r],l=t-a.start,i=l>=p.animationTime,c=i?1:l/p.animationTime;p.pulseAlgorithm&&(c=F(c));var s=a.x*c-a.lastX>>0,u=a.y*c-a.lastY>>0;o+=s,n+=u,a.lastX+=s,a.lastY+=u,i&&(g.splice(r,1),r--)}h?window.scrollBy(o,n):(o&&(d.scrollLeft+=o),n&&(d.scrollTop+=n)),f||m||(g=[]),g.length?j(w,d,1e3/p.frameRate+1):(S=!1,null!=d.$scrollBehavior&&(d.style.scrollBehavior=d.$scrollBehavior,d.$scrollBehavior=null))};j(w,d,0),S=!0}}function e(e){f||b();var t=e.target;if(e.defaultPrevented||e.ctrlKey)return!0;if(N(s,""embed"")||N(t,""embed"")&&/\.pdf/i.test(t.src)||N(s,""object"")||t.shadowRoot)return!0;var o=-e.wheelDeltaX||e.deltaX||0,n=-e.wheelDeltaY||e.deltaY||0;o||n||(n=-e.wheelDelta||0),1===e.deltaMode&&(o*=40,n*=40);var r=z(t);return r?!!function(e){if(!e)return;h.length||(h=[e,e,e]);e=Math.abs(e),h.push(e),h.shift(),clearTimeout(a),a=setTimeout(function(){try{localStorage.SS_deltaBuffer=h.join("","")}catch(e){}},1e3);var t=120<e&&P(e);return!P(120)&&!P(100)&&!t}(n)||(1.2<Math.abs(o)&&(o*=p.stepSize/120),1.2<Math.abs(n)&&(n*=p.stepSize/120),k(r,o,n),e.preventDefault(),void C()):!d||!W||(Object.defineProperty(e,""target"",{value:window.frameElement}),parent.wheel(e))}function D(e){var t=e.target,o=e.ctrlKey||e.altKey||e.metaKey||e.shiftKey&&e.keyCode!==v.spacebar;document.body.contains(s)||(s=document.activeElement);var n=/^(button|submit|radio|checkbox|file|color|image)$/i;if(e.defaultPrevented||/^(textarea|select|embed|object)$/i.test(t.nodeName)||N(t,""input"")&&!n.test(t.type)||N(s,""video"")||function(e){var t=e.target,o=!1;if(-1!=document.URL.indexOf(""www.youtube.com/watch""))do{if(o=t.classList&&t.classList.contains(""html5-video-controls""))break}while(t=t.parentNode);return o}(e)||t.isContentEditable||o)return!0;if((N(t,""button"")||N(t,""input"")&&n.test(t.type))&&e.keyCode===v.spacebar)return!0;if(N(t,""input"")&&""radio""==t.type&&y[e.keyCode])return!0;var r=0,a=0,l=z(s);if(!l)return!d||!W||parent.keydown(e);var i=l.clientHeight;switch(l==document.body&&(i=window.innerHeight),e.keyCode){case v.up:a=-p.arrowScroll;break;case v.down:a=p.arrowScroll;break;case v.spacebar:a=-(e.shiftKey?1:-1)*i*.9;break;case v.pageup:a=.9*-i;break;case v.pagedown:a=.9*i;break;case v.home:l==document.body&&document.scrollingElement&&(l=document.scrollingElement),a=-l.scrollTop;break;case v.end:var c=l.scrollHeight-l.scrollTop-i;a=0<c?c+10:0;break;case v.left:r=-p.arrowScroll;break;case v.right:r=p.arrowScroll;break;default:return!0}k(l,r,a),e.preventDefault(),C()}function t(e){s=e.target}var n,r,M=(n=0,function(e){return e.uniqueID||(e.uniqueID=n++)}),E={},T={},B={};function C(){clearTimeout(r),r=setInterval(function(){E=T=B={}},1e3)}function H(e,t,o){for(var n=o?E:T,r=e.length;r--;)n[M(e[r])]=t;return t}function z(e){var t=[],o=document.body,n=m.scrollHeight;do{var r=(!1?E:T)[M(e)];if(r)return H(t,r);if(t.push(e),n===e.scrollHeight){var a=O(m)&&O(o)||X(m);if(d&&L(m)||!d&&a)return H(t,q())}else if(L(e)&&X(e))return H(t,e)}while(e=e.parentElement)}function L(e){return e.clientHeight+10<e.scrollHeight}function O(e){return""hidden""!==getComputedStyle(e,"""").getPropertyValue(""overflow-y"")}function X(e){var t=getComputedStyle(e,"""").getPropertyValue(""overflow-y"");return""scroll""===t||""auto""===t}function Y(e,t,o){window.addEventListener(e,t,o||!1)}function A(e,t,o){window.removeEventListener(e,t,o||!1)}function N(e,t){return e&&(e.nodeName||"""").toLowerCase()===t.toLowerCase()}if(window.localStorage&&localStorage.SS_deltaBuffer)try{h=localStorage.SS_deltaBuffer.split("","")}catch(e){}function K(e,t){return Math.floor(e/t)==e/t}function P(e){return K(h[0],e)&&K(h[1],e)&&K(h[2],e)}var $,j=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||function(e,t,o){window.setTimeout(e,o||1e3/60)},R=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver,q=($=document.scrollingElement,function(){if(!$){var e=document.createElement(""div"");e.style.cssText=""height:10000px;width:1px;"",document.body.appendChild(e);var t=document.body.scrollTop;document.documentElement.scrollTop,window.scrollBy(0,3),$=document.body.scrollTop!=t?document.body:document.documentElement,window.scrollBy(0,-3),document.body.removeChild(e)}return $});function V(e){var t;return((e*=p.pulseScale)<1?e-(1-Math.exp(-e)):(e-=1,(t=Math.exp(-1))+(1-Math.exp(-e))*(1-t)))*p.pulseNormalize}function F(e){return 1<=e?1:e<=0?0:(1==p.pulseNormalize&&(p.pulseNormalize/=V(1)),V(e))}
 try{window.addEventListener(""test"",null,Object.defineProperty({},""passive"",{get:function(){ee=!0}}))}catch(e){}var te=!!ee&&{passive:!1},oe=""onwheel""in document.createElement(""div"")?""wheel"":""mousewheel"";function ne(e){for(var t in e)o.hasOwnProperty(t)&&(p[t]=e[t])}oe&&(Y(oe,e,te),Y(""mousedown"",t),Y(""load"",b)),ne.destroy=function(){i&&i.disconnect(),A(oe,e),A(""mousedown"",t),A(""keydown"",D),A(""resize"",c),A(""load"",b)},window.SmoothScrollOptions&&ne(window.SmoothScrollOptions),""function""==typeof define&&define.amd?define(function(){return ne}):""object""==typeof exports?module.exports=ne:window.SmoothScroll=ne}();
 SmoothScroll({animationTime:400,stepSize:100,accelerationDelta:50,accelerationMax:3,keyboardSupport:true,arrowScroll:50,pulseAlgorithm:true,pulseScale:4,pulseNormalize:1,touchpadSupport:false,fixedBackground:true,excluded:''});";
         public const string ExtensionScript = "var rect=document.body.getBoundingClientRect();engine.postMessage({width:rect.width+16,height:rect.height+40});";
+        public const string SharpenImageScript = "var spstyle=document.createElement('style');spstyle.textContent=`img,video{transition:filter 0.3s ease-in-out;filter: contrast(1.2) brightness(1.1) saturate(1.2) !important;}`;document.head.appendChild(spstyle);";
+
+        public const string OpenSearchScript = @"(function(){let link=document.querySelector('link[rel=""search""][type=""application/opensearchdescription+xml""]');if (link){engine.postMessage({type:'OpenSearch',url:link.href,name:link.title||''});}})();";
+
+        public const string ShiftContextMenuScript = @"document.addEventListener('contextmenu',function(e){if (e.shiftKey){e.stopPropagation();}},true);";
+        public const string AllowInteractionScript = @"document.addEventListener(""DOMContentLoaded"",function(){[""contextmenu"",""selectstart"",""copy"",""cut"",""paste"",""mousedown""].forEach(t=>{document.body.addEventListener(t,function(t){t.stopPropagation()},!0)});let t=document.createElement(""style"");t.textContent=""*{user-select:text !important;-webkit-user-select:text !important;pointer-events:auto !important;}"",document.head.appendChild(t)});";
+        public const string ForceContextMenuScript = @"document.querySelectorAll('[oncontextmenu]').forEach(el=>{el.removeAttribute('oncontextmenu');});
+let atcall=document.getElementsByTagName(""*"");
+for (let i=0;i<atcall.length;i++){if (typeof atcall[i].oncontextmenu==='function'){atcall[i].oncontextmenu = null;}}
+const atcAddEvent = EventTarget.prototype.addEventListener;
+EventTarget.prototype.addEventListener = function(type,listener,options) {
+    if (type==='contextmenu'){
+        const wrapped=function(e){const result=listener(e);e.stopImmediatePropagation();return result;};
+        return atcAddEvent.call(this,type,wrapped,options);
+    }
+    return atcAddEvent.call(this,type,listener,options);
+};
+window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true);";
+        public const string RemoveFilterCSS = "var atrbstyle=document.createElement(\"style\");atrbstyle.textContent=\"*{filter:none !important;backdrop-filter:none !important;}\",document.head.append(atrbstyle);";
+        public const string RemoveOverlayCSS = "!function(){function e(){function e(e){let o=getComputedStyle(e);return(parseInt(o.zIndex)||0)>=1e3&&(\"fixed\"===o.position||\"absolute\"===o.position)&&e.offsetHeight>200&&e.offsetWidth>200}document.querySelectorAll(\"*\").forEach(o=>{e(o)&&o.remove()});let o=new MutationObserver(o=>{for(let t of o)t.addedNodes.forEach(o=>{1===o.nodeType&&e(o)&&o.remove()})});o.observe(document.body,{childList:!0,subtree:!0})}document.body?e():window.addEventListener(\"DOMContentLoaded\",e)}();";
+
+        public const string LateAntiDevtools = @"(function(){'use strict';
+    function suspiciousCallback(callback){try{const code=callback.toString();return code.includes('debugger')||code.includes('about:blank')||code.includes('performance.now')||code.includes('console.clear')||code.includes('window.outerHeight')||code.includes('openDevTools');}catch{return false;}}
+    Object.defineProperty(window,'outerWidth',{get:function(){return window.innerWidth;}});
+    Object.defineProperty(window,'outerHeight',{get:function(){return window.innerHeight;}});
+
+    const originalSetInterval=window.setInterval;
+    window.setInterval=function(callback,delay) {
+        if (typeof callback==='function'&&typeof delay==='number'&&suspiciousCallback(callback)) {
+            return originalSetInterval(()=>{},delay);
+        }
+        return originalSetInterval.apply(this,arguments);
+    };
+    const originalSetTimeout=window.setTimeout;
+    window.setTimeout=function(callback,delay) {
+        if (typeof callback==='function'&&typeof delay==='number'&&suspiciousCallback(callback)) {
+            return originalSetTimeout(()=>{},delay);
+        }
+        return originalSetTimeout.apply(this,arguments);
+    };
+
+    const originalAddEventListener=window.addEventListener;
+    window.addEventListener=function(type,listener,options){if (type==='resize'){return;}return originalAddEventListener.apply(this,arguments);};
+    window.onresize=()=>{};
+
+    const originalConsole=window.console;
+    window.console={
+        ...originalConsole,
+        log:function(){},
+        /*warn:function(){},
+        error:function(){},*/
+        table:function(){},
+        clear:function(){}
+    };
+
+    const originalRegExpToString=RegExp.prototype.toString;
+    RegExp.prototype.toString=function(){try{return originalRegExpToString.call(this);}catch{return '';}};
+    const originalDefineProperty=Object.defineProperty;
+    Object.defineProperty=function(obj,prop,descriptor) {
+        try{if (prop==='id'&&obj instanceof HTMLElement&&descriptor.get){return originalDefineProperty(obj,prop,{value:'bypassed-id'});}}catch{}
+        return originalDefineProperty.apply(this,arguments);
+    };
+})();
+";
     }
 }

@@ -1,5 +1,6 @@
 ﻿using CefSharp;
 using SLBr.Controls;
+using System.Windows;
 
 namespace SLBr.Handlers
 {
@@ -7,7 +8,11 @@ namespace SLBr.Handlers
     {
         public bool OnBeforeUnloadDialog(IWebBrowser chromiumWebBrowser, IBrowser browser, string messageText, bool isReload, IJsDialogCallback callback)
         {
-            return false;
+            InformationDialogWindow InfoWindow = new InformationDialogWindow("Confirmation", isReload ? "Reload site?" : "Leave site?", "Changes made may not be saved.", "", isReload ? "Reload" : "Leave", "Cancel");
+            InfoWindow.Topmost = true;
+            bool Result = InfoWindow.ShowDialog() == true;
+            callback.Continue(Result);
+            return true;
         }
 
         public void OnDialogClosed(IWebBrowser chromiumWebBrowser, IBrowser browser)
@@ -18,9 +23,9 @@ namespace SLBr.Handlers
         {
             if (dialogType == CefJsDialogType.Alert)
             {
-                var infoWindow = new InformationDialogWindow("Alert", $"{Utils.Host(originUrl)}", messageText);
-                infoWindow.Topmost = true;
-                if (infoWindow.ShowDialog() == true)
+                InformationDialogWindow InfoWindow = new InformationDialogWindow("Alert", $"{Utils.Host(originUrl)}", messageText);
+                InfoWindow.Topmost = true;
+                if (InfoWindow.ShowDialog() == true)
                 {
                     callback.Continue(true);
                     return true;
@@ -28,9 +33,9 @@ namespace SLBr.Handlers
             }
             else if (dialogType == CefJsDialogType.Confirm)
             {
-                var infoWindow = new InformationDialogWindow("Confirmation", $"{Utils.Host(originUrl)}", messageText, "OK", "Cancel");
-                infoWindow.Topmost = true;
-                if (infoWindow.ShowDialog() == true)
+                InformationDialogWindow InfoWindow = new InformationDialogWindow("Confirmation", $"{Utils.Host(originUrl)}", messageText, "OK", "Cancel");
+                InfoWindow.Topmost = true;
+                if (InfoWindow.ShowDialog() == true)
                 {
                     callback.Continue(true);
                     return true;
@@ -38,36 +43,28 @@ namespace SLBr.Handlers
             }
             else if (dialogType == CefJsDialogType.Prompt)
             {
-                var infoWindow = new PromptDialogWindow("Prompt", $"{Utils.Host(originUrl)}", messageText, defaultPromptText);
-                infoWindow.Topmost = true;
-                if (infoWindow.ShowDialog() == true)
+                PromptDialogWindow InfoWindow = new PromptDialogWindow("Prompt", $"{Utils.Host(originUrl)}", messageText, defaultPromptText);
+                InfoWindow.Topmost = true;
+                if (InfoWindow.ShowDialog() == true)
                 {
-                    callback.Continue(true, infoWindow.UserInput);
+                    callback.Continue(true, InfoWindow.UserInput);
                     return true;
                 }
             }
-            /*var _InfoWindow = null;
-            if (dialogType == CefJsDialogType.Alert)
-                _InfoWindow = new InformationDialogWindow("Alert", $"{Utils.Host(originUrl)}", messageText);
-            else if (dialogType == CefJsDialogType.Confirm)
-                _InfoWindow = new InformationDialogWindow("Confirmation", $"{Utils.Host(originUrl)}", messageText, "OK", "Cancel");
-            else if (dialogType == CefJsDialogType.Prompt)
-                _InfoWindow = new PromptDialogWindow("Prompt", $"{Utils.Host(originUrl)}", messageText, defaultPromptText);
-            _InfoWindow.Topmost = true;
-            if (_InfoWindow.ShowDialog() == true)
-            {
-                if (dialogType == CefJsDialogType.Prompt)
-                    callback.Continue(true, _InfoWindow.UserInput);
-                else
-                    callback.Continue(true);
-                return true;
-            }*/
             suppressMessage = true;
             return false;
         }
 
         public void OnResetDialogState(IWebBrowser chromiumWebBrowser, IBrowser browser)
         {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (Window Window in Application.Current.Windows)
+                {
+                    if (Window is InformationDialogWindow || Window is PromptDialogWindow)
+                        Window.Close();
+                }
+            });
         }
     }
 }

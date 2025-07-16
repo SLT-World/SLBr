@@ -52,7 +52,7 @@ namespace SLBr.Pages
                 }
                 else
                 {
-                    Url = $"http://news.google.com/rss";//?hl=en-US
+                    Url = $"http://news.google.com/rss";
                     BackButton.Visibility = Visibility.Collapsed;
                 }
                 NewsXML.Source = new Uri(Url);
@@ -67,7 +67,7 @@ namespace SLBr.Pages
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            NewsXML.Source = new Uri($"http://news.google.com/rss");//?hl=en-US
+            NewsXML.Source = new Uri($"http://news.google.com/rss");
             SearchTextBox.Text = "";
             Keyboard.ClearFocus();
             BackButton.Visibility = Visibility.Collapsed;
@@ -77,7 +77,7 @@ namespace SLBr.Pages
         {
             var Target = (FrameworkElement)sender;
             string _Tooltip = Target.ToolTip.ToString();
-            NewsXML.Source = new Uri($"http://news.google.com/rss/search?q={_Tooltip}");//&hl=en-US
+            NewsXML.Source = new Uri($"http://news.google.com/rss/search?q={_Tooltip}");
             BackButton.Visibility = Visibility.Visible;
         }
     }

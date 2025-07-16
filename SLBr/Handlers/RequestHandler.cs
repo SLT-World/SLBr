@@ -3,12 +3,13 @@ using SLBr.Controls;
 using SLBr.Pages;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Windows;
 
 namespace SLBr.Handlers
 {
 	public class RequestHandler : IRequestHandler
 	{
-		Browser BrowserView;
+		public Browser BrowserView;
 
         public RequestHandler(Browser _BrowserView = null)
 		{
@@ -27,6 +28,16 @@ namespace SLBr.Handlers
 		{
 			return Connection_Budget_Used > 0;
 		}*/
+
+        public void ResetBudgets()
+        {
+            Image_Budget = 2 * 1024 * 1024;
+            Stylesheet_Budget = 400 * 1024;
+            Script_Budget = 500 * 1024;
+            Font_Budget = 300 * 1024;
+            Frame_Budget = 5;
+            //Connection_Budget = 10;
+        }
 
         public bool IsOverBudget(ResourceType _ResourceType)
 		{
@@ -121,16 +132,6 @@ namespace SLBr.Handlers
             }
         }
 
-        public void ResetBudgets()
-        {
-            Image_Budget = 2 * 1024 * 1024;
-            Stylesheet_Budget = 400 * 1024;
-            Script_Budget = 500 * 1024;
-            Font_Budget = 300 * 1024;
-            Frame_Budget = 5;
-            //Connection_Budget = 10;
-        }
-
         public bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
         {
             /*CredentialsDialogWindow _CredentialsDialogWindow;
@@ -179,20 +180,32 @@ namespace SLBr.Handlers
                 }
             }
             if (Utils.IsHttpScheme(request.Url))
-			{
-				if (App.Instance.GoogleSafeBrowsing)
-				{
-					ResourceRequestHandlerFactory _ResourceRequestHandlerFactory = (ResourceRequestHandlerFactory)chromiumWebBrowser.ResourceRequestHandlerFactory;
-                    if (!_ResourceRequestHandlerFactory.Handlers.ContainsKey(request.Url))
+            {
+                if (!BrowserView.Private && frame.IsMain) //IsMain disables iframe SafeBrowsing
+                {
+                    /*if (App.Instance.AMP)
                     {
-                        SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(App.Instance._SafeBrowsing.Response(request.Url));
-                        if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software)
-                            _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Malware_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
-                        else if (_ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
-                            _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Deception_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                        string? AMPUrl = Utils.GetAMPUrl(request.Url);
+                        if (!string.IsNullOrEmpty(AMPUrl))
+                        {
+                            frame.LoadUrl(AMPUrl);
+                            return true;
+                        }
+                    }*/
+                    if (App.Instance.GoogleSafeBrowsing && Utils.GetFileExtension(request.Url) != ".pdf")
+                    {
+                        ResourceRequestHandlerFactory _ResourceRequestHandlerFactory = (ResourceRequestHandlerFactory)chromiumWebBrowser.ResourceRequestHandlerFactory;
+                        if (!_ResourceRequestHandlerFactory.Handlers.ContainsKey(request.Url))
+                        {
+                            SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(App.Instance._SafeBrowsing.Response(request.Url));
+                            if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software)
+                                _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Malware_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                            else if (_ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
+                                _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Deception_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                        }
                     }
-				}
-			}
+                }
+            }
             else if (request.Url.StartsWith("chrome:", StringComparison.Ordinal))
             {
                 ResourceRequestHandlerFactory _ResourceRequestHandlerFactory = (ResourceRequestHandlerFactory)chromiumWebBrowser.ResourceRequestHandlerFactory;
@@ -311,7 +324,7 @@ namespace SLBr.Handlers
                 {
                     App.Current.Dispatcher.Invoke(async () =>
                     {
-                        BrowserView.Tab.Icon = await App.Instance.SetIcon("", chromiumWebBrowser.Address);
+                        BrowserView.Tab.Icon = await App.Instance.SetIcon("", chromiumWebBrowser.Address, BrowserView.Private);
                     });
                 }
                 if (App.Instance.NeverSlowMode)
@@ -330,7 +343,7 @@ namespace SLBr.Handlers
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
-                    App.Instance.CurrentFocusedWindow().NewTab(targetUrl, false, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+                    App.Instance.CurrentFocusedWindow().NewTab(targetUrl, false, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, BrowserView.Private);
 				});
 				return true;
 			}

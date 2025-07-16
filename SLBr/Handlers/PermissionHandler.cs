@@ -1,5 +1,6 @@
 ﻿using CefSharp;
 using SLBr.Controls;
+using System.Windows;
 using Windows.Devices.Geolocation;
 using Windows.UI.Notifications;
 
@@ -13,35 +14,40 @@ namespace SLBr.Handlers
 
         public bool OnRequestMediaAccessPermission(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, string requestingOrigin, MediaAccessPermissionType requestedPermissions, IMediaAccessCallback callback)
         {
-            using (callback)
+            if (callback == null)
+                return false;
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
+                if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
+                {
+                    callback.Dispose();
+                    return;
+                }
                 string Permissions = "";
                 string PermissionIcons = "";
-                foreach (MediaAccessPermissionType option in Enum.GetValues(typeof(MediaAccessPermissionType)))
+                foreach (MediaAccessPermissionType Option in Enum.GetValues(typeof(MediaAccessPermissionType)))
                 {
-                    if (requestedPermissions.HasFlag(option) && option != MediaAccessPermissionType.None)
+                    if (requestedPermissions.HasFlag(Option) && Option != MediaAccessPermissionType.None)
                     {
-                        switch (option)
+                        switch (Option)
                         {
                             case MediaAccessPermissionType.VideoCapture:
-                                Permissions += "Use your camera";
-                                PermissionIcons += "\xE714";
+                                Permissions += "Use your camera\n";
+                                PermissionIcons += "\xE714\n";
                                 break;
                             case MediaAccessPermissionType.AudioCapture:
-                                Permissions += "Use your microphone";
-                                PermissionIcons += "\xE720";
+                                Permissions += "Use your microphone\n";
+                                PermissionIcons += "\xE720\n";
                                 break;
                             case MediaAccessPermissionType.DesktopVideoCapture:
-                                Permissions += "Share your screen";
-                                PermissionIcons += "\xE7F4";
+                                Permissions += "Share your screen\n";
+                                PermissionIcons += "\xE7F4\n";
                                 break;
                             case MediaAccessPermissionType.DesktopAudioCapture:
-                                Permissions += "Capture desktop audio";
-                                PermissionIcons += "\xE7F3";
+                                Permissions += "Capture desktop audio\n";
+                                PermissionIcons += "\xE7F3\n";
                                 break;
                         }
-                        Permissions += "\n";
-                        PermissionIcons += "\n";
                     }
                 }
 
@@ -49,16 +55,25 @@ namespace SLBr.Handlers
                 PermissionIcons = PermissionIcons.TrimEnd('\n');
                 if (string.IsNullOrEmpty(Permissions))
                     Permissions = requestedPermissions.ToString();
-                var infoWindow = new InformationDialogWindow("Permission", $"Allow {Utils.Host(requestingOrigin)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
-                infoWindow.Topmost = true;
 
-                if (infoWindow.ShowDialog() == true)
+                var InfoWindow = new InformationDialogWindow("Permission", $"Allow {Utils.Host(requestingOrigin)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
+                InfoWindow.Topmost = true;
+
+                bool? Result = InfoWindow.ShowDialog();
+
+                if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
                 {
-                    callback.Continue(requestedPermissions);
-                    return true;
+                    callback.Dispose();
+                    return;
                 }
-                return false;
-            }
+
+                if (Result == true)
+                    callback.Continue(requestedPermissions);
+                else
+                    callback.Cancel();
+                callback.Dispose();
+            }));
+            return true;
         }
 
         //CefSharp's PermissionRequestType enum isn't synced with CEF's
@@ -97,17 +112,24 @@ namespace SLBr.Handlers
 
         public bool OnShowPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, string requestingOrigin, PermissionRequestType requestedPermissions, IPermissionPromptCallback callback)
         {
+            if (callback == null)
+                return false;
             FixedPermissionRequestType _ProperPermissionRequestType = (FixedPermissionRequestType)(int)requestedPermissions;
             //Know your location [Geolocation] https://github.com/cefsharp/CefSharp/discussions/3719
-            using (callback)
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
+                if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
+                {
+                    callback.Dispose();
+                    return;
+                }
                 string Permissions = "";
                 string PermissionIcons = "";
-                foreach (FixedPermissionRequestType option in Enum.GetValues(typeof(FixedPermissionRequestType)))
+                foreach (FixedPermissionRequestType Option in Enum.GetValues(typeof(FixedPermissionRequestType)))
                 {
-                    if (_ProperPermissionRequestType.HasFlag(option) && option != FixedPermissionRequestType.None)
+                    if (_ProperPermissionRequestType.HasFlag(Option) && Option != FixedPermissionRequestType.None)
                     {
-                        switch (option)
+                        switch (Option)
                         {
                             /*case ProperPermissionRequestType.AccessibilityEvents:
                                 Permissions += "Respond to Accessibility Events";
@@ -209,20 +231,30 @@ namespace SLBr.Handlers
                         PermissionIcons += "\n";
                     }
                 }
+
                 Permissions = Permissions.TrimEnd('\n');
                 PermissionIcons = PermissionIcons.TrimEnd('\n');
                 if (string.IsNullOrEmpty(Permissions))
                     Permissions = requestedPermissions.ToString();
-                var infoWindow = new InformationDialogWindow("Permission", $"Allow {Utils.Host(requestingOrigin)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
-                infoWindow.Topmost = true;
 
-                if (infoWindow.ShowDialog() == true)
+                var InfoWindow = new InformationDialogWindow("Permission", $"Allow {Utils.Host(requestingOrigin)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
+                InfoWindow.Topmost = true;
+
+                bool? Result = InfoWindow.ShowDialog();
+
+                if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
                 {
-                    callback.Continue(PermissionRequestResult.Accept);
-                    return true;
+                    callback.Dispose();
+                    return;
                 }
-                return false;
-            }
+
+                if (Result == true)
+                    callback.Continue(PermissionRequestResult.Accept);
+                else
+                    callback.Continue(PermissionRequestResult.Deny);
+                callback.Dispose();
+            }));
+            return true;
         }
     }
 }

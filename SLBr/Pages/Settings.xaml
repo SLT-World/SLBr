@@ -41,9 +41,16 @@
                             <TextBox Margin="0,0,0,10" x:Name="HomepageTextBox" Width="Auto" KeyDown="HomepageTextBox_KeyUp"/>
                             <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Background"/>
                             <DockPanel LastChildFill="True">
-                                <ComboBox x:Name="HomepageBackgroundComboBox" VerticalAlignment="Top" DockPanel.Dock="Left" SelectedIndex="0" Width="100px"/>
+                                <ComboBox x:Name="HomepageBackgroundComboBox" VerticalAlignment="Top" DockPanel.Dock="Left" SelectedIndex="0" Width="100px" SelectionChanged="HomepageBackgroundComboBox_SelectionChanged">
+                                    <ComboBoxItem>Custom</ComboBoxItem>
+                                    <ComboBoxItem>Bing</ComboBoxItem>
+                                    <ComboBoxItem>Picsum</ComboBoxItem>
+                                </ComboBox>
                                 <Grid Margin="5,0,0,0">
-                                    <ComboBox x:Name="BingBackgroundComboBox" SelectedIndex="0" Width="Auto" HorizontalAlignment="Stretch" Visibility="Collapsed"/>
+                                    <ComboBox x:Name="BingBackgroundComboBox" SelectedIndex="0" Width="Auto" HorizontalAlignment="Stretch" Visibility="Collapsed" SelectionChanged="BingBackgroundComboBox_SelectionChanged">
+                                        <ComboBoxItem>Image of the day</ComboBoxItem>
+                                        <ComboBoxItem>Random</ComboBoxItem>
+                                    </ComboBox>
                                     <TextBox x:Name="BackgroundQueryTextBox" KeyUp="BackgroundQueryTextBox_KeyUp" Width="Auto" HorizontalAlignment="Stretch" ToolTip="Query"/>
                                     <TextBox x:Name="BackgroundImageTextBox" KeyUp="BackgroundImageTextBox_KeyUp" Width="Auto" HorizontalAlignment="Stretch" ToolTip="Source" Visibility="Collapsed"/>
                                 </Grid>
@@ -56,13 +63,19 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <CheckBox Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
-                            <CheckBox x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
+                            <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
+                            <CheckBox x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
+                            Browser
+                        </GroupBox.Header>
                         <StackPanel>
                             <CheckBox Margin="0,0,0,10" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
-                            <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
+                            <CheckBox Margin="0,0,0,10" x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
+                            <CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>
+                            <CheckBox x:Name="EnhanceImageCheckBox" Width="Auto" Click="EnhanceImageCheckBox_Click" Content="Enhance images &amp; videos"/>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -186,11 +199,54 @@
                         <StackPanel>
                             <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" Text="Tab alignment"/>
-                                <ComboBox x:Name="TabAlignmentComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <ComboBox x:Name="TabAlignmentComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="TabAlignmentComboBox_SelectionChanged">
+                                    <ComboBoxItem>Horizontal</ComboBoxItem>
+                                    <ComboBoxItem>Vertical</ComboBoxItem>
+                                </ComboBox>
                             </DockPanel>
                             <DockPanel>
                                 <TextBlock VerticalAlignment="Center" Text="Favourites bar"/>
-                                <ComboBox x:Name="FavouritesBarComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <ComboBox x:Name="FavouritesBarComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FavouritesBarComboBox_SelectionChanged">
+                                    <ComboBoxItem>Show automatically</ComboBoxItem>
+                                    <ComboBoxItem>Always show</ComboBoxItem>
+                                    <ComboBoxItem>Never show</ComboBoxItem>
+                                </ComboBox>
+                            </DockPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
+                            Fonts
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <CheckBox x:Name="ExternalFontsCheckBox" Margin="0,0,0,10" Click="ExternalFontsCheckBox_Click" Content="External fonts" Width="Auto"/>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Font size"/>
+                                <Slider x:Name="FontSizeSlider" Width="200px" VerticalAlignment="Center" Minimum="9" Maximum="72" Value="16" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="FontSizeSlider_ValueChanged"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Minimum font size"/>
+                                <Slider x:Name="MinimumFontSizeSlider" Width="200px" VerticalAlignment="Center" Minimum="0" Maximum="25" Value="0" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="MinimumFontSizeSlider_ValueChanged"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Standard font"/>
+                                <ComboBox x:Name="StandardFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="StandardFontComboBox_SelectionChanged"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Serif font"/>
+                                <ComboBox x:Name="SerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SerifFontComboBox_SelectionChanged"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Sans-Serif font"/>
+                                <ComboBox x:Name="SansSerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SansSerifFontComboBox_SelectionChanged"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Fixed-width font"/>
+                                <ComboBox x:Name="FixedFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FixedFontComboBox_SelectionChanged"/>
+                            </DockPanel>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="Mathematical font"/>
+                                <ComboBox x:Name="MathFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="MathFontComboBox_SelectionChanged"/>
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -203,14 +259,6 @@
                                 </Border>-->
                                 <TextBlock VerticalAlignment="Center" Text="Home button"/>
                                 <ToggleButton x:Name="HomeButtonToggleButton" Click="HomeButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xe99a;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xe99a;"/>
-                                </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="AI Chat button"/>
-                                <ToggleButton x:Name="AIButtonToggleButton" Click="AIButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                             </DockPanel>
                             <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE8C1;" Margin="0,0,10,0"/>
@@ -234,7 +282,11 @@
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
                                 <TextBlock VerticalAlignment="Center" Text="Extension button"/>
-                                <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ExtensionButtonComboBox_SelectionChanged">
+                                    <ComboBoxItem>Show automatically</ComboBoxItem>
+                                    <ComboBoxItem>Always show</ComboBoxItem>
+                                    <ComboBoxItem>Never show</ComboBoxItem>
+                                </ComboBox>
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -249,17 +301,43 @@
                         </GroupBox.Header>
                         <StackPanel>
                             <DockPanel Margin="0,0,0,10" LastChildFill="False">
-                                <Border Margin="0,0,10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Width="50" Height="25">
-                                    <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xeb3b;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                        <TextBlock Grid.Row="1" Text="Ads Blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                        <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
+                                            <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
                                 </Border>
-                                <TextBlock Text="Ads blocked" Margin="0,0,25,0" VerticalAlignment="Center"/>
-                                <Border Margin="0,0,10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Width="50" Height="25">
-                                    <TextBlock x:Name="TrackersBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xe7b3;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                        <TextBlock Grid.Row="1" Text="Trackers Blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                        <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
+                                            <TextBlock x:Name="TrackersBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
                                 </Border>
-                                <TextBlock Text="Trackers blocked" Margin="0,0,10,0" VerticalAlignment="Center"/>
                             </DockPanel>
-                            <CheckBox x:Name="AdBlockCheckBox" Click="AdBlockCheckBox_Click" Margin="0,0,0,10" Content="Block ads" Width="Auto"/>
-                            <CheckBox x:Name="TrackerBlockCheckBox" Click="TrackerBlockCheckBox_Click" Content="Block trackers" Width="Auto"/>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="Ads &amp; Trackers Blocking"/>
+                                <ComboBox x:Name="AdBlockComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="AdBlockComboBox_SelectionChanged">
+                                    <ComboBoxItem>Disabled</ComboBoxItem>
+                                    <ComboBoxItem>Standard</ComboBoxItem>
+                                    <ComboBoxItem>Efficient</ComboBoxItem>
+                                </ComboBox>
+                            </DockPanel>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
@@ -293,6 +371,18 @@
                                 <TextBlock FontSize="10" Text="Clear history, cookies, cache, and more" Foreground="{StaticResource GrayBrush}"/>
                             </StackPanel>
                         </DockPanel>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
+                            <CheckBox x:Name="AntiTamperCheckBox" Click="AntiTamperCheckBox_Click" Content="Anti-Tamper Mode" Width="Auto"/>
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <CheckBox x:Name="BypassSiteMenuCheckBox" Margin="0,0,0,10" Width="Auto" Click="BypassSiteMenuCheckBox_Click" Content="Bypass custom site menus"/>
+                            <CheckBox x:Name="TextSelectionCheckBox" Margin="0,0,0,10" Width="Auto" Click="TextSelectionCheckBox_Click" Content="Re-enable text selection &amp; copy/paste"/>
+                            <CheckBox x:Name="RemoveFilterCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveFilterCheckBox_Click" Content="Remove visual filter effects"/>
+                            <CheckBox x:Name="RemoveOverlayCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveOverlayCheckBox_Click" Content="Remove obstructive overlays"/>
+                            <CheckBox x:Name="AntiInspectDetectCheckBox" Width="Auto" Click="AntiInspectDetectCheckBox_Click" Content="Disable DevTools detection"/>
+                        </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
                         <GroupBox.Header>
@@ -333,30 +423,14 @@
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Search &amp; Services</TextBlock>
                     <GroupBox Margin="0,0,0,10">
                         <GroupBox.Header>
-                            Search Engine
+                            Search
                         </GroupBox.Header>
                         <StackPanel>
-                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Selected search engine"/>
-                            <ComboBox x:Name="SearchEngineComboBox" Margin="0,0,0,10"  VerticalAlignment="Top" SelectedIndex="0" Width="Auto"/>
-                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Add search engine"/>
-                            <DockPanel LastChildFill="True" Margin="0,0,0,10">
-                                <Button Margin="10,0,0,0" Content="Add" DockPanel.Dock="Right" Click="AddSearchButton_Click"/>
-                                <TextBox x:Name="AddSearchTextBox" DockPanel.Dock="Left" ToolTip="Search engine prefix" Width="Auto"/>
-                            </DockPanel>
-                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                Url with {0} in place of query
-                            </TextBlock>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            <CheckBox x:Name="SearchSuggestionsCheckBox" Width="Auto" Click="SearchSuggestionsCheckBox_Click" Content="Search Suggestions"/>
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Suggestion API"/>
-                                <ComboBox x:Name="SuggestionsSourceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
+                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Selected provider"/>
+                            <ComboBox x:Name="SearchEngineComboBox" Margin="0,0,0,10" VerticalAlignment="Top" SelectedIndex="0" Width="Auto"/>
+                            <CheckBox x:Name="SearchSuggestionsCheckBox" Margin="0,0,0,10" Width="Auto" Click="SearchSuggestionsCheckBox_Click" Content="Search suggestions"/>
+                            <CheckBox x:Name="SmartSuggestionsCheckBox" Margin="0,0,0,10" Width="Auto" Click="SmartSuggestionsCheckBox_Click" Content="Smart suggestions"/>
+                            <CheckBox x:Name="OpenSearchCheckBox" Width="Auto" Click="OpenSearchCheckBox_Click" Content="Index other search engines"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
@@ -364,15 +438,8 @@
                             Services
                         </GroupBox.Header>
                         <StackPanel>
-                            <CheckBox x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Content="Web notifications" Width="Auto"/>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            YouTube
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <CheckBox x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Content="Skip video ads" Width="Auto"/>
+                            <CheckBox Margin="0,0,0,10" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Content="Web notifications" Width="Auto"/>
+                            <CheckBox x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Content="Skip YouTube ads" Width="Auto"/>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
@@ -389,7 +456,11 @@
                             </DockPanel>
                             <DockPanel>
                                 <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Image type"/>
-                                <ComboBox x:Name="ScreenshotFormatComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <ComboBox x:Name="ScreenshotFormatComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ScreenshotFormatComboBox_SelectionChanged">
+                                    <ComboBoxItem>JPG</ComboBoxItem>
+                                    <ComboBoxItem>PNG</ComboBoxItem>
+                                    <ComboBoxItem>WebP</ComboBoxItem>
+                                </ComboBox>
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -400,11 +471,24 @@
                     <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Performance</TextBlock>
                     <GroupBox Margin="0,0,0,10">
                         <StackPanel>
-                            <CheckBox x:Name="LiteModeCheckBox" Click="LiteModeCheckBox_Click" Margin="0,0,0,10" Content="Lite Mode" Width="Auto"/>
-                            <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Margin="0,0,0,10" Content="Never Slow Mode" Width="Auto"/>
-                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                <Run>Never Slow Mode limits the size and quantity of sub frames, stylesheets, scripts, images and fonts</Run>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock VerticalAlignment="Center" Text="Performance Profile"/>
+                                <ComboBox x:Name="PerformanceComboBox" SelectionChanged="PerformanceComboBox_SelectionChanged" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                                    <ComboBoxItem Content="Lite"></ComboBoxItem>
+                                    <ComboBoxItem Content="Balanced"></ComboBoxItem>
+                                    <ComboBoxItem Content="Turbo"></ComboBoxItem>
+                                </ComboBox>
+                            </DockPanel>
+                            <CheckBox x:Name="StartupBoostCheckBox" Click="StartupBoostCheckBox_Click" Margin="0,0,0,10" Content="Startup Boost" Width="Auto"/>
+                            <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Content="Never Slow Mode" Width="Auto"/>
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="0,5,0,0">
+                                Never Slow Mode limits the number and size of scripts, images, fonts, subframes, and stylesheets.
                             </TextBlock>
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="0,0,0,5">
+                                It also blocks scripts that previously failed to load, reducing retries and hangs.
+                            </TextBlock>
+                            <CheckBox x:Name="AMPCheckBox" Click="AMPCheckBox_Click" Margin="0,0,0,10" Content="Prefer AMP pages" Width="Auto"/>
+                            <CheckBox x:Name="MobileViewCheckBox" Click="MobileViewCheckBox_Click" Content="View as Mobile Site" Width="Auto"/>
                             <!--<CheckBox x:Name="ReduceMotionCheckBox" Click="ReduceMotionCheckBox_Click" Width="Auto" Content="Reduce Motion"/>-->
                         </StackPanel>
                     </GroupBox>
@@ -680,7 +764,10 @@
                         <StackPanel>
                             <DockPanel>
                                 <TextBlock VerticalAlignment="Center" Text="WPF Render Mode"/>
-                                <ComboBox x:Name="RenderModeComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <ComboBox x:Name="RenderModeComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="RenderModeComboBox_SelectionChanged">
+                                    <ComboBoxItem>Hardware</ComboBoxItem>
+                                    <ComboBoxItem>Software</ComboBoxItem>
+                                </ComboBox>
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
@@ -692,9 +779,13 @@
                             <!--<CheckBox x:Name="PDFViewerExtensionCheckBox" Click="PDFViewerExtensionCheckBox_Click" Content="Open PDF instead of downloading (Enable PDF Viewer Extension)" Width="Auto" Margin="0,0,0,10"/>-->
                             <DockPanel Margin="0,0,0,10">
                                 <TextBlock VerticalAlignment="Center" Text="Runtime Style"/>
-                                <ComboBox x:Name="RuntimeStyleComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <ComboBox x:Name="RuntimeStyleComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="RuntimeStyleComboBox_SelectionChanged">
+                                    <ComboBoxItem>Chrome</ComboBoxItem>
+                                    <ComboBoxItem>Alloy</ComboBoxItem>
+                                </ComboBox>
                             </DockPanel>
                             <CheckBox x:Name="ChromiumHardwareAccelerationCheckBox" Click="ChromiumHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>
+                            <CheckBox x:Name="JITCheckBox" Click="JITCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable V8 JIT optimizer"/>
                             <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental features"/>
                             <GroupBox BorderBrush="DarkOrange" Background="Orange">
                                 <StackPanel>

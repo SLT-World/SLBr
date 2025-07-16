@@ -131,9 +131,9 @@ namespace SLBr.Handlers
 
         CefMenuCommand MenuSaveAs = (CefMenuCommand)26501;
         CefMenuCommand MenuOpenNewTab = (CefMenuCommand)26502;
-        CefMenuCommand MenuInspector = (CefMenuCommand)26503;
+        //CefMenuCommand MenuInspector = (CefMenuCommand)26503;
         CefMenuCommand MenuCopyURL = (CefMenuCommand)26504;
-        CefMenuCommand MenuScreenshot = (CefMenuCommand)26505;
+        //CefMenuCommand MenuScreenshot = (CefMenuCommand)26505;
         CefMenuCommand MenuEmoji = (CefMenuCommand)26506;
         //CefMenuCommand MenuPictureInPicture = (CefMenuCommand)26507;
 
@@ -190,7 +190,7 @@ namespace SLBr.Handlers
                 {
                     if (CommandID == CefMenuCommand.Find)
                     {
-                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.GlobalSave.Get("SearchEngine"), Parameters.SelectionText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1); ;
+                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, Parameters.SelectionText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1); ;
                         ToReturn = true;
                     }
                 });

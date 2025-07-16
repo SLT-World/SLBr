@@ -29,15 +29,23 @@
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu>
                                 <MenuItem Icon="&#xEC6C;" Header="New Tab" Click="ButtonAction" Tag="5&lt;,&gt;{Homepage}"/>
+                                <MenuItem Icon="&#xEC6C;" Header="New Private Tab" Click="ButtonAction" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
                                 <MenuItem Icon="&#xe737;" Header="New Window" Click="ButtonAction" Tag="7"/>
                                 <Separator/>
-                                <MenuItem Icon="&#xE81C;" x:Name="HistoryListMenu" Header="History">
+                                <MenuItem Icon="&#xE81C;" Header="History">
+                                    <MenuItem.ItemsSource>
+                                        <CompositeCollection>
+                                            <MenuItem Header="History" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://history/"/>
+                                            <Separator/>
+                                            <CollectionContainer x:Name="HistoryListMenu"/>
+                                        </CompositeCollection>
+                                    </MenuItem.ItemsSource>
                                     <MenuItem.ItemContainerStyle>
                                         <Style TargetType="MenuItem">
-                                            <Setter Property="Icon" Value="&#xeb41;"/>
-                                            <Setter Property="Header" Value="{Binding Tooltip}"/>
-                                            <Setter Property="Tag" Value="{Binding Arguments}"/>
-                                            <EventSetter Event="Click" Handler="ButtonAction"/>
+                                            <Setter Property="Icon" Value="&#xEB41;" />
+                                            <Setter Property="Header" Value="{Binding Tooltip}" />
+                                            <Setter Property="Tag" Value="{Binding Arguments}" />
+                                            <EventSetter Event="Click" Handler="ButtonAction" />
                                         </Style>
                                     </MenuItem.ItemContainerStyle>
                                 </MenuItem>
@@ -74,11 +82,9 @@
                                 </MenuItem>
                                 <MenuItem Header="Tools" Icon="&#xe821;">
                                     <MenuItem Header="Reader Mode" Icon="&#xF000;" Click="ButtonAction" Tag="17"/>
-                                    <MenuItem Header="AI Chat" Icon="&#xe99a;" Click="ButtonAction" Tag="20"/>
                                     <MenuItem Header="News Feed" Icon="&#xe8a1;" Click="ButtonAction" Tag="23"/>
                                     <Separator/>
                                     <MenuItem Header="Developer Tools" Icon="&#xec7a;" Click="ButtonAction" Tag="9" InputGestureText="F12"/>
-                                    <!--<MenuItem Header="Validate HTML" Icon="&#xe943;" Click="ButtonAction" Tag="5&lt;,&gt;https://validator.nu/?doc={CurrentUrl}"/>-->
                                     <MenuItem Header="Tests" Icon="&#xebe8;">
                                         <MenuItem Header="HTML5 Test" Icon="&#xe81e;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.html5test.co/"/>
                                         <MenuItem Header="CSS3 Test" Icon="&#xf4a5;" Click="ButtonAction" Tag="4&lt;,&gt;https://css3test.com/"/>
@@ -96,7 +102,6 @@
                                         <MenuItem Header="Bad SSL" Icon="&#xe785;" Click="ButtonAction" Tag="4&lt;,&gt;https://badssl.com/"/>
                                         <MenuItem Header="Stutters &amp; Tearing" Icon="&#xe9d9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.testufo.com/stutter"/>
                                         <MenuItem Header="Show Picker" Icon="&#xef3c;" Click="ButtonAction" Tag="4&lt;,&gt;https://show-picker.glitch.me/demo.html"/>
-                                        <!--<MenuItem Header="SmartScreen" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://demo.smartscreen.msft.net/"/>-->
                                         <MenuItem Header="Widevine" Icon="&#xe8a6;" Click="ButtonAction" Tag="4&lt;,&gt;https://bitmovin.com/demos/drm/"/>
                                         <MenuItem Header="Service Worker" Icon="&#xec7a;" Click="ButtonAction" Tag="4&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
                                         <MenuItem Header="Prerender" Icon="&#xe8ff;" Click="ButtonAction" Tag="4&lt;,&gt;https://prerender-demos.glitch.me/"/>
@@ -164,6 +169,21 @@
                     <WinUI:DropDownButton BorderThickness="0" Tag="3" x:Name="ExtensionsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" ToolTip="Extensions" Content="&#xEA86;">
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu Width="250" x:Name="ExtensionsMenu">
+                                <!--<ContextMenu.ItemsSource>
+                                    <CompositeCollection>
+                                        <MenuItem Header="Manage Extensions" Icon="&#xe9a4;" Click="ButtonAction" Tag="5&lt;,&gt;chrome://extensions"/>
+                                        <Separator/>
+                                        <CollectionContainer x:Name="ExtensionsMenu"/>
+                                    </CompositeCollection>
+                                </ContextMenu.ItemsSource>
+                                <ContextMenu.ItemContainerStyle>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Icon" Value="&#xEA86;"/>
+                                        <Setter Property="Header" Value="{Binding Name}"/>
+                                        <Setter Property="Tag" Value="{Binding ID}"/>
+                                        <EventSetter Event="Click" Handler="LoadExtensionPopup"/>
+                                    </Style>
+                                </ContextMenu.ItemContainerStyle>-->
                                 <ContextMenu.ItemContainerStyle>
                                     <Style TargetType="MenuItem">
                                         <Setter Property="Icon" Value="&#xEA86;"/>
@@ -204,8 +224,6 @@
                     </Button>-->
 
                     <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="4&lt;,&gt;https://translate.google.com/translate?sl=auto&amp;tl=en&amp;hl=en&amp;u={CurrentUrl}" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Translate" Content="&#xE8C1;"/>
-                    <!--<Button Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="SearchButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Search" Content="&#xE773;"/>-->
-                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="20" x:Name="AIChatButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="AI Chat" Content="&#xe99a;"/>
                     <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="17" x:Name="ReaderModeButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Reader Mode" Content="&#xF000;"/>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="12" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Add to favourites" x:Name="FavouriteButton" Content="&#xEB51;"/>
 
@@ -234,42 +252,53 @@
                                     <Border Width="300" Padding="10" Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
                                         <StackPanel>
                                             <DockPanel>
-                                                <!--<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE72E;" Margin="0,0,10,0"/>-->
                                                 <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                                     <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE72E;"/>
                                                 </Border>
                                                 <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText" Text="Connection is secure"/>
                                             </DockPanel>
+                                            <StackPanel Margin="0,10,0,0" x:Name="AdBlockContainer">
+                                                <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
+                                                <DockPanel>
+                                                    <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xea18;"/>
+                                                    </Border>
+                                                    <ToggleButton x:Name="AdBlockToggleButton" Click="AdBlockToggleButton_Click" DockPanel.Dock="Right"/>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Block ads &amp; trackers on:"/>
+                                                        <TextBlock x:Name="AdBlockHostText" Foreground="{StaticResource GrayBrush}"/>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                            </StackPanel>
                                             <StackPanel Margin="0,10,0,0" x:Name="SiteInformationCertificate">
                                                 <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
                                                 <DockPanel>
-                                                    <!--<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEB95;" Margin="0,0,10,0"/>-->
                                                     <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                                         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
                                                     </Border>
                                                     <TextBlock x:Name="CertificateValidation" VerticalAlignment="Center" Text="Certificate is valid"/>
                                                 </DockPanel>
-                                                <GroupBox x:Name="CertificateInfo" Margin="0,10,0,0">
-                                                    <GroupBox.Header>
+                                                <Expander x:Name="CertificateInfo" Margin="0,10,0,0">
+                                                    <Expander.Header>
                                                         Certificate
-                                                    </GroupBox.Header>
+                                                    </Expander.Header>
                                                     <StackPanel>
                                                         <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued to" FontWeight="Bold"/>
                                                         <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Common Name (CN):" Width="125"/>
+                                                            <TextBlock Text="Common Name:" Width="125"/>
                                                             <TextBlock x:Name="IssueToCommonName" Text="google.com"/>
                                                         </StackPanel>
                                                         <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Company (O):" Width="125"/>
+                                                            <TextBlock Text="Company:" Width="125"/>
                                                             <TextBlock x:Name="IssueToCompany" Text=""/>
                                                         </StackPanel>
                                                         <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued by" FontWeight="Bold"/>
                                                         <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Common Name (CN):" Width="125"/>
+                                                            <TextBlock Text="Common Name:" Width="125"/>
                                                             <TextBlock x:Name="IssueByCommonName" Text="WR2"/>
                                                         </StackPanel>
                                                         <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Company (O):" Width="125"/>
+                                                            <TextBlock Text="Company:" Width="125"/>
                                                             <TextBlock x:Name="IssueByCompany" Text="Google Trust Services"/>
                                                         </StackPanel>
                                                         <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Validity period" FontWeight="Bold"/>
@@ -282,7 +311,7 @@
                                                             <TextBlock x:Name="CertificateEnd" Text="03/03/2025"/>
                                                         </StackPanel>
                                                     </StackPanel>
-                                                </GroupBox>
+                                                </Expander>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -290,11 +319,21 @@
                             </Grid>
                         </Border>
                         <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Search or type a URL" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0" Foreground="{StaticResource BorderBrush}" x:Name="OmniBoxPlaceholder" Visibility="Visible"/>
-                        <ComboBox VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" Style="{StaticResource DropDownTextBox}" BorderThickness="0" SelectionChanged="OmniBox_SelectionChanged" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>
-                        <!--<TextBox Style="{StaticResource NoBorder}" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" GotKeyboardFocus="OmniBox_GotKeyboardFocus" LostKeyboardFocus="OmniBox_LostKeyboardFocus" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch"/>-->
+                        <ComboBox TextSearch.TextPath="Text" IsTextSearchEnabled="False" StaysOpenOnEdit="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" DropDownClosed="OmniBox_DropDownClosed" Style="{StaticResource DropDownTextBox}" BorderThickness="0" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Focusable="False" Orientation="Horizontal" Margin="0">
+                                        <Border Margin="-8,0,5,0" Width="30" Height="30" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}">
+                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Text}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding Result}" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </Grid>
                 </DockPanel>
-                <!--<Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="Auto" Grid.Row="1" HorizontalAlignment="Stretch">-->
                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="41.25" Grid.Row="1" HorizontalAlignment="Stretch">
                     <ScrollViewer FontFamily="None" x:Name="FavouriteScrollViewer" Margin="5,0,5,5" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden" PreviewMouseWheel="FavouriteScrollViewer_PreviewMouseWheel">
                         <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
@@ -304,7 +343,7 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate><!--DataType="{x:Type SLBr:ActionStorage}">-->
+                                <DataTemplate>
                                     <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
                                         <Button.Resources>
                                             <Style TargetType="TextBlock">
@@ -314,16 +353,6 @@
                                         </Button.Resources>
                                     </Button>
                                 </DataTemplate>
-                                <!--<DataTemplate DataType="{x:Type SLBr:ActionStorage}">
-                                    <WinUI:DropDownButton MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
-                                        <WinUI:DropDownButton.Resources>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"></Setter>
-                                                <Setter Property="MaxWidth" Value="150"></Setter>
-                                            </Style>
-                                        </WinUI:DropDownButton.Resources>
-                                    </WinUI:DropDownButton>
-                                </DataTemplate>-->
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
@@ -332,7 +361,6 @@
         </Border>
 
         <Grid x:Name="WebContainer" Grid.Row="1">
-            <!---->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="SideBarColumnLeft" Width="Auto" MaxWidth="1750px"/>
                 <ColumnDefinition/>
@@ -380,12 +408,6 @@
                                 <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="10" Margin="0,0,5,0" ToolTip="Toggle size emulation" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE8CC;"/>
                                 <Border DockPanel.Dock="Left" Width="1" Background="{StaticResource BorderBrush}" Margin="0,5,5,5"/>
                             </DockPanel>
-                            <DockPanel LastChildFill="False" x:Name="AIChatToolBar">
-                                <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;0" Margin="0,0,5,0" ToolTip="Chat" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe8bd;"/>
-                                <!--<Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;1" Margin="0,0,5,0" ToolTip="Mobile Chat" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe7c5;"/>-->
-                                <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="21&lt;,&gt;2" Margin="0,0,5,0" ToolTip="Compose" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xe8ae;"/>
-                                <Border DockPanel.Dock="Left" Width="1" Background="{StaticResource BorderBrush}" Margin="0,5,5,5"/>
-                            </DockPanel>
                             <ComboBox Width="55" SelectedIndex="3" ToolTip="Dock side" x:Name="SideBarDockDropdown" SelectionChanged="InspectorDockDropdown_SelectionChanged">
                                 <ComboBoxItem ToolTip="Top">
                                     <TextBlock FontFamily="Segoe Fluent Icons" FontSize="18" FontWeight="Normal" TextAlignment="Center" RenderTransformOrigin="0.5,0.5" Text="&#xE90E;">
@@ -404,14 +426,6 @@
                                     <TextBlock FontFamily="Segoe Fluent Icons" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90D;"/>
                                 </ComboBoxItem>
                             </ComboBox>
-                            <!--<Button RenderTransformOrigin="0.5,0.5" Style="{StaticResource IconButton}" FontFamily="Segoe Fluent Icons" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;3" Margin="0,0,5,0" ToolTip="Dock top" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;">
-                                <Button.RenderTransform>
-                                    <RotateTransform Angle="180" />
-                                </Button.RenderTransform>
-                            </Button>
-                            <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;2" Margin="0,0,5,0" ToolTip="Dock bottom" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90E;"/>
-                            <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;1" Margin="0,0,5,0" ToolTip="Dock left" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90C;"/>
-                            <Button Style="{StaticResource IconButton}" DockPanel.Dock="Left" Click="ButtonAction" Tag="11&lt;,&gt;0" Margin="0,0,5,0" ToolTip="Dock right" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Content="&#xE90D;"/>-->
                             <!--<ComboBox FontFamily="None" Width="Auto" ToolTip="Browser Emulator" Foreground="{StaticResource FontBrush}" x:Name="BrowserEmulatorComboBox" VerticalAlignment="Center" SelectedIndex="0"/>-->
                         </DockPanel>
                     </Border>

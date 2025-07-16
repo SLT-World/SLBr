@@ -1,7 +1,7 @@
 ﻿using CefSharp;
 using CefSharp.DevTools;
-using CefSharp.DevTools.Emulation;
 using CefSharp.DevTools.Page;
+using CefSharp.SchemeHandler;
 using CefSharp.Wpf.HwndHost;
 using SLBr.Controls;
 using SLBr.Handlers;
@@ -44,38 +44,43 @@ namespace SLBr.Pages
 
         public BrowserTabItem Tab;
 
-        //BrowserSettings _BrowserSettings;
-
         public ChromiumWebBrowser Chromium;
         public Settings _Settings;
         public Handlers.ResourceRequestHandlerFactory _ResourceRequestHandlerFactory;
 
-        public Browser(string Url, BrowserTabItem _Tab = null)//int _BrowserType = 0, 
+        public bool Private = false;
+
+        public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false)//int _BrowserType = 0, 
         {
             InitializeComponent();
             Tab = _Tab != null ? _Tab : Tab.ParentWindow.GetTab(this);
-            Tab.Icon = App.Instance.GetIcon(bool.Parse(App.Instance.GlobalSave.Get("Favicons")) ? Url : "");
+            Private = IsPrivate;
+            Tab.Icon = App.Instance.GetIcon(bool.Parse(App.Instance.GlobalSave.Get("Favicons")) ? Url : "", Private);
             Address = Url;
             SetAudioState(false);
             //BrowserType = _BrowserType;
-            InitializeBrowserComponent();
             FavouritesPanel.ItemsSource = App.Instance.Favourites;
             FavouriteListMenu.ItemsSource = App.Instance.Favourites;
-            HistoryListMenu.ItemsSource = App.Instance.History;
+            HistoryListMenu.Collection = App.Instance.History;
             ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working for no reason so I turned it into a list
             /*BrowserEmulatorComboBox.Items.Add("Chromium");
             BrowserEmulatorComboBox.Items.Add("Edge");
             BrowserEmulatorComboBox.Items.Add("Internet Explorer");*/
-            App.Instance.Favourites.CollectionChanged += Favourites_CollectionChanged;
-            SetAppearance(App.Instance.CurrentTheme, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("AIButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),int.Parse(App.Instance.GlobalSave.Get("ExtensionButton")), int.Parse(App.Instance.GlobalSave.Get("FavouritesBar")));
+            SetAppearance(App.Instance.CurrentTheme, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")),App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
 
-            OmniBoxTimer = new DispatcherTimer();
-            OmniBoxTimer.Tick += OmniBoxTimer_Tick;
-            OmniBoxTimer.Interval = TimeSpan.FromMilliseconds(200);
+            if (!Private)
+            {
+                OmniBoxFastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+                OmniBoxSmartTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+                OmniBoxFastTimer.Tick += OmniBoxFastTimer_Tick;
+                OmniBoxSmartTimer.Tick += OmniBoxSmartTimer_Tick;
+            }
             //BrowserEmulatorComboBox.SelectionChanged += BrowserEmulatorComboBox_SelectionChanged;
+            if (Cef.IsInitialized.ToBool())
+                InitializeBrowserComponent();
         }
 
-        public void InitializeBrowserComponent(bool First = true)
+        public void InitializeBrowserComponent()
         {
             if (Chromium == null && Cef.IsInitialized.ToBool())
                 CreateChromium(Address);
@@ -100,8 +105,9 @@ namespace SLBr.Pages
                 Tab.ProgressBarVisibility = Visibility.Collapsed;
         }
 
-        private void Favourites_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        public void Favourites_CollectionChanged()
         {
+            SetFavouritesBarVisibility();
             if (FavouriteExists(Address) != -1)
             {
                 FavouriteButton.Content = "\xEB52";
@@ -120,8 +126,6 @@ namespace SLBr.Pages
 
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
-            /*if (sender == null)
-                return;*/
             var Values = ((FrameworkElement)sender).Tag.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
             Action((Actions)int.Parse(Values[0]), sender, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
         }
@@ -134,7 +138,6 @@ namespace SLBr.Pages
                 case Actions.Exit:
                     App.Instance.CloseSLBr(true);
                     break;
-
                 case Actions.Undo:
                     Back();
                     break;
@@ -159,6 +162,10 @@ namespace SLBr.Pages
                     {
                         BrowserTabItem _Tab = Tab.ParentWindow.GetBrowserTabWithId(int.Parse(V1));
                         Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1);
+                    }
+                    else if (V2 == "Private")
+                    {
+                        Tab.ParentWindow.NewTab(V1, true, -1, true);
                     }
                     else
                         Tab.ParentWindow.NewTab(V1, true);
@@ -195,12 +202,6 @@ namespace SLBr.Pages
                     ToggleReaderMode();
                     break;
 
-                case Actions.AIChat:
-                    AIChat();
-                    break;
-                case Actions.AIChatFeature:
-                    AIChatFeature(int.Parse(V1));
-                    break;
                 case Actions.CloseSideBar:
                     ToggleSideBar(true);
                     break;
@@ -234,12 +235,13 @@ namespace SLBr.Pages
 
         void CreateChromium(string Url)
         {
-            if (Chromium != null && (!Cef.IsInitialized.ToBool()))
+            if (Chromium != null && !Cef.IsInitialized.ToBool())
                 return;
             Address = Url;
             Tab.IsUnloaded = true;
             Tab.BrowserCommandsVisibility = Visibility.Collapsed;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
+
             Chromium = new ChromiumWebBrowser(Url);
             Chromium.Address = Url;
             Chromium.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
@@ -262,8 +264,35 @@ namespace SLBr.Pages
             Color _PrimaryColor = (Color)FindResource("PrimaryBrushColor");
             BrowserSettings _BrowserSettings = new BrowserSettings
             {
-                BackgroundColor = (uint)((_PrimaryColor.A << 24) | (_PrimaryColor.R << 16) | (_PrimaryColor.G << 8) | (_PrimaryColor.B << 0))
+                BackgroundColor = (uint)((_PrimaryColor.A << 24) | (_PrimaryColor.R << 16) | (_PrimaryColor.G << 8) | (_PrimaryColor.B << 0)),
+                //JavascriptCloseWindows = CefState.Disabled // Not working?
             };
+            if (Private)
+            {
+                _BrowserSettings.LocalStorage = CefState.Disabled;
+                _BrowserSettings.Databases = CefState.Disabled;
+                _BrowserSettings.JavascriptAccessClipboard = CefState.Disabled;
+                _BrowserSettings.JavascriptDomPaste = CefState.Disabled;
+                RequestContextSettings ContextSettings = new RequestContextSettings
+                {
+                    PersistSessionCookies = false,
+                    CachePath = null
+                };
+                RequestContext PrivateRequestContext = new RequestContext(ContextSettings); 
+                
+                string[] SLBrURLs = ["Credits", "License", "Downloads", "History", "Settings", "Tetris", "WhatsNew"];
+                PrivateRequestContext.RegisterSchemeHandlerFactory("slbr", "newtab", new FolderSchemeHandlerFactory(App.Instance.ResourcesPath, hostName: "newtab", defaultPage: "Private.html"));
+                foreach (string _Scheme in SLBrURLs)
+                {
+                    string Lower = _Scheme.ToLower();
+                    PrivateRequestContext.RegisterSchemeHandlerFactory("slbr", Lower, new FolderSchemeHandlerFactory(App.Instance.ResourcesPath, hostName: Lower, defaultPage: $"{_Scheme}.html"));
+                }
+                PrivateRequestContext.RegisterSchemeHandlerFactory("gemini", "", new GeminiSchemeHandlerFactory());
+                PrivateRequestContext.RegisterSchemeHandlerFactory("gopher", "", new GopherSchemeHandlerFactory());
+
+                Chromium.RequestContext = PrivateRequestContext;
+            }
+
             Chromium.BrowserSettings = _BrowserSettings;
             Chromium.IsBrowserInitializedChanged += Chromium_IsBrowserInitializedChanged;
             Chromium.FrameLoadStart += Chromium_FrameLoadStart;
@@ -277,45 +306,99 @@ namespace SLBr.Pages
             CoreContainer.Visibility = Visibility.Collapsed;
             CoreContainer.Children.Add(Chromium);
 
-            //RenderOptions.SetBitmapScalingMode(Chromium, BitmapScalingMode.LowQuality);
-
             //BrowserEmulatorComboBox.SelectedItem = "Chromium";
+        }
+
+        public void UnFocus()
+        {
+            if (App.Instance.LiteMode && Chromium != null && Chromium.IsBrowserInitialized && !Chromium.IsLoading && Chromium.CanExecuteJavascriptInMainFrame)
+            {
+                try
+                {
+                    Utils.RunSafeFireAndForget(async () =>
+                    {
+                        DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
+                        await _DevToolsClient.Page.SetWebLifecycleStateAsync(SetWebLifecycleStateState.Frozen);
+                    });
+                }
+                catch { }
+            }
         }
 
         public void ReFocus()
         {
-            InitializeBrowserComponent(false);
-            if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
+            if (Tab.IsUnloaded)
             {
-                if (Chromium != null)
-                    Chromium.Visibility = Visibility.Collapsed;
-                if (_Settings == null)
+                InitializeBrowserComponent();
+                if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
                 {
-                    _Settings = new Settings(this);
-                    CoreContainer.Children.Add(_Settings);
+                    if (Chromium != null)
+                        Chromium.Visibility = Visibility.Collapsed;
+                    if (_Settings == null)
+                    {
+                        _Settings = new Settings(this);
+                        CoreContainer.Children.Add(_Settings);
+                    }
+                    _Settings.Visibility = Visibility.Visible;
                 }
-                _Settings.Visibility = Visibility.Visible;
+                else
+                {
+                    if (Chromium != null)
+                        Chromium.Visibility = Visibility.Visible;
+                    if (_Settings != null)
+                    {
+                        CoreContainer.Children.Remove(_Settings);
+                        _Settings?.Dispose();
+                        _Settings = null;
+                    }
+                }
             }
-            else
+            if (App.Instance.LiteMode && Chromium != null && Chromium.IsBrowserInitialized && !Chromium.IsLoading && Chromium.CanExecuteJavascriptInMainFrame)
             {
-                if (Chromium != null)
-                    Chromium.Visibility = Visibility.Visible;
-                if (_Settings != null)
+                try
                 {
-                    CoreContainer.Children.Remove(_Settings);
-                    _Settings?.Dispose();
-                    _Settings = null;
+                    Utils.RunSafeFireAndForget(async () =>
+                    {
+                        DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
+                        //_DevToolsClient.Network.ResourceChangedPriority;
+                        //_DevToolsClient.Network.RequestWillBeSent
+                        /*ValidateSetWebLifecycleState(state);
+            var dict = new System.Collections.Generic.Dictionary<string, object>();
+            dict.Add("state", EnumToString(state));
+            return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Page.setWebLifecycleState", dict);*/
+                        //return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Network.clearBrowserCache", dict);
+                        await _DevToolsClient.Page.SetWebLifecycleStateAsync(SetWebLifecycleStateState.Active);
+                    });
                 }
+                catch { }
             }
         }
 
         private void Chromium_FrameLoadStart(object? sender, FrameLoadStartEventArgs e)
         {
-            Dispatcher.Invoke(() =>
+            if (e.Frame.IsMain)
             {
-                if (Address.StartsWith("slbr:", StringComparison.Ordinal))
-                    Chromium.ExecuteScriptAsync(App.InternalJavascriptFunction);
-            });
+                if (Utils.IsHttpScheme(e.Url))
+                {
+                    e.Browser.ExecuteScriptAsync("window.close=function(){};");//Replacement for DoClose of LifeSpanHandler in RuntimeStyle Chrome
+                    e.Browser.ExecuteScriptAsync(Scripts.ShiftContextMenuScript);
+                    if (bool.Parse(App.Instance.GlobalSave.Get("AntiTamper")))
+                    {
+                        if (bool.Parse(App.Instance.GlobalSave.Get("AntiInspectDetect")))
+                            e.Browser.ExecuteScriptAsync(Scripts.LateAntiDevtools);
+                        if (bool.Parse(App.Instance.GlobalSave.Get("BypassSiteMenu")))
+                            e.Browser.ExecuteScriptAsync(Scripts.ForceContextMenuScript);
+                        if (bool.Parse(App.Instance.GlobalSave.Get("TextSelection")))
+                            e.Browser.ExecuteScriptAsync(Scripts.AllowInteractionScript);
+                        if (bool.Parse(App.Instance.GlobalSave.Get("RemoveFilter")))
+                            e.Browser.ExecuteScriptAsync(Scripts.RemoveFilterCSS);
+                        if (bool.Parse(App.Instance.GlobalSave.Get("RemoveOverlay")))
+                            e.Browser.ExecuteScriptAsync(Scripts.RemoveOverlayCSS);
+                    }
+                }
+                else if (e.Url.StartsWith("slbr:", StringComparison.Ordinal))
+                    e.Browser.ExecuteScriptAsync(App.InternalJavascriptFunction);
+            }
         }
 
         private void Chromium_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -337,7 +420,7 @@ namespace SLBr.Pages
             });
         }
 
-        private void Chromium_IsBrowserInitializedChanged(object? sender, EventArgs e)
+        private async void Chromium_IsBrowserInitializedChanged(object? sender, EventArgs e)
         {
             if (Chromium.IsBrowserInitialized)
             {
@@ -346,11 +429,31 @@ namespace SLBr.Pages
                 Tab.BrowserCommandsVisibility = Visibility.Visible;
                 if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                     Tab.ProgressBarVisibility = Visibility.Visible;
-                Chromium.Focus();
                 using (var DevToolsClient = Chromium.GetDevToolsClient())
                 {
-                    DevToolsClient.Page.SetPrerenderingAllowedAsync(false);
-                    DevToolsClient.Preload.DisableAsync();
+                    //DevToolsClient.Network.SetCookieControlsAsync(true, true, true);
+                    //if (App.Instance.AdBlock == 2)
+                    //    await ToggleEfficientAdBlock(DevToolsClient, App.Instance.AdBlockAllowList.Has(Utils.FastHost(Address)));
+                    await ToggleEfficientAdBlock(DevToolsClient, App.Instance.AdBlock == 2);
+                    try
+                    {
+                        //await DevToolsClient.Page.EnableAsync();
+                        //await DevToolsClient.Page.SetAdBlockingEnabledAsync(App.Instance.AdBlock != 0);
+                        if (!App.Instance.HighPerformanceMode)
+                            await DevToolsClient.Page.SetPrerenderingAllowedAsync(false);
+                    }
+                    catch { }
+                    //TODO: CefSharp.DevTools.DevToolsClientException: 'DevTools Client Error :Not attached to an active page'
+
+
+
+                    //await DevToolsClient.Preload.DisableAsync();
+                    //await DevToolsClient.Network.SetExtraHTTPHeadersAsync
+                    if (!bool.Parse(App.Instance.GlobalSave.Get("BlockFingerprint")))
+                    {
+                        //navigator.userAgentData.getHighEntropyValues(["architecture","model","platform","platformVersion","uaFullVersion"]).then(ua =>{console.log(ua)});
+                        await DevToolsClient.Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, App.Instance.UserAgentData);
+                    }
                 }
             }
         }
@@ -380,6 +483,9 @@ namespace SLBr.Pages
                     case "Media":
                         SetAudioState(Message["event"].ToString() == "1");
                         break;
+                    case "OpenSearch":
+                        App.Instance.SaveOpenSearch(Message["name"].ToString(), Message["url"].ToString());
+                        break;
                     case "Internal":
                         switch (Message["function"])
                         {
@@ -391,11 +497,11 @@ namespace SLBr.Pages
                                 break;
                             case "Background":
                                 string Url = "";
-                                switch (App.Instance.GlobalSave.Get("HomepageBackground"))
+                                switch (App.Instance.GlobalSave.GetInt("HomepageBackground"))
                                 {
-                                    case "Bing":
-                                        string BingBackground = App.Instance.GlobalSave.Get("BingBackground");
-                                        if (BingBackground == "Image of the day")
+                                    case 1:
+                                        int BingBackground = App.Instance.GlobalSave.GetInt("BingBackground");
+                                        if (BingBackground == 0)
                                         {
                                             try
                                             {
@@ -405,15 +511,15 @@ namespace SLBr.Pages
                                             }
                                             catch { }
                                         }
-                                        else if (BingBackground == "Random")
+                                        else
                                             Url = "http://bingw.jasonzeng.dev/?index=random";
                                         break;
 
-                                    case "Picsum":
+                                    case 2:
                                         Url = "http://picsum.photos/1920/1080?random";
                                         break;
 
-                                    case "Custom":
+                                    case 0:
                                         Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
                                         if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
                                             Url = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
@@ -436,7 +542,7 @@ namespace SLBr.Pages
                             case "Search":
                                 Dispatcher.Invoke(() =>
                                 {
-                                    Address = Utils.FilterUrlForBrowser(Message["variable"].ToString(), App.Instance.GlobalSave.Get("SearchEngine"));
+                                    Address = Utils.FilterUrlForBrowser(Message["variable"].ToString(), App.Instance.DefaultSearchProvider.SearchUrl);
                                 });
                                 break;
                         }
@@ -478,11 +584,31 @@ namespace SLBr.Pages
         }
 
         bool IsCustomTheme = false;
+        bool DevToolsAdBlock = false;
+
+        public async Task ToggleEfficientAdBlock(DevToolsClient _DevToolsClient, bool Boolean)
+        {
+            AdBlockToggleButton.IsEnabled = !Boolean;
+            AdBlockContainer.ToolTip = Boolean ? "Whitelist is unavailable in efficient ad block mode." : "";
+            if (Boolean && !DevToolsAdBlock)
+            {
+                await _DevToolsClient.Network.EnableAsync();
+                await _DevToolsClient.Network.SetBlockedURLsAsync(App.BlockedAdPatterns);
+                DevToolsAdBlock = true;
+            }
+            else if (!Boolean && DevToolsAdBlock)
+            {
+                await _DevToolsClient.Network.DisableAsync();
+                DevToolsAdBlock = false;
+            }
+        }
 
         private void Chromium_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
         {
             Dispatcher.Invoke(async () =>
             {
+                if (Chromium == null)
+                    return;
                 IsReaderMode = false;
                 Address = Chromium.Address;
                 Title = Chromium.Title;
@@ -493,7 +619,7 @@ namespace SLBr.Pages
                 ReloadButton.Content = e.IsLoading ? "\xF78A" : "\xE72C";
                 DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
                 await _DevToolsClient.Emulation.SetAutoDarkModeOverrideAsync(App.Instance.CurrentTheme.DarkWebPage);
-                if (e.Browser.IsValid)
+                if (e.Browser != null && e.Browser.IsValid)
                 {
                     if (bool.Parse(App.Instance.GlobalSave.Get("BlockFingerprint")))
                     {
@@ -504,60 +630,24 @@ namespace SLBr.Pages
                                 break;
                             case "Random" or "Strict":
                                 //https://data.firefox.com/dashboard/hardware
-                                List<int> FingerprintHardwareConcurrencies = new List<int>() { 1, 2, 4, 6, 8, 10, 12, 14 };
+                                int[] FingerprintHardwareConcurrencies = { 1, 2, 4, 6, 8, 10, 12, 14 };
                                 //https://source.chromium.org/chromium/chromium/deps/icu.git/+/chromium/m120:source/data/misc/metaZones.txt
-                                List<string> FingerprintTimeZones = new List<string>() { "Africa/Monrovia", "Europe/London", "America/New_York", "Asia/Seoul", "Asia/Singapore", "Asia/Taipei" };
-                                Random _Random = new Random();
-                                await _DevToolsClient.Emulation.SetHardwareConcurrencyOverrideAsync(FingerprintHardwareConcurrencies[_Random.Next(FingerprintHardwareConcurrencies.Count)]);
-                                await _DevToolsClient.Emulation.SetTimezoneOverrideAsync(FingerprintTimeZones[_Random.Next(FingerprintTimeZones.Count)]);
+                                string[] FingerprintTimeZones = { "Africa/Monrovia", "Europe/London", "America/New_York", "Asia/Seoul", "Asia/Singapore", "Asia/Taipei" };
+                                await _DevToolsClient.Emulation.SetHardwareConcurrencyOverrideAsync(FingerprintHardwareConcurrencies[App.MiniRandom.Next(FingerprintHardwareConcurrencies.Length)]);
+                                await _DevToolsClient.Emulation.SetTimezoneOverrideAsync(FingerprintTimeZones[App.MiniRandom.Next(FingerprintTimeZones.Length)]);
                                 break;
                             default:
                                 break;
                         }
-                        //Hardware Concurrency 1, 2, 4, 6, 8, 10, 12, 14
                         //Device Memory 2, 3, 4, 6, 7, 8, 15, 16, 31, 32, 64
+                        //await DevToolsClient.Emulation.SetIdleOverrideAsync(true, true); //A permission prompt appears
                         if (App.Instance.GlobalSave.Get("FingerprintLevel") != "Minimal")
                             Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator,'getBattery',{get:function(){return new Promise((resolve,reject)=>{reject('Battery API is disabled.');});}});Object.defineProperty(navigator,'connection',{get:function(){return null;}});");
                     }
-                    else
-                    {
-                        var Brands = new List<UserAgentBrandVersion>
-                        {
-                            new UserAgentBrandVersion
-                            {
-                                Brand = "SLBr",
-                                Version = App.Instance.ReleaseVersion.Split('.')[0]
-                            },
-                            new UserAgentBrandVersion
-                            {
-                                Brand = "Chromium",
-                                Version = Cef.ChromiumVersion.Split('.')[0]
-                            }
-                        };
-                        var _UserAgentMetadata = new UserAgentMetadata
-                        {
-                            Brands = Brands,
-                            Architecture = UserAgentGenerator.GetCPUArchitecture(),
-                            Model = "",
-                            Platform = "Windows",
-                            PlatformVersion = UserAgentGenerator.GetPlatformVersion(),//https://textslashplain.com/2021/09/21/determining-os-platform-version/
-                            FullVersion = Cef.ChromiumVersion,
-                            Mobile = false
-                        };
-                        /*var _UserAgentMetadata = new UserAgentMetadata
-                        {
-                            Brands = Brands,
-                            Architecture = "arm",
-                            Model = "Nexus 7",
-                            Platform = "Android",
-                            PlatformVersion = "6.0.1",
-                            FullVersion = Cef.ChromiumVersion,
-                            Mobile = true
-                        };*/
-                        //navigator.userAgentData.getHighEntropyValues(["architecture","model","platform","platformVersion","uaFullVersion"]).then(ua =>{console.log(ua)});
-                        await _DevToolsClient.Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, _UserAgentMetadata);
-                    }
                 }
+
+                //if (App.Instance.AdBlock == 2)
+                //    await ToggleEfficientAdBlock(_DevToolsClient, App.Instance.AdBlockAllowList.Has(Utils.FastHost(Address)));
                 BrowserLoadChanged(Address, e.IsLoading);
                 //Chromium.GetDevToolsClient().Emulation.SetEmulatedMediaAsync(null, new List<MediaFeature>() { new MediaFeature() { Name = "prefers-reduced-motion", Value = "reduce" }, new MediaFeature() { Name = "prefers-reduced-data", Value = "reduce" } });
 
@@ -578,16 +668,18 @@ namespace SLBr.Pages
                             {
                                 if (App.Instance.SkipAds)
                                 {
-                                    if (Address.AsSpan().IndexOf("youtube.com", StringComparison.Ordinal) >= 0)
+                                    /*if (Address.AsSpan().IndexOf("youtube.com", StringComparison.Ordinal) >= 0)
                                     {
                                         Chromium.ExecuteScriptAsync(Scripts.YouTubeHideAdScript);
                                         if (Address.AsSpan().IndexOf("/watch?v=", StringComparison.Ordinal) >= 0)
                                             Chromium.ExecuteScriptAsync(Scripts.YouTubeSkipAdScript);
-                                    }
+                                    }*/
+                                    if (Address.AsSpan().IndexOf("youtube.com/watch?v=", StringComparison.Ordinal) >= 0)
+                                        Chromium.ExecuteScriptAsync(Scripts.YouTubeSkipAdScript);
                                 }
                                 if (Address.AsSpan().IndexOf("chromewebstore.google.com/detail", StringComparison.Ordinal) >= 0)
                                     Chromium.ExecuteScriptAsync(Scripts.WebStoreScript);
-                                //if (bool.Parse(App.Instance.GlobalSave.Get("LiteMode")))
+                                //if (App.Instance.LiteMode)
                                 //{
                                 //Chromium.ExecuteScriptAsync(@"var style = document.createElement('style');style.type ='text/css';style.appendChild(document.createTextNode('*{ transition: none!important;-webkit-transition: none!important; }')); document.getElementsByTagName('head')[0].appendChild(style);");
                                 //Chromium.ExecuteScriptAsync(@"Object.defineProperty(navigator.connection, 'saveData', { value: true, writable: false });");
@@ -619,11 +711,20 @@ namespace SLBr.Pages
     Notification.autoClose = 7000;
     window.Notification = Notification;");*/
                                     Chromium.ExecuteScriptAsync(Scripts.NotificationPolyfill);
+                                if (bool.Parse(App.Instance.GlobalSave.Get("EnhanceImage")))
+                                    Chromium.ExecuteScriptAsync(Scripts.SharpenImageScript);
+                                if (!Private && bool.Parse(App.Instance.GlobalSave.Get("OpenSearch")))
+                                {
+                                    string SiteHost = Utils.FastHost(Address);
+                                    if (App.Instance.SearchEngines.Find(i => i.Host == SiteHost) == null)
+                                        Chromium.ExecuteScriptAsync(Scripts.OpenSearchScript);
+                                }
                             }
                             else if (Address.StartsWith("file:///", StringComparison.Ordinal))
                                 Chromium.ExecuteScriptAsync(Scripts.FileScript);
                         }
-                        App.Instance.AddHistory(Address, Title);
+                        if (!Private)
+                            App.Instance.AddHistory(Address, Title);
                     }
                     if (bool.Parse(App.Instance.GlobalSave.Get("TabUnloading")))
                         Chromium.ExecuteScriptAsync(Scripts.TabUnloadScript);
@@ -684,7 +785,7 @@ namespace SLBr.Pages
                                         (byte)Math.Max(0, PrimaryColor.B * 1.95f));
                                 }
                                 SiteTheme.PrimaryColor = PrimaryColor;
-                                SetAppearance(SiteTheme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                                SetAppearance(SiteTheme, AllowHomeButton, AllowTranslateButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
                                 TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
                                 _TabItem.Foreground = new SolidColorBrush(SiteTheme.FontColor);
                                 _TabItem.Background = new SolidColorBrush(SiteTheme.PrimaryColor);
@@ -693,7 +794,7 @@ namespace SLBr.Pages
                             catch
                             {
                                 IsCustomTheme = false;
-                                SetAppearance(App.Instance.CurrentTheme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                                SetAppearance(App.Instance.CurrentTheme, AllowHomeButton, AllowTranslateButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
                                 TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
                                 _TabItem.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.FontColor);
                                 _TabItem.Background = new SolidColorBrush(App.Instance.CurrentTheme.PrimaryColor);
@@ -703,13 +804,15 @@ namespace SLBr.Pages
                         else if (IsCustomTheme)
                         {
                             IsCustomTheme = false;
-                            SetAppearance(App.Instance.CurrentTheme, AllowHomeButton, AllowTranslateButton, AllowAIButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                            SetAppearance(App.Instance.CurrentTheme, AllowHomeButton, AllowTranslateButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
                             TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
                             _TabItem.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.FontColor);
                             _TabItem.Background = new SolidColorBrush(App.Instance.CurrentTheme.PrimaryColor);
                             _TabItem.BorderBrush = new SolidColorBrush(App.Instance.CurrentTheme.BorderColor);
                         }
                     }
+                    if (App.Instance.AdBlock != 0)
+                        await _DevToolsClient.Storage.RunBounceTrackingMitigationsAsync();
                 }
             });
         }
@@ -730,6 +833,15 @@ namespace SLBr.Pages
             return false;
         }
 
+        private void AdBlockToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            string Host = Utils.FastHost(Address);
+            if (AdBlockToggleButton.IsChecked.ToBool())
+                App.Instance.AdBlockAllowList.Remove(Host);
+            else
+                App.Instance.AdBlockAllowList.Add(Host);
+        }
+
         async void BrowserLoadChanged(string Address, bool? IsLoading = null)
         {
             string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Address));
@@ -747,6 +859,7 @@ namespace SLBr.Pages
                         OmniBoxPlaceholder.Visibility = Visibility.Hidden;
                         OmniBox.Text = OutputUrl;
                     }
+                    OmniBoxIsDropdown = false;
                 }
                 OmniBox.Tag = Address;
             }
@@ -764,8 +877,6 @@ namespace SLBr.Pages
                 FavouriteButton.ToolTip = "Add from favourites";
                 Tab.FavouriteCommandHeader = "Add from favourites";
             }
-            //SetFavouritesBarVisibility();
-            AIChatButton.Visibility = AllowAIButton ? Visibility.Visible : Visibility.Collapsed;
             if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
             {
                 if (Chromium != null)
@@ -789,6 +900,16 @@ namespace SLBr.Pages
                 }
             }
             SiteInformationPopup.IsOpen = false;
+            bool IsHTTP = Utils.IsHttpScheme(Address);
+            if (IsHTTP && App.Instance.AdBlock != 0)
+            {
+                string Host = Utils.FastHost(Address);
+                AdBlockHostText.Text = Host;
+                AdBlockToggleButton.IsChecked = !App.Instance.AdBlockAllowList.Has(Host);
+                AdBlockContainer.Visibility = Visibility.Visible;
+            }
+            else
+                AdBlockContainer.Visibility = Visibility.Collapsed;
             if (IsLoading != null)
             {
                 Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
@@ -805,42 +926,54 @@ namespace SLBr.Pages
                     }
                     if (SetSiteInfo == "Process")
                     {
-                        if (Utils.IsHttpScheme(Address))
+                        if (IsHTTP)
                         {
                             SiteInformationCertificate.Visibility = Visibility.Visible;
                             if (Chromium != null && Chromium.IsBrowserInitialized)
                             {
                                 CefSharp.NavigationEntry _NavigationEntry = await Chromium.GetVisibleNavigationEntryAsync();
-                                SetSiteInfo = _NavigationEntry.SslStatus.IsSecureConnection ? (_NavigationEntry.HttpStatusCode == 418 ? "Teapot" : "Secure") : "Insecure";
-                                CertificateValidation.Text = _NavigationEntry.SslStatus.IsSecureConnection ? "Certificate is valid" : "Certificate is invalid";
-                                await Cef.UIThreadTaskFactory.StartNew(delegate
+                                if (_NavigationEntry != null)
                                 {
-                                    SslStatus _SSL = Chromium.GetBrowserHost().GetVisibleNavigationEntry().SslStatus;
-                                    Dispatcher.Invoke(() =>
+                                    SetSiteInfo = _NavigationEntry.SslStatus.IsSecureConnection ? (_NavigationEntry.HttpStatusCode == 418 ? "Teapot" : "Secure") : "Insecure";
+                                    CertificateValidation.Text = _NavigationEntry.SslStatus.IsSecureConnection ? "Certificate is valid" : "Certificate is invalid";
+                                    await Cef.UIThreadTaskFactory.StartNew(delegate
                                     {
-                                        if (_SSL.X509Certificate != null)
+                                        SslStatus _SSL = Chromium.GetBrowserHost().GetVisibleNavigationEntry().SslStatus;
+                                        Dispatcher.Invoke(() =>
                                         {
-                                            CertificateInfo.Visibility = Visibility.Visible;
-                                            var IssuedTo = Utils.ParseCertificateIssue(_SSL.X509Certificate.Subject);
-                                            IssueToCommonName.Text = IssuedTo.Item1;
-                                            IssueToCompany.Text = IssuedTo.Item2;
-                                            var IssuedBy = Utils.ParseCertificateIssue(_SSL.X509Certificate.Issuer);
-                                            IssueByCommonName.Text = IssuedBy.Item1;
-                                            IssueByCompany.Text = IssuedBy.Item2;
-                                            CertificateStart.Text = _SSL.X509Certificate.NotBefore.Date.ToShortDateString();
-                                            CertificateEnd.Text = _SSL.X509Certificate.NotAfter.Date.ToShortDateString();
-                                        }
-                                        else
-                                            CertificateInfo.Visibility = Visibility.Collapsed;
+                                            if (_SSL.X509Certificate != null)
+                                            {
+                                                CertificateInfo.Visibility = Visibility.Visible;
+                                                var IssuedTo = Utils.ParseCertificateIssue(_SSL.X509Certificate.Subject);
+                                                IssueToCommonName.Text = IssuedTo.Item1;
+                                                IssueToCompany.Text = IssuedTo.Item2;
+                                                var IssuedBy = Utils.ParseCertificateIssue(_SSL.X509Certificate.Issuer);
+                                                IssueByCommonName.Text = IssuedBy.Item1;
+                                                IssueByCompany.Text = IssuedBy.Item2;
+                                                CertificateStart.Text = _SSL.X509Certificate.NotBefore.Date.ToShortDateString();
+                                                CertificateEnd.Text = _SSL.X509Certificate.NotAfter.Date.ToShortDateString();
+                                            }
+                                            else
+                                                CertificateInfo.Visibility = Visibility.Collapsed;
+                                        });
                                     });
-                                });
+                                }
+                                else
+                                {
+                                    if (Address.StartsWith("https:", StringComparison.Ordinal))
+                                        SetSiteInfo = "Secure";
+                                    else
+                                        SetSiteInfo = "Insecure";
+                                    CertificateInfo.Visibility = Visibility.Collapsed;
+                                }
                             }
                             else
                             {
                                 if (Address.StartsWith("https:", StringComparison.Ordinal))
                                     SetSiteInfo = "Secure";
-                                else if (Address.StartsWith("http:", StringComparison.Ordinal))
+                                else
                                     SetSiteInfo = "Insecure";
+                                CertificateInfo.Visibility = Visibility.Collapsed;
                             }
                         }
                         else
@@ -895,8 +1028,6 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0092FF"));
                             SiteInformationText.Text = $"SLBr";
                             TranslateButton.Visibility = Visibility.Collapsed;
-                            if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
-                                AIChatButton.Visibility = Visibility.Collapsed;
                             //OpenFileExplorerButton.Visibility = Visibility.Visible;
                             SiteInformationPopupIcon.Text = "\xF8B0";
                             SiteInformationPopupIcon.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0092FF"));
@@ -950,7 +1081,7 @@ namespace SLBr.Pages
                     }
                     LoadingStoryboard?.Seek(TimeSpan.Zero);
                     LoadingStoryboard?.Stop();
-                    if (AllowReaderModeButton && Utils.IsHttpScheme(Address))
+                    if (AllowReaderModeButton && IsHTTP)
                         ReaderModeButton.Visibility = (await IsArticle()) ? Visibility.Visible : Visibility.Collapsed;
                     else
                         ReaderModeButton.Visibility = Visibility.Collapsed;
@@ -1282,10 +1413,9 @@ namespace SLBr.Pages
 
         bool IsUtilityContainerOpen;
         IWindowInfo SideBarWindowInfo;
-        HwndHoster Host;
+        public HwndHoster DevToolsHost;
         public void ToggleSideBar(bool ForceClose = false)
         {
-            AIChatToolBar.Visibility = Visibility.Collapsed;
             DevToolsToolBar.Visibility = Visibility.Collapsed;
             if (IsUtilityContainerOpen || ForceClose)
             {
@@ -1301,14 +1431,12 @@ namespace SLBr.Pages
                 {
                     SideBarCoreContainer.Children.Clear();
                     _NewsFeed = null;
-                    AIChatBrowser?.Dispose();
-                    AIChatBrowser = null;
-                    if (Host != null)
+                    if (DevToolsHost != null)
                     {
                         Chromium.BrowserCore.CloseDevTools();
-                        DestroyWindow(Host.Handle);
-                        Host?.Dispose();
-                        Host = null;
+                        DestroyWindow(DevToolsHost.Handle);
+                        DevToolsHost?.Dispose();
+                        DevToolsHost = null;
                     }
                     SideBarWindowInfo?.Dispose();
                     IsUtilityContainerOpen = false;
@@ -1323,27 +1451,26 @@ namespace SLBr.Pages
         }
         public void DevTools(bool ForceClose = false, int XCoord = 0, int YCoord = 0)
         {
-            if (!ForceClose && IsUtilityContainerOpen && ((AIChatBrowser != null && !AIChatBrowser.IsDisposed) || (_NewsFeed != null) || (Host != null)))
+            if (!ForceClose && IsUtilityContainerOpen && (_NewsFeed != null || DevToolsHost != null))
                 ToggleSideBar(ForceClose);
             ToggleSideBar(ForceClose);
             if (IsUtilityContainerOpen)
             {
-                AIChatToolBar.Visibility = Visibility.Collapsed;
                 DevToolsToolBar.Visibility = Visibility.Visible;
-                Host = new HwndHoster();
-                SideBarCoreContainer.Children.Add(Host);
-                Grid.SetColumn(Host, 1);
-                Grid.SetRow(Host, 1);
+                DevToolsHost = new HwndHoster();
+                SideBarCoreContainer.Children.Add(DevToolsHost);
+                Grid.SetColumn(DevToolsHost, 1);
+                Grid.SetRow(DevToolsHost, 1);
 
-                Host.HorizontalAlignment = HorizontalAlignment.Stretch;
-                Host.VerticalAlignment = VerticalAlignment.Stretch;
+                DevToolsHost.HorizontalAlignment = HorizontalAlignment.Stretch;
+                DevToolsHost.VerticalAlignment = VerticalAlignment.Stretch;
 
-                Host.Loaded += (s, args) =>
+                DevToolsHost.Loaded += (s, args) =>
                 {
-                    if (Host != null)
+                    if (DevToolsHost != null)
                     {
                         SideBarWindowInfo = WindowInfo.Create();
-                        SideBarWindowInfo.SetAsChild(Host.Handle);
+                        SideBarWindowInfo.SetAsChild(DevToolsHost.Handle);
                         if (Chromium != null && Chromium.BrowserCore != null)
                             Chromium.BrowserCore.ShowDevTools(SideBarWindowInfo, XCoord, YCoord);
                     }
@@ -1367,12 +1494,11 @@ namespace SLBr.Pages
         News _NewsFeed;
         public void NewsFeed(bool ForceClose = false)
         {
-            if (!ForceClose && IsUtilityContainerOpen && ((AIChatBrowser != null && !AIChatBrowser.IsDisposed) || (_NewsFeed != null) || (Host != null)))
+            if (!ForceClose && IsUtilityContainerOpen && (_NewsFeed != null || DevToolsHost != null))
                 ToggleSideBar(ForceClose);
             ToggleSideBar(ForceClose);
             if (IsUtilityContainerOpen)
             {
-                AIChatToolBar.Visibility = Visibility.Collapsed;
                 DevToolsToolBar.Visibility = Visibility.Collapsed;
                 _NewsFeed = new News(this);
                 SideBarCoreContainer.Children.Add(_NewsFeed);
@@ -1384,554 +1510,6 @@ namespace SLBr.Pages
             }
         }
 
-        ChromiumWebBrowser AIChatBrowser;
-        public void AIChat(bool ForceClose = false)
-        {
-            if (!ForceClose && IsUtilityContainerOpen && ((AIChatBrowser != null && !AIChatBrowser.IsDisposed) || (_NewsFeed != null) || (Host != null)))
-                ToggleSideBar(ForceClose);
-            ToggleSideBar(ForceClose);
-            if (IsUtilityContainerOpen)
-            {
-                AIChatToolBar.Visibility = Visibility.Visible;
-                DevToolsToolBar.Visibility = Visibility.Collapsed;
-                AIChatBrowser = new ChromiumWebBrowser();
-                AIChatBrowser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
-                AIChatBrowser.LifeSpanHandler = new LifeSpanHandler(true);
-                AIChatBrowser.DownloadHandler = App.Instance._DownloadHandler;
-                AIChatBrowser.MenuHandler = App.Instance._LimitedContextMenuHandler;
-                AIChatBrowser.AllowDrop = true;
-                AIChatBrowser.IsManipulationEnabled = true;
-                AIChatBrowser.UseLayoutRounding = true;
-
-                Color _PrimaryColor = (Color)FindResource("PrimaryBrushColor");
-                AIChatBrowser.BrowserSettings = new BrowserSettings
-                {
-                    WebGl = CefState.Disabled,
-                    BackgroundColor = (uint)((_PrimaryColor.A << 24) | (_PrimaryColor.R << 16) | (_PrimaryColor.G << 8) | (_PrimaryColor.B << 0))
-                };
-                AIChatBrowser.ZoomLevelIncrement = 0.5f;
-                //RenderOptions.SetBitmapScalingMode(AIChatBrowser, BitmapScalingMode.LowQuality);
-
-                SideBarCoreContainer.Children.Add(AIChatBrowser);
-                Grid.SetColumn(AIChatBrowser, 1);
-                Grid.SetRow(AIChatBrowser, 1);
-
-                AIChatBrowser.HorizontalAlignment = HorizontalAlignment.Stretch;
-                AIChatBrowser.VerticalAlignment = VerticalAlignment.Stretch;
-
-                AIChatFeature(0);
-                AIChatBrowser.LoadingStateChanged += AIChatBrowser_LoadingStateChanged;
-                AIChatBrowser.IsBrowserInitializedChanged += AIChatBrowser_IsBrowserInitializedChanged;
-                AIChatBrowser.Visibility = Visibility.Collapsed;
-            }
-        }
-
-
-        private void AIChatBrowser_IsBrowserInitializedChanged(object? sender, EventArgs e)
-        {
-            if (AIChatBrowser.IsBrowserInitialized)
-                AIChatBrowser.GetDevToolsClient().Emulation.SetUserAgentOverrideAsync($"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{Cef.ChromiumVersion} Safari/537.36 Edg/{Cef.ChromiumVersion}");
-        }
-
-        private void AIChatBrowser_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
-        {
-            if (AIChatBrowser == null)
-                return;
-            Dispatcher.Invoke(() =>
-            {
-                AIChatBrowser.Visibility = Visibility.Collapsed;
-            });
-            if (!AIChatBrowser.IsBrowserInitialized)
-                return;
-            if (!e.IsLoading)
-            {
-                Color _PrimaryColor = (Color)FindResource("PrimaryBrushColor");
-                string PrimaryHex = $"#{_PrimaryColor.R:X2}{_PrimaryColor.G:X2}{_PrimaryColor.B:X2}{_PrimaryColor.A:X2}";
-                Color _SecondaryColor = (Color)FindResource("SecondaryBrushColor");
-                string SecondaryHex = $"#{_SecondaryColor.R:X2}{_SecondaryColor.G:X2}{_SecondaryColor.B:X2}{_SecondaryColor.A:X2}";
-                Color _BorderColor = (Color)FindResource("BorderBrushColor");
-                string BorderHex = $"#{_BorderColor.R:X2}{_BorderColor.G:X2}{_BorderColor.B:X2}{_BorderColor.A:X2}";
-                Color _GrayColor = (Color)FindResource("GrayBrushColor");
-                string GrayHex = $"#{_GrayColor.R:X2}{_GrayColor.G:X2}{_GrayColor.B:X2}{_GrayColor.A:X2}";
-                Color _FontColor = (Color)FindResource("FontBrushColor");
-                string FontHex = $"#{_FontColor.R:X2}{_FontColor.G:X2}{_FontColor.B:X2}{_FontColor.A:X2}";
-                Color _IndicatorColor = (Color)FindResource("IndicatorBrushColor");
-                string IndicatorHex = $"#{_IndicatorColor.R:X2}{_IndicatorColor.G:X2}{_IndicatorColor.B:X2}{_IndicatorColor.A:X2}";
-
-                string ChatJS = $@"const CSSVariables=`body {{
-    --cib-border-radius-circular: 5px;
-    --cib-border-radius-extra-large: 5px;
-    --cib-border-radius-large: 5px;
-    --cib-comp-thread-host-border-radius: 5px;
-    --cib-color-background-surface-app-primary: {PrimaryHex};
-    --cib-color-background-surface-solid-base: {PrimaryHex};
-    --cib-color-background-surface-solid-primary: {PrimaryHex};
-    --cib-color-background-surface-app-secondary: {SecondaryHex};
-    --cib-color-background-surface-solid-secondary: {PrimaryHex};
-    --cib-color-background-surface-solid-quaternary: {PrimaryHex};
-    --cib-color-fill-neutral-solid-primary: {PrimaryHex};
-    --cib-color-fill-subtle-tertiary: {BorderHex};
-    --cib-color-stroke-neutral-quarternary: {BorderHex};
-    --cib-color-background-surface-card-primary: {SecondaryHex};
-    --cib-color-background-surface-card-secondary: {SecondaryHex};
-    --cib-color-background-surface-card-tertiary: {BorderHex};
-    --cib-color-foreground-neutral-tertiary: {GrayHex};
-    --cib-color-background-system-caution-primary: #FF8800;
-    background: {PrimaryHex} !important;
-    --cib-color-foreground-accent-primary: {IndicatorHex};
-    --cib-color-fill-accent-gradient-primary: {IndicatorHex};
-    --cib-color-stroke-accent-primary: {IndicatorHex};
-    --cib-color-fill-accent-gradient-customized-primary: {IndicatorHex};
-}}
-::-webkit-scrollbar {{
-    background: {PrimaryHex} !important;
-}}
-.surface {{
-    border: 1px solid var(--cib-color-background-surface-card-tertiary) !important;
-    box-shadow: none !important;
-}}
-button[is=""cib-button""] {{
-    height: 35px !important;
-    width: 35px !important;
-}}
-.text-message-content[user] div {{
-    background: var(--cib-color-fill-accent-gradient-primary) !important;
-    border-radius: 5px !important;
-    padding: 15px !important;
-    text-align: right !important;
-}}
-:host([source=user]) .header {{
-    align-self: flex-end !important;
-}}
-:host([source=user]) {{
-    align-items: flex-end;
-}}`;
-const style = document.createElement('style');
-style.type = 'text/css';
-style.innerHTML = CSSVariables;
-document.head.appendChild(style);
-var elements = document.querySelectorAll('.b_wlcmDesc');
-elements.forEach(function(element) {{
-    element.parentNode.removeChild(element);
-}});
-var elements = document.querySelectorAll('.b_wlcmName');
-elements.forEach(function(element) {{
-    element.parentNode.removeChild(element);
-}});";
-
-                string ComposeJS = $@"const CSSVariables=`::-webkit-scrollbar {{
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper .sidebar {{
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper .child {{
-    background: {SecondaryHex} !important;
-    border: 1px solid {BorderHex} !important;
-    box-shadow: none !important;
-}}
-.zpcarousel .wt_cont {{
-    border-radius: 5px !important;
-}}
-.zpcarousel .slide .cimg_cont {{
-    border-radius: 5px !important;
-}}
-.uds_coauthor_wrapper .button {{
-    border-radius: 5px !important;
-}}
-.uds_coauthor_wrapper .tag {{
-    border-radius: 5px !important;
-    color: white !important;
-    border-color: {BorderHex} !important;
-    background: {SecondaryHex} !important;
-    color: {FontHex} !important;
-}}
-.uds_coauthor_wrapper .tag.selected {{
-    outline: 2px solid {IndicatorHex} !important;
-    outline-offset: -2px;
-}}
-.uds_coauthor_wrapper .tag:hover:not(.selected) {{
-    background: {BorderHex} !important;
-}}
-.uds_coauthor_wrapper textarea {{
-    border-radius: 5px !important;
-    box-shadow: none !important;
-    border: 1px solid {BorderHex} !important;
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper #letter_counter {{
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper textarea:focus-visible {{
-    border: 1px solid {IndicatorHex} !important
-}}
-.uds_coauthor_wrapper .option-section {{
-    border-radius: 5px !important;
-    border-color: {BorderHex} !important;
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper .format-option .illustration {{
-    border-radius: 5px !important;
-    border: 1px solid {BorderHex} !important;
-    background: {SecondaryHex} !important;
-}}
-.uds_coauthor_wrapper .format-option.selected .illustration {{
-    outline: 2px solid {IndicatorHex} !important;
-    outline-offset: -2px;
-}}
-.uds_coauthor_wrapper .format-option.selected .illustration svg>path {{
-    fill-opacity: 1 !important;
-    opacity: 1 !important;
-}}
-.uds_coauthor_wrapper .format-option:hover:not(.selected) .illustration {{
-    background: {BorderHex} !important;
-}}
-.uds_coauthor_wrapper #custom_tone_plus_button svg>path, .uds_coauthor_wrapper #custom_tone_edit_button svg>path, .uds_coauthor_wrapper #add_change_suggestion_button svg>path {{
-    fill: {FontHex} !important;
-}}
-.uds_coauthor_wrapper #custom_tone_add_button, .uds_coauthor_wrapper #custom_tone_save_button, .uds_coauthor_wrapper #custom_tone_add_button:not(.disabled) span:hover, .uds_coauthor_wrapper #custom_tone_save_button:not(.disabled) span:hover, .uds_coauthor_wrapper #submit_change_suggestion_button, .uds_coauthor_wrapper #submit_change_suggestion_button:not(.disabled) span:hover, .uds_coauthor_wrapper input {{
-    box-shadow: none !important;
-    border: 1px solid {BorderHex} !important;
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper input:focus {{
-    box-shadow: none !important;
-    border-left: 1px solid {IndicatorHex} !important;
-    border-right: 0px;
-    border-top: 1px solid {IndicatorHex} !important;
-    border-bottom: 1px solid {IndicatorHex} !important;
-}}
-.uds_coauthor_wrapper #custom_tone_add_button, .uds_coauthor_wrapper #custom_tone_save_button, .uds_coauthor_wrapper #change_suggestions_input, .uds_coauthor_wrapper #submit_change_suggestion_button {{
-    box-shadow: none !important;
-    border-left: 0px;
-    border-right: 1px solid {IndicatorHex} !important;
-    border-top: 1px solid {IndicatorHex} !important;
-    border-bottom: 1px solid {IndicatorHex} !important;
-}}
-.uds_coauthor_wrapper .preview-options {{
-    background: {SecondaryHex} !important;
-    right: 10px !important;
-    width: auto !important;
-    border-radius: 5px !important;
-    border: 1px solid {BorderHex};
-    margin-bottom: 10px !important;
-}}
-.uds_coauthor_wrapper .preview-options .item.disabled:hover {{
-    background: transparent !important;
-}}
-.uds_coauthor_wrapper .preview-options .item:nth-child(2) {{
-    margin-left: 0px !important;
-}}
-.uds_coauthor_wrapper .preview-options .item {{
-    width: 35px !important;
-    height: 35px !important;
-    border-radius: 5px !important;
-    margin-left: 5px;
-}}
-.uds_coauthor_wrapper .preview-options .item div {{
-    align-items: center;
-    align-self: center;
-    display: flex;
-}}
-.uds_coauthor_wrapper .change-suggestion.tag {{
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper #compose_button:not(.disabled) {{
-    background: {IndicatorHex} !important;
-}}
-.uds_coauthor_wrapper .button.disabled {{
-    outline: 1px solid {BorderHex} !important;
-    outline-offset: -1px;
-    background: {SecondaryHex} !important;
-    color: {GrayHex} !important;
-    cursor: not-allowed !important;
-}}`;
-const style = document.createElement('style');
-style.type = 'text/css';
-style.innerHTML = CSSVariables;
-document.head.appendChild(style);
-const insertButton = document.querySelector('#insert_button');
-if (insertButton)
-    insertButton.remove();";
-                /*string ComposeJS = $@"
-const CSSVariables = `
-::-webkit-scrollbar {{
-    background: {PrimaryHex} !important;
-}}
-
-.uds_coauthor_wrapper .sidebar {{
-    background: {PrimaryHex} !important;
-}}
-
-.uds_coauthor_wrapper .child {{
-    background: {SecondaryHex} !important;
-    border: 1px solid {BorderHex} !important;
-    box-shadow: none !important;
-}}
-
-.zpcarousel .wt_cont {{
-    border-radius: 5px !important;
-}}
-
-.zpcarousel .slide .cimg_cont {{
-    border-radius: 5px !important;
-}}
-
-.uds_coauthor_wrapper .button {{
-    border-radius: 5px !important;
-}}
-
-.uds_coauthor_wrapper .tag {{
-    border-radius: 5px !important;
-    color: white !important;
-    border-color: {BorderHex} !important;
-    background: {SecondaryHex} !important;
-    color: {FontHex} !important;
-}}
-
-.uds_coauthor_wrapper .tag.selected {{
-    background: linear-gradient(130deg, #2870EA 20%, #1B4AEF 77.5%) !important;
-    border-color: #3399FF !important;
-    color: white !important;
-}}
-.uds_coauthor_wrapper .tag.selected svg>path {{
-    fill: white !important;
-}}
-.uds_coauthor_wrapper .tag:hover:not(.selected) {{
-    background: {BorderHex} !important;
-}}
-
-.uds_coauthor_wrapper textarea {{
-    border-radius: 5px !important;
-    box-shadow: none !important;
-    border: 1px solid {BorderHex} !important;
-    background: {PrimaryHex} !important;
-}}
-
-.uds_coauthor_wrapper #letter_counter {{
-    background: {PrimaryHex} !important;
-}}
-
-.uds_coauthor_wrapper textarea:focus-visible {{
-    border: 1px solid #3399FF !important
-}}
-
-.uds_coauthor_wrapper .option-section {{
-    border-radius: 5px !important;
-    border-color: {BorderHex} !important;
-    background: {PrimaryHex} !important;
-}}
-
-.uds_coauthor_wrapper .format-option .illustration {{
-    border-radius: 5px !important;
-    border: 1px solid {BorderHex} !important;
-    background: {SecondaryHex} !important;
-}}
-.uds_coauthor_wrapper .format-option.selected .illustration {{
-    border-color: #3399FF !important;
-    background: linear-gradient(130deg, #2870EA 20%, #1B4AEF 77.5%) !important;
-}}
-.uds_coauthor_wrapper .format-option.selected .illustration svg>path {{
-    fill-opacity: 1 !important;
-    opacity: 1 !important;
-    fill: white !important;
-}}
-.uds_coauthor_wrapper .format-option:hover:not(.selected) .illustration {{
-    background: {BorderHex} !important;
-}}
-
-.uds_coauthor_wrapper #custom_tone_plus_button:not(.selected) svg>path, .uds_coauthor_wrapper #custom_tone_edit_button:not(.selected) svg>path, .uds_coauthor_wrapper #add_change_suggestion_button:not(.selected) svg>path {{
-    fill: {FontHex} !important;
-}}
-
-.uds_coauthor_wrapper #custom_tone_add_button, .uds_coauthor_wrapper #custom_tone_save_button, .uds_coauthor_wrapper #custom_tone_add_button:not(.disabled) span:hover, .uds_coauthor_wrapper #custom_tone_save_button:not(.disabled) span:hover, .uds_coauthor_wrapper #submit_change_suggestion_button, .uds_coauthor_wrapper #submit_change_suggestion_button:not(.disabled) span:hover, .uds_coauthor_wrapper input {{
-    box-shadow: none !important;
-    border: 1px solid {BorderHex} !important;
-    background: {PrimaryHex} !important;
-}}
-.uds_coauthor_wrapper input:focus {{
-    box-shadow: none !important;
-    border-left: 1px solid #3399FF !important;
-    border-right: 0px;
-    border-top: 1px solid #3399FF !important;
-    border-bottom: 1px solid #3399FF !important;
-}}
-.uds_coauthor_wrapper #custom_tone_add_button, .uds_coauthor_wrapper #custom_tone_save_button, .uds_coauthor_wrapper #change_suggestions_input, .uds_coauthor_wrapper #submit_change_suggestion_button {{
-    box-shadow: none !important;
-    border-left: 0px;
-    border-right: 1px solid #3399FF !important;
-    border-top: 1px solid #3399FF !important;
-    border-bottom: 1px solid #3399FF !important;
-}}
-.uds_coauthor_wrapper .preview-options {{
-    background: {SecondaryHex} !important;
-    right: 10px !important;
-    width: auto !important;
-    border-radius: 5px !important;
-    border: 1px solid {BorderHex};
-    margin-bottom: 10px !important;
-}}
-
-.uds_coauthor_wrapper .preview-options .item.disabled:hover {{
-    background: transparent !important;
-}}
-
-.uds_coauthor_wrapper .preview-options .item:nth-child(2) {{
-    margin-left: 0px !important;
-}}
-.uds_coauthor_wrapper .preview-options .item {{
-    width: 35px !important;
-    height: 35px !important;
-    border-radius: 5px !important;
-    margin-left: 5px;
-}}
-
-.uds_coauthor_wrapper .preview-options .item div {{
-    align-items: center;
-    align-self: center;
-    display: flex;
-}}
-
-.uds_coauthor_wrapper .change-suggestion.tag {{
-    background: {PrimaryHex} !important;
-}}
-
-.uds_coauthor_wrapper #compose_button {{
-    background: linear-gradient(130deg, #2870EA 20%, #1B4AEF 77.5%) !important;
-}}
-`;
-
-const style = document.createElement('style');
-style.type = 'text/css';
-style.innerHTML = CSSVariables;
-document.head.appendChild(style);
-
-const insertButton = document.querySelector('#insert_button');
-if (insertButton) {{
-    insertButton.remove();
-}}";*/
-                /*
-                .primary-row button > * {{
-                    --icon-size: 20px !important;
-                }}
-                .primary-row .description {{
-                    height: 35px !important;
-                    align-content: center !important;
-                }}`;*/
-                Dispatcher.Invoke(() =>
-                {
-                    AIChatBrowser.Visibility = Visibility.Visible;
-                    if (AIChatBrowser.Address.StartsWith("https://edgeservices.bing.com/edgesvc/compose", StringComparison.Ordinal))
-                        AIChatBrowser.ExecuteScriptAsync(ComposeJS);
-                    else
-                    {
-                        AIChatBrowser.ExecuteScriptAsync(ChatJS);
-                        TaskScheduler syncContextScheduler = (SynchronizationContext.Current != null) ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current;
-                        Task.Factory.StartNew(() => Thread.Sleep(500))
-                        .ContinueWith((t) =>
-                        {
-                            AIChatBrowser.ExecuteScriptAsync(@"var elements=document.querySelectorAll('.b_wlcmLogo');
-elements.forEach(function(logo){
-    if (logo.shadowRoot){
-        const defsElement=logo.shadowRoot.querySelector(""defs"");
-        if (defsElement){
-            defsElement.innerHTML = `<radialGradient id='b' cx='0' cy='0' r='1' gradientUnits='userSpaceOnUse' gradientTransform='matrix(-18.09451 -22.11268 20.79145 -17.01336 58.88 31.274)'>
-                    <stop offset='0.0955758' stop-color='#00AEFF'></stop>
-                    <stop offset='0.773185' stop-color='#2253CE'></stop>
-                    <stop offset='1' stop-color='#0736C4'></stop>
-                </radialGradient>
-                <radialGradient id='c' cx='0' cy='0' r='1' gradientUnits='userSpaceOnUse' gradientTransform='rotate(43.896 -55.288 43.754) scale(25.1554 24.7085)'>
-                    <stop stop-color='#FFB657'></stop>
-                    <stop offset='0.633728' stop-color='#FF5F3D'></stop>
-                    <stop offset='0.923392' stop-color='#C02B3C'></stop>
-                </radialGradient>
-                <radialGradient id='f' cx='0' cy='0' r='1' gradientUnits='userSpaceOnUse' gradientTransform='matrix(-22.94248 56.77892 -69.48524 -28.07668 64.343 17.504)'>
-                    <stop offset='0.0661714' stop-color='#8C48FF'></stop>
-                    <stop offset='0.5' stop-color='#F2598A'></stop>
-                    <stop offset='0.895833' stop-color='#FFB152'></stop>
-                </radialGradient>
-                <linearGradient id='d' x1='13.637' y1='3.994' x2='21.673' y2='52.601' gradientUnits='userSpaceOnUse'>
-                    <stop offset='0.156162' stop-color='#0D91E1'></stop>
-                    <stop offset='0.487484' stop-color='#52B471'></stop>
-                    <stop offset='0.652394' stop-color='#98BD42'></stop>
-                    <stop offset='0.937361' stop-color='#FFC800'></stop>
-                </linearGradient>
-                <linearGradient id='e' x1='20.452' y1='3.994' x2='22.389' y2='49.999' gradientUnits='userSpaceOnUse'>
-                    <stop stop-color='#3DCBFF'></stop>
-                    <stop offset='0.246674' stop-color='#0588F7' stop-opacity='0'></stop>
-                </linearGradient>
-                <linearGradient id='g' x1='66.24' y1='20.254' x2='63.34' y2='38.021' gradientUnits='userSpaceOnUse'>
-                    <stop offset='0.0581535' stop-color='#F8ADFA'></stop>
-                    <stop offset='0.708063' stop-color='#A86EDD' stop-opacity='0'></stop>
-                </linearGradient>
-                <clipPath id='a'>
-                    <path fill='#fff' d='M0 0h72v72H0z'></path>
-                </clipPath>`;
-        }
-    }
-});
-function applyStyles(){
-    const applyCSS=(element,css)=>{const style=document.createElement('style');style.textContent=css;element.appendChild(style);};
-    document.querySelectorAll('.b_wlcmPersName').forEach(function(element){element.parentNode.removeChild(element);});
-    document.querySelectorAll('.b_wlcmPersDesc').forEach(function(element){element.parentNode.removeChild(element);});
-    document.querySelectorAll('.b_wlcmPersAuthorText').forEach(function(element){element.parentNode.removeChild(element);});
-    document.querySelectorAll('.b_wlcmCont').forEach(function(element){if (element.id=='b_sydWelcomeTemplate_'){document.querySelectorAll('.b_ziCont').forEach(function(element){element.parentNode.removeChild(element);});}});
-    const cibChatTurns=document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelectorAll('cib-chat-turn');
-    cibChatTurns.forEach(cibChatTurn=>{
-            const cibMessageGroups=cibChatTurn.shadowRoot.querySelectorAll('cib-message-group');
-                cibMessageGroups.forEach(cibMessageGroup => {
-            const cibMessageGroupShadowRoot=cibMessageGroup.shadowRoot;
-            const header=cibMessageGroupShadowRoot.querySelector('.header');
-            const cibMessage=cibMessageGroupShadowRoot.querySelector('cib-message');
-            if (cibMessage){
-                const cibShared=cibMessage.shadowRoot.querySelector('cib-shared');
-                const footer=cibMessage.shadowRoot.querySelector('.footer');
-                if (cibShared){
-                    applyCSS(cibMessage.shadowRoot,`:host([source=user]) .text-message-content div{
-    background:var(--cib-color-fill-accent-gradient-primary) !important;
-    border-radius:5px !important;
-    padding:15px !important;
-    text-align:right !important;
-    align-self:flex-end;
-    color:white !important;
-}
-:host([source=user]) .text-message-content[user] img{margin-inline-end:0px !important;margin-inline-start:auto !important;}
-:host([source=user]) .footer{align-self:flex-end !important;}`);
-                }
-                if (footer){
-                    const cibMessageActions=footer.querySelector('cib-message-actions');
-                    if (cibMessageActions){
-                        const cibMessageActionsShadowRoot=cibMessageActions.shadowRoot;
-                        const container = cibMessageActionsShadowRoot.querySelector('.container');
-                        if (container){
-                            const searchButton=container.querySelector('#search-on-bing-button');
-                            if (searchButton)
-                                searchButton.remove();
-                        }
-                    }
-                }
-            }
-            if (header)
-                applyCSS(cibMessageGroupShadowRoot,`:host([source=user]) .header{align-self:flex-end !important;} :host([source=user]){align-items:flex-end;}`);
-            });
-    });
-}
-applyStyles();
-new MutationObserver(applyStyles).observe(document.body,{attributes:true,childList:true,subtree:true});");
-
-                            /*if (AIChatBrowser.Address.Contains("mobfull,moblike"))
-                                AIChatBrowser.ExecuteScriptAsync(@"const LateStyle=document.createElement('style');
-LateStyle.type='text/css';
-LateStyle.innerHTML=`.zero_state_item{border-radius:5px !important;}`;
-document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.zero_state_wrap').shadowRoot.appendChild(LateStyle);
-document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.zero_state_wrap').shadowRoot.querySelector('.hello_text').innerHTML=""Suggestions"";
-document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversation-main').shadowRoot.querySelector('cib-welcome-container').shadowRoot.querySelector('.preview-container').remove();");*/
-                        }, syncContextScheduler);
-                    }
-                });
-            }
-        }
-
         bool Muted = false;
         public void ToggleMute()
         {
@@ -1940,34 +1518,6 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             MuteMenuItem.Icon = Muted ? "\xe767" : "\xe74f";
             MuteMenuItem.Header = Muted ? "Unmute" : "Mute";
             SetAudioState(null);
-        }
-
-        public void AIChatFeature(int Feature)
-        {
-            if (AIChatBrowser != null)
-            {
-                switch (Feature)
-                {
-                    case 0:
-                        string AIChatAddress = "http://edgeservices.bing.com/edgesvc/chat?udsframed=1&form=SHORUN&clientscopes=chat,noheader,channelstable";
-                        if (App.Instance.CurrentTheme.DarkWebPage)
-                            AIChatAddress += "&darkschemeovr=1";
-                        AIChatBrowser.Address = AIChatAddress;
-                        break;
-                    /*case 1:
-                        string AIMobAddress = "http://edgeservices.bing.com/edgesvc/chat?udsframed=1&form=SHORUN&clientscopes=chat,noheader,mobfull,moblike";
-                        if (App.Instance.CurrentTheme.DarkWebPage)
-                            AIMobAddress += "&darkschemeovr=1";
-                        AIChatBrowser.Address = AIMobAddress;
-                        break;*/
-                    case 2:
-                        string AIComposeAddress = "http://edgeservices.bing.com/edgesvc/compose?udsframed=1&clientscopes=chat,noheader";
-                        if (App.Instance.CurrentTheme.DarkWebPage)
-                            AIComposeAddress += "&darkschemeovr=1";
-                        AIChatBrowser.Address = AIComposeAddress;
-                        break;
-                }
-            }
         }
 
         public void Favourite()
@@ -1983,18 +1533,17 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             }
             else if (!IsLoading)
             {
-                var infoWindow = new PromptDialogWindow("Prompt", $"Add Favourite", "Name", Title);
-                infoWindow.Topmost = true;
-                if (infoWindow.ShowDialog() == true)
+                PromptDialogWindow InfoWindow = new PromptDialogWindow("Prompt", $"Add Favourite", "Name", Title);
+                InfoWindow.Topmost = true;
+                if (InfoWindow.ShowDialog() == true)
                 {
-                    App.Instance.Favourites.Add(new ActionStorage(infoWindow.UserInput, $"4<,>{Address}", Address));
+                    App.Instance.Favourites.Add(new ActionStorage(InfoWindow.UserInput, $"4<,>{Address}", Address));
                     FavouriteButton.Content = "\xEB52";
                     FavouriteButton.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
                     FavouriteButton.ToolTip = "Remove from favourites";
                     Tab.FavouriteCommandHeader = "Remove from favourites";
                 }
             }
-            SetFavouritesBarVisibility();
         }
 
         public void SetFavouritesBarVisibility()
@@ -2043,15 +1592,15 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
         {
             try
             {
-                string _ScreenshotFormat = App.Instance.GlobalSave.Get("ScreenshotFormat");
+                int _ScreenshotFormat = App.Instance.GlobalSave.GetInt("ScreenshotFormat");
                 string FileExtension = "jpg";
                 CaptureScreenshotFormat ScreenshotFormat = CaptureScreenshotFormat.Jpeg;
-                if (_ScreenshotFormat == "PNG")
+                if (_ScreenshotFormat == 1)
                 {
                     FileExtension = "png";
                     ScreenshotFormat = CaptureScreenshotFormat.Png;
                 }
-                else if (_ScreenshotFormat == "WebP")
+                else if (_ScreenshotFormat == 2)
                 {
                     FileExtension = "webp";
                     ScreenshotFormat = CaptureScreenshotFormat.Webp;
@@ -2063,9 +1612,9 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                 string Url = $"{Path.Combine(ScreenshotPath, Regex.Replace($"{Chromium.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", ""))}";
                 using (var _DevToolsClient = Chromium.GetDevToolsClient())
                 {
-                    var contentSize = await Chromium.GetContentSizeAsync();
-                    var result = await _DevToolsClient.Page.CaptureScreenshotAsync(ScreenshotFormat, null, new Viewport { Width = contentSize.Width, Height = contentSize.Height }, null, true, true);
-                    File.WriteAllBytes(Url, result.Data);
+                    var ContentSize = await Chromium.GetContentSizeAsync();
+                    var Result = await _DevToolsClient.Page.CaptureScreenshotAsync(ScreenshotFormat, null, new Viewport { Width = ContentSize.Width, Height = ContentSize.Height }, null, true, true);
+                    File.WriteAllBytes(Url, Result.Data);
                 }
                 Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true });
             }
@@ -2098,35 +1647,67 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             return false;
         }*/
 
+        public void OmniBoxEnter()
+        {
+            string Url = Utils.FilterUrlForBrowser(OmniBox.Text, App.Instance.DefaultSearchProvider.SearchUrl);
+            if (Url.StartsWith("javascript:", StringComparison.Ordinal))
+            {
+                Chromium.ExecuteScriptAsync(Url.Substring(11));
+                OmniBox.Text = OmniBox.Tag.ToString();
+            }
+            else if (!Utils.IsProgramUrl(Url))
+                Address = Url;
+            if (!Private && bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
+            {
+                OmniBoxFastTimer.Stop();
+                OmniBoxSmartTimer.Stop();
+            }
+            //Suggestions.Clear();
+            OmniBox.IsDropDownOpen = false;
+            Keyboard.ClearFocus();
+            Chromium.Focus();
+        }
+
+        private bool IsOnlyModifierPressed()
+        {
+            return Keyboard.Modifiers == ModifierKeys.Control ||
+                   Keyboard.Modifiers == ModifierKeys.Alt ||
+                   Keyboard.Modifiers == ModifierKeys.Windows;
+        }
+
+        private bool IsIgnorableKey(Key key)
+        {
+            if (key >= Key.F1 && key <= Key.F24)
+                return true;
+            return key switch
+            {
+                Key.Escape or Key.PrintScreen or Key.Pause or Key.Scroll
+                or Key.Insert or Key.Delete or Key.Home or Key.End
+                or Key.PageUp or Key.PageDown or Key.Up or Key.Down
+                or Key.Left or Key.Right or Key.CapsLock or Key.NumLock
+                or Key.Tab or Key.LWin or Key.RWin
+                or Key.LeftCtrl or Key.RightCtrl
+                or Key.LeftAlt or Key.RightAlt => true,
+
+                _ => false
+            };
+        }
+
         private void OmniBox_PreviewKeyUp(object sender, KeyEventArgs e)
         {
             if (OmniBox.Text.Trim().Length > 0)
             {
                 if (e.Key == Key.Return)
-                {
-                    string Url = Utils.FilterUrlForBrowser(OmniBox.Text, App.Instance.GlobalSave.Get("SearchEngine"));
-                    if (Url.StartsWith("javascript:", StringComparison.Ordinal))
-                    {
-                        Chromium.ExecuteScriptAsync(Url.Substring(11));
-                        OmniBox.Text = OmniBox.Tag.ToString();
-                    }
-                    else if (!Utils.IsProgramUrl(Url))
-                        Address = Url;
-                    Keyboard.ClearFocus();
-                    Chromium.Focus();
-                }
+                    OmniBoxEnter();
                 else
                 {
-                    if (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right || e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl || e.Key == Key.LeftShift || e.Key == Key.RightShift)
+                    if (IsIgnorableKey(e.Key) || IsOnlyModifierPressed())
                         return;
-                    if (Keyboard.Modifiers == ModifierKeys.Control || Keyboard.Modifiers == ModifierKeys.Alt || Keyboard.Modifiers == ModifierKeys.Shift)
-                        return;
-
-                    if (e.Key == Key.Back || !char.IsControl((char)KeyInterop.VirtualKeyFromKey(e.Key)))
+                    Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
+                    LoadingStoryboard?.Seek(TimeSpan.Zero);
+                    LoadingStoryboard?.Stop();
+                    if (OmniBox.Text.Length != 0)
                     {
-                        Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-                        LoadingStoryboard?.Seek(TimeSpan.Zero);
-                        LoadingStoryboard?.Stop();
                         if (OmniBox.Text.StartsWith("search:", StringComparison.Ordinal))
                         {
                             SiteInformationIcon.Text = "\xE721";
@@ -2163,14 +1744,27 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                             SiteInformationText.Text = $"Search";
                             SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text}";
                         }
-                        SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
 
-                        PreviousOmniBoxText = OmniTextBox.Text;
-                        CaretIndex = OmniTextBox.CaretIndex;
-                        SelectionStart = OmniTextBox.SelectionStart;
-                        SelectionLength = OmniTextBox.SelectionLength;
-                        OmniBoxTimer.Stop();
-                        OmniBoxTimer.Start();
+                        if (!Private && bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
+                        {
+                            OmniBoxFastTimer.Stop();
+                            OmniBoxSmartTimer.Stop();
+                            OmniBoxFastTimer.Start();
+                            if (bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions")))
+                                OmniBoxSmartTimer.Start();
+                        }
+                    }
+                    else
+                    {
+                        SiteInformationIcon.Text = "\xE721";
+                        SiteInformationText.Text = $"Search";
+                        SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text}";
+                    }
+                    SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                    if (OmniBox.IsDropDownOpen)
+                    {
+                        OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);
+                        OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
                     }
                 }
             }
@@ -2190,7 +1784,7 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                         OmniBox.Text = OmniBox.Tag.ToString();
                 }
                 catch { }
-                OmniTextBox.SelectAll();
+                //OmniTextBox.SelectAll();
                 OmniBoxBorder.BorderThickness = new Thickness(2);
                 OmniBoxBorder.BorderBrush = (SolidColorBrush)FindResource("IndicatorBrush");
                 OmniBoxFocused = true;
@@ -2241,36 +1835,29 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
 
         bool AllowHomeButton;
         bool AllowTranslateButton;
-        bool AllowAIButton;
         bool AllowReaderModeButton;
         int ShowExtensionButton;
         int ShowFavouritesBar;
 
-        public async void SetAppearance(Theme _Theme, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowAIButton, bool _AllowReaderModeButton, int _ShowExtensionButton, int _ShowFavouritesBar)
+        public async void SetAppearance(Theme _Theme, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowReaderModeButton, int _ShowExtensionButton, int _ShowFavouritesBar)
         {
             AllowHomeButton = _AllowHomeButton;
-            AllowTranslateButton = _AllowTranslateButton;
-            AllowAIButton = _AllowAIButton;
+            AllowTranslateButton = !Private && _AllowTranslateButton;
             AllowReaderModeButton = _AllowReaderModeButton;
             ShowExtensionButton = _ShowExtensionButton;
             ShowFavouritesBar = _ShowFavouritesBar;
             SetFavouritesBarVisibility();
             HomeButton.Visibility = AllowHomeButton ? Visibility.Visible : Visibility.Collapsed;
-            AIChatButton.Visibility = AllowAIButton ? Visibility.Visible : Visibility.Collapsed;
             if (!IsLoading)
             {
                 //MessageBox.Show(Address);
                 //MessageBox.Show(CoAddress);
                 if (Utils.IsHttpScheme(Address))
                     TranslateButton.Visibility = AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                else if (Address.StartsWith("file:", StringComparison.Ordinal))
+                /*else if (Address.StartsWith("file:", StringComparison.Ordinal))
                     TranslateButton.Visibility = Visibility.Collapsed;
                 else if (Address.StartsWith("slbr:", StringComparison.Ordinal))
-                {
-                    TranslateButton.Visibility = Visibility.Collapsed;
-                    if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
-                        AIChatButton.Visibility = Visibility.Collapsed;
-                }
+                    TranslateButton.Visibility = Visibility.Collapsed;*/
                 else
                     TranslateButton.Visibility = Visibility.Collapsed;
             }
@@ -2316,8 +1903,8 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
             Action(Actions.SetSideBarDock, null, (3 - SideBarDockDropdown.SelectedIndex).ToString());
         }
 
-        private ObservableCollection<string> _Suggestions = new ObservableCollection<string>();
-        public ObservableCollection<string> Suggestions
+        private ObservableCollection<OmniSuggestion> _Suggestions = new ObservableCollection<OmniSuggestion>();
+        public ObservableCollection<OmniSuggestion> Suggestions
         {
             get { return _Suggestions; }
             set
@@ -2326,142 +1913,122 @@ document.querySelector('.cib-serp-main').shadowRoot.querySelector('#cib-conversa
                 RaisePropertyChanged("Suggestions");
             }
         }
-        private DispatcherTimer OmniBoxTimer;
-        string PreviousOmniBoxText;
-        int CaretIndex;
-        int SelectionStart;
-        int SelectionLength;
+        private DispatcherTimer OmniBoxFastTimer;
+        private DispatcherTimer OmniBoxSmartTimer;
+        bool OmniBoxIsDropdown = false;
 
-        private async void OmniBoxTimer_Tick(object? sender, EventArgs e)
+        private CancellationTokenSource? SmartSuggestionCancellation;
+
+        private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
         {
-            OmniBoxTimer.Stop();
-            string Text = OmniBox.Text;
+            OmniBoxFastTimer.Stop();
+            string CurrentText = OmniBox.Text;
             Suggestions.Clear();
-            if (!bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
+            OmniBox.Text = CurrentText;
+            /*string FirstEntryType = "S";
+            switch (App.GetSearchType(OmniBox.Text))
             {
-                OmniBox.IsDropDownOpen = false;
-                return;
-            }
-            OmniBox.Text = Text;
-            if (OmniBox.Text.Trim().Length > 0)
+                case "Url":
+                    FirstEntryType = "W";
+                    break;
+                case "Program":
+                    FirstEntryType = "P";
+                    break;
+                case "Code":
+                    FirstEntryType = "C";
+                    break;
+                case "File":
+                    FirstEntryType = "F";
+                    break;
+            }*/
+            Suggestions.Add(App.GenerateSuggestion(CurrentText, App.GetMiniSearchType(CurrentText)));//FirstEntryType
+            try
             {
-                try
+                string SuggestionsUrl = string.Format(App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
+                if (SuggestionsUrl != "")
                 {
-                    string SuggestionSource = App.Instance.GlobalSave.Get("SuggestionsSource");
-                    string SuggestionsUrl = "";
-                    if (SuggestionSource == "Google")
-                        SuggestionsUrl = "http://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q=" + OmniBox.Text;
-                    else if (SuggestionSource == "Bing")
-                        SuggestionsUrl = "http://api.bing.com/osjson.aspx?query=" + OmniBox.Text;
-                    else if (SuggestionSource == "Brave Search")
-                        SuggestionsUrl = "http://search.brave.com/api/suggest?q=" + OmniBox.Text;
-                    //else if (SuggestionSource == "Ecosia")
-                    //    SuggestionsUrl = "http://ac.ecosia.org/autocomplete?type=list&q=" + OmniBox.Text;
-                    else if (SuggestionSource == "DuckDuckGo")
-                        SuggestionsUrl = "http://duckduckgo.com/ac/?type=list&q=" + OmniBox.Text;
-                    else if (SuggestionSource == "Yahoo")
-                        SuggestionsUrl = "http://ff.search.yahoo.com/gossip?output=fxjson&command=" + OmniBox.Text;
-                    else if (SuggestionSource == "Wikipedia")
-                        SuggestionsUrl = "http://en.wikipedia.org/w/api.php?action=opensearch&format=json&search=" + OmniBox.Text;
-
-                    HttpWebRequest Request = (HttpWebRequest)WebRequest.Create(SuggestionsUrl);
-                    try
+                    string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
+                    using (JsonDocument Document = JsonDocument.Parse(ResponseText))
                     {
-                        HttpWebResponse Response = (HttpWebResponse)await Request.GetResponseAsync();
-                        string ResponseText = new StreamReader(Response.GetResponseStream()).ReadToEnd();
-                        using (JsonDocument Document = JsonDocument.Parse(ResponseText))
+                        foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
                         {
-                            foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
-                                Suggestions.Add(Suggestion.GetString());
+                            string SuggestionStr = Suggestion.GetString();
+                            Suggestions.Add(App.GenerateSuggestion(SuggestionStr, App.GetMiniSearchType(SuggestionStr)));
                         }
                     }
-                    catch { }
-                    OmniBox.IsDropDownOpen = OmniBox.Text.Trim().Length > 0 && Suggestions.Count > 0;
                 }
-                catch { }
             }
-            Keyboard.Focus(OmniBox);
+            catch { }
+            OmniBox.IsDropDownOpen = Suggestions.Count > 0;
+            OmniBoxIsDropdown = true;
+
+            //Keyboard.Focus(OmniBox);
             OmniBox.Focus();
+            OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);
+            OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
         }
 
-        private void OmniBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void OmniBoxSmartTimer_Tick(object? sender, EventArgs e)
         {
-            if (e.AddedItems.Count != 0)
-                OmniBox.Text = e.AddedItems[0].ToString();
-            /*Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-            LoadingStoryboard?.Seek(TimeSpan.Zero);
-            LoadingStoryboard?.Stop();
-            if (OmniBox.Text.StartsWith("search:"))
-            {
-                SiteInformationIcon.Text = "\xE721";
-                SiteInformationText.Text = $"Search";
-                SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text.Substring(7).Trim()}";
-            }
-            else if (OmniBox.Text.StartsWith("domain:"))
-            {
-                SiteInformationIcon.Text = "\xE71B";
-                SiteInformationText.Text = $"Address";
-                SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text.Substring(7).Trim()}";
-            }
-            else if (Utils.IsProgramUrl(OmniBox.Text))
-            {
-                SiteInformationIcon.Text = "\xE756";
-                SiteInformationText.Text = $"Program";
-                SiteInformationPanel.ToolTip = $"Open program: {OmniBox.Text}";
-            }
-            else if (Utils.IsCode(OmniBox.Text))
-            {
-                SiteInformationIcon.Text = "\xE943";
-                SiteInformationText.Text = $"Code";
-                SiteInformationPanel.ToolTip = $"Code: {OmniBox.Text}";
-            }
-            else if (Utils.IsUrl(OmniBox.Text))
-            {
-                SiteInformationIcon.Text = "\xE71B";
-                SiteInformationText.Text = $"Address";
-                SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text}";
-            }
-            else
-            {
-                SiteInformationIcon.Text = "\xE721";
-                SiteInformationText.Text = $"Search";
-                SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text}";
-            }
-            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");*/
+            OmniBoxSmartTimer.Stop();
+            if (!OmniBox.IsDropDownOpen)
+                return;
+            string Text = OmniBox.Text.Trim();
+            string Type = App.GetSmartType(Text);
+            if (Type == "None") return;
+            SmartSuggestionCancellation?.Cancel();
+            SmartSuggestionCancellation = new CancellationTokenSource();
+            var Token = SmartSuggestionCancellation.Token;
 
-            string Url = Utils.FilterUrlForBrowser(OmniBox.Text, App.Instance.GlobalSave.Get("SearchEngine"));
-            if (Url.StartsWith("javascript:", StringComparison.Ordinal))
+            OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type, Token);
+            if (!Token.IsCancellationRequested)
             {
-                Chromium.ExecuteScriptAsync(Url.Substring(11));
-                OmniBox.Text = OmniBox.Tag.ToString();
+                Suggestions.RemoveAt(0);
+                Suggestions.Insert(0, Suggestion);
             }
-            else if (!Utils.IsProgramUrl(Url))
-                Address = Url;
-            Keyboard.ClearFocus();
-            Chromium.Focus();
         }
 
         private void OmniBox_DropDownOpened(object sender, EventArgs e)
         {
+            Chromium.Focusable = false;
             OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);// + 4 + 4
             OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
-            OmniTextBox.Text = PreviousOmniBoxText;
-            if (SelectionLength == 0)
-            {
-                OmniTextBox.Select(0, 0);
-                OmniTextBox.CaretIndex = CaretIndex;
-            }
-            else
-                OmniTextBox.Select(SelectionStart, SelectionLength);
         }
+
+        private void OmniBox_DropDownClosed(object sender, EventArgs e)
+        {
+            Chromium.Focusable = true;
+        }
+
+        int CaretIndex = 0;
 
         private void Browser_Loaded(object sender, RoutedEventArgs e)
         {
             Loaded -= Browser_Loaded;
             OmniTextBox = OmniBox.Template.FindName("PART_EditableTextBox", OmniBox) as TextBox;
+            OmniTextBox.PreviewKeyDown += (_, __) =>
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    CaretIndex = OmniTextBox.CaretIndex;
+                }), DispatcherPriority.Input);
+            };
+
+            OmniTextBox.GotKeyboardFocus += (sender, args) =>
+            {
+                args.Handled = true;
+                OmniTextBox.CaretIndex = CaretIndex;
+                if (!OmniBoxIsDropdown)
+                    OmniTextBox.SelectAll();
+            };
             OmniBoxPopup = OmniBox.Template.FindName("Popup", OmniBox) as Popup;
             OmniBoxPopupDropDown = OmniBox.Template.FindName("DropDown", OmniBox) as Grid;
             OmniBox.ItemsSource = Suggestions;
+            if (Address == "slbr://newtab")
+            {
+                Keyboard.Focus(OmniBox);
+                OmniBox.Focus();
+            }
         }
 
         Window ExtensionWindow;

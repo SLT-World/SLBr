@@ -206,24 +206,28 @@ Use of this source code is governed by a GNU license that can be found in the LI
             const list = JSON.parse(res);
             const currentIds = new Set();
             const downloadsDisplay = document.getElementById('downloads-display');
-
             Object.values(list).forEach(item => {
                 const id = "d" + item.Id;
                 currentIds.add(id);
                 UpdateItem(item);
             });
-
-            Array.from(downloadsDisplay.children).forEach(child => {
-                if (!currentIds.has(child.id)) {
-                    downloadsDisplay.removeChild(child);
-                }
-            });
+            if (currentIds.size === 0) {
+                downloadsDisplay.innerHTML = '<div class="card list_child"><div class="title_area"><p class="list_text">No downloads</p></div></div>';
+            }
+            else {
+                Array.from(downloadsDisplay.children).forEach(child => {
+                    if (!currentIds.has(child.id)) {
+                        downloadsDisplay.removeChild(child);
+                    }
+                });
+            }
         }
     </script>
 </head>
     <body>
-        <header>
-            <h1>Downloads</h1>
+        <header class="card">
+            <p class="font-icon"></p>
+            <p>Downloads</p>
         </header>
         <div class="main">
             <!--<div class="summary" id="downloads-summary">
@@ -293,7 +297,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
     user-select: none;
 }
 .list_text {
-    font-weight: bold;
+    font-weight: 500;
     margin-right: 10px;
 }
 .button_style {
@@ -314,11 +318,6 @@ Use of this source code is governed by a GNU license that can be found in the LI
 }
 .list_button:not(:last-child) {
     margin-right: 7.5px;
-}
-.icon_button {
-    width: 35px !important;
-    font-size: 17.5px !important;
-    font-family: "Segoe Fluent Icons" !important;
 }
 .button_style:hover {
     color: black;

@@ -1,10 +1,7 @@
 ﻿using CefSharp;
-using CefSharp.DevTools.IO;
 using SLBr.Protocols;
 using System.IO;
-using System.Net;
 using System.Text;
-using System.Windows;
 
 namespace SLBr.Handlers
 {
@@ -77,10 +74,10 @@ namespace SLBr.Handlers
             GeminiGopherIResponse Response = Gemini.Fetch(new Uri(Utils.CleanUrl(request.Url)));
             if (Response != null)
             {
-                bool Raw = request.Url.EndsWith("?raw=true");
-                Stream = new MemoryStream(Raw ? Response.Bytes.ToArray() : Encoding.UTF8.GetBytes(TextGemini.NewFormat(Response)));
+                /*bool Raw = request.Url.EndsWith("?raw=true");*/
+                Stream = new MemoryStream(/*Raw ? Response.Bytes.ToArray() : */Encoding.UTF8.GetBytes(TextGemini.NewFormat(Response)));
 
-                MimeType = Raw ? "text/plain" : Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime;
+                MimeType = /*Raw ? "text/plain" :*/ Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime;
 
                 callback.Continue();
                 return CefReturnValue.ContinueAsync;

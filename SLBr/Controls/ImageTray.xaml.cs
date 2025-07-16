@@ -82,15 +82,16 @@ namespace SLBr.Controls
 
         private void AllFilesButton_Click(object sender, RoutedEventArgs e)
         {
-            ImageCodecInfo[] encoders = ImageCodecInfo.GetImageEncoders();
+            //Use System.Drawing.Common
+            /*ImageCodecInfo[] encoders = ImageCodecInfo.GetImageEncoders();
 
             string FilterBuilder = "Image Files|";
             foreach (ImageCodecInfo info in encoders)
                 FilterBuilder += (!FilterBuilder.EndsWith("|") ? ";" : "") + info.FilenameExtension.ToLower();
-            FilterBuilder += (!FilterBuilder.EndsWith("|") ? ";" : "") + "*.svg";
+            FilterBuilder += (!FilterBuilder.EndsWith("|") ? ";" : "") + "*.svg";*/
             var Dialog = new OpenFileDialog
             {
-                Filter = FilterBuilder,//"Image Files|*.png;*.jpg;*.jpeg;*.gif;*.bmp",
+                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.gif;*.bmp",//FilterBuilder,
                 Multiselect = false
             };
             if (Dialog.ShowDialog() == true)

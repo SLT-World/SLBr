@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 
 namespace SLBr
 {
@@ -148,11 +143,14 @@ namespace SLBr
 public class DomainList : IEnumerable<string>
 {
     private readonly TrieNode Root = new();
+    public readonly HashSet<string> AllDomains = new();
 
-    public void Add(string domain)
+    public void Add(string Domain)
     {
-        bool WildCard = domain.StartsWith("*.", StringComparison.Ordinal);
-        var Parts = domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').Reverse();
+        if (!AllDomains.Add(Domain)) return;
+
+        bool WildCard = Domain.StartsWith("*.", StringComparison.Ordinal);
+        var Parts = Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').Reverse();
         var _Node = Root;
 
         foreach (var part in Parts)
@@ -166,7 +164,7 @@ public class DomainList : IEnumerable<string>
         }
 
         _Node.IsEnd = true;
-        _Node.IsWildcard = WildCard;
+        _Node.Wildcard = WildCard;
     }
 
     public bool Has(string Host)
@@ -176,9 +174,8 @@ public class DomainList : IEnumerable<string>
 
         foreach (var part in Parts)
         {
-            if (_Node.IsEnd && (!_Node.IsWildcard || _Node != Root))
+            if (_Node.IsEnd && _Node.Wildcard)
                 return true;
-
             if (!_Node.Children.TryGetValue(part, out _Node))
                 return false;
         }
@@ -186,11 +183,36 @@ public class DomainList : IEnumerable<string>
         return _Node.IsEnd;
     }
 
+    public void Remove(string Domain)
+    {
+        if (!AllDomains.Remove(Domain)) return;
+
+        RemoveRecursive(Root, Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').Reverse().ToList(), 0, Domain.StartsWith("*.", StringComparison.Ordinal));
+    }
+
+    private bool RemoveRecursive(TrieNode _Node, List<string> Parts, int Index, bool Wildcard)
+    {
+        if (Index == Parts.Count)
+        {
+            if (!_Node.IsEnd || _Node.Wildcard != Wildcard)
+                return false;
+            _Node.IsEnd = false;
+            _Node.Wildcard = false;
+            return _Node.Children.Count == 0;
+        }
+        string Part = Parts[Index];
+        if (!_Node.Children.TryGetValue(Part, out TrieNode child))
+            return false;
+        if (RemoveRecursive(child, Parts, Index + 1, Wildcard))
+            _Node.Children.Remove(Part);
+        return !_Node.IsEnd && _Node.Children.Count == 0;
+    }
+
     class TrieNode
     {
         public Dictionary<string, TrieNode> Children = new();
         public bool IsEnd = false;
-        public bool IsWildcard = false;
+        public bool Wildcard = false;
     }
 
     public IEnumerator<string> GetEnumerator() => throw new NotSupportedException();
