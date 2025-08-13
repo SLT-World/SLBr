@@ -285,9 +285,6 @@ namespace SLBr.Handlers
                         case string s when s.StartsWith("profile-picker", StringComparison.Ordinal):
                             Block = true;
                             break;
-                        case string s when s.StartsWith("search-engine-choice", StringComparison.Ordinal):
-                            Block = true;
-                            break;
                         case string s when s.StartsWith("intro", StringComparison.Ordinal):
                             Block = true;
                             break;
@@ -303,9 +300,9 @@ namespace SLBr.Handlers
                         case string s when s.StartsWith("reset-password", StringComparison.Ordinal):
                             Block = true;
                             break;
-                        case string s when s.StartsWith("imageburner", StringComparison.Ordinal):
-                            Block = true;
-                            break;
+                        //case string s when s.StartsWith("imageburner", StringComparison.Ordinal):
+                        //    Block = true;
+                        //    break;
                         case string s when s.StartsWith("connection-help", StringComparison.Ordinal):
                             Block = true;
                             break;
@@ -324,7 +321,7 @@ namespace SLBr.Handlers
                 {
                     App.Current.Dispatcher.Invoke(async () =>
                     {
-                        BrowserView.Tab.Icon = await App.Instance.SetIcon("", chromiumWebBrowser.Address, BrowserView.Private);
+                        BrowserView.Tab.Icon = await App.Instance.SetIcon("", request.Url, BrowserView.Private);
                     });
                 }
                 if (App.Instance.NeverSlowMode)
@@ -367,7 +364,7 @@ namespace SLBr.Handlers
 		public void OnDocumentAvailableInMainFrame(IWebBrowser chromiumWebBrowser, IBrowser browser)
         {
             chromiumWebBrowser.ExecuteScriptAsync(Scripts.ScrollCSS);
-            if (bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll")))
+            if (!App.Instance.LiteMode && bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll")))
                 chromiumWebBrowser.ExecuteScriptAsync(Scripts.ScrollScript);
         }
 

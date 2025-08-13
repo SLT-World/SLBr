@@ -48,6 +48,11 @@ namespace SLBr.Handlers
 
         public IResponseFilter GetResourceResponseFilter(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
         {
+            /*if (request.ResourceType == ResourceType.Script && !request.Url.StartsWith("devtools:", StringComparison.Ordinal))
+            {
+                return new SafePassthroughFilter("window", "dowin");
+            }*/
+
             return null;
         }
 
@@ -160,8 +165,8 @@ namespace SLBr.Handlers
                 //https://chromium-review.googlesource.com/c/chromium/src/+/1265506/25/third_party/blink/renderer/platform/loader/fetch/resource_loader.cc
                 if (App.Instance.AdBlock == 1)
                 {
-                    if (App.Instance.AdBlockAllowList.Has(Utils.FastHost(browser.FocusedFrame.Url)))
-                        return CefReturnValue.Continue;
+                    if (browser.FocusedFrame != null && App.Instance.AdBlockAllowList.Has(Utils.FastHost(browser.FocusedFrame.Url)))
+                            return CefReturnValue.Continue;
                     if (request.ResourceType == ResourceType.Ping)
                     {
                         App.Instance.TrackersBlocked++;
@@ -198,8 +203,14 @@ namespace SLBr.Handlers
                 }*/
                 if (App.Instance.LiteMode)
                     request.SetHeaderByName("Save-Data", "on", true);
-                if (App.Instance.MobileView)
+                //if (App.Instance.MobileView)
+                if (Handler.BrowserView.UserAgentBranding)
+                {
                     request.SetHeaderByName("User-Agent", App.Instance.UserAgent, true);
+                    //WARNING: \r\n SHOULD NOT BE REMOVED, CLOUDFLARE TURNSTILE WILL NOT WORK
+                    request.SetHeaderByName("sec-ch-ua", $"\r\n{App.Instance.UserAgentBrandsString}", true);
+                    //WARNING: \r\n SHOULD NOT BE REMOVED, CLOUDFLARE TURNSTILE WILL NOT WORK
+                }
                 //request.SetHeaderByName("Device-Memory", "0.25", true);
                 //request.SetHeaderByName("DNT", "1", true);
             }
@@ -232,6 +243,11 @@ namespace SLBr.Handlers
 
         public bool OnResourceResponse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
         {
+            //TODO: Always enable cache regardless of Cache-Control: no-cache
+            /*request.SetHeaderByName("Cache-Control", "public, max-age=31536000", true);
+            request.Headers.Remove("Pragma");
+            request.Headers.Remove("Expires");
+            request.Headers.Remove("ETag");*/
             if (App.Instance.AMP && request.ResourceType == ResourceType.MainFrame)
             {
                 if (frame.IsMain)

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace SLBr
 {
-//#if DEBUG
+#if DEBUG
     public class Benchmark
     {
         public class Result
@@ -52,4 +52,5 @@ namespace SLBr
             return _String.ToString();
         }
     }
+#endif
 }

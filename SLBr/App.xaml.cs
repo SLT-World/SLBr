@@ -1,6 +1,5 @@
 ﻿using CefSharp;
 using CefSharp.DevTools;
-using CefSharp.DevTools.CSS;
 using CefSharp.DevTools.Emulation;
 using CefSharp.Enums;
 using CefSharp.SchemeHandler;
@@ -151,6 +150,117 @@ namespace SLBr
         public string Icon { get; set; }
     }
 
+    public class DownloadEntry : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged(string name)
+        {
+            PropertyChanged(this, new PropertyChangedEventArgs(name));
+        }
+        #endregion
+
+        private int PID;
+        public int ID
+        {
+            get { return PID; }
+            set
+            {
+                PID = value;
+                RaisePropertyChanged(nameof(ID));
+            }
+        }
+
+        private string PFileName;
+        public string FileName
+        {
+            get { return PFileName; }
+            set
+            {
+                PFileName = value;
+                RaisePropertyChanged(nameof(FileName));
+            }
+        }
+
+        private string PIcon;
+        public string Icon
+        {
+            get { return PIcon; }
+            set
+            {
+                PIcon = value;
+                RaisePropertyChanged(nameof(Icon));
+            }
+        }
+
+        private int PPercentComplete;
+        public int PercentComplete
+        {
+            get { return PPercentComplete; }
+            set
+            {
+                PPercentComplete = value;
+                RaisePropertyChanged(nameof(PercentComplete));
+            }
+        }
+
+        private string PFormattedProgress;
+        public string FormattedProgress
+        {
+            get { return PFormattedProgress; }
+            set
+            {
+                PFormattedProgress = value;
+                RaisePropertyChanged(nameof(FormattedProgress));
+            }
+        }
+
+        private Visibility POpen;
+        public Visibility Open
+        {
+            get { return POpen; }
+            set
+            {
+                POpen = value;
+                RaisePropertyChanged(nameof(Open));
+            }
+        }
+
+        private Visibility PStop;
+        public Visibility Stop
+        {
+            get { return PStop; }
+            set
+            {
+                PStop = value;
+                RaisePropertyChanged(nameof(Stop));
+            }
+        }
+
+        private Visibility PProgress;
+        public Visibility Progress
+        {
+            get { return PProgress; }
+            set
+            {
+                PProgress = value;
+                RaisePropertyChanged(nameof(Progress));
+            }
+        }
+
+        private bool PIsIndeterminate;
+        public bool IsIndeterminate
+        {
+            get { return PIsIndeterminate; }
+            set
+            {
+                PIsIndeterminate = value;
+                RaisePropertyChanged(nameof(IsIndeterminate));
+            }
+        }
+    }
+
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
@@ -267,15 +377,107 @@ namespace SLBr
                 History.Remove(HistoryEntry);
             History.Insert(0, HistoryEntry);
         }
+        public ObservableCollection<DownloadEntry> VisibleDownloads = new ObservableCollection<DownloadEntry>();
         public Dictionary<int, DownloadItem> Downloads = new Dictionary<int, DownloadItem>();
-        public void UpdateDownloadItem(DownloadItem item)
+        public void UpdateDownloadItem(DownloadItem Item)
         {
-            Downloads[item.Id] = item;
+            Downloads[Item.Id] = Item;
             Dispatcher.Invoke(() =>
             {
                 foreach (MainWindow _Window in AllWindows)
-                    _Window.TaskbarProgress.ProgressValue = item.IsComplete ? 0 : item.PercentComplete / 100.0;
+                    _Window.TaskbarProgress.ProgressValue = Item.IsComplete ? 0 : Item.PercentComplete / 100.0;
+                DownloadEntry _Entry = VisibleDownloads.FirstOrDefault(d => d.ID == Item.Id);
+                if (_Entry != null)
+                {
+                    if (string.IsNullOrEmpty(_Entry.FileName))
+                    {
+                        _Entry.FileName = Path.GetFileName(Item.FullPath);
+                        if (!string.IsNullOrEmpty(_Entry.FileName))
+                        {
+                            if (_Entry.FileName.EndsWith(".zip") || _Entry.FileName.EndsWith(".rar") || _Entry.FileName.EndsWith(".7z") ||
+                                _Entry.FileName.EndsWith(".tar.gz") || _Entry.FileName.EndsWith(".tgz"))
+                                _Entry.Icon = "\uF012";
+                            else if (_Entry.FileName.EndsWith(".gif"))
+                                _Entry.Icon = "\uF4A9";
+                            else if (_Entry.FileName.EndsWith(".txt"))
+                                _Entry.Icon = "\uF000";
+                            else if (_Entry.FileName.EndsWith(".blend") || _Entry.FileName.EndsWith(".obj") || _Entry.FileName.EndsWith(".fbx") || _Entry.FileName.EndsWith(".max") ||
+                                _Entry.FileName.EndsWith(".stl") || _Entry.FileName.EndsWith(".x3d") || _Entry.FileName.EndsWith(".3ds") || _Entry.FileName.EndsWith(".dae") ||
+                                _Entry.FileName.EndsWith(".glb") || _Entry.FileName.EndsWith(".gltf") || _Entry.FileName.EndsWith(".ply"))
+                                _Entry.Icon = "\uF158";
+                            else if (_Entry.FileName.EndsWith(".mp3") || _Entry.FileName.EndsWith(".mp2"))
+                                _Entry.Icon = "\uEA69";
+                            else if (_Entry.FileName.EndsWith(".mp4") || _Entry.FileName.EndsWith(".avi") || _Entry.FileName.EndsWith(".ogg") || _Entry.FileName.EndsWith(".webm") ||
+                                _Entry.FileName.EndsWith(".mov") || _Entry.FileName.EndsWith(".mpej") || _Entry.FileName.EndsWith(".wmv") || _Entry.FileName.EndsWith(".h264") || _Entry.FileName.EndsWith(".mkv"))
+                                _Entry.Icon = "\uE786";
+                            else if (_Entry.FileName.EndsWith(".pdf"))
+                                _Entry.Icon = "\uEA90";
+                            else if (_Entry.FileName.EndsWith(".png") || _Entry.FileName.EndsWith(".jpg") || _Entry.FileName.EndsWith(".jpeg") || _Entry.FileName.EndsWith(".avif") ||
+                                _Entry.FileName.EndsWith(".svg") || _Entry.FileName.EndsWith(".webp") || _Entry.FileName.EndsWith(".jfif") || _Entry.FileName.EndsWith(".bmp"))
+                                _Entry.Icon = "\uE91B";
+                            else
+                                _Entry.Icon = "\uE8A5";
+                            MainWindow Current = CurrentFocusedWindow();
+                            if (Current != null)
+                            {
+                                Browser BrowserView = Current.Tabs[Current.TabsUI.SelectedIndex].Content;
+                                if (BrowserView != null)
+                                    BrowserView.OpenDownloadsButton.OpenPopup();
+                            }
+                        }
+                    }
+                    _Entry.PercentComplete = Item.PercentComplete;
+                    if (Item.IsComplete)
+                    {
+                        _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
+                        _Entry.Open = Visibility.Visible;
+                        _Entry.Stop = Visibility.Collapsed;
+                        _Entry.Progress = Visibility.Collapsed;
+                    }
+                    else if (Item.IsCancelled)
+                    {
+                        if (string.IsNullOrEmpty(_Entry.FileName))
+                        {
+                            VisibleDownloads.Remove(_Entry);
+                            return;
+                        }
+                        _Entry.FormattedProgress = "Canceled";
+                        _Entry.Open = Visibility.Collapsed;
+                        _Entry.Stop = Visibility.Collapsed;
+                        _Entry.Progress = Visibility.Collapsed;
+                    }
+                    else
+                    {
+                        if (Item.TotalBytes > 0)
+                            _Entry.FormattedProgress = FormatBytes(Item.ReceivedBytes, false) + "/" + FormatBytes(Item.TotalBytes) + " - Downloading";
+                        else
+                        {
+                            _Entry.FormattedProgress = FormatBytes(Item.ReceivedBytes) + " - Downloading";
+                            _Entry.IsIndeterminate = true;
+                        }
+                        _Entry.Open = Visibility.Collapsed;
+                        _Entry.Stop = Visibility.Visible;
+                        _Entry.Progress = Visibility.Visible;
+                    }
+                    /*_Entry.Icon = "\ue7ba"
+                     _Entry.FormattedProgress = "Suspicious download blocked"
+                    _Entry.Icon = "\uea39"
+                     _Entry.FormattedProgress = "Dangerous download blocked"*/
+                }
+                else
+                    VisibleDownloads.Add(new DownloadEntry { ID = Item.Id });
             });
+        }
+        static string[] FileSizes = { "Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+        private static string FormatBytes(long Bytes, bool ContainSizes = true)
+        {
+            if (Bytes == 0) return "0 Byte";
+            int k = 1000;
+            int i = (int)Math.Floor(Math.Log(Bytes) / Math.Log(k));
+            string Output = (Bytes / Math.Pow(k, i)).ToString("F2");
+            if (ContainSizes)
+                Output += $" {FileSizes[i]}";
+            return Output;
         }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -290,6 +492,7 @@ namespace SLBr
         static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
 
         public string UserAgent;
+        public string UserAgentBrandsString;
         public UserAgentMetadata UserAgentData;
 
         public void LoadExtensions()
@@ -593,9 +796,7 @@ namespace SLBr
                         AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30-" + Username + "}";
                 }
                 else if (Flag == "--background")
-                {
                     Background = true;
-                }
                 else
                 {
                     if (Flag.StartsWith("--", StringComparison.Ordinal))
@@ -612,7 +813,7 @@ namespace SLBr
                 {
                     Process OtherInstance = Utils.GetAlreadyRunningInstance(Process.GetCurrentProcess());
                     if (OtherInstance != null)
-                        MessageHelper.SendDataMessage(OtherInstance, "Start");
+                        MessageHelper.SendDataMessage(OtherInstance, "Start<|>"+ Username);
                     Shutdown(1);
                     Environment.Exit(0);
                     return;
@@ -650,6 +851,8 @@ namespace SLBr
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             CdnPath = Path.Combine(ResourcesPath, "cdn");
 
+            InitializeSaves();
+
             if (Username != "Default")
             {
                 string IconPath = Path.Combine(UserApplicationDataPath, $"Icon.png");
@@ -661,7 +864,6 @@ namespace SLBr
                 Icon = BitmapFrame.Create(new Uri(IconPath, UriKind.Absolute));
             }
 
-            InitializeSaves();
             InitializeUISaves(CommandLineUrl);
 
             if (Utils.IsAdministrator())
@@ -790,7 +992,6 @@ namespace SLBr
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
         {
-            
             if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
                 DiscordWebhookSendInfo(string.Format(ReportExceptionText, ReleaseVersion, Cef.CefVersion, RuntimeInformation.ProcessArchitecture.ToString(), e.Exception.Message, e.Exception.Source, e.Exception.TargetSite, e.Exception.StackTrace, e.Exception.InnerException));
 
@@ -1199,12 +1400,12 @@ Inner Exception: ```{7} ```";
                     var Values = SearchSave.Get($"{i}").Split("<#>");
                     if (Values.Length != 3)
                     {
-                        DefaultSearchProvider = new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" };
+                        DefaultSearchProvider = new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
                         SearchEngines = new List<SearchProvider>
                         {
-                            new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" },
-                            new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
                             DefaultSearchProvider,
+                            new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
+                            new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" },
                             new SearchProvider { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
                             new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
                             new SearchProvider { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p=e{0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
@@ -1223,12 +1424,12 @@ Inner Exception: ```{7} ```";
             }
             else
             {
-                DefaultSearchProvider = new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" };
+                DefaultSearchProvider = new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
                 SearchEngines = new List<SearchProvider>
                 {
-                    new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" },
-                    new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
                     DefaultSearchProvider,
+                    new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
+                    new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" },
                     new SearchProvider { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
                     new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
                     new SearchProvider { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p=e{0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
@@ -1244,10 +1445,10 @@ Inner Exception: ```{7} ```";
                     //"https://yandex.com/search/?text={0}","
                 };*/
             }
-            string SearchEngineName = GlobalSave.Get("SearchEngine", "Ecosia");
+            string SearchEngineName = GlobalSave.Get("SearchEngine", "Google");
             DefaultSearchProvider = SearchEngines.Find(i => i.Name == SearchEngineName);
             if (DefaultSearchProvider == null)
-                DefaultSearchProvider = SearchEngines.Find(i => i.SearchUrl.Contains("ecosia.org", StringComparison.Ordinal));
+                DefaultSearchProvider = SearchEngines.Find(i => i.SearchUrl.Contains("google.com", StringComparison.Ordinal));
 
             int AllowListCount = AllowListSave.GetInt("Count", -1);
             if (AllowListCount != -1)
@@ -1256,7 +1457,10 @@ Inner Exception: ```{7} ```";
                     AdBlockAllowList.Add(AllowListSave.Get($"{i}"));
             }
             else
+            {
                 AdBlockAllowList.Add("ecosia.org");
+                AdBlockAllowList.Add("youtube.com");
+            }
 
             int LanguageCount = LanguagesSave.GetInt("Count", 0);
             if (LanguageCount != 0)
@@ -1281,6 +1485,8 @@ Inner Exception: ```{7} ```";
 
             if (!GlobalSave.Has("CheckUpdate"))
                 GlobalSave.Set("CheckUpdate", true);
+            if (!GlobalSave.Has("PrivateTabs"))
+                GlobalSave.Set("PrivateTabs", false);
             if (!GlobalSave.Has("QuickImage"))
                 GlobalSave.Set("QuickImage", true);
             if (!GlobalSave.Has("SuppressError"))
@@ -1295,6 +1501,10 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("SmartSuggestions", true);
             if (!GlobalSave.Has("SpellCheck"))
                 GlobalSave.Set("SpellCheck", true);
+            if (!GlobalSave.Has("NetworkLimit"))
+                GlobalSave.Set("NetworkLimit", false);
+            if (!GlobalSave.Has("Bandwidth"))
+                GlobalSave.Set("Bandwidth", "200");
 
             if (!GlobalSave.Has("Homepage"))
                 GlobalSave.Set("Homepage", "slbr://newtab");
@@ -1355,7 +1565,7 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("PDF", true);
 
             if (!GlobalSave.Has("HomepageBackground"))
-                GlobalSave.Set("HomepageBackground", "Custom");
+                GlobalSave.Set("HomepageBackground", 0);
             if (!GlobalSave.Has("BingBackground"))
                 GlobalSave.Set("BingBackground", 0);
             if (!GlobalSave.Has("CustomBackgroundQuery"))
@@ -1367,6 +1577,8 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("AntiTamper", false);
             if (!GlobalSave.Has("AntiInspectDetect"))
                 GlobalSave.Set("AntiInspectDetect", true);
+            if (!GlobalSave.Has("AntiFullscreen"))
+                GlobalSave.Set("AntiFullscreen", false);
             if (!GlobalSave.Has("BypassSiteMenu"))
                 GlobalSave.Set("BypassSiteMenu", false);
             if (!GlobalSave.Has("TextSelection"))
@@ -1375,6 +1587,10 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("RemoveFilter", true);
             if (!GlobalSave.Has("RemoveOverlay"))
                 GlobalSave.Set("RemoveOverlay", false);
+            if (!GlobalSave.Has("ForceLazy"))
+                GlobalSave.Set("ForceLazy", false);
+            if (!GlobalSave.Has("FullscreenPopup"))
+                GlobalSave.Set("FullscreenPopup", true);
 
             if (!GlobalSave.Has("BlockFingerprint"))
                 GlobalSave.Set("BlockFingerprint", false);
@@ -1408,7 +1624,7 @@ Inner Exception: ```{7} ```";
                 Favourites.Add(new ActionStorage(Value[1], $"4<,>{Value[0]}", Value[0]));
             }
             Favourites.CollectionChanged += Favourites_CollectionChanged;
-            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", false.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0));
+            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), bool.Parse(GlobalSave.Get("CompactTab", true.ToString())), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0));
             if (bool.Parse(GlobalSave.Get("RestoreTabs", true.ToString())))
             {
                 for (int t = 0; t < WindowsSaves.Count; t++)
@@ -1427,15 +1643,18 @@ Inner Exception: ```{7} ```";
                     {
                         for (int i = 0; i < TabCount; i++)
                             _Window.NewTab(TabsSave.Get(i.ToString(), "slbr://newtab"));
-                        _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0);
+                        if (GlobalSave.GetInt("TabAlignment", 0) == 1)
+                            _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0) + 1;
+                        else
+                            _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0);
                     }
                     else
-                        _Window.NewTab(GlobalSave.Get("Homepage"), true);
+                        _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
                     _Window.TabsUI.Visibility = Visibility.Visible;
                 }
             }
             if (!string.IsNullOrEmpty(CommandLineUrl))
-                CurrentFocusedWindow().NewTab(CommandLineUrl, true);
+                CurrentFocusedWindow().NewTab(CommandLineUrl, true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
 
             Color _PrimaryColor = (Color)FindResource("PrimaryBrushColor");
             string PrimaryHex = $"#{_PrimaryColor.R:X2}{_PrimaryColor.G:X2}{_PrimaryColor.B:X2}{_PrimaryColor.A:X2}";
@@ -2143,9 +2362,12 @@ Inner Exception: ```{7} ```";
         {
             CurrentFocusedWindow().Refresh("", IgnoreCache);
         }
-        public void Fullscreen()
+        public void Fullscreen(bool ForceClose = false)
         {
-            CurrentFocusedWindow().Fullscreen(!CurrentFocusedWindow().IsFullscreen);
+            MainWindow CurrentWindow = CurrentFocusedWindow();
+            if (ForceClose && !CurrentWindow.IsFullscreen)
+                return;
+            CurrentWindow.Fullscreen(ForceClose ? false : !CurrentWindow.IsFullscreen);
         }
         public void DevTools(string Id = "")
         {
@@ -2163,7 +2385,7 @@ Inner Exception: ```{7} ```";
         {
             MainWindow _Window = new MainWindow();
             _Window.Show();
-            _Window.NewTab(GlobalSave.Get("Homepage"), true);
+            _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
         }
 
         public static readonly Regex AMPRegex = new(@"<link\s[^>]*rel=['""]amphtml['""][^>]*href=['""]([^'"">]+)['""]", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -2552,7 +2774,8 @@ Inner Exception: ```{7} ```";
             //_KeyboardHandler.AddKey(Screenshot, (int)Key.S, true);
             _KeyboardHandler.AddKey(delegate () { Refresh(); }, (int)Key.F5);
             _KeyboardHandler.AddKey(delegate () { Refresh(true); }, (int)Key.F5, true);
-            _KeyboardHandler.AddKey(Fullscreen, (int)Key.F11);
+            _KeyboardHandler.AddKey(delegate () { Fullscreen(); }, (int)Key.F11);
+            _KeyboardHandler.AddKey(delegate () { Fullscreen(true); }, (int)Key.Escape);
             _KeyboardHandler.AddKey(delegate () { DevTools(); }, (int)Key.F12);
             _KeyboardHandler.AddKey(delegate () { Find(); }, (int)Key.F, true);
 
@@ -2562,7 +2785,7 @@ Inner Exception: ```{7} ```";
             Settings.Locale = Locale.Tooltip;
             Settings.AcceptLanguageList = string.Join(",", Languages.Select(i => i.Tooltip));
             //Settings.UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/604.1";
-            Settings.UserAgentProduct = $"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}";
+            //Settings.UserAgentProduct = $"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}";
             //Settings.UserAgent = UserAgent;
 
             string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
@@ -2644,6 +2867,7 @@ Inner Exception: ```{7} ```";
 
                 GlobalRequestContext.SetPreference("autofill.credit_card_enabled", false, out Error);
                 GlobalRequestContext.SetPreference("autofill.profile_enabled", false, out Error);
+                GlobalRequestContext.SetPreference("autofill.save_data", false, out Error);
                 GlobalRequestContext.SetPreference("autofill.enabled", false, out Error);
                 GlobalRequestContext.SetPreference("payments.can_make_payment_enabled", false, out Error);
                 GlobalRequestContext.SetPreference("credentials_enable_service", false, out Error);
@@ -2901,7 +3125,8 @@ Inner Exception: ```{7} ```";
             Settings.CefCommandLineArgs.Add("disable-search-engine-choice-screen");
             Settings.CefCommandLineArgs.Add("ash-no-nudges");
             Settings.CefCommandLineArgs.Add("noerrdialogs");
-            Settings.CefCommandLineArgs.Add("disable-notifications");
+            Settings.CefCommandLineArgs.Add("disable-notifications"); //CLOUDFLARE ISSUE
+
             //Settings.CefCommandLineArgs.Add("hide-crash-restore-bubble");
             //Settings.CefCommandLineArgs.Add("disable-chrome-login-prompt");
         }
@@ -3181,7 +3406,7 @@ Inner Exception: ```{7} ```";
 
             if (bool.Parse(GlobalSave.Get("BlockFingerprint")))
             {
-                Settings.UserAgentProduct = "";
+                //Settings.UserAgentProduct = "";
                 if (GlobalSave.Get("FingerprintLevel") == "Strict")
                 {
                     Settings.CefCommandLineArgs.Add("disable-reading-from-canvas");
@@ -3197,7 +3422,8 @@ Inner Exception: ```{7} ```";
         {
             //Settings.CefCommandLineArgs.Add("enable-canvas-2d-dynamic-rendering-mode-switching");
 
-            Settings.CefCommandLineArgs.Add("autoplay-policy", "user-gesture-required");
+            //Settings.CefCommandLineArgs.Add("autoplay-policy", HighPerformanceMode ? "no-user-gesture-required" : "user-gesture-required");
+            Settings.CefCommandLineArgs.Add("autoplay-policy", LiteMode ? "user-gesture-required" : "no-user-gesture-required");
             Settings.CefCommandLineArgs.Add("animated-image-resume");
             Settings.CefCommandLineArgs.Add("disable-image-animation-resync");
             Settings.CefCommandLineArgs.Add("disable-checker-imaging");
@@ -3539,9 +3765,9 @@ Inner Exception: ```{7} ```";
         {
             if (Utils.GetFileExtension(Url) != ".pdf")
             {
-                if (Utils.IsHttpScheme(Url))
+                if (!IsPrivate && Utils.IsHttpScheme(Url))
                 {
-                    BitmapImage _Image = new BitmapImage(new Uri("http://static1.brave.com/s2/favicons?sz=24&domain=" + Utils.CleanUrl(Url, true, true, true, false, false)));
+                    BitmapImage _Image = new BitmapImage(new Uri("https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=" + Utils.CleanUrl(Url, true, true, true, false, false)));
                     if (_Image.CanFreeze)
                         _Image.Freeze();
                     return _Image;
@@ -3558,16 +3784,14 @@ Inner Exception: ```{7} ```";
                 return PDFTabIcon;
         }
 
-        public static void SaveImageSourceToFile(ImageSource imageSource, string filePath)
+        public static void SaveImageSourceToFile(ImageSource Source, string FilePath)
         {
-            if (imageSource is RenderTargetBitmap bmp)
+            if (Source is RenderTargetBitmap Bitmap)
             {
-                var encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(bmp));
-                using (var stream = File.Open(filePath, FileMode.Create))
-                {
-                    encoder.Save(stream);
-                }
+                PngBitmapEncoder Encoder = new PngBitmapEncoder();
+                Encoder.Frames.Add(BitmapFrame.Create(Bitmap));
+                using (var Stream = File.Open(FilePath, FileMode.Create))
+                    Encoder.Save(Stream);
             }
         }
 
@@ -3651,7 +3875,7 @@ Inner Exception: ```{7} ```";
         {
             if (Utils.GetFileExtension(Url) != ".pdf")
             {
-                if (Utils.IsHttpScheme(IconUrl))
+                if (!IsPrivate && Utils.IsHttpScheme(IconUrl))
                 {
                     try
                     {
@@ -3671,12 +3895,18 @@ Inner Exception: ```{7} ```";
                             return Bitmap;
                         }
                         else
-                            return IsPrivate ? PrivateIcon : TabIcon;
+                            return TabIcon;
                     }
-                    catch { return IsPrivate ? PrivateIcon : TabIcon; }
+                    catch { return TabIcon; }
                 }
                 else if (IconUrl.StartsWith("data:image/", StringComparison.Ordinal))
-                    return Utils.ConvertBase64ToBitmapImage(IconUrl);
+                {
+                    try
+                    {
+                        return Utils.ConvertBase64ToBitmapImage(IconUrl);
+                    }
+                    catch { }
+                }
                 else if (Url.StartsWith("slbr://settings", StringComparison.Ordinal))
                     return SettingsTabIcon;
                 else if (Url.StartsWith("slbr://history", StringComparison.Ordinal))
@@ -3718,18 +3948,18 @@ Inner Exception: ```{7} ```";
             UserAgentData = new UserAgentMetadata
             {
                 Brands = new List<UserAgentBrandVersion>
+                {
+                    new UserAgentBrandVersion
                     {
-                        new UserAgentBrandVersion
-                        {
-                            Brand = "SLBr",
-                            Version = ReleaseVersion.Split('.')[0]
-                        },
-                        new UserAgentBrandVersion
-                        {
-                            Brand = "Chromium",
-                            Version = Cef.ChromiumVersion.Split('.')[0]
-                        }
+                        Brand = "SLBr",
+                        Version = ReleaseVersion.Split('.')[0]
                     },
+                    new UserAgentBrandVersion
+                    {
+                        Brand = "Chromium",
+                        Version = Cef.ChromiumVersion.Split('.')[0]
+                    }
+                },
                 Architecture = Toggle ? "arm" : UserAgentGenerator.GetCPUArchitecture(),
                 Model = "",
                 Platform = Toggle ? "Android" : "Windows",
@@ -3737,16 +3967,17 @@ Inner Exception: ```{7} ```";
                 FullVersion = Cef.ChromiumVersion,
                 Mobile = Toggle
             };
+            UserAgentBrandsString = string.Join(", ", UserAgentData.Brands.Select(b => $"\"{b.Brand}\";v=\"{b.Version}\""));
+
             GlobalSave.Set("MobileView", Toggle);
-            if (!bool.Parse(GlobalSave.Get("BlockFingerprint")))
+            bool BlockFingerprint = bool.Parse(GlobalSave.Get("BlockFingerprint", false.ToString()));
+            foreach (MainWindow _Window in AllWindows)
             {
-                foreach (MainWindow _Window in AllWindows)
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
                 {
-                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
-                    {
-                        if (BrowserView.Chromium != null && BrowserView.Chromium.IsBrowserInitialized)
-                            BrowserView.Chromium.GetDevToolsClient().Emulation.SetUserAgentOverrideAsync(UserAgent, null, null, UserAgentData);
-                    }
+                    BrowserView.UserAgentBranding = !BrowserView.Private && !BlockFingerprint;
+                    if (BrowserView.UserAgentBranding)
+                        BrowserView.Chromium.GetDevToolsClient().Emulation.SetUserAgentOverrideAsync(UserAgent, null, null, UserAgentData);
                 }
             }
         }
@@ -3757,7 +3988,7 @@ Inner Exception: ```{7} ```";
             foreach (MainWindow _Window in AllWindows)
                 _Window.SetDimUnloadedIcon(Toggle);
         }
-        public void SetAppearance(Theme _Theme, int TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
+        public void SetAppearance(Theme _Theme, int TabAlignment, bool CompactTab, bool AllowHomeButton, bool AllowTranslateButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
         {
             GlobalSave.Set("TabAlignment", TabAlignment);
 
@@ -3772,7 +4003,7 @@ Inner Exception: ```{7} ```";
 
             int IconSize = 40;
             int DPI = 95;
-            TextBlock textBlock = new TextBlock
+            TextBlock _TextBlock = new TextBlock
             {
                 FontFamily = new FontFamily("Segoe Fluent Icons"),
                 Text = "\uEC6C",
@@ -3785,169 +4016,169 @@ Inner Exception: ```{7} ```";
                 Foreground = CurrentTheme.DarkWebPage ? new SolidColorBrush(Colors.White) : new SolidColorBrush(Colors.Black),
                 Margin = new Thickness(1, 2, 0, 0)
             };
-            RenderTargetBitmap renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            textBlock.Measure(new Size(IconSize, IconSize));
-            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            renderBitmap.Render(textBlock);
-            PngBitmapEncoder encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-            using (MemoryStream stream = new MemoryStream())
+            RenderTargetBitmap RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            PngBitmapEncoder Encoder = new PngBitmapEncoder();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new MemoryStream())
             {
-                encoder.Save(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                if (bitmapImage.CanFreeze)
-                    bitmapImage.Freeze();
+                BitmapImage _BitmapImage = new BitmapImage();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
 
-                TabIcon = bitmapImage;
+                TabIcon = _BitmapImage;
             }
 
-            textBlock.Text = "\uEA90";
-            renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            textBlock.Measure(new Size(IconSize, IconSize));
-            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            renderBitmap.Render(textBlock);
-            encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-            using (MemoryStream stream = new MemoryStream())
+            _TextBlock.Text = "\uEA90";
+            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            Encoder = new PngBitmapEncoder();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new MemoryStream())
             {
-                encoder.Save(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                if (bitmapImage.CanFreeze)
-                    bitmapImage.Freeze();
+                BitmapImage _BitmapImage = new BitmapImage();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
 
-                PDFTabIcon = bitmapImage;
+                PDFTabIcon = _BitmapImage;
             }
 
-            textBlock.Text = "\uE727";
-            renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            textBlock.Measure(new Size(IconSize, IconSize));
-            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            renderBitmap.Render(textBlock);
-            encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-            using (MemoryStream stream = new MemoryStream())
+            _TextBlock.Text = "\uE727";
+            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            Encoder = new PngBitmapEncoder();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new MemoryStream())
             {
-                encoder.Save(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                if (bitmapImage.CanFreeze)
-                    bitmapImage.Freeze();
+                BitmapImage _BitmapImage = new BitmapImage();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
 
-                PrivateIcon = bitmapImage;
+                PrivateIcon = _BitmapImage;
             }
 
-            textBlock.Text = "\uE713";
-            renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            textBlock.Measure(new Size(IconSize, IconSize));
-            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            renderBitmap.Render(textBlock);
-            encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-            using (MemoryStream stream = new MemoryStream())
+            _TextBlock.Text = "\uE713";
+            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            Encoder = new PngBitmapEncoder();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new MemoryStream())
             {
-                encoder.Save(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                if (bitmapImage.CanFreeze)
-                    bitmapImage.Freeze();
+                BitmapImage _BitmapImage = new BitmapImage();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
 
-                SettingsTabIcon = bitmapImage;
+                SettingsTabIcon = _BitmapImage;
             }
 
-            textBlock.Text = "\ue81c";
-            renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            textBlock.Measure(new Size(IconSize, IconSize));
-            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            renderBitmap.Render(textBlock);
-            encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-            using (MemoryStream stream = new MemoryStream())
+            _TextBlock.Text = "\ue81c";
+            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            Encoder = new PngBitmapEncoder();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new MemoryStream())
             {
-                encoder.Save(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                if (bitmapImage.CanFreeze)
-                    bitmapImage.Freeze();
+                BitmapImage _BitmapImage = new BitmapImage();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
 
-                HistoryTabIcon = bitmapImage;
+                HistoryTabIcon = _BitmapImage;
             }
 
-            textBlock.Text = "\ue896";
-            renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            textBlock.Measure(new Size(IconSize, IconSize));
-            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            renderBitmap.Render(textBlock);
-            encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-            using (MemoryStream stream = new MemoryStream())
+            _TextBlock.Text = "\ue896";
+            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            Encoder = new PngBitmapEncoder();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new MemoryStream())
             {
-                encoder.Save(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                if (bitmapImage.CanFreeze)
-                    bitmapImage.Freeze();
+                BitmapImage _BitmapImage = new BitmapImage();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
 
-                DownloadsTabIcon = bitmapImage;
+                DownloadsTabIcon = _BitmapImage;
             }
 
-            textBlock.Text = "\uEC0A";
-            textBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3AE872"));
-            renderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            textBlock.Measure(new Size(IconSize, IconSize));
-            textBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            renderBitmap.Render(textBlock);
-            encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
-            using (MemoryStream stream = new MemoryStream())
+            _TextBlock.Text = "\uEC0A";
+            _TextBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3AE872"));
+            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            Encoder = new PngBitmapEncoder();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new MemoryStream())
             {
-                encoder.Save(stream);
-                stream.Seek(0, SeekOrigin.Begin);
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                if (bitmapImage.CanFreeze)
-                    bitmapImage.Freeze();
+                BitmapImage _BitmapImage = new BitmapImage();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
 
-                UnloadedIcon = bitmapImage;
+                UnloadedIcon = _BitmapImage;
             }
 
             foreach (MainWindow _Window in AllWindows)
-                _Window.SetAppearance(_Theme, TabAlignment, AllowHomeButton, AllowTranslateButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
+                _Window.SetAppearance(_Theme, TabAlignment, CompactTab, AllowHomeButton, AllowTranslateButton, AllowReaderModeButton, ShowExtensionButton, ShowFavouritesBar);
         }
     }
 
@@ -4123,6 +4354,9 @@ Inner Exception: ```{7} ```";
 
     public static class Scripts
     {
+        public const string AntiCloseScript = "window.close=function(){};";
+        public const string AntiFullscreenScript = "Element.prototype.requestFullscreen=function(){};Element.prototype.webkitRequestFullscreen=function(){};document.exitFullscreen=function(){};document.webkitExitFullscreen=function(){};Object.defineProperties(document,{fullscreenElement:{get:()=>null},webkitFullscreenElement:{get:()=>null}});";
+    
         public const string ReaderScript = @"const tagsToRemove=['header','footer','nav','aside','ads','script'];
 tagsToRemove.forEach(tag=>{
     const elements=document.getElementsByTagName(tag);
@@ -4361,7 +4595,7 @@ scanButton();
 new MutationObserver(scanButton).observe(document.body,{attributes:true,childList:true,subtree:true});";
         public const string YouTubeSkipAdScript = @"(function() {
     let lastSkipTime = 0;
-    const adObserver = new MutationObserver(() => {
+    const SLBradObserver = new MutationObserver(() => {
         const now = Date.now();
         const skipButtons = document.querySelectorAll('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
         for (const btn of skipButtons) {
@@ -4375,15 +4609,15 @@ new MutationObserver(scanButton).observe(document.body,{attributes:true,childLis
         }
     });
 
-    const ABinterval = setInterval(() => {
+    const SLBrABinterval = setInterval(() => {
         if (document.readyState === ""complete"" && document.body) {
-            adObserver.observe(document.body, { childList: true, subtree: true });
-            clearInterval(ABinterval);
+            SLBradObserver.observe(document.body, { childList: true, subtree: true });
+            clearInterval(SLBrABinterval);
         }
     }, 500);
 })();";
         //public const string YouTubeHideAdScript = "var style=document.createElement('style');style.textContent=`ytd-action-companion-ad-renderer,ytd-display-ad-renderer,ytd-video-masthead-ad-advertiser-info-renderer,ytd-video-masthead-ad-primary-video-renderer,ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer,yt-about-this-ad-renderer,yt-mealbar-promo-renderer,ytd-statement-banner-renderer,ytd-ad-slot-renderer,ytd-in-feed-ad-layout-renderer,ytd-banner-promo-renderer-backgroundstatement-banner-style-type-compact,.ytd-video-masthead-ad-v3-renderer,div#root.style-scope.ytd-display-ad-renderer.yt-simple-endpoint,div#sparkles-container.style-scope.ytd-promoted-sparkles-web-renderer,div#main-container.style-scope.ytd-promoted-video-renderer,div#player-ads.style-scope.ytd-watch-flexy,ad-slot-renderer,ytm-promoted-sparkles-web-renderer,masthead-ad,tp-yt-iron-overlay-backdrop,#masthead-ad{display:none !important;}`;document.head.appendChild(style);";
-        public const string ScrollCSS = "var scstyle=document.createElement('style');scstyle.textContent=`::-webkit-scrollbar {width:15px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color: whitesmoke;}::-webkit-scrollbar-thumb {height:56px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color: gainsboro;transition:background-color 0.5s;}::-webkit-scrollbar-thumb:hover{background-color:gray;transition:background-color 0.5s;}::-webkit-scrollbar-corner{background-color:transparent;}`;document.head.append(scstyle);";
+        public const string ScrollCSS = "var scstyle=document.createElement('style');scstyle.textContent=`::-webkit-scrollbar {width:15px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color:transparent;}::-webkit-scrollbar-thumb {height:56px;border-radius:10px;border:5px solid transparent;background-clip:content-box;background-color: gainsboro;transition:background-color 0.5s;}::-webkit-scrollbar-thumb:hover{background-color:gray;transition:background-color 0.5s;}::-webkit-scrollbar-corner{background-color:transparent;}`;document.head.append(scstyle);";
         public const string ScrollScript = @"!function(){var s,i,c,a,o={frameRate:150,animationTime:400,stepSize:100,pulseAlgorithm:!0,pulseScale:4,pulseNormalize:1,accelerationDelta:50,accelerationMax:3,keyboardSupport:!0,arrowScroll:50,fixedBackground:!0,excluded:""""},p=o,u=!1,d=!1,l={x:0,y:0},f=!1,m=document.documentElement,h=[],v={left:37,up:38,right:39,down:40,spacebar:32,pageup:33,pagedown:34,end:35,home:36},y={37:1,38:1,39:1,40:1};function b(){if(!f&&document.body){f=!0;var e=document.body,t=document.documentElement,o=window.innerHeight,n=e.scrollHeight;if(m=0<=document.compatMode.indexOf(""CSS"")?t:e,s=e,p.keyboardSupport&&Y(""keydown"",D),top!=self)d=!0;else if(o<n&&(e.offsetHeight<=o||t.offsetHeight<=o)){var r,a=document.createElement(""div"");a.style.cssText=""position:absolute; z-index:-10000; top:0; left:0; right:0; height:""+m.scrollHeight+""px"",document.body.appendChild(a),c=function(){r||(r=setTimeout(function(){u||(a.style.height=""0"",a.style.height=m.scrollHeight+""px"",r=null)},500))},setTimeout(c,10),Y(""resize"",c);if((i=new R(c)).observe(e,{attributes:!0,childList:!0,characterData:!1}),m.offsetHeight<=o){var l=document.createElement(""div"");l.style.clear=""both"",e.appendChild(l)}}p.fixedBackground||u||(e.style.backgroundAttachment=""scroll"",t.style.backgroundAttachment=""scroll"")}}var g=[],S=!1,x=Date.now();function k(d,f,m){var e,t;if(e=0<(e=f)?1:-1,t=0<(t=m)?1:-1,(l.x!==e||l.y!==t)&&(l.x=e,l.y=t,g=[],x=0),1!=p.accelerationMax){var o=Date.now()-x;if(o<p.accelerationDelta){var n=(1+50/o)/2;1<n&&(n=Math.min(n,p.accelerationMax),f*=n,m*=n)}x=Date.now()}if(g.push({x:f,y:m,lastX:f<0?.99:-.99,lastY:m<0?.99:-.99,start:Date.now()}),!S){var r=q(),h=d===r||d===document.body;null==d.$scrollBehavior&&function(e){var t=M(e);if(null==B[t]){var o=getComputedStyle(e,"""")[""scroll-behavior""];B[t]=""smooth""==o}return B[t]}(d)&&(d.$scrollBehavior=d.style.scrollBehavior,d.style.scrollBehavior=""auto"");var w=function(e){for(var t=Date.now(),o=0,n=0,r=0;r<g.length;r++){var a=g[r],l=t-a.start,i=l>=p.animationTime,c=i?1:l/p.animationTime;p.pulseAlgorithm&&(c=F(c));var s=a.x*c-a.lastX>>0,u=a.y*c-a.lastY>>0;o+=s,n+=u,a.lastX+=s,a.lastY+=u,i&&(g.splice(r,1),r--)}h?window.scrollBy(o,n):(o&&(d.scrollLeft+=o),n&&(d.scrollTop+=n)),f||m||(g=[]),g.length?j(w,d,1e3/p.frameRate+1):(S=!1,null!=d.$scrollBehavior&&(d.style.scrollBehavior=d.$scrollBehavior,d.$scrollBehavior=null))};j(w,d,0),S=!0}}function e(e){f||b();var t=e.target;if(e.defaultPrevented||e.ctrlKey)return!0;if(N(s,""embed"")||N(t,""embed"")&&/\.pdf/i.test(t.src)||N(s,""object"")||t.shadowRoot)return!0;var o=-e.wheelDeltaX||e.deltaX||0,n=-e.wheelDeltaY||e.deltaY||0;o||n||(n=-e.wheelDelta||0),1===e.deltaMode&&(o*=40,n*=40);var r=z(t);return r?!!function(e){if(!e)return;h.length||(h=[e,e,e]);e=Math.abs(e),h.push(e),h.shift(),clearTimeout(a),a=setTimeout(function(){try{localStorage.SS_deltaBuffer=h.join("","")}catch(e){}},1e3);var t=120<e&&P(e);return!P(120)&&!P(100)&&!t}(n)||(1.2<Math.abs(o)&&(o*=p.stepSize/120),1.2<Math.abs(n)&&(n*=p.stepSize/120),k(r,o,n),e.preventDefault(),void C()):!d||!W||(Object.defineProperty(e,""target"",{value:window.frameElement}),parent.wheel(e))}function D(e){var t=e.target,o=e.ctrlKey||e.altKey||e.metaKey||e.shiftKey&&e.keyCode!==v.spacebar;document.body.contains(s)||(s=document.activeElement);var n=/^(button|submit|radio|checkbox|file|color|image)$/i;if(e.defaultPrevented||/^(textarea|select|embed|object)$/i.test(t.nodeName)||N(t,""input"")&&!n.test(t.type)||N(s,""video"")||function(e){var t=e.target,o=!1;if(-1!=document.URL.indexOf(""www.youtube.com/watch""))do{if(o=t.classList&&t.classList.contains(""html5-video-controls""))break}while(t=t.parentNode);return o}(e)||t.isContentEditable||o)return!0;if((N(t,""button"")||N(t,""input"")&&n.test(t.type))&&e.keyCode===v.spacebar)return!0;if(N(t,""input"")&&""radio""==t.type&&y[e.keyCode])return!0;var r=0,a=0,l=z(s);if(!l)return!d||!W||parent.keydown(e);var i=l.clientHeight;switch(l==document.body&&(i=window.innerHeight),e.keyCode){case v.up:a=-p.arrowScroll;break;case v.down:a=p.arrowScroll;break;case v.spacebar:a=-(e.shiftKey?1:-1)*i*.9;break;case v.pageup:a=.9*-i;break;case v.pagedown:a=.9*i;break;case v.home:l==document.body&&document.scrollingElement&&(l=document.scrollingElement),a=-l.scrollTop;break;case v.end:var c=l.scrollHeight-l.scrollTop-i;a=0<c?c+10:0;break;case v.left:r=-p.arrowScroll;break;case v.right:r=p.arrowScroll;break;default:return!0}k(l,r,a),e.preventDefault(),C()}function t(e){s=e.target}var n,r,M=(n=0,function(e){return e.uniqueID||(e.uniqueID=n++)}),E={},T={},B={};function C(){clearTimeout(r),r=setInterval(function(){E=T=B={}},1e3)}function H(e,t,o){for(var n=o?E:T,r=e.length;r--;)n[M(e[r])]=t;return t}function z(e){var t=[],o=document.body,n=m.scrollHeight;do{var r=(!1?E:T)[M(e)];if(r)return H(t,r);if(t.push(e),n===e.scrollHeight){var a=O(m)&&O(o)||X(m);if(d&&L(m)||!d&&a)return H(t,q())}else if(L(e)&&X(e))return H(t,e)}while(e=e.parentElement)}function L(e){return e.clientHeight+10<e.scrollHeight}function O(e){return""hidden""!==getComputedStyle(e,"""").getPropertyValue(""overflow-y"")}function X(e){var t=getComputedStyle(e,"""").getPropertyValue(""overflow-y"");return""scroll""===t||""auto""===t}function Y(e,t,o){window.addEventListener(e,t,o||!1)}function A(e,t,o){window.removeEventListener(e,t,o||!1)}function N(e,t){return e&&(e.nodeName||"""").toLowerCase()===t.toLowerCase()}if(window.localStorage&&localStorage.SS_deltaBuffer)try{h=localStorage.SS_deltaBuffer.split("","")}catch(e){}function K(e,t){return Math.floor(e/t)==e/t}function P(e){return K(h[0],e)&&K(h[1],e)&&K(h[2],e)}var $,j=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||function(e,t,o){window.setTimeout(e,o||1e3/60)},R=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver,q=($=document.scrollingElement,function(){if(!$){var e=document.createElement(""div"");e.style.cssText=""height:10000px;width:1px;"",document.body.appendChild(e);var t=document.body.scrollTop;document.documentElement.scrollTop,window.scrollBy(0,3),$=document.body.scrollTop!=t?document.body:document.documentElement,window.scrollBy(0,-3),document.body.removeChild(e)}return $});function V(e){var t;return((e*=p.pulseScale)<1?e-(1-Math.exp(-e)):(e-=1,(t=Math.exp(-1))+(1-Math.exp(-e))*(1-t)))*p.pulseNormalize}function F(e){return 1<=e?1:e<=0?0:(1==p.pulseNormalize&&(p.pulseNormalize/=V(1)),V(e))}
 try{window.addEventListener(""test"",null,Object.defineProperty({},""passive"",{get:function(){ee=!0}}))}catch(e){}var te=!!ee&&{passive:!1},oe=""onwheel""in document.createElement(""div"")?""wheel"":""mousewheel"";function ne(e){for(var t in e)o.hasOwnProperty(t)&&(p[t]=e[t])}oe&&(Y(oe,e,te),Y(""mousedown"",t),Y(""load"",b)),ne.destroy=function(){i&&i.disconnect(),A(oe,e),A(""mousedown"",t),A(""keydown"",D),A(""resize"",c),A(""load"",b)},window.SmoothScrollOptions&&ne(window.SmoothScrollOptions),""function""==typeof define&&define.amd?define(function(){return ne}):""object""==typeof exports?module.exports=ne:window.SmoothScroll=ne}();
 SmoothScroll({animationTime:400,stepSize:100,accelerationDelta:50,accelerationMax:3,keyboardSupport:true,arrowScroll:50,pulseAlgorithm:true,pulseScale:4,pulseNormalize:1,touchpadSupport:false,fixedBackground:true,excluded:''});";
@@ -4409,7 +4643,7 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
         public const string RemoveFilterCSS = "var atrbstyle=document.createElement(\"style\");atrbstyle.textContent=\"*{filter:none !important;backdrop-filter:none !important;}\",document.head.append(atrbstyle);";
         public const string RemoveOverlayCSS = "!function(){function e(){function e(e){let o=getComputedStyle(e);return(parseInt(o.zIndex)||0)>=1e3&&(\"fixed\"===o.position||\"absolute\"===o.position)&&e.offsetHeight>200&&e.offsetWidth>200}document.querySelectorAll(\"*\").forEach(o=>{e(o)&&o.remove()});let o=new MutationObserver(o=>{for(let t of o)t.addedNodes.forEach(o=>{1===o.nodeType&&e(o)&&o.remove()})});o.observe(document.body,{childList:!0,subtree:!0})}document.body?e():window.addEventListener(\"DOMContentLoaded\",e)}();";
 
-        public const string LateAntiDevtools = @"(function(){'use strict';
+        public const string LateAntiDevtoolsScript = @"(function(){'use strict';
     function suspiciousCallback(callback){try{const code=callback.toString();return code.includes('debugger')||code.includes('about:blank')||code.includes('performance.now')||code.includes('console.clear')||code.includes('window.outerHeight')||code.includes('openDevTools');}catch{return false;}}
     Object.defineProperty(window,'outerWidth',{get:function(){return window.innerWidth;}});
     Object.defineProperty(window,'outerHeight',{get:function(){return window.innerHeight;}});
@@ -4452,5 +4686,54 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
     };
 })();
 ";
+        public const string ForceLazyLoad = @"
+    function applyLazyLoading(el) {
+        if (el.tagName !== 'IMG' && el.tagName !== 'IFRAME') return;
+
+        const originalSrc = el.getAttribute('src');
+        if (!originalSrc || el.dataset.lazyfixed) return;
+        el.dataset.lazyfixed = '1';
+        el.setAttribute('loading', 'lazy');
+
+        el.src = '';
+        requestAnimationFrame(() => {
+            el.setAttribute('src', originalSrc);
+        });
+    }
+
+    function initObserver() {
+        document.querySelectorAll('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
+
+        const SLBrlazyobserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList') {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType !== 1) continue;
+                        if (node.tagName === 'IMG' || node.tagName === 'IFRAME') {
+                            applyLazyLoading(node);
+                        } else {
+                            node.querySelectorAll?.('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
+                        }
+                    }
+                }
+            }
+        });
+
+        const target = document.documentElement || document.body;
+        if (target) {
+            SLBrlazyobserver.observe(target, {
+                childList: true,
+                subtree: true
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initObserver);
+    } else {
+        initObserver();
+    }";
+
+        //public const string YouTubeAdCSS = "var SLBrYTStyle=document.createElement('style');SLBrYTStyle.textContent=`ytd-engagement-panel-section-list-renderer{display:none;}`;document.head.append(SLBrYTStyle);";
     }
 }

@@ -34,23 +34,14 @@ namespace SLBr.Handlers
 
         public void OnFaviconUrlChange(IWebBrowser chromiumWebBrowser, IBrowser browser, IList<string> urls)
         {
-            if (urls.Count != 0 && bool.Parse(App.Instance.GlobalSave.Get("Favicons")))
+            if (urls.Count != 0 && bool.Parse(App.Instance.GlobalSave.Get("Favicons")) && !_BrowserView.Private)
             {
-                urls = urls.OrderBy(url => url.EndsWith(".ico") ? 0 : url.EndsWith(".png") ? 1 : 2).ToList();
-                if (Utils.GetFileExtension(urls[0]) != ".svg")
+                urls = urls.OrderBy(url => url.EndsWith(".ico", StringComparison.Ordinal) ? 0 : url.EndsWith(".png", StringComparison.Ordinal) ? 1 : 2).ToList();
+                if (!urls[0].EndsWith(".svg", StringComparison.Ordinal))
                 {
                     App.Current.Dispatcher.Invoke(async () =>
                     {
-                        _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address, _BrowserView.Private);
-                        /*foreach (string url in urls)
-                        {
-                            if (Utils.GetFileExtensionFromUrl(url) != ".svg")
-                            {
-                                //MessageBox.Show(urls[0]);
-                                _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address);
-                                break;
-                            }
-                        }*/
+                        _BrowserView.Tab.Icon = await App.Instance.SetIcon(urls[0], chromiumWebBrowser.Address);
                     });
                 }
             }

@@ -49,6 +49,7 @@ namespace SLBr.Pages
         public Handlers.ResourceRequestHandlerFactory _ResourceRequestHandlerFactory;
 
         public bool Private = false;
+        public bool UserAgentBranding = true;
 
         public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false)//int _BrowserType = 0, 
         {
@@ -59,10 +60,11 @@ namespace SLBr.Pages
             Address = Url;
             SetAudioState(false);
             //BrowserType = _BrowserType;
+            DownloadsPopup.ItemsSource = App.Instance.VisibleDownloads;
             FavouritesPanel.ItemsSource = App.Instance.Favourites;
             FavouriteListMenu.ItemsSource = App.Instance.Favourites;
             HistoryListMenu.Collection = App.Instance.History;
-            ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working for no reason so I turned it into a list
+            ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working so turned it into a list
             /*BrowserEmulatorComboBox.Items.Add("Chromium");
             BrowserEmulatorComboBox.Items.Add("Edge");
             BrowserEmulatorComboBox.Items.Add("Internet Explorer");*/
@@ -126,7 +128,7 @@ namespace SLBr.Pages
 
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
-            var Values = ((FrameworkElement)sender).Tag.ToString().Split(new string[] { "<,>" }, StringSplitOptions.None);
+            var Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
             Action((Actions)int.Parse(Values[0]), sender, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
         }
         public void Action(Actions _Action, object sender = null, string V1 = "", string V2 = "", string V3 = "")
@@ -164,9 +166,7 @@ namespace SLBr.Pages
                         Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1);
                     }
                     else if (V2 == "Private")
-                    {
                         Tab.ParentWindow.NewTab(V1, true, -1, true);
-                    }
                     else
                         Tab.ParentWindow.NewTab(V1, true);
                     break;
@@ -357,21 +357,31 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    Utils.RunSafeFireAndForget(async () =>
-                    {
-                        DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
-                        //_DevToolsClient.Network.ResourceChangedPriority;
-                        //_DevToolsClient.Network.RequestWillBeSent
-                        /*ValidateSetWebLifecycleState(state);
-            var dict = new System.Collections.Generic.Dictionary<string, object>();
-            dict.Add("state", EnumToString(state));
-            return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Page.setWebLifecycleState", dict);*/
-                        //return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Network.clearBrowserCache", dict);
-                        await _DevToolsClient.Page.SetWebLifecycleStateAsync(SetWebLifecycleStateState.Active);
-                    });
+                    //Utils.RunSafeFireAndForget(async () =>
+                    //{
+                    DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
+                    _DevToolsClient.Page.SetWebLifecycleStateAsync(SetWebLifecycleStateState.Active);
+                    //_DevToolsClient.Network.ResourceChangedPriority;
+                    //_DevToolsClient.Network.RequestWillBeSent
+                    /*ValidateSetWebLifecycleState(state);
+        var dict = new System.Collections.Generic.Dictionary<string, object>();
+        dict.Add("state", EnumToString(state));
+        return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Page.setWebLifecycleState", dict);*/
+                    //return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Network.clearBrowserCache", dict);
+                    //});
                 }
                 catch { }
             }
+        }
+
+        public void LimitNetwork(int LatencyMs, double DownloadLimitMbps, double UploadLimitMbps)
+        {
+            DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
+            _DevToolsClient.Network.EnableAsync();
+            double DownloadThroughput = DownloadLimitMbps * 125000;
+            double UploadThroughput = UploadLimitMbps * 125000;
+            _DevToolsClient.Network.EmulateNetworkConditionsAsync(false, LatencyMs, DownloadThroughput, UploadThroughput, CefSharp.DevTools.Network.ConnectionType.Wifi);
+            // Mbps to bytes per second
         }
 
         private void Chromium_FrameLoadStart(object? sender, FrameLoadStartEventArgs e)
@@ -380,12 +390,14 @@ namespace SLBr.Pages
             {
                 if (Utils.IsHttpScheme(e.Url))
                 {
-                    e.Browser.ExecuteScriptAsync("window.close=function(){};");//Replacement for DoClose of LifeSpanHandler in RuntimeStyle Chrome
+                    e.Browser.ExecuteScriptAsync(Scripts.AntiCloseScript);//Replacement for DoClose of LifeSpanHandler in RuntimeStyle Chrome
                     e.Browser.ExecuteScriptAsync(Scripts.ShiftContextMenuScript);
                     if (bool.Parse(App.Instance.GlobalSave.Get("AntiTamper")))
                     {
+                        if (bool.Parse(App.Instance.GlobalSave.Get("AntiFullscreen")))
+                            e.Browser.ExecuteScriptAsync(Scripts.AntiFullscreenScript);
                         if (bool.Parse(App.Instance.GlobalSave.Get("AntiInspectDetect")))
-                            e.Browser.ExecuteScriptAsync(Scripts.LateAntiDevtools);
+                            e.Browser.ExecuteScriptAsync(Scripts.LateAntiDevtoolsScript);
                         if (bool.Parse(App.Instance.GlobalSave.Get("BypassSiteMenu")))
                             e.Browser.ExecuteScriptAsync(Scripts.ForceContextMenuScript);
                         if (bool.Parse(App.Instance.GlobalSave.Get("TextSelection")))
@@ -395,6 +407,8 @@ namespace SLBr.Pages
                         if (bool.Parse(App.Instance.GlobalSave.Get("RemoveOverlay")))
                             e.Browser.ExecuteScriptAsync(Scripts.RemoveOverlayCSS);
                     }
+                    if (bool.Parse(App.Instance.GlobalSave.Get("ForceLazy")))
+                        e.Browser.ExecuteScriptAsync(Scripts.ForceLazyLoad);
                 }
                 else if (e.Url.StartsWith("slbr:", StringComparison.Ordinal))
                     e.Browser.ExecuteScriptAsync(App.InternalJavascriptFunction);
@@ -419,7 +433,6 @@ namespace SLBr.Pages
                 e.Frame.LoadUrl(e.FailedUrl);
             });
         }
-
         private async void Chromium_IsBrowserInitializedChanged(object? sender, EventArgs e)
         {
             if (Chromium.IsBrowserInitialized)
@@ -429,11 +442,24 @@ namespace SLBr.Pages
                 Tab.BrowserCommandsVisibility = Visibility.Visible;
                 if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                     Tab.ProgressBarVisibility = Visibility.Visible;
+                /*LimitNetwork(0, 200, 200);
+                LimitNetwork(0, 10, 10);
+                LimitNetwork(0, 2, 2);*/
+                //LimitNetwork(0, 0.512, 0.512);
+                //LimitNetwork(0, 0.001, 0.001);
+                if (bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit")))
+                {
+                    float Bandwidth = float.Parse(App.Instance.GlobalSave.Get("Bandwidth"));
+                    LimitNetwork(0, Bandwidth, Bandwidth);
+                }
                 using (var DevToolsClient = Chromium.GetDevToolsClient())
                 {
                     //DevToolsClient.Network.SetCookieControlsAsync(true, true, true);
                     //if (App.Instance.AdBlock == 2)
                     //    await ToggleEfficientAdBlock(DevToolsClient, App.Instance.AdBlockAllowList.Has(Utils.FastHost(Address)));
+                    //await DevToolsClient.Debugger.EnableAsync();
+                    //await DevToolsClient.Debugger.SetSkipAllPausesAsync(true);
+                    //await DevToolsClient.Debugger.SetBreakpointsActiveAsync(false);
                     await ToggleEfficientAdBlock(DevToolsClient, App.Instance.AdBlock == 2);
                     try
                     {
@@ -449,12 +475,14 @@ namespace SLBr.Pages
 
                     //await DevToolsClient.Preload.DisableAsync();
                     //await DevToolsClient.Network.SetExtraHTTPHeadersAsync
-                    if (!bool.Parse(App.Instance.GlobalSave.Get("BlockFingerprint")))
+                    UserAgentBranding = !Private && !bool.Parse(App.Instance.GlobalSave.Get("BlockFingerprint"));
+                    if (UserAgentBranding)
                     {
                         //navigator.userAgentData.getHighEntropyValues(["architecture","model","platform","platformVersion","uaFullVersion"]).then(ua =>{console.log(ua)});
                         await DevToolsClient.Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, App.Instance.UserAgentData);
                     }
                 }
+                //Chromium.Load("https://www.whatismybrowser.com/detect/what-is-my-user-agent/");
             }
         }
         private void Chromium_StatusMessage(object? sender, StatusMessageEventArgs e)
@@ -487,64 +515,65 @@ namespace SLBr.Pages
                         App.Instance.SaveOpenSearch(Message["name"].ToString(), Message["url"].ToString());
                         break;
                     case "Internal":
-                        switch (Message["function"])
+                        if (e.Frame.Url.StartsWith("slbr:", StringComparison.Ordinal))
                         {
-                            case "Downloads":
-                                Chromium.ExecuteScriptAsync($"internal.receive(\"downloads={JsonSerializer.Serialize(App.Instance.Downloads).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
-                                break;
-                            case "History":
-                                Chromium.ExecuteScriptAsync($"internal.receive(\"history={JsonSerializer.Serialize(App.Instance.History).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
-                                break;
-                            case "Background":
-                                string Url = "";
-                                switch (App.Instance.GlobalSave.GetInt("HomepageBackground"))
-                                {
-                                    case 1:
-                                        int BingBackground = App.Instance.GlobalSave.GetInt("BingBackground");
-                                        if (BingBackground == 0)
-                                        {
-                                            try
+                            switch (Message["function"])
+                            {
+                                case "Downloads":
+                                    Chromium.ExecuteScriptAsync($"internal.receive(\"downloads={JsonSerializer.Serialize(App.Instance.Downloads).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
+                                    break;
+                                case "History":
+                                    Chromium.ExecuteScriptAsync($"internal.receive(\"history={JsonSerializer.Serialize(App.Instance.History).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
+                                    break;
+                                case "Background":
+                                    string Url = "";
+                                    switch (App.Instance.GlobalSave.GetInt("HomepageBackground"))
+                                    {
+                                        case 0:
+                                            Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
+                                            if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
+                                                Url = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
+                                            break;
+                                        case 1:
+                                            int BingBackground = App.Instance.GlobalSave.GetInt("BingBackground");
+                                            if (BingBackground == 0)
                                             {
-                                                XmlDocument doc = new XmlDocument();
-                                                doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
-                                                Url = "http://www.bing.com/" + doc.SelectSingleNode("/images/image/url").InnerText;
+                                                try
+                                                {
+                                                    XmlDocument doc = new XmlDocument();
+                                                    doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
+                                                    Url = "http://www.bing.com/" + doc.SelectSingleNode("/images/image/url").InnerText;
+                                                }
+                                                catch { }
                                             }
-                                            catch { }
-                                        }
-                                        else
-                                            Url = "http://bingw.jasonzeng.dev/?index=random";
-                                        break;
-
-                                    case 2:
-                                        Url = "http://picsum.photos/1920/1080?random";
-                                        break;
-
-                                    case 0:
-                                        Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
-                                        if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
-                                            Url = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
-                                        break;
-                                }
-                                Chromium.ExecuteScriptAsync($"internal.receive(\"background={$"url('{Url}')".Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
-                                break;
-                            case "OpenDownload":
-                                Process.Start(new ProcessStartInfo("explorer.exe", "/select, \"" + App.Instance.Downloads.GetValueOrDefault((int)Message["variable"]).FullPath + "\"") { UseShellExecute = true });
-                                break;
-                            case "CancelDownload":
-                                Dispatcher.Invoke(() =>
-                                {
-                                    App.Instance._DownloadHandler.CancelDownload((int)Message["variable"]);
-                                });
-                                break;
-                            case "ClearHistory":
-                                Dispatcher.Invoke(App.Instance.History.Clear);
-                                break;
-                            case "Search":
-                                Dispatcher.Invoke(() =>
-                                {
-                                    Address = Utils.FilterUrlForBrowser(Message["variable"].ToString(), App.Instance.DefaultSearchProvider.SearchUrl);
-                                });
-                                break;
+                                            else
+                                                Url = "http://bingw.jasonzeng.dev/?index=random";
+                                            break;
+                                        case 2:
+                                            Url = "http://picsum.photos/1920/1080?random";
+                                            break;
+                                    }
+                                    Chromium.ExecuteScriptAsync($"internal.receive(\"background={$"url('{Url}')".Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
+                                    break;
+                                case "OpenDownload":
+                                    Process.Start(new ProcessStartInfo("explorer.exe", "/select, \"" + App.Instance.Downloads.GetValueOrDefault((int)Message["variable"]).FullPath + "\"") { UseShellExecute = true });
+                                    break;
+                                case "CancelDownload":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        App.Instance._DownloadHandler.CancelDownload((int)Message["variable"]);
+                                    });
+                                    break;
+                                case "ClearHistory":
+                                    Dispatcher.Invoke(App.Instance.History.Clear);
+                                    break;
+                                case "Search":
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        Address = Utils.FilterUrlForBrowser(Message["variable"].ToString(), App.Instance.DefaultSearchProvider.SearchUrl);
+                                    });
+                                    break;
+                            }
                         }
                         break;
                     /*case "Extension":
@@ -811,8 +840,9 @@ namespace SLBr.Pages
                             _TabItem.BorderBrush = new SolidColorBrush(App.Instance.CurrentTheme.BorderColor);
                         }
                     }
-                    if (App.Instance.AdBlock != 0)
-                        await _DevToolsClient.Storage.RunBounceTrackingMitigationsAsync();
+                    //if (App.Instance.AdBlock != 0)
+                    //    await _DevToolsClient.Storage.RunBounceTrackingMitigationsAsync();
+                    // Gave weird errors
                 }
             });
         }
@@ -934,29 +964,30 @@ namespace SLBr.Pages
                                 CefSharp.NavigationEntry _NavigationEntry = await Chromium.GetVisibleNavigationEntryAsync();
                                 if (_NavigationEntry != null)
                                 {
-                                    SetSiteInfo = _NavigationEntry.SslStatus.IsSecureConnection ? (_NavigationEntry.HttpStatusCode == 418 ? "Teapot" : "Secure") : "Insecure";
-                                    CertificateValidation.Text = _NavigationEntry.SslStatus.IsSecureConnection ? "Certificate is valid" : "Certificate is invalid";
-                                    await Cef.UIThreadTaskFactory.StartNew(delegate
+                                    if (_NavigationEntry.HttpStatusCode == 0)
                                     {
-                                        SslStatus _SSL = Chromium.GetBrowserHost().GetVisibleNavigationEntry().SslStatus;
-                                        Dispatcher.Invoke(() =>
-                                        {
-                                            if (_SSL.X509Certificate != null)
-                                            {
-                                                CertificateInfo.Visibility = Visibility.Visible;
-                                                var IssuedTo = Utils.ParseCertificateIssue(_SSL.X509Certificate.Subject);
-                                                IssueToCommonName.Text = IssuedTo.Item1;
-                                                IssueToCompany.Text = IssuedTo.Item2;
-                                                var IssuedBy = Utils.ParseCertificateIssue(_SSL.X509Certificate.Issuer);
-                                                IssueByCommonName.Text = IssuedBy.Item1;
-                                                IssueByCompany.Text = IssuedBy.Item2;
-                                                CertificateStart.Text = _SSL.X509Certificate.NotBefore.Date.ToShortDateString();
-                                                CertificateEnd.Text = _SSL.X509Certificate.NotAfter.Date.ToShortDateString();
-                                            }
-                                            else
-                                                CertificateInfo.Visibility = Visibility.Collapsed;
-                                        });
-                                    });
+                                        Chromium.Stop();
+                                        Chromium.Load(Chromium.Address);
+                                        return;
+                                    }
+                                    SetSiteInfo = _NavigationEntry.SslStatus.IsSecureConnection ? (_NavigationEntry.HttpStatusCode == 418 ? "Teapot" : "Secure") : "Insecure";
+
+                                    CertificateValidation.Text = _NavigationEntry.SslStatus.IsSecureConnection ? "Certificate is valid" : "Certificate is invalid";
+                                    SslStatus _SSL = _NavigationEntry.SslStatus;
+                                    if (_SSL.X509Certificate != null)
+                                    {
+                                        CertificateInfo.Visibility = Visibility.Visible;
+                                        var IssuedTo = Utils.ParseCertificateIssue(_SSL.X509Certificate.Subject);
+                                        IssueToCommonName.Text = IssuedTo.Item1;
+                                        IssueToCompany.Text = IssuedTo.Item2;
+                                        var IssuedBy = Utils.ParseCertificateIssue(_SSL.X509Certificate.Issuer);
+                                        IssueByCommonName.Text = IssuedBy.Item1;
+                                        IssueByCompany.Text = IssuedBy.Item2;
+                                        CertificateStart.Text = _SSL.X509Certificate.NotBefore.Date.ToShortDateString();
+                                        CertificateEnd.Text = _SSL.X509Certificate.NotAfter.Date.ToShortDateString();
+                                    }
+                                    else
+                                        CertificateInfo.Visibility = Visibility.Collapsed;
                                 }
                                 else
                                 {
@@ -1205,10 +1236,10 @@ namespace SLBr.Pages
             {
                 if (ClearCache)
                 {
-                    using (var DevToolsClient = Chromium.GetDevToolsClient())
+                    using (DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient())
                     {
-                        DevToolsClient.Page.ClearCompilationCacheAsync();
-                        DevToolsClient.Network.ClearBrowserCacheAsync();
+                        _DevToolsClient.Page.ClearCompilationCacheAsync();
+                        _DevToolsClient.Network.ClearBrowserCacheAsync();
                     }
                 }
                 Reload(IgnoreCache);
@@ -1306,10 +1337,10 @@ namespace SLBr.Pages
 
         private void SwitchUserPopup()
         {
-            var infoWindow = new PromptDialogWindow("Prompt", $"Switch Profile", "Enter username for the profile to switch to:", "Default", "\xE77B");
-            infoWindow.Topmost = true;
-            if (infoWindow.ShowDialog() == true && infoWindow.UserInput != App.Instance.Username)
-                Process.Start(new ProcessStartInfo() { FileName = App.Instance.ExecutablePath, Arguments = $"--user={infoWindow.UserInput}" });
+            PromptDialogWindow InfoWindow = new PromptDialogWindow("Prompt", $"Switch Profile", "Enter username for the profile to switch to:", "Default", "\xE77B");
+            InfoWindow.Topmost = true;
+            if (InfoWindow.ShowDialog() == true && InfoWindow.UserInput != App.Instance.Username)
+                Process.Start(new ProcessStartInfo() { FileName = App.Instance.ExecutablePath, Arguments = $"--user={InfoWindow.UserInput}" });
             /*Process.Start(new ProcessStartInfo() {
                     WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true,
@@ -1557,13 +1588,13 @@ namespace SLBr.Pages
                 }
                 else
                 {
-                    FavouriteScrollViewer.Margin = new Thickness(5, 5, 5, 5);
+                    FavouriteScrollViewer.Margin = new Thickness(5);
                     FavouriteContainer.Height = 41.25f;
                 }
             }
             else if (ShowFavouritesBar == 1)
             {
-                FavouriteScrollViewer.Margin = new Thickness(5, 5, 5, 5);
+                FavouriteScrollViewer.Margin = new Thickness(5);
                 FavouriteContainer.Height = 41.25f;
             }
             else if (ShowFavouritesBar == 2)
@@ -1610,7 +1641,7 @@ namespace SLBr.Pages
                     Directory.CreateDirectory(ScreenshotPath);
                 DateTime CurrentTime = DateTime.Now;
                 string Url = $"{Path.Combine(ScreenshotPath, Regex.Replace($"{Chromium.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", ""))}";
-                using (var _DevToolsClient = Chromium.GetDevToolsClient())
+                using (DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient())
                 {
                     var ContentSize = await Chromium.GetContentSizeAsync();
                     var Result = await _DevToolsClient.Page.CaptureScreenshotAsync(ScreenshotFormat, null, new Viewport { Width = ContentSize.Width, Height = ContentSize.Height }, null, true, true);
@@ -1668,13 +1699,6 @@ namespace SLBr.Pages
             Chromium.Focus();
         }
 
-        private bool IsOnlyModifierPressed()
-        {
-            return Keyboard.Modifiers == ModifierKeys.Control ||
-                   Keyboard.Modifiers == ModifierKeys.Alt ||
-                   Keyboard.Modifiers == ModifierKeys.Windows;
-        }
-
         private bool IsIgnorableKey(Key key)
         {
             if (key >= Key.F1 && key <= Key.F24)
@@ -1688,7 +1712,6 @@ namespace SLBr.Pages
                 or Key.Tab or Key.LWin or Key.RWin
                 or Key.LeftCtrl or Key.RightCtrl
                 or Key.LeftAlt or Key.RightAlt => true,
-
                 _ => false
             };
         }
@@ -1701,7 +1724,7 @@ namespace SLBr.Pages
                     OmniBoxEnter();
                 else
                 {
-                    if (IsIgnorableKey(e.Key) || IsOnlyModifierPressed())
+                    if (IsIgnorableKey(e.Key) || (Keyboard.Modifiers == ModifierKeys.Control || Keyboard.Modifiers == ModifierKeys.Alt || Keyboard.Modifiers == ModifierKeys.Windows))
                         return;
                     Storyboard LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
                     LoadingStoryboard?.Seek(TimeSpan.Zero);
@@ -1784,7 +1807,6 @@ namespace SLBr.Pages
                         OmniBox.Text = OmniBox.Tag.ToString();
                 }
                 catch { }
-                //OmniTextBox.SelectAll();
                 OmniBoxBorder.BorderThickness = new Thickness(2);
                 OmniBoxBorder.BorderBrush = (SolidColorBrush)FindResource("IndicatorBrush");
                 OmniBoxFocused = true;
@@ -2034,6 +2056,7 @@ namespace SLBr.Pages
         Window ExtensionWindow;
         private void LoadExtensionPopup(object sender, RoutedEventArgs e)
         {
+            //TODO: Use PopupBrowser instead
             Extension _Extension = App.Instance.Extensions.ToList().Find(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             ExtensionWindow = new Window();
             ChromiumWebBrowser ExtensionBrowser = new ChromiumWebBrowser(_Extension.Popup);
@@ -2083,8 +2106,8 @@ var rect = element.getBoundingClientRect();
             switch (msg)
             {
                 case WM_SYSCOMMAND:
-                    int command = wParam.ToInt32() & 0xfff0;
-                    if (command == SC_MOVE)
+                    int Command = wParam.ToInt32() & 0xfff0;
+                    if (Command == SC_MOVE)
                         handled = true;
                     break;
             }
@@ -2113,6 +2136,16 @@ var rect = element.getBoundingClientRect();
         {
             if (SiteInformationText.Text != "Loading")
                 SiteInformationPopup.IsOpen = !SiteInformationPopup.IsOpen;
+        }
+
+        private void DownloadCancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            App.Instance._DownloadHandler.CancelDownload(int.Parse(((FrameworkElement)sender).Tag.ToString()));
+        }
+
+        private void DownloadOpenButton_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", "/select, \"" + App.Instance.Downloads.GetValueOrDefault(int.Parse(((FrameworkElement)sender).Tag.ToString())).FullPath + "\"") { UseShellExecute = true });
         }
     }
 }

@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -56,10 +57,10 @@ namespace SLBr
                     string Data = Marshal.PtrToStringUni(_dataStruct.lpData, _dataStruct.cbData / 2);
                     List<string> Datas = Data.Split("<|>").ToList();
                     if (Datas[0] == "Url")
-                        NewTab(Datas[1], true);
+                        NewTab(Datas[1], true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                     else if (Datas[0] == "Start")
                     {
-                        if (App.Instance.Background)
+                        if (App.Instance.Background && App.Instance.Username == Datas[1])
                             App.Instance.ContinueBackgroundInitialization();
                     }
                     SetForegroundWindow(new WindowInteropHelper(this).Handle);
@@ -70,6 +71,8 @@ namespace SLBr
         }
         [DllImport("dwmapi.dll")]
         public static extern int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute dwAttribute, ref int pvAttribute, int cbAttribute);
+
+        BrowserTabItem NewTabTab = null;
 
         private void InitializeWindow()
         {
@@ -88,10 +91,11 @@ namespace SLBr
                 App.Instance.WindowsSaves.Add(new Saving($"Window_{App.Instance.WindowsSaves.Count}.bin", App.Instance.UserApplicationWindowsPath));
             InitializeComponent();
             UpdateUnloadTimer();
-            Tabs.Add(new BrowserTabItem(null)
+            NewTabTab = new BrowserTabItem(null)
             {
                 TabStyle = (Style)FindResource("IconTabButton")
-            });
+            };
+            Tabs.Add(NewTabTab);
             TabsUI.ItemsSource = Tabs;
         }
 
@@ -193,7 +197,7 @@ namespace SLBr
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
+            SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("CompactTab")), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
 
             //Benchmark.Clear();
             /*Benchmark.Run("FastHost", Iterations, () =>
@@ -309,17 +313,27 @@ namespace SLBr
             UnloadTabs();
         }
 
-        public void SetAppearance(Theme _Theme, int TabAlignment, bool AllowHomeButton, bool AllowTranslateButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
+        bool VerticalTabs = false;
+
+        public void SetAppearance(Theme _Theme, int TabAlignment, bool CompactTab, bool AllowHomeButton, bool AllowTranslateButton, bool AllowReaderModeButton, int ShowExtensionButton, int ShowFavouritesBar)
         {
             if (TabAlignment == 0)
             {
+                VerticalTabs = false;
                 TabsUI.Style = FindResource(typeof(WinUITabControl)) as Style;
-                Tabs[Tabs.Count - 1].TabStyle = (Style)FindResource("IconTabButton");
+                TabsUI.Resources[typeof(TabItem)] = FindResource(typeof(TabItem)) as Style;
+                NewTabTab.TabStyle = (Style)FindResource("IconTabButton");
+                Tabs.Remove(NewTabTab);
+                Tabs.Add(NewTabTab);
             }
-            else if (TabAlignment == 1)
+            else
             {
+                VerticalTabs = true;
                 TabsUI.Style = Resources["VerticalTabControl"] as Style;
-                Tabs[Tabs.Count - 1].TabStyle = (Style)FindResource("VerticalIconTabButton");
+                TabsUI.Resources[typeof(TabItem)] = CompactTab ? (Style)FindResource("MinimizedVerticalTab") : (Style)FindResource("VerticalTab");
+                NewTabTab.TabStyle = CompactTab ? (Style)FindResource("MinimizedVerticalIconTabButton") : (Style)FindResource("VerticalIconTabButton");
+                Tabs.Remove(NewTabTab);
+                Tabs.Insert(0, NewTabTab);
             }
 
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
@@ -344,10 +358,10 @@ namespace SLBr
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
             var Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>", StringSplitOptions.None);
-            Action((Actions)int.Parse(Values[0]), sender, (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
+            Action((Actions)int.Parse(Values[0]), (Values.Length > 1) ? Values[1] : "", (Values.Length > 2) ? Values[2] : "", (Values.Length > 3) ? Values[3] : "");
         }
 
-        private void Action(Actions _Action, object sender = null, string V1 = "", string V2 = "", string V3 = "")
+        private void Action(Actions _Action, string V1 = "", string V2 = "", string V3 = "")
         {
             Browser _BrowserView = GetTab().Content;
             if (_BrowserView != null)
@@ -377,14 +391,12 @@ namespace SLBr
                     if (V2 == "Tab")
                     {
                         BrowserTabItem _Tab = GetBrowserTabWithId(int.Parse(V1));
-                        NewTab(_Tab.Content.Address, true, Tabs.IndexOf(_Tab) + 1);
+                        NewTab(_Tab.Content.Address, true, Tabs.IndexOf(_Tab) + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                     }
                     else if (V2 == "Private")
-                    {
                         NewTab(V1, true, -1, true);
-                    }
                     else
-                        NewTab(V1, true);
+                        NewTab(V1, true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                     break;
                 case Actions.CloseTab:
                     CloseTab(int.Parse(V1), int.Parse(V2));
@@ -490,6 +502,7 @@ namespace SLBr
             GetTab().Content?.Navigate(Url);
         }
         public bool IsFullscreen;
+        private DispatcherTimer FullscreenPopupTimer;
         public void Fullscreen(bool Fullscreen, Browser BrowserView = null)
         {
             IsFullscreen = Fullscreen;
@@ -508,6 +521,14 @@ namespace SLBr
                     }
                     WindowStyle = WindowStyle.None;
                     WindowState = WindowState.Maximized;
+                    if (bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup")))
+                    {
+                        FullscreenPopup.IsOpen = true;
+                        FullscreenPopupTimer = new DispatcherTimer();
+                        FullscreenPopupTimer.Interval = TimeSpan.FromSeconds(3);
+                        FullscreenPopupTimer.Tick += FullscreenPopupTimer_Tick;
+                        FullscreenPopupTimer.Start();
+                    }
                 }
                 else
                 {
@@ -519,9 +540,17 @@ namespace SLBr
                         Keyboard.Focus(BrowserView.Chromium);
                     }
                     WindowStyle = WindowStyle.SingleBorderWindow;
+                    FullscreenPopupTimer_Tick(null, null);
                 }
             }
         }
+        private void FullscreenPopupTimer_Tick(object? sender, EventArgs e)
+        {
+            FullscreenPopup.IsOpen = false;
+            FullscreenPopupTimer?.Stop();
+            FullscreenPopupTimer = null;
+        }
+
         public void DevTools(string Id = "")//, int XCoord = 0, int YCoord = 0)
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
@@ -536,7 +565,10 @@ namespace SLBr
             }
             BrowserTabItem _Tab = new BrowserTabItem(this) { Header = Utils.CleanUrl(Url, true, true, true, true), BrowserCommandsVisibility = Visibility.Collapsed };
             _Tab.Content = new Browser(Url, _Tab, IsPrivate);
-            Tabs.Insert(Index != -1 ? Index : Tabs.Count - 1, _Tab);
+            if (VerticalTabs)
+                Tabs.Insert(Index != -1 ? Index : Tabs.Count, _Tab);
+            else
+                Tabs.Insert(Index != -1 ? Index : Tabs.Count - 1, _Tab);
             if (IsSelected)
                 TabsUI.SelectedIndex = Tabs.IndexOf(_Tab);
         }
@@ -576,10 +608,20 @@ namespace SLBr
                 _Tab.Content.DisposeCore();
                 if (IsSelected)
                 {
-                    if (TabsUI.SelectedIndex > 0)
-                        TabsUI.SelectedIndex = TabsUI.SelectedIndex - 1;
+                    if (VerticalTabs)
+                    {
+                        if (TabsUI.SelectedIndex > 1)
+                            TabsUI.SelectedIndex = TabsUI.SelectedIndex - 1;
+                        else
+                            TabsUI.SelectedIndex = TabsUI.SelectedIndex + 1;
+                    }
                     else
-                        TabsUI.SelectedIndex = TabsUI.SelectedIndex + 1;
+                    {
+                        if (TabsUI.SelectedIndex > 0)
+                            TabsUI.SelectedIndex = TabsUI.SelectedIndex - 1;
+                        else
+                            TabsUI.SelectedIndex = TabsUI.SelectedIndex + 1;
+                    }
                 }
                 Tabs.Remove(_Tab);
                 if (IsSelected && TabsUI.SelectedIndex > Tabs.Count - 1)
@@ -638,10 +680,10 @@ namespace SLBr
         {
             try
             {
-                if (TabsUI.SelectedIndex == TabsUI.Items.Count - 1)
+                if (Tabs[TabsUI.SelectedIndex].ParentWindow == null)
                 {
                     if (TabsUI.Visibility == Visibility.Visible)
-                        NewTab(App.Instance.GlobalSave.Get("Homepage"), true);
+                        NewTab(App.Instance.GlobalSave.Get("Homepage"), true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                 }
                 else
                 {
@@ -652,7 +694,10 @@ namespace SLBr
                             _Tab.Content?.UnFocus();
                     }
                     if (_CurrentTab.Content != null)
+                    {
+                        _CurrentTab.Content.ReFocus();
                         Keyboard.Focus(_CurrentTab.Content.Chromium);
+                    }
                     Title = _CurrentTab.Header + (App.Instance.Username == "Default" ? " - SLBr" : $" - {App.Instance.Username} - SLBr");
                 }
             }

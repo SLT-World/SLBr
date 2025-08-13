@@ -861,13 +861,14 @@ namespace SLBr
 
         public int GetInt(string Key, int Default = -1)
         {
-            int Value = Default;
             if (Data.TryGetValue(Key, out string StrValue))
             {
                 if (int.TryParse(StrValue, out int IntValue))
                     return IntValue;
             }
-            return Value;
+            if (Default != -1)
+                Set(Key, Default);
+            return Default;
         }
 
         public string[] Get(string Key, bool UseListParameter) =>

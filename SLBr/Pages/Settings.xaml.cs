@@ -1,4 +1,5 @@
 ﻿using CefSharp;
+using CefSharp.DevTools.CSS;
 using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
@@ -10,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using Windows.UI.Text;
 
 namespace SLBr.Pages
 {
@@ -172,6 +174,7 @@ namespace SLBr.Pages
             DownloadPathText.Text = App.Instance.GlobalSave.Get("DownloadPath");
             ScreenshotPathText.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
 
+            PrivateTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs"));
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
             DownloadFaviconsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
             CheckUpdateCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("CheckUpdate"));
@@ -204,6 +207,7 @@ namespace SLBr.Pages
 
             GoogleSafeBrowsingCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("GoogleSafeBrowsing"));
             MobileViewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("MobileView"));
+            ForceLazyCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ForceLazy"));
 
             bool BlockFingerprintChecked = bool.Parse(App.Instance.GlobalSave.Get("BlockFingerprint"));
             BlockFingerprintCheckBox.IsChecked = BlockFingerprintChecked;
@@ -222,11 +226,13 @@ namespace SLBr.Pages
 
             bool AntiTamperChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiTamper"));
             AntiTamperCheckBox.IsChecked = AntiTamperChecked;
+            AntiFullscreenCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiFullscreen"));
             AntiInspectDetectCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiInspectDetect"));
             BypassSiteMenuCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("BypassSiteMenu"));
             TextSelectionCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TextSelection"));
             RemoveFilterCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RemoveFilter"));
             RemoveOverlayCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RemoveOverlay"));
+            AntiFullscreenCheckBox.IsEnabled = AntiTamperChecked;
             AntiInspectDetectCheckBox.IsEnabled = AntiTamperChecked;
             BypassSiteMenuCheckBox.IsEnabled = AntiTamperChecked;
             TextSelectionCheckBox.IsEnabled = AntiTamperChecked;
@@ -242,13 +248,23 @@ namespace SLBr.Pages
             ShowUnloadedIconCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadedIcon"));
             ShowUnloadTimeLeftCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress"));
 
-            TabAlignmentComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TabAlignment");
+            int TabAlignment = App.Instance.GlobalSave.GetInt("TabAlignment");
+            TabAlignmentComboBox.SelectedIndex = TabAlignment;
+            CompactTabCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("CompactTab"));
+            CompactTabCheckBox.Visibility = TabAlignment == 1 ? Visibility.Visible : Visibility.Collapsed;
+
+            bool NetworkLimit = bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit"));
+            NetworkLimitCheckBox.IsChecked = NetworkLimit;
+            BandwidthTextBox.IsEnabled = NetworkLimit;
+            BandwidthUnitComboBox.IsEnabled = NetworkLimit;
 
             bool SearchSuggestions = bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions"));
             SearchSuggestionsCheckBox.IsChecked = SearchSuggestions;
             SmartSuggestionsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions"));
             SmartSuggestionsCheckBox.IsEnabled = SearchSuggestions;
             OpenSearchCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("OpenSearch"));
+
+            FullscreenPopupCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup"));
 
 
 
@@ -284,6 +300,19 @@ namespace SLBr.Pages
             RuntimeStyleComboBox.SelectedIndex = RuntimeStyle;
             if (RuntimeStyle != 0)
                 ExtensionWarning.Visibility = Visibility.Visible;
+
+            float Bandwidth = float.Parse(App.Instance.GlobalSave.Get("Bandwidth"));
+            if (Bandwidth >= 1)
+            {
+                BandwidthTextBox.Text = Bandwidth.ToString("0.##");
+                BandwidthUnitComboBox.SelectedIndex = 0;
+            }
+            else
+            {
+                BandwidthTextBox.Text = (Bandwidth * 1000).ToString("0.##");
+                BandwidthUnitComboBox.SelectedIndex = 1;
+            }
+
 
             BackgroundImageTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundImage");
             BackgroundQueryTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundQuery");
@@ -455,7 +484,8 @@ namespace SLBr.Pages
             {
                 int TabAlignment = TabAlignmentComboBox.SelectedIndex;
                 App.Instance.GlobalSave.Set("TabAlignment", TabAlignment);
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
+                CompactTabCheckBox.Visibility = TabAlignment == 1 ? Visibility.Visible : Visibility.Collapsed;
             }
         }
         private void ExtensionButtonComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -464,7 +494,7 @@ namespace SLBr.Pages
             {
                 int ExtensionButton = ExtensionButtonComboBox.SelectedIndex;
                 App.Instance.GlobalSave.Set("ExtensionButton", ExtensionButton);
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), ExtensionButton, App.Instance.GlobalSave.GetInt("FavouritesBar"));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButton, FavouritesBarComboBox.SelectedIndex);
             }
         }
         private void FavouritesBarComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -473,7 +503,7 @@ namespace SLBr.Pages
             {
                 int FavouritesBar = FavouritesBarComboBox.SelectedIndex;
                 App.Instance.GlobalSave.Set("FavouritesBar", FavouritesBar);
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), FavouritesBar);
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBar);
             }
         }
 
@@ -531,6 +561,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("AdaptiveTheme", AdaptiveThemeCheckBox.IsChecked.ToBool().ToString());
+        }
+        private void PrivateTabsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("PrivateTabs", PrivateTabsCheckBox.IsChecked.ToBool().ToString());
         }
         private void RestoreTabsCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -604,6 +639,11 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("OpenSearch", OpenSearchCheckBox.IsChecked.ToBool().ToString());
         }
+        private void FullscreenPopupCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("FullscreenPopup", FullscreenPopupCheckBox.IsChecked.ToBool().ToString());
+        }
 
         private void GoogleSafeBrowsingCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -611,6 +651,11 @@ namespace SLBr.Pages
                 App.Instance.SetGoogleSafeBrowsing(GoogleSafeBrowsingCheckBox.IsChecked.ToBool());
         }
 
+        private void ForceLazyCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("ForceLazy", ForceLazyCheckBox.IsChecked.ToBool().ToString());
+        }
         private void MobileViewCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -623,6 +668,19 @@ namespace SLBr.Pages
                 bool Checked = BlockFingerprintCheckBox.IsChecked.ToBool();
                 App.Instance.GlobalSave.Set("BlockFingerprint", Checked.ToString());
                 FingerprintProtectionLevelComboBox.IsEnabled = Checked;
+
+                if (!Checked)
+                {
+                    foreach (MainWindow _Window in App.Instance.AllWindows)
+                    {
+                        foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
+                        {
+                            BrowserView.UserAgentBranding = !BrowserView.Private && !Checked;
+                            if (BrowserView.UserAgentBranding)
+                                BrowserView.Chromium.GetDevToolsClient().Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, App.Instance.UserAgentData);
+                        }
+                    }
+                }
             }
         }
         private void AntiTamperCheckBox_Click(object sender, RoutedEventArgs e)
@@ -631,12 +689,18 @@ namespace SLBr.Pages
             {
                 bool Checked = AntiTamperCheckBox.IsChecked.ToBool();
                 App.Instance.GlobalSave.Set("AntiTamper", Checked.ToString());
+                AntiFullscreenCheckBox.IsEnabled = Checked;
                 AntiInspectDetectCheckBox.IsEnabled = Checked;
                 BypassSiteMenuCheckBox.IsEnabled = Checked;
                 TextSelectionCheckBox.IsEnabled = Checked;
                 RemoveFilterCheckBox.IsEnabled = Checked;
                 RemoveOverlayCheckBox.IsEnabled = Checked;
             }
+        }
+        private void AntiFullscreenCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("AntiFullscreen", AntiFullscreenCheckBox.IsChecked.ToBool().ToString());
         }
         private void AntiInspectDetectCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -739,25 +803,34 @@ namespace SLBr.Pages
             }
         }
 
+        private void CompactTabCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                App.Instance.GlobalSave.Set("CompactTab", CompactTabCheckBox.IsChecked.ToBool().ToString());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
+            }
+        }
+
         private void TranslateButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
             {
                 App.Instance.GlobalSave.Set("TranslateButton", TranslateButtonToggleButton.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
             }
         }
         private void HomeButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             App.Instance.GlobalSave.Set("HomeButton", HomeButtonToggleButton.IsChecked.ToBool().ToString());
-            App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
+            App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
         }
         private void ReaderButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
             {
                 App.Instance.GlobalSave.Set("ReaderButton", ReaderButtonToggleButton.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
             }
         }
 
@@ -771,7 +844,7 @@ namespace SLBr.Pages
                 Theme _Theme = App.Instance.GetTheme(Text);
                 if (_Theme == null)
                     return;
-                App.Instance.SetAppearance(_Theme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
+                App.Instance.SetAppearance(_Theme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("CompactTab")), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
                 //App.Instance.ApplyTheme(_Theme);
                 ApplyTheme(_Theme);
             }
@@ -944,6 +1017,76 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetExternalFonts(ExternalFontsCheckBox.IsChecked.ToBool());
+        }
+
+        public float ParseBandwidthInput()
+        {
+            if (!float.TryParse(BandwidthTextBox.Text, out float Value))
+                return 0;
+            return BandwidthUnitComboBox.SelectedIndex switch
+            {
+                0 => Value,
+                1 => Value / 1000,
+                _ => 0
+            };
+        }
+        private void NetworkLimitCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                bool Checked = NetworkLimitCheckBox.IsChecked.ToBool();
+                App.Instance.GlobalSave.Set("NetworkLimit", Checked.ToString());
+
+                BandwidthTextBox.IsEnabled = Checked;
+                BandwidthUnitComboBox.IsEnabled = Checked;
+
+                float Bandwidth = Checked ? float.Parse(App.Instance.GlobalSave.Get("Bandwidth")) : 0;
+                foreach (MainWindow _Window in App.Instance.AllWindows)
+                {
+                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
+                        BrowserView.LimitNetwork(0, Bandwidth, Bandwidth);
+                }
+            }
+        }
+
+        private void BandwidthTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (e.Text.Any(char.IsLetter))
+                e.Handled = true;
+        }
+
+        private void BandwidthTextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                float Bandwidth = ParseBandwidthInput();
+                App.Instance.GlobalSave.Set("Bandwidth", Bandwidth);
+
+                if (!NetworkLimitCheckBox.IsChecked.ToBool())
+                    Bandwidth = 0;
+                foreach (MainWindow _Window in App.Instance.AllWindows)
+                {
+                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
+                        BrowserView.LimitNetwork(0, Bandwidth, Bandwidth);
+                }
+            }
+        }
+
+        private void BandwidthUnitComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                float Bandwidth = ParseBandwidthInput();
+                App.Instance.GlobalSave.Set("Bandwidth", Bandwidth);
+
+                if (!NetworkLimitCheckBox.IsChecked.ToBool())
+                    Bandwidth = 0;
+                foreach (MainWindow _Window in App.Instance.AllWindows)
+                {
+                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
+                        BrowserView.LimitNetwork(0, Bandwidth, Bandwidth);
+                }
+            }
         }
     }
 }

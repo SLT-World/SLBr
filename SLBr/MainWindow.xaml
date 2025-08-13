@@ -29,7 +29,12 @@
                 <StaticResource ResourceKey="TabItemStyleSelector"/>
             </TabControl.ItemContainerStyleSelector>
         </WinUI:WinUITabControl>
-        <Grid x:Name="FullscreenContainer" Visibility="Collapsed">
+        <Grid x:Name="FullscreenContainer" Visibility="Visible">
+            <Popup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
+                <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Opacity="0.8">
+                    <TextBlock FontSize="25" Text="To exit fullscreen, press F11 or Esc" Margin="7.5" Foreground="{StaticResource FontBrush}"/>
+                </Border>
+            </Popup>
         </Grid>
     </Grid>
 </Window>

@@ -93,7 +93,7 @@ namespace SLBr.Handlers
                             new PopupBrowser(targetUrl, popupFeatures.Width ?? 600, popupFeatures.Height ?? 650).Show();
                     }
                     else
-                        App.Instance.CurrentFocusedWindow().NewTab(targetUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+                        App.Instance.CurrentFocusedWindow().NewTab(targetUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                 });
             }
             return true;

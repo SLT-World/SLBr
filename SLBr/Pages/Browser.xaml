@@ -13,15 +13,15 @@
     </UserControl.Resources>
     <Grid Background="{StaticResource PrimaryBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Border x:Name="ToolBar" Grid.ColumnSpan="3" Grid.Row="0" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}" HorizontalAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5,5,0,0">
@@ -101,10 +101,10 @@
                                         <MenuItem Header="QUIC" Icon="&#xf159;" Click="ButtonAction" Tag="4&lt;,&gt;https://quic.nginx.org/"/>
                                         <MenuItem Header="Bad SSL" Icon="&#xe785;" Click="ButtonAction" Tag="4&lt;,&gt;https://badssl.com/"/>
                                         <MenuItem Header="Stutters &amp; Tearing" Icon="&#xe9d9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.testufo.com/stutter"/>
-                                        <MenuItem Header="Show Picker" Icon="&#xef3c;" Click="ButtonAction" Tag="4&lt;,&gt;https://show-picker.glitch.me/demo.html"/>
                                         <MenuItem Header="Widevine" Icon="&#xe8a6;" Click="ButtonAction" Tag="4&lt;,&gt;https://bitmovin.com/demos/drm/"/>
                                         <MenuItem Header="Service Worker" Icon="&#xec7a;" Click="ButtonAction" Tag="4&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
                                         <MenuItem Header="Prerender" Icon="&#xe8ff;" Click="ButtonAction" Tag="4&lt;,&gt;https://prerender-demos.glitch.me/"/>
+                                        <MenuItem Header="SLT Tests" Icon="&#xe9a4;" Click="ButtonAction" Tag="4&lt;,&gt;https://slt-world.github.io/"/>
                                         <Separator/>
                                         <MenuItem Header="WebGL Samples" Icon="&#xec26;">
                                             <MenuItem Header="HexGL" Icon="&#xe709;" Click="ButtonAction" Tag="4&lt;,&gt;https://hexgl.bkcore.com/"/>
@@ -164,7 +164,90 @@
                     </Button>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="4&lt;,&gt;{Homepage}" x:Name="HomeButton" Content="&#xE80F;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Home"/>
 
-                    <Button Click="ButtonAction" BorderThickness="0" Tag="5&lt;,&gt;slbr://downloads" x:Name="OpenDownloadsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Downloads" Content="&#xE896;"/>
+                    <WinUI:PopupButton BorderThickness="0" x:Name="OpenDownloadsButton" ToolTip="Downloads" Content="&#xE896;" Margin="0,0,5,0" Style="{StaticResource PopupIconButton}" DockPanel.Dock="Right">
+                        <WinUI:PopupButton.PopupContent>
+                            <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5,2.5">
+                                <StackPanel>
+                                    <ItemsControl x:Name="DownloadsPopup">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,2.5" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5">
+                                                    <StackPanel>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="35"/>
+                                                                <ColumnDefinition/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Width="30" Height="30" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                                                                <TextBlock Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons"/>
+                                                            </Border>
+                                                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition/>
+                                                                    <RowDefinition/>
+                                                                </Grid.RowDefinitions>
+                                                                <TextBlock Text="{Binding FileName}" />
+                                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                            </Grid>
+                                                            <Button Grid.Column="2" Width="75px" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
+                                                                <DockPanel VerticalAlignment="Center">
+                                                                    <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                                    <TextBlock TextAlignment="Center" Text="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </DockPanel>
+                                                            </Button>
+                                                            <Button Grid.Column="2" Width="75px" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
+                                                                <DockPanel VerticalAlignment="Center">
+                                                                    <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                                    <TextBlock TextAlignment="Center" Text="Open" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </DockPanel>
+                                                            </Button>
+                                                        </Grid>
+                                                        <ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Margin="0,5,0,0" Width="Auto" Maximum="100" Visibility="{Binding Progress}" Value="{Binding PercentComplete}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <!--<Border Margin="0,2.5" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="35"/>
+                                                    <ColumnDefinition/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="30" Height="30" Visibility="Visible" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                                                    <TextBlock Text="&#xE8A5;" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons"/>
+                                                </Border>
+                                                <Grid Grid.Column="1" VerticalAlignment="Center">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition/>
+                                                        <RowDefinition/>
+                                                    </Grid.RowDefinitions>
+                                                    <TextBlock Text="Chwefwefwefewrome.exe"/>
+                                                    <TextBlock Grid.Row="1" Text="41.4/82.8 MB" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                </Grid>
+                                                <Button Grid.Column="2" Width="75px" Click="">
+                                                    <DockPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                        <TextBlock TextAlignment="Center" Text="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </DockPanel>
+                                                </Button>
+                                                <Button Grid.Column="2" Width="75px" Click="">
+                                                    <DockPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                        <TextBlock TextAlignment="Center" Text="Open" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </DockPanel>
+                                                </Button>
+                                            </Grid>
+                                            <ProgressBar Margin="0,5,0,0" Width="Auto" Maximum="100" Value="50"/>
+                                        </StackPanel>
+                                    </Border>-->
+                                </StackPanel>
+                            </Border>
+                        </WinUI:PopupButton.PopupContent>
+                    </WinUI:PopupButton>
                     <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Youtube Ultilities" Content="&#xe786;" Foreground="Red"/>-->
                     <WinUI:DropDownButton BorderThickness="0" Tag="3" x:Name="ExtensionsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" ToolTip="Extensions" Content="&#xEA86;">
                         <WinUI:DropDownButton.Menu>

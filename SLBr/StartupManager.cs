@@ -9,20 +9,24 @@ namespace SLBr
 
         public static void EnableStartup()
         {
-            using RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
-            key.SetValue("SLBr", $"\"{Process.GetCurrentProcess().MainModule.FileName}\" --background");
+            string KeyName = App.Instance.Username == "Default" ? "SLBr" : $"SLBr-{App.Instance.Username}";
+            string Arguments = "--background" + (App.Instance.Username != "Default" ? $" --user={App.Instance.Username}" : "");
+            using RegistryKey Key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
+            Key.SetValue(KeyName, $"\"{Process.GetCurrentProcess().MainModule.FileName}\" {Arguments}");
         }
 
         public static void DisableStartup()
         {
-            using RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
-            key.DeleteValue("SLBr", false);
+            string KeyName = App.Instance.Username == "Default" ? "SLBr" : $"SLBr-{App.Instance.Username}";
+            using RegistryKey Key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
+            Key.DeleteValue(KeyName, false);
         }
 
         /*public static bool IsStartupEnabled()
         {
-            using RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, false);
-            return key?.GetValue("SLBr") != null;
+            string KeyName = App.Instance.Username == "Default" ? "SLBr" : $"SLBr-{App.Instance.Username}";
+            using RegistryKey Key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, false);
+            return Key?.GetValue(KeyName) != null;
         }*/
     }
 }

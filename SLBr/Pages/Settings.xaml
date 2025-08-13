@@ -23,7 +23,7 @@
                             <Button DockPanel.Dock="Right" Click="SwitchUserButton_Click">
                                 <DockPanel VerticalAlignment="Center">
                                     <TextBlock Text="&#xE748;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
-                                    <TextBlock x:Name="Text" TextAlignment="Center" Text="Switch" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock TextAlignment="Center" Text="Switch" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </DockPanel>
                             </Button>
                             <StackPanel VerticalAlignment="Center" Margin="0">
@@ -72,7 +72,11 @@
                             Browser
                         </GroupBox.Header>
                         <StackPanel>
-                            <CheckBox Margin="0,0,0,10" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
+                            <CheckBox Margin="0,0,0,10" x:Name="FullscreenPopupCheckBox" Width="Auto" Click="FullscreenPopupCheckBox_Click" Content="Show fullscreen warning"/>
+                            <CheckBox Margin="0,0,0,5" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
+                            <TextBlock Margin="0,0,0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                Smooth scrolling will be disabled in Lite Performance Mode
+                            </TextBlock>
                             <CheckBox Margin="0,0,0,10" x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
                             <CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>
                             <CheckBox x:Name="EnhanceImageCheckBox" Width="Auto" Click="EnhanceImageCheckBox_Click" Content="Enhance images &amp; videos"/>
@@ -81,342 +85,355 @@
                 </StackPanel>
             </TabItem>
             <TabItem Header="Appearance" Tag="&#xE790;">
-                <StackPanel Margin="25" MaxWidth="500">
-                    <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Appearance</TextBlock>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            Themes
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <ListBox x:Name="ThemeSelection" SelectionChanged="ThemeSelection_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel/>
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <ListBox.Resources>
-                                    <Style TargetType="{x:Type ListBoxItem}">
-                                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-                                        <Setter Property="BorderThickness" Value="1"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                    <Border Margin="0,0,10,10">
-                                                        <Grid>
-                                                            <ContentPresenter x:Name="Content" Margin="0"/>
-                                                            <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="Transparent"/>
-                                                            <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
-                                                        </Grid>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsSelected" Value="True">
-                                                            <Setter Property="BorderThickness" Value="0"/>
-                                                            <Trigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="Border" Duration="0:0:0.250" To="1.0" Storyboard.TargetProperty="Opacity"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.EnterActions>
-                                                            <Trigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="Border" Duration="0:0:0.250" To="0.0" Storyboard.TargetProperty="Opacity"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.ExitActions>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </ListBox.Resources>
-                                <!--<Border CornerRadius="5" Width="100" Height="100" BorderThickness="1" Background="LightSlateGray" BorderBrush="{StaticResource BorderBrush}" Margin="0,0,0,10">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, 
+           RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
+                    <StackPanel Margin="25" MaxWidth="500">
+                        <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Appearance</TextBlock>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                Themes
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <ListBox x:Name="ThemeSelection" SelectionChanged="ThemeSelection_SelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.Resources>
+                                        <Style TargetType="{x:Type ListBoxItem}">
+                                            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                        <Border Margin="0,0,10,10">
+                                                            <Grid>
+                                                                <ContentPresenter x:Name="Content" Margin="0"/>
+                                                                <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="Transparent"/>
+                                                                <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter Property="BorderThickness" Value="0"/>
+                                                                <Trigger.EnterActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard>
+                                                                            <DoubleAnimation Storyboard.TargetName="Border" Duration="0:0:0.250" To="1.0" Storyboard.TargetProperty="Opacity"/>
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </Trigger.EnterActions>
+                                                                <Trigger.ExitActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard>
+                                                                            <DoubleAnimation Storyboard.TargetName="Border" Duration="0:0:0.250" To="0.0" Storyboard.TargetProperty="Opacity"/>
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </Trigger.ExitActions>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.Resources>
+                                    <!--<Border CornerRadius="5" Width="100" Height="100" BorderThickness="1" Background="LightSlateGray" BorderBrush="{StaticResource BorderBrush}" Margin="0,0,0,10">
                                     <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
                                         <TextBlock Text="" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                     </Border>
                                 </Border>-->
-                                <Border Tag="Auto" CornerRadius="6" Width="100" Height="100">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Border CornerRadius="6,0,0,0" Background="WhiteSmoke">
-                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE706;" FontSize="20" Foreground="Black" TextAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <Border CornerRadius="0,6,0,0" Background="Black" Grid.Column="1">
-                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE708;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <Border Grid.Row="1" Grid.ColumnSpan="2" CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
-                                            <TextBlock Text="System" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                                <Border Tag="Light" CornerRadius="6" Width="100" Height="100" Background="WhiteSmoke">
-                                    <Grid>
-                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE706;" FontSize="20" Foreground="Black" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
-                                            <TextBlock Text="Light" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                                <Border Tag="Dark" CornerRadius="6" Width="100" Height="100" Background="Black">
-                                    <Grid>
-                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE708;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
-                                            <TextBlock Text="Dark" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                                <Border Tag="Purple" CornerRadius="6" Width="100" Height="100" Background="#251C31">
-                                    <Grid>
-                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xea3a;" FontSize="20" Foreground="#934CFE" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
-                                            <TextBlock Text="Purple" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                                <Border Tag="Green" CornerRadius="6" Width="100" Height="100" Background="#18352B">
-                                    <Grid>
-                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xe8be;" FontSize="20" Foreground="#3AE872" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
-                                        <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
-                                            <TextBlock Text="Green" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </ListBox>
-                            <CheckBox x:Name="AdaptiveThemeCheckBox" Click="AdaptiveThemeCheckBox_Click" Content="Adaptive theme" Width="Auto"/>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <StackPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" Text="Tab alignment"/>
-                                <ComboBox x:Name="TabAlignmentComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="TabAlignmentComboBox_SelectionChanged">
-                                    <ComboBoxItem>Horizontal</ComboBoxItem>
-                                    <ComboBoxItem>Vertical</ComboBoxItem>
-                                </ComboBox>
-                            </DockPanel>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Favourites bar"/>
-                                <ComboBox x:Name="FavouritesBarComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FavouritesBarComboBox_SelectionChanged">
-                                    <ComboBoxItem>Show automatically</ComboBoxItem>
-                                    <ComboBoxItem>Always show</ComboBoxItem>
-                                    <ComboBoxItem>Never show</ComboBoxItem>
-                                </ComboBox>
-                            </DockPanel>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            Fonts
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <CheckBox x:Name="ExternalFontsCheckBox" Margin="0,0,0,10" Click="ExternalFontsCheckBox_Click" Content="External fonts" Width="Auto"/>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" Text="Font size"/>
-                                <Slider x:Name="FontSizeSlider" Width="200px" VerticalAlignment="Center" Minimum="9" Maximum="72" Value="16" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="FontSizeSlider_ValueChanged"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" Text="Minimum font size"/>
-                                <Slider x:Name="MinimumFontSizeSlider" Width="200px" VerticalAlignment="Center" Minimum="0" Maximum="25" Value="0" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="MinimumFontSizeSlider_ValueChanged"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" Text="Standard font"/>
-                                <ComboBox x:Name="StandardFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="StandardFontComboBox_SelectionChanged"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" Text="Serif font"/>
-                                <ComboBox x:Name="SerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SerifFontComboBox_SelectionChanged"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" Text="Sans-Serif font"/>
-                                <ComboBox x:Name="SansSerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SansSerifFontComboBox_SelectionChanged"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" Text="Fixed-width font"/>
-                                <ComboBox x:Name="FixedFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FixedFontComboBox_SelectionChanged"/>
-                            </DockPanel>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Mathematical font"/>
-                                <ComboBox x:Name="MathFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="MathFontComboBox_SelectionChanged"/>
-                            </DockPanel>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <StackPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE80F;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                    <Border Tag="Auto" CornerRadius="6" Width="100" Height="100">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Border CornerRadius="6,0,0,0" Background="WhiteSmoke">
+                                                <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE706;" FontSize="20" Foreground="Black" TextAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <Border CornerRadius="0,6,0,0" Background="Black" Grid.Column="1">
+                                                <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE708;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <Border Grid.Row="1" Grid.ColumnSpan="2" CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
+                                                <TextBlock Text="System" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <Border Tag="Light" CornerRadius="6" Width="100" Height="100" Background="WhiteSmoke">
+                                        <Grid>
+                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE706;" FontSize="20" Foreground="Black" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
+                                            <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
+                                                <TextBlock Text="Light" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <Border Tag="Dark" CornerRadius="6" Width="100" Height="100" Background="Black">
+                                        <Grid>
+                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE708;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
+                                            <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
+                                                <TextBlock Text="Dark" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <Border Tag="Purple" CornerRadius="6" Width="100" Height="100" Background="#251C31">
+                                        <Grid>
+                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xea3a;" FontSize="20" Foreground="#934CFE" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
+                                            <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
+                                                <TextBlock Text="Purple" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <Border Tag="Green" CornerRadius="6" Width="100" Height="100" Background="#18352B">
+                                        <Grid>
+                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xe8be;" FontSize="20" Foreground="#3AE872" TextAlignment="Center" VerticalAlignment="Top" Margin="20"/>
+                                            <Border CornerRadius="0,0,6,6" VerticalAlignment="Bottom" Height="40" Background="{StaticResource PrimaryBrush}" Padding="5">
+                                                <TextBlock Text="Green" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </ListBox>
+                                <CheckBox x:Name="AdaptiveThemeCheckBox" Click="AdaptiveThemeCheckBox_Click" Content="Adaptive theme" Width="Auto"/>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Tab alignment"/>
+                                    <ComboBox x:Name="TabAlignmentComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="TabAlignmentComboBox_SelectionChanged">
+                                        <ComboBoxItem>Horizontal</ComboBoxItem>
+                                        <ComboBoxItem>Vertical</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
+                                <CheckBox Margin="0,0,0,10" x:Name="CompactTabCheckBox" Width="Auto" Click="CompactTabCheckBox_Click" Content="Compact tabs"/>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Favourites bar"/>
+                                    <ComboBox x:Name="FavouritesBarComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FavouritesBarComboBox_SelectionChanged">
+                                        <ComboBoxItem>Show automatically</ComboBoxItem>
+                                        <ComboBoxItem>Always show</ComboBoxItem>
+                                        <ComboBoxItem>Never show</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE80F;" Margin="0,0,10,0"/>
+                                    <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE80F;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="Home button"/>
-                                <ToggleButton x:Name="HomeButtonToggleButton" Click="HomeButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE8C1;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                    <TextBlock VerticalAlignment="Center" Text="Home button"/>
+                                    <ToggleButton x:Name="HomeButtonToggleButton" Click="HomeButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE8C1;" Margin="0,0,10,0"/>
+                                    <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE8C1;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="Translate button"/>
-                                <ToggleButton x:Name="TranslateButtonToggleButton" Click="TranslateButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                    <TextBlock VerticalAlignment="Center" Text="Translate button"/>
+                                    <ToggleButton x:Name="TranslateButtonToggleButton" Click="TranslateButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;" Margin="0,0,10,0"/>
+                                    <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="Reader Mode button"/>
-                                <ToggleButton x:Name="ReaderButtonToggleButton" Click="ReaderButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEA86;" Margin="0,0,10,0"/>
-                                <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                    <TextBlock VerticalAlignment="Center" Text="Reader Mode button"/>
+                                    <ToggleButton x:Name="ReaderButtonToggleButton" Click="ReaderButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                </DockPanel>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEA86;" Margin="0,0,10,0"/>
+                                    <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                <TextBlock VerticalAlignment="Center" Text="Extension button"/>
-                                <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ExtensionButtonComboBox_SelectionChanged">
-                                    <ComboBoxItem>Show automatically</ComboBoxItem>
-                                    <ComboBoxItem>Always show</ComboBoxItem>
-                                    <ComboBoxItem>Never show</ComboBoxItem>
-                                </ComboBox>
-                            </DockPanel>
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Extension button"/>
+                                    <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ExtensionButtonComboBox_SelectionChanged">
+                                        <ComboBoxItem>Show automatically</ComboBoxItem>
+                                        <ComboBoxItem>Always show</ComboBoxItem>
+                                        <ComboBoxItem>Never show</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                Fonts
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <CheckBox x:Name="ExternalFontsCheckBox" Margin="0,0,0,10" Click="ExternalFontsCheckBox_Click" Content="External fonts" Width="Auto"/>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Font size"/>
+                                    <Slider x:Name="FontSizeSlider" Width="175px" VerticalAlignment="Center" Minimum="9" Maximum="72" Value="16" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="FontSizeSlider_ValueChanged"/>
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding ElementName=FontSizeSlider, Path=Value, StringFormat={}{0:0}}" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="0,0,10,0"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Minimum font size"/>
+                                    <Slider x:Name="MinimumFontSizeSlider" Width="175px" VerticalAlignment="Center" Minimum="0" Maximum="25" Value="0" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="MinimumFontSizeSlider_ValueChanged"/>
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding ElementName=MinimumFontSizeSlider, Path=Value, StringFormat={}{0:0}}" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="0,0,10,0"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Standard font"/>
+                                    <ComboBox x:Name="StandardFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="StandardFontComboBox_SelectionChanged"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Serif font"/>
+                                    <ComboBox x:Name="SerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SerifFontComboBox_SelectionChanged"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Sans-Serif font"/>
+                                    <ComboBox x:Name="SansSerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SansSerifFontComboBox_SelectionChanged"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Fixed-width font"/>
+                                    <ComboBox x:Name="FixedFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FixedFontComboBox_SelectionChanged"/>
+                                </DockPanel>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Mathematical font"/>
+                                    <ComboBox x:Name="MathFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="MathFontComboBox_SelectionChanged"/>
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
             <TabItem Header="Privacy &amp; Security" Tag="&#xE72E;">
-                <StackPanel Margin="25" MaxWidth="500">
-                    <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Privacy &amp; Security</TextBlock>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            Ads &amp; Trackers
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <DockPanel Margin="0,0,0,10" LastChildFill="False">
-                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
-                                    <Grid VerticalAlignment="Center">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xeb3b;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                        <TextBlock Grid.Row="1" Text="Ads Blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                        <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
-                                            <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
-                                    <Grid VerticalAlignment="Center">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xe7b3;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                        <TextBlock Grid.Row="1" Text="Trackers Blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                        <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
-                                            <TextBlock x:Name="TrackersBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </DockPanel>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Ads &amp; Trackers Blocking"/>
-                                <ComboBox x:Name="AdBlockComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="AdBlockComboBox_SelectionChanged">
-                                    <ComboBoxItem>Disabled</ComboBoxItem>
-                                    <ComboBoxItem>Standard</ComboBoxItem>
-                                    <ComboBoxItem>Efficient</ComboBoxItem>
-                                </ComboBox>
-                            </DockPanel>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            Security
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <CheckBox x:Name="GoogleSafeBrowsingCheckBox" Click="GoogleSafeBrowsingCheckBox_Click" Margin="0,0,0,10" Content="Google Safe Browsing" Width="Auto"/>
-                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                Advisory provided by
-                                <Hyperlink ToolTip="https://developers.google.com/safe-browsing/v4/advisory" NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
-                            </TextBlock>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            Privacy
-                        </GroupBox.Header>
-                        <DockPanel Height="35">
-                            <!--<Border Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
-                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xea99;"/>
-                            </Border>-->
-                            <Button DockPanel.Dock="Right" Click="ClearAllDataButton_Click">
-                                <DockPanel VerticalAlignment="Center">
-                                    <TextBlock Text="&#xea99;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
-                                    <TextBlock TextAlignment="Center" Text="Clear" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, 
+           RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
+                    <StackPanel Margin="25" MaxWidth="500">
+                        <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Privacy &amp; Security</TextBlock>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                Ads &amp; Trackers
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,10" LastChildFill="False">
+                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
+                                        <Grid VerticalAlignment="Center">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xeb3b;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                            <TextBlock Grid.Row="1" Text="Ads Blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                            <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
+                                                <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
+                                        <Grid VerticalAlignment="Center">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xe7b3;" FontSize="20" Foreground="White" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                            <TextBlock Grid.Row="1" Text="Trackers Blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                            <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
+                                                <TextBlock x:Name="TrackersBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
                                 </DockPanel>
-                            </Button>
-                            <StackPanel VerticalAlignment="Center" Margin="0">
-                                <TextBlock Text="Clear browsing data"/>
-                                <TextBlock FontSize="10" Text="Clear history, cookies, cache, and more" Foreground="{StaticResource GrayBrush}"/>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Ads &amp; Trackers Blocking"/>
+                                    <ComboBox x:Name="AdBlockComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="AdBlockComboBox_SelectionChanged">
+                                        <ComboBoxItem>Disabled</ComboBoxItem>
+                                        <ComboBoxItem>Standard</ComboBoxItem>
+                                        <ComboBoxItem>Efficient</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
                             </StackPanel>
-                        </DockPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            <CheckBox x:Name="AntiTamperCheckBox" Click="AntiTamperCheckBox_Click" Content="Anti-Tamper Mode" Width="Auto"/>
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <CheckBox x:Name="BypassSiteMenuCheckBox" Margin="0,0,0,10" Width="Auto" Click="BypassSiteMenuCheckBox_Click" Content="Bypass custom site menus"/>
-                            <CheckBox x:Name="TextSelectionCheckBox" Margin="0,0,0,10" Width="Auto" Click="TextSelectionCheckBox_Click" Content="Re-enable text selection &amp; copy/paste"/>
-                            <CheckBox x:Name="RemoveFilterCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveFilterCheckBox_Click" Content="Remove visual filter effects"/>
-                            <CheckBox x:Name="RemoveOverlayCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveOverlayCheckBox_Click" Content="Remove obstructive overlays"/>
-                            <CheckBox x:Name="AntiInspectDetectCheckBox" Width="Auto" Click="AntiInspectDetectCheckBox_Click" Content="Disable DevTools detection"/>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            <CheckBox x:Name="BlockFingerprintCheckBox" Click="BlockFingerprintCheckBox_Click" Content="Block Fingerprinting" Width="Auto"/>
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="Protection level"/>
-                                <ComboBox x:Name="FingerprintProtectionLevelComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                            </DockPanel>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <StackPanel>
-                            <DockPanel>
-                                <TextBlock VerticalAlignment="Center" Text="History"/>
-                                <Button Style="{StaticResource IconButton}" Click="HyperlinkButton_Click" Tag="slbr://history" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
-                            </DockPanel>
-                        </StackPanel>
-                    </GroupBox>
-                    <GroupBox Margin="0,0,0,10">
-                        <GroupBox.Header>
-                            Data Collection
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <CheckBox x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="0,0,0,10" Content="Allow SLBr to send crash reports" Width="Auto"/>
-                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                <Run>SLBr sends diagnostic reports on crashes to help improve SLBr.</Run>
-                                <LineBreak/>
-                                <Run>Reports only include the version and the error.</Run>
-                            </TextBlock>
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                Security
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <CheckBox x:Name="GoogleSafeBrowsingCheckBox" Click="GoogleSafeBrowsingCheckBox_Click" Margin="0,0,0,5" Content="Google Safe Browsing" Width="Auto"/>
+                                <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                    Advisory provided by
+                                    <Hyperlink ToolTip="https://developers.google.com/safe-browsing/v4/advisory" NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
+                                </TextBlock>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                Privacy
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <CheckBox x:Name="PrivateTabsCheckBox" Click="PrivateTabsCheckBox_Click" Margin="0,0,0,10" Content="Always use Private Tabs" Width="Auto"/>
+                                <DockPanel Height="35">
+                                    <!--<Border Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
+                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xea99;"/>
+                                </Border>-->
+                                    <Button DockPanel.Dock="Right" Click="ClearAllDataButton_Click">
+                                        <DockPanel VerticalAlignment="Center">
+                                            <TextBlock Text="&#xea99;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                            <TextBlock TextAlignment="Center" Text="Clear" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center" Margin="0">
+                                        <TextBlock Text="Clear browsing data"/>
+                                        <TextBlock FontSize="10" Text="Clear history, cookies, cache, and more" Foreground="{StaticResource GrayBrush}"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                <CheckBox x:Name="AntiTamperCheckBox" Click="AntiTamperCheckBox_Click" Content="Anti-Tamper Mode" Width="Auto"/>
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <CheckBox x:Name="BypassSiteMenuCheckBox" Margin="0,0,0,10" Width="Auto" Click="BypassSiteMenuCheckBox_Click" Content="Bypass custom site menus"/>
+                                <CheckBox x:Name="TextSelectionCheckBox" Margin="0,0,0,10" Width="Auto" Click="TextSelectionCheckBox_Click" Content="Re-enable text selection &amp; copy/paste"/>
+                                <CheckBox x:Name="RemoveFilterCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveFilterCheckBox_Click" Content="Remove visual filter effects"/>
+                                <CheckBox x:Name="RemoveOverlayCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveOverlayCheckBox_Click" Content="Remove obstructive overlays"/>
+                                <CheckBox x:Name="AntiInspectDetectCheckBox" Margin="0,0,0,10" Width="Auto" Click="AntiInspectDetectCheckBox_Click" Content="Disable DevTools detection"/>
+                                <CheckBox x:Name="AntiFullscreenCheckBox" Width="Auto" Click="AntiFullscreenCheckBox_Click" Content="Disable Fullscreen API"/>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                <CheckBox x:Name="BlockFingerprintCheckBox" Click="BlockFingerprintCheckBox_Click" Content="Block Fingerprinting" Width="Auto"/>
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Protection level"/>
+                                    <ComboBox x:Name="FingerprintProtectionLevelComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <StackPanel>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="History"/>
+                                    <Button Style="{StaticResource IconButton}" Click="HyperlinkButton_Click" Tag="slbr://history" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xe8a7;" />
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                Data Collection
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <CheckBox x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="0,0,0,10" Content="Allow SLBr to send crash reports" Width="Auto"/>
+                                <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                    <Run>SLBr sends diagnostic reports on crashes to help improve SLBr.</Run>
+                                    <LineBreak/>
+                                    <Run>Reports only include the version and the error.</Run>
+                                </TextBlock>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
             <TabItem Header="Search &amp; Services" Tag="&#xE773;">
                 <StackPanel Margin="25" MaxWidth="500">
@@ -480,16 +497,39 @@
                                 </ComboBox>
                             </DockPanel>
                             <CheckBox x:Name="StartupBoostCheckBox" Click="StartupBoostCheckBox_Click" Margin="0,0,0,10" Content="Startup Boost" Width="Auto"/>
-                            <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Content="Never Slow Mode" Width="Auto"/>
-                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="0,5,0,0">
-                                Never Slow Mode limits the number and size of scripts, images, fonts, subframes, and stylesheets.
-                            </TextBlock>
-                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="0,0,0,5">
-                                It also blocks scripts that previously failed to load, reducing retries and hangs.
-                            </TextBlock>
                             <CheckBox x:Name="AMPCheckBox" Click="AMPCheckBox_Click" Margin="0,0,0,10" Content="Prefer AMP pages" Width="Auto"/>
+                            <CheckBox x:Name="ForceLazyCheckBox" Click="ForceLazyCheckBox_Click" Margin="0,0,0,10" Content="Force lazy loading" Width="Auto"/>
                             <CheckBox x:Name="MobileViewCheckBox" Click="MobileViewCheckBox_Click" Content="View as Mobile Site" Width="Auto"/>
                             <!--<CheckBox x:Name="ReduceMotionCheckBox" Click="ReduceMotionCheckBox_Click" Width="Auto" Content="Reduce Motion"/>-->
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
+                            <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Content="Never Slow Mode" Width="Auto"/>
+                        </GroupBox.Header>
+                        <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                            Limits the number and size of scripts, images, fonts, subframes, and stylesheets.
+                            <LineBreak/>
+                            It also blocks scripts that previously failed to load, reducing retries and hangs.
+                        </TextBlock>
+                    </GroupBox>
+                    <GroupBox Margin="0,0,0,10">
+                        <GroupBox.Header>
+                            <CheckBox x:Name="NetworkLimitCheckBox" Click="NetworkLimitCheckBox_Click" Content="Network Limiter" Width="Auto"/>
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="0,0,0,10">Limits the amount of bandwidth that can be used.</TextBlock>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="100px"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="BandwidthTextBox" PreviewTextInput="BandwidthTextBox_PreviewTextInput" KeyUp="BandwidthTextBox_KeyUp" HorizontalAlignment="Stretch" Width="Auto" Margin="0,0,5,0"/>
+                                <ComboBox Grid.Column="1" x:Name="BandwidthUnitComboBox" SelectionChanged="BandwidthUnitComboBox_SelectionChanged" SelectedIndex="0" HorizontalAlignment="Stretch" Width="Auto">
+                                    <ComboBoxItem Content="Mbps"></ComboBoxItem>
+                                    <ComboBoxItem Content="Kbps"></ComboBoxItem>
+                                </ComboBox>
+                            </Grid>
                         </StackPanel>
                     </GroupBox>
                     <GroupBox Margin="0,0,0,10">
@@ -499,9 +539,9 @@
                         <StackPanel>
                             <ProgressBar x:Name="UnloadProgressBar" Width="Auto" Margin="0,0,0,10" Foreground="#3AE872"/>
                             <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                <Run>Unloading tabs frees memory and system resources from inactive tabs.</Run>
+                                Unloading tabs frees memory and system resources from inactive tabs.
                                 <LineBreak/>
-                                <Run>Inactive tabs will automatically reactivate when revisited.</Run>
+                                Inactive tabs will automatically reactivate when revisited.
                             </TextBlock>
                             <DockPanel>
                                 <TextBlock VerticalAlignment="Center" Text="Interval (minute)"/>

@@ -224,7 +224,7 @@ namespace SLBr.Handlers
                     string SelectedText = Parameters.SelectionText;
                     App.Current.Dispatcher.Invoke(() =>
                     {
-                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, SelectedText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, SelectedText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                     });
                     ToReturn = true;
                 }
@@ -237,7 +237,7 @@ namespace SLBr.Handlers
                 {
                     if (CommandID == MenuOpenNewTab)
                     {
-                        App.Instance.CurrentFocusedWindow().NewTab(Parameters.LinkUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+                        App.Instance.CurrentFocusedWindow().NewTab(Parameters.LinkUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                         ToReturn = true;
                     }
                     else if (CommandID == MenuCopyURL)
@@ -254,7 +254,7 @@ namespace SLBr.Handlers
                 {
                     if (CommandID == CefMenuCommand.Find)
                     {
-                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, SelectedText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1); ;
+                        App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, SelectedText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                         ToReturn = true;
                     }
                 });
@@ -422,7 +422,7 @@ namespace SLBr.Handlers
                         }
                     case CefMenuCommand.ViewSource:
                         {
-                            App.Instance.CurrentFocusedWindow().NewTab($"view-source:{WebBrowser.Address}", true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+                            App.Instance.CurrentFocusedWindow().NewTab($"view-source:{WebBrowser.Address}", true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                             //Browser.FocusedFrame.ViewSource();
                             break;
                         }
