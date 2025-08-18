@@ -21,6 +21,7 @@ SLBr is an open-source, lightweight web browser based on Chromium. Built with .N
 CefSharp is a .NET wrapper for the Chromium Embedded Framework (CEF), providing an embedded Chromium browser for WPF and WinForms applications. It supports modern web standards, including HTML5, JavaScript, CSS3, WebGL, and HTML5 audio/video.
 
 ## Notable Features
+See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Clean, Modern UI:** Simple & refreshed design.
 - **Ad & Tracker Blocking:** Browse with fewer ads & less tracking.
 - **YouTube Ad Skip:** Automatically skips ads on YouTube.
