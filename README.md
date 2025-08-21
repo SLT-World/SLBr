@@ -57,6 +57,8 @@ SLBr is licensed under the [GNU General Public License v3.0](https://github.com/
 
 ## Screenshots & Videos
 
+New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
+
 ![Browser](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/SLBr%20Browser.png)
 ![Performance Settings](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/Performance.png)
 ![News Feed](https://raw.githubusercontent.com/SLT-World/SLBr/main/SLBr/Resources/News%20Feed.png)
