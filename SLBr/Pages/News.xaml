@@ -27,7 +27,7 @@
         <StackPanel>
             <DockPanel Margin="5">
                 <!--f57e-->
-                <TextBlock Text="&#xe8a1;" FontSize="22" FontWeight="UltraLight" FontFamily="Segoe Fluent Icons" TextAlignment="Center" VerticalAlignment="Center" Margin="5,2.5,7.5,0"/>
+                <TextBlock Text="&#xe8a1;" FontSize="22" FontWeight="UltraLight" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" VerticalAlignment="Center" Margin="5,2.5,7.5,0"/>
                 <TextBlock Text="News" FontSize="16" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,7.5,0"/>
                 <Button Click="RefreshButton_Click" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE72C;" ToolTip="Refresh"/>
                 <TextBox x:Name="SearchTextBox" KeyUp="SearchTextBox_KeyUp" Width="Auto" Margin="0,0,5,0"/>

@@ -41,33 +41,18 @@ namespace SLBr.Handlers
 
         public void OnDownloadUpdated(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IDownloadItemCallback callback)
         {
-            App.Instance.UpdateDownloadItem(downloadItem);
+            //App.Instance.UpdateDownloadItem(downloadItem);
             if (downloadItem.IsInProgress)
                 DownloadCallbacks[downloadItem.Id] = callback;
             else
             {
                 DownloadCallbacks.Remove(downloadItem.Id);
-                App.Current.Dispatcher.Invoke(() =>
+                App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     if (!browser.HasDocument)
                     {
                         if (browser.IsPopup)
                             browser.GetHost().CloseBrowser(false);
-                        /*else
-                        {
-                            foreach (MainWindow _Window in App.Instance.AllWindows)
-                            {
-                                foreach (BrowserTabItem _Tab in _Window.Tabs)
-                                {
-                                    Browser BrowserView = _Window.GetBrowserView(_Tab);
-                                    if (BrowserView?.Chromium == (ChromiumWebBrowser)chromiumWebBrowser)
-                                    {
-                                        _Window.CloseTab(_Tab.ID, _Window.ID);
-                                        return;
-                                    }
-                                }
-                            }
-                        }*/
                     }
                 });
             }

@@ -12,10 +12,12 @@
     <SignAssembly>False</SignAssembly>
     <ApplicationIcon>Resources\SLBr.ico</ApplicationIcon>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
-    <AssemblyVersion>2025.8.13.0</AssemblyVersion>
-    <FileVersion>2025.8.13.0</FileVersion>
+    <AssemblyVersion>2025.9.29.0</AssemblyVersion>
+    <FileVersion>2025.8.29.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>AnyCPU;x64</Platforms>
+    <Company>$(Authors)</Company>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -27,30 +29,77 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>portable</DebugType>
+    <DebugType>none</DebugType>
+	<DebugSymbols>false</DebugSymbols>
+	<AllowedReferenceRelatedFileExtensions>*.pdb</AllowedReferenceRelatedFileExtensions>
+	<ExcludeFilesFromDeployment>bin\**\*.pdb</ExcludeFilesFromDeployment>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <DebugType>portable</DebugType>
+    <DebugType>none</DebugType>
+	<DebugSymbols>false</DebugSymbols>
+	<AllowedReferenceRelatedFileExtensions>*.pdb</AllowedReferenceRelatedFileExtensions>
+	<ExcludeFilesFromDeployment>bin\**\*.pdb</ExcludeFilesFromDeployment>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Legacy Handlers\**" />
+    <EmbeddedResource Remove="Legacy Handlers\**" />
+    <None Remove="Legacy Handlers\**" />
+    <Page Remove="Legacy Handlers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Benchmark.cs" />
+    <Compile Remove="Controls\ReportWindow.xaml.cs" />
+    <Compile Remove="WebViewDemo.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="App.xaml.cs~RF3366dde.TMP" />
+    <None Remove="Fonts\SLBr Icons.ttf" />
     <None Remove="Resources\SLBr.png" />
     <None Remove="WinUIControls\5bmhprik.cf5~" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="Controls\ReportWindow.xaml" />
+    <Page Remove="WebViewDemo.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <COMReference Include="SHDocVw">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>1</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>eab22ac0-30c1-11cf-a7eb-0000c05bae0b</Guid>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Resources\SLBr.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\SLBr.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="137.0.100" />
+    <None Include="Benchmark.cs" />
+    <None Include="Controls\ReportWindow.xaml" />
+    <None Include="Controls\ReportWindow.xaml.cs" />
+    <None Include="WebViewDemo.xaml" />
+    <None Include="WebViewDemo.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="140.1.140" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3530-prerelease" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Fonts\SLBr Icons.ttf" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,52 +115,22 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Update="Resources\AI Compose.png">
+    <None Update="Resources\credits.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\CannotConnect.html">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\Credits.html">
+    <None Update="Resources\downloads.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Deception.html">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\Downloads.html">
+    <None Update="Resources\history.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\History.html">
+    <None Update="Resources\private.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Private.html">
+    <None Update="Resources\newtab.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\License.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\Malware.html">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\News Feed.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\NewTab.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\Performance.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\ProcessCrashed.html">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\Reader Mode.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\Settings.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\SLBr Browser.png">
+    <None Update="Resources\settings.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\SLBr.ico">
@@ -123,27 +142,43 @@
     <None Update="Resources\style.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Tetris.html">
+    <None Update="Resources\tetris.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Tetris.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\WhatsNew.html">
+    <None Update="Resources\tetris.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="138.0.17" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="140.1.14" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="138.0.17" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="140.1.14" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="138.0.17" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="140.1.14" />
   </ItemGroup>
 
+	<Target Name="DeleteFiles" AfterTargets="Publish">
+		<Copy SourceFiles="..\Updater\bin\$(Configuration)\net9.0\publish\Updater.exe" DestinationFolder="$(PublishDir)" />
+		<Delete Files="$(PublishDir)\Microsoft.Web.WebView2.WinForms.dll" />
+		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.exe" />
+		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.dll" />
+		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.runtimeconfig.json" />
+		<ItemGroup>
+			<FilesToDelete Include="$(PublishDir)*.pdb;$(PublishDir)\*.xml" />
+		</ItemGroup>
+		<Delete Files="@(FilesToDelete)">
+			<Output TaskParameter="DeletedFiles" ItemName="FilesDeleted" />
+		</Delete>
+		<Message Text="Deleted PDB files: @(FilesDeleted)" Importance="high" />
+	</Target>
+
+	<!--<Target Name="RemoveWinFormsDll" AfterTargets="Build">
+		<Delete Files="$(OutputPath)\Microsoft.Web.WebView2.WinForms.dll"/>
+		<Delete Files="$(OutputPath)\Microsoft.Web.WebView2.WinForms.xml"/>
+	</Target>-->
 </Project>

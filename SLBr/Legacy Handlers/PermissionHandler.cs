@@ -16,7 +16,7 @@ namespace SLBr.Handlers
         {
             if (callback == null)
                 return false;
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
                 {
@@ -114,9 +114,9 @@ namespace SLBr.Handlers
         {
             if (callback == null)
                 return false;
-            FixedPermissionRequestType _ProperPermissionRequestType = (FixedPermissionRequestType)(int)requestedPermissions;
+            FixedPermissionRequestType _ProperPermissionRequestType = (FixedPermissionRequestType)requestedPermissions;
             //Know your location [Geolocation] https://github.com/cefsharp/CefSharp/discussions/3719
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
                 {

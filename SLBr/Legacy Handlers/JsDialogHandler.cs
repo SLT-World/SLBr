@@ -33,7 +33,7 @@ namespace SLBr.Handlers
             }
             else if (dialogType == CefJsDialogType.Confirm)
             {
-                InformationDialogWindow InfoWindow = new InformationDialogWindow("Confirmation", $"{Utils.Host(originUrl)}", messageText, "OK", "Cancel");
+                InformationDialogWindow InfoWindow = new InformationDialogWindow("Confirmation", $"{Utils.Host(originUrl)}", messageText, "", "OK", "Cancel");
                 InfoWindow.Topmost = true;
                 if (InfoWindow.ShowDialog() == true)
                 {
@@ -57,7 +57,7 @@ namespace SLBr.Handlers
 
         public void OnResetDialogState(IWebBrowser chromiumWebBrowser, IBrowser browser)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.BeginInvoke(() =>
             {
                 foreach (Window Window in Application.Current.Windows)
                 {

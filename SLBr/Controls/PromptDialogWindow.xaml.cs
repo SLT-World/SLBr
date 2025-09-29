@@ -13,7 +13,7 @@ namespace SLBr.Controls
             Title = _Title;
 
             InitializeComponent();
-            QuestionText.Content = Question;
+            QuestionText.Text = Question;
             MessageText.Text = Message;
             UserInputTextBox.Text = DefaultInputText;
             if (!string.IsNullOrEmpty(Icon))

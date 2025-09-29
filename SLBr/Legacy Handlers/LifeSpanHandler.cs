@@ -1,7 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.Enums;
 using SLBr.Controls;
-using System.Windows;
 
 namespace SLBr.Handlers
 {
@@ -27,40 +26,13 @@ namespace SLBr.Handlers
             }
             else
             {
-                /*App.Current.Dispatcher.Invoke(() =>
-                {
-                    //try
-                    //{
-                        if (targetDisposition == WindowOpenDisposition.NewPopup)
-                        {
-                            bool Allow = false;
-                            string Host = Utils.Host(targetUrl);
-                            if (!App.Instance.PopupPermissionHosts.ContainsKey(Host))
-                            {
-                                var infoWindow = new InformationDialogWindow("Permission", $"Allow {Host} to", "Open popup", "\uE8D7", "Allow", "Block", "\xE737");
-                                infoWindow.Topmost = true;
-                                Allow = infoWindow.ShowDialog().ToBool();
-                                App.Instance.PopupPermissionHosts.Add(Host, Allow);
-                            }
-                            else
-                                App.Instance.PopupPermissionHosts.TryGetValue(Host, out Allow);
-                            if (Allow)
-                                new PopupBrowser(targetUrl, popupFeatures.Width != null ? (int)popupFeatures.Width : 600, popupFeatures.Height != null ? (int)popupFeatures.Height : 650).Show();
-                        }
-                        else
-                            App.Instance.CurrentFocusedWindow().NewTab(targetUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
-                    //}
-                    //catch { }
-                });*/
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                string TargetOrigin = Utils.GetOrigin(targetUrl);
                 string TopLevelOrigin = Utils.GetOrigin(browser.MainFrame.Url);
                 ContentSettingValues Value = GlobalRequestContext.GetContentSetting(TopLevelOrigin, TopLevelOrigin, ContentSettingTypes.Popups);
                 App.Current.Dispatcher.Invoke(() =>
                 {
                     if (targetDisposition == WindowOpenDisposition.NewPopup)
                     {
-                        //System.Windows.MessageBox.Show(Value.ToString());
                         bool Allow = false;
                         if (Value == ContentSettingValues.Allow || Value == ContentSettingValues.SessionOnly)
                             Allow = true;
@@ -105,7 +77,7 @@ namespace SLBr.Handlers
 
         public bool DoClose(IWebBrowser browserControl, IBrowser browser)
         {
-            //RuntimeStyle Chrome does not run this DoClose
+            //RuntimeStyle Chrome does not run DoClose
             if (browser.IsPopup)
                 return false;
             return true;

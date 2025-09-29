@@ -1,0 +1,10 @@
+[Dialogs]
+- Window Title: Error, Warning, Information, Success, Alert
+- Headline: Capital letters for every first char
+- Description: 1-2 sentences
+- Actions: "OK"
+- Examples:
+Error, Connection Failed, The server could not be reached. Check your internet connection and try again.
+Warning, Unsaved Changes, Closing now will discard any unsaved work. Do you want to continue?
+Information, New Version Available, A newer version is available for download.
+Success, Upload Complete, Files uploaded successfully.

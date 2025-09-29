@@ -1,0 +1,91 @@
+﻿<Window x:Class="SLBr.Controls.ColorPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SLBr.Controls"
+        mc:Ignorable="d"
+        Title="Color Picker" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen"
+        ContentRendered="Window_ContentRendered" WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent" MinWidth="400">
+    <Window.Resources>
+        <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
+    </Window.Resources>
+    <Border>
+        <Border.Effect>
+            <DropShadowEffect Direction="-75" ShadowDepth="1" Opacity="0.5" BlurRadius="15" Color="Gray"/>
+        </Border.Effect>
+        <Border Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="10">
+            <Grid Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <DockPanel Margin="0,0,0,10" Grid.Row="0" Height="Auto">
+                    <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xef3c;</TextBlock>
+                    <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Color Picker</Label>
+                </DockPanel>
+                <StackPanel Margin="0,0,0,10" Grid.Row="1">
+                    <Grid Margin="0,0,0,10" Height="125">
+                        <Border Name="Mask" Background="White" CornerRadius="5"/>
+                        <Grid>
+                            <Grid.OpacityMask>
+                                <VisualBrush Visual="{Binding ElementName=Mask}"/>
+                            </Grid.OpacityMask>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="250"/>
+                            </Grid.ColumnDefinitions>
+                            <Rectangle x:Name="PreviewBox" Fill="Red"/>
+                            <Border Grid.Column="1" Cursor="Cross">
+                                <Border.Background>
+                                    <SolidColorBrush x:Name="HueBrush" Color="Red"/>
+                                </Border.Background>
+                                <Grid x:Name="SVSquare" MouseDown="SVClick">
+                                    <Rectangle>
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="White" Offset="0.0"/>
+                                                <GradientStop Color="#00FFFFFF" Offset="0.75"/>
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                    <Rectangle>
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#00FFFFFF" Offset="0.0"/>
+                                                <GradientStop Color="Black" Offset="1.0"/>
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                    <Rectangle x:Name="HueBar" Cursor="Cross" MouseDown="HueClick" Margin="0,0,0,10" Height="25" RadiusX="5" RadiusY="5">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="Red" Offset="0.0"/>
+                                <GradientStop Color="Yellow" Offset="0.17"/>
+                                <GradientStop Color="Lime" Offset="0.33"/>
+                                <GradientStop Color="Cyan" Offset="0.5"/>
+                                <GradientStop Color="Blue" Offset="0.67"/>
+                                <GradientStop Color="Magenta" Offset="0.83"/>
+                                <GradientStop Color="Red" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <TextBlock x:Name="MessageText" Margin="0,0,0,10" VerticalAlignment="Center">Hex</TextBlock>
+                    <TextBox Name="UserInputTextBox" MinWidth="350" Width="Auto" KeyDown="UserInputTextBox_KeyDown"></TextBox>
+                </StackPanel>
+
+                <WrapPanel Grid.Row="3" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsDefault="True" Name="btnDialogOk" Click="DialogOk_Click" MinWidth="60">OK</Button>
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsCancel="True" MinWidth="60" Margin="10,0,0,0">Cancel</Button>
+                </WrapPanel>
+            </Grid>
+        </Border>
+    </Border>
+</Window>

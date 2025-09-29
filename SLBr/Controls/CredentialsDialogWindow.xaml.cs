@@ -12,7 +12,7 @@ namespace SLBr.Controls
         {
             InitializeComponent();
 
-            QuestionText.Content = Question;
+            QuestionText.Text = Question;
             if (!string.IsNullOrEmpty(Icon))
                 QuestionIcon.Text = Icon;
 			ApplyTheme(App.Instance.CurrentTheme);

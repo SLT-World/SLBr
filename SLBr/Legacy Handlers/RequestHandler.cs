@@ -1,15 +1,17 @@
 ﻿using CefSharp;
 using SLBr.Controls;
 using SLBr.Pages;
+using System.Collections.Concurrent;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Windows;
 
 namespace SLBr.Handlers
 {
 	public class RequestHandler : IRequestHandler
 	{
 		public Browser BrowserView;
+
+        public ConcurrentDictionary<string, bool> HostCache = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
 
         public RequestHandler(Browser _BrowserView = null)
 		{
@@ -179,153 +181,157 @@ namespace SLBr.Handlers
                     return false;
                 }
             }
-            if (Utils.IsHttpScheme(request.Url))
-            {
-                if (!BrowserView.Private && frame.IsMain) //IsMain disables iframe SafeBrowsing
-                {
-                    /*if (App.Instance.AMP)
-                    {
-                        string? AMPUrl = Utils.GetAMPUrl(request.Url);
-                        if (!string.IsNullOrEmpty(AMPUrl))
-                        {
-                            frame.LoadUrl(AMPUrl);
-                            return true;
-                        }
-                    }*/
-                    if (App.Instance.GoogleSafeBrowsing && Utils.GetFileExtension(request.Url) != ".pdf")
-                    {
-                        ResourceRequestHandlerFactory _ResourceRequestHandlerFactory = (ResourceRequestHandlerFactory)chromiumWebBrowser.ResourceRequestHandlerFactory;
-                        if (!_ResourceRequestHandlerFactory.Handlers.ContainsKey(request.Url))
-                        {
-                            SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(App.Instance._SafeBrowsing.Response(request.Url));
-                            if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software)
-                                _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Malware_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
-                            else if (_ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
-                                _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Deception_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
-                        }
-                    }
-                }
-            }
-            else if (request.Url.StartsWith("chrome:", StringComparison.Ordinal))
-            {
-                ResourceRequestHandlerFactory _ResourceRequestHandlerFactory = (ResourceRequestHandlerFactory)chromiumWebBrowser.ResourceRequestHandlerFactory;
-                if (!_ResourceRequestHandlerFactory.Handlers.ContainsKey(request.Url))
-                {
-                    bool Block = false;
-                    //https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/shared/model/url/chrome_url_constants.cc
-                    switch (request.Url.Substring(9))
-                    {
-                        case string s when s.StartsWith("settings", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("history", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("downloads", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("flags", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("new-tab-page", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("bookmarks", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("apps", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-
-                        case string s when s.StartsWith("dino", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("management", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("new-tab-page-third-party", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-
-                        case string s when s.StartsWith("favicon", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("sandbox", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-
-                        case string s when s.StartsWith("bookmarks-side-panel.top-chrome", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("customize-chrome-side-panel.top-chrome", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("read-later.top-chrome", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("tab-search.top-chrome", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("tab-strip.top-chrome", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-
-                        case string s when s.StartsWith("support-tool", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("privacy-sandbox-dialog", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("chrome-signin", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("browser-switch", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("profile-picker", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("intro", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("sync-confirmation", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("app-settings", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("managed-user-profile-notice", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("reset-password", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        //case string s when s.StartsWith("imageburner", StringComparison.Ordinal):
-                        //    Block = true;
-                        //    break;
-                        case string s when s.StartsWith("connection-help", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                        case string s when s.StartsWith("connection-monitoring-detected", StringComparison.Ordinal):
-                            Block = true;
-                            break;
-                            //cast-feedback
-                    }
-                    if (Block)
-                        _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect(request.Url, CefErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, "");
-                }
-            }
             if (frame.IsMain)
             {
+                if (Utils.IsHttpScheme(request.Url))
+                {
+                    if (!BrowserView.Private) //IsMain disables iframe SafeBrowsing
+                    {
+                        /*if (App.Instance.AMP)
+                        {
+                            string? AMPUrl = Utils.GetAMPUrl(request.Url);
+                            if (!string.IsNullOrEmpty(AMPUrl))
+                            {
+                                frame.LoadUrl(AMPUrl);
+                                return true;
+                            }
+                        }*/
+                        if (App.Instance.WebRiskService != WebRiskHandler.SecurityService.None && Utils.GetFileExtension(request.Url) != ".pdf")
+                        {
+                            ResourceRequestHandlerFactory _ResourceRequestHandlerFactory = (ResourceRequestHandlerFactory)chromiumWebBrowser.ResourceRequestHandlerFactory;
+                            if (!_ResourceRequestHandlerFactory.Handlers.ContainsKey(request.Url))
+                            {
+                                WebRiskHandler.ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(request.Url, App.Instance.WebRiskService);
+                                if (_ThreatType == WebRiskHandler.ThreatType.Malware || _ThreatType == WebRiskHandler.ThreatType.Unwanted_Software)
+                                    _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Malware_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                                else if (_ThreatType == WebRiskHandler.ThreatType.Social_Engineering)
+                                    _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Deception_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                            }
+                        }
+                    }
+                }
+                else if (request.Url.StartsWith("chrome:", StringComparison.Ordinal))
+                {
+                    ResourceRequestHandlerFactory _ResourceRequestHandlerFactory = (ResourceRequestHandlerFactory)chromiumWebBrowser.ResourceRequestHandlerFactory;
+                    if (!_ResourceRequestHandlerFactory.Handlers.ContainsKey(request.Url))
+                    {
+                        bool Block = false;
+                        //https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/shared/model/url/chrome_url_constants.cc
+                        switch (request.Url.Substring(9))
+                        {
+                            case string s when s.StartsWith("settings", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("history", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("downloads", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("flags", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("new-tab-page", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("bookmarks", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("apps", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+
+                            case string s when s.StartsWith("dino", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("management", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("new-tab-page-third-party", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+
+                            case string s when s.StartsWith("favicon", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("sandbox", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+
+                            case string s when s.StartsWith("bookmarks-side-panel.top-chrome", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("customize-chrome-side-panel.top-chrome", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("read-later.top-chrome", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("tab-search.top-chrome", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("tab-strip.top-chrome", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+
+                            case string s when s.StartsWith("support-tool", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("privacy-sandbox-dialog", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("chrome-signin", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("browser-switch", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("profile-picker", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("intro", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("sync-confirmation", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("app-settings", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("managed-user-profile-notice", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("reset-password", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            //case string s when s.StartsWith("imageburner", StringComparison.Ordinal):
+                            //    Block = true;
+                            //    break;
+                            case string s when s.StartsWith("connection-help", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("connection-monitoring-detected", StringComparison.Ordinal):
+                                Block = true;
+                                break;
+                                //cast-feedback
+                        }
+                        if (Block)
+                            _ResourceRequestHandlerFactory.RegisterHandler(request.Url, ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect(request.Url, -300, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, "");
+                    }
+                }
                 if (BrowserView != null)
                 {
-                    App.Current.Dispatcher.Invoke(async () =>
+                    //Keep this, since BeginInvoke might execute after request dies
+                    string Url = request.Url;
+                    App.Current.Dispatcher.BeginInvoke(async () =>
                     {
-                        BrowserView.Tab.Icon = await App.Instance.SetIcon("", request.Url, BrowserView.Private);
+                        BrowserView.Tab.Icon = await App.Instance.SetIcon("", Url, BrowserView.Private);
+                        BrowserView.QRBitmap = null;
                     });
                 }
                 if (App.Instance.NeverSlowMode)
                     ResetBudgets();
+                HostCache.Clear();
             }
             return false;
 		}
@@ -338,7 +344,7 @@ namespace SLBr.Handlers
 		{
 			if (targetDisposition == WindowOpenDisposition.NewBackgroundTab)
             {
-                App.Current.Dispatcher.Invoke(() =>
+                App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     App.Instance.CurrentFocusedWindow().NewTab(targetUrl, false, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, BrowserView.Private);
 				});
@@ -353,11 +359,11 @@ namespace SLBr.Handlers
 
 		public IResourceRequestHandler GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
         {
-			if (BrowserView != null)
+			/*if (BrowserView != null)
 			{
 				if (BrowserView._ResourceRequestHandlerFactory.Handlers.Keys.Contains(request.Url))
 					return null;
-			}
+			}*/
             return new ResourceRequestHandler(this);
         }
 
@@ -382,7 +388,7 @@ namespace SLBr.Handlers
 				//	browser.Reload(true);
 				//else
 				//{
-					App.Current.Dispatcher.Invoke(() =>
+					App.Current.Dispatcher.BeginInvoke(() =>
 					{
                         chromiumWebBrowser.LoadUrl($"slbr://processcrashed?s={chromiumWebBrowser.Address}");
 					});

@@ -8,7 +8,7 @@ namespace SLBr
     {
         private void TabIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
         {
-            int TabId = int.Parse(((Image)sender).Tag.ToString());
+            int TabId = int.Parse(((Image)sender).Tag.ToString()!);
             foreach (MainWindow _Window in App.Instance.AllWindows)
             {
                 BrowserTabItem CurrentTab = _Window.GetBrowserTabWithId(TabId);
@@ -36,13 +36,13 @@ namespace SLBr
         {
             MainWindow FocusedWindow = App.Instance.CurrentFocusedWindow();
 
-            int TabItemTargetId = int.Parse(((TabItem)e.Source).Tag.ToString());
+            int TabItemTargetId = int.Parse(((TabItem)e.Source).Tag.ToString()!);
             int TargetIndex = FocusedWindow.Tabs.IndexOf(FocusedWindow.GetBrowserTabWithId(TabItemTargetId));
             if (e.Data.GetData(typeof(TabItem)) != null)
             {
                 TabItem TabItemSource = (TabItem)e.Data.GetData(typeof(TabItem));
 
-                int TabItemSourceId = int.Parse(TabItemSource.Tag.ToString());
+                int TabItemSourceId = int.Parse(TabItemSource.Tag.ToString()!);
 
                 if (TabItemTargetId != TabItemSourceId)
                 {

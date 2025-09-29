@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls.Primitives;
 
 namespace WinUI
@@ -68,6 +63,7 @@ namespace WinUI
                 _Popup.IsOpen = !_Popup.IsOpen;
                 IsChecked = _Popup.IsOpen;
             }
+            base.OnClick();
         }
 
         public void OpenPopup()

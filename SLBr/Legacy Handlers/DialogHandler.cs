@@ -14,9 +14,9 @@ namespace SLBr.Handlers
         {
             if (mode == CefFileDialogMode.Open && bool.Parse(App.Instance.GlobalSave.Get("QuickImage")) && acceptFilters.FirstOrDefault() == "image/*")
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                Application.Current?.Dispatcher.Invoke(() =>
                 {
-                    var Picker = new ImageTray();
+                    ImageTray Picker = new ImageTray();
                     if (Picker.ShowDialog() == true && !string.IsNullOrEmpty(Picker.SelectedFilePath))
                         callback.Continue(new List<string> { Picker.SelectedFilePath });
                     else

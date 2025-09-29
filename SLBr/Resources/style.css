@@ -151,17 +151,17 @@ a:hover {
 
 .font-icon {
     user-select: none;
-    font-family: 'Segoe Fluent Icons';
+    font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets";
     font-size: 20px;
 }
 .icon_button {
     width: 35px !important;
     font-size: 17.5px !important;
-    font-family: "Segoe Fluent Icons" !important;
+    font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets" !important;
 }
-.icon_button * {
-    font-family: 'Segoe Fluent Icons';
-}
+    .icon_button * {
+        font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets";
+    }
 
 .card {
     padding: 5px;

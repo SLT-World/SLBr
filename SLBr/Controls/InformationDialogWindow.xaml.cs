@@ -14,7 +14,7 @@ namespace SLBr.Controls
 
             Title = _Title;
 
-            QuestionText.Content = Question;
+            QuestionText.Text = Question;
             if (!string.IsNullOrEmpty(_Icon))
                 QuestionIcon.Text = _Icon;
             DescriptionText.Text = Description;
@@ -54,7 +54,10 @@ namespace SLBr.Controls
                 Duration = TimeSpan.FromSeconds(0.125)
             });
             await Task.Delay(0125);
-            DialogResult = true;
+            if (IsLoaded && Owner != null)
+                DialogResult = true;
+            else
+                Close();
         }
     }
 }

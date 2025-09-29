@@ -22,7 +22,7 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel Margin="0,0,0,10" Grid.Row="0" Height="Auto">
-                    <TextBlock FontSize="18" FontFamily="Segoe Fluent Icons" Margin="0,0,5,0">&#xee71;</TextBlock>
+                    <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xee71;</TextBlock>
                     <Label Padding="0" FontWeight="Medium" FontSize="14">Quick Image Picker</Label>
                 </DockPanel>
                 <Grid Grid.Row="1">
@@ -37,7 +37,7 @@
                                 <ImageBrush x:Name="ClipboardImage" Stretch="UniformToFill"/>
                             </Button.Background>
                             <StackPanel>
-                                <TextBlock HorizontalAlignment="Center" FontSize="40" FontFamily="Segoe Fluent Icons" Margin="0,0,0,10">&#xe91b;</TextBlock>
+                                <TextBlock HorizontalAlignment="Center" FontSize="40" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,0,10">&#xe91b;</TextBlock>
                                 <Label x:Name="ClipboardFileName" HorizontalAlignment="Center" Padding="0" FontWeight="Medium" FontSize="14" Foreground="{StaticResource FontBrush}"/>
                                 <StackPanel.Style>
                                     <Style TargetType="StackPanel">
@@ -70,7 +70,7 @@
                                                 <ImageBrush ImageSource="{Binding Path}" Stretch="UniformToFill"/>
                                             </Button.Background>
                                             <StackPanel>
-                                                <TextBlock HorizontalAlignment="Center" FontSize="40" FontFamily="Segoe Fluent Icons" Margin="0,0,0,10">&#xe91b;</TextBlock>
+                                                <TextBlock HorizontalAlignment="Center" FontSize="40" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,0,10">&#xe91b;</TextBlock>
                                                 <Label HorizontalAlignment="Center" Padding="0" FontWeight="Medium" FontSize="14" Content="{Binding File}"/>
                                                 <StackPanel.Style>
                                                     <Style TargetType="StackPanel">

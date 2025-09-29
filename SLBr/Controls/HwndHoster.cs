@@ -59,10 +59,7 @@ namespace SLBr.Controls
             PresentationSource.AddSourceChangedHandler(this, PresentationSourceChangedHandler);
             UseLayoutRounding = true;
             SnapsToDevicePixels = true;
-
-            //managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, false);
             SizeChanged += OnSizeChanged;
-            //IsVisibleChanged += OnIsVisibleChanged;
             Loaded += HwndHoster_Loaded;
         }
 
@@ -72,8 +69,6 @@ namespace SLBr.Controls
             SetWindowPos(firstChildHwnd, IntPtr.Zero, 0, 0, (int)ActualWidth, (int)ActualHeight, SWP_NOZORDER | SWP_NOMOVE);
         }
 
-        //Window sourceWindow;
-
         private void PresentationSourceChangedHandler(object sender, SourceChangedEventArgs args)
         {
             if (args.NewSource != null)
@@ -81,18 +76,12 @@ namespace SLBr.Controls
                 var window = ((HwndSource)args.NewSource).RootVisual as Window;
                 if (window != null)
                 {
-                    //sourceWindow = window;
                     if (CleanupElement == null)
                         CleanupElement = window;
                     else if (CleanupElement is Window parent && parent != window)
                         CleanupElement = window;
                 }
             }
-            /*else if (args.OldSource != null)
-            {
-                if ((args.OldSource.RootVisual as Window) != null)
-                    sourceWindow = null;
-            }*/
         }
 
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
@@ -107,10 +96,6 @@ namespace SLBr.Controls
                             HOST_ID,
                             IntPtr.Zero,
                             0);
-                //if (GetWindowRect(firstChildHwnd, out rect))
-                //{
-                //SizeText.Text = $"First Child Window Handle: {firstChildHwnd}\nWidth: {(int)e.NewSize.Width}\nHeight: {(int)e.NewSize.Height}";
-                //}
             }
             return new HandleRef(null, hwndHost);
         }
@@ -138,17 +123,14 @@ namespace SLBr.Controls
                 InternalDispose(disposing);
             base.Dispose(disposing);
         }
-        //int WindowInitialized;
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void InternalDispose(bool disposing)
         {
-            //Interlocked.Exchange(ref WindowInitialized, 0);
             if (disposing)
             {
                 SizeChanged -= OnSizeChanged;
                 Loaded -= HwndHoster_Loaded;
                 PresentationSource.RemoveSourceChangedHandler(this, PresentationSourceChangedHandler);
-                //sourceWindow = null;
                 if (CleanupElement != null)
                     CleanupElement.Unloaded -= OnCleanupElementUnloaded;
             }
@@ -187,23 +169,6 @@ namespace SLBr.Controls
             if (firstChildHwnd != IntPtr.Zero)
                 SetWindowPos(firstChildHwnd, IntPtr.Zero, 0, 0, (int)e.NewSize.Width, (int)e.NewSize.Height, SWP_NOZORDER | SWP_NOMOVE);
         }
-
-        private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs args)
-        {
-            if ((bool)args.NewValue)
-                SetWindowPos(hwndHost, IntPtr.Zero, 0, 0, (int)ActualWidth, (int)ActualHeight, SWP_NOZORDER | SWP_NOMOVE);
-            else
-                SetWindowPos(hwndHost, IntPtr.Zero, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE);
-        }
-
-        /*[StructLayout(LayoutKind.Sequential)]
-        public struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }*/
 
         private IntPtr firstChildHwnd = IntPtr.Zero;
         private bool EnumChildProc(IntPtr hWnd, IntPtr lParam)

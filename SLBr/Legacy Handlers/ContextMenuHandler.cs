@@ -1,13 +1,10 @@
 ﻿using CefSharp;
-using CefSharp.DevTools;
 using CefSharp.Wpf.HwndHost;
-using System.Drawing;
 using System.IO;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Windows.UI.ViewManagement.Core;
 
@@ -75,7 +72,7 @@ namespace SLBr.Handlers
                     if (!string.IsNullOrEmpty(Parameters.SelectionText))
                     {
                         model.AddSeparator();
-                        model.AddItem(CefMenuCommand.Find, $"Search \"{Parameters.SelectionText}\" in new tab");
+                        model.AddItem(CefMenuCommand.Find, $"Search \"{Parameters.SelectionText.Cut(20, true)}\" in new tab");
                     }
                 }
                 else if (!string.IsNullOrEmpty(Parameters.LinkUrl))
@@ -85,7 +82,7 @@ namespace SLBr.Handlers
                 }
                 else if (!string.IsNullOrEmpty(Parameters.SelectionText))
                 {
-                    model.AddItem(CefMenuCommand.Find, $"Search \"{Parameters.SelectionText}\" in new tab");
+                    model.AddItem(CefMenuCommand.Find, $"Search \"{Parameters.SelectionText.Cut(20, true)}\" in new tab");
                     model.AddItem(CefMenuCommand.Copy, "Copy");
                     model.AddSeparator();
                     model.AddItem(CefMenuCommand.SelectAll, "Select All");
@@ -142,6 +139,7 @@ namespace SLBr.Handlers
                         model.AddItem(CefMenuCommand.Copy, "Copy image");
                         model.AddItem(MenuCopyURL, "Copy image link");
                         model.AddItem(MenuSaveAs, "Save image as");
+                        model.AddItem(MenuSearchImage, "Search image");
                         //model.AddItem((CefMenuCommand)26502, "Open in paintbrush");
                     }
                     else if (Parameters.MediaType == ContextMenuMediaType.Video)
@@ -163,37 +161,11 @@ namespace SLBr.Handlers
         CefMenuCommand MenuEmoji = (CefMenuCommand)26506;
         CefMenuCommand MenuTranslate = (CefMenuCommand)26507;
         CefMenuCommand MenuPictureInPicture = (CefMenuCommand)26508;
+        CefMenuCommand MenuSearchImage = (CefMenuCommand)26509;
 
         CefMenuCommand MenuZoomReset = (CefMenuCommand)26510;
         CefMenuCommand MenuZoomIn = (CefMenuCommand)26511;
         CefMenuCommand MenuZoomOut = (CefMenuCommand)26512;
-
-        private async void DownloadAndCopyImage(string ImageUrl)
-        {
-            try
-            {
-                using (var HttpClient = new HttpClient())
-                {
-                    byte[] ImageData = await HttpClient.GetByteArrayAsync(ImageUrl);
-                    if (ImageData != null)
-                    {
-                        using (MemoryStream stream = new MemoryStream(ImageData))
-                        {
-                            BitmapImage Bitmap = new BitmapImage();
-                            Bitmap.BeginInit();
-                            Bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            Bitmap.StreamSource = stream;
-                            Bitmap.EndInit();
-                            if (Bitmap.CanFreeze)
-                                Bitmap.Freeze();
-
-                            Clipboard.SetImage(Bitmap);
-                        }
-                    }
-                }
-            }
-            catch { }
-        }
 
         public bool OnContextMenuCommand(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags)
         {
@@ -222,7 +194,7 @@ namespace SLBr.Handlers
                 else if (CommandID == CefMenuCommand.Find)
                 {
                     string SelectedText = Parameters.SelectionText;
-                    App.Current.Dispatcher.Invoke(() =>
+                    App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, SelectedText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                     });
@@ -233,7 +205,7 @@ namespace SLBr.Handlers
             }
             else if (!string.IsNullOrEmpty(Parameters.LinkUrl))
             {
-                App.Current.Dispatcher.Invoke(() =>
+                App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     if (CommandID == MenuOpenNewTab)
                     {
@@ -250,7 +222,7 @@ namespace SLBr.Handlers
             else if (!string.IsNullOrEmpty(Parameters.SelectionText))
             {
                 string SelectedText = Parameters.SelectionText;
-                App.Current.Dispatcher.Invoke(() =>
+                App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     if (CommandID == CefMenuCommand.Find)
                     {
@@ -263,7 +235,7 @@ namespace SLBr.Handlers
             {
                 if (Parameters.MediaType == ContextMenuMediaType.None)
                 {
-                    App.Current.Dispatcher.Invoke(() =>
+                    App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         if (CommandID == MenuInspector)
                         {
@@ -308,7 +280,7 @@ namespace SLBr.Handlers
                 {
                     if (CommandID == CefMenuCommand.Copy)
                     {
-                        try { DownloadAndCopyImage(Parameters.SourceUrl); }
+                        try { Utils.DownloadAndCopyImage(Parameters.SourceUrl); }
                         catch { Clipboard.SetText(Parameters.SourceUrl); }
                         ToReturn = true;
                     }
@@ -320,6 +292,27 @@ namespace SLBr.Handlers
                     else if (CommandID == MenuSaveAs)
                     {
                         Browser.StartDownload(Parameters.SourceUrl);
+                        ToReturn = true;
+                    }
+                    else if (CommandID == MenuSearchImage)
+                    {
+                        string Url = "";
+                        switch (App.Instance.GlobalSave.GetInt("ImageSearch"))
+                        {
+                            case 0:
+                                Url = $"https://lens.google.com/uploadbyurl?url={Uri.EscapeDataString(Parameters.SourceUrl)}";
+                                break;
+                            case 1:
+                                Url = $"https://www.bing.com/images/searchbyimage?cbir=sbi&imgurl={Uri.EscapeDataString(Parameters.SourceUrl)}";
+                                break;
+                            case 2:
+                                Url = $"https://yandex.com/images/search?rpt=imageview&url={Uri.EscapeDataString(Parameters.SourceUrl)}";
+                                break;
+                            case 3:
+                                Url = $"https://tineye.com/search?url={Uri.EscapeDataString(Parameters.SourceUrl)}";
+                                break;
+                        }
+                        App.Instance.CurrentFocusedWindow().NewTab(Url, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                         ToReturn = true;
                     }
                     /*else if (commandId == (CefMenuCommand)26502)
@@ -417,7 +410,7 @@ namespace SLBr.Handlers
 
                     case CefMenuCommand.Print:
                         {
-                            Browser.GetHost().Print();
+                            Browser.Print();
                             break;
                         }
                     case CefMenuCommand.ViewSource:
@@ -428,12 +421,12 @@ namespace SLBr.Handlers
                         }
                     case CefMenuCommand.Find:
                         {
-                            Browser.GetHost().Find(Parameters.SelectionText, true, false, false);
+                            Browser.Find(Parameters.SelectionText, true, false, false);
                             break;
                         }
                     case CefMenuCommand.AddToDictionary:
                         {
-                            Browser.GetHost().AddWordToDictionary(Parameters.MisspelledWord);
+                            Browser.AddWordToDictionary(Parameters.MisspelledWord);
                             break;
                         }
                 }
@@ -619,46 +612,6 @@ namespace SLBr.Handlers
             public IEnumerable<MenuClass> SubMenu { get; set; }
         }
     }
-
-    public class RelayCommand : ICommand
-    {
-        private readonly Action<object> CommandHandler;
-        private readonly Func<object, bool> CanExecuteHandler;
-
-        public event EventHandler CanExecuteChanged;
-
-        public RelayCommand(Action<object> _CommandHandler, Func<object, bool> _CanExecuteHandler = null)
-        {
-            CommandHandler = _CommandHandler;
-            CanExecuteHandler = _CanExecuteHandler;
-        }
-        public RelayCommand(Action commandHandler, Func<bool> canExecuteHandler = null) : this(_ => commandHandler(), canExecuteHandler == null ? null : new Func<object, bool>(_ => canExecuteHandler()))
-        {
-        }
-
-        public void Execute(object parameter)
-        {
-            CommandHandler(parameter);
-        }
-
-        public bool CanExecute(object parameter)
-        {
-            return CanExecuteHandler == null || CanExecuteHandler(parameter);
-        }
-
-        public void RaiseCanExecuteChanged()
-        {
-            if (CanExecuteChanged != null)
-                CanExecuteChanged(this, EventArgs.Empty);
-        }
-    }
-
-    /*public class RelayCommand<T> : RelayCommand
-    {
-        public RelayCommand(Action<T> commandHandler, Func<T, bool> canExecuteHandler = null) : base(o => commandHandler(o is T t ? t : default(T)), canExecuteHandler == null ? null : new Func<object, bool>(o => canExecuteHandler(o is T t ? t : default(T))))
-        {
-        }
-    }*/
 
     class ContextMenuParams : IContextMenuParams
     {

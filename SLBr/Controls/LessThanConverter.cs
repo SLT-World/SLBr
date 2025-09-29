@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 
 namespace SLBr.Controls
@@ -19,7 +15,7 @@ namespace SLBr.Controls
             return false;
         }
 
-        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo C)
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture)
             => throw new NotImplementedException();
     }
 }

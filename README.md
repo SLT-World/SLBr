@@ -17,21 +17,18 @@
 ## SLBr
 SLBr is an open-source, lightweight web browser based on Chromium. Built with .NET, WPF, and CefSharp (CEF) to provide a modern browsing experience while remaining lightweight.
 
-## Using CefSharp
-CefSharp is a .NET wrapper for the Chromium Embedded Framework (CEF), providing an embedded Chromium browser for WPF and WinForms applications. It supports modern web standards, including HTML5, JavaScript, CSS3, WebGL, and HTML5 audio/video.
-
 ## Notable Features
 See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Clean, Modern UI:** Simple & refreshed design.
+- **Multi Web Engine:** Choose between Chromium engine (CEF), Edge engine (WebView2), Internet Explorer engine (Trident).
 - **Ad & Tracker Blocking:** Browse with fewer ads & less tracking.
-- **YouTube Ad Skip:** Automatically skips ads on YouTube.
 - **Tab Layouts:** Choose vertical or horizontal tab alignment.
 - **Tab Unloading:** Save memory by unloading inactive tabs.
 - **Smart Address Bar:** Search suggestions directly in the address bar, with quick calculations, weather, and translation.
 - **Private Tabs (Incognito Tabs):** Open private browsing sessions that don't store history and cookies.
 - **Clipboard & Download Popup:** Attach recent images from the clipboard/downloads, inspired by Opera's Easy Files.
 - **Extension Support:** Supports Chrome web store extensions.
-- **Google Safe Browsing:** Protects against malicious websites.
+- **Web Risk Service:** Protects against malicious websites with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
 - **Anti-Tamper Mode:** Keeps browsing unrestricted by allowing text selection, copy/paste, right-click menus, and developer tools on sites that block them.
 
 ## Installation

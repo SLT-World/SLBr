@@ -11,12 +11,12 @@
     <UserControl.Resources>
         <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
     </UserControl.Resources>
-    <Grid Background="{StaticResource PrimaryBrush}">
+    <Grid Background="{StaticResource SecondaryBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Border x:Name="ToolBar" Grid.ColumnSpan="3" Grid.Row="0" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}" HorizontalAlignment="Stretch">
+        <Border x:Name="ToolBar" Background="{StaticResource PrimaryBrush}" Grid.ColumnSpan="3" Grid.Row="0" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}" HorizontalAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -25,11 +25,14 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5,5,0,0">
+                    <Button Visibility="Collapsed" Click="ButtonAction" BorderThickness="0" Tag="55" x:Name="CompactTabButton" ToolTip="Toggle Compact Tabs" Content="&#xe90c;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
                     <WinUI:DropDownButton ToolTip="Options" BorderThickness="0" Content="&#xE712;" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu>
+                                <MenuItem Visibility="Collapsed" Icon="&#xea6a;" Header="New Update" x:Name="NewUpdateMenu" Foreground="Orange" Click="UpdateSLBr"/>
+                                <Separator Visibility="Collapsed" x:Name="NewUpdateMenuSeparator"/>
                                 <MenuItem Icon="&#xEC6C;" Header="New Tab" Click="ButtonAction" Tag="5&lt;,&gt;{Homepage}"/>
-                                <MenuItem Icon="&#xEC6C;" Header="New Private Tab" Click="ButtonAction" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
+                                <MenuItem Icon="&#xE727;" Header="New Private Tab" Click="ButtonAction" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
                                 <MenuItem Icon="&#xe737;" Header="New Window" Click="ButtonAction" Tag="7"/>
                                 <Separator/>
                                 <MenuItem Icon="&#xE81C;" Header="History">
@@ -75,12 +78,13 @@
                                 <MenuItem Icon="&#xE749;" Header="Print" Click="ButtonAction" Tag="30"/>
                                 <MenuItem Icon="&#xE773;" Header="Find" Click="ButtonAction" Tag="32" InputGestureText="Ctrl+F"/>
                                 <MenuItem x:Name="MuteMenuItem" Icon="&#xe74f;" Header="Mute" Click="ButtonAction" Tag="31"/>
-                                <MenuItem Icon="&#xe71e;" Header="Zoom" Click="ButtonAction" Tag="31">
+                                <!--<MenuItem Icon="&#xe71e;" Header="Zoom" Click="ButtonAction" Tag="31">
                                     <MenuItem Icon="&#xe8a3;" Header="Zoom in" Click="ButtonAction" Tag="40"/>
                                     <MenuItem Icon="&#xe71f;" Header="Zoom out" Click="ButtonAction" Tag="41"/>
                                     <MenuItem Icon="&#xe72c;" Header="Reset" Click="ButtonAction" Tag="42"/>
-                                </MenuItem>
+                                </MenuItem>-->
                                 <MenuItem Header="Tools" Icon="&#xe821;">
+                                    <MenuItem Header="Create QR Code" Icon="&#xed14;" Click="ButtonAction" Tag="57&lt;,&gt;0"/>
                                     <MenuItem Header="Reader Mode" Icon="&#xF000;" Click="ButtonAction" Tag="17"/>
                                     <MenuItem Header="News Feed" Icon="&#xe8a1;" Click="ButtonAction" Tag="23"/>
                                     <Separator/>
@@ -89,6 +93,7 @@
                                         <MenuItem Header="HTML5 Test" Icon="&#xe81e;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.html5test.co/"/>
                                         <MenuItem Header="CSS3 Test" Icon="&#xf4a5;" Click="ButtonAction" Tag="4&lt;,&gt;https://css3test.com/"/>
                                         <MenuItem Header="SafeBrowsing" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://testsafebrowsing.appspot.com/"/>
+                                        <MenuItem Header="SmartScreen" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://demo.smartscreen.msft.net/"/>
                                         <MenuItem Header="WebRTC" Icon="&#xe714;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.webrtc-experiment.com/"/>
                                         <MenuItem Header="Web Speech API" Icon="&#xefa9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/intl/en/chrome/demos/speech.html"/>
                                         <MenuItem Header="Web Notifications" Icon="&#xea8f;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.bennish.net/web-notifications.html"/>
@@ -162,6 +167,7 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
+
                     <Button Click="ButtonAction" BorderThickness="0" Tag="4&lt;,&gt;{Homepage}" x:Name="HomeButton" Content="&#xE80F;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Home"/>
 
                     <WinUI:PopupButton BorderThickness="0" x:Name="OpenDownloadsButton" ToolTip="Downloads" Content="&#xE896;" Margin="0,0,5,0" Style="{StaticResource PopupIconButton}" DockPanel.Dock="Right">
@@ -180,25 +186,25 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
                                                             <Border Width="30" Height="30" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                                                                <TextBlock Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons"/>
+                                                                <TextBlock Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
                                                             </Border>
                                                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                                                 <Grid.RowDefinitions>
                                                                     <RowDefinition/>
                                                                     <RowDefinition/>
                                                                 </Grid.RowDefinitions>
-                                                                <TextBlock Text="{Binding FileName}" />
+                                                                <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
                                                                 <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
                                                             </Grid>
-                                                            <Button Grid.Column="2" Width="75px" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
+                                                            <Button Grid.Column="2" Width="65" Height="30" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
                                                                 <DockPanel VerticalAlignment="Center">
-                                                                    <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                                    <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                                     <TextBlock TextAlignment="Center" Text="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                 </DockPanel>
                                                             </Button>
-                                                            <Button Grid.Column="2" Width="75px" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
+                                                            <Button Grid.Column="2" Width="65" Height="30" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
                                                                 <DockPanel VerticalAlignment="Center">
-                                                                    <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                                    <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                                     <TextBlock TextAlignment="Center" Text="Open" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                 </DockPanel>
                                                             </Button>
@@ -218,7 +224,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Border Width="30" Height="30" Visibility="Visible" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                                                    <TextBlock Text="&#xE8A5;" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons"/>
+                                                    <TextBlock Text="&#xE8A5;" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
                                                 </Border>
                                                 <Grid Grid.Column="1" VerticalAlignment="Center">
                                                     <Grid.RowDefinitions>
@@ -230,13 +236,13 @@
                                                 </Grid>
                                                 <Button Grid.Column="2" Width="75px" Click="">
                                                     <DockPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                        <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                         <TextBlock TextAlignment="Center" Text="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </DockPanel>
                                                 </Button>
                                                 <Button Grid.Column="2" Width="75px" Click="">
                                                     <DockPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                                                        <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                         <TextBlock TextAlignment="Center" Text="Open" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </DockPanel>
                                                 </Button>
@@ -245,6 +251,56 @@
                                         </StackPanel>
                                     </Border>-->
                                 </StackPanel>
+                            </Border>
+                        </WinUI:PopupButton.PopupContent>
+                    </WinUI:PopupButton>
+                    <Grid DockPanel.Dock="Right" Margin="0,0,5,0" x:Name="WebEngineButton">
+                        <WinUI:DropDownButton BorderThickness="0" Tag="3" DockPanel.Dock="Right" Style="{StaticResource DropDownIconButton}" ToolTip="Switch Web Engine" Content="&#xec6c;">
+                            <WinUI:DropDownButton.Menu>
+                                <ContextMenu Width="250">
+                                    <MenuItem Icon="&#xe713;" Header="Default" Click="ButtonAction" Tag="58&lt;,&gt;-1"/>
+                                    <Separator/>
+                                    <MenuItem Icon="&#x2600;" Header="Chromium (CEF)" Click="ButtonAction" Tag="58&lt;,&gt;0"/>
+                                    <MenuItem Icon="&#x2601;" Header="Edge (WebView2)" Click="ButtonAction" Tag="58&lt;,&gt;1"/>
+                                    <MenuItem Icon="&#x2602;" Header="Internet Explorer (Trident)" Click="ButtonAction" Tag="58&lt;,&gt;2"/>
+                                </ContextMenu>
+                            </WinUI:DropDownButton.Menu>
+                        </WinUI:DropDownButton>
+                        <Border Background="{StaticResource PrimaryBrush}" Width="10" Height="5" IsHitTestVisible="False"/>
+                        <TextBlock x:Name="WebEngineButtonIcon" Text="&#x2600;" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="7.5" FontSize="10" FontFamily="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons" IsHitTestVisible="False" Background="{StaticResource PrimaryBrush}"/>
+                    </Grid>
+                    <WinUI:PopupButton Click="ButtonAction" Tag="57&lt;,&gt;0" BorderThickness="0" x:Name="QRButton" ToolTip="Create QR Code" Content="&#xed14;" Margin="0,0,5,0" Style="{StaticResource PopupIconButton}" DockPanel.Dock="Right">
+                        <WinUI:PopupButton.PopupContent>
+                            <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <DockPanel Grid.ColumnSpan="2" Margin="0,0,0,10" Height="Auto">
+                                        <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xee6f;</TextBlock>
+                                        <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Scan QR Code</Label>
+                                    </DockPanel>
+                                    <Grid Height="230" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
+                                        <Image x:Name="QRImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant">
+                                            <Image.OpacityMask>
+                                                <VisualBrush>
+                                                    <VisualBrush.Visual>
+                                                        <Border CornerRadius="5" Background="White" Width="230" Height="230"/>
+                                                    </VisualBrush.Visual>
+                                                </VisualBrush>
+                                            </Image.OpacityMask>
+                                        </Image>
+                                    </Grid>
+                                    <Button Click="ButtonAction" Grid.Column="0" Margin="0,0,5,0" Width="Auto" Tag="57&lt;,&gt;1" Grid.Row="2">Copy</Button>
+                                    <Button Click="ButtonAction" Grid.Column="1" Margin="5,0,0,0" Width="Auto" Tag="57&lt;,&gt;2" Grid.Row="2">Download</Button>
+                                </Grid>
                             </Border>
                         </WinUI:PopupButton.PopupContent>
                     </WinUI:PopupButton>
@@ -279,8 +335,6 @@
                         </WinUI:DropDownButton.Menu>
                     </WinUI:DropDownButton>
                     <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="12&lt;,&gt;{CurrentUrl}" x:Name="OpenFileExplorerButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Open in File Explorer" Content="&#xEC50;"/>-->
-
-
                     <!--<Button Click="ButtonAction" BorderThickness="0" Visibility="Visible" Tag="23" x:Name="RSSFeedButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource IconButton}" ToolTip="RSS Feed" Background="#FC7E00" Content="&#xe874;" FontSize="30">
                         <Button.Resources>
                             <Style TargetType="{x:Type ContentPresenter}">
@@ -308,6 +362,7 @@
 
                     <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="4&lt;,&gt;https://translate.google.com/translate?sl=auto&amp;tl=en&amp;hl=en&amp;u={CurrentUrl}" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Translate" Content="&#xE8C1;"/>
                     <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="17" x:Name="ReaderModeButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Reader Mode" Content="&#xF000;"/>
+                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="56" x:Name="InstallWebAppButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Install Web App" Content="&#xe74c;"/>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="12" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Add to favourites" x:Name="FavouriteButton" Content="&#xEB51;"/>
 
                     <Grid Width="Auto" Margin="0,0,5,0" Height="35" x:Name="OmniBoxContainer" MouseEnter="OmniBoxContainer_MouseEnter" MouseLeave="OmniBoxContainer_MouseLeave" Background="{StaticResource PrimaryBrush}">
@@ -319,7 +374,7 @@
                         <Border MouseDown="SiteInformation_MouseDown" x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
                             <Grid>
                                 <DockPanel Margin="4.25">
-                                    <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0,0,0,0" Width="16px" FontFamily="Segoe Fluent Icons" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0,0,0,0" Width="16px" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock.RenderTransform>
                                             <RotateTransform x:Name="NoFreeze"/>
                                         </TextBlock.RenderTransform>
@@ -336,7 +391,7 @@
                                         <StackPanel>
                                             <DockPanel>
                                                 <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                    <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xE72E;"/>
+                                                    <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE72E;"/>
                                                 </Border>
                                                 <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText" Text="Connection is secure"/>
                                             </DockPanel>
@@ -344,7 +399,7 @@
                                                 <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
                                                 <DockPanel>
                                                     <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xea18;"/>
+                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xea18;"/>
                                                     </Border>
                                                     <ToggleButton x:Name="AdBlockToggleButton" Click="AdBlockToggleButton_Click" DockPanel.Dock="Right"/>
                                                     <StackPanel VerticalAlignment="Center">
@@ -357,7 +412,7 @@
                                                 <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
                                                 <DockPanel>
                                                     <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
+                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
                                                     </Border>
                                                     <TextBlock x:Name="CertificateValidation" VerticalAlignment="Center" Text="Certificate is valid"/>
                                                 </DockPanel>
@@ -402,12 +457,12 @@
                             </Grid>
                         </Border>
                         <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Search or type a URL" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0" Foreground="{StaticResource BorderBrush}" x:Name="OmniBoxPlaceholder" Visibility="Visible"/>
-                        <ComboBox TextSearch.TextPath="Text" IsTextSearchEnabled="False" StaysOpenOnEdit="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" DropDownClosed="OmniBox_DropDownClosed" Style="{StaticResource DropDownTextBox}" BorderThickness="0" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch">
+                        <ComboBox TextSearch.TextPath="Text" IsTextSearchEnabled="False" StaysOpenOnEdit="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" DropDownClosed="OmniBox_DropDownClosed" Style="{StaticResource DropDownTextBox}" BorderThickness="0" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" PreviewKeyDown="OmniBox_PreviewKeyDown" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Focusable="False" Orientation="Horizontal" Margin="0">
                                         <Border Margin="-8,0,5,0" Width="30" Height="30" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}">
-                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Segoe Fluent Icons" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
+                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="{Binding Icon}" Foreground="{Binding Color}"/>
                                         </Border>
                                         <TextBlock Text="{Binding Text}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                         <TextBlock Text="{Binding Result}" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center"/>
@@ -415,6 +470,16 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                        <Grid x:Name="OmniBoxStatus" Grid.Column="1" IsHitTestVisible="False" VerticalAlignment="Stretch" HorizontalAlignment="Right" Margin="5" Visibility="Visible">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource GrayBrush}" x:Name="OmniBoxStatusText"/>
+                            <Border x:Name="OmniBoxStatusKey" Grid.Column="1" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Width="Auto" CornerRadius="5">
+                                <TextBlock x:Name="OmniBoxStatusKeyText" Text="Tab" VerticalAlignment="Center" Margin="5" HorizontalAlignment="Center" Foreground="{StaticResource FontBrush}"/>
+                            </Border>
+                        </Grid>
                     </Grid>
                 </DockPanel>
                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="41.25" Grid.Row="1" HorizontalAlignment="Stretch">
@@ -427,7 +492,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
+                                    <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" MouseUp="FavouriteButton_MouseUp" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
                                         <Button.Resources>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="TextTrimming" Value="CharacterEllipsis"></Setter>
@@ -493,20 +558,20 @@
                             </DockPanel>
                             <ComboBox Width="55" SelectedIndex="3" ToolTip="Dock side" x:Name="SideBarDockDropdown" SelectionChanged="InspectorDockDropdown_SelectionChanged">
                                 <ComboBoxItem ToolTip="Top">
-                                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="18" FontWeight="Normal" TextAlignment="Center" RenderTransformOrigin="0.5,0.5" Text="&#xE90E;">
+                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" RenderTransformOrigin="0.5,0.5" Text="&#xE90E;">
                                         <TextBlock.RenderTransform>
                                             <RotateTransform Angle="180"/>
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                 </ComboBoxItem>
                                 <ComboBoxItem ToolTip="Bottom">
-                                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90E;"/>
+                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90E;"/>
                                 </ComboBoxItem>
                                 <ComboBoxItem ToolTip="Left">
-                                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90C;"/>
+                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90C;"/>
                                 </ComboBoxItem>
                                 <ComboBoxItem ToolTip="Right">
-                                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90D;"/>
+                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90D;"/>
                                 </ComboBoxItem>
                             </ComboBox>
                             <!--<ComboBox FontFamily="None" Width="Auto" ToolTip="Browser Emulator" Foreground="{StaticResource FontBrush}" x:Name="BrowserEmulatorComboBox" VerticalAlignment="Center" SelectedIndex="0"/>-->
@@ -543,7 +608,7 @@
                                                     <GeometryDrawing.Brush>
                                                         <VisualBrush Stretch="Uniform">
                                                             <VisualBrush.Visual>
-                                                                <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xEA86;"/>
+                                                                <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="&#xEA86;"/>
                                                             </VisualBrush.Visual>
                                                         </VisualBrush>
                                                     </GeometryDrawing.Brush>
@@ -574,6 +639,7 @@
                     </Border>
                 </Popup>
             </Grid>
+            <Border x:Name="WebContainerBorder" BorderBrush="{StaticResource BorderBrush}" Grid.ColumnSpan="10" Grid.RowSpan="10" BorderThickness="0" IsHitTestVisible="False"/>
         </Grid>
     </Grid>
 </UserControl>

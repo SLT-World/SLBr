@@ -2,6 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:WinUI="clr-namespace:WinUI" xmlns:controls="clr-namespace:SLBr.Controls"
                     x:Class="SLBr.WinUIStyleDictionary">
+    <FontFamily x:Key="IconFontFamily">
+        Segoe Fluent Icons, Segoe MDL2 Assets
+    </FontFamily>
+
     <controls:LessThanConverter x:Key="WidthLessThan60" Threshold="60"/>
     
     <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderBrushColor}"/>
@@ -175,7 +179,7 @@
                             <Grid Width="{TemplateBinding Height}" Height="{TemplateBinding Height}">
                                 <Border x:Name="Border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" CornerRadius="5"/>
                                 <Border Opacity="0" x:Name="IndicatorBorder" BorderThickness="0" Background="{DynamicResource IndicatorBrush}" CornerRadius="5"/>
-                                <TextBlock Opacity="0" x:Name="Checkmark" Padding="0,0,0,0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Opacity="0" x:Name="Checkmark" Padding="0,0,0,0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
                         </BulletDecorator.Bullet>
                         <ContentPresenter x:Name="content" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" RecognizesAccessKey="True"/>
@@ -301,7 +305,7 @@
                 <ControlTemplate TargetType="{x:Type CheckBox}">
                     <Grid>
                         <Border Width="{TemplateBinding Height}" x:Name="Border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" CornerRadius="5">
-                            <TextBlock Opacity="0" x:Name="Checkmark" Padding="0,0,0,0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Opacity="0" x:Name="Checkmark" Padding="0,0,0,0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ContentPresenter x:Name="content" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="60,0,0,0"/>
                     </Grid>
@@ -1093,14 +1097,14 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Width" Value="35"/>
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="FontWeight" Value="UltraLight"/>
-        <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+        <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}"/>
     </Style>
     <Style TargetType="{x:Type Button}" x:Key="TabIconButton" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Height" Value="35"/>
         <Setter Property="Width" Value="35"/>
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="FontWeight" Value="UltraLight"/>
-        <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+        <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -1159,7 +1163,7 @@ Margin="{TemplateBinding Padding}"/>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
                         <DockPanel Margin="{TemplateBinding Padding}" VerticalAlignment="Center">
-                            <TextBlock Foreground="{TemplateBinding Foreground}" Text="&#xe71b;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="16"/>
+                            <TextBlock Foreground="{TemplateBinding Foreground}" Text="&#xe71b;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                             <TextBlock x:Name="Text" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </DockPanel>
                     </Grid>
@@ -1262,7 +1266,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1363,7 +1367,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1699,7 +1703,7 @@ Margin="{TemplateBinding Padding}"/>
                         <Grid>
                             <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{TemplateBinding Background}"/>
                             <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                            <ContentPresenter Margin="{TemplateBinding Padding}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="Segoe Fluent Icons"/>
+                            <ContentPresenter Margin="{TemplateBinding Padding}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}"/>
                         </Grid>
                         <Popup 
           Name="Popup"
@@ -1803,20 +1807,29 @@ Margin="{TemplateBinding Padding}"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="Icon" Width="30" Height="30" Visibility="Visible" Margin="5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
-                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="Segoe Fluent Icons">
+                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}">
                         <ContentPresenter.Resources>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
                                     <Trigger Property="IsEnabled" Value="False">
                                         <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
                                     </Trigger>
+                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2600;">
+                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2601;">
+                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2602;">
+                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </ContentPresenter.Resources>
                     </ContentPresenter>
                 </Border>
                 <Border Name="Check" Width="20" Height="20" Visibility="Collapsed" VerticalAlignment="Center" Margin="5,0" Background="{DynamicResource PrimaryBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                    <TextBlock Opacity="1" x:Name="Checkmark" Padding="0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Opacity="1" x:Name="Checkmark" Padding="0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <ContentPresenter 
           Name="HeaderHost"
@@ -1841,17 +1854,10 @@ Margin="{TemplateBinding Padding}"/>
             </Grid>
         </Border>
         <ControlTemplate.Triggers>
-            <Trigger Property="Header" Value="Snip">
+            <!--<Trigger Property="Header" Value="Snip">
                 <Setter Property="Icon" Value="&#xe924;"/>
-            </Trigger>
+            </Trigger>-->
 
-            <Trigger Property="Header" Value="Copy image">
-                <Setter Property="Icon" Value="&#xe8b9;"/>
-            </Trigger>
-
-            <Trigger Property="Header" Value="Emoji">
-                <Setter Property="Icon" Value="&#xe76e;"/>
-            </Trigger>
             <Trigger Property="Header" Value="Undo">
                 <Setter Property="Icon" Value="&#xe7a7;"/>
             </Trigger>
@@ -1866,9 +1872,6 @@ Margin="{TemplateBinding Padding}"/>
             </Trigger>
             <Trigger Property="Header" Value="Paste">
                 <Setter Property="Icon" Value="&#xe77f;"/>
-            </Trigger>
-            <Trigger Property="Header" Value="Delete">
-                <Setter Property="Icon" Value="&#xe74d;"/>
             </Trigger>
             <Trigger Property="Header" Value="Select All">
                 <Setter Property="Icon" Value="&#xe8b3;"/>
@@ -1924,7 +1927,7 @@ Margin="{TemplateBinding Padding}"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="Icon" Width="30" Height="30" Visibility="Visible" Margin="5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="Segoe Fluent Icons"/>
+                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}"/>
                 </Border>
                 <ContentPresenter 
           Name="HeaderHost"
@@ -1962,9 +1965,6 @@ Margin="{TemplateBinding Padding}"/>
         </Border>
 
         <ControlTemplate.Triggers>
-            <Trigger Property="Header" Value="Zoom">
-                <Setter Property="Icon" Value="&#xe71e;"/>
-            </Trigger>
             <Trigger Property="Icon" Value="{x:Null}">
                 <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
             </Trigger>
@@ -2234,7 +2234,7 @@ Margin="{TemplateBinding Padding}"/>
                             <Border SnapsToDevicePixels="True" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5">
                                 <Grid>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
                                     <ContentPresenter Grid.Row="1" Margin="10" SnapsToDevicePixels="True"/>
                                 </Grid>
@@ -2305,64 +2305,6 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
 
-    <Style TargetType="{x:Type WinUI:WinUITabControl}">
-        <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Setter Property="OverridesDefaultStyle" Value="True"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="Margin" Value="0"/>
-        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type TabControl}">
-                    <Grid KeyboardNavigation.TabNavigation="Local" SnapsToDevicePixels="true" ClipToBounds="true">
-                        <Grid.RowDefinitions>
-                            <RowDefinition x:Name="RowDefinition0" Height="Auto"/>
-                            <RowDefinition x:Name="RowDefinition2" Height="*"/>
-                        </Grid.RowDefinitions>
-                        <WinUI:TabPanel Margin="5" x:Name="HeaderPanel" Panel.ZIndex="1" KeyboardNavigation.TabIndex="1" Grid.Row="0" IsItemsHost="true" Background="Transparent"/>
-                        <Border Margin="0" x:Name="ContentPanel" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}"
-									KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2" Grid.Row="2">
-                            <ContentPresenter x:Name="PART_SelectedContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0" ContentSource="SelectedContent"/>
-                        </Border>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-    <Style TargetType="{x:Type WinUI:WinUITabControl}" x:Key="VerticalTabControl">
-        <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Setter Property="OverridesDefaultStyle" Value="True"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="Margin" Value="0"/>
-        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-        <Setter Property="TabStripPlacement" Value="Left"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type TabControl}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <ScrollViewer VerticalScrollBarVisibility="Hidden">
-                            <TabPanel Grid.Column="0" Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
-                        </ScrollViewer>
-
-                        <Border Margin="0" Grid.Column="1" Background="{TemplateBinding Background}" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}" KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2">
-                            <ScrollViewer VerticalScrollBarVisibility="Hidden">
-                                <ContentPresenter ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0"/>
-                            </ScrollViewer>
-                        </Border>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-        <Style.Resources>
-            <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource VerticalTab}"/>
-            <Style TargetType="{x:Type TabItem}" x:Key="IconTabButton" BasedOn="{StaticResource VerticalIconTabButton}"/>
-        </Style.Resources>
-    </Style>
 
     <ContextMenu x:Key="TabItemContextMenu">
         <!--"&#xE737;"-->
@@ -2382,6 +2324,7 @@ Margin="{TemplateBinding Padding}"/>
         <Separator Visibility="{Binding BrowserCommandsVisibility}"/>
         <MenuItem Click="ButtonAction" Header="Close Tab" Tag="{Binding CloseCommand}"/>
     </ContextMenu>
+
 
     <Style TargetType="{x:Type TabItem}">
         <Setter Property="ContextMenu" Value="{StaticResource TabItemContextMenu}"/>
@@ -2432,7 +2375,16 @@ Margin="{TemplateBinding Padding}"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" DockPanel.Dock="Left">
-                                    <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" VerticalAlignment="Center" HorizontalAlignment="Left" Height="20" Width="20" Margin="1.5,0,0,0" Stretch="Uniform" Source="{Binding Icon}" Tag="{Binding ID}" x:Name="Icon"/>
+                                    <Grid x:Name="IconContainer" VerticalAlignment="Center" HorizontalAlignment="Left" Height="20" Width="20" Margin="1.5,0,0,0">
+                                        <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" Tag="{Binding ID}" x:Name="Icon"/>
+                                        <Grid.OpacityMask>
+                                            <VisualBrush>
+                                                <VisualBrush.Visual>
+                                                    <Border Height="{Binding ElementName=IconContainer, Path=ActualHeight}" Width="{Binding ElementName=IconContainer, Path=ActualWidth}" Background="White" CornerRadius="5"/>
+                                                </VisualBrush.Visual>
+                                            </VisualBrush>
+                                        </Grid.OpacityMask>
+                                    </Grid>
                                     <!--<Image.Source>
                                             <DrawingImage>
                                                 <DrawingImage.Drawing>
@@ -2440,7 +2392,7 @@ Margin="{TemplateBinding Padding}"/>
                                                         <GeometryDrawing.Brush>
                                                             <VisualBrush Stretch="Uniform">
                                                                 <VisualBrush.Visual>
-                                                                    <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xec6c;"/>
+                                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="&#xec6c;"/>
                                                                 </VisualBrush.Visual>
                                                             </VisualBrush>
                                                         </GeometryDrawing.Brush>
@@ -2493,14 +2445,12 @@ Margin="{TemplateBinding Padding}"/>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding IsUnloaded}" Value="True"/>
-                                <Condition Binding="{Binding DimUnloadedIcon}" Value="True"/>
+                                <Condition Binding="{Binding DimUnloadedIcon, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
                             </MultiDataTrigger.Conditions>
-                            <Setter TargetName="Icon" Property="Opacity" Value="0.25" />
+                            <Setter TargetName="Icon" Property="Opacity" Value="0.25"/>
                         </MultiDataTrigger>
 
-                        <DataTrigger
-                Binding="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthLessThan60}}"
-                Value="True">
+                        <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthLessThan60}}" Value="True">
                             <Setter TargetName="CloseButton" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
 
@@ -2560,7 +2510,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border Name="Border" Width="35" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0"/>
                         <Border Opacity="0" Width="35" Name="BorderMouseOver" Background="{DynamicResource BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0"/>
-                        <TextBlock Margin="0" RenderTransformOrigin="0.5,0.5"  FontFamily="Segoe Fluent Icons" TextAlignment="Center" Foreground="{TemplateBinding Foreground}" Text="&#xE8BB;" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Margin="0" RenderTransformOrigin="0.5,0.5"  FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" Foreground="{TemplateBinding Foreground}" Text="&#xE8BB;" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock.RenderTransform>
                                 <RotateTransform Angle="45"/>
                             </TextBlock.RenderTransform>
@@ -2628,7 +2578,16 @@ Margin="{TemplateBinding Padding}"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" DockPanel.Dock="Left">
-                                    <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" VerticalAlignment="Center" HorizontalAlignment="Left" Height="20" Width="20" Margin="1.5,0,0,0" Stretch="Uniform" Source="{Binding Icon}" Tag="{Binding ID}" x:Name="Icon"/>
+                                    <Grid x:Name="IconContainer" VerticalAlignment="Center" HorizontalAlignment="Left" Height="20" Width="20" Margin="1.5,0,0,0">
+                                        <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" Tag="{Binding ID}" x:Name="Icon"/>
+                                        <Grid.OpacityMask>
+                                            <VisualBrush>
+                                                <VisualBrush.Visual>
+                                                    <Border Height="{Binding ElementName=IconContainer, Path=ActualHeight}" Width="{Binding ElementName=IconContainer, Path=ActualWidth}" Background="White" CornerRadius="5"/>
+                                                </VisualBrush.Visual>
+                                            </VisualBrush>
+                                        </Grid.OpacityMask>
+                                    </Grid>
                                     <ContentPresenter HorizontalAlignment="Stretch" Width="{TemplateBinding MaxWidth}" x:Name="ContentSite" TextBlock.TextAlignment="Left" VerticalAlignment="Center" ContentSource="Header" Margin="7.5,0">
                                         <ContentPresenter.Resources>
                                             <Style TargetType="TextBlock">
@@ -2669,7 +2628,7 @@ Margin="{TemplateBinding Padding}"/>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding IsUnloaded}" Value="True"/>
-                                <Condition Binding="{Binding DimUnloadedIcon}" Value="True"/>
+                                <Condition Binding="{Binding DimUnloadedIcon, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="Icon" Property="Opacity" Value="0.25" />
                         </MultiDataTrigger>
@@ -2744,7 +2703,7 @@ Margin="{TemplateBinding Padding}"/>
                                                         <GeometryDrawing.Brush>
                                                             <VisualBrush Stretch="Uniform">
                                                                 <VisualBrush.Visual>
-                                                                    <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8BB;" RenderTransformOrigin="0.5,0.5">
+                                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="&#xE8BB;" RenderTransformOrigin="0.5,0.5">
                                                                         <TextBlock.RenderTransform>
                                                                             <RotateTransform Angle="45"/>
                                                                         </TextBlock.RenderTransform>
@@ -2817,73 +2776,9 @@ Margin="{TemplateBinding Padding}"/>
     <Style x:Key="MinimizedVerticalIconTabButton" TargetType="{x:Type TabItem}" BasedOn="{StaticResource VerticalIconTabButton}">
         <Setter Property="Width" Value="35"/>
     </Style>
-
-    <Style TargetType="{x:Type WinUI:WinUITabControl}" x:Key="WinUITabControl">
-        <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Setter Property="OverridesDefaultStyle" Value="True"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="Margin" Value="0"/>
-        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-        <Setter Property="TabStripPlacement" Value="Left"/>
-
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type TabControl}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <TabPanel Grid.Column="0" Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
-                        </ScrollViewer>
-
-                        <Border Margin="0" Grid.Column="1" Background="{TemplateBinding Background}" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}" KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2">
-                            <ScrollViewer VerticalScrollBarVisibility="Hidden">
-                                <ContentPresenter ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0"/>
-                            </ScrollViewer>
-                        </Border>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-        <Style.Resources>
-            <Style TargetType="{x:Type TabItem}" x:Key="TabSeparator">
-                <Setter Property="Height" Value="1"/>
-                <Setter Property="UseLayoutRounding" Value="True"/>
-                <Setter Property="SnapsToDevicePixels" Value="True"/>
-                <Setter Property="IsEnabled" Value="False"/>
-                <Setter Property="IsHitTestVisible" Value="False"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TabItem">
-                            <Border Name="Border" Background="{DynamicResource BorderBrush}" Margin="0,0,0,0"/>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-            <Style TargetType="{x:Type TabItem}" x:Key="ThickTabSeparator">
-                <Setter Property="Height" Value="7.5"/>
-                <Setter Property="UseLayoutRounding" Value="True"/>
-                <Setter Property="SnapsToDevicePixels" Value="True"/>
-                <Setter Property="IsEnabled" Value="False"/>
-                <Setter Property="IsHitTestVisible" Value="False"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TabItem">
-                            <Border Name="Border" Background="{DynamicResource BorderBrush}" CornerRadius="1.25" Margin="0,0,0,5"/>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-            <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource WinUITabItem}"/>
-        </Style.Resources>
-    </Style>
-
     <Style TargetType="{x:Type TabItem}" x:Key="WinUITabItem">
         <Setter Property="Height" Value="40"/>
-        <Setter Property="Width" Value="250"/>
+        <Setter Property="Width" Value="240"/>
         <Setter Property="MinWidth" Value="35"/>
         <Setter Property="MaxWidth" Value="240"/>
         <Setter Property="Padding" Value="0"/>
@@ -2914,7 +2809,7 @@ Margin="{TemplateBinding Padding}"/>
                                                         <GeometryDrawing.Brush>
                                                             <VisualBrush Stretch="Uniform">
                                                                 <VisualBrush.Visual>
-                                                                    <TextBlock FontFamily="Segoe Fluent Icons" Text="{TemplateBinding Tag}"/>
+                                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Tag}"/>
                                                                 </VisualBrush.Visual>
                                                             </VisualBrush>
                                                         </GeometryDrawing.Brush>
@@ -3017,7 +2912,7 @@ Margin="{TemplateBinding Padding}"/>
                                                         <GeometryDrawing.Brush>
                                                             <VisualBrush Stretch="Uniform">
                                                                 <VisualBrush.Visual>
-                                                                    <TextBlock FontFamily="Segoe Fluent Icons" Text="{TemplateBinding Tag}" Foreground="{TemplateBinding BorderBrush}"/>
+                                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Tag}" Foreground="{TemplateBinding BorderBrush}"/>
                                                                 </VisualBrush.Visual>
                                                             </VisualBrush>
                                                         </GeometryDrawing.Brush>
@@ -3096,5 +2991,154 @@ Margin="{TemplateBinding Padding}"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+    <Style TargetType="{x:Type WinUI:WinUITabControl}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid KeyboardNavigation.TabNavigation="Local" SnapsToDevicePixels="true" ClipToBounds="true">
+                        <Grid.RowDefinitions>
+                            <RowDefinition x:Name="RowDefinition0" Height="Auto"/>
+                            <RowDefinition x:Name="RowDefinition2" Height="*"/>
+                        </Grid.RowDefinitions>
+                        <WinUI:TabPanel Margin="5" x:Name="HeaderPanel" Panel.ZIndex="1" KeyboardNavigation.TabIndex="1" Grid.Row="0" IsItemsHost="true" Background="Transparent"/>
+                        <Border Margin="0" x:Name="ContentPanel" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}"
+									KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2" Grid.Row="2">
+                            <ContentPresenter x:Name="PART_SelectedContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0" ContentSource="SelectedContent"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="{x:Type WinUI:WinUITabControl}" x:Key="VerticalTabControl">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="TabStripPlacement" Value="Left"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Border Margin="0" Grid.Column="1" Background="{TemplateBinding Background}" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}" KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2">
+                        <Grid>
+                            <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                <ContentPresenter ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0"/>
+                            </ScrollViewer>
+                            <ScrollViewer x:Name="TabPanelScroll" VerticalScrollBarVisibility="Hidden" HorizontalAlignment="Left" Margin="{TemplateBinding Padding}">
+                                <TabPanel Grid.Column="0" Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Resources>
+            <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource VerticalTab}"/>
+            <Style TargetType="{x:Type TabItem}" x:Key="IconTabButton" BasedOn="{StaticResource VerticalIconTabButton}"/>
+        </Style.Resources>
+    </Style>
+    <Style TargetType="{x:Type WinUI:WinUITabControl}" x:Key="NormalVerticalTabControl">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="TabStripPlacement" Value="Left"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                            <TabPanel Grid.Column="0" Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
+                        </ScrollViewer>
+
+                        <Border Margin="0" Grid.Column="1" Background="{TemplateBinding Background}" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}" KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2">
+                            <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                <ContentPresenter ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Resources>
+            <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource VerticalTab}"/>
+            <Style TargetType="{x:Type TabItem}" x:Key="IconTabButton" BasedOn="{StaticResource VerticalIconTabButton}"/>
+        </Style.Resources>
+    </Style>
+
+    <Style TargetType="{x:Type WinUI:WinUITabControl}" x:Key="WinUITabControl">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="TabStripPlacement" Value="Left"/>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <TabPanel Grid.Column="0" Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
+                        </ScrollViewer>
+
+                        <Border Margin="0" Grid.Column="1" Background="{TemplateBinding Background}" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}" KeyboardNavigation.TabNavigation="Local" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabIndex="2">
+                            <ScrollViewer VerticalScrollBarVisibility="Hidden">
+                                <ContentPresenter ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Resources>
+            <Style TargetType="{x:Type TabItem}" x:Key="TabSeparator">
+                <Setter Property="Height" Value="1"/>
+                <Setter Property="UseLayoutRounding" Value="True"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="IsEnabled" Value="False"/>
+                <Setter Property="IsHitTestVisible" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabItem">
+                            <Border Name="Border" Background="{DynamicResource BorderBrush}" Margin="0,0,0,0"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="{x:Type TabItem}" x:Key="ThickTabSeparator">
+                <Setter Property="Height" Value="7.5"/>
+                <Setter Property="UseLayoutRounding" Value="True"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="IsEnabled" Value="False"/>
+                <Setter Property="IsHitTestVisible" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabItem">
+                            <Border Name="Border" Background="{DynamicResource BorderBrush}" CornerRadius="1.25" Margin="0,0,0,5"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource WinUITabItem}"/>
+        </Style.Resources>
     </Style>
 </ResourceDictionary>

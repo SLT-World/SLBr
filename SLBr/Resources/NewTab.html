@@ -106,7 +106,7 @@ ul.nav > li > a {
         </div>
     </div>
     <script type="text/javascript">
-        internal.background();
+        engine.postMessage({ type: "Internal", function: 'background' });
         document.getElementById('SearchField').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 search(document.getElementById("SearchField").value);

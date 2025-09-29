@@ -3,25 +3,6 @@ using System.Windows.Input;
 
 namespace SLBr.Handlers
 {
-    class HotKey
-    {
-        public HotKey(Action _Callback, int _KeyCode, bool HasControl, bool HasShift, bool HasAlt)
-        {
-            Callback = _Callback;
-            KeyCode = _KeyCode;
-            Control = HasControl;
-            Shift = HasShift;
-            Alt = HasAlt;
-        }
-
-        public int KeyCode;
-        public bool Control;
-        public bool Shift;
-        public bool Alt;
-
-        public Action Callback;
-    }
-
     public class KeyboardHandler : IKeyboardHandler
     {
         FastHashSet<HotKey> Keys = new FastHashSet<HotKey>();

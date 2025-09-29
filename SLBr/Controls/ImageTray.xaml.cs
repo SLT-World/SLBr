@@ -1,20 +1,10 @@
 ﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shell;
 
 namespace SLBr.Controls
 {
@@ -32,6 +22,10 @@ namespace SLBr.Controls
         }
 
         public string SelectedFilePath { get; private set; }
+        public IReadOnlyCollection<string> FileExtensions;
+        public IReadOnlyCollection<string> FileDescriptions;
+        public IReadOnlyCollection<string> FileFilters;
+        public bool IncludeAllFiles = false;
 
         public ImageTray()
         {
@@ -41,17 +35,20 @@ namespace SLBr.Controls
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var ImageFiles = Directory.EnumerateFiles(App.Instance.GlobalSave.Get("DownloadPath"), "*.*", SearchOption.TopDirectoryOnly)
-                                      .Where(f => f.EndsWith(".png") || f.EndsWith(".jpg") || f.EndsWith(".jpeg") || f.EndsWith(".gif") || f.EndsWith(".bmp"))
-                                      .OrderByDescending(File.GetCreationTime)
-                                      .Take(20);
+            List<string> ImageFiles = new();
+            string[] ExtensionsArray = FileExtensions.ToArray();
+            for (int i = 0; i < ExtensionsArray.Length; i++)
+            {
+                IEnumerable<string> Extensions = ExtensionsArray[i].Split([',', ';'], StringSplitOptions.RemoveEmptyEntries).Select(e => e.Trim());
+                ImageFiles.AddRange(Directory.EnumerateFiles(App.Instance.GlobalSave.Get("DownloadPath"), "*.*", SearchOption.TopDirectoryOnly).Where(f => Extensions.Contains(Path.GetExtension(f).ToLowerInvariant())).OrderByDescending(File.GetCreationTime).Take(20));
+            }
             DownloadImages.Clear();
             foreach (var Image in ImageFiles)
                 DownloadImages.Add(new DownloadImageEntry { Path = Image, File = Path.GetFileName(Image) });
 
             if (Clipboard.ContainsImage())
             {
-                var Encoder = new PngBitmapEncoder();
+                PngBitmapEncoder Encoder = new PngBitmapEncoder();
                 Encoder.Frames.Add(BitmapFrame.Create(Clipboard.GetImage()));
                 string TempPath = Path.Combine(Path.GetTempPath(), $"clipboard_{Guid.NewGuid()}.png");
                 using (var _Stream = new FileStream(TempPath, FileMode.Create))
@@ -62,9 +59,7 @@ namespace SLBr.Controls
                 ClipboardFileName.Content = Path.GetFileName(TempPath);
             }
             else
-            {
                 ClipboardColumn.Width = new GridLength(0);
-            }
         }
 
         private void FileButton_Click(object sender, RoutedEventArgs e)
@@ -82,16 +77,40 @@ namespace SLBr.Controls
 
         private void AllFilesButton_Click(object sender, RoutedEventArgs e)
         {
-            //Use System.Drawing.Common
-            /*ImageCodecInfo[] encoders = ImageCodecInfo.GetImageEncoders();
-
-            string FilterBuilder = "Image Files|";
-            foreach (ImageCodecInfo info in encoders)
-                FilterBuilder += (!FilterBuilder.EndsWith("|") ? ";" : "") + info.FilenameExtension.ToLower();
-            FilterBuilder += (!FilterBuilder.EndsWith("|") ? ";" : "") + "*.svg";*/
-            var Dialog = new OpenFileDialog
+            List<string> FilterParts = new();
+            if (FileDescriptions != null && FileExtensions != null && FileDescriptions.Count == FileExtensions.Count)
             {
-                Filter = "Image Files|*.png;*.jpg;*.jpeg;*.gif;*.bmp",//FilterBuilder,
+                string[] DescriptionArray = FileDescriptions.ToArray();
+                string[] ExtensionArray = FileExtensions.ToArray();
+
+                for (int i = 0; i < FileDescriptions.Count; i++)
+                {
+                    IEnumerable<string> Extensions = ExtensionArray[i].Split([',', ';'], StringSplitOptions.RemoveEmptyEntries).Select(e => e.TrimStart('.').Trim());
+                    string ExtensionPattern = string.Join(";", Extensions.Select(e => "*." + e));
+
+                    FilterParts.Add($"{DescriptionArray[i]} ({ExtensionPattern})|{ExtensionPattern}");
+                }
+            }
+            else if (FileExtensions?.Any() == true)
+            {
+                IEnumerable<string> Extensions = FileExtensions.Select(e => "*." + e.TrimStart('.'));
+                string ExtensionPattern = string.Join(";", Extensions);
+                FilterParts.Add($"Files ({ExtensionPattern})|{ExtensionPattern}");
+            }
+            else if (FileFilters?.Any() == true)
+            {
+                foreach (string _File in FileFilters)
+                    FilterParts.Add($"{_File}|{_File}");
+            }
+
+            if (IncludeAllFiles)
+                FilterParts.Add("All Files (*.*)|*.*");
+
+
+            Clipboard.SetText(string.Join("|", FilterParts));
+            OpenFileDialog Dialog = new OpenFileDialog
+            {
+                Filter = string.Join("|", FilterParts),
                 Multiselect = false
             };
             if (Dialog.ShowDialog() == true)

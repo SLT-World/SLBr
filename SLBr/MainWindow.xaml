@@ -19,6 +19,9 @@
         <TaskbarItemInfo x:Name="TaskbarProgress" ProgressState="Normal" ProgressValue="0"/>
     </Window.TaskbarItemInfo>
     <Grid Background="{StaticResource SecondaryBrush}">
+        <!--<Grid.LayoutTransform>
+            <ScaleTransform ScaleX="2.5" ScaleY="2.5"/>
+        </Grid.LayoutTransform>-->
         <WinUI:WinUITabControl x:Name="TabsUI" SelectionChanged="TabsUI_SelectionChanged" Padding="0" Visibility="Hidden" SelectedIndex="-1">
             <TabControl.ContentTemplate>
                 <DataTemplate>

@@ -82,7 +82,7 @@ namespace SLBr.Protocols
             if (!input.StartsWith("&gt; ", StringComparison.Ordinal))
                 return input;
             string template = "<div class=\"Embed\"><div style=\"display: inline-block; background: gray; width: 2px; height: 12.5px; margin-right: 5px; margin-left: 5px;\"></div>{0}</div>";
-            input = input.Replace("&gt; ", "");
+            input = input.Replace("&gt; ", string.Empty);
             return string.Format(template, input);
         }
 
@@ -139,7 +139,7 @@ namespace SLBr.Protocols
                         lineout = FormatLineAsLink(lineout, LinkCount);
                     }
                     else
-                        lineout = lineout.Replace("<br/>", "");
+                        lineout = lineout.Replace("<br/>", string.Empty);
                     if (line.StartsWith("```", StringComparison.Ordinal))
                     {
                         is_literal = !is_literal;
@@ -282,10 +282,7 @@ namespace SLBr.Protocols
             {
                 _Client = new TcpClient(ServerHost, Port);
             }
-            catch (Exception e)
-            {
-                return null;
-            }
+            catch { return null; }
 
             RemoteCertificateValidationCallback _Callback = new RemoteCertificateValidationCallback(ValidateServerCertificate);
             if (Insecure)
@@ -309,7 +306,7 @@ namespace SLBr.Protocols
                 SSLStream.Flush();
                 resp = ReadMessage(SSLStream, HostURL, AbandonReadSizeKb, AbandonReadTimes);
             }
-            catch (Exception Error)
+            catch
             {
                 SSLStream.Close();
                 _Client.Close();

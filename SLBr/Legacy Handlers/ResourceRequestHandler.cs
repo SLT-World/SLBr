@@ -1,11 +1,6 @@
 ﻿using CefSharp;
-using SLBr.Controls;
-using System.Buffers.Text;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows;
 
 namespace SLBr.Handlers
 {
@@ -49,18 +44,11 @@ namespace SLBr.Handlers
         public IResponseFilter GetResourceResponseFilter(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
         {
             /*if (request.ResourceType == ResourceType.Script && !request.Url.StartsWith("devtools:", StringComparison.Ordinal))
-            {
-                return new SafePassthroughFilter("window", "dowin");
-            }*/
-
+                return new SafePassthroughFilter("char", "quattro");*/
             return null;
         }
 
-        /* fontawesome.min.js
-         * angular.js
-         * three.js
-         * vue.js
-         */
+        //fontawesome.min.js, angular.js, three.js,vue.js
         //https://developers.google.com/speed/libraries/
         //https://burak-vural.medium.com/most-common-javascript-libraries-advices-cae853bc0da
         //https://kinsta.com/blog/javascript-libraries/
@@ -126,93 +114,93 @@ namespace SLBr.Handlers
 
             /*if (request.ResourceType == ResourceType.Worker || request.ResourceType == ResourceType.SharedWorker || request.ResourceType == ResourceType.ServiceWorker)
                 return CefReturnValue.Cancel;*/
-            string Url = request.Url.ToLowerInvariant();
-
-            //MessageBox.Show(Url);
+            string Url = request.Url;
             //if (Url.Contains("disable-devtool"))
             //    return CefReturnValue.Cancel;
             /*if (request.Url.EndsWith("devtools.svg", StringComparison.Ordinal))
                 return CefReturnValue.Cancel;*/
-            if (Utils.IsHttpScheme(Url))
+            if (!Utils.IsHttpScheme(Url))
+                return CefReturnValue.Continue;
+            
+            /*if (request.ResourceType == ResourceType.Script)
             {
-                /*if (request.ResourceType == ResourceType.Script)
-                {
-                    string MainHost = Utils.FastHost(browser.MainFrame.Url);
-                    string RequestHost = Utils.FastHost(request.Url);
-                    if (!RequestHost.EndsWith(MainHost, StringComparison.Ordinal))
-                        return CefReturnValue.Cancel;
-                }*/
-                /*string? CdnOverride = GetLocalCdn(Url);
-                if (!string.IsNullOrEmpty(CdnOverride))
-                {
-                    string CdnFile = Path.Combine(App.Instance.CdnPath, CdnOverride);
-                    MessageBox.Show(Url);
-                    MessageBox.Show(CdnFile);
-                    if (File.Exists(CdnFile))
-                        request.Url = CdnFile;
-                }*/
-
-                if (!App.Instance.ExternalFonts && request.ResourceType == ResourceType.FontResource)
+                string MainHost = Utils.FastHost(browser.MainFrame.Url);
+                string RequestHost = Utils.FastHost(request.Url);
+                if (!RequestHost.EndsWith(MainHost, StringComparison.Ordinal))
                     return CefReturnValue.Cancel;
-                if (App.Instance.NeverSlowMode)
-                {
-                    if (Handler.IsOverBudget(request.ResourceType))
+            }*/
+            /*string? CdnOverride = GetLocalCdn(Url);
+            if (!string.IsNullOrEmpty(CdnOverride))
+            {
+                string CdnFile = Path.Combine(App.Instance.CdnPath, CdnOverride);
+                MessageBox.Show(Url);
+                MessageBox.Show(CdnFile);
+                if (File.Exists(CdnFile))
+                    request.Url = CdnFile;
+            }*/
+
+            if (!App.Instance.ExternalFonts && request.ResourceType == ResourceType.FontResource)
+                return CefReturnValue.Cancel;
+            if (App.Instance.NeverSlowMode)
+            {
+                if (Handler.IsOverBudget(request.ResourceType))
+                    return CefReturnValue.Cancel;
+                foreach (string Pattern in App.FailedScripts)
+                    if (Url.Contains(Pattern, StringComparison.Ordinal))
                         return CefReturnValue.Cancel;
-                    foreach (string Pattern in App.FailedScripts)
-                        if (Url.Contains(Pattern))
-                            return CefReturnValue.Cancel;
+            }
+            //https://chromium-review.googlesource.com/c/chromium/src/+/1265506/25/third_party/blink/renderer/platform/loader/fetch/resource_loader.cc
+            if (App.Instance.AdBlock == 1)
+            {
+                IFrame FocusedFrame = browser.FocusedFrame;
+                if (FocusedFrame != null && FocusedFrame.IsValid)
+                {
+                    string Host = Utils.FastHost(FocusedFrame.Url);
+                    if (App.Instance.AdBlockAllowList.Has(Host))
+                        return CefReturnValue.Continue;
                 }
-                //https://chromium-review.googlesource.com/c/chromium/src/+/1265506/25/third_party/blink/renderer/platform/loader/fetch/resource_loader.cc
-                if (App.Instance.AdBlock == 1)
+                if (request.ResourceType == ResourceType.Ping)
                 {
-                    if (browser.FocusedFrame != null && App.Instance.AdBlockAllowList.Has(Utils.FastHost(browser.FocusedFrame.Url)))
-                            return CefReturnValue.Continue;
-                    if (request.ResourceType == ResourceType.Ping)
-                    {
-                        App.Instance.TrackersBlocked++;
+                    Interlocked.Increment(ref App.Instance.TrackersBlocked);
+                    App.Instance.TrackersBlocked++;
+                    return CefReturnValue.Cancel;
+                }
+                else if (Utils.IsPossiblyAd(request.ResourceType))
+                {
+                    string Host = Utils.FastHost(Url);
+                    bool Cached = Handler.HostCache.TryGetValue(Host, out bool Blocked);
+                    if (Blocked)
                         return CefReturnValue.Cancel;
-                    }
-                    else if (Utils.IsPossiblyAd(request.ResourceType))
+                    if (!Cached)
                     {
-                        string Host = Utils.FastHost(Url);
-                        if (App.Ads.Has(Host))// || App.Miners.Has(Host)
+                        if (App.Ads.Has(Host))
                         {
-                            App.Instance.AdsBlocked++;
+                            Interlocked.Increment(ref App.Instance.AdsBlocked);
+                            Handler.HostCache[Host] = true;
                             return CefReturnValue.Cancel;
                         }
                         else if (App.Analytics.Has(Host))
                         {
-                            App.Instance.TrackersBlocked++;
+                            Interlocked.Increment(ref App.Instance.TrackersBlocked);
+                            Handler.HostCache[Host] = true;
                             return CefReturnValue.Cancel;
                         }
-                        else if (request.ResourceType == ResourceType.Script)// || request.ResourceType == ResourceType.Xhr
-                        {
-                            foreach (string Pattern in App.HasInLink)
-                                if (Url.Contains(Pattern))
-                                    return CefReturnValue.Cancel;
-                        }
+                        Handler.HostCache[Host] = false;
+                    }
+                    if (request.ResourceType == ResourceType.Script)
+                    {
+                        if (App.HasInLinkRegex.IsMatch(Url))
+                            return CefReturnValue.Cancel;
                     }
                 }
+            }
 
-                //https://blog.chromium.org/2024/02/optimizing-safe-browsing-checks-in.html
-                /*if (App.Instance.GoogleSafeBrowsing && Utils.CanCheckSafeBrowsing(request.ResourceType))
-                {
-                    SafeBrowsingHandler.ThreatType _ThreatType = App.Instance._SafeBrowsing.GetThreatType(App.Instance._SafeBrowsing.Response(Url));
-                    if (_ThreatType == SafeBrowsingHandler.ThreatType.Malware || _ThreatType == SafeBrowsingHandler.ThreatType.Unwanted_Software || _ThreatType == SafeBrowsingHandler.ThreatType.Social_Engineering)
-                        return CefReturnValue.Cancel;
-                }*/
-                if (App.Instance.LiteMode)
-                    request.SetHeaderByName("Save-Data", "on", true);
-                //if (App.Instance.MobileView)
-                if (Handler.BrowserView.UserAgentBranding)
-                {
-                    request.SetHeaderByName("User-Agent", App.Instance.UserAgent, true);
-                    //WARNING: \r\n SHOULD NOT BE REMOVED, CLOUDFLARE TURNSTILE WILL NOT WORK
-                    request.SetHeaderByName("sec-ch-ua", $"\r\n{App.Instance.UserAgentBrandsString}", true);
-                    //WARNING: \r\n SHOULD NOT BE REMOVED, CLOUDFLARE TURNSTILE WILL NOT WORK
-                }
-                //request.SetHeaderByName("Device-Memory", "0.25", true);
-                //request.SetHeaderByName("DNT", "1", true);
+            if (App.Instance.LiteMode)
+                request.SetHeaderByName("Save-Data", "on", true);
+            if (Handler.BrowserView.UserAgentBranding)
+            {
+                request.SetHeaderByName("User-Agent", App.Instance.UserAgent, true);
+                request.SetHeaderByName("sec-ch-ua", App.Instance.UserAgentBrandsString, true);
             }
             return CefReturnValue.Continue;
         }
@@ -232,7 +220,7 @@ namespace SLBr.Handlers
                 {
                     if (request.ResourceType != ResourceType.Script)
                         return;
-                    App.FailedScripts.Add(Utils.CleanUrl(request.Url.ToLowerInvariant(), true, true, true, true, true));
+                    App.FailedScripts.Add(Utils.CleanUrl(request.Url, true, true, true, true, true));
                 }
             }
         }
@@ -244,10 +232,6 @@ namespace SLBr.Handlers
         public bool OnResourceResponse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
         {
             //TODO: Always enable cache regardless of Cache-Control: no-cache
-            /*request.SetHeaderByName("Cache-Control", "public, max-age=31536000", true);
-            request.Headers.Remove("Pragma");
-            request.Headers.Remove("Expires");
-            request.Headers.Remove("ETag");*/
             if (App.Instance.AMP && request.ResourceType == ResourceType.MainFrame)
             {
                 if (frame.IsMain)

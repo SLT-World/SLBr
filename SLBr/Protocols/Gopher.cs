@@ -2,24 +2,22 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows;
 
 namespace SLBr.Protocols
 {
     public class TextGopher
     {
-        bool is_literal = false;
         private static string FormatLineAsLink(string input, int count)
         {
             if (string.IsNullOrEmpty(input))
                 return input;
-            if (!Char.IsNumber(input.First()))
+            if (!char.IsNumber(input.First()))
                 return input;
             string remainder = input.Substring(1).Trim().Replace("<p>", "i").Replace("</p>", "0");
-            int firstSlash = remainder.IndexOfAny(new char[] { '/' });
+            int firstSlash = remainder.IndexOfAny(['/']);
             string url;
-            string host = "";
-            string port = "";
+            string host = string.Empty;
+            string port = string.Empty;
             string label;
 
             if (remainder.EndsWith("+"))
@@ -189,7 +187,7 @@ namespace SLBr.Protocols
         {
             var Response = "text/html";
             var ExtensionFull = Path.GetExtension(URI.AbsolutePath);
-            string Extension = (ExtensionFull.Length > 0) ? ExtensionFull.Substring(1) : "";
+            string Extension = (ExtensionFull.Length > 0) ? ExtensionFull.Substring(1) : string.Empty;
             if (ExtensionFull.Length > 0)
             {
                 switch (Extension)

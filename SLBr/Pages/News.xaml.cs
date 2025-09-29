@@ -44,7 +44,7 @@ namespace SLBr.Pages
             if (e.Key == Key.Enter)
             {
                 SearchTextBox.Text = SearchTextBox.Text.Trim();
-                string Url = "";
+                string Url = string.Empty;
                 if (SearchTextBox.Text.Length > 0)
                 {
                     Url = $"http://news.google.com/rss/search?q={Uri.EscapeDataString(SearchTextBox.Text)}";//&hl=en-US
@@ -68,7 +68,7 @@ namespace SLBr.Pages
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             NewsXML.Source = new Uri($"http://news.google.com/rss");
-            SearchTextBox.Text = "";
+            SearchTextBox.Text = string.Empty;
             Keyboard.ClearFocus();
             BackButton.Visibility = Visibility.Collapsed;
         }

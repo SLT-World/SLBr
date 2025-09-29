@@ -1,5 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.DevTools.CSS;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
@@ -59,7 +60,7 @@ namespace SLBr.Pages
                 {
                     if (App.Instance.Languages.Count == 1)
                     {
-                        var infoWindow = new InformationDialogWindow("Alert", $"Settings", "Unable to remove languages", "\uece4");
+                        var infoWindow = new InformationDialogWindow("Error", $"Settings", "The selected languages could not be removed.", "\uece4");
                         infoWindow.Topmost = true;
                         infoWindow.ShowDialog();
                         return;
@@ -102,13 +103,13 @@ namespace SLBr.Pages
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            BrowserView.Tab.ParentWindow.NewTab(e.Uri.ToString(), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+            BrowserView.Tab.ParentWindow.NewTab(e.Uri.ToString(), true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
             e.Handled = true;
         }
 
         private void HyperlinkButton_Click(object sender, RoutedEventArgs e)
         {
-            App.Instance.CurrentFocusedWindow().NewTab(((FrameworkElement)sender).Tag.ToString(), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1);
+            BrowserView.Tab.ParentWindow.NewTab(((FrameworkElement)sender).Tag.ToString(), true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
         }
 
         private void LanguageSelection_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -118,16 +119,18 @@ namespace SLBr.Pages
                 if (LanguageSelection.SelectedIndex == -1)
                     LanguageSelection.SelectedIndex = 0;
                 App.Instance.Locale = App.Instance.Languages[LanguageSelection.SelectedIndex];
-
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        IRequestContext GlobalRequestContext = Cef.GetGlobalRequestContext();
 
-                    string Error;
-                    IEnumerable<string> LocaleStrings = App.Instance.Languages.Select(i => i.Tooltip);
-                    GlobalRequestContext.SetPreference("spellcheck.dictionaries", LocaleStrings, out Error);
-                    GlobalRequestContext.SetPreference("intl.accept_languages", LocaleStrings, out Error);
-                });
+                        string Error;
+                        IEnumerable<string> LocaleStrings = App.Instance.Languages.Select(i => i.Tooltip);
+                        GlobalRequestContext.SetPreference("spellcheck.dictionaries", LocaleStrings, out Error);
+                        GlobalRequestContext.SetPreference("intl.accept_languages", LocaleStrings, out Error);
+                    });
+                }
             }
         }
 
@@ -135,9 +138,72 @@ namespace SLBr.Pages
 
         List<string> _Fonts;
 
+        public void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            //InformationDialogWindow InfoWindow = new InformationDialogWindow("Alert", "Update SLBr", "A new update for SLBr is available and will be automatically downloaded.", "\ue895", "Update", "Later");
+
+            InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
+            InfoWindow.Topmost = true;
+            if (InfoWindow.ShowDialog() == true)
+                App.Instance.Update();
+        }
+
+        public void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            App.Instance.CheckUpdate();
+            if (!string.IsNullOrEmpty(App.Instance.UpdateAvailable))
+            {
+                CheckUpdateButton.Visibility = Visibility.Collapsed;
+                UpdateStatusDescription.Text = $"Version {App.Instance.UpdateAvailable}";
+                if (App.Instance.UpdateAvailable == App.Instance.ReleaseVersion)
+                {
+                    UpdateStatusColor.Foreground = App.Instance.GreenColor;
+                    UpdateStatusText.Text = "SLBr is up to date";
+                }
+                else
+                {
+                    UpdateStatusColor.Foreground = App.Instance.OrangeColor;
+                    UpdateStatusText.Text = "An update for SLBr is available";
+                    UpdateStatusButton.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                UpdateStatusColor.Foreground = (SolidColorBrush)FindResource("IndicatorBrush");
+                UpdateStatusText.Text = "SLBr update check was skipped";
+                CheckUpdateButton.Visibility = Visibility.Visible;
+                UpdateStatusDescription.Text = $"Version {App.Instance.ReleaseVersion}";
+            }
+        }
+
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             SettingsInitialized = false;
+
+            if (!string.IsNullOrEmpty(App.Instance.UpdateAvailable))
+            {
+                CheckUpdateButton.Visibility = Visibility.Collapsed;
+                UpdateStatusDescription.Text = $"Version {App.Instance.UpdateAvailable}";
+                if (App.Instance.UpdateAvailable == App.Instance.ReleaseVersion)
+                {
+                    UpdateStatusColor.Foreground = App.Instance.GreenColor;
+                    UpdateStatusText.Text = "SLBr is up to date";
+                }
+                else
+                {
+                    UpdateStatusColor.Foreground = App.Instance.OrangeColor;
+                    UpdateStatusText.Text = "An update for SLBr is available";
+                    UpdateStatusButton.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                UpdateStatusColor.Foreground = (SolidColorBrush)FindResource("IndicatorBrush");
+                UpdateStatusText.Text = "SLBr update check was skipped";
+                CheckUpdateButton.Visibility = Visibility.Visible;
+                UpdateStatusDescription.Text = $"Version {App.Instance.ReleaseVersion}";
+            }
+
             List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
             if (AddableLanguages.Count == 0)
             {
@@ -149,20 +215,23 @@ namespace SLBr.Pages
                 AddableLanguages = new ObservableCollection<ActionStorage>(AddableLanguages.OrderBy(x => x.Tooltip));
             }
 
+            LanguageSelection.SelectionChanged -= LanguageSelection_SelectionChanged;
             LanguageSelection.ItemsSource = App.Instance.Languages;
             LanguageSelection.SelectedValue = App.Instance.Locale;
             LanguageSelection.SelectionChanged += LanguageSelection_SelectionChanged;
             AddLanguageListMenu.ItemsSource = AddableLanguages;
 
-            foreach (string Url in App.Instance.SearchEngines.Select(i => i.Name))
+            SearchEngineComboBox.SelectionChanged -= SearchEngineComboBox_SelectionChanged;
+            SearchEngineComboBox.Items.Clear();
+            foreach (string Name in App.Instance.SearchEngines.Select(i => i.Name))
             {
-                if (!SearchEngineComboBox.Items.Contains(Url))
-                    SearchEngineComboBox.Items.Add(Url);
+                if (!SearchEngineComboBox.Items.Contains(Name))
+                    SearchEngineComboBox.Items.Add(Name);
             }
-            SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
             string SearchEngine = App.Instance.DefaultSearchProvider.Name;
             if (SearchEngineComboBox.Items.Contains(SearchEngine))
                 SearchEngineComboBox.SelectedValue = SearchEngine;
+            SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
 
             HomepageTextBox.Text = App.Instance.GlobalSave.Get("Homepage");
             bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab", StringComparison.Ordinal);
@@ -180,8 +249,7 @@ namespace SLBr.Pages
             CheckUpdateCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("CheckUpdate"));
             SmoothScrollCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll"));
             QuickImageCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("QuickImage"));
-            SuppressErrorCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SuppressError"));
-            EnhanceImageCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("EnhanceImage"));
+            //SuppressErrorCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SuppressError"));
             SpellCheckCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SpellCheck"));
             DownloadPromptCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt"));
             ExternalFontsCheckBox.IsChecked = App.Instance.ExternalFonts;
@@ -195,32 +263,20 @@ namespace SLBr.Pages
             ShowUnloadTimeLeftCheckBox.IsEnabled = TabUnloadingCheck;
 
             AdaptiveThemeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme"));
+            WarnCodecCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
 
 
             NeverSlowModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NeverSlowMode"));
             AMPCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AMP"));
 
             AdBlockComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("AdBlock");
+            WebRiskServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebRiskService");
 
 
             SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
 
-            GoogleSafeBrowsingCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("GoogleSafeBrowsing"));
             MobileViewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("MobileView"));
             ForceLazyCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ForceLazy"));
-
-            bool BlockFingerprintChecked = bool.Parse(App.Instance.GlobalSave.Get("BlockFingerprint"));
-            BlockFingerprintCheckBox.IsChecked = BlockFingerprintChecked;
-            FingerprintProtectionLevelComboBox.IsEnabled = BlockFingerprintChecked;
-            if (FingerprintProtectionLevelComboBox.Items.Count == 0)
-            {
-                FingerprintProtectionLevelComboBox.Items.Add("Minimal");
-                FingerprintProtectionLevelComboBox.Items.Add("Balanced");
-                FingerprintProtectionLevelComboBox.Items.Add("Random");
-                FingerprintProtectionLevelComboBox.Items.Add("Strict");
-            }
-            FingerprintProtectionLevelComboBox.SelectionChanged += FingerprintProtectionLevelComboBox_SelectionChanged;
-            FingerprintProtectionLevelComboBox.SelectedValue = App.Instance.GlobalSave.Get("FingerprintLevel");
 
 
 
@@ -239,10 +295,9 @@ namespace SLBr.Pages
             RemoveFilterCheckBox.IsEnabled = AntiTamperChecked;
             RemoveOverlayCheckBox.IsEnabled = AntiTamperChecked;
 
-
-
             SendDiagnosticsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SendDiagnostics"));
             WebNotificationsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WebNotifications"));
+            WebAppsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WebApps"));
 
             DimIconsWhenUnloadedCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DimUnloadedIcon"));
             ShowUnloadedIconCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadedIcon"));
@@ -266,9 +321,7 @@ namespace SLBr.Pages
 
             FullscreenPopupCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup"));
 
-
-
-            ChromiumHardwareAccelerationCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ChromiumHardwareAcceleration"));
+            BrowserHardwareAccelerationCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("BrowserHardwareAcceleration"));
             JITCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("JIT"));
             ExperimentalFeaturesCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ExperimentalFeatures"));
             StartupBoostCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("StartupBoost"));
@@ -278,7 +331,10 @@ namespace SLBr.Pages
 
             RenderModeComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("RenderMode");
             BingBackgroundComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("BingBackground");
+            ImageSearchComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ImageSearch");
+            WebEngineComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebEngine");
 
+            TabUnloadingTimeComboBox.SelectionChanged -= TabUnloadingTimeComboBox_SelectionChanged;
             if (TabUnloadingTimeComboBox.Items.Count == 0)
             {
                 TabUnloadingTimeComboBox.Items.Add("1");
@@ -291,8 +347,8 @@ namespace SLBr.Pages
                 TabUnloadingTimeComboBox.Items.Add("60");
                 TabUnloadingTimeComboBox.Items.Add("120");
             }
-            TabUnloadingTimeComboBox.SelectionChanged += TabUnloadingTimeComboBox_SelectionChanged;
             TabUnloadingTimeComboBox.SelectedValue = App.Instance.GlobalSave.Get("TabUnloadingTime");
+            TabUnloadingTimeComboBox.SelectionChanged += TabUnloadingTimeComboBox_SelectionChanged;
 
             HomepageBackgroundComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("HomepageBackground");
 
@@ -322,6 +378,9 @@ namespace SLBr.Pages
 
             ScreenshotFormatComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ScreenshotFormat");
 
+            Theme _Theme = App.Instance.GetTheme("Custom");
+            CustomThemeIcon.Foreground = new SolidColorBrush(_Theme.PrimaryColor);
+            CustomThemeSelection.Background = new SolidColorBrush(_Theme.SecondaryColor);
             string ThemeName = App.Instance.GlobalSave.Get("Theme");
             foreach (Border ThemeItems in ThemeSelection.Items)
             {
@@ -333,19 +392,40 @@ namespace SLBr.Pages
             }
 
             AboutVersion.Text = $"Version {App.Instance.ReleaseVersion}";
+            ChromiumVersion.Text = $"Chromium: {Cef.ChromiumVersion}";
             CEFVersion.Text = $"CEF: {(Cef.CefVersion.StartsWith("r", StringComparison.Ordinal) ? Cef.CefVersion.Substring(1, Cef.CefVersion.IndexOf("-") - 10) : Cef.CefVersion.Substring(0, Cef.CefVersion.IndexOf("-") - 10))}";
-            ChromiumVersion.Text = $"Version: {Cef.ChromiumVersion}";
+            WebView2Version.Text = $"WebView2: {CoreWebView2Environment.GetAvailableBrowserVersionString() ?? "Unavailable"}";
+            switch (WebViewManager.Settings.TridentVersion)
+            {
+                case TridentEmulationVersion.IE7:
+                    TridentVersion.Text = $"Trident (Internet Explorer): 7";
+                    break;
+                case TridentEmulationVersion.IE8:
+                    TridentVersion.Text = $"Trident (Internet Explorer): 8";
+                    break;
+                case TridentEmulationVersion.IE9:
+                    TridentVersion.Text = $"Trident (Internet Explorer): 9";
+                    break;
+                case TridentEmulationVersion.IE10:
+                    TridentVersion.Text = $"Trident (Internet Explorer): 10";
+                    break;
+                case TridentEmulationVersion.IE11:
+                    TridentVersion.Text = $"Trident (Internet Explorer): 11";
+                    break;
+            }
 
             AdsBlocked.Text = App.Instance.AdsBlocked.ToString();
             TrackersBlocked.Text = App.Instance.TrackersBlocked.ToString();
 
-            HomeButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomeButton"));
-            TranslateButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TranslateButton"));
-            ReaderButtonToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ReaderButton"));
+            HomeButtonToggleButton.IsChecked = App.Instance.AllowHomeButton;
+            TranslateButtonToggleButton.IsChecked = App.Instance.AllowTranslateButton;
+            ReaderButtonToggleButton.IsChecked = App.Instance.AllowReaderModeButton;
+            QRButtonToggleButton.IsChecked = App.Instance.AllowQRButton;
+            WebEngineButtonToggleButton.IsChecked = App.Instance.AllowWebEngineButton;
 
-            ExtensionButtonComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ExtensionButton");
+            ExtensionButtonComboBox.SelectedIndex = App.Instance.ShowExtensionButton;
 
-            FavouritesBarComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("FavouritesBar");
+            FavouritesBarComboBox.SelectedIndex = App.Instance.ShowFavouritesBar;
 
             if (StandardFontComboBox.Items.Count == 0)
             {
@@ -356,51 +436,55 @@ namespace SLBr.Pages
                 FixedFontComboBox.ItemsSource = new List<string>(_Fonts);
                 MathFontComboBox.ItemsSource = new List<string>(_Fonts);
             }
-            Cef.UIThreadTaskFactory.StartNew(delegate
+            if (WebViewManager.IsCefInitialized)
             {
-                var Preferences = Cef.GetGlobalRequestContext().GetAllPreferences(true);
-                Dispatcher.Invoke(() =>
+                //TODO: APPLY FOR WEBVIEW2 & TRIDENT
+                Cef.UIThreadTaskFactory.StartNew(delegate
                 {
-                    if (Preferences.TryGetValue("webkit", out var WebKitObject) && WebKitObject is IDictionary<string, object> WebKit)
+                    var Preferences = Cef.GetGlobalRequestContext().GetAllPreferences(true);
+                    Dispatcher.Invoke(() =>
                     {
-                        if (WebKit.TryGetValue("webprefs", out var WebPrefsObject) && WebPrefsObject is IDictionary<string, object> WebPrefs)
+                        if (Preferences.TryGetValue("webkit", out var WebKitObject) && WebKitObject is IDictionary<string, object> WebKit)
                         {
-                            if (WebPrefs.TryGetValue("fonts", out var FontsObject) && FontsObject is IDictionary<string, object> Fonts)
+                            if (WebKit.TryGetValue("webprefs", out var WebPrefsObject) && WebPrefsObject is IDictionary<string, object> WebPrefs)
                             {
-                                if (Fonts.TryGetValue("standard", out var StandardFontMap) && StandardFontMap is IDictionary<string, object> StandardScriptMap)
+                                if (WebPrefs.TryGetValue("fonts", out var FontsObject) && FontsObject is IDictionary<string, object> Fonts)
                                 {
-                                    if (StandardScriptMap.TryGetValue("Zyyy", out var StandardFont))
-                                        StandardFontComboBox.SelectedItem = StandardFont;
+                                    if (Fonts.TryGetValue("standard", out var StandardFontMap) && StandardFontMap is IDictionary<string, object> StandardScriptMap)
+                                    {
+                                        if (StandardScriptMap.TryGetValue("Zyyy", out var StandardFont))
+                                            StandardFontComboBox.SelectedItem = StandardFont;
+                                    }
+                                    if (Fonts.TryGetValue("serif", out var SerifFontMap) && SerifFontMap is IDictionary<string, object> SerifScriptMap)
+                                    {
+                                        if (SerifScriptMap.TryGetValue("Zyyy", out var SerifFont))
+                                            SerifFontComboBox.SelectedItem = SerifFont;
+                                    }
+                                    if (Fonts.TryGetValue("sansserif", out var SansSerifFontMap) && SansSerifFontMap is IDictionary<string, object> SansSerifScriptMap)
+                                    {
+                                        if (SansSerifScriptMap.TryGetValue("Zyyy", out var SansSerifFont))
+                                            SansSerifFontComboBox.SelectedItem = SansSerifFont;
+                                    }
+                                    if (Fonts.TryGetValue("fixed", out var FixedFontMap) && FixedFontMap is IDictionary<string, object> FixedScriptMap)
+                                    {
+                                        if (FixedScriptMap.TryGetValue("Zyyy", out var FixedFont))
+                                            FixedFontComboBox.SelectedItem = FixedFont;
+                                    }
+                                    if (Fonts.TryGetValue("math", out var MathFontMap) && MathFontMap is IDictionary<string, object> MathScriptMap)
+                                    {
+                                        if (MathScriptMap.TryGetValue("Zyyy", out var MathFont))
+                                            MathFontComboBox.SelectedItem = MathFont;
+                                    }
                                 }
-                                if (Fonts.TryGetValue("serif", out var SerifFontMap) && SerifFontMap is IDictionary<string, object> SerifScriptMap)
-                                {
-                                    if (SerifScriptMap.TryGetValue("Zyyy", out var SerifFont))
-                                        SerifFontComboBox.SelectedItem = SerifFont;
-                                }
-                                if (Fonts.TryGetValue("sansserif", out var SansSerifFontMap) && SansSerifFontMap is IDictionary<string, object> SansSerifScriptMap)
-                                {
-                                    if (SansSerifScriptMap.TryGetValue("Zyyy", out var SansSerifFont))
-                                        SansSerifFontComboBox.SelectedItem = SansSerifFont;
-                                }
-                                if (Fonts.TryGetValue("fixed", out var FixedFontMap) && FixedFontMap is IDictionary<string, object> FixedScriptMap)
-                                {
-                                    if (FixedScriptMap.TryGetValue("Zyyy", out var FixedFont))
-                                        FixedFontComboBox.SelectedItem = FixedFont;
-                                }
-                                if (Fonts.TryGetValue("math", out var MathFontMap) && MathFontMap is IDictionary<string, object> MathScriptMap)
-                                {
-                                    if (MathScriptMap.TryGetValue("Zyyy", out var MathFont))
-                                        MathFontComboBox.SelectedItem = MathFont;
-                                }
+                                if (WebPrefs.TryGetValue("default_font_size", out var FontSize))
+                                    FontSizeSlider.Value = (int)FontSize;
+                                if (WebPrefs.TryGetValue("minimum_font_size", out var MinimumFontSize))
+                                    MinimumFontSizeSlider.Value = (int)MinimumFontSize;
                             }
-                            if (WebPrefs.TryGetValue("default_font_size", out var FontSize))
-                                FontSizeSlider.Value = (int)FontSize;
-                            if (WebPrefs.TryGetValue("minimum_font_size", out var MinimumFontSize))
-                                MinimumFontSizeSlider.Value = (int)MinimumFontSize;
                         }
-                    }
+                    });
                 });
-            });
+            }
 
             App.Instance.LoadExtensions();
             ExtensionsList.ItemsSource = App.Instance.Extensions;
@@ -459,52 +543,70 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("BingBackground", BingBackgroundComboBox.SelectedIndex);
         }
+        private void ImageSearchComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("ImageSearch", ImageSearchComboBox.SelectedIndex);
+        }
+        private void WebEngineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                if (WebEngineComboBox.SelectedIndex == 1)
+                {
+                    string? AvailableVersion = null;
+                    try
+                    {
+                        AvailableVersion = CoreWebView2Environment.GetAvailableBrowserVersionString();
+                    }
+                    catch (WebView2RuntimeNotFoundException)
+                    {
+                        WebEngineComboBox.SelectedIndex = 0;
+                        InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
+                        InfoWindow.Topmost = true;
+                        if (InfoWindow.ShowDialog() == true)
+                            BrowserView.Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+                    }
+                }
+                App.Instance.GlobalSave.Set("WebEngine", WebEngineComboBox.SelectedIndex);
+            }
+        }
         private void SearchEngineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
             {
-                string Name = SearchEngineComboBox.SelectedValue.ToString();
-                App.Instance.DefaultSearchProvider = App.Instance.SearchEngines.Find(i => i.Name == Name);
-                App.Instance.GlobalSave.Set("SearchEngine", Name);
+                App.Instance.DefaultSearchProvider = App.Instance.SearchEngines[SearchEngineComboBox.SelectedIndex];
+                App.Instance.GlobalSave.Set("SearchEngine", App.Instance.DefaultSearchProvider.Name);
             }
-        }
-        private void FingerprintProtectionLevelComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("FingerprintLevel", FingerprintProtectionLevelComboBox.SelectedValue.ToString());
         }
         private void AdBlockComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
                 App.Instance.SetAdBlock(AdBlockComboBox.SelectedIndex);
         }
+        private void WebRiskServiceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetWebRiskService(WebRiskServiceComboBox.SelectedIndex);
+        }
         private void TabAlignmentComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
             {
                 int TabAlignment = TabAlignmentComboBox.SelectedIndex;
-                App.Instance.GlobalSave.Set("TabAlignment", TabAlignment);
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
                 CompactTabCheckBox.Visibility = TabAlignment == 1 ? Visibility.Visible : Visibility.Collapsed;
             }
         }
         private void ExtensionButtonComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                int ExtensionButton = ExtensionButtonComboBox.SelectedIndex;
-                App.Instance.GlobalSave.Set("ExtensionButton", ExtensionButton);
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButton, FavouritesBarComboBox.SelectedIndex);
-            }
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
         private void FavouritesBarComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                int FavouritesBar = FavouritesBarComboBox.SelectedIndex;
-                App.Instance.GlobalSave.Set("FavouritesBar", FavouritesBar);
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBar);
-            }
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
 
         private void BackgroundImageTextBox_KeyUp(object sender, KeyEventArgs e)
@@ -562,6 +664,12 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("AdaptiveTheme", AdaptiveThemeCheckBox.IsChecked.ToBool().ToString());
         }
+
+        private void WarnCodecCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("WarnCodec", WarnCodecCheckBox.IsChecked.ToBool().ToString());
+        }
         private void PrivateTabsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -592,16 +700,11 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("QuickImage", QuickImageCheckBox.IsChecked.ToBool().ToString());
         }
-        private void SuppressErrorCheckBox_Click(object sender, RoutedEventArgs e)
+        /*private void SuppressErrorCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("SuppressError", SuppressErrorCheckBox.IsChecked.ToBool().ToString());
-        }
-        private void EnhanceImageCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("EnhanceImage", EnhanceImageCheckBox.IsChecked.ToBool().ToString());
-        }
+        }*/
         private void SpellCheckCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -609,15 +712,18 @@ namespace SLBr.Pages
                 bool Enabled = SpellCheckCheckBox.IsChecked.ToBool();
 
                 App.Instance.GlobalSave.Set("SpellCheck", Enabled.ToString());
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
 
-                    string Error;
-                    GlobalRequestContext.SetPreference("browser.enable_spellchecking", Enabled, out Error);
-                    GlobalRequestContext.SetPreference("spellcheck.dictionaries", App.Instance.Languages.Select(i => i.Tooltip), out Error);
-                    GlobalRequestContext.SetPreference("intl.accept_languages", App.Instance.Languages.Select(i => i.Tooltip), out Error);
-                });
+                        string Error;
+                        GlobalRequestContext.SetPreference("browser.enable_spellchecking", Enabled, out Error);
+                        GlobalRequestContext.SetPreference("spellcheck.dictionaries", App.Instance.Languages.Select(i => i.Tooltip), out Error);
+                        GlobalRequestContext.SetPreference("intl.accept_languages", App.Instance.Languages.Select(i => i.Tooltip), out Error);
+                    });
+                }
             }
         }
         private void SearchSuggestionsCheckBox_Click(object sender, RoutedEventArgs e)
@@ -645,12 +751,6 @@ namespace SLBr.Pages
                 App.Instance.GlobalSave.Set("FullscreenPopup", FullscreenPopupCheckBox.IsChecked.ToBool().ToString());
         }
 
-        private void GoogleSafeBrowsingCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.SetGoogleSafeBrowsing(GoogleSafeBrowsingCheckBox.IsChecked.ToBool());
-        }
-
         private void ForceLazyCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -660,28 +760,6 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetMobileView(MobileViewCheckBox.IsChecked.ToBool());
-        }
-        private void BlockFingerprintCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-            {
-                bool Checked = BlockFingerprintCheckBox.IsChecked.ToBool();
-                App.Instance.GlobalSave.Set("BlockFingerprint", Checked.ToString());
-                FingerprintProtectionLevelComboBox.IsEnabled = Checked;
-
-                if (!Checked)
-                {
-                    foreach (MainWindow _Window in App.Instance.AllWindows)
-                    {
-                        foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
-                        {
-                            BrowserView.UserAgentBranding = !BrowserView.Private && !Checked;
-                            if (BrowserView.UserAgentBranding)
-                                BrowserView.Chromium.GetDevToolsClient().Emulation.SetUserAgentOverrideAsync(App.Instance.UserAgent, null, null, App.Instance.UserAgentData);
-                        }
-                    }
-                }
-            }
         }
         private void AntiTamperCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -758,6 +836,11 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("WebNotifications", WebNotificationsCheckBox.IsChecked.ToBool().ToString());
         }
+        private void WebAppsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("WebApps", WebAppsCheckBox.IsChecked.ToBool().ToString());
+        }
 
         private void DimUnloadedIconCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -777,10 +860,10 @@ namespace SLBr.Pages
                 App.Instance.UpdateTabUnloadingTimer();
             }
         }
-        private void ChromiumHardwareAccelerationCheckBox_Click(object sender, RoutedEventArgs e)
+        private void BrowserHardwareAccelerationCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("ChromiumHardwareAcceleration", ChromiumHardwareAccelerationCheckBox.IsChecked.ToBool().ToString());
+                App.Instance.GlobalSave.Set("BrowserHardwareAcceleration", BrowserHardwareAccelerationCheckBox.IsChecked.ToBool().ToString());
         }
         private void JITCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -806,32 +889,33 @@ namespace SLBr.Pages
         private void CompactTabCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                App.Instance.GlobalSave.Set("CompactTab", CompactTabCheckBox.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
-            }
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
 
         private void TranslateButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                App.Instance.GlobalSave.Set("TranslateButton", TranslateButtonToggleButton.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
-            }
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
         private void HomeButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
-            App.Instance.GlobalSave.Set("HomeButton", HomeButtonToggleButton.IsChecked.ToBool().ToString());
-            App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
+            if (SettingsInitialized)
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
         private void ReaderButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                App.Instance.GlobalSave.Set("ReaderButton", ReaderButtonToggleButton.IsChecked.ToBool().ToString());
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex);
-            }
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
+        }
+        private void QRButtonToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
+        }
+        private void WebEngineButtonToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
 
 
@@ -844,8 +928,19 @@ namespace SLBr.Pages
                 Theme _Theme = App.Instance.GetTheme(Text);
                 if (_Theme == null)
                     return;
-                App.Instance.SetAppearance(_Theme, App.Instance.GlobalSave.GetInt("TabAlignment"), bool.Parse(App.Instance.GlobalSave.Get("CompactTab")), bool.Parse(App.Instance.GlobalSave.Get("HomeButton")), bool.Parse(App.Instance.GlobalSave.Get("TranslateButton")), bool.Parse(App.Instance.GlobalSave.Get("ReaderButton")), App.Instance.GlobalSave.GetInt("ExtensionButton"), App.Instance.GlobalSave.GetInt("FavouritesBar"));
-                //App.Instance.ApplyTheme(_Theme);
+                if (Text == "Custom")
+                {
+                    ColorPickerWindow _ColorPickerWindow = new ColorPickerWindow(Utils.HexToColor(App.Instance.GlobalSave.Get("CustomTheme")));
+                    _ColorPickerWindow.Topmost = true;
+                    if (_ColorPickerWindow.ShowDialog() == true)
+                    {
+                        App.Instance.GlobalSave.Set("CustomTheme", Utils.ColorToHex(_ColorPickerWindow.UserInput.Color));
+                        _Theme = App.Instance.GenerateTheme(_ColorPickerWindow.UserInput.Color, "Custom");
+                        CustomThemeIcon.Foreground = new SolidColorBrush(_Theme.PrimaryColor);
+                        CustomThemeSelection.Background = new SolidColorBrush(_Theme.SecondaryColor);
+                    }
+                }
+                App.Instance.SetAppearance(_Theme, TabAlignmentComboBox.SelectedIndex, CompactTabCheckBox.IsChecked.ToBool(), HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
                 ApplyTheme(_Theme);
             }
         }
@@ -885,7 +980,7 @@ namespace SLBr.Pages
 
         private void ClearAllDataButton_Click(object sender, RoutedEventArgs e)
         {
-            var infoWindow = new InformationDialogWindow("Confirmation", "Settings", "Clear all browsing data permanently?", "\uea99", "Yes", "No");
+            var infoWindow = new InformationDialogWindow("Warning", "Clear Browsing Data", "This will permanently delete all browsing data. Do you want to continue?", "\uea99", "Yes", "No");
             infoWindow.Topmost = true;
 
             if (infoWindow.ShowDialog() == true)
@@ -900,15 +995,8 @@ namespace SLBr.Pages
                 var Values = Target.Tag.ToString().Split("<,>", StringSplitOptions.None);
                 if (Values[0] == "PDF")
                 {
-                    bool PDFViewerExtension = Target.IsChecked.ToBool();
-                    App.Instance.GlobalSave.Set("PDF", PDFViewerExtension);
-                    Cef.UIThreadTaskFactory.StartNew(delegate
-                    {
-                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                        string Error;
-                        GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !PDFViewerExtension, out Error);
-                        GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !PDFViewerExtension, out Error);
-                    });
+                    WebViewManager.RuntimeSettings.PDFViewer = Target.IsChecked.ToBool();
+                    App.Instance.GlobalSave.Set("PDF", WebViewManager.RuntimeSettings.PDFViewer);
                 }
             }
         }
@@ -928,11 +1016,15 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 string Value = StandardFontComboBox.SelectedItem.ToString();
-                Cef.UIThreadTaskFactory.StartNew(delegate
+
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                    GlobalRequestContext.SetPreference("webkit.webprefs.fonts.standard.Zyyy", Value, out string _);
-                });
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        GlobalRequestContext.SetPreference("webkit.webprefs.fonts.standard.Zyyy", Value, out string _);
+                    });
+                }
             }
         }
 
@@ -941,11 +1033,14 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 string Value = SerifFontComboBox.SelectedItem.ToString();
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                    GlobalRequestContext.SetPreference("webkit.webprefs.fonts.serif.Zyyy", Value, out string _);
-                });
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        GlobalRequestContext.SetPreference("webkit.webprefs.fonts.serif.Zyyy", Value, out string _);
+                    });
+                }
             }
         }
 
@@ -954,11 +1049,14 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 string Value = SansSerifFontComboBox.SelectedItem.ToString();
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                    GlobalRequestContext.SetPreference("webkit.webprefs.fonts.sansserif.Zyyy", Value, out string _);
-                });
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        GlobalRequestContext.SetPreference("webkit.webprefs.fonts.sansserif.Zyyy", Value, out string _);
+                    });
+                }
             }
         }
 
@@ -967,11 +1065,14 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 string Value = FixedFontComboBox.SelectedItem.ToString();
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                    GlobalRequestContext.SetPreference("webkit.webprefs.fonts.fixed.Zyyy", Value, out string _);
-                });
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        GlobalRequestContext.SetPreference("webkit.webprefs.fonts.fixed.Zyyy", Value, out string _);
+                    });
+                }
             }
         }
 
@@ -980,11 +1081,14 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 string Value = MathFontComboBox.SelectedItem.ToString();
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                    GlobalRequestContext.SetPreference("webkit.webprefs.fonts.math.Zyyy", Value, out string _);
-                });
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        GlobalRequestContext.SetPreference("webkit.webprefs.fonts.math.Zyyy", Value, out string _);
+                    });
+                }
             }
         }
 
@@ -993,11 +1097,14 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 int Value = (int)FontSizeSlider.Value;
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                    GlobalRequestContext.SetPreference("webkit.webprefs.default_font_size", Value, out string _);
-                });
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        GlobalRequestContext.SetPreference("webkit.webprefs.default_font_size", Value, out string _);
+                    });
+                }
             }
         }
 
@@ -1006,11 +1113,14 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 int Value = (int)MinimumFontSizeSlider.Value;
-                Cef.UIThreadTaskFactory.StartNew(delegate
+                if (WebViewManager.IsCefInitialized)
                 {
-                    var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                    GlobalRequestContext.SetPreference("webkit.webprefs.minimum_font_size", Value, out string _);
-                });
+                    Cef.UIThreadTaskFactory.StartNew(delegate
+                    {
+                        var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                        GlobalRequestContext.SetPreference("webkit.webprefs.minimum_font_size", Value, out string _);
+                    });
+                }
             }
         }
         private void ExternalFontsCheckBox_Click(object sender, RoutedEventArgs e)
@@ -1043,7 +1153,7 @@ namespace SLBr.Pages
                 float Bandwidth = Checked ? float.Parse(App.Instance.GlobalSave.Get("Bandwidth")) : 0;
                 foreach (MainWindow _Window in App.Instance.AllWindows)
                 {
-                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
+                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
                         BrowserView.LimitNetwork(0, Bandwidth, Bandwidth);
                 }
             }
@@ -1066,7 +1176,7 @@ namespace SLBr.Pages
                     Bandwidth = 0;
                 foreach (MainWindow _Window in App.Instance.AllWindows)
                 {
-                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
+                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
                         BrowserView.LimitNetwork(0, Bandwidth, Bandwidth);
                 }
             }
@@ -1083,9 +1193,49 @@ namespace SLBr.Pages
                     Bandwidth = 0;
                 foreach (MainWindow _Window in App.Instance.AllWindows)
                 {
-                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.Chromium != null && i.Chromium.IsBrowserInitialized))
+                    foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
                         BrowserView.LimitNetwork(0, Bandwidth, Bandwidth);
                 }
+            }
+        }
+
+        private void AddSearchEngineButton_Click(object sender, RoutedEventArgs e)
+        {
+            MultiPromptDialogWindow _MultiPromptDialogWindow = new MultiPromptDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", IsRequired = true }, new InputField { Name = "Search URL with {0} as query", IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query (optional)", IsRequired = false } }, "\xf6fa");
+            _MultiPromptDialogWindow.Topmost = true;
+            if (_MultiPromptDialogWindow.ShowDialog() == true)
+            {
+                SearchProvider _SearchProvider = new SearchProvider
+                {
+                    Name = _MultiPromptDialogWindow.UserInputs[0].Trim(),
+                    Host = Utils.FastHost(_MultiPromptDialogWindow.UserInputs[1]),
+                    SearchUrl = _MultiPromptDialogWindow.UserInputs[1] + (_MultiPromptDialogWindow.UserInputs[1].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"),
+                    SuggestUrl = _MultiPromptDialogWindow.UserInputs[2] + (string.IsNullOrEmpty(_MultiPromptDialogWindow.UserInputs[2]) ? string.Empty : (_MultiPromptDialogWindow.UserInputs[2].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"))
+                };
+                App.Instance.SearchEngines.Add(_SearchProvider);
+                SearchEngineComboBox.Items.Add(_SearchProvider.Name);
+                SearchEngineComboBox.SelectedValue = _SearchProvider.Name;
+            }
+        }
+
+        private void EditSearchEngineButton_Click(object sender, RoutedEventArgs e)
+        {
+            int SelectedIndex = SearchEngineComboBox.SelectedIndex;
+            SearchProvider _SearchProvider = App.Instance.SearchEngines[SelectedIndex];
+
+            MultiPromptDialogWindow _MultiPromptDialogWindow = new MultiPromptDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query (optional)", IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f");
+            _MultiPromptDialogWindow.Topmost = true;
+            if (_MultiPromptDialogWindow.ShowDialog() == true)
+            {
+                _SearchProvider.Name = _MultiPromptDialogWindow.UserInputs[0].Trim();
+                _SearchProvider.Host = Utils.FastHost(_MultiPromptDialogWindow.UserInputs[1]);
+                _SearchProvider.SearchUrl = _MultiPromptDialogWindow.UserInputs[1] + (_MultiPromptDialogWindow.UserInputs[1].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}");
+                _SearchProvider.SuggestUrl = _MultiPromptDialogWindow.UserInputs[2] + (string.IsNullOrEmpty(_MultiPromptDialogWindow.UserInputs[2]) ? string.Empty : (_MultiPromptDialogWindow.UserInputs[2].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"));
+                App.Instance.SearchEngines[SelectedIndex] = _SearchProvider;
+                SearchEngineComboBox.SelectionChanged -= SearchEngineComboBox_SelectionChanged;
+                SearchEngineComboBox.Items[SelectedIndex] = _SearchProvider.Name;
+                SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
+                SearchEngineComboBox.SelectedIndex = SelectedIndex;
             }
         }
     }

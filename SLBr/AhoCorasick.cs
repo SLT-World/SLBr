@@ -4,10 +4,8 @@ namespace SLBr
 {
     public class Trie : Trie<string>, IEnumerable<string>
     {
-        public void Add(string s)
-        {
+        public void Add(string s) =>
             Add(s, s);
-        }
         public void Add(IEnumerable<string> strings)
         {
             foreach (string s in strings)
@@ -25,70 +23,70 @@ namespace SLBr
     {
         public static Trie FromList(IEnumerable<string> patterns)
         {
-            Trie trie = new Trie { patterns };
-            trie.Build();
-            return trie;
+            Trie _Trie = new Trie { patterns };
+            _Trie.Build();
+            return _Trie;
         }
 
-        private readonly Node<T, TValue> root = new Node<T, TValue>();
+        private readonly Node<T, TValue> _Root = new Node<T, TValue>();
 
-        public void Add(IEnumerable<T> word, TValue value)
+        public void Add(IEnumerable<T> _Word, TValue _Value)
         {
-            var node = root;
-            foreach (T c in word)
+            var _Node = _Root;
+            foreach (T c in _Word)
             {
-                var child = node[c];
-                if (child == null)
-                    child = node[c] = new Node<T, TValue>(c, node);
-                node = child;
+                var Child = _Node[c];
+                if (Child == null)
+                    Child = _Node[c] = new Node<T, TValue>(c, _Node);
+                _Node = Child;
             }
-            node.Values.Add(value);
+            _Node.Values.Add(_Value);
         }
         public void Build()
         {
-            var queue = new Queue<Node<T, TValue>>();
-            queue.Enqueue(root);
-            while (queue.Count > 0)
+            var Queue = new Queue<Node<T, TValue>>();
+            Queue.Enqueue(_Root);
+            while (Queue.Count > 0)
             {
-                var node = queue.Dequeue();
-                foreach (var child in node)
-                    queue.Enqueue(child);
-                if (node == root)
+                var _Node = Queue.Dequeue();
+                foreach (var Child in _Node)
+                    Queue.Enqueue(Child);
+                if (_Node == _Root)
                 {
-                    root.Fail = root;
+                    _Root.Fail = _Root;
                     continue;
                 }
-                var fail = node.Parent.Fail;
-                while (fail[node.Word] == null && fail != root)
-                    fail = fail.Fail;
-                node.Fail = fail[node.Word] ?? root;
-                if (node.Fail == node)
-                    node.Fail = root;
+                var _Fail = _Node.Parent.Fail;
+                while (_Fail[_Node.Word] == null && _Fail != _Root)
+                    _Fail = _Fail.Fail;
+                _Node.Fail = _Fail[_Node.Word] ?? _Root;
+                if (_Node.Fail == _Node)
+                    _Node.Fail = _Root;
             }
         }
 
-        public IEnumerable<TValue> Find(IEnumerable<T> text)
+        public IEnumerable<TValue> Find(IEnumerable<T> Text)
         {
-            var node = root;
-            foreach (T c in text)
+            var _Node = _Root;
+            foreach (T c in Text)
             {
-                while (node[c] == null && node != root)
-                    node = node.Fail;
-                node = node[c] ?? root;
-                for (var t = node; t != root; t = t.Fail)
+                while (_Node[c] == null && _Node != _Root)
+                    _Node = _Node.Fail;
+                _Node = _Node[c] ?? _Root;
+                for (var t = _Node; t != _Root; t = t.Fail)
                 {
-                    foreach (TValue value in t.Values)
-                        yield return value;
+                    foreach (TValue _Value in t.Values)
+                        yield return _Value;
                 }
             }
         }
 
         private class Node<TNode, TNodeValue> : IEnumerable<Node<TNode, TNodeValue>>
         {
-            private readonly TNode word;
-            private readonly Node<TNode, TNodeValue> parent;
-            private readonly Dictionary<TNode, Node<TNode, TNodeValue>> children = new Dictionary<TNode, Node<TNode, TNodeValue>>();
-            private readonly List<TNodeValue> values = new List<TNodeValue>();
+            private readonly TNode _Word;
+            private readonly Node<TNode, TNodeValue> _Parent;
+            private readonly Dictionary<TNode, Node<TNode, TNodeValue>> _Children = new Dictionary<TNode, Node<TNode, TNodeValue>>();
+            private readonly List<TNodeValue> _Values = new List<TNodeValue>();
 
             public Node()
             {
@@ -96,16 +94,16 @@ namespace SLBr
 
             public Node(TNode word, Node<TNode, TNodeValue> parent)
             {
-                this.word = word;
-                this.parent = parent;
+                _Word = word;
+                _Parent = parent;
             }
             public TNode Word
             {
-                get { return word; }
+                get { return _Word; }
             }
             public Node<TNode, TNodeValue> Parent
             {
-                get { return parent; }
+                get { return _Parent; }
             }
             public Node<TNode, TNodeValue> Fail
             {
@@ -114,28 +112,22 @@ namespace SLBr
             }
             public Node<TNode, TNodeValue> this[TNode c]
             {
-                get { return children.ContainsKey(c) ? children[c] : null; }
-                set { children[c] = value; }
+                get { return _Children.ContainsKey(c) ? _Children[c] : null; }
+                set { _Children[c] = value; }
             }
             public List<TNodeValue> Values
             {
-                get { return values; }
+                get { return _Values; }
             }
 
-            public IEnumerator<Node<TNode, TNodeValue>> GetEnumerator()
-            {
-                return children.Values.GetEnumerator();
-            }
+            public IEnumerator<Node<TNode, TNodeValue>> GetEnumerator() =>
+                _Children.Values.GetEnumerator();
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            IEnumerator IEnumerable.GetEnumerator() =>
+                GetEnumerator();
 
-            public override string ToString()
-            {
-                return Word.ToString();
-            }
+            public override string ToString() =>
+                Word.ToString();
         }
     }
 }
@@ -150,15 +142,15 @@ public class DomainList : IEnumerable<string>
         if (!AllDomains.Add(Domain)) return;
 
         bool WildCard = Domain.StartsWith("*.", StringComparison.Ordinal);
-        var Parts = Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').Reverse();
+        var Parts = Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse();
         var _Node = Root;
 
-        foreach (var part in Parts)
+        foreach (var Part in Parts)
         {
-            if (!_Node.Children.TryGetValue(part, out var Child))
+            if (!_Node.Children.TryGetValue(Part, out var Child))
             {
                 Child = new TrieNode();
-                _Node.Children[part] = Child;
+                _Node.Children[Part] = Child;
             }
             _Node = Child;
         }
@@ -169,7 +161,34 @@ public class DomainList : IEnumerable<string>
 
     public bool Has(string Host)
     {
-        var Parts = Host.Trim().TrimEnd('.').Split('.').Reverse();
+        Host = Host.AsSpan().TrimEnd('.').ToString();
+        var Span = Host.AsSpan();
+        TrieNode Node = Root;
+
+        int End = Span.Length;
+        while (End > 0)
+        {
+            int Dot = Span.Slice(0, End).LastIndexOf(".", StringComparison.Ordinal);
+            ReadOnlySpan<char> Label;
+            if (Dot == -1)
+            {
+                Label = Span.Slice(0, End);
+                End = 0;
+            }
+            else
+            {
+                Label = Span.Slice(Dot + 1, End - Dot - 1);
+                End = Dot;
+            }
+            if (Node.IsEnd && Node.Wildcard)
+                return true;
+            if (!Node.Children.TryGetValue(Label.ToString(), out Node))
+                return false;
+        }
+
+        return Node.IsEnd;
+
+        /*var Parts = Host.Trim().TrimEnd('.').Split('.').Reverse();
         var _Node = Root;
 
         foreach (var part in Parts)
@@ -180,14 +199,13 @@ public class DomainList : IEnumerable<string>
                 return false;
         }
 
-        return _Node.IsEnd;
+        return _Node.IsEnd;*/
     }
 
     public void Remove(string Domain)
     {
         if (!AllDomains.Remove(Domain)) return;
-
-        RemoveRecursive(Root, Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').Reverse().ToList(), 0, Domain.StartsWith("*.", StringComparison.Ordinal));
+        RemoveRecursive(Root, Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse().ToList(), 0, Domain.StartsWith("*.", StringComparison.Ordinal));
     }
 
     private bool RemoveRecursive(TrieNode _Node, List<string> Parts, int Index, bool Wildcard)
