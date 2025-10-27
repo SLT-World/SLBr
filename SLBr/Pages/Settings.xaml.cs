@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -245,7 +246,12 @@ namespace SLBr.Pages
 
             PrivateTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs"));
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
-            DownloadFaviconsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
+
+            bool DownloadFavicons = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
+            DownloadFaviconsCheckBox.IsChecked = DownloadFavicons;
+            FaviconServiceComboBox.IsEnabled = DownloadFavicons;
+            FaviconServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("FaviconService");
+
             CheckUpdateCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("CheckUpdate"));
             SmoothScrollCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll"));
             QuickImageCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("QuickImage"));
@@ -332,6 +338,7 @@ namespace SLBr.Pages
             RenderModeComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("RenderMode");
             BingBackgroundComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("BingBackground");
             ImageSearchComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ImageSearch");
+            TranslationProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TranslationProvider");
             WebEngineComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebEngine");
 
             TabUnloadingTimeComboBox.SelectionChanged -= TabUnloadingTimeComboBox_SelectionChanged;
@@ -394,7 +401,8 @@ namespace SLBr.Pages
             AboutVersion.Text = $"Version {App.Instance.ReleaseVersion}";
             ChromiumVersion.Text = $"Chromium: {Cef.ChromiumVersion}";
             CEFVersion.Text = $"CEF: {(Cef.CefVersion.StartsWith("r", StringComparison.Ordinal) ? Cef.CefVersion.Substring(1, Cef.CefVersion.IndexOf("-") - 10) : Cef.CefVersion.Substring(0, Cef.CefVersion.IndexOf("-") - 10))}";
-            WebView2Version.Text = $"WebView2: {CoreWebView2Environment.GetAvailableBrowserVersionString() ?? "Unavailable"}";
+            try { WebView2Version.Text = $"WebView2: {CoreWebView2Environment.GetAvailableBrowserVersionString()}"; }
+            catch (WebView2RuntimeNotFoundException) { WebView2Version.Text = $"WebView2: Unavailable"; }
             switch (WebViewManager.Settings.TridentVersion)
             {
                 case TridentEmulationVersion.IE7:
@@ -453,33 +461,54 @@ namespace SLBr.Pages
                                     if (Fonts.TryGetValue("standard", out var StandardFontMap) && StandardFontMap is IDictionary<string, object> StandardScriptMap)
                                     {
                                         if (StandardScriptMap.TryGetValue("Zyyy", out var StandardFont))
+                                        {
                                             StandardFontComboBox.SelectedItem = StandardFont;
+                                            StandardFontComboBox.IsEnabled = true;
+                                        }
                                     }
                                     if (Fonts.TryGetValue("serif", out var SerifFontMap) && SerifFontMap is IDictionary<string, object> SerifScriptMap)
                                     {
                                         if (SerifScriptMap.TryGetValue("Zyyy", out var SerifFont))
+                                        {
                                             SerifFontComboBox.SelectedItem = SerifFont;
+                                            SerifFontComboBox.IsEnabled = true;
+                                        }
                                     }
                                     if (Fonts.TryGetValue("sansserif", out var SansSerifFontMap) && SansSerifFontMap is IDictionary<string, object> SansSerifScriptMap)
                                     {
                                         if (SansSerifScriptMap.TryGetValue("Zyyy", out var SansSerifFont))
+                                        {
                                             SansSerifFontComboBox.SelectedItem = SansSerifFont;
+                                            SansSerifFontComboBox.IsEnabled = true;
+                                        }
                                     }
                                     if (Fonts.TryGetValue("fixed", out var FixedFontMap) && FixedFontMap is IDictionary<string, object> FixedScriptMap)
                                     {
                                         if (FixedScriptMap.TryGetValue("Zyyy", out var FixedFont))
+                                        {
                                             FixedFontComboBox.SelectedItem = FixedFont;
+                                            FixedFontComboBox.IsEnabled = true;
+                                        }
                                     }
                                     if (Fonts.TryGetValue("math", out var MathFontMap) && MathFontMap is IDictionary<string, object> MathScriptMap)
                                     {
                                         if (MathScriptMap.TryGetValue("Zyyy", out var MathFont))
+                                        {
                                             MathFontComboBox.SelectedItem = MathFont;
+                                            MathFontComboBox.IsEnabled = true;
+                                        }
                                     }
                                 }
                                 if (WebPrefs.TryGetValue("default_font_size", out var FontSize))
+                                {
                                     FontSizeSlider.Value = (int)FontSize;
+                                    FontSizeSlider.IsEnabled = true;
+                                }
                                 if (WebPrefs.TryGetValue("minimum_font_size", out var MinimumFontSize))
+                                {
                                     MinimumFontSizeSlider.Value = (int)MinimumFontSize;
+                                    MinimumFontSizeSlider.IsEnabled = true;
+                                }
                             }
                         }
                     });
@@ -548,6 +577,11 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("ImageSearch", ImageSearchComboBox.SelectedIndex);
         }
+        private void TranslationProviderComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("TranslationProvider", TranslationProviderComboBox.SelectedIndex);
+        }
         private void WebEngineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
@@ -578,6 +612,11 @@ namespace SLBr.Pages
                 App.Instance.DefaultSearchProvider = App.Instance.SearchEngines[SearchEngineComboBox.SelectedIndex];
                 App.Instance.GlobalSave.Set("SearchEngine", App.Instance.DefaultSearchProvider.Name);
             }
+        }
+        private void FaviconServiceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("FaviconService", FaviconServiceComboBox.SelectedIndex);
         }
         private void AdBlockComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -683,7 +722,11 @@ namespace SLBr.Pages
         private void DownloadFaviconsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("Favicons", DownloadFaviconsCheckBox.IsChecked.ToBool().ToString());
+            {
+                bool DownloadFavicons = DownloadFaviconsCheckBox.IsChecked.ToBool();
+                FaviconServiceComboBox.IsEnabled = DownloadFavicons;
+                App.Instance.GlobalSave.Set("Favicons", DownloadFavicons);
+            }
         }
         private void CheckUpdateCheckBox_Click(object sender, RoutedEventArgs e)
         {

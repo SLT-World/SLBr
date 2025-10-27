@@ -49,13 +49,13 @@ namespace SLBr
                     BrowserTabItem BrowserTabItemSource = FocusedWindow.GetBrowserTabWithId(TabItemSourceId);
 
                     bool IsOriginallySelected = TabItemSource.IsSelected;
-
-                    if (IsOriginallySelected)
-                        FocusedWindow.TabsUI.SelectedIndex = TargetIndex;
-                    FocusedWindow.Tabs.Remove(BrowserTabItemSource);
-                    FocusedWindow.Tabs.Insert(TargetIndex, BrowserTabItemSource);
-                    if (IsOriginallySelected)
-                        FocusedWindow.TabsUI.SelectedIndex = TargetIndex;
+                    int OldIndex = FocusedWindow.Tabs.IndexOf(BrowserTabItemSource);
+                    if (OldIndex >= 0)
+                    {
+                        FocusedWindow.Tabs.Move(OldIndex, TargetIndex);
+                        if (IsOriginallySelected)
+                            FocusedWindow.TabsUI.SelectedIndex = TargetIndex;
+                    }
                 }
                 e.Handled = true;
             }

@@ -170,7 +170,7 @@
 
                     <Button Click="ButtonAction" BorderThickness="0" Tag="4&lt;,&gt;{Homepage}" x:Name="HomeButton" Content="&#xE80F;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Home"/>
 
-                    <WinUI:PopupButton BorderThickness="0" x:Name="OpenDownloadsButton" ToolTip="Downloads" Content="&#xE896;" Margin="0,0,5,0" Style="{StaticResource PopupIconButton}" DockPanel.Dock="Right">
+                    <WinUI:PopupButton BorderThickness="0" x:Name="OpenDownloadsButton" ToolTip="Downloads" Content="&#xE896;" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" DockPanel.Dock="Right">
                         <WinUI:PopupButton.PopupContent>
                             <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5,2.5">
                                 <StackPanel>
@@ -269,7 +269,7 @@
                         <Border Background="{StaticResource PrimaryBrush}" Width="10" Height="5" IsHitTestVisible="False"/>
                         <TextBlock x:Name="WebEngineButtonIcon" Text="&#x2600;" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="7.5" FontSize="10" FontFamily="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons" IsHitTestVisible="False" Background="{StaticResource PrimaryBrush}"/>
                     </Grid>
-                    <WinUI:PopupButton Click="ButtonAction" Tag="57&lt;,&gt;0" BorderThickness="0" x:Name="QRButton" ToolTip="Create QR Code" Content="&#xed14;" Margin="0,0,5,0" Style="{StaticResource PopupIconButton}" DockPanel.Dock="Right">
+                    <WinUI:PopupButton Click="ButtonAction" Tag="57&lt;,&gt;0" BorderThickness="0" x:Name="QRButton" ToolTip="Create QR Code" Content="&#xed14;" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" DockPanel.Dock="Right">
                         <WinUI:PopupButton.PopupContent>
                             <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
                                 <Grid>
@@ -360,7 +360,58 @@
                         </Button.Resources>
                     </Button>-->
 
-                    <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="4&lt;,&gt;https://translate.google.com/translate?sl=auto&amp;tl=en&amp;hl=en&amp;u={CurrentUrl}" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Translate" Content="&#xE8C1;"/>
+                    <WinUI:PopupButton BorderThickness="0" Visibility="Collapsed" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" ToolTip="Translate" Content="&#xE8C1;">
+                        <WinUI:PopupButton.PopupContent>
+
+                            <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <DockPanel Grid.ColumnSpan="2" Margin="0,0,0,10" Height="Auto">
+                                        <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE8C1;</TextBlock>
+                                        <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Translate Page</Label>
+                                    </DockPanel>
+                                    <StackPanel Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
+                                        <TextBlock TextTrimming="CharacterEllipsis" Text="Translate to" Margin="0,0,0,5"/>
+                                        <ComboBox Width="Auto" x:Name="TranslateComboBox"/>
+                                    </StackPanel>
+                                    <Button Click="ButtonAction" Grid.Column="0" Margin="0,0,5,0" Width="Auto" Tag="59&lt;,&gt;0" Grid.Row="2">Translate</Button>
+                                    <Button Click="ButtonAction" Grid.Column="1" Margin="5,0,0,0" Width="Auto" Tag="59&lt;,&gt;1" Grid.Row="2">Show original</Button>
+
+                                    <Grid x:Name="TranslateLoadingPanel" Visibility="Collapsed" Grid.ColumnSpan="2" Grid.RowSpan="3" Background="{StaticResource PrimaryBrush}">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="10"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock RenderTransformOrigin="0.5,0.5" Padding="0,0,0,0" FontSize="25px" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                            <TextBlock.RenderTransform>
+                                                <RotateTransform/>
+                                            </TextBlock.RenderTransform>
+                                            <TextBlock.Resources>
+                                                <Storyboard x:Key="TranslateSpinStoryboard" RepeatBehavior="Forever">
+                                                    <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:2"/>
+                                                </Storyboard>
+                                            </TextBlock.Resources>
+                                            <TextBlock.Triggers>
+                                                <EventTrigger RoutedEvent="TextBlock.Loaded">
+                                                    <BeginStoryboard Storyboard="{StaticResource TranslateSpinStoryboard}" x:Name="TranslateTriggerSpinStoryboard"/>
+                                                </EventTrigger>
+                                            </TextBlock.Triggers>
+                                        </TextBlock>
+                                        <TextBlock Grid.Row="2" VerticalAlignment="Top" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Text="Translating" Margin="0,0,0,5"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </WinUI:PopupButton.PopupContent>
+                    </WinUI:PopupButton>
                     <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="17" x:Name="ReaderModeButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Reader Mode" Content="&#xF000;"/>
                     <Button Click="ButtonAction" BorderThickness="0" Visibility="Collapsed" Tag="56" x:Name="InstallWebAppButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Install Web App" Content="&#xe74c;"/>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="12" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Add to favourites" x:Name="FavouriteButton" Content="&#xEB51;"/>
@@ -371,7 +422,7 @@
                             <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
                         <Border x:Name="OmniBoxBorder" Grid.ColumnSpan="2" Width="Auto" Margin="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Height="35" Padding="0"/>
-                        <Border MouseDown="SiteInformation_MouseDown" x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
+                        <Border x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
                             <Grid>
                                 <DockPanel Margin="4.25">
                                     <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0,0,0,0" Width="16px" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -386,74 +437,76 @@
                                     </TextBlock>
                                     <TextBlock DockPanel.Dock="Right" x:Name="SiteInformationText" Visibility="Collapsed" Margin="5,0,0,0" Text="-" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </DockPanel>
-                                <Popup x:Name="SiteInformationPopup" IsOpen="False" PopupAnimation="Fade" VerticalOffset="7.5" AllowsTransparency="True" SnapsToDevicePixels="True">
-                                    <Border Width="300" Padding="10" Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
-                                        <StackPanel>
-                                            <DockPanel>
-                                                <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                    <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE72E;"/>
-                                                </Border>
-                                                <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText" Text="Connection is secure"/>
-                                            </DockPanel>
-                                            <StackPanel Margin="0,10,0,0" x:Name="AdBlockContainer">
-                                                <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
+                                <WinUI:PopupButton x:Name="SiteInformationPopupButton" Width="Auto" Height="Auto" Background="Transparent" Opacity="0" BorderThickness="0" Style="{StaticResource PopupIconButton}">
+                                    <WinUI:PopupButton.PopupContent>
+                                        <Border Width="300" Padding="10" Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
+                                            <StackPanel>
                                                 <DockPanel>
                                                     <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xea18;"/>
+                                                        <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE72E;"/>
                                                     </Border>
-                                                    <ToggleButton x:Name="AdBlockToggleButton" Click="AdBlockToggleButton_Click" DockPanel.Dock="Right"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Block ads &amp; trackers on:"/>
-                                                        <TextBlock x:Name="AdBlockHostText" Foreground="{StaticResource GrayBrush}"/>
-                                                    </StackPanel>
+                                                    <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText" Text="Connection is secure"/>
                                                 </DockPanel>
+                                                <StackPanel Margin="0,10,0,0" x:Name="AdBlockContainer">
+                                                    <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
+                                                    <DockPanel>
+                                                        <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xea18;"/>
+                                                        </Border>
+                                                        <ToggleButton x:Name="AdBlockToggleButton" Click="AdBlockToggleButton_Click" DockPanel.Dock="Right"/>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="Block ads &amp; trackers on:"/>
+                                                            <TextBlock x:Name="AdBlockHostText" Foreground="{StaticResource GrayBrush}"/>
+                                                        </StackPanel>
+                                                    </DockPanel>
+                                                </StackPanel>
+                                                <StackPanel Margin="0,10,0,0" x:Name="SiteInformationCertificate">
+                                                    <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
+                                                    <DockPanel>
+                                                        <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
+                                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
+                                                        </Border>
+                                                        <TextBlock x:Name="CertificateValidation" VerticalAlignment="Center" Text="Certificate is valid"/>
+                                                    </DockPanel>
+                                                    <Expander x:Name="CertificateInfo" Margin="0,10,0,0">
+                                                        <Expander.Header>
+                                                            Certificate
+                                                        </Expander.Header>
+                                                        <StackPanel>
+                                                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued to" FontWeight="Bold"/>
+                                                            <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                                <TextBlock Text="Common Name:" Width="125"/>
+                                                                <TextBlock x:Name="IssueToCommonName" Text="google.com"/>
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                                <TextBlock Text="Company:" Width="125"/>
+                                                                <TextBlock x:Name="IssueToCompany" Text=""/>
+                                                            </StackPanel>
+                                                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued by" FontWeight="Bold"/>
+                                                            <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                                <TextBlock Text="Common Name:" Width="125"/>
+                                                                <TextBlock x:Name="IssueByCommonName" Text="WR2"/>
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                                <TextBlock Text="Company:" Width="125"/>
+                                                                <TextBlock x:Name="IssueByCompany" Text="Google Trust Services"/>
+                                                            </StackPanel>
+                                                            <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Validity period" FontWeight="Bold"/>
+                                                            <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                                <TextBlock Text="Start:" Width="125"/>
+                                                                <TextBlock x:Name="CertificateStart" Text="12/09/2024"/>
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
+                                                                <TextBlock Text="End:" Width="125"/>
+                                                                <TextBlock x:Name="CertificateEnd" Text="03/03/2025"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Expander>
+                                                </StackPanel>
                                             </StackPanel>
-                                            <StackPanel Margin="0,10,0,0" x:Name="SiteInformationCertificate">
-                                                <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
-                                                <DockPanel>
-                                                    <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
-                                                    </Border>
-                                                    <TextBlock x:Name="CertificateValidation" VerticalAlignment="Center" Text="Certificate is valid"/>
-                                                </DockPanel>
-                                                <Expander x:Name="CertificateInfo" Margin="0,10,0,0">
-                                                    <Expander.Header>
-                                                        Certificate
-                                                    </Expander.Header>
-                                                    <StackPanel>
-                                                        <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued to" FontWeight="Bold"/>
-                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Common Name:" Width="125"/>
-                                                            <TextBlock x:Name="IssueToCommonName" Text="google.com"/>
-                                                        </StackPanel>
-                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Company:" Width="125"/>
-                                                            <TextBlock x:Name="IssueToCompany" Text=""/>
-                                                        </StackPanel>
-                                                        <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued by" FontWeight="Bold"/>
-                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Common Name:" Width="125"/>
-                                                            <TextBlock x:Name="IssueByCommonName" Text="WR2"/>
-                                                        </StackPanel>
-                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Company:" Width="125"/>
-                                                            <TextBlock x:Name="IssueByCompany" Text="Google Trust Services"/>
-                                                        </StackPanel>
-                                                        <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Validity period" FontWeight="Bold"/>
-                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="Start:" Width="125"/>
-                                                            <TextBlock x:Name="CertificateStart" Text="12/09/2024"/>
-                                                        </StackPanel>
-                                                        <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                                                            <TextBlock Text="End:" Width="125"/>
-                                                            <TextBlock x:Name="CertificateEnd" Text="03/03/2025"/>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </Expander>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </Popup>
+                                        </Border>
+                                    </WinUI:PopupButton.PopupContent>
+                                </WinUI:PopupButton>
                             </Grid>
                         </Border>
                         <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Search or type a URL" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0" Foreground="{StaticResource BorderBrush}" x:Name="OmniBoxPlaceholder" Visibility="Visible"/>

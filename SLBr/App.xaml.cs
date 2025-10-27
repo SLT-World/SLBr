@@ -13,7 +13,6 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -1025,7 +1024,9 @@ namespace SLBr
                 if (Flag.StartsWith("--user=", StringComparison.Ordinal))
                 {
                     Username = Flag.Replace("--user=", string.Empty).Replace(" ", "-");
-                    if (Username != "Default")
+                    if (Utils.IsEmptyOrWhiteSpace(Username))
+                        Username = "Default";
+                    else if (Username != "Default")
                         AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30-" + Username + "}";
                 }
                 else if (Flag == "--background")
@@ -1080,10 +1081,12 @@ namespace SLBr
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             DispatcherUnhandledException += App_DispatcherUnhandledException;
+            Dispatcher.UnhandledException += App_DispatcherUnhandledException;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             ReleaseVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             //Set Google API keys. See http://www.chromium.org/developers/how-tos/api-keys
+            //https://source.chromium.org/chromium/chromium/src/+/main:google_apis/google_api_keys.h
             Environment.SetEnvironmentVariable("GOOGLE_API_KEY", SECRETS.GOOGLE_API_KEY);
             Environment.SetEnvironmentVariable("GOOGLE_DEFAULT_CLIENT_ID", SECRETS.GOOGLE_DEFAULT_CLIENT_ID);
             Environment.SetEnvironmentVariable("GOOGLE_DEFAULT_CLIENT_SECRET", SECRETS.GOOGLE_DEFAULT_CLIENT_SECRET);
@@ -1094,6 +1097,8 @@ namespace SLBr
             ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             //CdnPath = Path.Combine(ResourcesPath, "cdn");
+
+            LocaleNames = AllLocales.Select(i => i.Value).ToList();
 
             InitializeSaves();
 
@@ -1641,6 +1646,7 @@ Inner Exception: ```{7} ```";
             { "zu", "Zulu" },
             { "zu-ZA", "Zulu (South Africa)" },
         };
+        public List<string> LocaleNames = null;
 
         public string GetLocaleIcon(string ISO)
         {
@@ -1707,7 +1713,7 @@ Inner Exception: ```{7} ```";
                         {
                             DefaultSearchProvider,
                             new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
-                            new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" },
+                            new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?q={0}&type=list" },
                             new SearchProvider { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
                             new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
                             new SearchProvider { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
@@ -1862,6 +1868,8 @@ Inner Exception: ```{7} ```";
 
             if (!GlobalSave.Has("ImageSearch"))
                 GlobalSave.Set("ImageSearch", 0);
+            if (!GlobalSave.Has("TranslationProvider"))
+                GlobalSave.Set("TranslationProvider", 0);
 
             if (!GlobalSave.Has("WebEngine"))
                 GlobalSave.Set("WebEngine", 0);
@@ -1884,6 +1892,7 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("ForceLazy", false);
             if (!GlobalSave.Has("FullscreenPopup"))
                 GlobalSave.Set("FullscreenPopup", true);
+            GlobalSave.GetInt("FaviconService", 0);
 
             SetWebRiskService(GlobalSave.GetInt("WebRiskService", 1));
 
@@ -2702,8 +2711,8 @@ Inner Exception: ```{7} ```";
         }
 
         public const string Cannot_Connect_Error = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
-        public const string Process_Crashed_Error = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons, Segoe MDL2 Assets','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
-        public const string Deception_Error = @"<html><head><title>Deceptive site ahead</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons, Segoe MDL2 Assets','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Deceptive site ahead</h2><h5>The site may contain deceptive content that may trick you into installing software or revealing personal information.</h5></div></body></html>";
+        public const string Process_Crashed_Error = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
+        public const string Deception_Error = @"<html><head><title>Deceptive site ahead</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Deceptive site ahead</h2><h5>The site may contain deceptive content that may trick you into installing software or revealing personal information.</h5></div></body></html>";
         public const string Malware_Error = @"<html><head><title>Dangerous site ahead</title><style>html{background:darkred;}body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>The site may install harmful and malicious software that may manipulate or steal personal information.</h5></div></body></html>";
 
         private void SetBrowserFlags(WebViewSettings Settings)
@@ -2717,6 +2726,7 @@ Inner Exception: ```{7} ```";
             SetSecurityFlags(Settings);
             SetFeatureFlags(Settings);
             SetUrlFlags(Settings);
+            SetEdgeFlags(Settings);
             //force-gpu-mem-available-mb https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/service/gpu_switches.cc
             //disable-file-system Disable FileSystem API.
         }
@@ -2731,6 +2741,7 @@ Inner Exception: ```{7} ```";
             //https://source.chromium.org/chromium/chromium/src/+/main:components/google/core/common/google_switches.cc
             //https://source.chromium.org/chromium/chromium/src/+/main:components/policy/core/common/policy_switches.cc
             //https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/chrome_switches.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:google_apis/gaia/gaia_urls_unittest.cc;l=144?q=%22const%20char%20k%22%20%22%5B%5D%22%20%22-url%5C%22%22&start=31
             Settings.AddFlag("connectivity-check-url", "https://cp.cloudflare.com/generate_204");
             Settings.AddFlag("sync-url", DummyUrl);
             Settings.AddFlag("gaia-url", DummyUrl);
@@ -2761,6 +2772,8 @@ Inner Exception: ```{7} ```";
 
             //https://source.chromium.org/chromium/chromium/src/+/main:components/translate/core/common/translate_switches.cc
             Settings.AddFlag("translate-script-url", DummyUrl);
+            Settings.AddFlag("translate-security-origin", "");
+            Settings.AddFlag("translate-ranker-model-url", DummyUrl);
 
             //https://source.chromium.org/chromium/chromium/src/+/main:components/autofill/core/common/autofill_features.cc
             Settings.AddFlag("autofill-server-url", DummyUrl);
@@ -2769,6 +2782,19 @@ Inner Exception: ```{7} ```";
             Settings.AddFlag("override-metrics-upload-url", DummyUrl);
             Settings.AddFlag("crash-server-url", DummyUrl);
             Settings.AddFlag("ignore-google-port-numbers");
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/chrome_features.cc
+            Settings.AddFlag("glic-guest-url", DummyUrl);
+            Settings.AddFlag("glic-user-status-url", DummyUrl);
+            Settings.AddFlag("glic-user-status-oauth2-scope", DummyUrl);
+            Settings.AddFlag("glic-fre-url", DummyUrl);
+            Settings.AddFlag("glic-caa-link-url", DummyUrl);
+            Settings.AddFlag("glic-allowed-origins-override", "");
+
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/core/common/safebrowsing_switches.cc
+            //Settings.AddFlag("binary-upload-service-url", "");
+            //cloud-print-url, url-filtering-endpoint
+            //trace-upload-url
         }
 
         public static void SetChromeFlags(WebViewSettings Settings)
@@ -2887,7 +2913,7 @@ Inner Exception: ```{7} ```";
 
             //https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/graphics/dark_mode_settings_builder.cc
             //https://chromium.googlesource.com/chromium/src/+/refs/heads/main/third_party/blink/renderer/platform/graphics/dark_mode_settings.h
-            Settings.AddFlag("dark-mode-settings", "ImagePolicy=1");//,ImageClassifierPolicy=0,InversionAlgorithm=2
+            //Settings.AddFlag("dark-mode-settings", "");//ImagePolicy=1,ImageClassifierPolicy=1,InversionAlgorithm=3
 
             //Disabling site isolation somehow increases memory usage by 10 MB
             /*Settings.AddFlag("no-sandbox");
@@ -2917,6 +2943,14 @@ Inner Exception: ```{7} ```";
                 //Turns device memory into 0.5
                 Settings.AddFlag("enable-low-end-device-mode"); //Causes memory to be 20 MB more when minimized, but reduces 80 MB when not minimized
 
+                //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/ui/startup/bad_flags_prompt.cc
+                // This flag delays execution of base::TaskPriority::BEST_EFFORT tasks until
+                // shutdown. The queue of base::TaskPriority::BEST_EFFORT tasks can increase
+                // memory usage. Also, while it should be possible to use Chrome almost
+                // normally with this flag, it is expected that some non-visible operations
+                // such as writing user data to disk, cleaning caches, reporting metrics or
+                // updating components won't be performed until shutdown.
+                //switches::kDisableBestEffortTasks,
                 Settings.AddFlag("disable-best-effort-tasks"); //NO LONGER PREVENTS GOOGLE LOGIN IN 27/6/2025
 
                 Settings.AddFlag("disable-smooth-scrolling");
@@ -2933,7 +2967,7 @@ Inner Exception: ```{7} ```";
                 Settings.AddFlag("gpu-program-cache-size-kb", $"{128 * 1024}");
                 Settings.AddFlag("gpu-disk-cache-size-kb", $"{128 * 1024}");
 
-                Settings.AddFlag("force-effective-connection-type", "Slow-2G");
+                Settings.AddFlag("force-effective-connection-type", "Slow-2G-On-Cellular");
                 //Settings.AddFlag("num-raster-threads", "4"); //RETIRED FLAG
                 Settings.AddFlag("renderer-process-limit", "4");
                 //Settings.AddFlag("use-mobile-user-agent");
@@ -3077,6 +3111,8 @@ Inner Exception: ```{7} ```";
                     Settings.AddFlag("use-webgpu-power-preference", "force-low-power");
                 else
                     Settings.AddFlag("use-webgpu-power-preference", "default-low-power");*/
+                if (HighPerformanceMode)
+                    Settings.AddFlag("force-high-performance-gpu");
             }
             else
             {
@@ -3131,8 +3167,10 @@ Inner Exception: ```{7} ```";
             Settings.AddFlag("disable-checker-imaging");
 
             if (LiteMode)
+            {
                 Settings.AddFlag("enable-lite-video");
-            //Settings.AddFlag("lite-video-force-override-decision");
+                Settings.AddFlag("lite-video-force-override-decision");
+            }
 
             //FLAG SEEMS TO NOT EXIST BUT IT DOES WORK
             Settings.AddFlag("enable-speech-input");
@@ -3249,7 +3287,7 @@ Inner Exception: ```{7} ```";
             //MHTML_Improvements, OptimizeHTMLElementUrls,WebFontsCacheAwareTimeoutAdaption, EstablishGpuChannelAsync
             //https://source.chromium.org/chromium/chromium/src/+/main:components/download/public/common/download_features.cc
             //https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/features.cc
-            string EnableFeatures = "HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
+            string EnableFeatures = "EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
             //https://github.com/chromiumembedded/cef/issues/3991
             string DisableFeatures = "LensOverlay,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
             //WebBluetooth,MediaRouter,
@@ -3271,6 +3309,9 @@ Inner Exception: ```{7} ```";
                 Settings.Flags["disable-blink-features"] += "," + DisableBlinkFeatures;
             }
 
+            //https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform2/login_manager/feature_flags_tables.h;l=840?q=enable-lazy-image-loading
+
+
             //https://github.com/Alex313031/thorium/blob/main/src/chrome/browser/chrome_content_browser_client.cc
             //https://chromium.googlesource.com/chromium/src/third_party/+/master/blink/renderer/core/frame/settings.json5
             //https://chromium.googlesource.com/chromium/src/+/HEAD/third_party/blink/public/platform/web_effective_connection_type.h
@@ -3286,7 +3327,7 @@ Inner Exception: ```{7} ```";
             else
             {
                 Settings.Flags["blink-settings"] += ",lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
-                Settings.Flags["enable-features"] += ",LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
+                Settings.Flags["enable-features"] += ",LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
                 Settings.Flags["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
 
                 Settings.Flags["enable-blink-features"] += ",SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
@@ -3297,7 +3338,7 @@ Inner Exception: ```{7} ```";
                     //https://github.com/cypress-io/cypress/issues/22622
                     //https://issues.chromium.org/issues/40220332
                     Settings.Flags["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
-                    Settings.Flags["enable-features"] += ",AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
+                    Settings.Flags["enable-features"] += ",LiteVideo,AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
                     Settings.Flags["enable-blink-features"] += ",PrefersReducedData,ForceReduceMotion";//
                     Settings.Flags["blink-settings"] += ",imageAnimationPolicy=1,prefersReducedTransparency=true,prefersReducedMotion=true,lazyLoadingFrameMarginPxUnknown=0,lazyLoadingFrameMarginPxOffline=0,lazyLoadingFrameMarginPxSlow2G=0,lazyLoadingFrameMarginPx2G=0,lazyLoadingFrameMarginPx3G=0,lazyLoadingFrameMarginPx4G=0,lazyLoadingImageMarginPxUnknown=0,lazyLoadingImageMarginPxOffline=0,lazyLoadingImageMarginPxSlow2G=0,lazyLoadingImageMarginPx2G=0,lazyLoadingImageMarginPx3G=0,lazyLoadingImageMarginPx4G=0";
                     JsFlags += " --max-lazy --lite-mode --noexpose-wasm --optimize-for-size";
@@ -3318,6 +3359,22 @@ Inner Exception: ```{7} ```";
             if (!bool.Parse(GlobalSave.Get("JIT")))
                 JsFlags += " --jitless";
             Settings.JavaScriptFlags = JsFlags;
+        }
+
+        private void SetEdgeFlags(WebViewSettings Settings)
+        {
+            // Does this actually work? Disabling msSmartScreenProtection in --disable-features does seem to work
+            //msLocalSpellcheck,msFreezeAdFramesImmediately,msEdgeAdaptiveCPUThrottling
+            //msEdgeWebViewApplyWebResourceRequestedFilterForOOPIFs
+            string EnableFeatures = "msWebView2CancelInitialNavigation,msWebView2CodeCache,msWebView2TreatAppSuspendAsDeviceSuspend";
+            try
+            {
+                Settings.AddFlag("enable-features", EnableFeatures);
+            }
+            catch
+            {
+                Settings.Flags["enable-features"] += "," + EnableFeatures;
+            }
         }
 
         public Theme CurrentTheme;
@@ -3468,10 +3525,24 @@ Inner Exception: ```{7} ```";
             {
                 if (!IsPrivate && Utils.IsHttpScheme(Url))
                 {
-                    BitmapImage _Image = new BitmapImage(new Uri("https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=24&url=" + Utils.CleanUrl(Url, true, true, true, false, false)));
-                    if (_Image.CanFreeze)
-                        _Image.Freeze();
-                    return _Image;
+                    switch (GlobalSave.GetInt("FaviconService", 0))
+                    {
+                        case 0:
+                            BitmapImage _GImage = new BitmapImage(new Uri("https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false)));
+                            if (_GImage.CanFreeze)
+                                _GImage.Freeze();
+                            return _GImage;
+                        case 1:
+                            BitmapImage _YImage = new BitmapImage(new Uri("https://favicon.yandex.net/favicon/" + Utils.FastHost(Url)));
+                            if (_YImage.CanFreeze)
+                                _YImage.Freeze();
+                            return _YImage;
+                        case 2:
+                            BitmapImage _DImage = new BitmapImage(new Uri("https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico"));
+                            if (_DImage.CanFreeze)
+                                _DImage.Freeze();
+                            return _DImage;
+                    }
                 }
                 else if (Url.StartsWith("slbr://settings", StringComparison.Ordinal))
                     return SettingsTabIcon;
@@ -4004,7 +4075,8 @@ Inner Exception: ```{7} ```";
         ToggleCompactTabs = 55,
         InstallWebApp = 56,
         QR = 57,
-        SwitchWebEngine = 58
+        SwitchWebEngine = 58,
+        Translate = 59
     }
 
     public class ActionStorage : INotifyPropertyChanged
@@ -4099,6 +4171,8 @@ Inner Exception: ```{7} ```";
 
     public static class Scripts
     {
+        public const string GetFaviconScript = @"(function() { var links = document.getElementsByTagName('link'); for (var i = 0; i < links.length; i++) { var rel = links[i].getAttribute('rel'); if (rel && rel.toLowerCase().indexOf('icon') !== -1) { return links[i].href; } } return ''; })();";
+
         public const string ReaderModeScript = @"(function() {
   const allowedTags = new Set([
     ""a"", ""p"", ""blockquote"", ""code"", ""span"",
@@ -4678,6 +4752,57 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
     }";
 
         public const string DetectPWA = "(async()=>{const link=document.querySelector('link[rel=\"manifest\"]');const manifest=link?link.href:null;let service_worker=false;try{service_worker=!!(navigator.serviceWorker&&(await navigator.serviceWorker.ready));}catch{}return{manifest,service_worker};})();";
+
+        public const string GetTranslationText = @"(function() {
+function shouldAcceptNode(node) {
+    let parent = node.parentNode
+    while (parent) {
+        const tag = parent.tagName ? parent.tagName.toLowerCase() : ''
+        if (['script', 'style', 'meta', 'link', 'noscript'].includes(tag)) return NodeFilter.FILTER_REJECT
+        parent = parent.parentNode
+    }
+    const trim = node.textContent.trim()
+    if (!trim || trim.length <= 1 || trim.startsWith('<') || trim.includes('{') || trim.includes('}') || /^[\s<>{}\\/]+$/.test(trim)) return NodeFilter.FILTER_REJECT
+    return NodeFilter.FILTER_ACCEPT
+}
+const texts = []
+const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: shouldAcceptNode }, false)
+let node
+while (node = walker.nextNode()) {
+    texts.push(node.textContent.trim())
+}
+return JSON.stringify(texts);
+})();";
+
+        public const string SetTranslationText = @"(function() {{
+const translations = {0};
+const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {{
+        acceptNode: function(node) {{
+            let parent = node.parentNode;
+            while (parent) {{
+                const tag = parent.tagName ? parent.tagName.toLowerCase() : '';
+                if (['script','style','meta','link','noscript'].includes(tag)) return NodeFilter.FILTER_REJECT;
+                parent = parent.parentNode;
+            }}
+            const trimmed = node.textContent.trim();
+            if (!trimmed || trimmed.length <= 1 || trimmed.startsWith('<') || trimmed.includes('{{') || trimmed.includes('}}') || /^[\\s<>{{}}\\/]+$/.test(trimmed))
+                return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+        }}
+    }}, false
+);
+let node, i = 0;
+while (node = walker.nextNode()) {{
+    if (i < translations.length) {{
+        const beforeMatch = node.textContent.match(/^\s*/);
+        const afterMatch = node.textContent.match(/\s*$/);
+        const before = beforeMatch ? beforeMatch[0] : """";
+        const after = afterMatch ? afterMatch[0] : """";
+        node.textContent = before + translations[i] + after;
+        i++;
+    }}
+}}
+}})();";
     }
 
     public class WebAppManifest

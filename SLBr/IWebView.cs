@@ -968,6 +968,12 @@ namespace SLBr
         {
             Browser?.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
             Browser?.Address = InitialUrl;
+            /*if (Settings.Private)
+            {
+                nint HWND = Browser.GetBrowserHost().GetWindowHandle();
+                IntPtr ChildHWND = DllUtils.GetWindow(HWND, DllUtils.GetWindowCommand.GW_CHILD);
+                DllUtils.SetWindowDisplayAffinity(ChildHWND, DllUtils.WindowDisplayAffinity.WDA_MONITOR);
+            }*/
         }
 
         private void Browser_FrameLoadStart(object? sender, FrameLoadStartEventArgs e)
@@ -1004,18 +1010,22 @@ namespace SLBr
 
         public bool IsSecure { get; private set; }
         public bool AudioPlaying { get; private set; }
+
+        private bool _IsMuted;
         public bool IsMuted
         {
-            get
-            {
+            get => _IsMuted;
+            /*{
+                //This causes a freeze when reloading on PDF
                 return Cef.UIThreadTaskFactory.StartNew(() =>
                 {
                     return Browser.GetBrowserHost()?.IsAudioMuted ?? false;
                 }).Result;
-            }
+            }*/
             set
             {
-                Cef.UIThreadTaskFactory.StartNew(() => Browser.GetBrowserHost()?.SetAudioMuted(value));
+                _IsMuted = value;
+                Application.Current.Dispatcher.BeginInvoke(() => Cef.UIThreadTaskFactory.StartNew(() => Browser.GetBrowserHost()?.SetAudioMuted(value)));
             }
         }
 
@@ -1437,6 +1447,13 @@ namespace SLBr
             BrowserCore.BasicAuthenticationRequested += Browser_BasicAuthenticationRequested;
 
             BrowserCore.LaunchingExternalUriScheme += Browser_LaunchingExternalUriScheme;
+
+            /*if (Settings.Private)
+            {
+                nint HWND = Browser.Handle;
+                IntPtr ChildHWND = DllUtils.GetWindow(HWND, DllUtils.GetWindowCommand.GW_CHILD);
+                DllUtils.SetWindowDisplayAffinity(ChildHWND, DllUtils.WindowDisplayAffinity.WDA_MONITOR);
+            }*/
 
             BrowserCore.Navigate(InitialUrl);
         }
@@ -1924,7 +1941,13 @@ namespace SLBr
 
         public void ExecuteScript(string Script) => Browser.ExecuteScriptAsync(Script);
         public bool CanExecuteJavascript => BrowserCore != null;
-        public async Task<string> EvaluateScriptAsync(string Script) => await BrowserCore.ExecuteScriptAsync(Script);
+        public async Task<string> EvaluateScriptAsync(string Script)
+        {
+            string Result = await BrowserCore.ExecuteScriptAsync(Script);
+            if (Result.StartsWith("\"") && Result.EndsWith("\""))
+                return JsonSerializer.Deserialize<string>(Result);
+            return Result;
+        }
 
         public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format)
         {
@@ -2260,7 +2283,7 @@ namespace SLBr
 
             try
             {
-                string Icon = Browser.InvokeScript("eval", @"(function() { var links = document.getElementsByTagName('link'); for (var i = 0; i < links.length; i++) { var rel = links[i].getAttribute('rel'); if (rel && rel.toLowerCase().indexOf('icon') !== -1) { return links[i].href; } } return ''; })();").ToString() ?? string.Empty;
+                string Icon = Browser.InvokeScript("eval", Scripts.GetFaviconScript).ToString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(Icon))
                     FaviconChanged?.RaiseUIAsync(this, Icon);
             }

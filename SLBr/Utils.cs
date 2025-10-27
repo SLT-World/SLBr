@@ -7,6 +7,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -20,6 +21,31 @@ namespace SLBr
 {
     static class DllUtils
     {
+        /*[DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr GetWindow(IntPtr hWnd, GetWindowCommand uCmd);
+
+        public enum GetWindowCommand : uint
+        {
+            GW_HWNDFIRST = 0,
+            GW_HWNDLAST = 1,
+            GW_HWNDNEXT = 2,
+            GW_HWNDPREV = 3,
+            GW_OWNER = 4,
+            GW_CHILD = 5,
+            GW_ENABLEDPOPUP = 6
+        }*/
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetWindowDisplayAffinity(IntPtr hWnd, WindowDisplayAffinity affinity);
+
+        public enum WindowDisplayAffinity : uint
+        {
+            WDA_NONE = 0x00000000,
+            WDA_MONITOR = 0x00000001
+            //WDA_EXCLUDEFROMCAPTURE = 0x00000011
+        }
+
         public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         [DllImport("kernel32.dll")]
@@ -895,6 +921,17 @@ namespace SLBr
             return new string(Buffer[..j]);
         }
 
+        public static string GenerateSID()
+        {
+            long unixTimeMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            string timePart = unixTimeMs.ToString("x");
+
+            byte[] randomBytes = new byte[8];
+            RandomNumberGenerator.Fill(randomBytes);
+
+            string randomPart = BitConverter.ToString(randomBytes).Replace("-", "").ToLower();
+            return (timePart + randomPart).Substring(0, 16);
+        }
 
         public static string RemovePrefix(string Input, string Prefix, bool CaseSensitive = false, bool FromEnd = false, bool ReturnCaseSensitive = true)
         {

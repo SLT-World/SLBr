@@ -74,7 +74,7 @@ namespace SLBr
                             else
                                 App.Instance.NewWindow();
                         }
-                        DllUtils.SetForegroundWindow(new WindowInteropHelper(this).Handle);
+                        DllUtils.SetForegroundWindow(WindowInterop.Handle);
                     }
                     handled = true;
                     break;
@@ -82,6 +82,7 @@ namespace SLBr
             return IntPtr.Zero;
         }
 
+        WindowInteropHelper WindowInterop;
         BrowserTabItem NewTabTab = null;
 
         private void InitializeWindow()
@@ -89,8 +90,8 @@ namespace SLBr
             if (App.Instance.Icon != null)
                 Icon = App.Instance.Icon;
             ID = Utils.GenerateRandomId();
-
-            HwndSource HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
+            WindowInterop = new WindowInteropHelper(this);
+            HwndSource HwndSource = HwndSource.FromHwnd(WindowInterop.EnsureHandle());
             HwndSource.AddHook(new HwndSourceHook(WndProc));
             int trueValue = 0x01;
             DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
@@ -338,7 +339,7 @@ namespace SLBr
 
             SetTabAlignment();
 
-            HwndSource HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
+            HwndSource HwndSource = HwndSource.FromHwnd(WindowInterop.EnsureHandle());
             int trueValue = 0x01;
             int falseValue = 0x00;
             if (App.Instance.CurrentTheme.DarkTitleBar)
@@ -712,6 +713,8 @@ namespace SLBr
                 return Tabs[TabsUI.SelectedIndex];
         }
 
+        bool WasPrivate = false;
+
         private void TabsUI_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
@@ -733,6 +736,11 @@ namespace SLBr
                     {
                         _CurrentTab.Content.ReFocus();
                         Keyboard.Focus(_CurrentTab.Content.WebView?.Control);
+                        if (WasPrivate != _CurrentTab.Content.Private)
+                        {
+                            DllUtils.SetWindowDisplayAffinity(WindowInterop.EnsureHandle(), _CurrentTab.Content.Private ? DllUtils.WindowDisplayAffinity.WDA_MONITOR : DllUtils.WindowDisplayAffinity.WDA_NONE);
+                            WasPrivate = _CurrentTab.Content.Private;
+                        }
                     }
                     Title = _CurrentTab.Header + " - SLBr";
                 }

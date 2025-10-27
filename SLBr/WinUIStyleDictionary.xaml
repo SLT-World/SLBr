@@ -454,10 +454,10 @@
     </ControlTemplate>
 
     <Style x:Key="SliderUnfilledButton" TargetType="RepeatButton">
-        <Setter Property="SnapsToDevicePixels" Value="true" />
-        <Setter Property="OverridesDefaultStyle" Value="true" />
-        <Setter Property="IsTabStop" Value="false" />
-        <Setter Property="Focusable" Value="false" />
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
@@ -468,24 +468,34 @@
     </Style>
 
     <Style x:Key="SliderFilledButton" TargetType="RepeatButton">
-        <Setter Property="SnapsToDevicePixels" Value="true" />
-        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RepeatButton">
-                    <Border CornerRadius="2.5,0,0,2.5" SnapsToDevicePixels="True" Background="{StaticResource IndicatorBrush}" Height="5"/>
+                    <Border x:Name="Border" CornerRadius="2.5,0,0,2.5" SnapsToDevicePixels="True" Background="{StaticResource IndicatorBrush}" Height="5"/>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=Slider}}" Value="False">
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource BorderBrush}"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
     <Style x:Key="SliderThumb" TargetType="Thumb">
-        <Setter Property="SnapsToDevicePixels" Value="true" />
-        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Ellipse Height="15" Width="15" Fill="{StaticResource IndicatorBrush}"></Ellipse>
+                    <Ellipse x:Name="Ellipse" Height="15" Width="15" Fill="{StaticResource IndicatorBrush}"/>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=Slider}}" Value="False">
+                            <Setter TargetName="Ellipse" Property="Fill" Value="{StaticResource BorderBrush}"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -1373,6 +1383,49 @@ Margin="{TemplateBinding Padding}"/>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
                             <Setter Property="Background" Value="{DynamicResource SecondaryBrush}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsPressed" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BackgroundMouseOver" Duration="0:0:0.250" To="1.0" Storyboard.TargetProperty="Opacity"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BackgroundMouseOver" Duration="0:0:0.250" To="0.0" Storyboard.TargetProperty="Opacity"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="BackgroundMouseOver" Property="Opacity" Value="0.0"/>
+                            <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type WinUI:PopupButton}" x:Key="ToolBarPopupIconButton" BasedOn="{StaticResource PopupIconButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type WinUI:PopupButton}">
+                    <Grid>
+                        <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
+                        <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
+                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>

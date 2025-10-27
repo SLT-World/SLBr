@@ -65,7 +65,6 @@
                             </GroupBox.Header>
                             <StackPanel>
                                 <CheckBox Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
-                                <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
                                 <CheckBox x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
                             </StackPanel>
                         </GroupBox>
@@ -79,8 +78,17 @@
                                 <CheckBox x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
                                 <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not available when Lite Performance Mode is enabled</TextBlock>
                                 <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
-                                <TextBlock Margin="0,5,0,0" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident webviews</TextBlock>
+                                <TextBlock Margin="0,5,0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
                                 <!--<CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>-->
+                                <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
+                                <DockPanel Margin="0,0,0,0">
+                                    <TextBlock VerticalAlignment="Center" Text="Startup Favicon Service"/>
+                                    <ComboBox x:Name="FaviconServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FaviconServiceComboBox_SelectionChanged">
+                                        <ComboBoxItem>Google</ComboBoxItem>
+                                        <ComboBoxItem>Yandex</ComboBoxItem>
+                                        <ComboBoxItem>DuckDuckGo</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
@@ -283,36 +291,36 @@
                                 Fonts
                             </GroupBox.Header>
                             <StackPanel>
-                                <CheckBox x:Name="ExternalFontsCheckBox" Margin="0,0,0,10" Click="ExternalFontsCheckBox_Click" Content="External fonts" Width="Auto"/>
+                                <CheckBox x:Name="ExternalFontsCheckBox" Margin="0,0,0,10" Click="ExternalFontsCheckBox_Click" Content="Download external fonts" Width="Auto"/>
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Font size"/>
-                                    <Slider x:Name="FontSizeSlider" Width="175px" VerticalAlignment="Center" Minimum="9" Maximum="72" Value="16" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="FontSizeSlider_ValueChanged"/>
+                                    <Slider IsEnabled="False" x:Name="FontSizeSlider" Width="175px" VerticalAlignment="Center" Minimum="9" Maximum="72" Value="16" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="FontSizeSlider_ValueChanged"/>
                                     <TextBlock VerticalAlignment="Center" Text="{Binding ElementName=FontSizeSlider, Path=Value, StringFormat={}{0:0}}" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="0,0,10,0"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Minimum font size"/>
-                                    <Slider x:Name="MinimumFontSizeSlider" Width="175px" VerticalAlignment="Center" Minimum="0" Maximum="25" Value="0" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="MinimumFontSizeSlider_ValueChanged"/>
+                                    <Slider IsEnabled="False" x:Name="MinimumFontSizeSlider" Width="175px" VerticalAlignment="Center" Minimum="0" Maximum="25" Value="0" DockPanel.Dock="Right" HorizontalAlignment="Right" ValueChanged="MinimumFontSizeSlider_ValueChanged"/>
                                     <TextBlock VerticalAlignment="Center" Text="{Binding ElementName=MinimumFontSizeSlider, Path=Value, StringFormat={}{0:0}}" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="0,0,10,0"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Standard font"/>
-                                    <ComboBox x:Name="StandardFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="StandardFontComboBox_SelectionChanged"/>
+                                    <ComboBox IsEnabled="False" x:Name="StandardFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="StandardFontComboBox_SelectionChanged"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Serif font"/>
-                                    <ComboBox x:Name="SerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SerifFontComboBox_SelectionChanged"/>
+                                    <ComboBox IsEnabled="False" x:Name="SerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SerifFontComboBox_SelectionChanged"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Sans-Serif font"/>
-                                    <ComboBox x:Name="SansSerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SansSerifFontComboBox_SelectionChanged"/>
+                                    <ComboBox IsEnabled="False" x:Name="SansSerifFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SansSerifFontComboBox_SelectionChanged"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Fixed-width font"/>
-                                    <ComboBox x:Name="FixedFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FixedFontComboBox_SelectionChanged"/>
+                                    <ComboBox IsEnabled="False" x:Name="FixedFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FixedFontComboBox_SelectionChanged"/>
                                 </DockPanel>
                                 <DockPanel>
                                     <TextBlock VerticalAlignment="Center" Text="Mathematical font"/>
-                                    <ComboBox x:Name="MathFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="MathFontComboBox_SelectionChanged"/>
+                                    <ComboBox IsEnabled="False" x:Name="MathFontComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="MathFontComboBox_SelectionChanged"/>
                                 </DockPanel>
                             </StackPanel>
                         </GroupBox>
@@ -383,7 +391,7 @@
                                     </ComboBox>
                                 </DockPanel>
                                 <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                    Edge WebViews will rely on Microsoft Defender SmartScreen if not disabled.
+                                    Edge web views will rely on Microsoft Defender SmartScreen if not disabled.
                                     <LineBreak/>
                                     Advisory provided by <Hyperlink ToolTip="https://developers.google.com/safe-browsing/v4/advisory" NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
                                 </TextBlock>
@@ -477,7 +485,7 @@
                             <StackPanel>
                                 <CheckBox Margin="0,0,0,10" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Content="Web notifications" Width="Auto"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Content="Skip YouTube ads" Width="Auto"/>
-                                <CheckBox Margin="0,0,0,10" x:Name="WebAppsCheckBox" Click="WebAppsCheckBox_Click" Content="Check for web apps" Width="Auto"/>
+                                <CheckBox Margin="0,0,0,10" x:Name="WebAppsCheckBox" Click="WebAppsCheckBox_Click" Content="Check for Web Apps" Width="Auto"/>
                                 <DockPanel>
                                     <TextBlock VerticalAlignment="Center" Text="Reverse image search engine"/>
                                     <ComboBox x:Name="ImageSearchComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ImageSearchComboBox_SelectionChanged">
@@ -594,7 +602,16 @@
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Languages</TextBlock>
                         <GroupBox Margin="0,0,0,10">
                             <StackPanel>
-                                <CheckBox x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Check for spelling errors"/>
+                                <CheckBox Margin="0,0,0,10" x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Check for spelling errors"/>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Translation provider"/>
+                                    <ComboBox x:Name="TranslationProviderComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="TranslationProviderComboBox_SelectionChanged">
+                                        <ComboBoxItem>Google</ComboBoxItem>
+                                        <ComboBoxItem>Microsoft</ComboBoxItem>
+                                        <ComboBoxItem>Yandex</ComboBoxItem>
+                                        <ComboBoxItem>Lingvanex</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
                             </StackPanel>
                         </GroupBox>
 
@@ -878,7 +895,7 @@
                                 </DockPanel>
                                 <CheckBox x:Name="BrowserHardwareAccelerationCheckBox" Click="BrowserHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>
                                 <CheckBox x:Name="JITCheckBox" Click="JITCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable V8 JIT optimizer"/>
-                                <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental features"/>
+                                <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental web features"/>
                                 <GroupBox BorderBrush="DarkOrange" Background="Orange">
                                     <StackPanel>
                                         <DockPanel>

@@ -15,20 +15,21 @@
 </div>
 
 ## SLBr
-SLBr is an open-source, lightweight web browser based on Chromium. Built with .NET, WPF, and CefSharp (CEF) to provide a modern browsing experience while remaining lightweight.
+SLBr is an open-source, lightweight web browser based on Chromium. Built with .NET, WPF, and [CefSharp (CEF) / WebView2] to provide a modern browsing experience while remaining lightweight.
 
 ## Notable Features
 See the full feature list, [here](https://slt-world.github.io/slbr/)
-- **Clean, Modern UI:** Simple & refreshed design.
+- **Clean, Modern UI:** Simple & clean design.
 - **Multi Web Engine:** Choose between Chromium engine (CEF), Edge engine (WebView2), Internet Explorer engine (Trident).
 - **Ad & Tracker Blocking:** Browse with fewer ads & less tracking.
 - **Tab Layouts:** Choose vertical or horizontal tab alignment.
 - **Tab Unloading:** Save memory by unloading inactive tabs.
 - **Smart Address Bar:** Search suggestions directly in the address bar, with quick calculations, weather, and translation.
 - **Private Tabs (Incognito Tabs):** Open private browsing sessions that don't store history and cookies.
-- **Clipboard & Download Popup:** Attach recent images from the clipboard/downloads, inspired by Opera's Easy Files.
+- **Clipboard & Download Popup:** Attach recent images from the clipboard/downloads, inspired by Opera's Easy Files. (Only available for the Chromium web engine)
 - **Extension Support:** Supports Chrome web store extensions.
 - **Web Risk Service:** Protects against malicious websites with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
+- **Direct Translation:** Directly translate websites without proxies with Google, Microsoft, Yandex & Lingvanex providers.
 - **Anti-Tamper Mode:** Keeps browsing unrestricted by allowing text selection, copy/paste, right-click menus, and developer tools on sites that block them.
 
 ## Installation
@@ -37,22 +38,23 @@ To install SLBr, follow these steps:
 2. Ensure the following requirements are installed:
     - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe) (Should be bundled in the computer already)
     - [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) - (Launching SLBr without .NET 9.0 will automatically prompt a redirect to a direct download.)
-    - [Segoe Fluent Icons](https://learn.microsoft.com/en-us/windows/apps/design/downloads/#fonts) - [Direct Download](https://aka.ms/SegoeFluentIcons) (Windows 11 users are not required to download)
     - Windows 10 & above
 ## Thanks
 
 - **Chromium Embedded Framework (CEF)**: Thanks to Marshall A. Greenblatt.
 - **CefSharp Team**: Thanks to Amaitland and the CefSharp team.
-- **IPFS Implementation** (Not present in latest rework): Thanks to Ranger Mauve for assisting with the implementation of IPFS in SLBr.
+- **IPFS Implementation** (Not present in the latest rework): Thanks to Ranger Mauve for assisting with the implementation of IPFS in SLBr.
+
+## License
+SLBr is licensed under the [GNU General Public License v3.0](https://github.com/SLT-World/SLBr/blob/main/LICENSE).
 
 ## Contribution
 Feature suggestions and contributions would be much appreciated. Your input helps improve SLBr.
 Or you can also contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
 
-## License
-SLBr is licensed under the [GNU General Public License v3.0](https://github.com/SLT-World/SLBr/blob/main/LICENSE).
+## Screenshots, Videos & Etc
 
-## Screenshots & Videos
+Website: [SLBr](https://slt-world.github.io/slbr/)
 
 New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
 
@@ -63,20 +65,29 @@ New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
 Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 
 ## Others
-**Missing class `SECRETS`**
 
-The `SECRETS` file is removed as private API keys are stored inside. To fix it, either:
-- Remove the code that is causing the error, which will remove the ability to use Google Safe Browsing & sign in to Google.
-- Generate a new C# class called "SECRETS":
-```
-namespace SLBr
-{
-    class SECRETS
-    {
-        public static string GOOGLE_API_KEY = "";
-        public static string GOOGLE_DEFAULT_CLIENT_ID = "";
-        public static string GOOGLE_DEFAULT_CLIENT_SECRET = "";
-        public static string DISCORD_WEBHOOK = "";
-    }
-}
-```
+> [!IMPORTANT]
+> The `SECRETS.cs` file is removed as private API keys are stored inside. To fix it, either:
+> - Remove the code that is causing the error, which will remove the ability to use Google Safe Browsing & sign in to Google.
+> - Generate a new C# class called "SECRETS":
+> ```
+> namespace SLBr
+> {
+>     class SECRETS
+>     {
+>         public static string GOOGLE_API_KEY = "";
+>         public static string GOOGLE_DEFAULT_CLIENT_ID = "";
+>         public static string GOOGLE_DEFAULT_CLIENT_SECRET = "";
+>         public static string DISCORD_WEBHOOK = "";
+>         public static readonly ReadOnlyCollection<string> YANDEX_API_KEYS = new ReadOnlyCollection<string>();
+>         public static readonly ReadOnlyCollection<string> PHISHTANK_API_KEYS = new ReadOnlyCollection<string>();
+>         public static readonly ReadOnlyCollection<string> WEATHER_API_KEYS = new ReadOnlyCollection<string>();
+>         public static readonly ReadOnlyCollection<string> AMPs = new ReadOnlyCollection<string>();
+>         public const string GOOGLE_TRANSLATE_ENDPOINT = "";
+>         public const string MICROSOFT_TRANSLATE_ENDPOINT = "";
+>         public const string LINGVANEX_ENDPOINT = "";
+>         public const string YANDEX_LANGUAGE_DETECTION_ENDPOINT = "";
+>         public const string YANDEX_ENDPOINT = "";
+>     }
+> }
+> ```

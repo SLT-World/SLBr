@@ -13,7 +13,7 @@
     <ApplicationIcon>Resources\SLBr.ico</ApplicationIcon>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
     <AssemblyVersion>2025.9.29.0</AssemblyVersion>
-    <FileVersion>2025.8.29.0</FileVersion>
+    <FileVersion>2025.9.29.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>AnyCPU;x64</Platforms>
     <Company>$(Authors)</Company>
@@ -89,13 +89,11 @@
     <None Include="Benchmark.cs" />
     <None Include="Controls\ReportWindow.xaml" />
     <None Include="Controls\ReportWindow.xaml.cs" />
-    <None Include="WebViewDemo.xaml" />
-    <None Include="WebViewDemo.xaml.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="140.1.140" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3530-prerelease" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="141.0.110" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3590-prerelease" />
   </ItemGroup>
 
   <ItemGroup>
@@ -151,15 +149,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="140.1.14" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="141.0.11" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="140.1.14" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="141.0.11" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="140.1.14" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="141.0.11" />
   </ItemGroup>
 
 	<Target Name="DeleteFiles" AfterTargets="Publish">

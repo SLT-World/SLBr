@@ -54,10 +54,10 @@ namespace SLBr.Controls
                 Duration = TimeSpan.FromSeconds(0.125)
             });
             await Task.Delay(0125);
-            if (IsLoaded && Owner != null)
-                DialogResult = true;
-            else
-                Close();
+            //if (IsLoaded && Owner != null)
+            DialogResult = true;
+            //else
+            //    Close();
         }
     }
 }

@@ -640,7 +640,7 @@ namespace SLBr
         {
             string Address = string.Empty;
             Application.Current?.Dispatcher.Invoke(() => Address = chromiumWebBrowser.Address);
-            var Args = new ScriptDialogEventArgs(ScriptDialogType.BeforeUnload, Address, messageText, "", isReload);
+            var Args = new ScriptDialogEventArgs(ScriptDialogType.BeforeUnload, Address, messageText, string.Empty, isReload);
             WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaiseScriptDialog(Args);
             if (Args.Handled)
             {

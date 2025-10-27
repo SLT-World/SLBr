@@ -1,5 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using SLBr.Controls;
 using SLBr.Handlers;
@@ -14,6 +15,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -71,6 +73,8 @@ namespace SLBr.Pages
             //SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
             SiteInformationText.Text = "Loading";
             LoadingStoryboard?.Begin();
+            TranslateComboBox.ItemsSource = App.Instance.LocaleNames;
+            TranslateComboBox.SelectedValue = App.Instance.Locale.Name;
             InitializeBrowserComponent();
         }
 
@@ -321,6 +325,19 @@ namespace SLBr.Pages
                                 InfoWindow.ShowDialog();
                                 break;
                             }
+                            string? AvailableVersion = null;
+                            try
+                            {
+                                AvailableVersion = CoreWebView2Environment.GetAvailableBrowserVersionString();
+                            }
+                            catch (WebView2RuntimeNotFoundException)
+                            {
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
+                                InfoWindow.Topmost = true;
+                                if (InfoWindow.ShowDialog() == true)
+                                    Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+                                break;
+                            }
                             DisposeBrowserCore();
                             CreateWebView(Address, WebEngineType.ChromiumEdge);
                             break;
@@ -342,6 +359,9 @@ namespace SLBr.Pages
                             CreateWebView(Address, Engine);
                             break;
                     }
+                    break;
+                case Actions.Translate:
+                    Translate(V1 == "1");
                     break;
             }
         }
@@ -431,15 +451,22 @@ namespace SLBr.Pages
                 UserAgentBranding = !Private;
                 if (UserAgentBranding)
                 {
-                    await WebView.CallDevToolsAsync("Emulation.setUserAgentOverride", new
+                    await WebView?.CallDevToolsAsync("Emulation.setUserAgentOverride", new
                     {
                         userAgent = App.Instance.UserAgent,
                         userAgentMetadata = App.Instance.UserAgentData
                     });
-                    await WebView.CallDevToolsAsync("Network.setUserAgentOverride", new
+                    await WebView?.CallDevToolsAsync("Network.setUserAgentOverride", new
                     {
                         userAgent = App.Instance.UserAgent,
                         userAgentMetadata = App.Instance.UserAgentData
+                    });
+                }
+                if (App.Instance.LiteMode)
+                {
+                    await WebView?.CallDevToolsAsync("Emulation.setDataSaverOverride", new
+                    {
+                        dataSaverEnabled = true
                     });
                 }
             }
@@ -621,7 +648,6 @@ namespace SLBr.Pages
                 if (e.ResourceRequestType == ResourceRequestType.Ping)
                 {
                     Interlocked.Increment(ref App.Instance.TrackersBlocked);
-                    App.Instance.TrackersBlocked++;
                     e.Cancel = true;
                     return;
                 }
@@ -672,9 +698,13 @@ namespace SLBr.Pages
             }
             if (bool.Parse(App.Instance.GlobalSave.Get("WarnCodec")) && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
             {
-                InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Proprietary Codecs Detected", "This site is trying to play media using formats not supported by Chromium (Cef).\nFor full compatibility, please switch to the Edge (WebView2) engine.");
-                InfoWindow.Topmost = true;
-                InfoWindow.Show();
+                Dispatcher.BeginInvoke(() =>
+                {
+                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Proprietary Codecs Detected", "This site is trying to play media using formats not supported by Chromium (CEF).\nDo you want to switch to the Edge (WebView2) engine?", "\xe8ab", "Yes", "No");
+                    InfoWindow.Topmost = true;
+                    if (InfoWindow.ShowDialog() == true)
+                        Action(Actions.SwitchWebEngine, null, "1");
+                });
             }
         }
 
@@ -877,7 +907,7 @@ namespace SLBr.Pages
                             PermissionIcons += "\xF0E3";
                             break;
                         case WebPermissionKind.TopLevelStorageAccess:
-                            Permissions += "Access cookies and site data";
+                            Permissions += "Access cookies and site Data";
                             PermissionIcons += "\xE8B7";
                             break;
                         case WebPermissionKind.DiskQuota:
@@ -933,7 +963,7 @@ namespace SLBr.Pages
                             PermissionIcons += "\xE71B";
                             break;
                         case WebPermissionKind.StorageAccess:
-                            Permissions += "Access cookies and site data";
+                            Permissions += "Access cookies and site Data";
                             PermissionIcons += "\xE8B7";
                             break;
                         case WebPermissionKind.VrSession:
@@ -1016,11 +1046,6 @@ namespace SLBr.Pages
                 return;
             if (Address.StartsWith("slbr:", StringComparison.Ordinal))
                 WebView?.ExecuteScript(Scripts.InternalScript);
-            if (IsReaderMode)
-            {
-                ReaderModeButton.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                IsReaderMode = false;
-            }
             BackButton.IsEnabled = CanGoBack;
             ForwardButton.IsEnabled = CanGoForward;
             ReloadButton.Content = IsLoading ? "\xF78A" : "\xE72C";
@@ -1137,7 +1162,7 @@ namespace SLBr.Pages
                         case 0:
                             Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
                             if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
-                                Url = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
+                                Url = $"Data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
                             break;
                         case 1:
                             int BingBackground = App.Instance.GlobalSave.GetInt("BingBackground");
@@ -1219,7 +1244,7 @@ namespace SLBr.Pages
                         HandleInternalMessage(Message);
                     break;
                 case "Notification":
-                    var DataJson = Message["data"]?.ToString();
+                    var DataJson = Message["Data"]?.ToString();
                     if (string.IsNullOrWhiteSpace(DataJson))
                         return;
                     var Data = JsonSerializer.Deserialize<List<object>>(DataJson);
@@ -1296,6 +1321,7 @@ namespace SLBr.Pages
             {
                 if (e.MenuType.HasFlag(i))
                 {
+                    //BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = i.ToString(), Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
                     if (BrowserMenu.Items.Count != 0 && BrowserMenu.Items[BrowserMenu.Items.Count - 1].GetType() == typeof(MenuItem))
                         BrowserMenu.Items.Add(new Separator());
                     if (i == WebContextMenuType.Link)
@@ -1314,9 +1340,9 @@ namespace SLBr.Pages
                     }
                     else if (i == WebContextMenuType.Media)
                     {
-                        IsPageMenu = false;
                         if (e.MediaType == WebContextMenuMediaType.Image)
                         {
+                            IsPageMenu = false;
                             BrowserMenu.Items.Add(new MenuItem
                             {
                                 Icon = "\xe8b9",
@@ -1357,6 +1383,7 @@ namespace SLBr.Pages
                         }
                         else if (e.MediaType == WebContextMenuMediaType.Video)
                         {
+                            IsPageMenu = false;
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy video link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save video as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uee49", Header = "Picture in picture", Command = new RelayCommand(_ => WebView?.ExecuteScript("(async()=>{let playingVideo=Array.from(document.querySelectorAll('video')).find(v=>!v.paused&&!v.ended&&v.readyState>2);if (!playingVideo){playingVideo=document.querySelector('video');}if (playingVideo&&document.pictureInPictureEnabled){await playingVideo.requestPictureInPicture();}})();")) });
@@ -1401,7 +1428,7 @@ namespace SLBr.Pages
                     BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
                 }
             }
-            else if (IsPageMenu && e.MediaType == WebContextMenuMediaType.None)
+            else if (IsPageMenu)// && e.MediaType == WebContextMenuMediaType.None)
             {
                 BrowserMenu.Items.Add(new MenuItem { IsEnabled = WebView.CanGoBack, Icon = "\uE76B", Header = "Back", Command = new RelayCommand(_ => WebView?.Back()) });
                 BrowserMenu.Items.Add(new MenuItem { IsEnabled = WebView.CanGoForward, Icon = "\uE76C", Header = "Forward", Command = new RelayCommand(_ => WebView?.Forward()) });
@@ -1412,7 +1439,7 @@ namespace SLBr.Pages
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select All", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                 BrowserMenu.Items.Add(new Separator());
 
-                BrowserMenu.Items.Add(new MenuItem { IsEnabled = Utils.IsHttpScheme(e.FrameUrl), Icon = "\uE8C1", Header = "Translate", Command = new RelayCommand(_ => Navigate($"https://translate.google.com/translate?sl=auto&tl=en&hl=en&u={e.FrameUrl}")) });
+                BrowserMenu.Items.Add(new MenuItem { IsEnabled = !IsLoading && !Address.StartsWith("slbr:", StringComparison.Ordinal), Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
 
                 /*MenuItem ZoomSubMenuModel = new MenuItem { Icon = "\ue71e", Header = "Zoom" };
@@ -1457,18 +1484,15 @@ namespace SLBr.Pages
 
         public void UnFocus()
         {
-            /*if (App.Instance.LiteMode && Chromium != null && Chromium.IsBrowserInitialized && !Chromium.IsLoading && Chromium.CanExecuteJavascriptInMainFrame)
+            //SLBr seems to freeze when switching from a loaded tab with devtools to an unloaded tab
+            DevTools(true);
+            if (App.Instance.LiteMode && WebView != null && WebView.Engine == WebEngineType.ChromiumEdge && WebView.IsBrowserInitialized)
             {
-                try
+                WebView?.CallDevToolsAsync("Page.setWebLifecycleState", new
                 {
-                    Utils.RunSafeFireAndForget(async () =>
-                    {
-                        DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
-                        await _DevToolsClient.Page.SetWebLifecycleStateAsync(SetWebLifecycleStateState.Frozen);
-                    });
-                }
-                catch { }
-            }*/
+                    state = "frozen"
+                });
+            }
         }
 
         public void ReFocus()
@@ -1508,27 +1532,15 @@ namespace SLBr.Pages
                     });
                     //if (WebView2DevToolsHWND != IntPtr.Zero)
                     //    WebView2DevTools_SizeChanged(null, null);
+                    if (App.Instance.LiteMode && WebView != null && WebView.IsBrowserInitialized)
+                    {
+                        WebView?.CallDevToolsAsync("Page.setWebLifecycleState", new
+                        {
+                            state = "active"
+                        });
+                    }
                 }
             }
-            /*if (App.Instance.LiteMode && Chromium != null && Chromium.IsBrowserInitialized && !Chromium.IsLoading && Chromium.CanExecuteJavascriptInMainFrame)
-            {
-                try
-                {
-                    //Utils.RunSafeFireAndForget(async () =>
-                    //{
-                    DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
-                    _DevToolsClient.Page.SetWebLifecycleStateAsync(SetWebLifecycleStateState.Active);
-                    //_DevToolsClient.Network.ResourceChangedPriority;
-                    //_DevToolsClient.Network.RequestWillBeSent
-                    //ValidateSetWebLifecycleState(state);
-        //var dict = new System.Collections.Generic.Dictionary<string, object>();
-        //dict.Add("state", EnumToString(state));
-        //return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Page.setWebLifecycleState", dict);
-                    //return _client.ExecuteDevToolsMethodAsync<DevToolsMethodResponse>("Network.clearBrowserCache", dict);
-                    //});
-                }
-                catch { }
-            }*/
         }
 
         public async void LimitNetwork(int LatencyMs, double DownloadLimitMbps, double UploadLimitMbps)
@@ -1536,17 +1548,17 @@ namespace SLBr.Pages
             //DevToolsClient _DevToolsClient = Chromium.GetDevToolsClient();
             //_DevToolsClient.Network.EnableAsync();
             await WebView?.CallDevToolsAsync("Network.enable");
-            double DownloadThroughput = DownloadLimitMbps * 125000;
-            double UploadThroughput = UploadLimitMbps * 125000;
             //_DevToolsClient.Network.EmulateNetworkConditionsAsync(false, LatencyMs, DownloadThroughput, UploadThroughput, CefSharp.DevTools.Network.ConnectionType.Wifi);
             // Mbps to bytes per second
 
+            //TODO: Switch to Network.emulateNetworkConditionsByRule for https://issues.chromium.org/issues/40434685
+            //Network.emulateNetworkConditions is going to be deprecated
             await WebView?.CallDevToolsAsync("Network.emulateNetworkConditions", new
             {
                 offline = false,
                 latency = LatencyMs,
-                downloadThroughput = DownloadThroughput,
-                uploadThroughput = UploadThroughput,
+                downloadThroughput = DownloadLimitMbps * 125000,
+                uploadThroughput = UploadLimitMbps * 125000,
                 connectionType = "wifi",
             });
         }
@@ -1744,7 +1756,6 @@ namespace SLBr.Pages
                     _Settings = null;
                 }
             }
-            SiteInformationPopup.IsOpen = false;
             bool IsHTTP = Utils.IsHttpScheme(Address);
             if (IsHTTP && App.Instance.AdBlock != 0)
             {
@@ -1755,12 +1766,19 @@ namespace SLBr.Pages
             }
             else
                 AdBlockContainer.Visibility = Visibility.Collapsed;
+            if (Translated)
+                Translated = false;
+            if (IsReaderMode)
+                IsReaderMode = false;
             if (IsLoading != null)
             {
                 SiteInformationIcon.FontFamily = App.Instance.IconFont;
                 SiteInformationPopupIcon.FontFamily = App.Instance.IconFont;
                 LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-                if (!IsLoading.ToBool())
+                bool IsLoadingBool = IsLoading.ToBool();
+                if (App.Instance.AllowTranslateButton)
+                    TranslateButton.IsEnabled = !IsLoadingBool;
+                if (!IsLoadingBool)
                 {
                     string SetSiteInfo = string.Empty;
                     if (WebViewManager.OverrideRequests.TryGetValue(Address, out RequestOverrideItem Item))
@@ -1865,7 +1883,7 @@ namespace SLBr.Pages
                             SiteInformationIcon.Text = "\xE8B7";
                             SiteInformationIcon.Foreground = App.Instance.NavajoWhiteColor;
                             SiteInformationText.Text = $"File";
-                            TranslateButton.Visibility = Visibility.Collapsed;
+                            TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE8B7";
                             SiteInformationPopupIcon.Foreground = App.Instance.NavajoWhiteColor;
                             SiteInformationPopupText.Text = $"Local or shared file";
@@ -1887,7 +1905,7 @@ namespace SLBr.Pages
                             SiteInformationIcon.Text = "\xE730";
                             SiteInformationIcon.Foreground = App.Instance.RedColor;
                             SiteInformationText.Text = $"Danger";
-                            TranslateButton.Visibility = Visibility.Collapsed;
+                            TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE730";
                             SiteInformationPopupIcon.Foreground = App.Instance.RedColor;
                             SiteInformationPopupText.Text = $"Dangerous site";
@@ -1897,7 +1915,7 @@ namespace SLBr.Pages
                             SiteInformationIcon.Text = "\xE774";
                             SiteInformationIcon.Foreground = App.Instance.CornflowerBlueColor;
                             SiteInformationText.Text = $"Protocol";
-                            TranslateButton.Visibility = Visibility.Collapsed;
+                            TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE774";
                             SiteInformationPopupIcon.Foreground = App.Instance.CornflowerBlueColor;
                             SiteInformationPopupText.Text = $"Network protocol";
@@ -1907,7 +1925,7 @@ namespace SLBr.Pages
                             SiteInformationIcon.Text = "\xEA86";
                             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = $"Extension";
-                            TranslateButton.Visibility = Visibility.Collapsed;
+                            TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xEA86";
                             SiteInformationPopupIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationPopupText.Text = $"Extension";
@@ -1929,6 +1947,7 @@ namespace SLBr.Pages
                         ReaderModeButton.Visibility = (await IsArticle()) ? Visibility.Visible : Visibility.Collapsed;
                     else
                         ReaderModeButton.Visibility = Visibility.Collapsed;
+                    SiteInformationPopupButton.IsEnabled = true;
                 }
                 else if (SiteInformationText.Text != "Loading")
                 {
@@ -1936,6 +1955,7 @@ namespace SLBr.Pages
                     SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                     SiteInformationText.Text = "Loading";
                     LoadingStoryboard?.Begin();
+                    SiteInformationPopupButton.IsEnabled = false;
                 }
             }
         }
@@ -2348,11 +2368,22 @@ namespace SLBr.Pages
             DllUtils.SetWindowPos(WebView2DevToolsHWND, IntPtr.Zero, -7, -30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOZORDER | DllUtils.SWP_FRAMECHANGED | DllUtils.SWP_SHOWWINDOW);
         }*/
 
-        bool IsReaderMode = false;
+        bool PIsReaderMode = false;
+        bool IsReaderMode
+        {
+            get { return PIsReaderMode; }
+            set
+            {
+                PIsReaderMode = value;
+                if (value)
+                    Dispatcher.BeginInvoke(() => ReaderModeButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
+                else
+                    Dispatcher.BeginInvoke(() => ReaderModeButton.ClearValue(Control.ForegroundProperty));
+            }
+        }
         public async void ToggleReaderMode()
         {
             IsReaderMode = !IsReaderMode;
-            ReaderModeButton.Foreground = IsReaderMode ? App.Instance.CornflowerBlueColor : (SolidColorBrush)FindResource("FontBrush");
             if (IsReaderMode)
                 WebView?.ExecuteScript(Scripts.ReaderModeScript);
             else
@@ -2489,6 +2520,392 @@ namespace SLBr.Pages
             catch { }
         }
 
+        bool PrivateTranslate = false;
+        bool Translated
+        {
+            get {  return PrivateTranslate; }
+            set
+            {
+                PrivateTranslate = value;
+                //Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(value ? App.Instance.CurrentTheme.IndicatorColor : App.Instance.CurrentTheme.FontColor));
+                if (value)
+                    Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
+                else
+                    Dispatcher.BeginInvoke(() => TranslateButton.ClearValue(Control.ForegroundProperty));
+            }
+        }
+
+        public async void Translate(bool Original = false)
+        {
+            if (Original)
+            {
+                TranslateButton.ClosePopup();
+                if (Translated == true)
+                    Refresh();
+                return;
+            }
+            string Texts = await WebView.EvaluateScriptAsync(Scripts.GetTranslationText);
+            List<string> TranslatedTexts = null;
+            if (TranslateButton.Visibility == Visibility.Visible)
+                TranslateButton.OpenPopup();
+            await Dispatcher.BeginInvoke(() => TranslateLoadingPanel.Visibility = Visibility.Visible);
+            List<string> AllTexts = JsonSerializer.Deserialize<List<string>>(Texts);
+            string TargetLanguage = App.Instance.AllLocales.Where(i => i.Value == TranslateComboBox.SelectedValue).First().Key;
+            switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
+            {
+                case 0:
+                    IEnumerable<List<string>> GBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
+
+                    TranslatedTexts = new List<string>();
+                    List<Task<List<string>>> GBatchTasks = new();
+
+                    foreach (List<string> Batch in GBatches)
+                    {
+                        GBatchTasks.Add(Task.Run(async () =>
+                        {
+                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.GOOGLE_TRANSLATE_ENDPOINT))
+                            {
+                                TranslateRequest.Headers.Add("Origin", "https://www.google.com");
+                                TranslateRequest.Headers.Add("Accept", "*/*");
+                                TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                                TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new object[] { new object[] { Batch, "auto", TargetLanguage }, "te_lib" }), Encoding.UTF8, "application/json+protobuf");
+                                var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                if (!Response.IsSuccessStatusCode)
+                                    return new List<string>();
+                                string Data = await Response.Content.ReadAsStringAsync();
+                                List<object> Json = JsonSerializer.Deserialize<List<object>>(Data);
+                                if (Json == null || Json.Count == 0)
+                                    return new List<string>();
+                                if (Json[0] is not JsonElement Element || Element.ValueKind != JsonValueKind.Array)
+                                    return new List<string>();
+                                return Element.EnumerateArray().Select(e => HttpUtility.HtmlDecode(e.GetString())).ToList()!;
+                            }
+                        }));
+                    }
+
+                    var GResults = await Task.WhenAll(GBatchTasks);
+                    foreach (List<string> BatchResult in GResults)
+                        TranslatedTexts.AddRange(BatchResult);
+                    break;
+                    /*using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.GOOGLE_TRANSLATE_ENDPOINT))
+                    {
+                        TranslateRequest.Headers.Add("Origin", "https://www.google.com");
+                        TranslateRequest.Headers.Add("Accept", "");
+                        TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                        TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new object[] { new object[] { AllTexts, "auto", TargetLanguage }, "te_lib" }), Encoding.UTF8, "application/json+protobuf");
+                        var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                        string Data = await Response.Content.ReadAsStringAsync();
+                        List<object> Json = JsonSerializer.Deserialize<List<object>>(Data);
+                        if (!Response.IsSuccessStatusCode)
+                        {
+                            Dispatcher.BeginInvoke(() => {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                InfoWindow.Topmost = true;
+                                InfoWindow.ShowDialog();
+                            });
+                            return;
+                        }
+                        if (Json == null || Json.Count == 0)
+                        {
+                            Dispatcher.BeginInvoke(() => {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                InfoWindow.Topmost = true;
+                                InfoWindow.ShowDialog();
+                            });
+                            return;
+                        }
+                        if (Json[0] is not JsonElement Element || Element.ValueKind != JsonValueKind.Array)
+                        {
+                            Dispatcher.BeginInvoke(() => {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                InfoWindow.Topmost = true;
+                                InfoWindow.ShowDialog();
+                            });
+                            return;
+                        }
+                        TranslatedTexts = Element.EnumerateArray().Select(e => HttpUtility.HtmlDecode(e.GetString())).ToList()!;
+                    }
+                    break;*/
+                case 1:
+                    IEnumerable<List<string>> MBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
+
+                    TranslatedTexts = new List<string>();
+                    List<Task<List<string>>> MBatchTasks = new();
+
+                    foreach (List<string> Batch in MBatches)
+                    {
+                        MBatchTasks.Add(Task.Run(async () =>
+                        {
+                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, string.Format(SECRETS.MICROSOFT_TRANSLATE_ENDPOINT, TargetLanguage)))
+                            {
+                                TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                                TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(Batch), Encoding.UTF8, "application/json");
+                                var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                if (!Response.IsSuccessStatusCode)
+                                    return new List<string>();
+                                string Data = await Response.Content.ReadAsStringAsync();
+                                List<string> Result = new List<string>();
+                                try
+                                {
+                                    using JsonDocument Document = JsonDocument.Parse(Data);
+                                    foreach (JsonElement Item in Document.RootElement.EnumerateArray())
+                                    {
+                                        if (Item.TryGetProperty("translations", out JsonElement TranslationsElement))
+                                        {
+                                            foreach (JsonElement TranslationElement in TranslationsElement.EnumerateArray())
+                                            {
+                                                if (TranslationElement.TryGetProperty("text", out JsonElement TextElement))
+                                                    Result.Add(TextElement.GetString() ?? "");
+                                            }
+                                        }
+                                    }
+                                    return Result;
+                                }
+                                catch
+                                {
+                                    return new List<string>();
+                                }
+                            }
+                        }));
+                    }
+
+                    var MResults = await Task.WhenAll(MBatchTasks);
+                    foreach (List<string> BatchResult in MResults)
+                        TranslatedTexts.AddRange(BatchResult);
+                    break;
+                    /*using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, string.Format(SECRETS.MICROSOFT_TRANSLATE_ENDPOINT, App.Instance.AllLocales.Where(i => i.Value == TranslateComboBox.SelectedValue).First().Key)))
+                    {
+                        TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                        TranslateRequest.Content = new StringContent(Texts, Encoding.UTF8, "application/json");
+                        var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                        if (!Response.IsSuccessStatusCode)
+                        {
+                            Dispatcher.BeginInvoke(() => {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                InfoWindow.Topmost = true;
+                                InfoWindow.ShowDialog();
+                            });
+                            return;
+                        }
+                        string Data = await Response.Content.ReadAsStringAsync();
+                        TranslatedTexts = new List<string>();
+                        try
+                        {
+                            using JsonDocument Document = JsonDocument.Parse(Data);
+                            foreach (var Item in Document.RootElement.EnumerateArray())
+                            {
+                                if (Item.TryGetProperty("translations", out var TranslationsElement))
+                                {
+                                    foreach (var TranslationElement in TranslationsElement.EnumerateArray())
+                                    {
+                                        if (TranslationElement.TryGetProperty("text", out var TextElement))
+                                            TranslatedTexts.Add(TextElement.GetString() ?? "");
+                                    }
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            Dispatcher.BeginInvoke(() => {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                InfoWindow.Topmost = true;
+                                InfoWindow.ShowDialog();
+                            });
+                            return;
+                        }
+                    }*/
+                case 2:
+                    string SourceLanguage = "";
+                    try
+                    {
+                        using (HttpRequestMessage LanguageDetectRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(SECRETS.YANDEX_LANGUAGE_DETECTION_ENDPOINT, $"{Utils.GenerateSID()}-0-0", HttpUtility.UrlEncode(AllTexts.First()))))
+                        {
+                            var Response = await App.MiniHttpClient.SendAsync(LanguageDetectRequest);
+                            if (!Response.IsSuccessStatusCode)
+                            {
+                                Dispatcher.BeginInvoke(() => {
+                                    TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                    InfoWindow.Topmost = true;
+                                    InfoWindow.ShowDialog();
+                                });
+                                return;
+                            }
+                            string Data = await Response.Content.ReadAsStringAsync();
+                            using var Document = JsonDocument.Parse(Data);
+                            if (Document.RootElement.TryGetProperty("lang", out JsonElement LanguageElement))
+                                SourceLanguage = LanguageElement.GetString() ?? "en";
+                        }
+                    }
+                    catch
+                    {
+                        Dispatcher.BeginInvoke(() => {
+                            TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                            InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                            InfoWindow.Topmost = true;
+                            InfoWindow.ShowDialog();
+                        });
+                        return;
+                    }
+                    IEnumerable<List<string>> Batches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 16).Select(g => g.Select(x => x.t).ToList());
+
+                    TargetLanguage = TargetLanguage.Split('-').First();
+                    string YandexUserAgent = UserAgentGenerator.BuildUserAgentFromProduct("YaBrowser/25.2.0.0");
+                    TranslatedTexts = new List<string>();
+                    List<Task<List<string>>> BatchTasks = new();
+
+                    foreach (List<string> Batch in Batches)
+                    {
+                        BatchTasks.Add(Task.Run(async () =>
+                        {
+                            List<string> EncodedTexts = Batch.Select(t => "text=" + HttpUtility.UrlEncode(t)).ToList();
+                            string TextParameters = string.Join("&", EncodedTexts);
+                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(SECRETS.YANDEX_ENDPOINT, $"{Utils.GenerateSID()}-0-0", $"{SourceLanguage}-{TargetLanguage}", TextParameters)))
+                            {
+                                TranslateRequest.Headers.Add("User-Agent", YandexUserAgent);
+                                try
+                                {
+                                    var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                    Response.EnsureSuccessStatusCode();
+
+                                    string Data = await Response.Content.ReadAsStringAsync();
+                                    if (JsonDocument.Parse(Data).RootElement.TryGetProperty("text", out JsonElement TranslatedTexts))
+                                        return TranslatedTexts.EnumerateArray().Select(x => x.GetString() ?? "").ToList();
+                                }
+                                catch
+                                {
+                                    return new List<string>();
+                                }
+                            }
+                            return new List<string>();
+                        }));
+                    }
+
+                    var Results = await Task.WhenAll(BatchTasks);
+                    foreach (List<string> BatchResult in Results)
+                        TranslatedTexts.AddRange(BatchResult);
+                    break;
+                case 3:
+                    TargetLanguage = TargetLanguage switch
+                    {
+                        "zh" => "zh-Hans",
+                        "zh-CN" => "zh-Hans",
+                        "zh-TW" => "zh-Hant",
+                        "zh-HK" => "zh-Hant",
+                        _ => TargetLanguage
+                    };
+
+                    IEnumerable<List<string>> LBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
+
+                    TranslatedTexts = new List<string>();
+                    List<Task<List<string>>> LBatchTasks = new();
+
+                    foreach (List<string> Batch in LBatches)
+                    {
+                        LBatchTasks.Add(Task.Run(async () =>
+                        {
+                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.LINGVANEX_ENDPOINT))
+                            {
+                                TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                                TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new
+                                {
+                                    target = TargetLanguage,
+                                    q = Batch
+                                }), Encoding.UTF8, "application/json");
+                                var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                if (!Response.IsSuccessStatusCode)
+                                    return new List<string>();
+                                string Data = await Response.Content.ReadAsStringAsync();
+                                List<string> Result = new List<string>();
+
+                                try
+                                {
+                                    using var Document = JsonDocument.Parse(Data);
+                                    if (Document.RootElement.TryGetProperty("translatedText", out JsonElement TranslatedText))
+                                    {
+                                        foreach (var item in TranslatedText.EnumerateArray())
+                                            Result.Add(item.GetString() ?? "");
+                                    }
+                                }
+                                catch { }
+                                return Result;
+                            }
+                        }));
+                    }
+
+                    var LResults = await Task.WhenAll(LBatchTasks);
+                    foreach (List<string> BatchResult in LResults)
+                        TranslatedTexts.AddRange(BatchResult);
+                    break;
+
+
+                    /*using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.LINGVANEX_ENDPOINT))
+                    {
+                        TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                        TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new
+                        {
+                            target = TargetLanguage,
+                            q = AllTexts
+                        }), Encoding.UTF8, "application/json");
+                        var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                        if (!Response.IsSuccessStatusCode)
+                        {
+                            Dispatcher.BeginInvoke(() => {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                InfoWindow.Topmost = true;
+                                InfoWindow.ShowDialog();
+                            });
+                            return;
+                        }
+                        string Data = await Response.Content.ReadAsStringAsync();
+                        TranslatedTexts = new List<string>();
+
+                        try
+                        {
+                            using var Document = JsonDocument.Parse(Data);
+                            if (Document.RootElement.TryGetProperty("translatedText", out JsonElement TranslatedText))
+                            {
+                                foreach (var item in TranslatedText.EnumerateArray())
+                                    TranslatedTexts.Add(item.GetString() ?? "");
+                            }
+                        }
+                        catch
+                        {
+                            Dispatcher.BeginInvoke(() => {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                InfoWindow.Topmost = true;
+                                InfoWindow.ShowDialog();
+                            });
+                            return;
+                        }
+                    }
+                    break;*/
+            }
+            if (TranslatedTexts == null || TranslatedTexts.Count == 0)
+            {
+                Dispatcher.BeginInvoke(() => {
+                    TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                    InfoWindow.Topmost = true;
+                    InfoWindow.ShowDialog();
+                });
+                return;
+            }
+            WebView.ExecuteScript(string.Format(Scripts.SetTranslationText, JsonSerializer.Serialize(TranslatedTexts)));
+            Translated = true;
+            Dispatcher.BeginInvoke(() => {
+                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                TranslateButton.ClosePopup();
+            });
+            
+        }
 
         private void FavouriteScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
@@ -2630,10 +3047,11 @@ namespace SLBr.Pages
                     }
                     else
                     {
+                        SiteInformationIcon.FontFamily = App.Instance.IconFont;
                         SiteInformationIcon.Text = "\xE721";
                         SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                         SiteInformationText.Text = $"Search";
-                        SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text}";
+                        SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text}";
                     }
                     if (OmniBox.IsDropDownOpen)
                     {
@@ -2649,43 +3067,44 @@ namespace SLBr.Pages
         }
         public void SetTemporarySiteInformation()
         {
+            SiteInformationIcon.FontFamily = App.Instance.IconFont;
             if (OmniBoxOverrideSearch == null)
             {
                 if (OmniBox.Text.StartsWith("search:", StringComparison.Ordinal))
                 {
                     SiteInformationIcon.Text = "\xE721";
                     SiteInformationText.Text = "Search";
-                    SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text.Substring(7).Trim()}";
+                    SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text.Substring(7).Trim()}";
                 }
                 else if (OmniBox.Text.StartsWith("domain:", StringComparison.Ordinal))
                 {
                     SiteInformationIcon.Text = "\xE71B";
                     SiteInformationText.Text = "Address";
-                    SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text.Substring(7).Trim()}";
+                    SiteInformationPopupButton.ToolTip = $"Address: {OmniBox.Text.Substring(7).Trim()}";
                 }
                 else if (Utils.IsProgramUrl(OmniBox.Text))
                 {
                     SiteInformationIcon.Text = "\xE756";
                     SiteInformationText.Text = "Program";
-                    SiteInformationPanel.ToolTip = $"Open program: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Open program: {OmniBox.Text}";
                 }
                 else if (Utils.IsCode(OmniBox.Text))
                 {
                     SiteInformationIcon.Text = "\xE943";
                     SiteInformationText.Text = "Code";
-                    SiteInformationPanel.ToolTip = $"Code: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Code: {OmniBox.Text}";
                 }
                 else if (Utils.IsUrl(OmniBox.Text))
                 {
                     SiteInformationIcon.Text = "\xE71B";
                     SiteInformationText.Text = "Address";
-                    SiteInformationPanel.ToolTip = $"Address: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Address: {OmniBox.Text}";
                 }
                 else
                 {
                     SiteInformationIcon.Text = "\xE721";
                     SiteInformationText.Text = "Search";
-                    SiteInformationPanel.ToolTip = $"Searching: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text}";
                 }
                 SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
             }
@@ -2715,7 +3134,7 @@ namespace SLBr.Pages
                         break;
                 }
                 SiteInformationText.Text = OmniBoxOverrideSearch.Name;
-                SiteInformationPanel.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBox.Text.Trim()}";
+                SiteInformationPopupButton.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBox.Text.Trim()}";
             }
         }
 
@@ -2784,7 +3203,7 @@ namespace SLBr.Pages
             QRButton.Visibility = App.Instance.AllowQRButton ? Visibility.Visible : Visibility.Collapsed;
             WebEngineButton.Visibility = App.Instance.AllowWebEngineButton ? Visibility.Visible : Visibility.Collapsed;
             if (!IsLoading)
-                TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton && Utils.IsHttpScheme(Address) ? Visibility.Visible : Visibility.Collapsed;
+                TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton && !Address.StartsWith("slbr:", StringComparison.Ordinal) ? Visibility.Visible : Visibility.Collapsed;
 
             if (WebView != null && WebView.IsBrowserInitialized)
             {
@@ -3119,12 +3538,6 @@ namespace SLBr.Pages
                 ExtensionWindow.Height = data.height;
                 ExtensionWindow.Width = data.width;
             });
-        }
-
-        private void SiteInformation_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (SiteInformationText.Text != "Loading")
-                SiteInformationPopup.IsOpen = !SiteInformationPopup.IsOpen;
         }
 
         private void DownloadCancelButton_Click(object sender, RoutedEventArgs e)
