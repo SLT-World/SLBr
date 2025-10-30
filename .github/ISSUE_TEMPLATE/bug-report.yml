@@ -1,0 +1,99 @@
+name: Bug Report
+description: Submit a report for a reproducible bug
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+  - SLT-World
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only open an issue if you have a **bug** to report.
+        For project-related questions & discussions, use [Discussions](https://github.com/SLT-World/SLBr/discussions).
+
+        Before proceeding, ensure that:
+        - The issue concerns this project specifically.
+        - The problem can be consistently reproduced.
+        - You are using the latest available version.
+  - type: checkboxes
+    attributes:
+      label: Existing Issue Check
+      description: Confirm that no existing issue already reports this bug.
+      options:
+      - label: I have searched both open/closed issues and found no duplicate.
+        required: true
+  - type: input
+    id: slbr-version
+    attributes:
+      label: SLBr Version
+      description: Specify the exact version in which the problem occurs. Only report issues reproducible on the latest version.
+      placeholder: ----.--.--.--
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating System
+      multiple: false
+      options:
+        - Windows 10
+        - Windows 11
+    validations:
+      required: true
+  - type: dropdown
+    id: web-engine
+    attributes:
+      label: Web Engine
+      multiple: true
+      options:
+        - Unknown
+        - CEF
+        - WebView2
+        - Trident
+    validations:
+      required: true
+  - type: textarea
+    id: repro-steps
+    attributes:
+      label: Reproduction Steps
+      description: |
+        Provide the minimal and precise steps required to reproduce the issue.
+      placeholder: Minimal reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: |
+        Provide a description of the expected behavior.
+      placeholder: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: |
+        Describe the observed behavior. Include any error messages, exceptions, or stack traces, if available.
+      placeholder: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: known-workarounds
+    attributes:
+      label: Known Workarounds
+      description: |
+        If you have discovered any temporary workaround or mitigation, please describe it here.
+      placeholder: Known Workarounds
+    validations:
+      required: false
+  - type: textarea
+    id: other-info
+    attributes:
+      label: Additional Information
+      description: |
+        Mention any relevant context, such as third-party components or unusual configurations.
+      placeholder: Additional information
+    validations:
+      required: false
