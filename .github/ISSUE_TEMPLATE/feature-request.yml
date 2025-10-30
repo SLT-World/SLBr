@@ -1,0 +1,70 @@
+name: Feature Request
+description: Suggest an idea
+title: "[Feature Request]: "
+labels: ["feature request"]
+assignees:
+  - SLT-World
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only open an issue if you have a project-related **feature** to suggest.
+        For project-related questions & discussions, use [Discussions](https://github.com/SLT-World/SLBr/discussions).
+
+        Before proceeding, ensure that:
+        - The suggestion concerns this project specifically.
+        - No existing issue proposes a similar idea.
+        - The request is technically feasible within the project's scope.
+  - type: checkboxes
+    attributes:
+      label: Existing Issue Check
+      description: Confirm that no similar feature requests have been submitted.
+      options:
+      - label: I have searched both open/closed issues and found no duplicate.
+        required: true
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: |
+        Provide an explanation of the proposed feature.
+      placeholder: Proposed feature
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: |
+        Explain why this feature should be implemented.
+        Describe the problem it addresses or the use case it offers.
+      placeholder: Reason and benefit of the feature
+    validations:
+      required: true
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Proposed Implementation
+      description: |
+        If applicable, outline how the feature could be implemented.
+      placeholder: Suggested implementation
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: |
+        Describe any alternative approaches or workarounds considered.
+      placeholder: Possible alternatives
+    validations:
+      required: false
+  - type: textarea
+    id: other-info
+    attributes:
+      label: Additional Information
+      description: |
+        Include any relevant context.
+      placeholder: Additional information
+    validations:
+      required: false
