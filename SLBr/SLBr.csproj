@@ -12,8 +12,8 @@
     <SignAssembly>False</SignAssembly>
     <ApplicationIcon>Resources\SLBr.ico</ApplicationIcon>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
-    <AssemblyVersion>2025.9.29.0</AssemblyVersion>
-    <FileVersion>2025.9.29.0</FileVersion>
+    <AssemblyVersion>2025.12.8.0</AssemblyVersion>
+    <FileVersion>2025.12.8.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>AnyCPU;x64</Platforms>
     <Company>$(Authors)</Company>
@@ -93,7 +93,7 @@
 
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="141.0.110" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3590-prerelease" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3650-prerelease" />
   </ItemGroup>
 
   <ItemGroup>

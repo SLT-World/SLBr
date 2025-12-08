@@ -23,23 +23,9 @@ namespace SLBr.Handlers
             Unwanted_Software,
         }
 
-        string GoogleClientID;
-
-        string[] GoogleAPIKeys;
-        string[] YandexAPIKeys;
-        string[] PhishTankAPIKeys;
-
         const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=";
         const string YandexEndpoint = "https://sba.yandex.net/v4/threatMatches:find?key=";
         const string PhishTankEndpoint = "https://checkurl.phishtank.com/checkurl/";
-
-        public WebRiskHandler(string[] _GoogleAPIKeys, string[] _YandexAPIKeys, string[] _PhishTankAPIKeys, string _GoogleClientID)
-        {
-            GoogleAPIKeys = _GoogleAPIKeys;
-            YandexAPIKeys = _YandexAPIKeys;
-            PhishTankAPIKeys = _PhishTankAPIKeys;
-            GoogleClientID = _GoogleClientID;
-        }
 
         public ThreatType SBGetThreatType(string Data)
         {
@@ -86,7 +72,7 @@ namespace SLBr.Handlers
             {
                 //""THREAT_TYPE_UNSPECIFIED"",""POTENTIALLY_HARMFUL_APPLICATION""
                 string Payload = $@"{{
-    ""client"":{{""clientId"":""{GoogleClientID}"",""clientVersion"":""1.0.0""}},
+    ""client"":{{""clientId"":""{SECRETS.GOOGLE_DEFAULT_CLIENT_ID}"",""clientVersion"":""1.0.0""}},
     ""threatInfo"":{{
         ""threatTypes"":[""MALWARE"",""SOCIAL_ENGINEERING"",""UNWANTED_SOFTWARE""],
         ""platformTypes"":[""CHROME""],
@@ -151,11 +137,11 @@ namespace SLBr.Handlers
             switch (Service)
             {
                 case SecurityService.Google:
-                    return SBGetThreatType(SBResponse(Url, GoogleEndpoint + GoogleAPIKeys[App.MiniRandom.Next(GoogleAPIKeys.Length)]));
+                    return SBGetThreatType(SBResponse(Url, GoogleEndpoint + SECRETS.GOOGLE_API_KEY));
                 case SecurityService.Yandex:
-                    return SBGetThreatType(SBResponse(Url, YandexEndpoint + YandexAPIKeys[App.MiniRandom.Next(YandexAPIKeys.Length)]));
+                    return SBGetThreatType(SBResponse(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
                 case SecurityService.PhishTank:
-                    return PTCheck(Url, PhishTankAPIKeys[App.MiniRandom.Next(PhishTankAPIKeys.Length)]);
+                    return PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
             }
             return ThreatType.Unknown;
         }

@@ -1,4 +1,5 @@
-﻿using SLBr.Pages;
+﻿using SLBr.Controls;
+using SLBr.Pages;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -511,7 +512,7 @@ namespace SLBr
         public void ForceUnloadTab(int Id)
         {
             BrowserTabItem _Tab = GetBrowserTabWithId(Id);
-            if (_Tab.Content != null)
+            if (_Tab?.Content != null)
                 UnloadTab(_Tab.Content, true);
         }
         private void UnloadTab(Browser BrowserView, bool Bypass = false)

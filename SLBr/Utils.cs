@@ -122,12 +122,21 @@ namespace SLBr
         [DllImport("user32.dll")]
         public static extern IntPtr GetDesktopWindow();
 
+        [DllImport("user32.dll")]
+        public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string lpszClass, string lpszWindow);
+
         public static string GetWindowTextRaw(IntPtr hWnd)
         {
             StringBuilder Builder = new(512);
             GetWindowText(hWnd, Builder, Builder.Capacity);
             return Builder.ToString();
         }
+
+        public const uint WM_KEYDOWN = 0x0100;
+        public const uint WM_KEYUP = 0x0101;
 
         public const int GWL_STYLE = -16;
         public const int GWL_EXSTYLE = -20;
@@ -606,7 +615,7 @@ namespace SLBr
                 string Payload = $"{{\"urls\":\"{Url}\"}}";
                 try
                 {
-                    Client.DefaultRequestHeaders.Add("X-Goog-Api-Key", SECRETS.AMPs[App.MiniRandom.Next(SECRETS.AMPs.Count)]);
+                    Client.DefaultRequestHeaders.Add("X-Goog-Api-Key", SECRETS.AMP_API_KEY);
                     var Response = Client.PostAsync(App.AMPEndpoint, new StringContent(Payload, Encoding.Default, "application/json")).Result;
                     if (!Response.IsSuccessStatusCode) return null;
                     var Json = Response.Content.ReadFromJsonAsync<JsonElement>().Result;

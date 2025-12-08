@@ -79,15 +79,16 @@ Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 >         public static string GOOGLE_DEFAULT_CLIENT_ID = "";
 >         public static string GOOGLE_DEFAULT_CLIENT_SECRET = "";
 >         public static string DISCORD_WEBHOOK = "";
->         public static readonly ReadOnlyCollection<string> YANDEX_API_KEYS = new ReadOnlyCollection<string>();
->         public static readonly ReadOnlyCollection<string> PHISHTANK_API_KEYS = new ReadOnlyCollection<string>();
->         public static readonly ReadOnlyCollection<string> WEATHER_API_KEYS = new ReadOnlyCollection<string>();
->         public static readonly ReadOnlyCollection<string> AMPs = new ReadOnlyCollection<string>();
+>         public static string YANDEX_API_KEY = "";
+>         public static string PHISHTANK_API_KEY = "";
+>         public static string WEATHER_API_KEY = "";
+>         public static string AMP_API_KEY = "";
 >         public const string GOOGLE_TRANSLATE_ENDPOINT = "";
 >         public const string MICROSOFT_TRANSLATE_ENDPOINT = "";
 >         public const string LINGVANEX_ENDPOINT = "";
 >         public const string YANDEX_LANGUAGE_DETECTION_ENDPOINT = "";
 >         public const string YANDEX_ENDPOINT = "";
+>         public const string SPELLCHECK_ENDPOINT = "";
 >     }
 > }
 > ```

@@ -676,7 +676,7 @@ namespace SLBr
             {
                 foreach (Window Window in Application.Current.Windows)
                 {
-                    if (Window is InformationDialogWindow || Window is PromptDialogWindow)
+                    if (Window is InformationDialogWindow || Window is DynamicDialogWindow || Window is CredentialsDialogWindow)
                         Window.Close();
                 }
             });
@@ -723,7 +723,7 @@ namespace SLBr
             if (Args.ModifiedHeaders != null && Args.ModifiedHeaders.Count != 0)
             {
                 foreach (var Header in Args.ModifiedHeaders)
-                    request.SetHeaderByName(Header.Key, Header.Value, true);
+                    request.Headers[Header.Key] = Header.Value;
             }
             return CefReturnValue.Continue;
         }

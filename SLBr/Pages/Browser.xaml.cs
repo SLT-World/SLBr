@@ -174,7 +174,7 @@ namespace SLBr.Pages
                     if (V2 == "Tab")
                     {
                         BrowserTabItem _Tab = Tab.ParentWindow.GetBrowserTabWithId(int.Parse(V1));
-                        Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                        Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1, Private);
                     }
                     else if (V2 == "Private")
                         Tab.ParentWindow.NewTab(V1, true, -1, true);
@@ -508,12 +508,19 @@ namespace SLBr.Pages
             }
             else if (e.DialogType == ScriptDialogType.Prompt)
             {
-                PromptDialogWindow InfoWindow = new PromptDialogWindow("Prompt", $"{Utils.Host(e.Url)}", e.Text, e.DefaultPrompt);
-                InfoWindow.Topmost = true;
+
+                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Prompt", Utils.Host(e.Url),
+                    new List<InputField>
+                    {
+                        new InputField { Name = e.Text, IsRequired = false, Type = DialogInputType.Text, Value = e.DefaultPrompt }
+                    },
+                    "\ue946"
+                );
+                _DynamicDialogWindow.Topmost = true;
                 e.Handled = true;
-                if (InfoWindow.ShowDialog() == true)
+                if (_DynamicDialogWindow.ShowDialog() == true)
                 {
-                    e.PromptResult = InfoWindow.UserInput;
+                    e.PromptResult = _DynamicDialogWindow.InputFields[0].Value;
                     e.Result = true;
                 }
                 else
@@ -694,19 +701,35 @@ namespace SLBr.Pages
             if (UserAgentBranding)
             {
                 e.ModifiedHeaders.Add("User-Agent", App.Instance.UserAgent);
-                e.ModifiedHeaders.Add("sec-ch-ua", App.Instance.UserAgentBrandsString);
+                e.ModifiedHeaders.Add("Sec-Ch-Ua", App.Instance.UserAgentBrandsString);
             }
-            if (bool.Parse(App.Instance.GlobalSave.Get("WarnCodec")) && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
+            if (ProprietaryCodecsDialogWindow == null && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
             {
-                Dispatcher.BeginInvoke(() =>
+                bool WarnCodec = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
+                if (WarnCodec)
                 {
-                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Proprietary Codecs Detected", "This site is trying to play media using formats not supported by Chromium (CEF).\nDo you want to switch to the Edge (WebView2) engine?", "\xe8ab", "Yes", "No");
-                    InfoWindow.Topmost = true;
-                    if (InfoWindow.ShowDialog() == true)
-                        Action(Actions.SwitchWebEngine, null, "1");
-                });
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        ProprietaryCodecsDialogWindow = new DynamicDialogWindow("Information", "Proprietary Codecs Detected",
+                            new List<InputField>
+                            {
+                    new InputField { Name = "This site is trying to play media using formats not supported by Chromium (CEF).\nDo you want to switch to the Edge (WebView2) engine?", Type = DialogInputType.Label },
+                    new InputField { Name = "Do not show this message again", Type = DialogInputType.Boolean, BoolValue = !WarnCodec }
+                            },
+                            "\xe8ab", "Yes", "No"
+                        );
+                        ProprietaryCodecsDialogWindow.Topmost = true;
+                        if (ProprietaryCodecsDialogWindow.ShowDialog() == true)
+                            Action(Actions.SwitchWebEngine, null, "1");
+                        App.Instance.GlobalSave.Set("WarnCodec", !ProprietaryCodecsDialogWindow.InputFields[1].BoolValue);
+                        //App.Instance.GlobalSave.Set("WarnCodec", !ProprietaryCodecsDialogWindow.InputFields.Where(i => i.Type == DialogInputType.Boolean).First().BoolValue);
+                        ProprietaryCodecsDialogWindow = null;
+                    });
+                }
             }
         }
+
+        DynamicDialogWindow? ProprietaryCodecsDialogWindow;
 
         private void WebView_ResourceLoaded(object? sender, ResourceLoadedResult e)
         {
@@ -1027,7 +1050,7 @@ namespace SLBr.Pages
                 e.WebView = Popup.WebView;
             }
             else
-                e.WebView = Tab.ParentWindow.NewTab(e.Url, !e.Background, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private ? Private : bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                e.WebView = Tab.ParentWindow.NewTab(e.Url, !e.Background, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private ? Private : Private);
         }
 
         private void WebView_NavigationError(object? sender, NavigationErrorEventArgs e)
@@ -1040,6 +1063,45 @@ namespace SLBr.Pages
             Navigate(e.Url);
         }
 
+        private async void SetDarkMode(bool IsDarkModeEnabled)
+        {
+            if (App.Instance.SmartDarkMode)
+            {
+                App.Instance.Dispatcher.BeginInvoke(async () =>
+                {
+                    if (WebView.CanExecuteJavascript)
+                    {
+                        var RequireForceDarkMode = await WebView?.EvaluateScriptAsync(Scripts.CheckNativeDarkModeScript);
+                        await WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
+                        {
+                            enabled = (RequireForceDarkMode == "1")
+                        });
+                    }
+                    else
+                    {
+                        EventHandler<bool>? DelayHandler = null;
+                        DelayHandler = async (sender, args) =>
+                        {
+                            if (WebView.CanExecuteJavascript)
+                            {
+                                WebView.LoadingStateChanged -= DelayHandler;
+                                var RequireForceDarkMode = await WebView?.EvaluateScriptAsync(Scripts.CheckNativeDarkModeScript);
+                                await WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
+                                {
+                                    enabled = (RequireForceDarkMode == "1")
+                                });
+                            }
+                        };
+                        WebView.LoadingStateChanged += DelayHandler;
+                    }
+                });
+            }
+            await WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
+            {
+                enabled = IsDarkModeEnabled
+            });
+        }
+
         private async void WebView_LoadingStateChanged(object? sender, bool e)
         {
             if (WebView == null || !WebView.IsBrowserInitialized)
@@ -1049,10 +1111,7 @@ namespace SLBr.Pages
             BackButton.IsEnabled = CanGoBack;
             ForwardButton.IsEnabled = CanGoForward;
             ReloadButton.Content = IsLoading ? "\xF78A" : "\xE72C";
-            await WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
-            {
-                enabled = App.Instance.CurrentTheme.DarkWebPage
-            });
+            SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
 
             CurrentWebAppManifest = null;
             CurrentWebAppManifestUrl = string.Empty;
@@ -1157,45 +1216,48 @@ namespace SLBr.Pages
 
                 case "background":
                     string Url = string.Empty;
-                    switch (App.Instance.GlobalSave.GetInt("HomepageBackground"))
+                    try
                     {
-                        case 0:
-                            Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
-                            if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
-                                Url = $"Data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
-                            break;
-                        case 1:
-                            int BingBackground = App.Instance.GlobalSave.GetInt("BingBackground");
-                            if (BingBackground == 0)
-                            {
-                                try
+                        switch (App.Instance.GlobalSave.GetInt("HomepageBackground"))
+                        {
+                            case 0:
+                                Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
+                                if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
+                                    Url = $"Data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
+                                break;
+                            case 1:
+                                int BingBackground = App.Instance.GlobalSave.GetInt("BingBackground");
+                                if (BingBackground == 0)
                                 {
-                                    XmlDocument Doc = new XmlDocument();
-                                    Doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
-                                    Url = "http://www.bing.com/" + Doc.SelectSingleNode("/images/image/url").InnerText;
+                                    try
+                                    {
+                                        XmlDocument Doc = new XmlDocument();
+                                        Doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
+                                        Url = "http://www.bing.com/" + Doc.SelectSingleNode("/images/image/url").InnerText;
+                                    }
+                                    catch { }
                                 }
-                                catch { }
-                            }
-                            else
-                                Url = "http://bingw.jasonzeng.dev/?index=random";
-                            break;
-                        case 2:
-                            Url = "http://picsum.photos/1920/1080?random";
-                            break;
-                        case 3:
-                            using (var Client = new HttpClient())
-                            {
-                                string Json = await Client.GetStringAsync("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY");
-
-                                using var Document = JsonDocument.Parse(Json);
-                                var Root = Document.RootElement;
-                                if (!App.Instance.LiteMode && Root.TryGetProperty("hdurl", out var HDUrl))
-                                    Url = HDUrl.GetString() ?? string.Empty;
-                                else if (Root.TryGetProperty("url", out var _Url))
-                                    Url = _Url.GetString() ?? string.Empty;
-                            }
-                            break;
+                                else
+                                    Url = "http://bingw.jasonzeng.dev/?index=random";
+                                break;
+                            case 2:
+                                Url = "http://picsum.photos/1920/1080?random";
+                                break;
+                            case 3:
+                                using (var Client = new HttpClient())
+                                {
+                                    string Json = await Client.GetStringAsync("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY");
+                                    using var Document = JsonDocument.Parse(Json);
+                                    var Root = Document.RootElement;
+                                    if (App.Instance.HighPerformanceMode && Root.TryGetProperty("hdurl", out var HDUrl))
+                                        Url = HDUrl.GetString() ?? string.Empty;
+                                    else if (Root.TryGetProperty("url", out var _Url))
+                                        Url = _Url.GetString() ?? string.Empty;
+                                }
+                                break;
+                        }
                     }
+                    catch { }
                     if (!string.IsNullOrEmpty(Url))
                         WebView?.ExecuteScript($"document.documentElement.style.backgroundImage = \"url('{Url}')\";");
                     break;
@@ -1273,6 +1335,7 @@ namespace SLBr.Pages
 
         private void WebView_FrameLoadStart(object? sender, string e)
         {
+            //SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
             if (Utils.IsHttpScheme(e))
             {
                 WebView?.ExecuteScript(Scripts.AntiCloseScript);//Replacement for DoClose of LifeSpanHandler in RuntimeStyle Chrome
@@ -1313,7 +1376,7 @@ namespace SLBr.Pages
             e.Launch = InfoWindow.ShowDialog() == true;
         }
 
-        private void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
+        private async void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
             bool IsPageMenu = true;
             ContextMenu BrowserMenu = new ContextMenu();
@@ -1321,25 +1384,26 @@ namespace SLBr.Pages
             {
                 if (e.MenuType.HasFlag(i))
                 {
-                    //BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = i.ToString(), Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
+                    //BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = i.ToString(), Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                     if (BrowserMenu.Items.Count != 0 && BrowserMenu.Items[BrowserMenu.Items.Count - 1].GetType() == typeof(MenuItem))
                         BrowserMenu.Items.Add(new Separator());
                     if (i == WebContextMenuType.Link)
                     {
                         IsPageMenu = false;
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
                     }
                     else if (i == WebContextMenuType.Selection && !e.IsEditable)
                     {
                         IsPageMenu = false;
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                         BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => Clipboard.SetText(e.SelectionText)) });
                         BrowserMenu.Items.Add(new Separator());
                         BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select All", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                     }
                     else if (i == WebContextMenuType.Media)
                     {
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                         if (e.MediaType == WebContextMenuMediaType.Image)
                         {
                             IsPageMenu = false;
@@ -1376,7 +1440,7 @@ namespace SLBr.Pages
                                             Url = $"https://tineye.com/search?url={Uri.EscapeDataString(e.SourceUrl)}";
                                             break;
                                     }
-                                    Tab.ParentWindow.NewTab(Url, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                                    Tab.ParentWindow.NewTab(Url, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private);
                                 })
                             });
                             //model.AddItem((CefMenuCommand)26502, "Open in paintbrush");
@@ -1393,7 +1457,8 @@ namespace SLBr.Pages
             }
             if (e.IsEditable)
             {
-                if (e.SpellCheck && e.DictionarySuggestions.Count != 0)
+                //Doesn't work at all
+                /*if (e.SpellCheck && e.DictionarySuggestions.Count != 0)
                 {
                     foreach (string Suggestion in e.DictionarySuggestions)
                     {
@@ -1409,6 +1474,54 @@ namespace SLBr.Pages
                             ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().AddWordToDictionary(e.MisspelledWord);
                     }) });
                     BrowserMenu.Items.Add(new Separator());
+                }*/
+                if (!string.IsNullOrEmpty(e.SelectionText) && !e.SelectionText.Contains(" ", StringComparison.Ordinal) && bool.Parse(App.Instance.GlobalSave.Get("SpellCheck")))
+                {
+                    List<(string Word, List<string> Suggestions)> Results = await App.Instance.SpellCheck(e.SelectionText);
+                    if (Results.Count != 0)
+                    {
+                        int Count = 0;
+
+                        MenuItem? SuggestionsSubMenuModel = null;
+                        foreach ((string Word, List<string> Suggestions) in Results)
+                        {
+                            foreach (string Suggestion in Suggestions)
+                            {
+                                if (Count < 3)
+                                {
+                                    BrowserMenu.Items.Add(new MenuItem
+                                    {
+                                        Icon = "\uf87b",
+                                        Header = Suggestion,
+                                        Command = new RelayCommand(_ =>
+                                        {
+                                            if (WebView is ChromiumWebView ChromiumWebView)
+                                                ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().ReplaceMisspelling(Suggestion);
+                                        })
+                                    });
+                                }
+                                else
+                                {
+                                    if (SuggestionsSubMenuModel == null)
+                                        SuggestionsSubMenuModel = new MenuItem { Icon = "\ue82d", Header = "More" };
+                                    SuggestionsSubMenuModel.Items.Add(new MenuItem
+                                    {
+                                        Icon = "\uf87b",
+                                        Header = Suggestion,
+                                        Command = new RelayCommand(_ =>
+                                        {
+                                            if (WebView is ChromiumWebView ChromiumWebView)
+                                                ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().ReplaceMisspelling(Suggestion);
+                                        })
+                                    });
+                                }
+                                Count++;
+                            }
+                        }
+                        if (SuggestionsSubMenuModel != null)
+                            BrowserMenu.Items.Add(SuggestionsSubMenuModel);
+                        BrowserMenu.Items.Add(new Separator());
+                    }
                 }
 
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Win+Period", Icon = "\ue76e", Header = "Emoji", Command = new RelayCommand(_ => CoreInputView.GetForCurrentView().TryShow(CoreInputViewKind.Emoji)) });
@@ -1425,7 +1538,7 @@ namespace SLBr.Pages
                 if (!string.IsNullOrEmpty(e.SelectionText))
                 {
                     BrowserMenu.Items.Add(new Separator());
-                    BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
+                    BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                 }
             }
             else if (IsPageMenu)// && e.MediaType == WebContextMenuMediaType.None)
@@ -1453,7 +1566,7 @@ namespace SLBr.Pages
 
                 MenuItem AdvancedSubMenuModel = new MenuItem { Icon = "\uec7a", Header = "Advanced" };
                 AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\uec7a", Header = "Inspect", Command = new RelayCommand(_ => DevTools()) });
-                AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab($"view-source:{e.FrameUrl}", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
+                AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab($"view-source:{e.FrameUrl}", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                 BrowserMenu.Items.Add(AdvancedSubMenuModel);
             }
             BrowserMenu.PlacementTarget = WebView?.Control;
@@ -1523,13 +1636,11 @@ namespace SLBr.Pages
             }
             else
             {
+                //Looks like both Chromium engines have issues now
                 if (WebView.Engine == WebEngineType.ChromiumEdge)
                 {
                     //Warning: WebView2 somehow forgets the auto dark mode after a while
-                    WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
-                    {
-                        enabled = App.Instance.CurrentTheme.DarkWebPage
-                    });
+                    SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
                     //if (WebView2DevToolsHWND != IntPtr.Zero)
                     //    WebView2DevTools_SizeChanged(null, null);
                     if (App.Instance.LiteMode && WebView != null && WebView.IsBrowserInitialized)
@@ -1540,6 +1651,8 @@ namespace SLBr.Pages
                         });
                     }
                 }
+                else if (WebView.Engine == WebEngineType.Chromium)
+                    SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
             }
         }
 
@@ -2434,15 +2547,26 @@ namespace SLBr.Pages
             }
             else if (!IsLoading)
             {
-                PromptDialogWindow InfoWindow = new PromptDialogWindow("Prompt", $"Add Favourite", "Name", Title);
-                InfoWindow.Topmost = true;
-                if (InfoWindow.ShowDialog() == true)
+                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Prompt", "Add Favourite",
+                    new List<InputField>
+                    {
+                        new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Title },
+                        new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Address },
+                    },
+                    "\ue946"
+                );
+                _DynamicDialogWindow.Topmost = true;
+                if (_DynamicDialogWindow.ShowDialog() == true)
                 {
-                    App.Instance.Favourites.Add(new ActionStorage(InfoWindow.UserInput, $"4<,>{Address}", Address));
-                    FavouriteButton.Content = "\xEB52";
-                    FavouriteButton.Foreground = App.Instance.FavouriteColor;
-                    FavouriteButton.ToolTip = "Remove from favourites";
-                    Tab.FavouriteCommandHeader = "Remove from favourites";
+                    string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
+                    App.Instance.Favourites.Add(new ActionStorage(_DynamicDialogWindow.InputFields[0].Value, $"4<,>{URL}", URL));
+                    if (URL == Address)
+                    {
+                        FavouriteButton.Content = "\xEB52";
+                        FavouriteButton.Foreground = App.Instance.FavouriteColor;
+                        FavouriteButton.ToolTip = "Remove from favourites";
+                        Tab.FavouriteCommandHeader = "Remove from favourites";
+                    }
                 }
             }
         }
@@ -3207,10 +3331,7 @@ namespace SLBr.Pages
 
             if (WebView != null && WebView.IsBrowserInitialized)
             {
-                await WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
-                {
-                    enabled = _Theme.DarkWebPage
-                });
+                SetDarkMode(_Theme.DarkWebPage);
                 ReaderModeButton.Visibility = App.Instance.AllowReaderModeButton ? (WebView.CanExecuteJavascript && (await IsArticle()) ? Visibility.Visible : Visibility.Collapsed) : Visibility.Collapsed;
             }
             else
@@ -3369,7 +3490,7 @@ namespace SLBr.Pages
             try
             {
                 string SuggestionsUrl = string.Format((OmniBoxOverrideSearch ?? App.Instance.DefaultSearchProvider).SuggestUrl, Uri.EscapeDataString(CurrentText));
-                if (string.IsNullOrEmpty(SuggestionsUrl))
+                if (!string.IsNullOrEmpty(SuggestionsUrl))
                 {
                     string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
                     /*if (Search.Name == "YouTube")
@@ -3559,7 +3680,7 @@ namespace SLBr.Pages
             if (e.ChangedButton == MouseButton.Middle)
             {
                 string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
-                Tab.ParentWindow.NewTab(Values[1], false, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                Tab.ParentWindow.NewTab(Values[1], false, -1, Private);
             }
         }
     }

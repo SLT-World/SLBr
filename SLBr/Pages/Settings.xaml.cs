@@ -280,6 +280,7 @@ namespace SLBr.Pages
 
 
             SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
+            SmartDarkModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartDarkMode"));
 
             MobileViewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("MobileView"));
             ForceLazyCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ForceLazy"));
@@ -340,6 +341,7 @@ namespace SLBr.Pages
             ImageSearchComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ImageSearch");
             TranslationProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TranslationProvider");
             WebEngineComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebEngine");
+            TridentVersionComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TridentVersion");
 
             TabUnloadingTimeComboBox.SelectionChanged -= TabUnloadingTimeComboBox_SelectionChanged;
             if (TabUnloadingTimeComboBox.Items.Count == 0)
@@ -605,6 +607,11 @@ namespace SLBr.Pages
                 App.Instance.GlobalSave.Set("WebEngine", WebEngineComboBox.SelectedIndex);
             }
         }
+        private void TridentVersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("TridentVersion", TridentVersionComboBox.SelectedIndex);
+        }
         private void SearchEngineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
@@ -689,21 +696,21 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.SetAMP(AMPCheckBox.IsChecked.ToBool());
         }
-
-
         private void SkipAdsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
                 App.Instance.SetYouTube(SkipAdsCheckBox.IsChecked.ToBool());
         }
-
-
+        private void SmartDarkModeCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetSmartDarkMode(SmartDarkModeCheckBox.IsChecked.ToBool());
+        }
         private void AdaptiveThemeCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("AdaptiveTheme", AdaptiveThemeCheckBox.IsChecked.ToBool().ToString());
         }
-
         private void WarnCodecCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -1244,16 +1251,16 @@ namespace SLBr.Pages
 
         private void AddSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
-            MultiPromptDialogWindow _MultiPromptDialogWindow = new MultiPromptDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", IsRequired = true }, new InputField { Name = "Search URL with {0} as query", IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query (optional)", IsRequired = false } }, "\xf6fa");
-            _MultiPromptDialogWindow.Topmost = true;
-            if (_MultiPromptDialogWindow.ShowDialog() == true)
+            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query (optional)", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa");
+            _DynamicDialogWindow.Topmost = true;
+            if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 SearchProvider _SearchProvider = new SearchProvider
                 {
-                    Name = _MultiPromptDialogWindow.UserInputs[0].Trim(),
-                    Host = Utils.FastHost(_MultiPromptDialogWindow.UserInputs[1]),
-                    SearchUrl = _MultiPromptDialogWindow.UserInputs[1] + (_MultiPromptDialogWindow.UserInputs[1].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"),
-                    SuggestUrl = _MultiPromptDialogWindow.UserInputs[2] + (string.IsNullOrEmpty(_MultiPromptDialogWindow.UserInputs[2]) ? string.Empty : (_MultiPromptDialogWindow.UserInputs[2].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"))
+                    Name = _DynamicDialogWindow.InputFields[0].Value.Trim(),
+                    Host = Utils.FastHost(_DynamicDialogWindow.InputFields[1].Value),
+                    SearchUrl = _DynamicDialogWindow.InputFields[1].Value + (_DynamicDialogWindow.InputFields[1].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"),
+                    SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"))
                 };
                 App.Instance.SearchEngines.Add(_SearchProvider);
                 SearchEngineComboBox.Items.Add(_SearchProvider.Name);
@@ -1266,14 +1273,14 @@ namespace SLBr.Pages
             int SelectedIndex = SearchEngineComboBox.SelectedIndex;
             SearchProvider _SearchProvider = App.Instance.SearchEngines[SelectedIndex];
 
-            MultiPromptDialogWindow _MultiPromptDialogWindow = new MultiPromptDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query (optional)", IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f");
-            _MultiPromptDialogWindow.Topmost = true;
-            if (_MultiPromptDialogWindow.ShowDialog() == true)
+            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query (optional)", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f");
+            _DynamicDialogWindow.Topmost = true;
+            if (_DynamicDialogWindow.ShowDialog() == true)
             {
-                _SearchProvider.Name = _MultiPromptDialogWindow.UserInputs[0].Trim();
-                _SearchProvider.Host = Utils.FastHost(_MultiPromptDialogWindow.UserInputs[1]);
-                _SearchProvider.SearchUrl = _MultiPromptDialogWindow.UserInputs[1] + (_MultiPromptDialogWindow.UserInputs[1].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}");
-                _SearchProvider.SuggestUrl = _MultiPromptDialogWindow.UserInputs[2] + (string.IsNullOrEmpty(_MultiPromptDialogWindow.UserInputs[2]) ? string.Empty : (_MultiPromptDialogWindow.UserInputs[2].Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"));
+                _SearchProvider.Name = _DynamicDialogWindow.InputFields[0].Value.Trim();
+                _SearchProvider.Host = Utils.FastHost(_DynamicDialogWindow.InputFields[1].Value);
+                _SearchProvider.SearchUrl = _DynamicDialogWindow.InputFields[1].Value + (_DynamicDialogWindow.InputFields[1].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}");
+                _SearchProvider.SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"));
                 App.Instance.SearchEngines[SelectedIndex] = _SearchProvider;
                 SearchEngineComboBox.SelectionChanged -= SearchEngineComboBox_SelectionChanged;
                 SearchEngineComboBox.Items[SelectedIndex] = _SearchProvider.Name;

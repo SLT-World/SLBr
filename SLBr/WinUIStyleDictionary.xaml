@@ -525,7 +525,7 @@
 
     <Style TargetType="{x:Type ComboBox}">
         <Setter Property="IsEditable" Value="False"/>
-        <Setter Property="IsTextSearchEnabled" Value="False"/>
+        <Setter Property="IsTextSearchEnabled" Value="True"/>
         <Setter Property="MaxDropDownHeight" Value="300"/>
         <Setter Property="IsSynchronizedWithCurrentItem" Value="True" />
         <Setter Property="StaysOpenOnEdit" Value="True" />

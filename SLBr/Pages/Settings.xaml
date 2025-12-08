@@ -65,7 +65,16 @@
                             </GroupBox.Header>
                             <StackPanel>
                                 <CheckBox Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
-                                <CheckBox x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
+                                <CheckBox Margin="0,0,0,10" x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
+                                <DockPanel Margin="0,0,0,0">
+                                    <TextBlock VerticalAlignment="Center" Text="Startup Favicon Service"/>
+                                    <ComboBox x:Name="FaviconServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FaviconServiceComboBox_SelectionChanged">
+                                        <ComboBoxItem>Google</ComboBoxItem>
+                                        <ComboBoxItem>Yandex</ComboBoxItem>
+                                        <ComboBoxItem>DuckDuckGo</ComboBoxItem>
+                                        <ComboBoxItem>AllesEDV</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Margin="0,0,0,10">
@@ -78,17 +87,9 @@
                                 <CheckBox x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
                                 <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not available when Lite Performance Mode is enabled</TextBlock>
                                 <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
-                                <TextBlock Margin="0,5,0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
+                                <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
                                 <!--<CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>-->
-                                <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
-                                <DockPanel Margin="0,0,0,0">
-                                    <TextBlock VerticalAlignment="Center" Text="Startup Favicon Service"/>
-                                    <ComboBox x:Name="FaviconServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FaviconServiceComboBox_SelectionChanged">
-                                        <ComboBoxItem>Google</ComboBoxItem>
-                                        <ComboBoxItem>Yandex</ComboBoxItem>
-                                        <ComboBoxItem>DuckDuckGo</ComboBoxItem>
-                                    </ComboBox>
-                                </DockPanel>
+                                <CheckBox Margin="0,0,0,0" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
@@ -207,7 +208,8 @@
                                         </Grid>
                                     </Border>
                                 </ListBox>
-                                <CheckBox x:Name="AdaptiveThemeCheckBox" Click="AdaptiveThemeCheckBox_Click" Content="Adaptive theme" Width="Auto"/>
+                                <CheckBox Margin="0,0,0,10" x:Name="AdaptiveThemeCheckBox" Click="AdaptiveThemeCheckBox_Click" Content="Adaptive theme" Width="Auto"/>
+                                <CheckBox x:Name="SmartDarkModeCheckBox" Click="SmartDarkModeCheckBox_Click" Content="Smart dark mode" Width="Auto"/>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Margin="0,0,0,10">
@@ -891,6 +893,16 @@
                                     <ComboBox x:Name="RuntimeStyleComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="RuntimeStyleComboBox_SelectionChanged">
                                         <ComboBoxItem>Chrome</ComboBoxItem>
                                         <ComboBoxItem>Alloy</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <TextBlock VerticalAlignment="Center" Text="Trident Version"/>
+                                    <ComboBox x:Name="TridentVersionComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="TridentVersionComboBox_SelectionChanged">
+                                        <ComboBoxItem>7</ComboBoxItem>
+                                        <ComboBoxItem>8</ComboBoxItem>
+                                        <ComboBoxItem>9</ComboBoxItem>
+                                        <ComboBoxItem>10</ComboBoxItem>
+                                        <ComboBoxItem>11</ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
                                 <CheckBox x:Name="BrowserHardwareAccelerationCheckBox" Click="BrowserHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>

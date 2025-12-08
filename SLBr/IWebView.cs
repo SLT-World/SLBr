@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
@@ -957,7 +958,7 @@ namespace SLBr
 
         private void Browser_LoadError(object? sender, LoadErrorEventArgs e)
         {
-            if (e.ErrorCode == CefErrorCode.Aborted)
+            if (e.ErrorCode == CefErrorCode.Aborted || e.ErrorCode == CefErrorCode.IoPending || e.ErrorCode == CefErrorCode.BlockedByClient || e.ErrorCode == CefErrorCode.BlockedByResponse)
                 return;
             NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs((int)e.ErrorCode, e.ErrorText, e.FailedUrl));
         }
@@ -1148,6 +1149,8 @@ namespace SLBr
         public bool CanExecuteJavascript => Browser.CanExecuteJavascriptInMainFrame;
         public async Task<string> EvaluateScriptAsync(string Script)
         {
+            if (!CanExecuteJavascript)
+                return null;
             var Result = await Browser.EvaluateScriptAsync(Script);
             return Result.Success ? Result.Result?.ToString() : null;
         }
@@ -1347,6 +1350,9 @@ namespace SLBr
             if (!WebViewManager.IsWebView2Initialized)
                 WebViewManager.InitializeWebView2();
             Browser = new WebView2();
+            /*KeyboardNavigation.SetDirectionalNavigation(Browser, KeyboardNavigationMode.None);
+            KeyboardNavigation.SetTabNavigation(Browser, KeyboardNavigationMode.None);
+            KeyboardNavigation.SetControlTabNavigation(Browser, KeyboardNavigationMode.None);*/
             Browser.CoreWebView2InitializationCompleted += Browser_CoreWebView2InitializationCompleted;
 
             try
@@ -1359,8 +1365,33 @@ namespace SLBr
                 WebViewManager.DeleteWebView2HighDPIRegistry();
                 Browser.EnsureCoreWebView2Async(WebViewManager.WebView2Environment, Settings.Private ? WebViewManager.WebView2PrivateControllerOptions : WebViewManager.WebView2ControllerOptions);
             }
+            Browser.LostFocus += Browser_LostFocus;
             Browser.KeyDown += (s, e) => HotKeyManager.HandleKeyDown(e);
             ZoomFactor = 1;
+        }
+
+        private void Browser_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (Keyboard.Modifiers == ModifierKeys.None && (Keyboard.IsKeyDown(Key.Up) || Keyboard.IsKeyDown(Key.Down) || Keyboard.IsKeyDown(Key.Left) || Keyboard.IsKeyDown(Key.Right) || Keyboard.IsKeyDown(Key.Tab)))
+            {
+                e.Handled = true;
+
+                string? JSKey = null;
+                int JSKeyCode = 0;
+
+                if (Keyboard.IsKeyDown(Key.Up)) { JSKey = "ArrowUp"; JSKeyCode = 38; }
+                else if (Keyboard.IsKeyDown(Key.Down)) { JSKey = "ArrowDown"; JSKeyCode = 40; }
+                else if (Keyboard.IsKeyDown(Key.Left)) { JSKey = "ArrowLeft"; JSKeyCode = 37; }
+                else if (Keyboard.IsKeyDown(Key.Right)) { JSKey = "ArrowRight"; JSKeyCode = 39; }
+                else if (Keyboard.IsKeyDown(Key.Tab)) { JSKey = "Tab"; JSKeyCode = 9; }
+                App.Instance.Dispatcher.BeginInvoke(async () =>
+                {
+                    if (!Browser.IsFocused)
+                        Browser.Focus();
+                    if (JSKey != null)
+                        ExecuteScript($@"document.dispatchEvent(new KeyboardEvent('keydown',{{key:'{JSKey}',code:'{JSKey}',keyCode:{JSKeyCode},which:{JSKeyCode},bubbles:true}}));document.dispatchEvent(new KeyboardEvent('keyup',{{key:'{JSKey}',code:'{JSKey}',keyCode:{JSKeyCode},which:{JSKeyCode},bubbles:true}}));");
+                }, System.Windows.Threading.DispatcherPriority.Input);
+            }
         }
 
         private void Browser_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
@@ -1374,7 +1405,7 @@ namespace SLBr
             BrowserCore.Settings.AreHostObjectsAllowed = false;
             BrowserCore.Settings.IsScriptEnabled = Settings.JavaScript;
             BrowserCore.Settings.IsStatusBarEnabled = false;
-            BrowserCore.Settings.IsZoomControlEnabled = false;
+            BrowserCore.Settings.IsZoomControlEnabled = true;
             BrowserCore.Settings.AreBrowserAcceleratorKeysEnabled = true;
             BrowserCore.Settings.IsPasswordAutosaveEnabled = false;
             BrowserCore.Settings.IsSwipeNavigationEnabled = false;

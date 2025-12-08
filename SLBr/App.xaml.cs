@@ -865,6 +865,36 @@ namespace SLBr
             return "Search";
         }*/
 
+        public async Task<List<(string Word, List<string> Suggestions)>> SpellCheck(string Text)
+        {
+            var Results = new List<(string, List<string>)>();
+            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
+
+            using JsonDocument Document = JsonDocument.Parse(Json);
+            if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches))
+            {
+                foreach (JsonElement Match in Matches.EnumerateArray())
+                {
+                    if (!Match.TryGetProperty("context", out JsonElement context))
+                        continue;
+
+                    List<string> Suggestions = new();
+                    if (Match.TryGetProperty("replacements", out JsonElement replacements))
+                    {
+                        foreach (JsonElement repl in replacements.EnumerateArray())
+                            Suggestions.Add(repl.GetProperty("value").GetString());
+                    }
+
+                    string ContextText = context.GetProperty("text").GetString();
+                    int Offset = Match.GetProperty("offset").GetInt32();
+                    int Length = Match.GetProperty("length").GetInt32();
+
+                    Results.Add((ContextText.Substring(Offset, Length), Suggestions));
+                }
+            }
+            return Results;
+        }
+
         public static string GetMiniSearchType(string Text)
         {
             if (Text.StartsWith("search:", StringComparison.Ordinal))
@@ -970,7 +1000,7 @@ namespace SLBr
                     string Location = Regex.Replace(Text, @"^weather(\s+in)?\s+", string.Empty, RegexOptions.IgnoreCase).Trim();
                     try
                     {
-                        string WeatherEndpoint = $"https://api.openweathermap.org/data/2.5/weather?lang=en&q={Location}&appid={SECRETS.WEATHER_API_KEYS[App.MiniRandom.Next(SECRETS.WEATHER_API_KEYS.Count)]}&units=metric";
+                        string WeatherEndpoint = $"https://api.openweathermap.org/data/2.5/weather?lang=en&q={Location}&appid={SECRETS.WEATHER_API_KEY}&units=metric";
                         using (HttpClient Client = new HttpClient())
                         {
                             HttpResponseMessage Response = Client.GetAsync(WeatherEndpoint).Result;
@@ -1322,7 +1352,21 @@ namespace SLBr
 
         public void Update()
         {
-            Process.Start(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Updater.exe"));
+            string AppDirectory = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+            string TemporaryUpdater = Path.Combine(Path.GetTempPath(), "SLBr_Updater.exe");
+
+            if (File.Exists(TemporaryUpdater))
+                File.Delete(TemporaryUpdater);
+            File.Copy(Path.Combine(AppDirectory, "Updater.exe"), TemporaryUpdater, true);
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = TemporaryUpdater,
+                Arguments = AppDirectory.Contains(' ') ? $"\"{AppDirectory}\"" : AppDirectory,
+                UseShellExecute = false
+            });
+
+            //Process.Start(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Updater.exe"));
             CloseSLBr();
         }
 
@@ -1422,6 +1466,13 @@ Inner Exception: ```{7} ```";
 
         public bool SkipAds;
         public bool ExternalFonts;
+        public bool SmartDarkMode;
+
+        public void SetSmartDarkMode(bool _SmartDarkMode)
+        {
+            GlobalSave.Set("SmartDarkMode", _SmartDarkMode.ToString());
+            SmartDarkMode = _SmartDarkMode;
+        }
 
         public void SetExternalFonts(bool _ExternalFonts)
         {
@@ -1485,10 +1536,14 @@ Inner Exception: ```{7} ```";
 
         public void SwitchUserPopup()
         {
-            MultiPromptDialogWindow _MultiPromptDialogWindow = new MultiPromptDialogWindow("Prompt", "Switch Profile", new List<InputField> { new InputField { Name = "Enter profile username to switch to:", IsRequired = true, Value = "" } }, "\xE77B");
-            _MultiPromptDialogWindow.Topmost = true;
-            if (_MultiPromptDialogWindow.ShowDialog() == true && _MultiPromptDialogWindow.UserInputs[0].Trim() != Username)
-                Process.Start(new ProcessStartInfo() { FileName = ExecutablePath, Arguments = $"--user={_MultiPromptDialogWindow.UserInputs[0].Trim()}" });
+            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Prompt", "Switch Profile", new List<InputField> { new InputField { Name = "Enter profile username to switch to:", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B");
+            _DynamicDialogWindow.Topmost = true;
+            if (_DynamicDialogWindow.ShowDialog() == true)
+            {
+                string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
+                if (Input != Username)
+                    Process.Start(new ProcessStartInfo() { FileName = ExecutablePath, Arguments = $"--user={Input}" });
+            }
         }
 
         public void SaveOpenSearch(string Name, string Url)
@@ -1910,6 +1965,7 @@ Inner Exception: ```{7} ```";
         }
         private void InitializeUISaves(string CommandLineUrl = "")
         {
+            SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", false.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
             SetYouTube(bool.Parse(GlobalSave.Get("SkipAds", false.ToString())));
             SetNeverSlowMode(bool.Parse(GlobalSave.Get("NeverSlowMode", false.ToString())));
@@ -1924,7 +1980,7 @@ Inner Exception: ```{7} ```";
             }
             Favourites.CollectionChanged += Favourites_CollectionChanged;
             SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), bool.Parse(GlobalSave.Get("CompactTab", true.ToString())), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
-            if (bool.Parse(GlobalSave.Get("RestoreTabs", true.ToString())))
+            if (bool.Parse(GlobalSave.Get("RestoreTabs", false.ToString())))
             {
                 foreach (Saving TabsSave in WindowsSaves)
                 {
@@ -2435,6 +2491,14 @@ Inner Exception: ```{7} ```";
             Settings.RegisterProtocol("slbr", WebViewManager.SLBrHandler);
 
             Settings.CefRuntimeStyle = GlobalSave.GetInt("ChromiumRuntimeStyle", 1) == 1 ? CefRuntimeStyle.Alloy : CefRuntimeStyle.Chrome;
+            switch (GlobalSave.GetInt("TridentVersion", 4))
+            {
+                case 0: Settings.TridentVersion = TridentEmulationVersion.IE7; break;
+                case 1: Settings.TridentVersion = TridentEmulationVersion.IE8; break;
+                case 2: Settings.TridentVersion = TridentEmulationVersion.IE9; break;
+                case 3: Settings.TridentVersion = TridentEmulationVersion.IE10; break;
+                case 4: Settings.TridentVersion = TridentEmulationVersion.IE11; break;
+            }
 
             Settings.UserDataPath = UserDataPath;
             Settings.Language = Locale.Tooltip;
@@ -2473,7 +2537,7 @@ Inner Exception: ```{7} ```";
             WebViewManager.DownloadManager.DownloadUpdated += UpdateDownloadItem;
             WebViewManager.DownloadManager.DownloadCompleted += UpdateDownloadItem;
 
-            _WebRiskHandler = new WebRiskHandler([SECRETS.GOOGLE_API_KEY], SECRETS.YANDEX_API_KEYS.ToArray(), SECRETS.PHISHTANK_API_KEYS.ToArray(), SECRETS.GOOGLE_DEFAULT_CLIENT_ID);
+            _WebRiskHandler = new WebRiskHandler();
 
             WebEngineType DefaultEngine = (WebEngineType)GlobalSave.GetInt("WebEngine");
             switch (DefaultEngine)
@@ -3289,7 +3353,8 @@ Inner Exception: ```{7} ```";
             //https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/features.cc
             string EnableFeatures = "EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
             //https://github.com/chromiumembedded/cef/issues/3991
-            string DisableFeatures = "LensOverlay,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
+            //https://github.com/chromiumembedded/cef/issues/3966
+            string DisableFeatures = "StorageNotificationService,LensOverlay,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
             //WebBluetooth,MediaRouter,
             string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
             string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI";//Adding ,DocumentPictureInPictureAPI would stop WebView2's NewWindowRequested from being called on PiP popups
@@ -3528,20 +3593,41 @@ Inner Exception: ```{7} ```";
                     switch (GlobalSave.GetInt("FaviconService", 0))
                     {
                         case 0:
-                            BitmapImage _GImage = new BitmapImage(new Uri("https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false)));
+                            string GIconUrl = "https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false);
+                            /*if (FaviconCache.TryGetValue(GIconUrl, out BitmapImage GCachedImage))
+                                return GCachedImage;*/
+                            BitmapImage _GImage = new BitmapImage(new Uri(GIconUrl));
                             if (_GImage.CanFreeze)
                                 _GImage.Freeze();
+                            //FaviconCache[GIconUrl] = _GImage;
                             return _GImage;
                         case 1:
-                            BitmapImage _YImage = new BitmapImage(new Uri("https://favicon.yandex.net/favicon/" + Utils.FastHost(Url)));
+                            string YIconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url);
+                            /*if (FaviconCache.TryGetValue(YIconUrl, out BitmapImage YCachedImage))
+                                return YCachedImage;*/
+                            BitmapImage _YImage = new BitmapImage(new Uri(YIconUrl));
                             if (_YImage.CanFreeze)
                                 _YImage.Freeze();
+                            //FaviconCache[YIconUrl] = _YImage;
                             return _YImage;
                         case 2:
-                            BitmapImage _DImage = new BitmapImage(new Uri("https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico"));
+                            string DIconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico";
+                            /*if (FaviconCache.TryGetValue(DIconUrl, out BitmapImage DCachedImage))
+                                return DCachedImage;*/
+                            BitmapImage _DImage = new BitmapImage(new Uri(DIconUrl));
                             if (_DImage.CanFreeze)
                                 _DImage.Freeze();
+                            //FaviconCache[DIconUrl] = _DImage;
                             return _DImage;
+                        case 3:
+                            string AIconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url);
+                            /*if (FaviconCache.TryGetValue(AIconUrl, out BitmapImage ACachedImage))
+                                return ACachedImage;*/
+                            BitmapImage _AImage = new BitmapImage(new Uri(AIconUrl));
+                            if (_AImage.CanFreeze)
+                                _AImage.Freeze();
+                            //FaviconCache[AIconUrl] = _AImage;
+                            return _AImage;
                     }
                 }
                 else if (Url.StartsWith("slbr://settings", StringComparison.Ordinal))
@@ -3632,41 +3718,75 @@ Inner Exception: ```{7} ```";
             return Bitmap;
         }
 
+        private static readonly Dictionary<string, BitmapImage?> FaviconCache = new();
+        private static readonly Dictionary<string, Task<BitmapImage?>> DownloadingFavicons = new();
+        private static readonly LinkedList<string> CacheOrder = new();
+        private const int MaxCacheSize = 500;
+        private static void CacheFavicon(string Key, BitmapImage? Bitmap)
+        {
+            if (FaviconCache.ContainsKey(Key))
+                return;
+            FaviconCache[Key] = Bitmap;
+            CacheOrder.AddLast(Key);
+            if (CacheOrder.Count > MaxCacheSize)
+            {
+                var Oldest = CacheOrder.First!;
+                CacheOrder.RemoveFirst();
+                FaviconCache.Remove(Oldest.Value);
+            }
+        }
+
         public async Task<BitmapImage> SetIcon(string IconUrl, string Url = "", bool IsPrivate = false)
         {
             if (Utils.GetFileExtension(Url) != ".pdf")
             {
                 if (!IsPrivate && Utils.IsHttpScheme(IconUrl))
                 {
+                    if (FaviconCache.TryGetValue(IconUrl, out BitmapImage? CachedImage))
+                        return CachedImage ?? TabIcon;
                     try
                     {
-                        byte[]? ImageData = await DownloadImageDataAsync(IconUrl);
-                        if (ImageData != null)
+                        if (DownloadingFavicons.TryGetValue(IconUrl, out Task<BitmapImage?> PendingTask))
+                            return await PendingTask ?? TabIcon;
+                        Task<BitmapImage?> IconTask = Task.Run(async () =>
                         {
-                            BitmapImage Bitmap = new BitmapImage();
-                            using (MemoryStream Stream = new MemoryStream(ImageData))
+                            byte[]? ImageData = await DownloadFaviconAsync(IconUrl);
+                            if (ImageData != null)
                             {
-                                Bitmap.BeginInit();
-                                Bitmap.StreamSource = Stream;
-                                Bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                Bitmap.EndInit();
-                                if (Bitmap.CanFreeze)
-                                    Bitmap.Freeze();
+                                BitmapImage Bitmap = new BitmapImage();
+                                using (MemoryStream Stream = new MemoryStream(ImageData))
+                                {
+                                    Bitmap.BeginInit();
+                                    Bitmap.StreamSource = Stream;
+                                    Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                    Bitmap.EndInit();
+                                    if (Bitmap.CanFreeze)
+                                        Bitmap.Freeze();
+                                }
+                                CacheFavicon(IconUrl, Bitmap);
+                                return Bitmap;
                             }
-                            return Bitmap;
-                        }
-                        else
-                            return TabIcon;
+                            else
+                                return null;
+                        });
+                        DownloadingFavicons[IconUrl] = IconTask;
+                        BitmapImage? Result = await IconTask;
+                        DownloadingFavicons.Remove(IconUrl);
+                        return Result ?? TabIcon;
                     }
-                    catch { return TabIcon; }
+                    catch { }
                 }
                 else if (IconUrl.StartsWith("data:image/", StringComparison.Ordinal))
                 {
                     try
                     {
+                        //CacheFavicon(IconUrl, Bitmap);
                         return Utils.ConvertBase64ToBitmapImage(IconUrl);
                     }
-                    catch { }
+                    catch
+                    {
+                        //CacheFavicon(IconUrl, null);
+                    }
                 }
                 else if (Url.StartsWith("slbr://settings", StringComparison.Ordinal))
                     return SettingsTabIcon;
@@ -3679,8 +3799,9 @@ Inner Exception: ```{7} ```";
             else
                 return PDFTabIcon;
         }
-        private async Task<byte[]?> DownloadImageDataAsync(string Url)
+        private async Task<byte[]?> DownloadFaviconAsync(string Url)
         {
+            Debug.Write("Downloaded\n");
             if (string.IsNullOrEmpty(Url))
                 return null;
             using (WebClient _WebClient = new WebClient())
@@ -4802,6 +4923,33 @@ while (node = walker.nextNode()) {{
         i++;
     }}
 }}
+}})();";
+
+        public const string CheckNativeDarkModeScript = @"(function() {{
+function detectDarkAppearance() {
+const brightness = (rgbStr) => {
+    const m = rgbStr.match(/\d+/g);
+    if (!m) return 255;
+    const [r,g,b] = m.map(Number);
+    return 0.299*r + 0.587*g + 0.114*b;
+};
+
+const colors = new Set();
+const elements = [document.documentElement, document.body, ...document.querySelectorAll('*')].slice(0, 100);
+for (const el of elements) {
+    const bg = getComputedStyle(el).backgroundColor;
+    if (bg && bg !== 'transparent' && !bg.includes('rgba(0, 0, 0, 0)')) {
+    colors.add(bg);
+    }
+}
+
+const brights = [...colors].map(brightness);
+const avg = brights.length ? brights.reduce((a,b)=>a+b,0)/brights.length : 255;
+return avg < 110;
+}
+
+if (detectDarkAppearance()) return 0;
+return 1;
 }})();";
     }
 
