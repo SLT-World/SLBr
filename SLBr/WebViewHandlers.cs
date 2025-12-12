@@ -109,7 +109,8 @@ namespace SLBr
             foreach (var Flag in Settings.Flags)
                 ChromiumSettings.AddNoErrorFlag(Flag.Key, Flag.Value);
 
-            CefSharpSettings.RuntimeStyle = Settings.CefRuntimeStyle;
+            //CefSharpSettings.RuntimeStyle = Settings.CefRuntimeStyle;
+            CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Alloy;
             foreach (var Scheme in Settings.Schemes)
             {
                 ChromiumSettings.RegisterScheme(new CefCustomScheme

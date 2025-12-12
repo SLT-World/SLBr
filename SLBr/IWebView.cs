@@ -1685,7 +1685,13 @@ namespace SLBr
                     if (Args.ModifiedHeaders != null && Args.ModifiedHeaders.Count != 0)
                     {
                         foreach (var Header in Args.ModifiedHeaders)
-                            e.Request.Headers.SetHeader(Header.Key, Header.Value);
+                        {
+                            try
+                            {
+                                e.Request.Headers.SetHeader(Header.Key, Header.Value);
+                            }
+                            catch { }
+                        }
                     }
                 }
             }

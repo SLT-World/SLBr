@@ -161,7 +161,7 @@ namespace SLBr
                 Settings.AddNoErrorFlag("enable-blink-features", EnableBlinkFeatures);
                 Settings.AddNoErrorFlag("disable-blink-features", DisableBlinkFeatures);
 
-                CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Chrome;
+                CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Alloy;
                 Cef.Initialize(Settings);
 
                 Application CleanApp = new Application();

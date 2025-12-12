@@ -1637,7 +1637,7 @@ namespace SLBr.Pages
             else
             {
                 //Looks like both Chromium engines have issues now
-                if (WebView.Engine == WebEngineType.ChromiumEdge)
+                if (WebView?.Engine == WebEngineType.ChromiumEdge)
                 {
                     //Warning: WebView2 somehow forgets the auto dark mode after a while
                     SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
@@ -1651,7 +1651,7 @@ namespace SLBr.Pages
                         });
                     }
                 }
-                else if (WebView.Engine == WebEngineType.Chromium)
+                else if (WebView?.Engine == WebEngineType.Chromium)
                     SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
             }
         }
