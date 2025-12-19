@@ -120,11 +120,5 @@ namespace SLBr.Controls
                 Close();
             }
         }
-
-        private void DownloadsScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            DownloadsScrollViewer.ScrollToHorizontalOffset(DownloadsScrollViewer.HorizontalOffset - e.Delta / 3);
-            e.Handled = true;
-        }
     }
 }

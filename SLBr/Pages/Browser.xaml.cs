@@ -2711,48 +2711,6 @@ namespace SLBr.Pages
                     foreach (List<string> BatchResult in GResults)
                         TranslatedTexts.AddRange(BatchResult);
                     break;
-                    /*using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.GOOGLE_TRANSLATE_ENDPOINT))
-                    {
-                        TranslateRequest.Headers.Add("Origin", "https://www.google.com");
-                        TranslateRequest.Headers.Add("Accept", "");
-                        TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
-                        TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new object[] { new object[] { AllTexts, "auto", TargetLanguage }, "te_lib" }), Encoding.UTF8, "application/json+protobuf");
-                        var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
-                        string Data = await Response.Content.ReadAsStringAsync();
-                        List<object> Json = JsonSerializer.Deserialize<List<object>>(Data);
-                        if (!Response.IsSuccessStatusCode)
-                        {
-                            Dispatcher.BeginInvoke(() => {
-                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                InfoWindow.Topmost = true;
-                                InfoWindow.ShowDialog();
-                            });
-                            return;
-                        }
-                        if (Json == null || Json.Count == 0)
-                        {
-                            Dispatcher.BeginInvoke(() => {
-                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                InfoWindow.Topmost = true;
-                                InfoWindow.ShowDialog();
-                            });
-                            return;
-                        }
-                        if (Json[0] is not JsonElement Element || Element.ValueKind != JsonValueKind.Array)
-                        {
-                            Dispatcher.BeginInvoke(() => {
-                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                InfoWindow.Topmost = true;
-                                InfoWindow.ShowDialog();
-                            });
-                            return;
-                        }
-                        TranslatedTexts = Element.EnumerateArray().Select(e => HttpUtility.HtmlDecode(e.GetString())).ToList()!;
-                    }
-                    break;*/
                 case 1:
                     IEnumerable<List<string>> MBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
 
@@ -2800,49 +2758,6 @@ namespace SLBr.Pages
                     foreach (List<string> BatchResult in MResults)
                         TranslatedTexts.AddRange(BatchResult);
                     break;
-                    /*using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, string.Format(SECRETS.MICROSOFT_TRANSLATE_ENDPOINT, App.Instance.AllLocales.Where(i => i.Value == TranslateComboBox.SelectedValue).First().Key)))
-                    {
-                        TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
-                        TranslateRequest.Content = new StringContent(Texts, Encoding.UTF8, "application/json");
-                        var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
-                        if (!Response.IsSuccessStatusCode)
-                        {
-                            Dispatcher.BeginInvoke(() => {
-                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                InfoWindow.Topmost = true;
-                                InfoWindow.ShowDialog();
-                            });
-                            return;
-                        }
-                        string Data = await Response.Content.ReadAsStringAsync();
-                        TranslatedTexts = new List<string>();
-                        try
-                        {
-                            using JsonDocument Document = JsonDocument.Parse(Data);
-                            foreach (var Item in Document.RootElement.EnumerateArray())
-                            {
-                                if (Item.TryGetProperty("translations", out var TranslationsElement))
-                                {
-                                    foreach (var TranslationElement in TranslationsElement.EnumerateArray())
-                                    {
-                                        if (TranslationElement.TryGetProperty("text", out var TextElement))
-                                            TranslatedTexts.Add(TextElement.GetString() ?? "");
-                                    }
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            Dispatcher.BeginInvoke(() => {
-                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                InfoWindow.Topmost = true;
-                                InfoWindow.ShowDialog();
-                            });
-                            return;
-                        }
-                    }*/
                 case 2:
                     string SourceLanguage = "";
                     try
@@ -2966,51 +2881,6 @@ namespace SLBr.Pages
                     foreach (List<string> BatchResult in LResults)
                         TranslatedTexts.AddRange(BatchResult);
                     break;
-
-
-                    /*using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.LINGVANEX_ENDPOINT))
-                    {
-                        TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
-                        TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new
-                        {
-                            target = TargetLanguage,
-                            q = AllTexts
-                        }), Encoding.UTF8, "application/json");
-                        var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
-                        if (!Response.IsSuccessStatusCode)
-                        {
-                            Dispatcher.BeginInvoke(() => {
-                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                InfoWindow.Topmost = true;
-                                InfoWindow.ShowDialog();
-                            });
-                            return;
-                        }
-                        string Data = await Response.Content.ReadAsStringAsync();
-                        TranslatedTexts = new List<string>();
-
-                        try
-                        {
-                            using var Document = JsonDocument.Parse(Data);
-                            if (Document.RootElement.TryGetProperty("translatedText", out JsonElement TranslatedText))
-                            {
-                                foreach (var item in TranslatedText.EnumerateArray())
-                                    TranslatedTexts.Add(item.GetString() ?? "");
-                            }
-                        }
-                        catch
-                        {
-                            Dispatcher.BeginInvoke(() => {
-                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                InfoWindow.Topmost = true;
-                                InfoWindow.ShowDialog();
-                            });
-                            return;
-                        }
-                    }
-                    break;*/
             }
             if (TranslatedTexts == null || TranslatedTexts.Count == 0)
             {
@@ -3029,12 +2899,6 @@ namespace SLBr.Pages
                 TranslateButton.ClosePopup();
             });
             
-        }
-
-        private void FavouriteScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            FavouriteScrollViewer.ScrollToHorizontalOffset(FavouriteScrollViewer.HorizontalOffset - e.Delta / 3);
-            e.Handled = true;
         }
 
         private void OmniBoxContainer_MouseEnter(object sender, MouseEventArgs e)

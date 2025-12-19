@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SLBr.Pages"
+             xmlns:controls="clr-namespace:SLBr.Controls"
              xmlns:SLBr="clr-namespace:SLBr"
              xmlns:WinUI="clr-namespace:WinUI"
              mc:Ignorable="d" 
@@ -536,7 +537,7 @@
                     </Grid>
                 </DockPanel>
                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="41.25" Grid.Row="1" HorizontalAlignment="Stretch">
-                    <ScrollViewer FontFamily="None" x:Name="FavouriteScrollViewer" Margin="5,0,5,5" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden" PreviewMouseWheel="FavouriteScrollViewer_PreviewMouseWheel">
+                    <ScrollViewer controls:SmoothScrollBehavior.Enable="True" FontFamily="None" x:Name="FavouriteScrollViewer" Margin="5,0,5,5" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden">
                         <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>

@@ -58,7 +58,7 @@
             </DockPanel>
         </StackPanel>
         <Grid Grid.Row="1">
-            <ScrollViewer Margin="10,0,10,0" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" CanContentScroll="True">
+            <ScrollViewer Margin="10,0,10,0" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" CanContentScroll="False" controls:SmoothScrollBehavior.Enable="True">
                 <ItemsControl ItemsSource="{Binding Source={StaticResource NewsRSSFeed}, XPath=item}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

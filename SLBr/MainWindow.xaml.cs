@@ -349,7 +349,6 @@ namespace SLBr
                 DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
 
         }
-        //ScrollViewer _TabPanel;
 
         public void SetTabAlignment()
         {

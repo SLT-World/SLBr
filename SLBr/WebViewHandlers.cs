@@ -625,7 +625,6 @@ namespace SLBr
 
         public bool DoClose(IWebBrowser browserControl, IBrowser browser)
         {
-            MessageBox.Show("Hoi");
             if (browser.IsPopup)
                 return false;
             return true;
