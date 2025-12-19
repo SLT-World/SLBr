@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SLBr.Pages"
+             xmlns:controls="clr-namespace:SLBr.Controls"
              xmlns:WinUI="clr-namespace:WinUI"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Height="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Grid}},Path=ActualHeight}">
@@ -17,6 +18,7 @@
             <!--https://www.latimes.com/local/rss2.0.xml-->
             <!--https://rss.nytimes.com/services/xml/rss/nyt/World.xml-->
             <XmlDataProvider x:Key="NewsRSSFeed" Source="http://news.google.com/rss" XPath="rss/channel"/>
+            <controls:StringToColorConverter x:Key="StringToColorConverter"/>
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid Background="{StaticResource PrimaryBrush}">
@@ -26,7 +28,6 @@
         </Grid.RowDefinitions>
         <StackPanel>
             <DockPanel Margin="10">
-                <!--f57e-->
                 <TextBlock Text="&#xe8a1;" FontSize="22" FontWeight="UltraLight" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" VerticalAlignment="Center" Margin="5,2.5,7.5,0"/>
                 <TextBlock Text="News" FontSize="16" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,7.5,0"/>
                 <Button Click="RefreshButton_Click" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE72C;" ToolTip="Refresh"/>
@@ -65,8 +66,11 @@
                                 <StackPanel Margin="10">
                                     <TextBlock Foreground="{StaticResource FontBrush}" Margin="0,0,0,10" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}" ToolTip="{Binding XPath=title}"/>
                                     <DockPanel>
-                                        <Button Click="Navigate" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8a7;" Tag="{Binding XPath=link}" ToolTip="Go"/>
-                                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                        <Button Click="Navigate" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8a7;" Tag="{Binding XPath=link}" ToolTip="Navigate"/>
+                                        <Button Click="Copy" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8c8;" Tag="{Binding XPath=link}" ToolTip="Copy URL"/>
+                                        <Border Background="{Binding XPath=source, Converter={StaticResource StringToColorConverter}}" BorderBrush="{Binding XPath=source, Converter={StaticResource StringToColorConverter}, ConverterParameter=0.75}" BorderThickness="1" Height="20" Padding="5,0" CornerRadius="10" DockPanel.Dock="Right" VerticalAlignment="Center">
+                                            <TextBlock Foreground="White" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10"/>
+                                        </Border>
                                         <TextBlock VerticalAlignment="Center" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
                                     </DockPanel>
                                 </StackPanel>

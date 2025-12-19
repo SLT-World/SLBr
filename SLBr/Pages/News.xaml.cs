@@ -39,6 +39,12 @@ namespace SLBr.Pages
             BrowserView.Navigate((_Button.Tag as XmlNode).InnerText);
         }
 
+        private void Copy(object sender, RoutedEventArgs e)
+        {
+            Button _Button = sender as Button;
+            Clipboard.SetText((_Button.Tag as XmlNode).InnerText);
+        }
+
         private void SearchTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -73,9 +79,7 @@ namespace SLBr.Pages
             BackButton.Visibility = Visibility.Collapsed;
         }
 
-        /*TODO: Topic buttons turn blue when selected, similar to Reader Mode & Translate buttons
-         * Add copy url button
-         * Assign individual colors to each publisher source text? Might be out of scope*/
+        //TODO: Topic buttons turn blue when selected, similar to Reader Mode & Translate buttons
         private void TopicButton_Click(object sender, RoutedEventArgs e)
         {
             NewsXML.Source = new Uri($"http://news.google.com/rss/search?q={((FrameworkElement)sender).ToolTip.ToString()}");
