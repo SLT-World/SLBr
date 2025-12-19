@@ -73,11 +73,12 @@ namespace SLBr.Pages
             BackButton.Visibility = Visibility.Collapsed;
         }
 
+        /*TODO: Topic buttons turn blue when selected, similar to Reader Mode & Translate buttons
+         * Add copy url button
+         * Assign individual colors to each publisher source text? Might be out of scope*/
         private void TopicButton_Click(object sender, RoutedEventArgs e)
         {
-            var Target = (FrameworkElement)sender;
-            string _Tooltip = Target.ToolTip.ToString();
-            NewsXML.Source = new Uri($"http://news.google.com/rss/search?q={_Tooltip}");
+            NewsXML.Source = new Uri($"http://news.google.com/rss/search?q={((FrameworkElement)sender).ToolTip.ToString()}");
             BackButton.Visibility = Visibility.Visible;
         }
     }

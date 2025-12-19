@@ -25,7 +25,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel>
-            <DockPanel Margin="5">
+            <DockPanel Margin="10">
                 <!--f57e-->
                 <TextBlock Text="&#xe8a1;" FontSize="22" FontWeight="UltraLight" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" VerticalAlignment="Center" Margin="5,2.5,7.5,0"/>
                 <TextBlock Text="News" FontSize="16" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,7.5,0"/>
@@ -33,7 +33,7 @@
                 <TextBox x:Name="SearchTextBox" KeyUp="SearchTextBox_KeyUp" Width="Auto" Margin="0,0,5,0"/>
             </DockPanel>
             <Separator Background="{StaticResource BorderBrush}" Margin="5,0"/>
-            <DockPanel Margin="5" LastChildFill="False">
+            <DockPanel Margin="10" LastChildFill="False">
                 <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xE909;" ToolTip="World" Margin="0,0,5,0"/>
                 <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xecaf;" ToolTip="Local" Margin="0,0,5,0"/>
                 <Button Style="{StaticResource IconButton}" Click="TopicButton_Click" Content="&#xeafc;" ToolTip="Business" Margin="0,0,5,0"/>
@@ -57,17 +57,17 @@
             </DockPanel>
         </StackPanel>
         <Grid Grid.Row="1">
-            <ScrollViewer Margin="5,0,5,0" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" CanContentScroll="True">
+            <ScrollViewer Margin="10,0,10,0" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" CanContentScroll="True">
                 <ItemsControl ItemsSource="{Binding Source={StaticResource NewsRSSFeed}, XPath=item}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,5">
-                                <StackPanel Margin="5">
-                                    <TextBlock Foreground="{StaticResource FontBrush}" Margin="0,0,0,5" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}"/>
+                            <Border Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
+                                <StackPanel Margin="10">
+                                    <TextBlock Foreground="{StaticResource FontBrush}" Margin="0,0,0,10" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding XPath=title}" ToolTip="{Binding XPath=title}"/>
                                     <DockPanel>
-                                        <Button Click="Navigate" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8ad;" Tag="{Binding XPath=link}" ToolTip="Go"/>
-                                        <TextBlock DockPanel.Dock="Right" ToolTip="Search news" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
-                                        <TextBlock ToolTip="Search news" VerticalAlignment="Center" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                        <Button Click="Navigate" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8a7;" Tag="{Binding XPath=link}" ToolTip="Go"/>
+                                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
                                     </DockPanel>
                                 </StackPanel>
                             </Border>
