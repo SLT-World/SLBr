@@ -69,8 +69,6 @@ namespace SLBr.Pages
                 OmniBoxSmartTimer.Tick += OmniBoxSmartTimer_Tick;
             }
             LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-            //SiteInformationIcon.Text = "\xF16A";
-            //SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
             SiteInformationText.Text = "Loading";
             LoadingStoryboard?.Begin();
             TranslateComboBox.ItemsSource = App.Instance.LocaleNames;
@@ -102,12 +100,10 @@ namespace SLBr.Pages
                 AudioPlaying = _AudioPlaying.Value;
             if (WebIcon != null)
                 SetIcon(WebIcon);
-            //QRButton.Foreground = _AudioPlaying.ToBool() ? App.Instance.GreenColor : App.Instance.RedColor;
             if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 Tab.ProgressBarVisibility = (Muted || !AudioPlaying) ? Visibility.Visible : Visibility.Collapsed;
             else
                 Tab.ProgressBarVisibility = Visibility.Collapsed;
-            //MessageBox.Show(_AudioPlaying.ToString());
         }
 
         public void Favourites_CollectionChanged()
@@ -535,23 +531,6 @@ namespace SLBr.Pages
             }
         }
 
-        /*private void WebView_ResourceResponded(object? sender, ResourceRespondedResult e)
-        {
-            if (App.Instance.AMP && e.ResourceRequestType == ResourceRequestType.MainFrame)
-            {
-                string Url = e.Url;
-                WebView.GetSourceAsync().ContinueWith(TaskHtml =>
-                {
-                    string? AMPUrl = Utils.ParseAMPLink(TaskHtml.Result, Url);
-                    if (!string.IsNullOrEmpty(AMPUrl))
-                    {
-                        Stop();
-                        Navigate(AMPUrl);
-                    }
-                });
-            }
-        }*/
-
         public ConcurrentDictionary<string, bool> HostCache = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
 
         public long Image_Budget = 2 * 1024 * 1024;
@@ -614,7 +593,6 @@ namespace SLBr.Pages
 
         private void WebView_ResourceRequested(object? sender, ResourceRequestEventArgs e)
         {
-            //MessageBox.Show(e.Url);
             if (!Utils.IsHttpScheme(e.Url))
             {
                 e.Cancel = false;
@@ -722,7 +700,6 @@ namespace SLBr.Pages
                         if (ProprietaryCodecsDialogWindow.ShowDialog() == true)
                             Action(Actions.SwitchWebEngine, null, "1");
                         App.Instance.GlobalSave.Set("WarnCodec", !ProprietaryCodecsDialogWindow.InputFields[1].BoolValue);
-                        //App.Instance.GlobalSave.Set("WarnCodec", !ProprietaryCodecsDialogWindow.InputFields.Where(i => i.Type == DialogInputType.Boolean).First().BoolValue);
                         ProprietaryCodecsDialogWindow = null;
                     });
                 }
@@ -1129,17 +1106,8 @@ namespace SLBr.Pages
                     {
                         if (Utils.IsHttpScheme(Address))
                         {
-                            if (App.Instance.SkipAds)
-                            {
-                                /*if (Address.AsSpan().IndexOf("youtube.com", StringComparison.Ordinal) >= 0)
-                                {
-                                    Chromium.ExecuteScriptAsync(Scripts.YouTubeHideAdScript);
-                                    if (Address.AsSpan().IndexOf("/watch?v=", StringComparison.Ordinal) >= 0)
-                                        Chromium.ExecuteScriptAsync(Scripts.YouTubeSkipAdScript);
-                                }*/
-                                if (Address.AsSpan().IndexOf("youtube.com/watch?v=", StringComparison.Ordinal) >= 0)
-                                    WebView?.ExecuteScript(Scripts.YouTubeSkipAdScript);
-                            }
+                            if (App.Instance.SkipAds && Address.AsSpan().IndexOf("youtube.com/watch?v=", StringComparison.Ordinal) >= 0)
+                                WebView?.ExecuteScript(Scripts.YouTubeSkipAdScript);
                             if (Address.AsSpan().IndexOf("chromewebstore.google.com/detail", StringComparison.Ordinal) >= 0)
                                 WebView?.ExecuteScript(Scripts.WebStoreScript);
                             if (bool.Parse(App.Instance.GlobalSave.Get("WebNotifications")))
@@ -1676,56 +1644,6 @@ namespace SLBr.Pages
             });
         }
 
-        /*private void Chromium_FrameLoadStart(object? sender, FrameLoadStartEventArgs e)
-        {
-            if (e.Frame.IsMain)
-            {
-                if (Utils.IsHttpScheme(e.Url))
-                {
-                    e.Browser.ExecuteScriptAsync(Scripts.AntiCloseScript);//Replacement for DoClose of LifeSpanHandler in RuntimeStyle Chrome
-                    e.Browser.ExecuteScriptAsync(Scripts.ShiftContextMenuScript);
-                    if (bool.Parse(App.Instance.GlobalSave.Get("AntiTamper")))
-                    {
-                        if (bool.Parse(App.Instance.GlobalSave.Get("AntiFullscreen")))
-                            e.Browser.ExecuteScriptAsync(Scripts.AntiFullscreenScript);
-                        if (bool.Parse(App.Instance.GlobalSave.Get("AntiInspectDetect")))
-                            e.Browser.ExecuteScriptAsync(Scripts.LateAntiDevtoolsScript);
-                        if (bool.Parse(App.Instance.GlobalSave.Get("BypassSiteMenu")))
-                            e.Browser.ExecuteScriptAsync(Scripts.ForceContextMenuScript);
-                        if (bool.Parse(App.Instance.GlobalSave.Get("TextSelection")))
-                            e.Browser.ExecuteScriptAsync(Scripts.AllowInteractionScript);
-                        if (bool.Parse(App.Instance.GlobalSave.Get("RemoveFilter")))
-                            e.Browser.ExecuteScriptAsync(Scripts.RemoveFilterCSS);
-                        if (bool.Parse(App.Instance.GlobalSave.Get("RemoveOverlay")))
-                            e.Browser.ExecuteScriptAsync(Scripts.RemoveOverlayCSS);
-                    }
-                    if (bool.Parse(App.Instance.GlobalSave.Get("ForceLazy")))
-                        e.Browser.ExecuteScriptAsync(Scripts.ForceLazyLoad);
-                }
-                else if (e.Url.StartsWith("slbr:", StringComparison.Ordinal))
-                    e.Browser.ExecuteScriptAsync(App.InternalJavascriptFunction);
-            }
-        }*/
-
-        /*private void Chromium_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            if (Keyboard.Modifiers != ModifierKeys.Control)
-                return;
-            if (e.Delta != 0)
-                Zoom(e.Delta);
-        }*/
-
-        /*private void Chromium_LoadError(object? sender, LoadErrorEventArgs e)
-        {
-            if (e.ErrorCode == CefErrorCode.Aborted)
-                return;
-            Dispatcher.Invoke(() =>
-            {
-                _ResourceRequestHandlerFactory.RegisterHandler(e.FailedUrl, ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect(e.FailedUrl, e.ErrorCode, e.ErrorText), Encoding.UTF8), "text/html", 1, string.Empty);
-                e.Frame.LoadUrl(e.FailedUrl);
-            });
-        }*/
-
         bool IsCustomTheme = false;
         bool DevToolsAdBlock = false;
 
@@ -1765,15 +1683,6 @@ namespace SLBr.Pages
                     bool ServiceWorker = Document.RootElement.GetProperty("service_worker").GetBoolean();
 
                     return (!string.IsNullOrEmpty(Manifest) && ServiceWorker, Manifest);
-
-                    /*string? Response = await WebView?.EvaluateScriptAsync(Scripts.DetectPWA);
-                    if (Response == null)
-                        return (false, "");
-                    dynamic o = Response.Result;
-                    string Manifest = o.manifest;
-                    bool SW = o.service_worker;
-
-                    return (!string.IsNullOrEmpty(Manifest) && SW, Manifest);*/
                 }
                 catch { }
             }
@@ -1792,8 +1701,6 @@ namespace SLBr.Pages
                 try
                 {
                     var Response = await WebView?.EvaluateScriptAsync(Scripts.ArticleScript);
-                    //if (Response.Success && Response.Result is bool IsArticle)
-                    //    return IsArticle;
                     if (Response != null)
                         return bool.Parse(Response);
                 }
@@ -2385,14 +2292,6 @@ namespace SLBr.Pages
                     ToggleSideBar(ForceClose);
                     return;
                 }
-                /*if (WebView.Engine == WebEngineType.Trident)
-                {
-                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Inspector Unavailable", "Trident webview does not support an inspector tool.", "\uec7a");
-                    InfoWindow.Topmost = true;
-                    InfoWindow.ShowDialog();
-                    return;
-                }*/
-
                 if (WebView.Engine != WebEngineType.Chromium)
                 {
                     if (WebView is ChromiumEdgeWebView EdgeWebView)
@@ -2651,7 +2550,6 @@ namespace SLBr.Pages
             set
             {
                 PrivateTranslate = value;
-                //Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(value ? App.Instance.CurrentTheme.IndicatorColor : App.Instance.CurrentTheme.FontColor));
                 if (value)
                     Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
                 else
@@ -3258,8 +3156,6 @@ namespace SLBr.Pages
             CoreContainer.Children.Clear();
             SideBarCoreContainer.Children.Clear();
 
-            //_RequestHandler = null;
-            //_ResourceRequestHandlerFactory = null;
             if (WebView != null)
             {
                 if (WebView.IsBrowserInitialized)
@@ -3286,33 +3182,12 @@ namespace SLBr.Pages
                 WebView?.ScriptDialogOpened -= WebView_ScriptDialogOpened;
                 WebView?.StatusMessage -= WebView_StatusMessage;
                 WebView?.TitleChanged -= WebView_TitleChanged;
-                /*Chromium.LifeSpanHandler = null;
-                Chromium.DownloadHandler = null;
-                Chromium.RequestHandler = null;
-                Chromium.MenuHandler = null;
-                Chromium.KeyboardHandler = null;
-                Chromium.JsDialogHandler = null;
-                Chromium.PermissionHandler = null;
-                Chromium.DialogHandler = null;
-                Chromium.ResourceRequestHandlerFactory = null;
-                Chromium.DisplayHandler = null;*/
-
-                /* Chromium.IsBrowserInitializedChanged -= Chromium_IsBrowserInitializedChanged;
-                 Chromium.FrameLoadStart -= Chromium_FrameLoadStart;
-                 Chromium.LoadingStateChanged -= Chromium_LoadingStateChanged;
-                 Chromium.TitleChanged -= Chromium_TitleChanged;
-                 Chromium.StatusMessage -= Chromium_StatusMessage;
-                 Chromium.LoadError -= Chromium_LoadError;
-                 Chromium.PreviewMouseWheel -= Chromium_PreviewMouseWheel;
-                 Chromium.JavascriptMessageReceived -= Chromium_JavascriptMessageReceived;*/
 
                 WebView?.Dispose();
             }
             _Settings?.Dispose();
             _Settings = null;
             WebView = null;
-            //GC.Collect(GC.MaxGeneration);
-            //GC.SuppressFinalize(this);
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
@@ -3358,11 +3233,6 @@ namespace SLBr.Pages
                 if (!string.IsNullOrEmpty(SuggestionsUrl))
                 {
                     string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
-                    /*if (Search.Name == "YouTube")
-                    {
-                        ResponseText = Utils.RemovePrefix(ResponseText, "window.google.ac.h(");
-                        ResponseText = Utils.RemovePrefix(ResponseText, ")", false, true);
-                    }*/
                     using (JsonDocument Document = JsonDocument.Parse(ResponseText))
                     {
                         foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())

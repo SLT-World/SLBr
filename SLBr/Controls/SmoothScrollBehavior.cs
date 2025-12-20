@@ -31,10 +31,24 @@ namespace SLBr.Controls
                 Viewer.PreviewMouseWheel -= OnPreviewMouseWheel;
         }
 
+        private static bool IsInnerScrollable(DependencyObject Source, ScrollViewer OuterViewer)
+        {
+            while (Source != null && Source != OuterViewer)
+            {
+                if (Source is ScrollViewer Viewer)
+                {
+                    if (Viewer != OuterViewer && (Viewer.ScrollableHeight > 0 || Viewer.ScrollableWidth > 0))
+                        return true;
+                }
+                Source = VisualTreeHelper.GetParent(Source);
+            }
+            return false;
+        }
+
         private static void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             ScrollViewer Viewer = FindScrollViewer(sender as DependencyObject);
-            if (Viewer == null)
+            if (Viewer == null || IsInnerScrollable(e.OriginalSource as DependencyObject, Viewer))
                 return;
 
             e.Handled = true;
