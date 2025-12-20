@@ -2,6 +2,8 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
+using System.Xml.Linq;
 
 namespace SLBr.Controls
 {
@@ -14,11 +16,11 @@ namespace SLBr.Controls
         private static ScrollViewer? ActiveScrollViewer;
         private static bool Hooked;
 
-        public static void SetEnable(DependencyObject element, bool value)
-            => element.SetValue(EnableProperty, value);
+        public static void SetEnable(DependencyObject element, bool value) =>
+            element.SetValue(EnableProperty, value);
 
-        public static bool GetEnable(DependencyObject element)
-            => (bool)element.GetValue(EnableProperty);
+        public static bool GetEnable(DependencyObject element) =>
+            (bool)element.GetValue(EnableProperty);
 
         private static void OnEnableChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
         {
@@ -40,7 +42,10 @@ namespace SLBr.Controls
                     if (Viewer != OuterViewer && (Viewer.ScrollableHeight > 0 || Viewer.ScrollableWidth > 0))
                         return true;
                 }
-                Source = VisualTreeHelper.GetParent(Source);
+                if (Source is Visual || Source is Visual3D)
+                    Source = VisualTreeHelper.GetParent(Source);
+                else
+                    Source = LogicalTreeHelper.GetParent(Source);
             }
             return false;
         }
@@ -55,18 +60,29 @@ namespace SLBr.Controls
             ActiveScrollViewer = Viewer;
 
             bool ForceHorizontal = Viewer.VerticalScrollBarVisibility == ScrollBarVisibility.Disabled && Viewer.ScrollableWidth > 0;
+            bool Horizontal = ForceHorizontal || Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 
-            bool Horizontal = (ForceHorizontal || Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift));
+            double Delta = -e.Delta;
 
-            if (Horizontal && Viewer.ScrollableWidth > 0)
-                VelocityX += -e.Delta * 0.1;
-            else
-                VelocityY += -e.Delta * 0.1;
-
-            if (!Hooked)
+            if (App.Instance.LiteMode)
             {
-                CompositionTarget.Rendering += OnRendering;
-                Hooked = true;
+                if (Horizontal && Viewer.ScrollableWidth > 0)
+                    Viewer.ScrollToHorizontalOffset(Math.Max(0, Math.Min(Viewer.HorizontalOffset + Delta, Viewer.ScrollableWidth)));
+                else if (Viewer.ScrollableHeight > 0)
+                    Viewer.ScrollToVerticalOffset(Math.Max(0, Math.Min(Viewer.VerticalOffset + Delta, Viewer.ScrollableHeight)));
+            }
+            else
+            {
+                if (Horizontal && Viewer.ScrollableWidth > 0)
+                    VelocityX += Delta * 0.1;
+                else
+                    VelocityY += Delta * 0.1;
+
+                if (!Hooked)
+                {
+                    CompositionTarget.Rendering += OnRendering;
+                    Hooked = true;
+                }
             }
         }
 

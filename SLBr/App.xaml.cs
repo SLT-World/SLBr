@@ -2516,7 +2516,6 @@ Inner Exception: ```{7} ```";
             WebViewManager.Settings = Settings;
             WebViewManager.RuntimeSettings.PDFViewer = bool.Parse(GlobalSave.Get("PDF"));
 
-
             HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(), (int)Key.R, true, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(), (int)Key.F5, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(true), (int)Key.F5, true, false, false));
