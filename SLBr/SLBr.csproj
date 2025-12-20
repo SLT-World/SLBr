@@ -60,6 +60,7 @@
     <None Remove="Fonts\SLBr Icons.ttf" />
     <None Remove="Resources\SLBr.png" />
     <None Remove="WinUIControls\5bmhprik.cf5~" />
+    <None Remove="WinUIStyleDictionary.xaml~RF21739d47.TMP" />
   </ItemGroup>
 
   <ItemGroup>

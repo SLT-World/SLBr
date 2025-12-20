@@ -88,9 +88,7 @@ namespace SLBr
             private readonly Dictionary<TNode, Node<TNode, TNodeValue>> _Children = new Dictionary<TNode, Node<TNode, TNodeValue>>();
             private readonly List<TNodeValue> _Values = new List<TNodeValue>();
 
-            public Node()
-            {
-            }
+            public Node() { }
 
             public Node(TNode word, Node<TNode, TNodeValue> parent)
             {
@@ -130,109 +128,96 @@ namespace SLBr
                 Word.ToString();
         }
     }
-}
 
-public class DomainList : IEnumerable<string>
-{
-    private readonly TrieNode Root = new();
-    public readonly HashSet<string> AllDomains = new();
-
-    public void Add(string Domain)
+    public class DomainList : IEnumerable<string>
     {
-        if (!AllDomains.Add(Domain)) return;
+        private readonly TrieNode Root = new();
+        public readonly HashSet<string> AllDomains = new();
 
-        bool WildCard = Domain.StartsWith("*.", StringComparison.Ordinal);
-        var Parts = Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse();
-        var _Node = Root;
-
-        foreach (var Part in Parts)
+        public void Add(string Domain)
         {
-            if (!_Node.Children.TryGetValue(Part, out var Child))
+            if (!AllDomains.Add(Domain)) return;
+
+            bool WildCard = Domain.StartsWith("*.", StringComparison.Ordinal);
+            var Parts = Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse();
+            var _Node = Root;
+
+            foreach (var Part in Parts)
             {
-                Child = new TrieNode();
-                _Node.Children[Part] = Child;
+                if (!_Node.Children.TryGetValue(Part, out var Child))
+                {
+                    Child = new TrieNode();
+                    _Node.Children[Part] = Child;
+                }
+                _Node = Child;
             }
-            _Node = Child;
+
+            _Node.IsEnd = true;
+            _Node.Wildcard = WildCard;
         }
 
-        _Node.IsEnd = true;
-        _Node.Wildcard = WildCard;
-    }
-
-    public bool Has(string Host)
-    {
-        Host = Host.AsSpan().TrimEnd('.').ToString();
-        var Span = Host.AsSpan();
-        TrieNode Node = Root;
-
-        int End = Span.Length;
-        while (End > 0)
+        public bool Has(string Host)
         {
-            int Dot = Span.Slice(0, End).LastIndexOf(".", StringComparison.Ordinal);
-            ReadOnlySpan<char> Label;
-            if (Dot == -1)
+            Host = Host.AsSpan().TrimEnd('.').ToString();
+            var Span = Host.AsSpan();
+            TrieNode Node = Root;
+
+            int End = Span.Length;
+            while (End > 0)
             {
-                Label = Span.Slice(0, End);
-                End = 0;
+                int Dot = Span.Slice(0, End).LastIndexOf(".", StringComparison.Ordinal);
+                ReadOnlySpan<char> Label;
+                if (Dot == -1)
+                {
+                    Label = Span.Slice(0, End);
+                    End = 0;
+                }
+                else
+                {
+                    Label = Span.Slice(Dot + 1, End - Dot - 1);
+                    End = Dot;
+                }
+                if (Node.IsEnd && Node.Wildcard)
+                    return true;
+                if (!Node.Children.TryGetValue(Label.ToString(), out Node))
+                    return false;
             }
-            else
+
+            return Node.IsEnd;
+        }
+
+        public void Remove(string Domain)
+        {
+            if (!AllDomains.Remove(Domain)) return;
+            RemoveRecursive(Root, Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse().ToList(), 0, Domain.StartsWith("*.", StringComparison.Ordinal));
+        }
+
+        private bool RemoveRecursive(TrieNode _Node, List<string> Parts, int Index, bool Wildcard)
+        {
+            if (Index == Parts.Count)
             {
-                Label = Span.Slice(Dot + 1, End - Dot - 1);
-                End = Dot;
+                if (!_Node.IsEnd || _Node.Wildcard != Wildcard)
+                    return false;
+                _Node.IsEnd = false;
+                _Node.Wildcard = false;
+                return _Node.Children.Count == 0;
             }
-            if (Node.IsEnd && Node.Wildcard)
-                return true;
-            if (!Node.Children.TryGetValue(Label.ToString(), out Node))
+            string Part = Parts[Index];
+            if (!_Node.Children.TryGetValue(Part, out TrieNode child))
                 return false;
+            if (RemoveRecursive(child, Parts, Index + 1, Wildcard))
+                _Node.Children.Remove(Part);
+            return !_Node.IsEnd && _Node.Children.Count == 0;
         }
 
-        return Node.IsEnd;
-
-        /*var Parts = Host.Trim().TrimEnd('.').Split('.').Reverse();
-        var _Node = Root;
-
-        foreach (var part in Parts)
+        class TrieNode
         {
-            if (_Node.IsEnd && _Node.Wildcard)
-                return true;
-            if (!_Node.Children.TryGetValue(part, out _Node))
-                return false;
+            public Dictionary<string, TrieNode> Children = new();
+            public bool IsEnd = false;
+            public bool Wildcard = false;
         }
 
-        return _Node.IsEnd;*/
+        public IEnumerator<string> GetEnumerator() => throw new NotSupportedException();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
-
-    public void Remove(string Domain)
-    {
-        if (!AllDomains.Remove(Domain)) return;
-        RemoveRecursive(Root, Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse().ToList(), 0, Domain.StartsWith("*.", StringComparison.Ordinal));
-    }
-
-    private bool RemoveRecursive(TrieNode _Node, List<string> Parts, int Index, bool Wildcard)
-    {
-        if (Index == Parts.Count)
-        {
-            if (!_Node.IsEnd || _Node.Wildcard != Wildcard)
-                return false;
-            _Node.IsEnd = false;
-            _Node.Wildcard = false;
-            return _Node.Children.Count == 0;
-        }
-        string Part = Parts[Index];
-        if (!_Node.Children.TryGetValue(Part, out TrieNode child))
-            return false;
-        if (RemoveRecursive(child, Parts, Index + 1, Wildcard))
-            _Node.Children.Remove(Part);
-        return !_Node.IsEnd && _Node.Children.Count == 0;
-    }
-
-    class TrieNode
-    {
-        public Dictionary<string, TrieNode> Children = new();
-        public bool IsEnd = false;
-        public bool Wildcard = false;
-    }
-
-    public IEnumerator<string> GetEnumerator() => throw new NotSupportedException();
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

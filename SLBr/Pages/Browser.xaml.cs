@@ -2503,7 +2503,7 @@ namespace SLBr.Pages
                 Refresh();
         }
 
-        News _NewsFeed;
+        News? _NewsFeed;
         public void NewsFeed(bool ForceClose = false)
         {
             if (!ForceClose && IsUtilityContainerOpen && (_NewsFeed != null || DevToolsHost != null))
@@ -3200,6 +3200,7 @@ namespace SLBr.Pages
             }
             else
                 ReaderModeButton.Visibility = Visibility.Collapsed;
+            _NewsFeed?.ApplyTheme(_Theme);
 
             if (App.Instance.ShowExtensionButton == 0)
                 ExtensionsButton.Visibility = App.Instance.Extensions.Any() ? Visibility.Visible : Visibility.Collapsed;

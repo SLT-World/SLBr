@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace SLBr
+namespace SLBr.Controls
 {
     public static class ScrollViewerBehavior
     {
