@@ -930,14 +930,6 @@ namespace SLBr
 
         private void Browser_JavascriptMessageReceived(object? sender, JavascriptMessageReceivedEventArgs e)
         {
-            /*if (Settings.AudioListener)
-            {
-                dynamic msg = e.Message;
-                if (msg?.type?.ToString() == "__cef_audio__")
-                {
-                    MessageBox.Show(((msg?.playing?.ToString() ?? "0") == "1").ToString());
-                }
-            }*/
             string Json;
             try
             {
@@ -947,7 +939,6 @@ namespace SLBr
             {
                 Json = e.Message?.ToString() ?? string.Empty;
             }
-            //For performance
             if (Settings.AudioListener && Json.EndsWith(@"""type"":""__cef_audio__""}"))
             {
                 SetAudioPlaying(Json.StartsWith(@"{""playing"":1"));
@@ -1036,7 +1027,6 @@ namespace SLBr
             set { Browser.ZoomLevel = value - 1; }
         }
 
-        //public void Navigate(string Url) => Browser?.Dispatcher.Invoke(() => {Browser.Load(Url); MessageBox.Show(Url); });
         public void Navigate(string Url) => Browser?.Dispatcher.Invoke(() => Browser.Load(Url));
         public void Back() { if (CanGoBack) Browser.Back(); }
         public void Forward() { if (CanGoForward) Browser.Forward(); }
@@ -1523,58 +1513,6 @@ namespace SLBr
                     UseShellExecute = true
                 });
             }
-
-            /*if (string.Equals(e.Uri, "calculator:///", StringComparison.OrdinalIgnoreCase))
-            {
-                // Set the event args to cancel the event and launch the
-                // calculator app. This will always allow the external URI scheme launch.
-                ProcessStartInfo info = new ProcessStartInfo
-                {
-                    FileName = e.Uri,
-                    UseShellExecute = true
-                };
-                Process.Start(info);
-            }
-            else if (string.Equals(e.Uri, "malicious:///", StringComparison.OrdinalIgnoreCase))
-            {
-                // Always block the request in this case by cancelling the event.
-                e.Cancel = true;
-            }
-            else if (string.Equals(e.Uri, "contoso:///", StringComparison.OrdinalIgnoreCase))
-            {
-                // To display a custom dialog we cancel the launch, display
-                // a custom dialog, and then manually launch the external URI scheme
-                // depending on the user's selection.
-                e.Cancel = true;
-                string text = "Launching External URI Scheme";
-                if (e.InitiatingOrigin != "")
-                {
-                    text += "from ";
-                    text += e.InitiatingOrigin;
-                }
-                text += " to ";
-                text += e.Uri;
-                text += "\n";
-                text += "Do you want to grant permission?";
-                string caption = "Launching External URI Scheme request";
-                MessageBoxButton btnMessageBox = MessageBoxButton.YesNo;
-                MessageBoxImage icnMessageBox = MessageBoxImage.None;
-                MessageBoxResult resultbox = MessageBox.Show(text, caption, btnMessageBox, icnMessageBox);
-                switch (resultbox)
-                {
-                    case MessageBoxResult.Yes:
-                        ProcessStartInfo info = new ProcessStartInfo
-                        {
-                            FileName = e.Uri,
-                            UseShellExecute = true
-                        };
-                        Process.Start(info);
-                        break;
-
-                    case MessageBoxResult.No:
-                        break;
-                }
-            }*/
         }
 
         private void Browser_BasicAuthenticationRequested(object? sender, CoreWebView2BasicAuthenticationRequestedEventArgs e)
@@ -1614,14 +1552,8 @@ namespace SLBr
 
         private void Browser_ContextMenuRequested(object? sender, CoreWebView2ContextMenuRequestedEventArgs e)
         {
-            /*//https://github.com/MicrosoftEdge/WebView2Feedback/issues/2340
+            //https://github.com/MicrosoftEdge/WebView2Feedback/issues/2340
             //God knows when the WebView2 developers will fix this
-            //Proposed solution: Just detect if the misspelled word via this `Name == "spellcheck"`'s existance, and then use another API to get suggestions for the wrong word
-            foreach (var E in e.MenuItems)
-            {
-                if (E.Name == "spellcheck" && E.Kind == CoreWebView2ContextMenuItemKind.Command)
-                    MessageBox.Show($"{JsonSerializer.Serialize(E)}");
-            }*/
 
             CoreWebView2ContextMenuTarget? Target = e.ContextMenuTarget;
 
@@ -2334,7 +2266,6 @@ namespace SLBr
         {
             get => string.IsNullOrEmpty(OverrideAddress) ? (Browser.Source?.AbsoluteUri ?? InitialUrl) : OverrideAddress;
             set => Navigate(value);
-            //set => Navigate(value);
         }
         public string Title { get; private set; } = string.Empty;
 
@@ -2430,7 +2361,6 @@ namespace SLBr
             }
             catch { }
         }
-        //public void Navigate(string Url) { try { Browser.Navigate(Url); } catch { } }
         public void Back() { if (CanGoBack) Browser?.GoBack(); }
         public void Forward() { if (CanGoForward) Browser?.GoForward(); }
         public void Refresh(bool IgnoreCache = false, bool ClearCache = false) { if (string.IsNullOrEmpty(OverrideAddress)) Browser?.Refresh(); }
@@ -2466,10 +2396,6 @@ namespace SLBr
         public event EventHandler<ResourceRespondedResult> ResourceResponded;
         public event EventHandler<ResourceLoadedResult> ResourceLoaded;
         public event EventHandler<PermissionRequestedEventArgs> PermissionRequested;
-
-        /*public event Action<WebDownloadItem> DownloadStarted;
-        public event Action<WebDownloadItem> DownloadUpdated;
-        public event Action<WebDownloadItem> DownloadCompleted;*/
 
         public event EventHandler<WebContextMenuEventArgs> ContextMenuRequested;
         public event EventHandler<WebAuthenticationRequestedEventArgs> AuthenticationRequested;

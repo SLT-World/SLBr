@@ -203,7 +203,7 @@ namespace SLBr
             catch (WebView2RuntimeNotFoundException)
             {
                 //MessageBox.Show("WebView2 Runtime is not installed. Please install it or disable WebView2.");
-                return;// false;
+                return;
             }
 
             EnvironmentOptions.AreBrowserExtensionsEnabled = true;
@@ -300,7 +300,6 @@ namespace SLBr
             GeminiGopherIResponse Response = Gopher.Fetch(new Uri(Url));
             if (Response == null)
                 return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html");
-            //return ProtocolResponse.FromString("<h1>Failed to fetch resource</h1>", "text/html");
             return ProtocolResponse.FromString(TextGopher.NewFormat(Response), Response.Mime.Contains("application/gopher-menu") ? "text/html" : Response.Mime);
         }
         public static ProtocolResponse GeminiHandler(string Url, string Extra = "")
@@ -308,7 +307,6 @@ namespace SLBr
             GeminiGopherIResponse Response = Gemini.Fetch(new Uri(Url));
             if (Response == null)
                 return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html");
-            //return ProtocolResponse.FromString("<h1>Failed to fetch resource</h1>", "text/html");
             return ProtocolResponse.FromString(TextGemini.NewFormat(Response), Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime);
         }
         public static ProtocolResponse SLBrHandler(string Url, string Extra = "")
@@ -499,8 +497,6 @@ namespace SLBr
         public void Updated(WebDownloadItem Item) => DownloadUpdated?.RaiseUIAsync(Item);
         public void Completed(WebDownloadItem Item) => DownloadCompleted?.RaiseUIAsync(Item);
 
-        //private readonly Dictionary<string, WebDownloadItem> ActiveDownloads = new();
-
         public async Task StartDownloadAsync(string Url, string TargetPath, bool ShowDialog, string DialogFilter = "")
         {
             if (ShowDialog)
@@ -524,7 +520,6 @@ namespace SLBr
                 State = WebDownloadState.InProgress
             };
 
-            //ActiveDownloads[Item.ID] = Item;
             Started(Item);
 
             try
@@ -716,7 +711,6 @@ namespace SLBr
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
             ResourceRequestEventArgs Args = new ResourceRequestEventArgs(request.Url, browser.FocusedFrame == null ? string.Empty : browser.FocusedFrame.Url, request.Method, request.ResourceType.ToResourceRequestType(), new Dictionary<string, string>());
-            //request.Headers.AllKeys.ToDictionary(k => k, k => request.Headers[k])
             WebView.RaiseResourceRequest(Args);
             if (Args.Cancel)
                 return CefReturnValue.Cancel;
@@ -771,7 +765,6 @@ namespace SLBr
         {
             if (callback == null)
                 return false;
-            //WebPermissionKind _ProperPermissionRequestType = (MediaAccessPermissionType)requestedPermissions;
             Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
@@ -779,40 +772,6 @@ namespace SLBr
                     callback.Dispose();
                     return;
                 }
-                /*bool NoPermission = true;
-                MediaAccessPermissionType AllowedPermissions = MediaAccessPermissionType.None;
-                foreach (MediaAccessPermissionType SinglePermission in Enum.GetValues(typeof(MediaAccessPermissionType)))
-                {
-                    if (requestedPermissions.HasFlag(SinglePermission))
-                    {
-                        WebPermissionKind WebPermission = SinglePermission switch
-                        {
-                            MediaAccessPermissionType.AudioCapture => WebPermissionKind.MicStream,
-                            MediaAccessPermissionType.VideoCapture => WebPermissionKind.CameraStream,
-                            MediaAccessPermissionType.DesktopAudioCapture => WebPermissionKind.RecordAudio,
-                            MediaAccessPermissionType.DesktopVideoCapture => WebPermissionKind.ScreenShare,
-                            _ => WebPermissionKind.None
-                        };
-                        if (WebPermission == WebPermissionKind.None)
-                            continue;
-                        var Args = new PermissionRequestedEventArgs(requestingOrigin, WebPermission);
-                        WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaisePermissionRequested(Args);
-                        if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
-                        {
-                            callback.Dispose();
-                            return;
-                        }
-                        if (Args.State == WebPermissionState.Allow)
-                        {
-                            NoPermission = false;
-                            AllowedPermissions |= SinglePermission;
-                        }
-                    }
-                }
-                if (NoPermission)
-                    callback.Cancel();
-                else
-                    callback.Continue(AllowedPermissions);*/
 
 
                 var Args = new PermissionRequestedEventArgs(requestingOrigin, requestedPermissions.ToWebPermission());
@@ -877,92 +836,6 @@ namespace SLBr
                     callback.Dispose();
                     return;
                 }
-                /*PermissionRequestResult Result = PermissionRequestResult.Ignore;
-                PermissionRequestType AllowedPermissions = PermissionRequestType.None;
-                foreach (FixedPermissionRequestType SinglePermission in Enum.GetValues(typeof(FixedPermissionRequestType)))
-                {
-                    if (_ProperPermissionRequestType.HasFlag(SinglePermission))
-                    {
-                        WebPermissionKind WebPermission = SinglePermission switch
-                        {
-                            FixedPermissionRequestType.ArSession => WebPermissionKind.ArSession,
-                            FixedPermissionRequestType.CameraPanTiltZoom => WebPermissionKind.CameraPanTiltZoom,
-                            FixedPermissionRequestType.CameraStream => WebPermissionKind.CameraStream,
-                            FixedPermissionRequestType.CapturedSurfaceControl => WebPermissionKind.CapturedSurfaceControl,
-                            FixedPermissionRequestType.Clipboard => WebPermissionKind.Clipboard,
-                            FixedPermissionRequestType.TopLevelStorageAccess => WebPermissionKind.TopLevelStorageAccess,
-                            FixedPermissionRequestType.DiskQuota => WebPermissionKind.DiskQuota,
-                            FixedPermissionRequestType.LocalFonts => WebPermissionKind.LocalFonts,
-                            FixedPermissionRequestType.Geolocation => WebPermissionKind.Geolocation,
-                            FixedPermissionRequestType.IdentityProvider => WebPermissionKind.IdentityProvider,
-                            FixedPermissionRequestType.IdleDetection => WebPermissionKind.IdleDetection,
-                            FixedPermissionRequestType.MicStream => WebPermissionKind.MicStream,
-                            FixedPermissionRequestType.MidiSysex => WebPermissionKind.MidiSysex,
-                            FixedPermissionRequestType.MultipleDownloads => WebPermissionKind.MultipleDownloads,
-                            FixedPermissionRequestType.Notifications => WebPermissionKind.Notifications,
-                            FixedPermissionRequestType.KeyboardLock => WebPermissionKind.KeyboardLock,
-                            FixedPermissionRequestType.PointerLock => WebPermissionKind.PointerLock,
-                            FixedPermissionRequestType.ProtectedMediaIdentifier => WebPermissionKind.ProtectedMediaIdentifier,
-                            FixedPermissionRequestType.RegisterProtocolHandler => WebPermissionKind.RegisterProtocolHandler,
-                            FixedPermissionRequestType.StorageAccess => WebPermissionKind.StorageAccess,
-                            FixedPermissionRequestType.VrSession => WebPermissionKind.VrSession,
-                            FixedPermissionRequestType.WebAppInstallation => WebPermissionKind.WebAppInstallation,
-                            FixedPermissionRequestType.WindowManagement => WebPermissionKind.WindowManagement,
-                            FixedPermissionRequestType.FileSystemAccess => WebPermissionKind.FileSystemAccess,
-                            FixedPermissionRequestType.LocalNetworkAccess => WebPermissionKind.LocalNetworkAccess,
-                            _ => WebPermissionKind.None
-                        };
-                        if (WebPermission == WebPermissionKind.None)
-                            continue;
-                        var Args = new PermissionRequestedEventArgs(requestingOrigin, WebPermission);
-                        WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaisePermissionRequested(Args);
-                        if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
-                        {
-                            callback.Dispose();
-                            return;
-                        }
-                        if (Args.State == WebPermissionState.Allow)
-                        {
-                            Result = PermissionRequestResult.Accept;
-                            AllowedPermissions |= (PermissionRequestType)SinglePermission;
-                        }
-                        else if (Args.State == WebPermissionState.Deny)
-                            Result = PermissionRequestResult.Deny;
-                    }
-                }
-                callback.Continue(Result);
-                callback.Dispose();*/
-                /*WebPermissionKind WebPermission = SinglePermission switch
-                {
-                    FixedPermissionRequestType.ArSession => WebPermissionKind.ArSession,
-                    FixedPermissionRequestType.CameraPanTiltZoom => WebPermissionKind.CameraPanTiltZoom,
-                    FixedPermissionRequestType.CameraStream => WebPermissionKind.CameraStream,
-                    FixedPermissionRequestType.CapturedSurfaceControl => WebPermissionKind.CapturedSurfaceControl,
-                    FixedPermissionRequestType.Clipboard => WebPermissionKind.Clipboard,
-                    FixedPermissionRequestType.TopLevelStorageAccess => WebPermissionKind.TopLevelStorageAccess,
-                    FixedPermissionRequestType.DiskQuota => WebPermissionKind.DiskQuota,
-                    FixedPermissionRequestType.LocalFonts => WebPermissionKind.LocalFonts,
-                    FixedPermissionRequestType.Geolocation => WebPermissionKind.Geolocation,
-                    FixedPermissionRequestType.IdentityProvider => WebPermissionKind.IdentityProvider,
-                    FixedPermissionRequestType.IdleDetection => WebPermissionKind.IdleDetection,
-                    FixedPermissionRequestType.MicStream => WebPermissionKind.MicStream,
-                    FixedPermissionRequestType.MidiSysex => WebPermissionKind.MidiSysex,
-                    FixedPermissionRequestType.MultipleDownloads => WebPermissionKind.MultipleDownloads,
-                    FixedPermissionRequestType.Notifications => WebPermissionKind.Notifications,
-                    FixedPermissionRequestType.KeyboardLock => WebPermissionKind.KeyboardLock,
-                    FixedPermissionRequestType.PointerLock => WebPermissionKind.PointerLock,
-                    FixedPermissionRequestType.ProtectedMediaIdentifier => WebPermissionKind.ProtectedMediaIdentifier,
-                    FixedPermissionRequestType.RegisterProtocolHandler => WebPermissionKind.RegisterProtocolHandler,
-                    FixedPermissionRequestType.StorageAccess => WebPermissionKind.StorageAccess,
-                    FixedPermissionRequestType.VrSession => WebPermissionKind.VrSession,
-                    FixedPermissionRequestType.WebAppInstallation => WebPermissionKind.WebAppInstallation,
-                    FixedPermissionRequestType.WindowManagement => WebPermissionKind.WindowManagement,
-                    FixedPermissionRequestType.FileSystemAccess => WebPermissionKind.FileSystemAccess,
-                    FixedPermissionRequestType.LocalNetworkAccess => WebPermissionKind.LocalNetworkAccess,
-                    _ => WebPermissionKind.None
-                };*/
-                //if (WebPermission == WebPermissionKind.None)
-                //    continue;
                 var Args = new PermissionRequestedEventArgs(requestingOrigin, _ProperPermissionRequestType.ToWebPermission());
                 WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaisePermissionRequested(Args);
                 if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
@@ -975,16 +848,6 @@ namespace SLBr
                 else if (Args.State == WebPermissionState.Deny)
                     callback.Continue(PermissionRequestResult.Deny);
                 callback.Dispose();
-
-                /*var Args = new PermissionRequestedEventArgs(requestingOrigin, _ProperPermissionRequestType);
-                WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaisePermissionRequested(Args);
-                if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
-                {
-                    callback.Dispose();
-                    return;
-                }
-                callback.Continue(Args.State.ToCefPermissionState());
-                callback.Dispose();*/
             }));
             return true;
         }
@@ -1060,31 +923,9 @@ namespace SLBr
     {
         public void OnBeforeContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
         {
+            //Both CefSharp & WebView2 suffer from the same spellcheck issue.
             if (parameters.FrameUrl.StartsWith("devtools:", StringComparison.Ordinal))
                 return;
-            //Looks like CefSharp suffers the same issue of spellcheck seen in WebView2
-            /*for (int i = 0; i < model.Count; i++)
-            {
-                var commandId = model.GetCommandIdAt(i);
-                var label = model.GetLabelAt(i);
-                var type = model.GetTypeAt(i);
-                var enabled = model.IsEnabledAt(i);
-                var visible = model.IsVisibleAt(i);
-
-                MessageBox.Show($"[{i}] {commandId} | {label} | {type} | Enabled={enabled} | Visible={visible}");
-
-                // If it's a submenu, recurse
-                var subMenu = model.GetSubMenuAt(i);
-                if (subMenu != null)
-                {
-                    for (int j = 0; j < subMenu.Count; j++)
-                    {
-                        var subCommandId = subMenu.GetCommandIdAt(j);
-                        var subLabel = subMenu.GetLabelAt(j);
-                        MessageBox.Show($"    Sub[{j}] {subCommandId} | {subLabel}");
-                    }
-                }
-            }*/
             model.Clear();
             WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaiseContextMenu(new WebContextMenuEventArgs
             {

@@ -891,7 +891,7 @@
                                 <!--<CheckBox x:Name="PDFViewerExtensionCheckBox" Click="PDFViewerExtensionCheckBox_Click" Content="Open PDF instead of downloading (Enable PDF Viewer Extension)" Width="Auto" Margin="0,0,0,10"/>-->
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="CEF Runtime Style"/>
-                                    <ComboBox x:Name="RuntimeStyleComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="RuntimeStyleComboBox_SelectionChanged">
+                                    <ComboBox IsEnabled="False" x:Name="RuntimeStyleComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="RuntimeStyleComboBox_SelectionChanged">
                                         <ComboBoxItem>Chrome</ComboBoxItem>
                                         <ComboBoxItem>Alloy</ComboBoxItem>
                                     </ComboBox>

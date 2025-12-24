@@ -311,7 +311,6 @@ namespace SLBr
             new Theme("Light", Colors.White, Colors.WhiteSmoke, Colors.Gainsboro, Colors.Gray, Colors.Black, (Color)ColorConverter.ConvertFromString("#3399FF"), false, false),
             new Theme("Dark", (Color)ColorConverter.ConvertFromString("#202225"), (Color)ColorConverter.ConvertFromString("#2F3136"), (Color)ColorConverter.ConvertFromString("#36393F"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#3399FF"), true, true),
             new Theme("Purple", (Color)ColorConverter.ConvertFromString("#191025"), (Color)ColorConverter.ConvertFromString("#251C31"), (Color)ColorConverter.ConvertFromString("#2B2237"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#934CFE"), true, true),
-        //    new Theme("Green", (Color)ColorConverter.ConvertFromString("#163C2C"), (Color)ColorConverter.ConvertFromString("#18352B"), (Color)ColorConverter.ConvertFromString("#1A3029"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#3AE872"), true, true)
         };
         public DomainList AdBlockAllowList = new DomainList();
 
@@ -336,7 +335,6 @@ namespace SLBr
         public SolidColorBrush GreenColor;
         public FontFamily IconFont;
         public FontFamily SLBrFont;
-        //public SolidColorBrush FontColor;
 
         public string Username = "Default";
         public string UserApplicationWindowsPath;
@@ -562,133 +560,6 @@ namespace SLBr
                     VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID });
             });
         }
-        /*public void UpdateDownloadItem(DownloadItem Item)
-        {
-            Downloads[Item.Id] = Item;
-            Dispatcher.BeginInvoke(() =>
-            {
-                foreach (MainWindow _Window in AllWindows)
-                    _Window.TaskbarProgress.ProgressValue = Item.IsComplete ? 0 : Item.PercentComplete / 100.0;
-                DownloadEntry _Entry = VisibleDownloads.FirstOrDefault(d => d.ID == Item.Id);
-                if (_Entry != null)
-                {
-                    if (string.IsNullOrEmpty(_Entry.FileName))
-                    {
-                        _Entry.FileName = Path.GetFileName(Item.FullPath);
-                        if (!string.IsNullOrEmpty(_Entry.FileName))
-                        {
-                            switch (_Entry.FileName.Split(".").Last())
-                            {
-                                case "zip":
-                                case "rar":
-                                case "7z":
-                                case "tgz":
-                                case "gz"://.tar.gz
-                                    _Entry.Icon = "\uF012";
-                                    break;
-                                case "txt":
-                                    _Entry.Icon = "\uF000";
-                                    break;
-                                case "png":
-                                case "jpg":
-                                case "jpeg":
-                                case "avif":
-                                case "svg":
-                                case "webp":
-                                case "jfif":
-                                case "bmp":
-                                    _Entry.Icon = "\uE91B";
-                                    break;
-                                case "gif":
-                                    _Entry.Icon = "\uF4A9";
-                                    break;
-                                case "mp3":
-                                case "mp2":
-                                    _Entry.Icon = "\uEA69";
-                                    break;
-                                case "pdf":
-                                    _Entry.Icon = "\uEA90";
-                                    break;
-
-                                case "blend":
-                                case "obj":
-                                case "fbx":
-                                case "max":
-                                case "stl":
-                                case "x3d":
-                                case "3ds":
-                                case "dae":
-                                case "glb":
-                                case "gltf":
-                                case "ply":
-                                    _Entry.Icon = "\uF158";
-                                    break;
-                                case "mp4":
-                                case "avi":
-                                case "ogg":
-                                case "webm":
-                                case "mov":
-                                case "mpej":
-                                case "wmv":
-                                case "h264":
-                                case "mkv":
-                                    _Entry.Icon = "\uE786";
-                                    break;
-                                default:
-                                    _Entry.Icon = "\uE8A5";
-                                    break;
-                            }
-                            MainWindow Current = CurrentFocusedWindow();
-                            if (Current != null)
-                            {
-                                Browser BrowserView = Current.Tabs[Current.TabsUI.SelectedIndex].Content;
-                                if (BrowserView != null)
-                                    BrowserView.OpenDownloadsButton.OpenPopup();
-                            }
-                        }
-                    }
-                    _Entry.PercentComplete = Item.PercentComplete;
-                    if (Item.IsComplete)
-                    {
-                        _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
-                        _Entry.Open = Visibility.Visible;
-                        _Entry.Stop = Visibility.Collapsed;
-                        _Entry.Progress = Visibility.Collapsed;
-                    }
-                    else if (Item.IsCancelled)
-                    {
-                        if (string.IsNullOrEmpty(_Entry.FileName))
-                        {
-                            VisibleDownloads.Remove(_Entry);
-                            return;
-                        }
-                        _Entry.FormattedProgress = "Canceled";
-                        _Entry.Open = Visibility.Collapsed;
-                        _Entry.Stop = Visibility.Collapsed;
-                        _Entry.Progress = Visibility.Collapsed;
-                    }
-                    else
-                    {
-                        if (Item.TotalBytes > 0)
-                            _Entry.FormattedProgress = FormatBytes(Item.ReceivedBytes, false) + "/" + FormatBytes(Item.TotalBytes) + " - Downloading";
-                        else
-                        {
-                            _Entry.FormattedProgress = FormatBytes(Item.ReceivedBytes) + " - Downloading";
-                            _Entry.IsIndeterminate = true;
-                        }
-                        _Entry.Open = Visibility.Collapsed;
-                        _Entry.Stop = Visibility.Visible;
-                        _Entry.Progress = Visibility.Visible;
-                    }
-    }
-                else
-                    VisibleDownloads.Add(new DownloadEntry { ID = Item.Id
-});
-            });
-        }*/
-
-
-
 
         static string[] FileSizes = { "Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
         public static string FormatBytes(long Bytes, bool ContainSizes = true)
@@ -720,7 +591,7 @@ namespace SLBr
                 IconResourceIndex = 0
             };
             jumpList.JumpItems.Add(NewWindowTask);
-            JumpList.SetJumpList(Application.Current, jumpList);
+            JumpList.SetJumpList(Current, jumpList);
             jumpList.Apply();
         }
 
@@ -1011,17 +882,6 @@ namespace SLBr
                                 string Description = Utils.CapitalizeAllFirstCharacters(Data.GetProperty("weather")[0].GetProperty("description").GetString());
 
                                 Suggestion.Result = $"{Temperature} °C | {Description}";
-                                //string CityName = Data.GetProperty("name").GetString() ?? "Unknown";
-                                //int Humidity = Data.GetProperty("main").GetProperty("humidity").GetInt32();
-                                //int Pressure = Data.GetProperty("main").GetProperty("pressure").GetInt32();
-                                //string Country = Data.GetProperty("sys").GetProperty("country").GetString();
-
-                                //MessageBox.Show($"City: {CityName}");
-                                //MessageBox.Show($"Country: {Country}");
-                                //MessageBox.Show($"Temperature: {Temperature} °C");
-                                //MessageBox.Show($"Description: {Description}");
-                                //MessageBox.Show($"Humidity: {Humidity}%");
-                                //MessageBox.Show($"Pressure: {Pressure} hPa");
                             }
                             else
                                 Suggestion.Result = $"- No data";
@@ -1150,7 +1010,6 @@ namespace SLBr
             OrangeColor = new SolidColorBrush(Colors.Orange);
             IconFont = (FontFamily)Application.Current.Resources["IconFontFamily"];
             SLBrFont = new FontFamily(new Uri("pack://application:,,,/SLBr;component/"), "./Fonts/#SLBr Icons");
-            //FontColor = (SolidColorBrush)FindResource("FontBrush");
 
             InitializeBrowser();
             InitializeUISaves(CommandLineUrl);
@@ -1366,7 +1225,6 @@ namespace SLBr
                 UseShellExecute = false
             });
 
-            //Process.Start(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Updater.exe"));
             CloseSLBr();
         }
 
@@ -1378,10 +1236,7 @@ namespace SLBr
                 username = "SLBr Diagnostics"
             };
 
-            //var Response = 
             await MiniHttpClient.PostAsync(SECRETS.DISCORD_WEBHOOK, new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json"));
-            /*if (!Response.IsSuccessStatusCode)
-                Console.WriteLine($"[Webhook Error] {Response.StatusCode}: {await Response.Content.ReadAsStringAsync()}");*/
         }
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
@@ -1499,11 +1354,6 @@ Inner Exception: ```{7} ```";
         }
         public void SetAdBlock(int Type)
         {
-            /*Cef.UIThreadTaskFactory.StartNew(delegate
-            {
-                var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Ads, Boolean ? ContentSettingValues.Block : ContentSettingValues.Default);
-            });*/
             GlobalSave.Set("AdBlock", Type);
             AdBlock = Type;
             foreach (MainWindow _Window in AllWindows)
@@ -1716,7 +1566,6 @@ Inner Exception: ```{7} ```";
             else if (ISO.StartsWith("en", StringComparison.Ordinal))
                 return "\xe97e";
             return "\xf2b7";
-            //return "\xE8C1";
         }
 
         public bool LiteMode;
@@ -1845,8 +1694,6 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("PrivateTabs", false);
             if (!GlobalSave.Has("QuickImage"))
                 GlobalSave.Set("QuickImage", true);
-            /*if (!GlobalSave.Has("SuppressError"))
-                GlobalSave.Set("SuppressError", true);*/
             if (!GlobalSave.Has("OpenSearch"))
                 GlobalSave.Set("OpenSearch", false);
             if (!GlobalSave.Has("SearchSuggestions"))
@@ -2029,10 +1876,8 @@ Inner Exception: ```{7} ```";
         public MainWindow CurrentFocusedWindow() =>
             AllWindows.FirstOrDefault(w => w.IsFocused || w.IsActive || w.WindowState == WindowState.Maximized || w.WindowState == WindowState.Normal) ?? AllWindows.First();
 
-        public void Refresh(bool IgnoreCache = false)
-        {
+        public void Refresh(bool IgnoreCache = false) =>
             CurrentFocusedWindow().Refresh(string.Empty, IgnoreCache);
-        }
         public void Fullscreen(bool ForceClose = false)
         {
             MainWindow CurrentWindow = CurrentFocusedWindow();
@@ -2040,18 +1885,12 @@ Inner Exception: ```{7} ```";
                 return;
             CurrentWindow.Fullscreen(ForceClose ? false : !CurrentWindow.IsFullscreen);
         }
-        public void DevTools(string Id = "")
-        {
+        public void DevTools(string Id = "") =>
             CurrentFocusedWindow().DevTools(Id);
-        }
-        public void Find(string Text = "")
-        {
+        public void Find(string Text = "") =>
             CurrentFocusedWindow().Find(Text);
-        }
-        public void Screenshot()
-        {
+        public void Screenshot() =>
             CurrentFocusedWindow().Screenshot();
-        }
         public void NewWindow()
         {
             MainWindow _Window = new MainWindow();
@@ -2059,8 +1898,6 @@ Inner Exception: ```{7} ```";
             _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
             _Window.TabsUI.Visibility = Visibility.Visible;
         }
-
-        //public static readonly Regex AMPRegex = new(@"<link\s[^>]*rel=['""]amphtml['""][^>]*href=['""]([^'"">]+)['""]", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
         public static FastHashSet<string> FailedScripts = new();
         public static readonly string[] BlockedAdPatterns = ["ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
@@ -2428,15 +2265,6 @@ Inner Exception: ```{7} ```";
             "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com"
         };
 
-        /*public LifeSpanHandler _LifeSpanHandler;
-        public DownloadHandler _DownloadHandler;
-        public LimitedContextMenuHandler _LimitedContextMenuHandler;
-        public RequestHandler _RequestHandler;
-        public ContextMenuHandler _ContextMenuHandler;
-        public KeyboardHandler _KeyboardHandler;
-        public JsDialogHandler _JsDialogHandler;
-        public PermissionHandler _PermissionHandler;
-        public DialogHandler _DialogHandler;*/
         public WebRiskHandler _WebRiskHandler;
 
         public string ReleaseVersion;
@@ -2468,9 +2296,6 @@ Inner Exception: ```{7} ```";
                 case 5:
                     CurrentWindow.GetTab().Content.ToggleReaderMode();
                     break;
-                /*case 6:
-                    CurrentWindow.NewTab("slbr://newtab", true, -1, true);
-                    break;*/
                 case 6:
                     CurrentWindow.GetTab().Content.WebView?.Print();
                     break;
@@ -2551,154 +2376,6 @@ Inner Exception: ```{7} ```";
                     WebViewManager.InitializeTrident();
                     break;
             }
-
-            /*_LifeSpanHandler = new LifeSpanHandler(false);
-            _DownloadHandler = new DownloadHandler();
-            _RequestHandler = new RequestHandler();
-            _LimitedContextMenuHandler = new LimitedContextMenuHandler();
-            _ContextMenuHandler = new ContextMenuHandler();
-            _KeyboardHandler = new KeyboardHandler();
-            _JsDialogHandler = new JsDialogHandler();
-            _PermissionHandler = new PermissionHandler();
-            _DialogHandler = new DialogHandler();
-
-            _KeyboardHandler.AddKey(delegate () { Refresh(); }, (int)Key.F5);
-            _KeyboardHandler.AddKey(delegate () { Refresh(true); }, (int)Key.F5, true);
-            _KeyboardHandler.AddKey(delegate () { Fullscreen(); }, (int)Key.F11);
-            _KeyboardHandler.AddKey(delegate () { KeyAction(2); }, (int)Key.Escape);
-            _KeyboardHandler.AddKey(delegate () { DevTools(); }, (int)Key.F12);
-            _KeyboardHandler.AddKey(delegate () { Find(); }, (int)Key.F, true);
-            _KeyboardHandler.AddKey(delegate () { KeyAction(0); }, (int)Key.F6);
-            _KeyboardHandler.AddKey(delegate () { KeyAction(1); }, (int)Key.T, true);
-
-            CefSettings Settings = new CefSettings();
-            Settings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
-
-            Settings.Locale = Locale.Tooltip;
-            Settings.AcceptLanguageList = string.Join(",", Languages.Select(i => i.Tooltip));
-            //Settings.UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/604.1";
-            //Settings.UserAgentProduct = $"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}";
-            //Settings.UserAgent = UserAgent;
-
-            string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
-            Settings.LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log"));
-            Settings.LogSeverity = LogSeverity.Error;
-            Settings.CachePath = Path.GetFullPath(Path.Combine(UserDataPath, "Cache"));
-            Settings.RootCachePath = UserDataPath;
-
-            SetCEFFlags(Settings);
-
-            Settings.RegisterScheme(new CefCustomScheme
-            {
-                SchemeName = "gemini",
-                SchemeHandlerFactory = new GeminiSchemeHandlerFactory()
-            });
-            Settings.RegisterScheme(new CefCustomScheme
-            {
-                SchemeName = "gopher",
-                SchemeHandlerFactory = new GopherSchemeHandlerFactory()
-            });
-
-            string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris"];
-            foreach (string _Scheme in SLBrURLs)
-            {
-                string Lower = _Scheme.ToLower();
-                Settings.RegisterScheme(new CefCustomScheme
-                {
-                    SchemeName = "slbr",
-                    DomainName = Lower,
-                    SchemeHandlerFactory = new FolderSchemeHandlerFactory(ResourcesPath, hostName: Lower, defaultPage: $"{_Scheme}.html"),
-                    IsSecure = true,
-                    IsLocal = true,
-                    IsStandard = true,
-                    IsCorsEnabled = true
-                });
-            }
-
-            CefSharpSettings.RuntimeStyle = GlobalSave.GetInt("ChromiumRuntimeStyle", 1) == 1 ? CefRuntimeStyle.Alloy : CefRuntimeStyle.Chrome;
-            //Alloy: No bottom chrome status bar, No chrome permission popups, Pointer lock broken, 
-            //Chrome: Find broken, Has "Esc" popup prompts for Fullscreen & Pointer Locks
-
-            Cef.Initialize(Settings);
-            Cef.UIThreadTaskFactory.StartNew(delegate
-            {
-                var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Geolocation, ContentSettingValues.Block);
-                //GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.JavascriptOptimizer, ContentSettingValues.Allow);
-                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.AdsData, ContentSettingValues.Block);
-                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Notifications, ContentSettingValues.Ask);
-                GlobalRequestContext.SetContentSetting(null, null, ContentSettingTypes.Popups, ContentSettingValues.Ask);
-                bool PDFViewerExtension = bool.Parse(GlobalSave.Get("PDF"));
-
-                ///*string _Preferences = "";
-                //foreach (KeyValuePair<string, object> e in GlobalRequestContext.GetAllPreferences(true))
-                //    _Preferences = GetPreferencesString(_Preferences, "", e);
-                //string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                //using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "WriteLines.txt")))
-                //    outputFile.Write(_Preferences);
-
-                //https://github.com/cefsharp/CefSharp/issues/4986
-                string Error;
-                GlobalRequestContext.SetPreference("privacy_sandbox.apis_enabled", false, out Error);
-
-                GlobalRequestContext.SetPreference("compact_mode", true, out Error);
-                GlobalRequestContext.SetPreference("history.saving_disabled", true, out Error);
-                GlobalRequestContext.SetPreference("profile.cookies_control_mode", 1, out Error);
-                GlobalRequestContext.SetPreference("profile.content_settings.enable_cpss.geolocation", false, out Error);
-                GlobalRequestContext.SetPreference("accessibility.captions.live_caption_enabled", false, out Error);
-
-                GlobalRequestContext.SetPreference("autofill.credit_card_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("autofill.profile_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("autofill.save_data", false, out Error);
-                GlobalRequestContext.SetPreference("autofill.enabled", false, out Error);
-                GlobalRequestContext.SetPreference("payments.can_make_payment_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("credentials_enable_service", false, out Error);
-                GlobalRequestContext.SetPreference("profile.password_manager_enabled", false, out Error);
-
-                //GlobalRequestContext.SetPreference("scroll_to_text_fragment_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("url_keyed_anonymized_data_collection.enabled", false, out Error);
-
-                GlobalRequestContext.SetPreference("download_bubble_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("download_bubble.partial_view_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("download_duplicate_file_prompt_enabled", false, out Error);
-                //GlobalRequestContext.SetPreference("profile.default_content_setting_values.automatic_downloads", 1, out Error);
-                //GlobalRequestContext.SetPreference("profile.default_content_setting_values.notifications", 2, out Error);
-
-                GlobalRequestContext.SetPreference("shopping_list_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("browser_labs_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("allow_dinosaur_easter_egg", false, out Error);
-                GlobalRequestContext.SetPreference("feedback_allowed", false, out Error);
-                GlobalRequestContext.SetPreference("policy.feedback_surveys_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("ntp.promo_visible", false, out Error);
-                GlobalRequestContext.SetPreference("ntp.shortcust_visible", false, out Error);
-                GlobalRequestContext.SetPreference("ntp_snippets.enable", false, out Error);
-                GlobalRequestContext.SetPreference("ntp_snippets_by_dse.enable", false, out Error);
-                GlobalRequestContext.SetPreference("search.suggest_enabled", false, out Error);
-                GlobalRequestContext.SetPreference("side_search.enabled", false, out Error);
-                GlobalRequestContext.SetPreference("translate.enabled", false, out Error);
-                GlobalRequestContext.SetPreference("history.saving_disabled", false, out Error);
-                GlobalRequestContext.SetPreference("media_router.enable_media_router", false, out Error);
-                GlobalRequestContext.SetPreference("documentsuggest.enabled", false, out Error);
-                GlobalRequestContext.SetPreference("alternate_error_pages.enabled", false, out Error);
-                GlobalRequestContext.SetPreference("https_first_balanced_mode_enabled", true, out Error);
-                //GlobalRequestContext.SetPreference("enable_do_not_track", bool.Parse(GlobalSave.Get("DoNotTrack")), out errorMessage);
-                //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/preloading/preloading_prefs.h
-                GlobalRequestContext.SetPreference("net.network_prediction_options", HighPerformanceMode ? 0 : 2, out Error);
-                GlobalRequestContext.SetPreference("safebrowsing.enabled", false, out Error);
-                //GlobalRequestContext.SetPreference("browser.theme.follows_system_colors", false, out Error);
-
-                GlobalRequestContext.SetPreference("browser.enable_spellchecking", bool.Parse(GlobalSave.Get("SpellCheck")), out Error);
-                //GlobalRequestContext.SetPreference("spellcheck.use_spelling_service", false, out Error);
-                GlobalRequestContext.SetPreference("spellcheck.dictionaries", Languages.Select(i => i.Tooltip), out Error);
-                GlobalRequestContext.SetPreference("intl.accept_languages", Languages.Select(i => i.Tooltip), out Error);
-
-                GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !PDFViewerExtension, out Error);
-                GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !PDFViewerExtension, out Error);
-
-                if (bool.Parse(GlobalSave.Get("BlockFingerprint")))
-                    GlobalRequestContext.SetPreference("webrtc.ip_handling_policy", "disable_non_proxied_udp", out Error);
-                //GlobalRequestContext.SetPreference("profile.content_settings.enable_quiet_permission_ui.geolocation", false, out Error);
-            });*/
             LoadExtensions();
             foreach (MainWindow _Window in AllWindows)
             {
@@ -4966,8 +4643,8 @@ return 1;
     public class ManifestIcon
     {
         [JsonPropertyName("src")] public string Source { get; set; }
-        [JsonPropertyName("sizes")] public string Sizes { get; set; } // e.g., "192x192 512x512"
-        [JsonPropertyName("type")] public string Type { get; set; }   // e.g., "image/png"
-        [JsonPropertyName("purpose")] public string Purpose { get; set; } // "any" | "maskable" | "monochrome"
+        [JsonPropertyName("sizes")] public string Sizes { get; set; }
+        [JsonPropertyName("type")] public string Type { get; set; }
+        [JsonPropertyName("purpose")] public string Purpose { get; set; }
     }
 }

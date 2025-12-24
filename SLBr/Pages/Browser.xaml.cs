@@ -504,7 +504,6 @@ namespace SLBr.Pages
             }
             else if (e.DialogType == ScriptDialogType.Prompt)
             {
-
                 DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Prompt", Utils.Host(e.Url),
                     new List<InputField>
                     {
@@ -1254,7 +1253,6 @@ namespace SLBr.Pages
         {
             if (string.IsNullOrWhiteSpace(e))
                 return;
-            //MessageBox.Show(e);
             IDictionary<string, object>? Message;
             try
             {
@@ -1303,7 +1301,6 @@ namespace SLBr.Pages
 
         private void WebView_FrameLoadStart(object? sender, string e)
         {
-            //SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
             if (Utils.IsHttpScheme(e))
             {
                 WebView?.ExecuteScript(Scripts.AntiCloseScript);//Replacement for DoClose of LifeSpanHandler in RuntimeStyle Chrome

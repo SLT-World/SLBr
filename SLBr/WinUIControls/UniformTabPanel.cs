@@ -7,26 +7,8 @@ namespace WinUI
 {
     class TabPanel : Panel
     {
-        /*public TabPanel()
-        {
-            IsItemsHost = true;
-            Rows = 1;
-            HorizontalAlignment = HorizontalAlignment.Stretch;
-        }
-
-        protected override Size MeasureOverride(Size constraint)
-        {
-            var totalMaxWidth = Children.OfType<TabItem>().Sum(tab => tab.MaxWidth);
-            if (!double.IsInfinity(totalMaxWidth))
-                HorizontalAlignment = constraint.Width > totalMaxWidth
-                   ? HorizontalAlignment.Left
-                   : HorizontalAlignment.Stretch;
-
-            return base.MeasureOverride(constraint);
-        }*/
-
-        private double _rowHeight;
-        private double _scaleFactor;
+        private double _RowHeight;
+        private double _ScaleFactor;
 
         static TabPanel()
         {
@@ -36,7 +18,7 @@ namespace WinUI
 
         private void Child_Unloaded(object? sender, EventArgs e)
         {
-            if (sender is UIElement updatedElement)
+            if (sender is UIElement Element)
             {
                 CurrentSize.Width = ActualWidth;
                 SetChildrenMaxWidths(CurrentSize.Width);
@@ -72,7 +54,6 @@ namespace WinUI
                 ResizeTimer.Stop();
                 ResizeTimer.Start();
                 CurrentSize = sizeInfo.NewSize;
-                //MessageBox.Show("Size Changed");
             }
         }
 
@@ -81,137 +62,120 @@ namespace WinUI
             base.OnPropertyChanged(e);
             if (!DesignMode)
             {
-                //if (e.Property != IsMouseOverProperty)
-                //    Dispatcher.BeginInvoke(new Action(() => MessageBox.Show(e.Property.Name.ToString())));
-                
                 if (e.Property.ToString() == "TabOnceActiveElement")
                 {
-                    foreach (UIElement child in Children)
+                    foreach (UIElement Child in Children)
                     {
-                        if (child is FrameworkElement frameworkElement)
+                        if (Child is FrameworkElement Element)
                         {
-                            frameworkElement.Unloaded -= Child_Unloaded;
-                            frameworkElement.Unloaded += Child_Unloaded;
+                            Element.Unloaded -= Child_Unloaded;
+                            Element.Unloaded += Child_Unloaded;
                         }
                     }
                     CurrentSize.Width = ActualWidth;
                     SetChildrenMaxWidths(ActualWidth);
-                    //SetChildrenMaxWidths(SystemParameters.PrimaryScreenWidth - (margin.Left + margin.Right));
                 }
             }
         }
 
         private void SetChildrenMaxWidths(double MaxWidth)
         {
-            double width = 0.0;
-            _rowHeight = 0.0;
+            double _Width = 0.0;
+            _RowHeight = 0.0;
             Size MaximumSize = new Size(MaxWidth, 45.0);
-            foreach (UIElement element in Children)
+            foreach (UIElement Element in Children)
             {
-                element.SetValue(MaxWidthProperty, 250.0);
-                element.Measure(MaximumSize);
-                Size size = GetDesiredSizeLessMargin(element);
-                _rowHeight = Math.Max(_rowHeight, size.Height);
-                width += size.Width;
+                Element.SetValue(MaxWidthProperty, 250.0);
+                Element.Measure(MaximumSize);
+                Size _Size = GetDesiredSizeLessMargin(Element);
+                _RowHeight = Math.Max(_RowHeight, _Size.Height);
+                _Width += _Size.Width;
             }
 
-            if (width > MaximumSize.Width)
+            if (_Width > MaximumSize.Width)
             {
-                _scaleFactor = MaximumSize.Width / width;
-                width = 0.0;
-                foreach (UIElement element in Children)
+                _ScaleFactor = MaximumSize.Width / _Width;
+                _Width = 0.0;
+                foreach (UIElement Element in Children)
                 {
-                    element.Measure(new Size(element.DesiredSize.Width * _scaleFactor, MaximumSize.Height));
-                    width += element.DesiredSize.Width;
+                    Element.Measure(new Size(Element.DesiredSize.Width * _ScaleFactor, MaximumSize.Height));
+                    _Width += Element.DesiredSize.Width;
                 }
             }
             else
-                _scaleFactor = 1.0;
-            Size arrangeSize = new Size(width, _rowHeight);
-            Point point = new Point();
-            foreach (UIElement element in Children)
+                _ScaleFactor = 1.0;
+            Size ArrangeSize = new Size(_Width, _RowHeight);
+            Point _Point = new Point();
+            foreach (UIElement Element in Children)
             {
-                Size size1 = element.DesiredSize;
-                Size size2 = GetDesiredSizeLessMargin(element);
-                Thickness margin = (Thickness)element.GetValue(MarginProperty);
-                double TabWidth = size2.Width;
-                if (element.DesiredSize.Width != size2.Width)
-                    TabWidth = arrangeSize.Width - point.X; // Last-tab-selected "fix"
-                if (Children.IndexOf(element) != Children.Count - 1)
+                Size Size1 = Element.DesiredSize;
+                Size Size2 = GetDesiredSizeLessMargin(Element);
+                Thickness _Margin = (Thickness)Element.GetValue(MarginProperty);
+                double TabWidth = Size2.Width;
+                if (Element.DesiredSize.Width != Size2.Width)
+                    TabWidth = ArrangeSize.Width - _Point.X;
+                if (Children.IndexOf(Element) != Children.Count - 1)
                 {
-                    element.SetValue(WidthProperty, double.NaN);
-                    element.SetValue(MaxWidthProperty, Math.Max(TabWidth, 40));
-                    //element.SetValue(WidthProperty, width);
+                    Element.SetValue(WidthProperty, double.NaN);
+                    Element.SetValue(MaxWidthProperty, Math.Max(TabWidth, 40));
                 }
-                double leftRightMargin = Math.Max(0.0, -(margin.Left + margin.Right));
-                point.X += size1.Width + (leftRightMargin * _scaleFactor);
+                double LeftRightMargin = Math.Max(0.0, -(_Margin.Left + _Margin.Right));
+                _Point.X += Size1.Width + (LeftRightMargin * _ScaleFactor);
             }
         }
-
-        // This Panel lays its children out horizontally.
-        // If all children cannot fit in the allocated space,
-        // the available space is divided proportionally between them.
-        protected override Size MeasureOverride(Size availableSize)
+        protected override Size MeasureOverride(Size AvailableSize)
         {
-            double width = 0.0;
-            _rowHeight = 0.0;
-            foreach (UIElement element in Children)
+            double _Width = 0.0;
+            _RowHeight = 0.0;
+            foreach (UIElement Element in Children)
             {
-                element.Measure(availableSize);
-                Size size = GetDesiredSizeLessMargin(element);
-                _rowHeight = Math.Max(_rowHeight, size.Height);
-                width += size.Width;
+                Element.Measure(AvailableSize);
+                Size size = GetDesiredSizeLessMargin(Element);
+                _RowHeight = Math.Max(_RowHeight, size.Height);
+                _Width += size.Width;
             }
 
-            if (width > availableSize.Width)
+            if (_Width > AvailableSize.Width)
             {
-                _scaleFactor = availableSize.Width / width;
-                width = 0.0;
-                foreach (UIElement element in Children)
+                _ScaleFactor = AvailableSize.Width / _Width;
+                _Width = 0.0;
+                foreach (UIElement Element in Children)
                 {
-                    element.Measure(new Size(element.DesiredSize.Width * _scaleFactor, availableSize.Height));
-                    width += element.DesiredSize.Width;
+                    Element.Measure(new Size(Element.DesiredSize.Width * _ScaleFactor, AvailableSize.Height));
+                    _Width += Element.DesiredSize.Width;
                 }
             }
             else
-                _scaleFactor = 1.0;
-            return new Size(width, _rowHeight);
+                _ScaleFactor = 1.0;
+            return new Size(_Width, _RowHeight);
         }
-
-        // Perform arranging of children based on the final size
-        protected override Size ArrangeOverride(Size arrangeSize)
+        protected override Size ArrangeOverride(Size ArrangeSize)
         {
-            Point point = new Point();
-            foreach (UIElement element in Children)
+            Point _Point = new Point();
+            foreach (UIElement Element in Children)
             {
-                Size size1 = element.DesiredSize;
-                Size size2 = GetDesiredSizeLessMargin(element);
-                Thickness margin = (Thickness)element.GetValue(MarginProperty);
-                double width = size2.Width;
-                if (element.DesiredSize.Width != size2.Width)
-                    width = arrangeSize.Width - point.X; // Last-tab-selected "fix"
-                element.Arrange(new Rect(point, new Size(Math.Min(width, size2.Width), _rowHeight)));
-                if (Children.IndexOf(element) != Children.Count - 1)
-                {
-                    //element.SetValue(WidthProperty, double.NaN);
-                    element.SetValue(MinWidthProperty, Math.Max(width, 40));
-                    //element.SetValue(WidthProperty, width);
-                }
+                Size Size1 = Element.DesiredSize;
+                Size Size2 = GetDesiredSizeLessMargin(Element);
+                Thickness margin = (Thickness)Element.GetValue(MarginProperty);
+                double _Width = Size2.Width;
+                if (Element.DesiredSize.Width != Size2.Width)
+                    _Width = ArrangeSize.Width - _Point.X;
+                Element.Arrange(new Rect(_Point, new Size(Math.Min(_Width, Size2.Width), _RowHeight)));
+                if (Children.IndexOf(Element) != Children.Count - 1)
+                    Element.SetValue(MinWidthProperty, Math.Max(_Width, 40));
                 double leftRightMargin = Math.Max(0.0, -(margin.Left + margin.Right));
-                point.X += size1.Width + (leftRightMargin * _scaleFactor);
+                _Point.X += Size1.Width + (leftRightMargin * _ScaleFactor);
             }
-            return arrangeSize;
+            return ArrangeSize;
         }
 
-        // Return element's size
-        // after subtracting margin
-        private Size GetDesiredSizeLessMargin(UIElement element)
+        private Size GetDesiredSizeLessMargin(UIElement Element)
         {
-            Thickness margin = (Thickness)element.GetValue(MarginProperty);
-            Size size = new Size();
-            size.Height = Math.Max(0.0, element.DesiredSize.Height - (margin.Top + margin.Bottom));
-            size.Width = Math.Max(0.0, element.DesiredSize.Width - (margin.Left + margin.Right));
-            return size;
+            Thickness _Margin = (Thickness)Element.GetValue(MarginProperty);
+            Size _Size = new Size();
+            _Size.Height = Math.Max(0.0, Element.DesiredSize.Height - (_Margin.Top + _Margin.Bottom));
+            _Size.Width = Math.Max(0.0, Element.DesiredSize.Width - (_Margin.Left + _Margin.Right));
+            return _Size;
         }
     }
 }
