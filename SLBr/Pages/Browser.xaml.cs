@@ -256,11 +256,6 @@ namespace SLBr.Pages
                             if (InfoWindow.ShowDialog() == true)
                             {
                                 await WebAppHandler.Install(CurrentWebAppManifest);
-                                /*MessageBox.Show("Name: " + CurrentWebAppManifest.Name);
-                                MessageBox.Show("Display: " + CurrentWebAppManifest.Display);
-                                MessageBox.Show("StartUrl: " + CurrentWebAppManifest.StartUrl);
-                                foreach (ManifestIcon _ManifestIcon in CurrentWebAppManifest.Icons)
-                                    MessageBox.Show("Icon: " + _ManifestIcon.Source + " | " + _ManifestIcon.Type + " | " + _ManifestIcon.Sizes);*/
                             }
                         }
                     });
@@ -690,8 +685,8 @@ namespace SLBr.Pages
                         ProprietaryCodecsDialogWindow = new DynamicDialogWindow("Information", "Proprietary Codecs Detected",
                             new List<InputField>
                             {
-                    new InputField { Name = "This site is trying to play media using formats not supported by Chromium (CEF).\nDo you want to switch to the Edge (WebView2) engine?", Type = DialogInputType.Label },
-                    new InputField { Name = "Do not show this message again", Type = DialogInputType.Boolean, BoolValue = !WarnCodec }
+                                new InputField { Name = "This site is trying to play media using formats not supported by Chromium (CEF).\nDo you want to switch to the Edge (WebView2) engine?", Type = DialogInputType.Label },
+                                new InputField { Name = "Do not show this message again", Type = DialogInputType.Boolean, BoolValue = !WarnCodec }
                             },
                             "\xe8ab", "Yes", "No"
                         );
@@ -975,7 +970,7 @@ namespace SLBr.Pages
                             break;
                         case WebPermissionKind.FileSystemAccess:
                             Permissions += "Access file system";
-                            PermissionIcons += "\xEC50";//E8B7
+                            PermissionIcons += "\xEC50";
                             break;
                         case WebPermissionKind.ScreenShare:
                             Permissions += "Share your screen\n";
@@ -1050,7 +1045,7 @@ namespace SLBr.Pages
                         var RequireForceDarkMode = await WebView?.EvaluateScriptAsync(Scripts.CheckNativeDarkModeScript);
                         await WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
                         {
-                            enabled = (RequireForceDarkMode == "1")
+                            enabled = RequireForceDarkMode == "1"
                         });
                     }
                     else
@@ -1064,7 +1059,7 @@ namespace SLBr.Pages
                                 var RequireForceDarkMode = await WebView?.EvaluateScriptAsync(Scripts.CheckNativeDarkModeScript);
                                 await WebView?.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
                                 {
-                                    enabled = (RequireForceDarkMode == "1")
+                                    enabled = RequireForceDarkMode == "1"
                                 });
                             }
                         };
@@ -1408,7 +1403,6 @@ namespace SLBr.Pages
                                     Tab.ParentWindow.NewTab(Url, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private);
                                 })
                             });
-                            //model.AddItem((CefMenuCommand)26502, "Open in paintbrush");
                         }
                         else if (e.MediaType == WebContextMenuMediaType.Video)
                         {

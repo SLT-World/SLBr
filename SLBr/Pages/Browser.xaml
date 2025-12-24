@@ -106,10 +106,9 @@
                                         <MenuItem Header="Acid3" Icon="&#xe9d2;" Click="ButtonAction" Tag="4&lt;,&gt;http://acid3.acidtests.org/"/>
                                         <MenuItem Header="QUIC" Icon="&#xf159;" Click="ButtonAction" Tag="4&lt;,&gt;https://quic.nginx.org/"/>
                                         <MenuItem Header="Bad SSL" Icon="&#xe785;" Click="ButtonAction" Tag="4&lt;,&gt;https://badssl.com/"/>
-                                        <MenuItem Header="Stutters &amp; Tearing" Icon="&#xe9d9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.testufo.com/stutter"/>
                                         <MenuItem Header="Widevine" Icon="&#xe8a6;" Click="ButtonAction" Tag="4&lt;,&gt;https://bitmovin.com/demos/drm/"/>
                                         <MenuItem Header="Service Worker" Icon="&#xec7a;" Click="ButtonAction" Tag="4&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
-                                        <MenuItem Header="Prerender" Icon="&#xe8ff;" Click="ButtonAction" Tag="4&lt;,&gt;https://prerender-demos.glitch.me/"/>
+                                        <MenuItem Header="Prerender" Icon="&#xe8ff;" Click="ButtonAction" Tag="4&lt;,&gt;https://chrome.dev/prerender-demos/"/>
                                         <MenuItem Header="SLT Tests" Icon="&#xe9a4;" Click="ButtonAction" Tag="4&lt;,&gt;https://slt-world.github.io/"/>
                                         <Separator/>
                                         <MenuItem Header="WebGL Samples" Icon="&#xec26;">
