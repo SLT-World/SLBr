@@ -90,62 +90,6 @@
                                     <MenuItem Header="News Feed" Icon="&#xe8a1;" Click="ButtonAction" Tag="23"/>
                                     <Separator/>
                                     <MenuItem Header="Developer Tools" Icon="&#xec7a;" Click="ButtonAction" Tag="9" InputGestureText="F12"/>
-                                    <MenuItem Header="Tests" Icon="&#xebe8;">
-                                        <MenuItem Header="HTML5 Test" Icon="&#xe81e;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.html5test.co/"/>
-                                        <MenuItem Header="CSS3 Test" Icon="&#xf4a5;" Click="ButtonAction" Tag="4&lt;,&gt;https://css3test.com/"/>
-                                        <MenuItem Header="SafeBrowsing" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://testsafebrowsing.appspot.com/"/>
-                                        <MenuItem Header="SmartScreen" Icon="&#xe705;" Click="ButtonAction" Tag="4&lt;,&gt;https://demo.smartscreen.msft.net/"/>
-                                        <MenuItem Header="WebRTC" Icon="&#xe714;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.webrtc-experiment.com/"/>
-                                        <MenuItem Header="Web Speech API" Icon="&#xefa9;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/intl/en/chrome/demos/speech.html"/>
-                                        <MenuItem Header="Web Notifications" Icon="&#xea8f;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.bennish.net/web-notifications.html"/>
-                                        <MenuItem Header="WebGL" Icon="&#xf158;" Click="ButtonAction" Tag="4&lt;,&gt;https://get.webgl.org/"/>
-                                        <MenuItem Header="WebAssembly" Icon="&#xe7b8;" Click="ButtonAction" Tag="4&lt;,&gt;https://webassembly.org/features/"/>
-                                        <MenuItem Header="Jigsaw" Icon="&#xe774;" Click="ButtonAction" Tag="4&lt;,&gt;https://jigsaw.w3.org/"/>
-                                        <MenuItem Header="BrowserLeaks" Icon="&#xe9d5;" Click="ButtonAction" Tag="4&lt;,&gt;https://browserleaks.com/"/>
-                                        <MenuItem Header="Permissions" Icon="&#xe8d7;" Click="ButtonAction" Tag="4&lt;,&gt;https://permission.site/"/>
-                                        <MenuItem Header="Acid3" Icon="&#xe9d2;" Click="ButtonAction" Tag="4&lt;,&gt;http://acid3.acidtests.org/"/>
-                                        <MenuItem Header="QUIC" Icon="&#xf159;" Click="ButtonAction" Tag="4&lt;,&gt;https://quic.nginx.org/"/>
-                                        <MenuItem Header="Bad SSL" Icon="&#xe785;" Click="ButtonAction" Tag="4&lt;,&gt;https://badssl.com/"/>
-                                        <MenuItem Header="Widevine" Icon="&#xe8a6;" Click="ButtonAction" Tag="4&lt;,&gt;https://bitmovin.com/demos/drm/"/>
-                                        <MenuItem Header="Service Worker" Icon="&#xec7a;" Click="ButtonAction" Tag="4&lt;,&gt;https://googlechrome.github.io/samples/service-worker/basic/"/>
-                                        <MenuItem Header="Prerender" Icon="&#xe8ff;" Click="ButtonAction" Tag="4&lt;,&gt;https://chrome.dev/prerender-demos/"/>
-                                        <MenuItem Header="SLT Tests" Icon="&#xe9a4;" Click="ButtonAction" Tag="4&lt;,&gt;https://slt-world.github.io/"/>
-                                        <Separator/>
-                                        <MenuItem Header="WebGL Samples" Icon="&#xec26;">
-                                            <MenuItem Header="HexGL" Icon="&#xe709;" Click="ButtonAction" Tag="4&lt;,&gt;https://hexgl.bkcore.com/"/>
-                                            <MenuItem Header="Book" Icon="&#xf582;" Click="ButtonAction" Tag="4&lt;,&gt;https://webglsamples.org/book/book.html"/>
-                                            <MenuItem Header="Interactive Water" Icon="&#xeb42;" Click="ButtonAction" Tag="4&lt;,&gt;https://madebyevan.com/webgl-water/"/>
-                                            <MenuItem Header="Aquarium" Click="ButtonAction" Tag="4&lt;,&gt;https://webglsamples.org/aquarium/aquarium.html"/>
-                                        </MenuItem>
-                                    </MenuItem>
-                                    <Separator/>
-                                    <MenuItem Header="Interesting Sites" Icon="&#xeb41;">
-                                        <MenuItem Header="SLBr Tetris" Icon="&#xe74c;" Click="ButtonAction" Tag="4&lt;,&gt;slbr://tetris/"/>
-                                        <MenuItem Header="Pointer Pointer" Icon="&#xe7c9;" Click="ButtonAction" Tag="4&lt;,&gt;pointerpointer.com"/>
-                                        <MenuItem Header="Bouncing DVD Logo" Icon="&#xe7c4;" Click="ButtonAction" Tag="4&lt;,&gt;www.bouncingdvdlogo.com"/>
-                                        <MenuItem Header="Take b1nzy to space" Icon="&#xe709;" Click="ButtonAction" Tag="4&lt;,&gt;https://takeb1nzyto.space/"/>
-                                        <MenuItem Header="Old Net Navigator" Icon="&#xec6c;" Click="ButtonAction" Tag="4&lt;,&gt;https://theoldnet.com/browser/"/>
-                                        <MenuItem Header="Passive Aggressive Passwords" Icon="&#xe8d7;" Click="ButtonAction" Tag="4&lt;,&gt;https://trypap.com/"/>
-                                        <MenuItem Header="🐮" Icon="&#xe767;" Click="ButtonAction" Tag="4&lt;,&gt;https://xn--2o8h.ws/"/>
-                                        <MenuItem Header="Endless Horse" Click="ButtonAction" Tag="4&lt;,&gt;http://endless.horse/"/>
-                                        <MenuItem Header="CO2GLE" Click="ButtonAction" Tag="4&lt;,&gt;https://www.janavirgin.com/CO2/"/>
-                                        <MenuItem Header="Deforest" Click="ButtonAction" Tag="4&lt;,&gt;https://www.janavirgin.com/CO2/DEFOOOOOOOOOOOOOOOOOOOOOREST.html"/>
-                                    </MenuItem>
-                                    <MenuItem Header="Google">
-                                        <MenuItem Header="I'm a teapot" Icon="&#xEC32;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/teapot"/>
-                                        <MenuItem Header="PAC-MAN" Icon="&#xe91f;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/logos/2010/pacman10-i.html"/>
-                                        <Separator/>
-                                        <MenuItem Header="Do a barrel roll" Icon="&#xe895;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Do+a+barrel+roll"/>
-                                        <MenuItem Header="Askew" Icon="&#xe7ad;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Askew"/>
-                                        <MenuItem Header="Blink HTML" Icon="&#xe7b3;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Blink+HTML"/>
-                                        <MenuItem Header="Festivus" Icon="&#xe784;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Festivus"/>
-                                        <MenuItem Header="Google in 1998" Icon="&#xe81c;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=Google+in+1998"/>
-                                        <MenuItem Header="What sound does a dog make?" Icon="&#xe767;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=What+sound+does+a+dog+make"/>
-                                        <!--<MenuItem Header="1.2+​(sqrt(​1-​sqrt(​x^​2+​y^​2)^​2)+​1-​x^​2-​y^​2)*​(sin(​10000*​(x*​3+​y/​5+​7))+​1/​4)" Icon="&#xe8ef;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/search?q=1.2%2B(sqrt(1-(sqrt(x%5E2%2By%5E2))%5E2)+%2B+1+-+x%5E2-y%5E2)+*+(sin+(10000+*+(x*3%2By/5%2B7))%2B1/4)+from+-1.6+to+1.6"/>-->
-                                        <Separator/>
-                                        <MenuItem Header="Google Moon" Icon="&#xe708;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/maps/space/moon/"/>
-                                        <MenuItem Header="Google Mars" Icon="&#xea3a;" Click="ButtonAction" Tag="4&lt;,&gt;https://www.google.com/maps/space/mars/"/>
-                                    </MenuItem>
                                 </MenuItem>
                                 <Separator/>
                                 <MenuItem Icon="&#xE748;" Header="Switch User" Click="ButtonAction" Tag="15"/>
