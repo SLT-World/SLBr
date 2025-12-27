@@ -1329,20 +1329,22 @@ Inner Exception: ```{7} ```";
         //https://chromium-review.googlesource.com/c/chromium/src/+/1265506
         public bool NeverSlowMode;
 
+        public bool TrimURL;
+        public bool HomographProtection;
         public bool SkipAds;
         public bool ExternalFonts;
         public bool SmartDarkMode;
 
-        public void SetSmartDarkMode(bool _SmartDarkMode)
+        public void SetSmartDarkMode(bool Toggle)
         {
-            GlobalSave.Set("SmartDarkMode", _SmartDarkMode.ToString());
-            SmartDarkMode = _SmartDarkMode;
+            GlobalSave.Set("SmartDarkMode", Toggle.ToString());
+            SmartDarkMode = Toggle;
         }
 
-        public void SetExternalFonts(bool _ExternalFonts)
+        public void SetExternalFonts(bool Toggle)
         {
-            GlobalSave.Set("ExternalFonts", _ExternalFonts.ToString());
-            ExternalFonts = _ExternalFonts;
+            GlobalSave.Set("ExternalFonts", Toggle.ToString());
+            ExternalFonts = Toggle;
         }
 
         public WebRiskHandler.SecurityService WebRiskService;
@@ -1352,15 +1354,41 @@ Inner Exception: ```{7} ```";
             GlobalSave.Set("WebRiskService", Service);
             WebRiskService = (WebRiskHandler.SecurityService)Service;
         }
-        public void SetYouTube(bool _SkipAds)
+        public void SetTrimURL(bool Toggle)
         {
-            GlobalSave.Set("SkipAds", _SkipAds.ToString());
-            SkipAds = _SkipAds;
+            GlobalSave.Set("TrimURL", Toggle.ToString());
+            TrimURL = Toggle;
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                {
+                    if (BrowserView.OmniBoxOverlayText.Visibility == Visibility.Visible)
+                        BrowserView.SetOverlayDisplay(TrimURL, HomographProtection);
+                }
+            }
         }
-        public void SetNeverSlowMode(bool Boolean)
+        public void SetHomographProtection(bool Toggle)
         {
-            GlobalSave.Set("NeverSlowMode", Boolean.ToString());
-            NeverSlowMode = Boolean;
+            GlobalSave.Set("HomographProtection", Toggle.ToString());
+            HomographProtection = Toggle;
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                {
+                    if (BrowserView.OmniBoxOverlayText.Visibility == Visibility.Visible)
+                        BrowserView.SetOverlayDisplay(TrimURL, HomographProtection);
+                }
+            }
+        }
+        public void SetYouTube(bool Toggle)
+        {
+            GlobalSave.Set("SkipAds", Toggle.ToString());
+            SkipAds = Toggle;
+        }
+        public void SetNeverSlowMode(bool Toggle)
+        {
+            GlobalSave.Set("NeverSlowMode", Toggle.ToString());
+            NeverSlowMode = Toggle;
         }
         public void SetAdBlock(int Type)
         {
@@ -1822,8 +1850,10 @@ Inner Exception: ```{7} ```";
         }
         private void InitializeUISaves(string CommandLineUrl = "")
         {
-            SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", false.ToString())));
+            SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", true.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
+            SetTrimURL(bool.Parse(GlobalSave.Get("TrimURL", true.ToString())));
+            SetHomographProtection(bool.Parse(GlobalSave.Get("HomographProtection", true.ToString())));
             SetYouTube(bool.Parse(GlobalSave.Get("SkipAds", false.ToString())));
             SetNeverSlowMode(bool.Parse(GlobalSave.Get("NeverSlowMode", false.ToString())));
             SetAdBlock(GlobalSave.GetInt("AdBlock", 1));

@@ -289,6 +289,12 @@
                                 </DockPanel>
                             </StackPanel>
                         </GroupBox>
+                        <GroupBox Margin="0,0,0,10" Header="Omnibox">
+                            <StackPanel>
+                                <CheckBox x:Name="TrimURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="TrimURLCheckBox_Click" Content="Show simplified URLs"/>
+                                <CheckBox x:Name="HomographProtectionCheckBox" Width="Auto" Click="HomographProtectionCheckBox_Click" Content="Highlight deceptive characters"/>
+                            </StackPanel>
+                        </GroupBox>
                         <GroupBox Margin="0,0,0,10">
                             <GroupBox.Header>
                                 Fonts

@@ -1730,7 +1730,7 @@ namespace SLBr.Pages
 
                     OmniBoxIsDropdown = false;
                     OmniBoxStatus.Visibility = Visibility.Collapsed;
-                    SetOverlayDisplay();
+                    SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
                 }
             }
             if (FavouriteExists(Address) != -1)
@@ -3039,7 +3039,7 @@ namespace SLBr.Pages
                     if (OmniBox.Text.Trim().Length == 0)
                         OmniBoxPlaceholder.Visibility = Visibility.Visible;
                     if (OmniBox.Text == OmniBox.Tag.ToString())
-                        SetOverlayDisplay();
+                        SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
                 }
                 catch { }
                 OmniBoxBorder.BorderThickness = new Thickness(1);
@@ -3050,10 +3050,9 @@ namespace SLBr.Pages
             }
         }
 
-        //TODO: Add setting to control Truncation "Always show full URLs"
         //Protection against homograph attacks https://www.xudongz.com/blog/2017/idn-phishing/
         //TODO: Add "Did you mean apple.com?", visit xn--80ak6aa92e.com in Chrome to see the error page.
-        private void SetOverlayDisplay(bool TruncateURL = true, bool HighlightSuspicious = true)
+        public void SetOverlayDisplay(bool TruncateURL = true, bool HighlightSuspicious = true)
         {
             OmniBoxOverlayText.Inlines.Clear();
             OmniBoxOverlayText.Visibility = Visibility.Visible;
@@ -3114,6 +3113,11 @@ namespace SLBr.Pages
 
             if (HighlightSuspicious)
             {
+                //vvikipedia.com
+                //xn--micrsoft-qbh.com
+                //xn--l-7sba6dbr.com
+                //xn--80ak6aa92e.com
+                //xn--pple-zld.com
                 int HostIndex = 0;
                 StringBuilder HostBuffer = new();
                 bool IsNormal = false;
@@ -3121,10 +3125,6 @@ namespace SLBr.Pages
                 while (HostIndex < Host.Length)
                 {
                     char _Char = Host[HostIndex];
-                    //xn--micrsoft-qbh.com
-                    //xn--l-7sba6dbr.com
-                    //xn--80ak6aa92e.com
-                    //xn--pple-zld.com
                     if (_Char > 127 && char.IsLetter(_Char))
                     {
                         if (IsNormal)

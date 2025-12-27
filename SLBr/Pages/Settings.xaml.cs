@@ -278,6 +278,8 @@ namespace SLBr.Pages
             AdBlockComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("AdBlock");
             WebRiskServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebRiskService");
 
+            TrimURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TrimURL"));
+            HomographProtectionCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographProtection"));
 
             SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
             SmartDarkModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartDarkMode"));
@@ -695,6 +697,16 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetAMP(AMPCheckBox.IsChecked.ToBool());
+        }
+        private void TrimURLCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetTrimURL(TrimURLCheckBox.IsChecked.ToBool());
+        }
+        private void HomographProtectionCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetHomographProtection(HomographProtectionCheckBox.IsChecked.ToBool());
         }
         private void SkipAdsCheckBox_Click(object sender, RoutedEventArgs e)
         {
