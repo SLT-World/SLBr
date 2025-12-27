@@ -4,7 +4,6 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using SLBr.Controls;
 using SLBr.Handlers;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -13,7 +12,6 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -31,7 +29,6 @@ using System.Windows.Threading;
 using System.Xml;
 using Windows.UI.Notifications;
 using Windows.UI.ViewManagement.Core;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SLBr.Pages
 {
@@ -3053,7 +3050,6 @@ namespace SLBr.Pages
             }
         }
 
-
         //TODO: Add setting to control Truncation "Always show full URLs"
         //Protection against homograph attacks https://www.xudongz.com/blog/2017/idn-phishing/
         //TODO: Add "Did you mean apple.com?", visit xn--80ak6aa92e.com in Chrome to see the error page.
@@ -3119,6 +3115,9 @@ namespace SLBr.Pages
             if (HighlightSuspicious)
             {
                 int HostIndex = 0;
+                StringBuilder HostBuffer = new();
+                bool IsNormal = false;
+
                 while (HostIndex < Host.Length)
                 {
                     char _Char = Host[HostIndex];
@@ -3128,7 +3127,16 @@ namespace SLBr.Pages
                     //xn--pple-zld.com
                     if (_Char > 127 && char.IsLetter(_Char))
                     {
-                        OmniBoxOverlayText.Inlines.Add(new Run(_Char.ToString()) { Foreground = App.Instance.OrangeColor });
+                        if (IsNormal)
+                        {
+                            if (HostBuffer.Length != 0)
+                            {
+                                OmniBoxOverlayText.Inlines.Add(new Run(HostBuffer.ToString()) { Foreground = IsNormal ? FontBrush : App.Instance.OrangeColor });
+                                HostBuffer.Clear();
+                            }
+                            IsNormal = false;
+                        }
+                        HostBuffer.Append(_Char);
                         HostIndex++;
                         continue;
                     }
@@ -3138,8 +3146,16 @@ namespace SLBr.Pages
                     {
                         if (HostIndex + Confusable.Length <= Host.Length && Host.Slice(HostIndex, Confusable.Length).Equals(Confusable.AsSpan(), StringComparison.Ordinal))
                         {
-                            OmniBoxOverlayText.Inlines.Add(new Run(Host.Slice(HostIndex, Confusable.Length).ToString()) { Foreground = App.Instance.OrangeColor });
-
+                            if (IsNormal)
+                            {
+                                if (HostBuffer.Length != 0)
+                                {
+                                    OmniBoxOverlayText.Inlines.Add(new Run(HostBuffer.ToString()) { Foreground = IsNormal ? FontBrush : App.Instance.OrangeColor });
+                                    HostBuffer.Clear();
+                                }
+                                IsNormal = false;
+                            }
+                            HostBuffer.Append(Confusable);
                             HostIndex += Confusable.Length;
                             Matched = true;
                             break;
@@ -3148,9 +3164,23 @@ namespace SLBr.Pages
 
                     if (!Matched)
                     {
-                        OmniBoxOverlayText.Inlines.Add(new Run(_Char.ToString()) { Foreground = FontBrush });
+                        if (!IsNormal)
+                        {
+                            if (HostBuffer.Length != 0)
+                            {
+                                OmniBoxOverlayText.Inlines.Add(new Run(HostBuffer.ToString()) { Foreground = IsNormal ? FontBrush : App.Instance.OrangeColor });
+                                HostBuffer.Clear();
+                            }
+                            IsNormal = true;
+                        }
+                        HostBuffer.Append(_Char);
                         HostIndex++;
                     }
+                }
+                if (HostBuffer.Length != 0)
+                {
+                    OmniBoxOverlayText.Inlines.Add(new Run(HostBuffer.ToString()) { Foreground = IsNormal ? FontBrush : App.Instance.OrangeColor });
+                    HostBuffer.Clear();
                 }
             }
             else
