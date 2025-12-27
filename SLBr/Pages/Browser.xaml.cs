@@ -1711,7 +1711,7 @@ namespace SLBr.Pages
 
         async void BrowserLoadChanged(string Address, bool? IsLoading = null)
         {
-            string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Address));
+            string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Address, RemoveTrivialSubdomain: true));
             if (OmniBox.Text != OutputUrl)
             {
                 if (IsOmniBoxModifiable())
@@ -3021,7 +3021,7 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    if (OmniBox.Text == Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(OmniBox.Tag.ToString())))
+                    if (OmniBox.Text == Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(OmniBox.Tag.ToString(), RemoveTrivialSubdomain: true)))
                         OmniBox.Text = OmniBox.Tag.ToString();
                 }
                 catch { }
@@ -3040,7 +3040,7 @@ namespace SLBr.Pages
                     if (OmniBox.Text.Trim().Length == 0)
                         OmniBoxPlaceholder.Visibility = Visibility.Visible;
                     if (Utils.CleanUrl(OmniBox.Text) == Utils.CleanUrl(OmniBox.Tag.ToString()))
-                        OmniBox.Text = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(OmniBox.Tag.ToString()));
+                        OmniBox.Text = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(OmniBox.Tag.ToString(), RemoveTrivialSubdomain: true));
                 }
                 catch { }
                 OmniBoxBorder.BorderThickness = new Thickness(1);
