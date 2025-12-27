@@ -270,8 +270,8 @@ namespace SLBr.Controls
             else
             {
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                string TargetOrigin = Utils.GetOrigin(targetUrl);
-                string TopLevelOrigin = Utils.GetOrigin(browser.MainFrame.Url);
+                string TargetOrigin = Utils.FastHost(targetUrl, false);
+                string TopLevelOrigin = Utils.FastHost(browser.MainFrame.Url, false);
                 ContentSettingValues Value = GlobalRequestContext.GetContentSetting(TopLevelOrigin, TopLevelOrigin, ContentSettingTypes.Popups);
                 WebApp.Dispatcher.Invoke(() =>
                 {

@@ -454,6 +454,7 @@
                             </Grid>
                         </Border>
                         <TextBlock Grid.Column="1" IsHitTestVisible="False" Text="Search or type a URL" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0" Foreground="{StaticResource BorderBrush}" x:Name="OmniBoxPlaceholder" Visibility="Visible"/>
+                        <TextBlock Grid.Column="1" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="2,0" x:Name="OmniBoxOverlayText" Visibility="Visible"  Foreground="{StaticResource GrayBrush}"/>
                         <ComboBox TextSearch.TextPath="Text" IsTextSearchEnabled="False" StaysOpenOnEdit="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" IsSynchronizedWithCurrentItem="False" DropDownOpened="OmniBox_DropDownOpened" DropDownClosed="OmniBox_DropDownClosed" Style="{StaticResource DropDownTextBox}" BorderThickness="0" Text="" Grid.Column="1" Height="Auto" BorderBrush="Transparent" Margin="0" Background="Transparent" Tag="Loading" PreviewKeyUp="OmniBox_PreviewKeyUp" PreviewKeyDown="OmniBox_PreviewKeyDown" IsKeyboardFocusWithinChanged="OmniBox_IsKeyboardFocusWithinChanged" x:Name="OmniBox" Padding="0" Width="Auto" HorizontalAlignment="Stretch">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>

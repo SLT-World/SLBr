@@ -994,7 +994,7 @@ namespace SLBr
                 return FixUrl(Span[7..].ToString());
             return Url;
         }
-        public static string FastHost(string Url)
+        public static string FastHost(string Url, bool RemoveTrivialSubdomain = true)
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
@@ -1004,37 +1004,19 @@ namespace SLBr
             if (Protocol >= 0)
                 Span = Span[(Protocol + 3)..];
 
-            if (Span.StartsWith("www.", StringComparison.Ordinal))
-                Span = Span[4..];
-            if (Span.StartsWith("m.", StringComparison.Ordinal))
-                Span = Span[2..];
+            if (RemoveTrivialSubdomain)
+            {
+                if (Span.StartsWith("www.", StringComparison.Ordinal))
+                    Span = Span[4..];
+                if (Span.StartsWith("m.", StringComparison.Ordinal))
+                    Span = Span[2..];
+            }
 
             int Separator = Span.IndexOfAny('/', '?', '#');
             if (Separator >= 0)
                 Span = Span[..Separator];
 
             return Span.ToString();
-        }
-        public static string GetOrigin(string Url)
-        {
-            if (string.IsNullOrEmpty(Url))
-                return Url;
-
-            ReadOnlySpan<char> Span = Url.AsSpan();
-
-            int SchemeEnd = Span.IndexOf("://", StringComparison.Ordinal);
-            if (SchemeEnd < 0)
-                return Url;
-
-            ReadOnlySpan<char> Scheme = Span[..(SchemeEnd + 3)];
-
-            Span = Span[(SchemeEnd + 3)..];
-
-            int Separator = Span.IndexOfAny('/', '?', '#');
-            if (Separator >= 0)
-                Span = Span[..Separator];
-
-            return string.Concat(Scheme, Span);
         }
         public static string Host(string Url, bool RemoveTrivialSubdomain = true)
         {

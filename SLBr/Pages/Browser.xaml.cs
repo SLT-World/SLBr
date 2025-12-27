@@ -4,6 +4,7 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using SLBr.Controls;
 using SLBr.Handlers;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -19,6 +21,7 @@ using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -28,6 +31,7 @@ using System.Windows.Threading;
 using System.Xml;
 using Windows.UI.Notifications;
 using Windows.UI.ViewManagement.Core;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SLBr.Pages
 {
@@ -1711,9 +1715,9 @@ namespace SLBr.Pages
 
         async void BrowserLoadChanged(string Address, bool? IsLoading = null)
         {
-            string OutputUrl = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Address, RemoveTrivialSubdomain: true));
-            if (OmniBox.Text != OutputUrl)
+            if (OmniBox.Text != Address)
             {
+                OmniBox.Tag = Address;
                 if (IsOmniBoxModifiable())
                 {
                     if (Address.StartsWith("slbr://newtab", StringComparison.Ordinal))
@@ -1724,12 +1728,13 @@ namespace SLBr.Pages
                     else
                     {
                         OmniBoxPlaceholder.Visibility = Visibility.Hidden;
-                        OmniBox.Text = OutputUrl;
+                        OmniBox.Text = Address;
                     }
+
                     OmniBoxIsDropdown = false;
                     OmniBoxStatus.Visibility = Visibility.Collapsed;
+                    SetOverlayDisplay();
                 }
-                OmniBox.Tag = Address;
             }
             if (FavouriteExists(Address) != -1)
             {
@@ -1875,77 +1880,77 @@ namespace SLBr.Pages
                         case "Secure":
                             SiteInformationIcon.Text = "\xE72E";
                             SiteInformationIcon.Foreground = App.Instance.LimeGreenColor;
-                            SiteInformationText.Text = $"Secure";
+                            SiteInformationText.Text = "Secure";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE72E";
                             SiteInformationPopupIcon.Foreground = App.Instance.LimeGreenColor;
-                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is secure";
+                            SiteInformationPopupText.Text = "Connection to {Utils.Host(Address)} is secure";
                             break;
                         case "Insecure":
                             SiteInformationIcon.Text = "\xE785";
                             SiteInformationIcon.Foreground = App.Instance.RedColor;
-                            SiteInformationText.Text = $"Insecure";
+                            SiteInformationText.Text = "Insecure";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE785";
                             SiteInformationPopupIcon.Foreground = App.Instance.RedColor;
-                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is insecure";
+                            SiteInformationPopupText.Text = "Connection to {Utils.Host(Address)} is insecure";
                             break;
                         case "File":
                             SiteInformationIcon.Text = "\xE8B7";
                             SiteInformationIcon.Foreground = App.Instance.NavajoWhiteColor;
-                            SiteInformationText.Text = $"File";
+                            SiteInformationText.Text = "File";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE8B7";
                             SiteInformationPopupIcon.Foreground = App.Instance.NavajoWhiteColor;
-                            SiteInformationPopupText.Text = $"Local or shared file";
+                            SiteInformationPopupText.Text = "Local or shared file";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
                         case "SLBr":
                             SiteInformationIcon.Text = "\u2603";
                             SiteInformationIcon.FontFamily = App.Instance.SLBrFont;
                             SiteInformationIcon.Foreground = App.Instance.SLBrColor;
-                            SiteInformationText.Text = $"SLBr";
+                            SiteInformationText.Text = "SLBr";
                             TranslateButton.Visibility = Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\u2603";
                             SiteInformationPopupIcon.FontFamily = App.Instance.SLBrFont;
                             SiteInformationPopupIcon.Foreground = App.Instance.SLBrColor;
-                            SiteInformationPopupText.Text = $"Secure SLBr page";
+                            SiteInformationPopupText.Text = "Secure SLBr page";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
                         case "Danger":
                             SiteInformationIcon.Text = "\xE730";
                             SiteInformationIcon.Foreground = App.Instance.RedColor;
-                            SiteInformationText.Text = $"Danger";
+                            SiteInformationText.Text = "Danger";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE730";
                             SiteInformationPopupIcon.Foreground = App.Instance.RedColor;
-                            SiteInformationPopupText.Text = $"Dangerous site";
+                            SiteInformationPopupText.Text = "Dangerous site";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
                         case "Protocol":
                             SiteInformationIcon.Text = "\xE774";
                             SiteInformationIcon.Foreground = App.Instance.CornflowerBlueColor;
-                            SiteInformationText.Text = $"Protocol";
+                            SiteInformationText.Text = "Protocol";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE774";
                             SiteInformationPopupIcon.Foreground = App.Instance.CornflowerBlueColor;
-                            SiteInformationPopupText.Text = $"Network protocol";
+                            SiteInformationPopupText.Text = "Network protocol";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
                         case "Extension":
                             SiteInformationIcon.Text = "\xEA86";
                             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                            SiteInformationText.Text = $"Extension";
+                            SiteInformationText.Text = "Extension";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xEA86";
                             SiteInformationPopupIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                            SiteInformationPopupText.Text = $"Extension";
+                            SiteInformationPopupText.Text = "Extension";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
                         case "Teapot":
                             SiteInformationIcon.Text = "\xEC32";
                             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                            SiteInformationText.Text = $"Teapot";
+                            SiteInformationText.Text = "Teapot";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xEC32";
                             SiteInformationPopupIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
@@ -3019,12 +3024,9 @@ namespace SLBr.Pages
         {
             if (OmniBox.IsKeyboardFocusWithin)
             {
-                try
-                {
-                    if (OmniBox.Text == Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(OmniBox.Tag.ToString(), RemoveTrivialSubdomain: true)))
-                        OmniBox.Text = OmniBox.Tag.ToString();
-                }
-                catch { }
+                OmniBoxOverlayText.Visibility = Visibility.Collapsed;
+                OmniBox.Opacity = 1;
+
                 OmniBoxBorder.BorderThickness = new Thickness(2);
                 OmniBoxBorder.BorderBrush = (SolidColorBrush)FindResource("IndicatorBrush");
                 OmniBoxFocused = true;
@@ -3039,8 +3041,8 @@ namespace SLBr.Pages
                 {
                     if (OmniBox.Text.Trim().Length == 0)
                         OmniBoxPlaceholder.Visibility = Visibility.Visible;
-                    if (Utils.CleanUrl(OmniBox.Text) == Utils.CleanUrl(OmniBox.Tag.ToString()))
-                        OmniBox.Text = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(OmniBox.Tag.ToString(), RemoveTrivialSubdomain: true));
+                    if (OmniBox.Text == OmniBox.Tag.ToString())
+                        SetOverlayDisplay();
                 }
                 catch { }
                 OmniBoxBorder.BorderThickness = new Thickness(1);
@@ -3048,6 +3050,76 @@ namespace SLBr.Pages
                 OmniBoxFocused = false;
                 if (!OmniBoxHovered)
                     SiteInformationText.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        //TODO: Add setting to control Truncation "Always show full URLs"
+        //TODO: Add homograph attacks protection
+        private void SetOverlayDisplay(bool TruncateURL = true)
+        {
+            OmniBoxOverlayText.Inlines.Clear();
+            OmniBoxOverlayText.Visibility = Visibility.Visible;
+            OmniBox.Opacity = 0;
+            if (OmniBox.Tag is not string Url || string.IsNullOrWhiteSpace(Url) || Url.StartsWith("slbr://newtab", StringComparison.Ordinal))
+            {
+                OmniBoxOverlayText.Text = string.Empty;
+                return;
+            }
+
+            Url = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", TruncateURL));
+
+            SolidColorBrush FontBrush = (SolidColorBrush)FindResource("FontBrush");
+            SolidColorBrush GrayBrush = (SolidColorBrush)FindResource("GrayBrush");
+
+            ReadOnlySpan<char> _Span = Url.AsSpan();
+
+            string Scheme = Utils.GetScheme(Url);
+
+            if (!string.IsNullOrEmpty(Scheme))
+            {
+                if (Scheme == "file")
+                {
+                    OmniBoxOverlayText.Inlines.Add(new Run(Url) { Foreground = GrayBrush });
+                    return;
+                }
+                else
+                {
+                    Brush SchemeBrush =
+                        Scheme == "https" ? App.Instance.GreenColor :
+                        Scheme == "http" ? App.Instance.RedColor :
+                        Scheme == "slbr" ? App.Instance.SLBrColor :
+                        GrayBrush;
+                    OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = SchemeBrush });
+                }
+            }
+
+            int Protocol = _Span.IndexOf("://", StringComparison.Ordinal);
+            if (Protocol >= 0)
+            {
+                OmniBoxOverlayText.Inlines.Add(new Run("://") { Foreground = GrayBrush });
+                _Span = _Span[(Protocol + 3)..];
+            }
+
+            if (_Span.StartsWith("www.", StringComparison.Ordinal))
+            {
+                OmniBoxOverlayText.Inlines.Add(new Run("www.") { Foreground = GrayBrush });
+                _Span = _Span[4..];
+            }
+            else if (_Span.StartsWith("m.", StringComparison.Ordinal))
+            {
+                OmniBoxOverlayText.Inlines.Add(new Run("m.") { Foreground = GrayBrush });
+                _Span = _Span[2..];
+            }
+
+            int HostEnd = _Span.IndexOfAny('/', '?', '#');
+            ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
+
+            OmniBoxOverlayText.Inlines.Add(new Run(Host.ToString()) { Foreground = FontBrush });
+
+            if (HostEnd >= 0)
+            {
+                ReadOnlySpan<char> _Path = _Span[HostEnd..];
+                OmniBoxOverlayText.Inlines.Add(new Run(_Path.ToString()) { Foreground = GrayBrush });
             }
         }
 
