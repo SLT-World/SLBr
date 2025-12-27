@@ -1006,6 +1006,8 @@ namespace SLBr
 
             if (Span.StartsWith("www.", StringComparison.Ordinal))
                 Span = Span[4..];
+            if (Span.StartsWith("m.", StringComparison.Ordinal))
+                Span = Span[2..];
 
             int Separator = Span.IndexOfAny('/', '?', '#');
             if (Separator >= 0)
@@ -1034,9 +1036,9 @@ namespace SLBr
 
             return string.Concat(Scheme, Span);
         }
-        public static string Host(string Url, bool RemoveWWW = true)
+        public static string Host(string Url, bool RemoveTrivialSubdomain = true)
         {
-            string Host = CleanUrl(Url, true, false, true, RemoveWWW);
+            string Host = CleanUrl(Url, true, false, true, RemoveTrivialSubdomain);
             if (IsHttpScheme(Url) || Url.StartsWith("file:///", StringComparison.Ordinal))
             {
                 int SlashIndex = Host.IndexOf('/', StringComparison.Ordinal);
@@ -1044,7 +1046,7 @@ namespace SLBr
             }
             return Host;
         }
-        public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveFragment = true, bool RemoveWWW = false, bool RemoveProtocol = true)
+        public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveFragment = true, bool RemoveTrivialSubdomain = false, bool RemoveProtocol = true)
         {
             if (string.IsNullOrWhiteSpace(Url))
                 return Url;
@@ -1072,8 +1074,11 @@ namespace SLBr
             }
             if (RemoveLastSlash && Url.Length > 0 && Url[^1] == '/')
                 Url = Url[..^1];
-            if (RemoveWWW)
+            if (RemoveTrivialSubdomain)
+            {
                 Url = RemovePrefix(Url, "www.");
+                Url = RemovePrefix(Url, "m.");
+            }
             return Url;
         }
         public static string FixUrl(string Url)
