@@ -346,6 +346,16 @@ namespace SLBr
 
         bool AppInitialized;
 
+        public static readonly string[] URLConfusables =
+        {
+            "rn",//m, rnicrosoft
+            "vv",//w
+            "cl",//d
+            "0",//o
+            "1",//l
+            "5",//S
+        };
+
         public ObservableCollection<ActionStorage> Favourites = new ObservableCollection<ActionStorage>();
         public ObservableCollection<ActionStorage> History = new ObservableCollection<ActionStorage>();
         private List<Extension> PrivateExtensions = new List<Extension>();

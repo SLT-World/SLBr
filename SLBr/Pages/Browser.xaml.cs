@@ -3053,9 +3053,11 @@ namespace SLBr.Pages
             }
         }
 
+
         //TODO: Add setting to control Truncation "Always show full URLs"
-        //TODO: Add homograph attacks protection
-        private void SetOverlayDisplay(bool TruncateURL = true)
+        //Protection against homograph attacks https://www.xudongz.com/blog/2017/idn-phishing/
+        //TODO: Add "Did you mean apple.com?", visit xn--80ak6aa92e.com in Chrome to see the error page.
+        private void SetOverlayDisplay(bool TruncateURL = true, bool HighlightSuspicious = true)
         {
             OmniBoxOverlayText.Inlines.Clear();
             OmniBoxOverlayText.Visibility = Visibility.Visible;
@@ -3114,7 +3116,45 @@ namespace SLBr.Pages
             int HostEnd = _Span.IndexOfAny('/', '?', '#');
             ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
 
-            OmniBoxOverlayText.Inlines.Add(new Run(Host.ToString()) { Foreground = FontBrush });
+            if (HighlightSuspicious)
+            {
+                int HostIndex = 0;
+                while (HostIndex < Host.Length)
+                {
+                    char _Char = Host[HostIndex];
+                    //xn--micrsoft-qbh.com
+                    //xn--l-7sba6dbr.com
+                    //xn--80ak6aa92e.com
+                    //xn--pple-zld.com
+                    if (_Char > 127 && char.IsLetter(_Char))
+                    {
+                        OmniBoxOverlayText.Inlines.Add(new Run(_Char.ToString()) { Foreground = App.Instance.OrangeColor });
+                        HostIndex++;
+                        continue;
+                    }
+
+                    bool Matched = false;
+                    foreach (string Confusable in App.URLConfusables)
+                    {
+                        if (HostIndex + Confusable.Length <= Host.Length && Host.Slice(HostIndex, Confusable.Length).Equals(Confusable.AsSpan(), StringComparison.Ordinal))
+                        {
+                            OmniBoxOverlayText.Inlines.Add(new Run(Host.Slice(HostIndex, Confusable.Length).ToString()) { Foreground = App.Instance.OrangeColor });
+
+                            HostIndex += Confusable.Length;
+                            Matched = true;
+                            break;
+                        }
+                    }
+
+                    if (!Matched)
+                    {
+                        OmniBoxOverlayText.Inlines.Add(new Run(_Char.ToString()) { Foreground = FontBrush });
+                        HostIndex++;
+                    }
+                }
+            }
+            else
+                OmniBoxOverlayText.Inlines.Add(new Run(Host.ToString()) { Foreground = FontBrush });
 
             if (HostEnd >= 0)
             {
