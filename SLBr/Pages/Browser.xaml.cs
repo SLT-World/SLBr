@@ -1881,7 +1881,7 @@ namespace SLBr.Pages
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE72E";
                             SiteInformationPopupIcon.Foreground = App.Instance.LimeGreenColor;
-                            SiteInformationPopupText.Text = "Connection to {Utils.Host(Address)} is secure";
+                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is secure";
                             break;
                         case "Insecure":
                             SiteInformationIcon.Text = "\xE785";
@@ -1890,7 +1890,7 @@ namespace SLBr.Pages
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupIcon.Text = "\xE785";
                             SiteInformationPopupIcon.Foreground = App.Instance.RedColor;
-                            SiteInformationPopupText.Text = "Connection to {Utils.Host(Address)} is insecure";
+                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is insecure";
                             break;
                         case "File":
                             SiteInformationIcon.Text = "\xE8B7";
@@ -3063,30 +3063,45 @@ namespace SLBr.Pages
                 return;
             }
 
-            Url = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", TruncateURL));
+            Url = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", false));
 
             SolidColorBrush FontBrush = (SolidColorBrush)FindResource("FontBrush");
             SolidColorBrush GrayBrush = (SolidColorBrush)FindResource("GrayBrush");
 
-            ReadOnlySpan<char> _Span = Url.AsSpan();
-
             string Scheme = Utils.GetScheme(Url);
+
+            ReadOnlySpan<char> _Span = Url.AsSpan();
 
             if (!string.IsNullOrEmpty(Scheme))
             {
                 if (Scheme == "file")
                 {
-                    OmniBoxOverlayText.Inlines.Add(new Run(Url) { Foreground = GrayBrush });
+                    OmniBoxOverlayText.Inlines.Add(new Run(TruncateURL ? Url[8..] : Url) { Foreground = GrayBrush });
                     return;
                 }
                 else
                 {
-                    Brush SchemeBrush =
-                        Scheme == "https" ? App.Instance.GreenColor :
-                        Scheme == "http" ? App.Instance.RedColor :
-                        Scheme == "slbr" ? App.Instance.SLBrColor :
-                        GrayBrush;
-                    OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = SchemeBrush });
+                    switch (Scheme)
+                    {
+                        case "https":
+                            if (TruncateURL)
+                                _Span = _Span[8..];
+                            else
+                                OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.GreenColor });
+                            break;
+                        case "http":
+                            if (TruncateURL)
+                                _Span = _Span[7..];
+                            else
+                                OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.RedColor });
+                            break;
+                        case "slbr":
+                            OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.SLBrColor });
+                            break;
+                        default:
+                            OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = GrayBrush });
+                            break;
+                    }
                 }
             }
 
