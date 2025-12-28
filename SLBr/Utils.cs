@@ -1,5 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
+using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -944,6 +945,58 @@ namespace SLBr
             return (timePart + randomPart).Substring(0, 16);
         }
 
+        public static string GetProtocolAppName(string Protocol)
+        {
+            Protocol = Protocol.ToLowerInvariant();
+            string? Name = GetRegistryProtocol(Registry.CurrentUser, @"Software\Classes\" + Protocol);
+            if (Name != null)
+                return Name;
+            Name = GetRegistryProtocol(Registry.ClassesRoot, Protocol);
+            if (Name != null)
+                return Name;
+            return Protocol;
+        }
+
+
+        public static string GetRegistryProtocol(RegistryKey Root, string SubKeyPath)
+        {
+            try
+            {
+                using RegistryKey? Key = Root.OpenSubKey(SubKeyPath);
+                if (Key == null)
+                    return null;
+                using RegistryKey? CommandKey = Key.OpenSubKey(@"shell\open\command");
+                string Command = (string)CommandKey?.GetValue(null);
+                if (!string.IsNullOrWhiteSpace(Command))
+                {
+                    string _ExecutablePath = string.Empty;
+                    if (Command.StartsWith("\"", StringComparison.Ordinal))
+                        _ExecutablePath = Command.Split('"')[1];
+                    else
+                        _ExecutablePath = Command.Split(' ')[0];
+                    if (File.Exists(_ExecutablePath))
+                    {
+                        FileVersionInfo Info = FileVersionInfo.GetVersionInfo(_ExecutablePath);
+                        return Info.ProductName ?? Info.FileDescription ?? Path.GetFileNameWithoutExtension(_ExecutablePath);
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
+        public static string GetProtocolName(string Protocol)
+        {
+            return Protocol switch
+            {
+                "ms-settings" => "Windows Settings",
+                "ms-photos" => "Microsoft Photos",
+                "ms-store" => "Microsoft Store",
+                "mailto" => "Mail",
+                "tel" => "Phone",
+                _ => GetProtocolAppName(Protocol)
+            };
+        }
+
         public static string RemovePrefix(string Input, string Prefix, bool CaseSensitive = false, bool FromEnd = false, bool ReturnCaseSensitive = true)
         {
             ReadOnlySpan<char> InputSpan = Input.AsSpan();
@@ -1008,9 +1061,9 @@ namespace SLBr
 
             if (RemoveTrivialSubdomain)
             {
-                if (Span.StartsWith("www.", StringComparison.Ordinal))
+                if (Span.StartsWith("www.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Span[4..]))
                     Span = Span[4..];
-                if (Span.StartsWith("m.", StringComparison.Ordinal))
+                else if (Span.StartsWith("m.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Span[2..]))
                     Span = Span[2..];
             }
 

@@ -2,6 +2,7 @@
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
 using System.Collections.Concurrent;
@@ -1327,12 +1328,9 @@ namespace SLBr.Pages
 
         private void WebView_ExternalProtocolRequested(object? sender, ExternalProtocolEventArgs e)
         {
-            string ProtocolName = e.Url;
-            if (e.Url.StartsWith("ms-settings"))
-                ProtocolName = "Settings";
-            else if (e.Url.StartsWith("ms-photos"))
-                ProtocolName = "Photos";
-            InformationDialogWindow InfoWindow = new InformationDialogWindow("Warning", $"Open {ProtocolName}", "A website is requesting to open this application.", string.Empty, "Open", "Cancel");
+            string ProtocolName = Utils.GetProtocolName(Utils.GetScheme(e.Url));
+            string Host = Utils.FastHost(e.Origin);
+            InformationDialogWindow InfoWindow = new InformationDialogWindow("Warning", $"Open {ProtocolName}", $"{(Host.Length == 0 ? "A website" : Host)} is requesting to open this application.", string.Empty, "Open", "Cancel");
             InfoWindow.Topmost = true;
             e.Launch = InfoWindow.ShowDialog() == true;
         }
@@ -3112,6 +3110,7 @@ namespace SLBr.Pages
                 _Span = _Span[(Protocol + 3)..];
             }
 
+            //www.com, m.com
             if (_Span.StartsWith("www.", StringComparison.Ordinal) && Utils.CanRemoveTrivialSubdomain(_Span[4..]))
             {
                 if (!TruncateURL)

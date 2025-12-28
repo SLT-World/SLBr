@@ -288,11 +288,13 @@ namespace SLBr
     public class ExternalProtocolEventArgs : EventArgs
     {
         public string Url { get; }
+        public string Origin { get; }
         public bool Launch { get; set; }
 
-        public ExternalProtocolEventArgs(string _Url)
+        public ExternalProtocolEventArgs(string _Url, string _Origin)
         {
             Url = _Url;
+            Origin = _Origin;
         }
     }
 
@@ -1503,7 +1505,7 @@ namespace SLBr
         private void Browser_LaunchingExternalUriScheme(object? sender, CoreWebView2LaunchingExternalUriSchemeEventArgs e)
         {
             e.Cancel = true;
-            ExternalProtocolEventArgs Args = new ExternalProtocolEventArgs(e.Uri);
+            ExternalProtocolEventArgs Args = new ExternalProtocolEventArgs(e.Uri, e.InitiatingOrigin);
             Browser?.Dispatcher.Invoke(() => ExternalProtocolRequested?.Invoke(this, Args));
             if (Args.Launch)
             {
