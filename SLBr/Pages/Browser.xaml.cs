@@ -2,7 +2,6 @@
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
-using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
 using System.Collections.Concurrent;
@@ -1126,7 +1125,14 @@ namespace SLBr.Pages
                             }
                         }
                         else if (Address.StartsWith("file:///", StringComparison.Ordinal))
-                            WebView?.ExecuteScript(Scripts.FileScript);
+                        {
+                            if (Address.EndsWith("/", StringComparison.Ordinal))
+                            {
+                                //if (Address.LastIndexOf(".", StringComparison.Ordinal) < Address.LastIndexOf("/", StringComparison.Ordinal))
+                                if (Directory.Exists(Uri.UnescapeDataString(Address.Substring(8)).Replace('/', '\\')))
+                                    WebView?.ExecuteScript(Scripts.FileScript);
+                            }
+                        }
                     }
                     if (bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme")))
                     {

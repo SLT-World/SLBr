@@ -941,9 +941,9 @@ namespace SLBr
             {
                 Json = e.Message?.ToString() ?? string.Empty;
             }
-            if (Settings.AudioListener && Json.EndsWith(@"""type"":""__cef_audio__""}"))
+            if (Settings.AudioListener && Json.EndsWith(@"""type"":""__cef_audio__""}", StringComparison.Ordinal))
             {
-                SetAudioPlaying(Json.StartsWith(@"{""playing"":1"));
+                SetAudioPlaying(Json.StartsWith(@"{""playing"":1", StringComparison.Ordinal));
                 return;
             }
             JavaScriptMessageReceived.RaiseUIAsync(this, Json);
