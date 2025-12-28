@@ -1767,7 +1767,7 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("ScreenshotPath", Path.Combine(Utils.GetFolderPath(Utils.FolderGuids.Pictures), "Screenshots", "SLBr"));
 
             if (!GlobalSave.Has("SendDiagnostics"))
-                GlobalSave.Set("SendDiagnostics", true);
+                GlobalSave.Set("SendDiagnostics", false);
             if (!GlobalSave.Has("WebNotifications"))
                 GlobalSave.Set("WebNotifications", true);
             if (!GlobalSave.Has("WebApps"))
@@ -1817,15 +1817,15 @@ Inner Exception: ```{7} ```";
             if (!GlobalSave.Has("AntiTamper"))
                 GlobalSave.Set("AntiTamper", false);
             if (!GlobalSave.Has("AntiInspectDetect"))
-                GlobalSave.Set("AntiInspectDetect", true);
+                GlobalSave.Set("AntiInspectDetect", false);
             if (!GlobalSave.Has("AntiFullscreen"))
                 GlobalSave.Set("AntiFullscreen", false);
             if (!GlobalSave.Has("BypassSiteMenu"))
                 GlobalSave.Set("BypassSiteMenu", false);
             if (!GlobalSave.Has("TextSelection"))
-                GlobalSave.Set("TextSelection", true);
+                GlobalSave.Set("TextSelection", false);
             if (!GlobalSave.Has("RemoveFilter"))
-                GlobalSave.Set("RemoveFilter", true);
+                GlobalSave.Set("RemoveFilter", false);
             if (!GlobalSave.Has("RemoveOverlay"))
                 GlobalSave.Set("RemoveOverlay", false);
             if (!GlobalSave.Has("ForceLazy"))
@@ -1867,6 +1867,7 @@ Inner Exception: ```{7} ```";
             }
             Favourites.CollectionChanged += Favourites_CollectionChanged;
             SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), bool.Parse(GlobalSave.Get("CompactTab", true.ToString())), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
+            bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
             if (bool.Parse(GlobalSave.Get("RestoreTabs", false.ToString())))
             {
                 foreach (Saving TabsSave in WindowsSaves)
@@ -1887,7 +1888,7 @@ Inner Exception: ```{7} ```";
                             string Url = TabsSave.Get(i.ToString(), "slbr://newtab");
                             if (Utils.IsEmptyOrWhiteSpace(Url))
                                 Url = "slbr://newtab";
-                            _Window.NewTab(Url, false, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
+                            _Window.NewTab(Url, false, -1, PrivateTabs);
                         }
                         if (GlobalSave.GetInt("TabAlignment", 0) == 1)
                             _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0) + 1;
@@ -1895,12 +1896,12 @@ Inner Exception: ```{7} ```";
                             _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0);
                     }
                     else
-                        _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
+                        _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, PrivateTabs);
                     _Window.TabsUI.Visibility = Visibility.Visible;
                 }
             }
             if (!string.IsNullOrEmpty(CommandLineUrl))
-                CurrentFocusedWindow().NewTab(CommandLineUrl, true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
+                CurrentFocusedWindow().NewTab(CommandLineUrl, true, -1, PrivateTabs);
         }
 
         private void Favourites_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -1939,6 +1940,7 @@ Inner Exception: ```{7} ```";
             _Window.TabsUI.Visibility = Visibility.Visible;
         }
 
+        //TODO: Automatically fetch & update blocklists from online sources
         public static FastHashSet<string> FailedScripts = new();
         public static readonly string[] BlockedAdPatterns = ["ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
                         "googleadservices.com", "doubleclick.net", "google-analytics.com",
@@ -3496,13 +3498,9 @@ Inner Exception: ```{7} ```";
                 {
                     try
                     {
-                        //CacheFavicon(IconUrl, Bitmap);
                         return Utils.ConvertBase64ToBitmapImage(IconUrl);
                     }
-                    catch
-                    {
-                        //CacheFavicon(IconUrl, null);
-                    }
+                    catch { }
                 }
                 else if (Url.StartsWith("slbr://settings", StringComparison.Ordinal))
                     return SettingsTabIcon;
