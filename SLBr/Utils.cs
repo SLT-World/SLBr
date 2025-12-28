@@ -1,5 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -12,6 +13,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DColor = System.Drawing.Color;
@@ -1028,6 +1030,21 @@ namespace SLBr
             }
             return Host;
         }
+        //TODO: Switch to public suffix list detection
+        public static bool CanRemoveTrivialSubdomain(ReadOnlySpan<char> Host)
+        {
+            int Dots = 0;
+            foreach (char _Char in Host)
+                if (_Char == '.') Dots++;
+            return Dots >= 1;//Switch to 2 to support "www.co.uk"
+        }
+        public static bool CanRemoveTrivialSubdomain(string Host)
+        {
+            int Dots = 0;
+            foreach (char _Char in Host)
+                if (_Char == '.') Dots++;
+            return Dots >= 1;
+        }
         public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveFragment = true, bool RemoveTrivialSubdomain = false, bool RemoveProtocol = true)
         {
             if (string.IsNullOrWhiteSpace(Url))
@@ -1056,10 +1073,13 @@ namespace SLBr
             }
             if (RemoveLastSlash && Url.Length > 0 && Url[^1] == '/')
                 Url = Url[..^1];
+
             if (RemoveTrivialSubdomain)
             {
-                Url = RemovePrefix(Url, "www.");
-                Url = RemovePrefix(Url, "m.");
+                if (Url.StartsWith("www.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Url[4..]))
+                    Url = Url[4..];
+                else if (Url.StartsWith("m.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Url[2..]))
+                    Url = Url[2..];
             }
             return Url;
         }

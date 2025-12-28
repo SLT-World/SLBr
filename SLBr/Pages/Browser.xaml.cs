@@ -3112,14 +3112,16 @@ namespace SLBr.Pages
                 _Span = _Span[(Protocol + 3)..];
             }
 
-            if (_Span.StartsWith("www.", StringComparison.Ordinal))
+            if (_Span.StartsWith("www.", StringComparison.Ordinal) && Utils.CanRemoveTrivialSubdomain(_Span[4..]))
             {
-                OmniBoxOverlayText.Inlines.Add(new Run("www.") { Foreground = GrayBrush });
+                if (!TruncateURL)
+                    OmniBoxOverlayText.Inlines.Add(new Run("www.") { Foreground = GrayBrush });
                 _Span = _Span[4..];
             }
-            else if (_Span.StartsWith("m.", StringComparison.Ordinal))
+            else if (_Span.StartsWith("m.", StringComparison.Ordinal) && Utils.CanRemoveTrivialSubdomain(_Span[2..]))
             {
-                OmniBoxOverlayText.Inlines.Add(new Run("m.") { Foreground = GrayBrush });
+                if (!TruncateURL)
+                    OmniBoxOverlayText.Inlines.Add(new Run("m.") { Foreground = GrayBrush });
                 _Span = _Span[2..];
             }
 
