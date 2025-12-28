@@ -870,9 +870,9 @@ namespace SLBr
         public static bool IsProgramUrl(string Url) =>
             Url.StartsWith("callto:", StringComparison.Ordinal) || Url.StartsWith("mailto:", StringComparison.Ordinal) || Url.StartsWith("news:", StringComparison.Ordinal) || Url.StartsWith("feed:", StringComparison.Ordinal);
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
-             _ResourceType == ResourceType.Xhr || _ResourceType == ResourceType.Media || _ResourceType == ResourceType.Script || _ResourceType == ResourceType.SubFrame || _ResourceType == ResourceType.Image;
+             _ResourceType is ResourceType.Xhr or ResourceType.Media or ResourceType.Script or ResourceType.SubFrame or ResourceType.Image;
         public static bool IsPossiblyAd(ResourceRequestType _ResourceType) =>
-             _ResourceType == ResourceRequestType.XMLHTTPRequest || _ResourceType == ResourceRequestType.Media || _ResourceType == ResourceRequestType.Script || _ResourceType == ResourceRequestType.SubFrame || _ResourceType == ResourceRequestType.Image;
+             _ResourceType is ResourceRequestType.XMLHTTPRequest or ResourceRequestType.Media or ResourceRequestType.Script or ResourceRequestType.SubFrame or ResourceRequestType.Image;
         public static bool IsHttpScheme(string Url) =>
             Url.StartsWith("https:", StringComparison.Ordinal) || Url.StartsWith("http:", StringComparison.Ordinal);
         public static bool IsDomain(string Url) =>
@@ -900,7 +900,7 @@ namespace SLBr
         public static bool IsCustomScheme(string Url) =>
             !IsHttpScheme(Url) && !IsCode(Url) && IsProtocol(Url);
         public static bool IsProprietaryCodec(string Extension) =>
-            Extension == ".mp4" || Extension == ".m4a" || Extension == ".aac" || Extension == ".m4v" || Extension == ".mov" || Extension == ".mp3" || Extension == ".wma" || Extension == ".wmv";
+            Extension is ".mp4" or ".m4a" or ".aac" or ".m4v" or ".mov" or ".mp3" or ".wma" or ".wmv";
 
 
         public static string EscapeDataString(string Input)

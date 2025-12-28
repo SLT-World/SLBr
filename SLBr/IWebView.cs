@@ -951,7 +951,7 @@ namespace SLBr
 
         private void Browser_LoadError(object? sender, LoadErrorEventArgs e)
         {
-            if (e.ErrorCode == CefErrorCode.Aborted || e.ErrorCode == CefErrorCode.IoPending || e.ErrorCode == CefErrorCode.BlockedByClient || e.ErrorCode == CefErrorCode.BlockedByResponse)
+            if (e.ErrorCode is CefErrorCode.Aborted or CefErrorCode.IoPending or CefErrorCode.BlockedByClient or CefErrorCode.BlockedByResponse)
                 return;
             NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs((int)e.ErrorCode, e.ErrorText, e.FailedUrl));
         }

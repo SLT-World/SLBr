@@ -730,7 +730,7 @@ namespace SLBr.Pages
                         if (!Private && App.Instance.WebRiskService != WebRiskHandler.SecurityService.None && Utils.GetFileExtension(e.Url) != ".pdf")
                         {
                             WebRiskHandler.ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
-                            if (_ThreatType == WebRiskHandler.ThreatType.Malware || _ThreatType == WebRiskHandler.ThreatType.Unwanted_Software)
+                            if (_ThreatType is WebRiskHandler.ThreatType.Malware or WebRiskHandler.ThreatType.Unwanted_Software)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.Malware_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                             else if (_ThreatType == WebRiskHandler.ThreatType.Social_Engineering)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.Deception_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
@@ -3070,37 +3070,29 @@ namespace SLBr.Pages
 
             ReadOnlySpan<char> _Span = Url.AsSpan();
 
-            if (!string.IsNullOrEmpty(Scheme))
+            switch (Scheme)
             {
-                if (Scheme == "file")
-                {
+                case "https":
+                    if (TruncateURL)
+                        _Span = _Span[8..];
+                    else
+                        OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.GreenColor });
+                    break;
+                case "http":
+                    if (TruncateURL)
+                        _Span = _Span[7..];
+                    else
+                        OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.RedColor });
+                    break;
+                case "slbr":
+                    OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.SLBrColor });
+                    break;
+                case "file":
                     OmniBoxOverlayText.Inlines.Add(new Run(TruncateURL ? Url[8..] : Url) { Foreground = GrayBrush });
                     return;
-                }
-                else
-                {
-                    switch (Scheme)
-                    {
-                        case "https":
-                            if (TruncateURL)
-                                _Span = _Span[8..];
-                            else
-                                OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.GreenColor });
-                            break;
-                        case "http":
-                            if (TruncateURL)
-                                _Span = _Span[7..];
-                            else
-                                OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.RedColor });
-                            break;
-                        case "slbr":
-                            OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.SLBrColor });
-                            break;
-                        default:
-                            OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = GrayBrush });
-                            break;
-                    }
-                }
+                default:
+                    OmniBoxOverlayText.Inlines.Add(new Run(Url) { Foreground = GrayBrush });
+                    return;
             }
 
             int Protocol = _Span.IndexOf("://", StringComparison.Ordinal);
@@ -3356,7 +3348,7 @@ namespace SLBr.Pages
         private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
         {
             OmniBoxFastTimer.Stop();
-            string CurrentText = OmniBox.Text;
+            string CurrentText = OmniBox.Text.Trim();
             SolidColorBrush IconColor = (SolidColorBrush)FindResource("FontBrush");
             if (OmniBoxOverrideSearch != null)
             {
@@ -3378,16 +3370,19 @@ namespace SLBr.Pages
             Suggestions.Add(App.GenerateSuggestion(CurrentText, App.GetMiniSearchType(CurrentText), IconColor));
             try
             {
-                string SuggestionsUrl = string.Format((OmniBoxOverrideSearch ?? App.Instance.DefaultSearchProvider).SuggestUrl, Uri.EscapeDataString(CurrentText));
-                if (!string.IsNullOrEmpty(SuggestionsUrl))
+                if (CurrentText.Length <= 60)
                 {
-                    string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
-                    using (JsonDocument Document = JsonDocument.Parse(ResponseText))
+                    string SuggestionsUrl = string.Format((OmniBoxOverrideSearch ?? App.Instance.DefaultSearchProvider).SuggestUrl, Uri.EscapeDataString(CurrentText));
+                    if (!string.IsNullOrEmpty(SuggestionsUrl))
                     {
-                        foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
+                        string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
+                        using (JsonDocument Document = JsonDocument.Parse(ResponseText))
                         {
-                            string SuggestionStr = Suggestion.GetString();
-                            Suggestions.Add(App.GenerateSuggestion(SuggestionStr, App.GetMiniSearchType(SuggestionStr), IconColor));
+                            foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
+                            {
+                                string SuggestionStr = Suggestion.GetString();
+                                Suggestions.Add(App.GenerateSuggestion(SuggestionStr, App.GetMiniSearchType(SuggestionStr), IconColor));
+                            }
                         }
                     }
                 }
