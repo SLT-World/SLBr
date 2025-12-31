@@ -83,7 +83,7 @@ namespace SLBr
             return IntPtr.Zero;
         }
 
-        WindowInteropHelper WindowInterop;
+        public WindowInteropHelper WindowInterop;
         BrowserTabItem NewTabTab = null;
 
         private void InitializeWindow()

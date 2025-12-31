@@ -9,14 +9,17 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.Marshalling;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using WinRT;
 using DColor = System.Drawing.Color;
 using MColor = System.Windows.Media.Color;
 
@@ -507,7 +510,7 @@ namespace SLBr
         }
     }
 
-    public static class Utils
+    public static partial class Utils
     {
         public static async void DownloadAndCopyImage(string ImageUrl)
         {
@@ -785,8 +788,8 @@ namespace SLBr
             Downloads,
             Pictures
         }
-        private static Guid DownloadsGuid = new Guid("374DE290-123F-4565-9164-39C4925E467B");
-        private static Guid PicturesGuid = new Guid("33E28130-4E1E-4676-835A-98395C3BC3BB");
+        private static Guid DownloadsGuid = new("374DE290-123F-4565-9164-39C4925E467B");
+        private static Guid PicturesGuid = new("33E28130-4E1E-4676-835A-98395C3BC3BB");
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         private static extern int SHGetKnownFolderPath(ref Guid id, int flags, IntPtr token, out IntPtr path);
         public static string GetFolderPath(FolderGuids FolderGuid)
@@ -794,7 +797,7 @@ namespace SLBr
             IntPtr PathPtr = IntPtr.Zero;
             try
             {
-                Guid _FolderGuid = new Guid();
+                Guid _FolderGuid = new();
                 switch (FolderGuid)
                 {
                     case FolderGuids.Downloads:
@@ -811,6 +814,31 @@ namespace SLBr
             {
                 Marshal.FreeCoTaskMem(PathPtr);
             }
+        }
+
+        static Guid DTM_IID = new(0xa5caee9b, 0x8708, 0x49d1, 0x8d, 0x36, 0x67, 0xd2, 0x5a, 0x8d, 0xa0, 0x0c);
+
+        [GeneratedComInterface]
+        [Guid("3A3DCD6C-3EAB-43DC-BCDE-45671CE800C8")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        internal partial interface IDataTransferManagerInterop
+        {
+            IntPtr GetForWindow(IntPtr appWindow, ref Guid riid);
+
+            void ShowShareUIForWindow(IntPtr appWindow);
+        }
+
+        public static void Share(nint HWND, string Title, Uri Url)
+        {
+            IDataTransferManagerInterop DataTransferManagerFactory = Windows.ApplicationModel.DataTransfer.DataTransferManager.As<IDataTransferManagerInterop>();
+            var _DataTransferManager = MarshalInterface<Windows.ApplicationModel.DataTransfer.DataTransferManager>.FromAbi(DataTransferManagerFactory.GetForWindow(HWND, ref DTM_IID));
+            _DataTransferManager.DataRequested += (sender, args) =>
+            {
+                args.Request.Data.Properties.Title = Title;
+                args.Request.Data.SetUri(Url);
+                args.Request.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Link;
+            };
+            DataTransferManagerFactory.ShowShareUIForWindow(HWND);
         }
 
         //public static bool IsAdministrator() =>
@@ -875,8 +903,42 @@ namespace SLBr
              _ResourceType is ResourceRequestType.XMLHTTPRequest or ResourceRequestType.Media or ResourceRequestType.Script or ResourceRequestType.SubFrame or ResourceRequestType.Image;
         public static bool IsHttpScheme(string Url) =>
             Url.StartsWith("https:", StringComparison.Ordinal) || Url.StartsWith("http:", StringComparison.Ordinal);
-        public static bool IsDomain(string Url) =>
-            !Url.StartsWith(".", StringComparison.Ordinal) && Url.IndexOf(".", StringComparison.Ordinal) > 0;
+        
+        public static bool IsDomain(string Url)
+        {
+            string Host = FastHost(Url);
+            int LastDot = Host.LastIndexOf(".", StringComparison.Ordinal);
+            if (LastDot <= 0 || LastDot == Host.Length - 1)
+                return false;
+            string TLD = Host[(LastDot + 1)..];
+            if (IsAlphabeticalTLD(TLD))
+                return true;
+            if (IsPunycodeTLD(TLD))
+                return true;
+            return false;
+        }
+        static bool IsAlphabeticalTLD(string TLD)
+        {
+            foreach (char _Char in TLD)
+                if (!char.IsLetter(_Char))
+                    return false;
+            return TLD.Length >= 2;
+        }
+        //https://xn--j1ay.xn--p1ai/
+        static bool IsPunycodeTLD(string TLD)
+        {
+            if (!TLD.StartsWith("xn--", StringComparison.Ordinal))
+                return false;
+            if (TLD.Length <= 4)
+                return false;
+            for (int i = 4; i < TLD.Length; i++)
+            {
+                char _Char = TLD[i];
+                if (!(char.IsLetterOrDigit(_Char) || _Char == '-'))
+                    return false;
+            }
+            return true;
+        }
         public static bool IsProtocolNotHttp(string Url) =>
             !IsHttpScheme(Url) && IsProtocol(Url);
         public static bool IsProtocol(string Url)
@@ -887,6 +949,7 @@ namespace SLBr
             int Dot = Url.IndexOf(".", StringComparison.Ordinal);
             return Dot < 0 || Colon < Dot;
         }
+        //TODO: Validate domain TLDs from https://data.iana.org/TLD/tlds-alpha-by-domain.txt
         public static bool IsUrl(string Url)
         {
             if (IsCode(Url))

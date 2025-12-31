@@ -181,7 +181,8 @@ namespace SLBr
     public class OmniSuggestion
     {
         public string Text { get; set; }
-        public string Result { get; set; }
+        public string Display { get; set; }
+        public string SubText { get; set; }
         public string Icon { get; set; }
         public SolidColorBrush Color { get; set; }
     }
@@ -705,16 +706,16 @@ namespace SLBr
             }
         }
 
-        public static OmniSuggestion GenerateSuggestion(string Text, string Type, SolidColorBrush IconColor)
+        public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush Color, string SubText = "", string? Actual = null)
         {
-            OmniSuggestion Suggestion = new OmniSuggestion { Text = Text, Color = IconColor };
+            OmniSuggestion Suggestion = new OmniSuggestion { Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText };
             switch (Type)
             {
                 case "S":
                     Suggestion.Icon = "\xE721";
                     break;
                 case "W":
-                    Suggestion.Icon = "\xE71B";
+                    Suggestion.Icon = "\xE774";
                     break;
                 case "P":
                     Suggestion.Icon = "\xE756";
@@ -808,9 +809,9 @@ namespace SLBr
             return "None";
         }
 
-        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, string Type, CancellationToken Token)
+        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, string Type, SolidColorBrush Color, CancellationToken Token)
         {
-            OmniSuggestion Suggestion = new OmniSuggestion { Text = Text };
+            OmniSuggestion Suggestion = new OmniSuggestion { Text = Text, Display = Text, Color = Color };
 
             Suggestion.Icon = "\xE721";
             switch (Type)
@@ -818,8 +819,8 @@ namespace SLBr
                 case "Math":
                     try
                     {
-                        Suggestion.Result = $"= {new DataTable().Compute(Text, null)?.ToString()}";
-                        Suggestion.Icon = "\uE8EF";
+                        Suggestion.SubText = $"= {new DataTable().Compute(Text, null)?.ToString()}";
+                        Suggestion.Icon = "\xE8EF";
                     }
                     catch { }
                     break;
@@ -829,8 +830,8 @@ namespace SLBr
                         string Json = await MiniHttpClient.GetStringAsync($"https://api.dictionaryapi.dev/api/v2/entries/en/{Text.Substring(7).Trim()}");
                         JsonDocument _JsonDocument = JsonDocument.Parse(Json);
                         string Result = _JsonDocument.RootElement[0].GetProperty("meanings")[0].GetProperty("definitions")[0].GetProperty("definition").GetString();
-                        Suggestion.Result = $"- {Result}";
-                        Suggestion.Icon = "\uE82D";
+                        Suggestion.SubText = $"- {Result}";
+                        Suggestion.Icon = "\xE82D";
                     }
                     catch { }
                     break;
@@ -838,8 +839,8 @@ namespace SLBr
                     Match TranslateMatch = Regex.Match(Text, @"^translate\s+(?<Phrase>.+?)\s+to\s+(?<Lang>.+)", RegexOptions.IgnoreCase);
                     if (TranslateMatch.Success)
                     {
-                        Suggestion.Result = "- Unavailable";
-                        Suggestion.Icon = "\uE8C1";
+                        Suggestion.SubText = "- Unavailable";
+                        Suggestion.Icon = "\xE8C1";
                         string LanguageInput = TranslateMatch.Groups["Lang"].Value.Trim().ToLowerInvariant();
                         string LanguageCode = (LanguageInput.Length == 2) ? LanguageInput : AllLocales.FirstOrDefault(x => x.Value.Contains(LanguageInput, StringComparison.OrdinalIgnoreCase)).Key;
                         if (!string.IsNullOrEmpty(LanguageCode))
@@ -847,7 +848,7 @@ namespace SLBr
                             try
                             {
                                 string Response = await MiniHttpClient.GetStringAsync($"https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl={LanguageCode}&q={Uri.EscapeDataString(TranslateMatch.Groups["Phrase"].Value.Trim())}");
-                                Suggestion.Result = $"- {JsonDocument.Parse(Response).RootElement[0][0][0].GetString()}";
+                                Suggestion.SubText = $"- {JsonDocument.Parse(Response).RootElement[0][0][0].GetString()}";
                             }
                             catch { }
                         }
@@ -857,8 +858,8 @@ namespace SLBr
                     Match CurrencyMatch = Regex.Match(Text, @"(?<Amount>\d+(\.\d+)?)\s+(?<From>[A-Za-z]{3})\s+(?:to|in)\s+(?<To>[A-Za-z]{3})");
                     if (CurrencyMatch.Success)
                     {
-                        Suggestion.Result = "- Unavailable";
-                        Suggestion.Icon = "\ue8ee";
+                        Suggestion.SubText = "- Unavailable";
+                        Suggestion.Icon = "\xe8ee";
                         string Amount = CurrencyMatch.Groups["Amount"].Value;
                         string From = CurrencyMatch.Groups["From"].Value.ToUpper();
                         string To = CurrencyMatch.Groups["To"].Value.ToUpper();
@@ -870,14 +871,14 @@ namespace SLBr
                             JsonElement Root = _JsonDocument.RootElement;
 
                             if (Root.TryGetProperty("rates", out JsonElement Rates) && Rates.TryGetProperty(To, out JsonElement Output))
-                                Suggestion.Result = $"- {Amount} {From} ≈ {Output.GetDouble():0.00} {To}";
+                                Suggestion.SubText = $"- {Amount} {From} ≈ {Output.GetDouble():0.00} {To}";
                         }
                         catch { }
                     }
                     break;
 
                 case "Weather":
-                    Suggestion.Icon = "\uE9CA";
+                    Suggestion.Icon = "\xE9CA";
                     string Location = Regex.Replace(Text, @"^weather(\s+in)?\s+", string.Empty, RegexOptions.IgnoreCase).Trim();
                     try
                     {
@@ -891,14 +892,14 @@ namespace SLBr
                                 double Temperature = Data.GetProperty("main").GetProperty("temp").GetDouble();
                                 string Description = Utils.CapitalizeAllFirstCharacters(Data.GetProperty("weather")[0].GetProperty("description").GetString());
 
-                                Suggestion.Result = $"{Temperature} °C | {Description}";
+                                Suggestion.SubText = $"{Temperature} °C | {Description}";
                             }
                             else
-                                Suggestion.Result = $"- No data";
+                                Suggestion.SubText = $"- No data";
                         }
                     }
                     catch (OperationCanceledException) { }
-                    catch { Suggestion.Result = "- Unavailable"; }
+                    catch { Suggestion.SubText = "- Unavailable"; }
                     break;
             }
 
@@ -3899,6 +3900,7 @@ Inner Exception: ```{7} ```";
         Print = 30,
         Mute = 31,
         Find = 32,
+        Share = 33,
 
         /*ZoomIn = 40,
         ZoomOut = 41,

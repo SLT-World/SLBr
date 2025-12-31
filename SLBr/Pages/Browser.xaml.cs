@@ -166,6 +166,9 @@ namespace SLBr.Pages
                 case Actions.Navigate:
                     Navigate(V1);
                     break;
+                case Actions.Share:
+                    Share();
+                    break;
 
                 case Actions.CreateTab:
                     if (V2 == "Tab")
@@ -1517,13 +1520,16 @@ namespace SLBr.Pages
                 BrowserMenu.Items.Add(new Separator());
 
                 BrowserMenu.Items.Add(new MenuItem { IsEnabled = !IsLoading && !Address.StartsWith("slbr:", StringComparison.Ordinal), Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
-                BrowserMenu.Items.Add(new MenuItem { Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
+
+                MenuItem ToolsSubMenuModel = new MenuItem { Icon = "\ue821", Header = "More Tools" };
+                ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
+                ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
+                BrowserMenu.Items.Add(ToolsSubMenuModel);
 
                 /*MenuItem ZoomSubMenuModel = new MenuItem { Icon = "\ue71e", Header = "Zoom" };
                 ZoomSubMenuModel.Items.Add(new MenuItem { Icon = "\ue8a3", Header = "Zoom in", Command = new RelayCommand(_ => Zoom(1)) });
                 ZoomSubMenuModel.Items.Add(new MenuItem { Icon = "\ue71f", Header = "Zoom out", Command = new RelayCommand(_ => Zoom(-1)) });
                 ZoomSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72c", Header = "Reset", Command = new RelayCommand(_ => Zoom(0)) });
-
                 menu.Items.Add(ZoomSubMenuModel);*/
 
                 BrowserMenu.Items.Add(new Separator());
@@ -2067,6 +2073,12 @@ namespace SLBr.Pages
             WebView?.Stop();
         }
 
+        public void Share()
+        {
+            if (Uri.TryCreate(Address, UriKind.Absolute, out Uri? _Uri))
+                Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), Title.Length != 0 ? Title : "Shared link", _Uri);
+        }
+
         public static void ActivatePopup(Popup popup)
         {
             DllUtils.SetForegroundWindow(((HwndSource)PresentationSource.FromVisual(popup.Child)).Handle);
@@ -2569,7 +2581,7 @@ namespace SLBr.Pages
                 TranslateButton.OpenPopup();
             await Dispatcher.BeginInvoke(() => TranslateLoadingPanel.Visibility = Visibility.Visible);
             List<string> AllTexts = JsonSerializer.Deserialize<List<string>>(Texts);
-            string TargetLanguage = App.Instance.AllLocales.Where(i => i.Value == TranslateComboBox.SelectedValue).First().Key;
+            string TargetLanguage = App.Instance.AllLocales.First(i => i.Value == TranslateComboBox.SelectedValue).Key;
             switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
             {
                 case 0:
@@ -3355,25 +3367,18 @@ namespace SLBr.Pages
         {
             OmniBoxFastTimer.Stop();
             string CurrentText = OmniBox.Text.Trim();
-            SolidColorBrush IconColor = (SolidColorBrush)FindResource("FontBrush");
-            if (OmniBoxOverrideSearch != null)
-            {
-                switch (OmniBoxOverrideSearch.Name)
-                {
-                    case "YouTube":
-                        IconColor = App.Instance.RedColor;
-                        break;
-                    case "ChatGPT":
-                        IconColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#10A37F");
-                        break;
-                    case "Perplexity":
-                        IconColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#21808D");
-                        break;
-                }
-            }
+            SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
+            SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
             Suggestions.Clear();
             OmniBox.Text = CurrentText;
-            Suggestions.Add(App.GenerateSuggestion(CurrentText, App.GetMiniSearchType(CurrentText), IconColor));
+            string FirstType = App.GetMiniSearchType(CurrentText);
+            if (FirstType == "W")
+            {
+                Suggestions.Add(App.GenerateSuggestion(CurrentText, FirstType, LinkColor, "- Visit"));
+                Suggestions.Add(App.GenerateSuggestion(CurrentText, "S", Color, "- Search", $"search:{CurrentText}"));
+            }
+            else
+                Suggestions.Add(App.GenerateSuggestion(CurrentText, FirstType, Color));
             try
             {
                 if (CurrentText.Length <= 60)
@@ -3387,7 +3392,8 @@ namespace SLBr.Pages
                             foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
                             {
                                 string SuggestionStr = Suggestion.GetString();
-                                Suggestions.Add(App.GenerateSuggestion(SuggestionStr, App.GetMiniSearchType(SuggestionStr), IconColor));
+                                string SuggestionType = App.GetMiniSearchType(SuggestionStr);
+                                Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color));
                             }
                         }
                     }
@@ -3429,8 +3435,9 @@ namespace SLBr.Pages
             SmartSuggestionCancellation?.Cancel();
             SmartSuggestionCancellation = new CancellationTokenSource();
             var Token = SmartSuggestionCancellation.Token;
+            SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
 
-            OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type, Token);
+            OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type, Color, Token);
             if (!Token.IsCancellationRequested)
             {
                 Suggestions.RemoveAt(0);
