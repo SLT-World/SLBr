@@ -71,7 +71,7 @@ namespace Updater
 
                 if (File.Exists(TemporaryZip))
                     File.Delete(TemporaryZip);
-                using (HttpClient Client = new HttpClient(new HttpClientHandler
+                using (HttpClient Client = new(new HttpClientHandler
                 {
                     AutomaticDecompression = System.Net.DecompressionMethods.All,
                     AllowAutoRedirect = true,
@@ -89,7 +89,7 @@ namespace Updater
 
                         using (Stream? _Stream = await Response.Content.ReadAsStreamAsync())
                         {
-                            using (FileStream _FileStream = new FileStream(TemporaryZip, FileMode.Create, FileAccess.Write, FileShare.None))
+                            using (FileStream _FileStream = new(TemporaryZip, FileMode.Create, FileAccess.Write, FileShare.None))
                             {
                                 byte[] Buffer = new byte[1048576];//1024 * 512 * 2
                                 long TotalRead = 0;

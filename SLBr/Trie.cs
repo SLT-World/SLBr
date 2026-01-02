@@ -138,7 +138,7 @@ namespace SLBr
         {
             if (!AllDomains.Add(Domain)) return;
 
-            bool WildCard = Domain.StartsWith("*.", StringComparison.Ordinal);
+            bool WildCard = Domain.StartsWith("*.");
             var Parts = Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse();
             var _Node = Root;
 
@@ -165,7 +165,7 @@ namespace SLBr
             int End = Span.Length;
             while (End > 0)
             {
-                int Dot = Span.Slice(0, End).LastIndexOf(".", StringComparison.Ordinal);
+                int Dot = Span.Slice(0, End).LastIndexOf(".");
                 ReadOnlySpan<char> Label;
                 if (Dot == -1)
                 {
@@ -189,7 +189,7 @@ namespace SLBr
         public void Remove(string Domain)
         {
             if (!AllDomains.Remove(Domain)) return;
-            RemoveRecursive(Root, Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse().ToList(), 0, Domain.StartsWith("*.", StringComparison.Ordinal));
+            RemoveRecursive(Root, Domain.Trim().TrimStart('*', '.').TrimEnd('.').Split('.').AsEnumerable().Reverse().ToList(), 0, Domain.StartsWith("*."));
         }
 
         private bool RemoveRecursive(TrieNode _Node, List<string> Parts, int Index, bool Wildcard)

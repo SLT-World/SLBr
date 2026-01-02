@@ -128,7 +128,7 @@ namespace SLBr.Pages
 
         public void UpdateSLBr(object sender, RoutedEventArgs e)
         {
-            InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
+            InformationDialogWindow InfoWindow = new("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
             InfoWindow.Topmost = true;
             if (InfoWindow.ShowDialog() == true)
                 App.Instance.Update();
@@ -137,9 +137,9 @@ namespace SLBr.Pages
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
             string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
-            Action((Actions)int.Parse(Values[0]), sender, (Values.Length > 1) ? Values[1] : string.Empty, (Values.Length > 2) ? Values[2] : string.Empty, (Values.Length > 3) ? Values[3] : string.Empty);
+            Action((Actions)int.Parse(Values[0]), (Values.Length > 1) ? Values[1] : string.Empty, (Values.Length > 2) ? Values[2] : string.Empty, (Values.Length > 3) ? Values[3] : string.Empty);
         }
-        public void Action(Actions _Action, object sender = null, string V1 = "", string V2 = "", string V3 = "")
+        public void Action(Actions _Action, string V1 = "", string V2 = "", string V3 = "")
         {
             V1 = V1.Replace("{CurrentUrl}", Address).Replace("{Homepage}", App.Instance.GlobalSave.Get("Homepage"));
 
@@ -201,7 +201,7 @@ namespace SLBr.Pages
                     Favourite();
                     break;
                 case Actions.OpenFileExplorer:
-                    App.Instance.OpenFileExplorer(V1);
+                    Utils.OpenFileExplorer(V1);
                     break;
                 case Actions.OpenAsPopupBrowser:
                     OpenAsPopupBrowser(V1);
@@ -255,26 +255,17 @@ namespace SLBr.Pages
                         }
                         if (CurrentWebAppManifest != null)
                         {
-                            InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", $"Install {CurrentWebAppManifest.ShortName ?? CurrentWebAppManifest.Name}", "This site can be installed as an application.", "\ueb3b", "Install", "Cancel");
+                            InformationDialogWindow InfoWindow = new("Information", $"Install {CurrentWebAppManifest.ShortName ?? CurrentWebAppManifest.Name}", "This site can be installed as an application.", "\ueb3b", "Install", "Cancel");
                             InfoWindow.Topmost = true;
                             if (InfoWindow.ShowDialog() == true)
-                            {
                                 await WebAppHandler.Install(CurrentWebAppManifest);
-                            }
                         }
                     });
                     break;
                 case Actions.QR:
                     if (V1 == "0")
                     {
-                        if (QRBitmap == null)
-                        {
-                            QRBitmap = new QRSaveBitmapImage(App.MiniQREncoder.Encode(Address))
-                            {
-                                ModuleSize = 5,
-                                QuietZone = 10
-                            }.CreateQRCodeBitmap();
-                        }
+                        QRBitmap ??= new QRSaveBitmapImage(App.MiniQREncoder.Encode(Address)) { ModuleSize = 5, QuietZone = 10 }.CreateQRCodeBitmap();
                         QRImage.Source = QRBitmap;
                         QRButton.OpenPopup();
                     }
@@ -306,7 +297,7 @@ namespace SLBr.Pages
                         case "0":
                             if (WebView?.Engine == WebEngineType.Chromium)
                             {
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Already Using Chromium web engine", "This tab is already running with the Chromium web engine. No changes are necessary.");
+                                InformationDialogWindow InfoWindow = new("Information", "Already Using Chromium web engine", "This tab is already running with the Chromium web engine. No changes are necessary.");
                                 InfoWindow.ShowDialog();
                                 break;
                             }
@@ -316,7 +307,7 @@ namespace SLBr.Pages
                         case "1":
                             if (WebView?.Engine == WebEngineType.ChromiumEdge)
                             {
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Already Using Edge web engine", "This tab is already running with the Edge web engine. No changes are necessary.");
+                                InformationDialogWindow InfoWindow = new("Information", "Already Using Edge web engine", "This tab is already running with the Edge web engine. No changes are necessary.");
                                 InfoWindow.ShowDialog();
                                 break;
                             }
@@ -327,7 +318,7 @@ namespace SLBr.Pages
                             }
                             catch (WebView2RuntimeNotFoundException)
                             {
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
+                                InformationDialogWindow InfoWindow = new("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
                                 InfoWindow.Topmost = true;
                                 if (InfoWindow.ShowDialog() == true)
                                     Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1);
@@ -339,7 +330,7 @@ namespace SLBr.Pages
                         case "2":
                             if (WebView?.Engine == WebEngineType.Trident)
                             {
-                                InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Already Using Trident web engine", "This tab is already running with the Trident web engine. No changes are necessary.");
+                                InformationDialogWindow InfoWindow = new("Information", "Already Using Trident web engine", "This tab is already running with the Trident web engine. No changes are necessary.");
                                 InfoWindow.ShowDialog();
                                 break;
                             }
@@ -383,7 +374,7 @@ namespace SLBr.Pages
                     break;
             }
 
-            WebViewBrowserSettings WebViewSettings = new WebViewBrowserSettings()
+            WebViewBrowserSettings WebViewSettings = new()
             {
                 Private = Private,
                 AudioListener = !App.Instance.LiteMode
@@ -489,21 +480,21 @@ namespace SLBr.Pages
         {
             if (e.DialogType == ScriptDialogType.Alert)
             {
-                InformationDialogWindow InfoWindow = new InformationDialogWindow("Alert", $"{Utils.Host(e.Url)}", e.Text);
+                InformationDialogWindow InfoWindow = new("Alert", $"{Utils.Host(e.Url)}", e.Text);
                 InfoWindow.Topmost = true;
                 e.Handled = true;
                 e.Result = InfoWindow.ShowDialog() == true;
             }
             else if (e.DialogType == ScriptDialogType.Confirm)
             {
-                InformationDialogWindow InfoWindow = new InformationDialogWindow("Confirmation", $"{Utils.Host(e.Url)}", e.Text, string.Empty, "OK", "Cancel");
+                InformationDialogWindow InfoWindow = new("Confirmation", $"{Utils.Host(e.Url)}", e.Text, string.Empty, "OK", "Cancel");
                 InfoWindow.Topmost = true;
                 e.Handled = true;
                 e.Result = InfoWindow.ShowDialog() == true;
             }
             else if (e.DialogType == ScriptDialogType.Prompt)
             {
-                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Prompt", Utils.Host(e.Url),
+                DynamicDialogWindow _DynamicDialogWindow = new("Prompt", Utils.Host(e.Url),
                     new List<InputField>
                     {
                         new InputField { Name = e.Text, IsRequired = false, Type = DialogInputType.Text, Value = e.DefaultPrompt }
@@ -522,14 +513,14 @@ namespace SLBr.Pages
             }
             else if (e.DialogType == ScriptDialogType.BeforeUnload)
             {
-                InformationDialogWindow InfoWindow = new InformationDialogWindow("Warning", e.IsReload ? "Reload site?" : "Leave site?", "You may lose unsaved changes. Do you want to continue?", string.Empty, e.IsReload ? "Reload" : "Leave", "Cancel");
+                InformationDialogWindow InfoWindow = new("Warning", e.IsReload ? "Reload site?" : "Leave site?", "You may lose unsaved changes. Do you want to continue?", string.Empty, e.IsReload ? "Reload" : "Leave", "Cancel");
                 InfoWindow.Topmost = true;
                 e.Handled = true;
                 e.Result = InfoWindow.ShowDialog() == true;
             }
         }
 
-        public ConcurrentDictionary<string, bool> HostCache = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
+        public ConcurrentDictionary<string, bool> HostCache = new(StringComparer.Ordinal);
 
         public long Image_Budget = 2 * 1024 * 1024;
         public long Stylesheet_Budget = 400 * 1024;
@@ -610,7 +601,7 @@ namespace SLBr.Pages
                 }
                 foreach (string Pattern in App.FailedScripts)
                 {
-                    if (e.Url.Contains(Pattern, StringComparison.Ordinal))
+                    if (e.Url.Contains(Pattern))
                     {
                         e.Cancel = true;
                         return;
@@ -686,7 +677,7 @@ namespace SLBr.Pages
                 {
                     Dispatcher.BeginInvoke(() =>
                     {
-                        ProprietaryCodecsDialogWindow = new DynamicDialogWindow("Information", "Proprietary Codecs Detected",
+                        ProprietaryCodecsDialogWindow = new("Information", "Proprietary Codecs Detected",
                             new List<InputField>
                             {
                                 new InputField { Name = "This site is trying to play media using formats not supported by Chromium (CEF).\nDo you want to switch to the Edge (WebView2) engine?", Type = DialogInputType.Label },
@@ -696,7 +687,7 @@ namespace SLBr.Pages
                         );
                         ProprietaryCodecsDialogWindow.Topmost = true;
                         if (ProprietaryCodecsDialogWindow.ShowDialog() == true)
-                            Action(Actions.SwitchWebEngine, null, "1");
+                            Action(Actions.SwitchWebEngine, "1");
                         App.Instance.GlobalSave.Set("WarnCodec", !ProprietaryCodecsDialogWindow.InputFields[1].BoolValue);
                         ProprietaryCodecsDialogWindow = null;
                     });
@@ -738,106 +729,106 @@ namespace SLBr.Pages
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.Deception_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                         }
                     }
-                    else if (e.Url.StartsWith("chrome:", StringComparison.Ordinal))
+                    else if (e.Url.StartsWith("chrome:"))
                     {
                         bool Block = false;
                         //https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/shared/model/url/chrome_url_constants.cc
                         switch (e.Url.Substring(9))
                         {
-                            case string s when s.StartsWith("settings", StringComparison.Ordinal):
+                            case string s when s.StartsWith("settings"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("history", StringComparison.Ordinal):
+                            case string s when s.StartsWith("history"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("downloads", StringComparison.Ordinal):
+                            case string s when s.StartsWith("downloads"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("flags", StringComparison.Ordinal):
+                            case string s when s.StartsWith("flags"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("new-tab-page", StringComparison.Ordinal):
+                            case string s when s.StartsWith("new-tab-page"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("bookmarks", StringComparison.Ordinal):
+                            case string s when s.StartsWith("bookmarks"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("apps", StringComparison.Ordinal):
-                                Block = true;
-                                break;
-
-                            case string s when s.StartsWith("dino", StringComparison.Ordinal):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("management", StringComparison.Ordinal):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("new-tab-page-third-party", StringComparison.Ordinal):
+                            case string s when s.StartsWith("apps"):
                                 Block = true;
                                 break;
 
-                            case string s when s.StartsWith("favicon", StringComparison.Ordinal):
+                            case string s when s.StartsWith("dino"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("sandbox", StringComparison.Ordinal):
+                            case string s when s.StartsWith("management"):
                                 Block = true;
                                 break;
-
-                            case string s when s.StartsWith("bookmarks-side-panel.top-chrome", StringComparison.Ordinal):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("customize-chrome-side-panel.top-chrome", StringComparison.Ordinal):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("read-later.top-chrome", StringComparison.Ordinal):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("tab-search.top-chrome", StringComparison.Ordinal):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("tab-strip.top-chrome", StringComparison.Ordinal):
+                            case string s when s.StartsWith("new-tab-page-third-party"):
                                 Block = true;
                                 break;
 
-                            case string s when s.StartsWith("support-tool", StringComparison.Ordinal):
+                            case string s when s.StartsWith("favicon"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("privacy-sandbox-dialog", StringComparison.Ordinal):
+                            case string s when s.StartsWith("sandbox"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("chrome-signin", StringComparison.Ordinal):
+
+                            case string s when s.StartsWith("bookmarks-side-panel.top-chrome"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("browser-switch", StringComparison.Ordinal):
+                            case string s when s.StartsWith("customize-chrome-side-panel.top-chrome"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("profile-picker", StringComparison.Ordinal):
+                            case string s when s.StartsWith("read-later.top-chrome"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("intro", StringComparison.Ordinal):
+                            case string s when s.StartsWith("tab-search.top-chrome"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("sync-confirmation", StringComparison.Ordinal):
+                            case string s when s.StartsWith("tab-strip.top-chrome"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("app-settings", StringComparison.Ordinal):
+
+                            case string s when s.StartsWith("support-tool"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("managed-user-profile-notice", StringComparison.Ordinal):
+                            case string s when s.StartsWith("privacy-sandbox-dialog"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("reset-password", StringComparison.Ordinal):
+                            case string s when s.StartsWith("chrome-signin"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("connection-help", StringComparison.Ordinal):
+                            case string s when s.StartsWith("browser-switch"):
                                 Block = true;
                                 break;
-                            case string s when s.StartsWith("connection-monitoring-detected", StringComparison.Ordinal):
+                            case string s when s.StartsWith("profile-picker"):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("intro"):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("sync-confirmation"):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("app-settings"):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("managed-user-profile-notice"):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("reset-password"):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("connection-help"):
+                                Block = true;
+                                break;
+                            case string s when s.StartsWith("connection-monitoring-detected"):
                                 Block = true;
                                 break;
                         }
                         if (Block)
-                            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect(e.Url, -300, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, string.Empty);
+                            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, -300, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, string.Empty);
                     }
                 }
 
@@ -875,7 +866,7 @@ namespace SLBr.Pages
         {
             string Permissions = string.Empty;
             string PermissionIcons = string.Empty;
-            foreach (WebPermissionKind Option in Enum.GetValues(typeof(WebPermissionKind)))
+            foreach (WebPermissionKind Option in Enum.GetValues<WebPermissionKind>())
             {
                 if (e.Kind.HasFlag(Option) && Option != WebPermissionKind.None)
                 {
@@ -995,7 +986,7 @@ namespace SLBr.Pages
             if (string.IsNullOrEmpty(Permissions))
                 Permissions = e.Kind.ToString();
 
-            var InfoWindow = new InformationDialogWindow("Permission", $"Allow {Utils.Host(e.Url)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
+            InformationDialogWindow InfoWindow = new("Permission", $"Allow {Utils.Host(e.Url)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
             InfoWindow.Topmost = true;
 
             bool? Result = InfoWindow.ShowDialog();
@@ -1016,7 +1007,7 @@ namespace SLBr.Pages
                 int Height = (int)e.Popup.Value.Height;
                 if (Height == 0)
                     Height = 650;
-                PopupBrowser Popup = new PopupBrowser(e.Url, Width, Height);
+                PopupBrowser Popup = new(e.Url, Width, Height);
                 Popup.Show();
                 if (e.Popup.Value.Left != 0)
                     Popup.Left = e.Popup.Value.Left;
@@ -1034,7 +1025,7 @@ namespace SLBr.Pages
                 return;
             if (WebView.Engine == WebEngineType.Trident && e.ErrorCode == -2146697203) //Custom protocols in IE
                 return;
-            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.Instance.GenerateCannotConnect(e.Url, e.ErrorCode, e.ErrorText), Encoding.UTF8), "text/html", 1);
+            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, e.ErrorCode, e.ErrorText), Encoding.UTF8), "text/html", 1);
             Navigate(e.Url);
         }
 
@@ -1081,7 +1072,7 @@ namespace SLBr.Pages
         {
             if (WebView == null || !WebView.IsBrowserInitialized)
                 return;
-            if (Address.StartsWith("slbr:", StringComparison.Ordinal))
+            if (Address.StartsWith("slbr:"))
                 WebView?.ExecuteScript(Scripts.InternalScript);
             BackButton.IsEnabled = CanGoBack;
             ForwardButton.IsEnabled = CanGoForward;
@@ -1098,15 +1089,15 @@ namespace SLBr.Pages
                     App.Instance.AddHistory(Address, Title);
                 if (!App.Instance.LiteMode && bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll")))
                     WebView.ExecuteScript(Scripts.ScrollScript);
-                if (!Address.StartsWith("slbr:", StringComparison.Ordinal))
+                if (!Address.StartsWith("slbr:"))
                 {
                     if (WebView.CanExecuteJavascript)
                     {
                         if (Utils.IsHttpScheme(Address))
                         {
-                            if (App.Instance.SkipAds && Address.AsSpan().IndexOf("youtube.com/watch?v=", StringComparison.Ordinal) >= 0)
+                            if (App.Instance.SkipAds && Address.Contains("youtube.com/watch?v="))
                                 WebView?.ExecuteScript(Scripts.YouTubeSkipAdScript);
-                            if (Address.AsSpan().IndexOf("chromewebstore.google.com/detail", StringComparison.Ordinal) >= 0)
+                            if (Address.Contains("chromewebstore.google.com/detail"))
                                 WebView?.ExecuteScript(Scripts.WebStoreScript);
                             if (bool.Parse(App.Instance.GlobalSave.Get("WebNotifications")))
                                 WebView?.ExecuteScript(Scripts.NotificationPolyfill);
@@ -1127,12 +1118,11 @@ namespace SLBr.Pages
                                 }
                             }
                         }
-                        else if (Address.StartsWith("file:///", StringComparison.Ordinal))
+                        else if (Address.StartsWith("file:///"))
                         {
-                            if (Address.EndsWith("/", StringComparison.Ordinal))
+                            if (Address.EndsWith('/'))
                             {
-                                //if (Address.LastIndexOf(".", StringComparison.Ordinal) < Address.LastIndexOf("/", StringComparison.Ordinal))
-                                if (Directory.Exists(Uri.UnescapeDataString(Address.Substring(8)).Replace('/', '\\')))
+                                if (Directory.Exists(Uri.UnescapeDataString(Address.AsSpan(8)).Replace('/', '\\')))
                                     WebView?.ExecuteScript(Scripts.FileScript);
                             }
                         }
@@ -1173,11 +1163,11 @@ namespace SLBr.Pages
             }
         }
 
-        private async void HandleInternalMessage(IDictionary<string, object> Message)
+        private async void HandleInternalMessage(Dictionary<string, object> Message)
         {
-            if (!Message.ContainsKey("function"))
+            if (!Message.TryGetValue("function", out object? Value))
                 return;
-            switch (Message["function"]?.ToString())
+            switch (Value?.ToString())
             {
                 case "Downloads":
                     WebView?.ExecuteScript($"internal.receive(\"downloads={JsonSerializer.Serialize(App.Instance.Downloads).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
@@ -1204,7 +1194,7 @@ namespace SLBr.Pages
                                 {
                                     try
                                     {
-                                        XmlDocument Doc = new XmlDocument();
+                                        XmlDocument Doc = new();
                                         Doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
                                         Url = "http://www.bing.com/" + Doc.SelectSingleNode("/images/image/url").InnerText;
                                     }
@@ -1259,22 +1249,22 @@ namespace SLBr.Pages
         {
             if (string.IsNullOrWhiteSpace(e))
                 return;
-            IDictionary<string, object>? Message;
+            Dictionary<string, object>? Message;
             try
             {
                 Message = JsonSerializer.Deserialize<Dictionary<string, object>>(e);
             }
             catch { return; }
-            if (Message == null || !Message.ContainsKey("type"))
+            if (Message == null || !Message.TryGetValue("type", out object? Value))
                 return;
 
-            switch (Message["type"].ToString())
+            switch (Value.ToString())
             {
                 case "OpenSearch":
                     App.Instance.SaveOpenSearch(Message["name"]?.ToString()!, Message["url"]?.ToString()!);
                     break;
                 case "Internal":
-                    if (Address.StartsWith("slbr:", StringComparison.Ordinal))
+                    if (Address.StartsWith("slbr:"))
                         HandleInternalMessage(Message);
                     break;
                 case "Notification":
@@ -1288,8 +1278,8 @@ namespace SLBr.Pages
                         ToastXML.LoadXml(@$"<toast>
     <visual>
         <binding template=""ToastText04"">
-            <text id=""1"">{Data[0].ToString()}</text>
-            <text id=""2"">{((IDictionary<string, object>)JsonSerializer.Deserialize<ExpandoObject>(((JsonElement)Data[1]).GetRawText()))["body"].ToString()}</text>
+            <text id=""1"">{Data[0]}</text>
+            <text id=""2"">{((IDictionary<string, object>)JsonSerializer.Deserialize<ExpandoObject>(((JsonElement)Data[1]).GetRawText()))["body"]}</text>
             <text id=""3"">{Utils.Host(Address, false)}</text>
         </binding>
     </visual>
@@ -1339,7 +1329,7 @@ namespace SLBr.Pages
         {
             string ProtocolName = Utils.GetProtocolName(Utils.GetScheme(e.Url));
             string Host = Utils.FastHost(e.Origin);
-            InformationDialogWindow InfoWindow = new InformationDialogWindow("Warning", $"Open {ProtocolName}", $"{(Host.Length == 0 ? "A website" : Host)} is requesting to open this application.", string.Empty, "Open", "Cancel");
+            InformationDialogWindow InfoWindow = new("Warning", $"Open {ProtocolName}", $"{(Host.Length == 0 ? "A website" : Host)} is requesting to open this application.", string.Empty, "Open", "Cancel");
             InfoWindow.Topmost = true;
             e.Launch = InfoWindow.ShowDialog() == true;
         }
@@ -1348,7 +1338,7 @@ namespace SLBr.Pages
         {
             bool IsPageMenu = true;
             ContextMenu BrowserMenu = new ContextMenu();
-            foreach (WebContextMenuType i in Enum.GetValues(typeof(WebContextMenuType)))
+            foreach (WebContextMenuType i in Enum.GetValues<WebContextMenuType>())
             {
                 if (e.MenuType.HasFlag(i))
                 {
@@ -1442,7 +1432,7 @@ namespace SLBr.Pages
                     }) });
                     BrowserMenu.Items.Add(new Separator());
                 }*/
-                if (!string.IsNullOrEmpty(e.SelectionText) && !e.SelectionText.Contains(" ", StringComparison.Ordinal) && bool.Parse(App.Instance.GlobalSave.Get("SpellCheck")))
+                if (!string.IsNullOrEmpty(e.SelectionText) && !e.SelectionText.Contains(' ') && bool.Parse(App.Instance.GlobalSave.Get("SpellCheck")))
                 {
                     List<(string Word, List<string> Suggestions)> Results = await App.Instance.SpellCheck(e.SelectionText);
                     if (Results.Count != 0)
@@ -1469,8 +1459,7 @@ namespace SLBr.Pages
                                 }
                                 else
                                 {
-                                    if (SuggestionsSubMenuModel == null)
-                                        SuggestionsSubMenuModel = new MenuItem { Icon = "\ue82d", Header = "More" };
+                                    SuggestionsSubMenuModel ??= new MenuItem { Icon = "\ue82d", Header = "More" };
                                     SuggestionsSubMenuModel.Items.Add(new MenuItem
                                     {
                                         Icon = "\uf87b",
@@ -1519,9 +1508,9 @@ namespace SLBr.Pages
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select All", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                 BrowserMenu.Items.Add(new Separator());
 
-                BrowserMenu.Items.Add(new MenuItem { IsEnabled = !IsLoading && !Address.StartsWith("slbr:", StringComparison.Ordinal), Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
+                BrowserMenu.Items.Add(new MenuItem { IsEnabled = !IsLoading && !Address.StartsWith("slbr:"), Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
 
-                MenuItem ToolsSubMenuModel = new MenuItem { Icon = "\ue821", Header = "More Tools" };
+                MenuItem ToolsSubMenuModel = new() { Icon = "\ue821", Header = "More Tools" };
                 ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
                 ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
                 BrowserMenu.Items.Add(ToolsSubMenuModel);
@@ -1534,7 +1523,7 @@ namespace SLBr.Pages
 
                 BrowserMenu.Items.Add(new Separator());
 
-                MenuItem AdvancedSubMenuModel = new MenuItem { Icon = "\uec7a", Header = "Advanced" };
+                MenuItem AdvancedSubMenuModel = new() { Icon = "\uec7a", Header = "Advanced" };
                 AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\uec7a", Header = "Inspect", Command = new RelayCommand(_ => DevTools()) });
                 AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab($"view-source:{e.FrameUrl}", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                 BrowserMenu.Items.Add(AdvancedSubMenuModel);
@@ -1547,7 +1536,7 @@ namespace SLBr.Pages
         {
             App.Current.Dispatcher.Invoke(() =>
             {
-                CredentialsDialogWindow _CredentialsDialogWindow = new CredentialsDialogWindow($"Sign in to {Utils.FastHost(e.Url)}", "\uec19");
+                CredentialsDialogWindow _CredentialsDialogWindow = new($"Sign in to {Utils.FastHost(e.Url)}", "\uec19");
                 _CredentialsDialogWindow.Topmost = true;
                 if (_CredentialsDialogWindow.ShowDialog().ToBool())
                 {
@@ -1583,7 +1572,7 @@ namespace SLBr.Pages
             if (Tab.IsUnloaded)
             {
                 InitializeBrowserComponent();
-                if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
+                if (Address.StartsWith("slbr://settings"))
                 {
                     WebView?.Control?.Visibility = Visibility.Collapsed;
                     if (_Settings == null)
@@ -1727,7 +1716,7 @@ namespace SLBr.Pages
                 OmniBox.Tag = Address;
                 if (IsOmniBoxModifiable())
                 {
-                    if (Address.StartsWith("slbr://newtab", StringComparison.Ordinal))
+                    if (Address.StartsWith("slbr://newtab"))
                     {
                         OmniBoxPlaceholder.Visibility = Visibility.Visible;
                         OmniBox.Text = string.Empty;
@@ -1757,7 +1746,7 @@ namespace SLBr.Pages
                 FavouriteButton.ToolTip = "Add to favourites";
                 Tab.FavouriteCommandHeader = "Add to favourites";
             }
-            if (Address.StartsWith("slbr://settings", StringComparison.Ordinal))
+            if (Address.StartsWith("slbr://settings"))
             {
                 if (WebView != null)
                     WebView?.Control?.Visibility = Visibility.Collapsed;
@@ -1862,7 +1851,7 @@ namespace SLBr.Pages
                             }
                             else
                             {
-                                if (Address.StartsWith("https:", StringComparison.Ordinal))
+                                if (Address.StartsWith("https:"))
                                     SetSiteInfo = "Secure";
                                 else
                                     SetSiteInfo = "Insecure";
@@ -1872,11 +1861,11 @@ namespace SLBr.Pages
                         else
                         {
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
-                            if (Address.StartsWith("file:", StringComparison.Ordinal))
+                            if (Address.StartsWith("file:"))
                                 SetSiteInfo = "File";
-                            else if (Address.StartsWith("slbr:", StringComparison.Ordinal))
+                            else if (Address.StartsWith("slbr:"))
                                 SetSiteInfo = "SLBr";
-                            else if (Address.StartsWith("chrome-extension:", StringComparison.Ordinal))
+                            else if (Address.StartsWith("chrome-extension:"))
                                 SetSiteInfo = "Extension";
                             else
                                 SetSiteInfo = "Protocol";
@@ -2166,7 +2155,7 @@ namespace SLBr.Pages
             SizeEmulatorRowSplitter2.Visibility = ActiveSizeEmulation ? Visibility.Collapsed : Visibility.Visible;
             ActiveSizeEmulation = !ActiveSizeEmulation;
         }
-        private void OpenAsPopupBrowser(string Url)
+        private static void OpenAsPopupBrowser(string Url)
         {
             new PopupBrowser(Url, -1, -1).Show();
         }
@@ -2302,7 +2291,7 @@ namespace SLBr.Pages
                 }
                 if (WebView.Engine == WebEngineType.Trident)
                 {
-                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Inspector Unavailable", "Trident webview does not support an inspector tool.", "\uec7a");
+                    InformationDialogWindow InfoWindow = new("Error", "Inspector Unavailable", "Trident webview does not support an inspector tool.", "\uec7a");
                     InfoWindow.Topmost = true;
                     InfoWindow.ShowDialog();
                     return;
@@ -2453,7 +2442,7 @@ namespace SLBr.Pages
             }
             else if (!IsLoading)
             {
-                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Prompt", "Add Favourite",
+                DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Favourite",
                     new List<InputField>
                     {
                         new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Title },
@@ -2504,7 +2493,7 @@ namespace SLBr.Pages
             }
         }
 
-        int FavouriteExists(string Url)
+        static int FavouriteExists(string Url)
         {
             if (App.Instance.Favourites.Count == 0)
                 return -1;
@@ -2585,8 +2574,8 @@ namespace SLBr.Pages
                 case 0:
                     IEnumerable<List<string>> GBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
 
-                    TranslatedTexts = new List<string>();
-                    List<Task<List<string>>> GBatchTasks = new();
+                    TranslatedTexts = [];
+                    List<Task<List<string>>> GBatchTasks = [];
 
                     foreach (List<string> Batch in GBatches)
                     {
@@ -2619,14 +2608,14 @@ namespace SLBr.Pages
                 case 1:
                     IEnumerable<List<string>> MBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
 
-                    TranslatedTexts = new List<string>();
-                    List<Task<List<string>>> MBatchTasks = new();
+                    TranslatedTexts = [];
+                    List<Task<List<string>>> MBatchTasks = [];
 
                     foreach (List<string> Batch in MBatches)
                     {
                         MBatchTasks.Add(Task.Run(async () =>
                         {
-                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, string.Format(SECRETS.MICROSOFT_TRANSLATE_ENDPOINT, TargetLanguage)))
+                            using (HttpRequestMessage TranslateRequest = new(HttpMethod.Post, string.Format(SECRETS.MICROSOFT_TRANSLATE_ENDPOINT, TargetLanguage)))
                             {
                                 TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
                                 TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(Batch), Encoding.UTF8, "application/json");
@@ -2634,7 +2623,7 @@ namespace SLBr.Pages
                                 if (!Response.IsSuccessStatusCode)
                                     return new List<string>();
                                 string Data = await Response.Content.ReadAsStringAsync();
-                                List<string> Result = new List<string>();
+                                List<string> Result = [];
                                 try
                                 {
                                     using JsonDocument Document = JsonDocument.Parse(Data);
@@ -2667,14 +2656,14 @@ namespace SLBr.Pages
                     string SourceLanguage = "";
                     try
                     {
-                        using (HttpRequestMessage LanguageDetectRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(SECRETS.YANDEX_LANGUAGE_DETECTION_ENDPOINT, $"{Utils.GenerateSID()}-0-0", HttpUtility.UrlEncode(AllTexts.First()))))
+                        using (HttpRequestMessage LanguageDetectRequest = new(HttpMethod.Get, string.Format(SECRETS.YANDEX_LANGUAGE_DETECTION_ENDPOINT, $"{Utils.GenerateSID()}-0-0", HttpUtility.UrlEncode(AllTexts.First()))))
                         {
                             var Response = await App.MiniHttpClient.SendAsync(LanguageDetectRequest);
                             if (!Response.IsSuccessStatusCode)
                             {
                                 Dispatcher.BeginInvoke(() => {
                                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                                    InformationDialogWindow InfoWindow = new("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
                                     InfoWindow.Topmost = true;
                                     InfoWindow.ShowDialog();
                                 });
@@ -2690,7 +2679,7 @@ namespace SLBr.Pages
                     {
                         Dispatcher.BeginInvoke(() => {
                             TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                            InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                            InformationDialogWindow InfoWindow = new("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
                             InfoWindow.Topmost = true;
                             InfoWindow.ShowDialog();
                         });
@@ -2700,8 +2689,8 @@ namespace SLBr.Pages
 
                     TargetLanguage = TargetLanguage.Split('-').First();
                     string YandexUserAgent = UserAgentGenerator.BuildUserAgentFromProduct("YaBrowser/25.2.0.0");
-                    TranslatedTexts = new List<string>();
-                    List<Task<List<string>>> BatchTasks = new();
+                    TranslatedTexts = [];
+                    List<Task<List<string>>> BatchTasks = [];
 
                     foreach (List<string> Batch in Batches)
                     {
@@ -2709,7 +2698,7 @@ namespace SLBr.Pages
                         {
                             List<string> EncodedTexts = Batch.Select(t => "text=" + HttpUtility.UrlEncode(t)).ToList();
                             string TextParameters = string.Join("&", EncodedTexts);
-                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Get, string.Format(SECRETS.YANDEX_ENDPOINT, $"{Utils.GenerateSID()}-0-0", $"{SourceLanguage}-{TargetLanguage}", TextParameters)))
+                            using (HttpRequestMessage TranslateRequest = new(HttpMethod.Get, string.Format(SECRETS.YANDEX_ENDPOINT, $"{Utils.GenerateSID()}-0-0", $"{SourceLanguage}-{TargetLanguage}", TextParameters)))
                             {
                                 TranslateRequest.Headers.Add("User-Agent", YandexUserAgent);
                                 try
@@ -2746,14 +2735,14 @@ namespace SLBr.Pages
 
                     IEnumerable<List<string>> LBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
 
-                    TranslatedTexts = new List<string>();
-                    List<Task<List<string>>> LBatchTasks = new();
+                    TranslatedTexts = [];
+                    List<Task<List<string>>> LBatchTasks = [];
 
                     foreach (List<string> Batch in LBatches)
                     {
                         LBatchTasks.Add(Task.Run(async () =>
                         {
-                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.LINGVANEX_ENDPOINT))
+                            using (HttpRequestMessage TranslateRequest = new(HttpMethod.Post, SECRETS.LINGVANEX_ENDPOINT))
                             {
                                 TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
                                 TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new
@@ -2765,7 +2754,7 @@ namespace SLBr.Pages
                                 if (!Response.IsSuccessStatusCode)
                                     return new List<string>();
                                 string Data = await Response.Content.ReadAsStringAsync();
-                                List<string> Result = new List<string>();
+                                List<string> Result = [];
 
                                 try
                                 {
@@ -2791,7 +2780,7 @@ namespace SLBr.Pages
             {
                 Dispatcher.BeginInvoke(() => {
                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
+                    InformationDialogWindow InfoWindow = new("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
                     InfoWindow.Topmost = true;
                     InfoWindow.ShowDialog();
                 });
@@ -2822,7 +2811,7 @@ namespace SLBr.Pages
         public void OmniBoxEnter()
         {
             string Url = Utils.FilterUrlForBrowser(OmniBox.Text, (OmniBoxOverrideSearch ?? App.Instance.DefaultSearchProvider).SearchUrl);
-            if (Url.StartsWith("javascript:", StringComparison.Ordinal))
+            if (Url.StartsWith("javascript:"))
             {
                 WebView?.ExecuteScript(Url.Substring(11));
                 OmniBox.Text = OmniBox.Tag.ToString();
@@ -2858,7 +2847,7 @@ namespace SLBr.Pages
             }
         }
 
-        private bool IsIgnorableKey(Key key)
+        private static bool IsIgnorableKey(Key key)
         {
             if (key >= Key.F1 && key <= Key.F24)
                 return true;
@@ -2963,13 +2952,13 @@ namespace SLBr.Pages
             SiteInformationIcon.FontFamily = App.Instance.IconFont;
             if (OmniBoxOverrideSearch == null)
             {
-                if (OmniBox.Text.StartsWith("search:", StringComparison.Ordinal))
+                if (OmniBox.Text.StartsWith("search:"))
                 {
                     SiteInformationIcon.Text = "\xE721";
                     SiteInformationText.Text = "Search";
                     SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text.Substring(7).Trim()}";
                 }
-                else if (OmniBox.Text.StartsWith("domain:", StringComparison.Ordinal))
+                else if (OmniBox.Text.StartsWith("domain:"))
                 {
                     SiteInformationIcon.Text = "\xE71B";
                     SiteInformationText.Text = "Address";
@@ -3071,7 +3060,7 @@ namespace SLBr.Pages
             OmniBoxOverlayText.Inlines.Clear();
             OmniBoxOverlayText.Visibility = Visibility.Visible;
             OmniBox.Opacity = 0;
-            if (OmniBox.Tag is not string Url || string.IsNullOrWhiteSpace(Url) || Url.StartsWith("slbr://newtab", StringComparison.Ordinal))
+            if (OmniBox.Tag is not string Url || string.IsNullOrWhiteSpace(Url) || Url.StartsWith("slbr://newtab"))
             {
                 OmniBoxOverlayText.Text = string.Empty;
                 return;
@@ -3106,12 +3095,16 @@ namespace SLBr.Pages
                 case "file":
                     OmniBoxOverlayText.Inlines.Add(new Run(TruncateURL ? Url[8..] : Url) { Foreground = GrayBrush });
                     return;
+                case "gopher":
+                case "gemini":
+                    OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = GrayBrush });
+                    break;
                 default:
                     OmniBoxOverlayText.Inlines.Add(new Run(Url) { Foreground = GrayBrush });
                     return;
             }
 
-            int Protocol = _Span.IndexOf("://", StringComparison.Ordinal);
+            int Protocol = _Span.IndexOf("://");
             if (Protocol >= 0)
             {
                 OmniBoxOverlayText.Inlines.Add(new Run("://") { Foreground = GrayBrush });
@@ -3119,13 +3112,13 @@ namespace SLBr.Pages
             }
 
             //www.com, m.com
-            if (_Span.StartsWith("www.", StringComparison.Ordinal) && Utils.CanRemoveTrivialSubdomain(_Span[4..]))
+            if (_Span.StartsWith("www.") && Utils.CanRemoveTrivialSubdomain(_Span[4..]))
             {
                 if (!TruncateURL)
                     OmniBoxOverlayText.Inlines.Add(new Run("www.") { Foreground = GrayBrush });
                 _Span = _Span[4..];
             }
-            else if (_Span.StartsWith("m.", StringComparison.Ordinal) && Utils.CanRemoveTrivialSubdomain(_Span[2..]))
+            else if (_Span.StartsWith("m.") && Utils.CanRemoveTrivialSubdomain(_Span[2..]))
             {
                 if (!TruncateURL)
                     OmniBoxOverlayText.Inlines.Add(new Run("m.") { Foreground = GrayBrush });
@@ -3168,6 +3161,7 @@ namespace SLBr.Pages
                     bool Matched = false;
                     foreach (string Confusable in App.URLConfusables)
                     {
+                        //WARNING: Do not remove StringComparison.Ordinal
                         if (HostIndex + Confusable.Length <= Host.Length && Host.Slice(HostIndex, Confusable.Length).Equals(Confusable.AsSpan(), StringComparison.Ordinal))
                         {
                             if (IsNormal)
@@ -3223,10 +3217,10 @@ namespace SLBr.Pages
         Size MaximizedSize = Size.Empty;
         private void CoreContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            Size NewSize = new Size(CoreContainerSizeEmulator.ActualWidth, CoreContainerSizeEmulator.ActualHeight);
+            Size NewSize = new(CoreContainerSizeEmulator.ActualWidth, CoreContainerSizeEmulator.ActualHeight);
             if (MaximizedSize == Size.Empty)
                 MaximizedSize = NewSize;
-            Size Percentage = new Size(NewSize.Width / MaximizedSize.Width, NewSize.Height / MaximizedSize.Height);
+            Size Percentage = new(NewSize.Width / MaximizedSize.Width, NewSize.Height / MaximizedSize.Height);
 
             SizeEmulatorColumn1.MaxWidth = 900 * Percentage.Width;
             SizeEmulatorColumn2.MaxWidth = 900 * Percentage.Width;
@@ -3246,7 +3240,7 @@ namespace SLBr.Pages
             QRButton.Visibility = App.Instance.AllowQRButton ? Visibility.Visible : Visibility.Collapsed;
             WebEngineButton.Visibility = App.Instance.AllowWebEngineButton ? Visibility.Visible : Visibility.Collapsed;
             if (!IsLoading)
-                TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton && !Address.StartsWith("slbr:", StringComparison.Ordinal) ? Visibility.Visible : Visibility.Collapsed;
+                TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton && !Address.StartsWith("slbr:") ? Visibility.Visible : Visibility.Collapsed;
 
             if (WebView != null && WebView.IsBrowserInitialized)
             {
@@ -3258,7 +3252,7 @@ namespace SLBr.Pages
             _NewsFeed?.ApplyTheme(_Theme);
 
             if (App.Instance.ShowExtensionButton == 0)
-                ExtensionsButton.Visibility = App.Instance.Extensions.Any() ? Visibility.Visible : Visibility.Collapsed;
+                ExtensionsButton.Visibility = App.Instance.Extensions.Count != 0 ? Visibility.Visible : Visibility.Collapsed;
             else if (App.Instance.ShowExtensionButton == 1)
                 ExtensionsButton.Visibility = Visibility.Visible;
             else
@@ -3351,10 +3345,10 @@ namespace SLBr.Pages
 
         private void InspectorDockDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Action(Actions.SetSideBarDock, null, (3 - SideBarDockDropdown.SelectedIndex).ToString());
+            Action(Actions.SetSideBarDock, (3 - SideBarDockDropdown.SelectedIndex).ToString());
         }
 
-        private ObservableCollection<OmniSuggestion> Suggestions = new ObservableCollection<OmniSuggestion>();
+        private ObservableCollection<OmniSuggestion> Suggestions = [];
         private DispatcherTimer OmniBoxFastTimer;
         private DispatcherTimer OmniBoxSmartTimer;
         bool OmniBoxIsDropdown = false;
@@ -3435,7 +3429,7 @@ namespace SLBr.Pages
             var Token = SmartSuggestionCancellation.Token;
             SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
 
-            OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type, Color, Token);
+            OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type, Color);
             if (!Token.IsCancellationRequested)
             {
                 Suggestions.RemoveAt(0);
@@ -3494,7 +3488,7 @@ namespace SLBr.Pages
             if (_Extension == null)
                 return;
             ExtensionWindow = new Window();
-            ChromiumWebBrowser ExtensionBrowser = new ChromiumWebBrowser(_Extension.Popup);
+            ChromiumWebBrowser ExtensionBrowser = new(_Extension.Popup);
             ExtensionBrowser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
             HwndSource _HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(ExtensionWindow).EnsureHandle());
             _HwndSource.AddHook(WndProc);

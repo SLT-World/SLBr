@@ -27,7 +27,7 @@ namespace SLBr
             IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
             foreach (string Flag in Args)
             {
-                if (Flag.StartsWith("--user=", StringComparison.Ordinal))
+                if (Flag.StartsWith("--user="))
                 {
                     Username = Flag.Replace("--user=", string.Empty).Replace(" ", "-");
                     System.Windows.MessageBox.Show(File.ReadAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", Username, "Save.bin")).Contains("Performance<:>2").ToString());
@@ -37,9 +37,9 @@ namespace SLBr
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
             MinimizeMemory();
-            if (args.Length > 0 && args[0].StartsWith("--type=", StringComparison.Ordinal))
+            if (args.Length > 0 && args[0].StartsWith("--type="))
                 return SelfHost.Main(args);
-            else if (args.Length > 0 && args[0].StartsWith("--app=", StringComparison.Ordinal))
+            else if (args.Length > 0 && args[0].StartsWith("--app="))
             {
                 BackgroundWorker Worker = new BackgroundWorker();
                 Worker.DoWork += Worker_DoWork;

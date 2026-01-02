@@ -440,74 +440,37 @@ namespace SLBr
                         _Entry.FileName = Path.GetFileName(Item.FullPath);
                         if (!string.IsNullOrEmpty(_Entry.FileName))
                         {
-                            switch (_Entry.FileName.Split(".").Last())
+                            _Entry.Icon = _Entry.FileName.Split(".").Last() switch
                             {
-                                case "zip":
-                                case "rar":
-                                case "7z":
-                                case "tgz":
-                                case "gz"://.tar.gz
-                                    _Entry.Icon = "\uF012";
-                                    break;
-                                case "txt":
-                                    _Entry.Icon = "\uF000";
-                                    break;
-                                case "png":
-                                case "jpg":
-                                case "jpeg":
-                                case "avif":
-                                case "svg":
-                                case "webp":
-                                case "jfif":
-                                case "bmp":
-                                    _Entry.Icon = "\uE91B";
-                                    break;
-                                case "gif":
-                                    _Entry.Icon = "\uF4A9";
-                                    break;
-                                case "mp3":
-                                case "mp2":
-                                    _Entry.Icon = "\uEA69";
-                                    break;
-                                case "pdf":
-                                    _Entry.Icon = "\uEA90";
-                                    break;
+                                "zip" or "rar" or "7z" or "tgz" or "gz" =>
+                                    "\uF012",
 
-                                case "blend":
-                                case "obj":
-                                case "fbx":
-                                case "max":
-                                case "stl":
-                                case "x3d":
-                                case "3ds":
-                                case "dae":
-                                case "glb":
-                                case "gltf":
-                                case "ply":
-                                    _Entry.Icon = "\uF158";
-                                    break;
-                                case "mp4":
-                                case "avi":
-                                case "ogg":
-                                case "webm":
-                                case "mov":
-                                case "mpej":
-                                case "wmv":
-                                case "h264":
-                                case "mkv":
-                                    _Entry.Icon = "\uE786";
-                                    break;
-                                default:
-                                    _Entry.Icon = "\uE8A5";
-                                    break;
-                            }
+                                "txt" =>
+                                    "\uF000",
+
+                                "png" or "jpg" or "jpeg" or "avif" or "svg" or "webp" or "jfif" or "bmp" =>
+                                    "\uE91B",
+
+                                "gif" =>
+                                    "\uF4A9",
+
+                                "mp3" or "mp2" =>
+                                    "\uEA69",
+
+                                "pdf" =>
+                                    "\uEA90",
+
+                                "blend" or "obj" or "fbx" or "max" or "stl" or "x3d" or "3ds" or "dae" or "glb" or "gltf" or "ply" =>
+                                    "\uF158",
+
+                                "mp4" or "avi" or "ogg" or "webm" or "mov" or "mpej" or "wmv" or "h264" or "mkv" =>
+                                    "\uE786",
+
+                                _ => "\uE8A5",
+                            };
                             MainWindow Current = CurrentFocusedWindow();
                             if (Current != null)
-                            {
-                                Browser BrowserView = Current.Tabs[Current.TabsUI.SelectedIndex].Content;
-                                if (BrowserView != null)
-                                    BrowserView.OpenDownloadsButton.OpenPopup();
-                            }
+                                Current?.Tabs[Current.TabsUI.SelectedIndex].Content?.OpenDownloadsButton.OpenPopup();
                         }
                     }
                     _Entry.PercentComplete = (int)(Item.Progress * 100);
@@ -560,7 +523,7 @@ namespace SLBr
             });
         }
 
-        static string[] FileSizes = { "Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+        static readonly string[] FileSizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
         public static string FormatBytes(long Bytes, bool ContainSizes = true)
         {
             if (Bytes == 0)
@@ -577,10 +540,12 @@ namespace SLBr
             base.OnStartup(e);
             Instance = this;
             InitializeApp();
-            JumpList jumpList = new JumpList();
-            jumpList.ShowRecentCategory = true;
-            jumpList.ShowFrequentCategory = true;
-            JumpTask NewWindowTask = new JumpTask
+            JumpList jumpList = new()
+            {
+                ShowRecentCategory = true,
+                ShowFrequentCategory = true
+            };
+            JumpTask NewWindowTask = new()
             {
                 Title = "New window",
                 Description = "Open a new browser window",
@@ -608,7 +573,7 @@ namespace SLBr
                 var ExtensionsDirectory = Directory.GetDirectories(ExtensionsPath);
                 if (ExtensionsDirectory.Length != 0)
                 {
-                    List<Extension> _Extensions = new List<Extension>();
+                    List<Extension> _Extensions = [];
                     foreach (var ExtensionParentDirectory in ExtensionsDirectory)
                     {
                         try
@@ -621,7 +586,7 @@ namespace SLBr
                                 {
                                     JsonElement Manifest = JsonDocument.Parse(File.ReadAllText(ManifestFile)).RootElement;
 
-                                    Extension _Extension = new Extension() { ID = Path.GetFileName(ExtensionParentDirectory), Version = Manifest.GetProperty("version").ToString()/*, ManifestVersion = Manifest.GetProperty("manifest_version").ToString()*/ };
+                                    Extension _Extension = new() { ID = Path.GetFileName(ExtensionParentDirectory), Version = Manifest.GetProperty("version").ToString()/*, ManifestVersion = Manifest.GetProperty("manifest_version").ToString()*/ };
 
                                     if (Manifest.TryGetProperty("action", out JsonElement ExtensionAction))
                                     {
@@ -633,11 +598,11 @@ namespace SLBr
                                             _Extension.Icon = $"chrome-extension://{ExtensionID}/{firstIcon.Value.GetString()}";
                                         }*/
                                     }
-                                    List<string> VarsInMessages = new List<string>();
+                                    List<string> VarsInMessages = [];
                                     if (Manifest.TryGetProperty("name", out JsonElement ExtensionName))
                                     {
                                         string Name = ExtensionName.GetString();
-                                        if (Name.StartsWith("__MSG_", StringComparison.Ordinal))
+                                        if (Name.StartsWith("__MSG_"))
                                             VarsInMessages.Add($"Name<|>{Name}");
                                         else
                                             _Extension.Name = Name;
@@ -645,7 +610,7 @@ namespace SLBr
                                     if (Manifest.TryGetProperty("description", out JsonElement ExtensionDescription))
                                     {
                                         string Description = ExtensionDescription.GetString();
-                                        if (Description.StartsWith("__MSG_", StringComparison.Ordinal))
+                                        if (Description.StartsWith("__MSG_"))
                                             VarsInMessages.Add($"Description<|>{Description}");
                                         else
                                             _Extension.Description = Description;
@@ -671,12 +636,12 @@ namespace SLBr
                                             string[] Vars = Var.Split("<|>");
                                             if (Vars[0] == "Description")
                                             {
-                                                _Extension.Description = Messages.GetProperty(Vars[1].Remove(0, 5).Trim('_')).GetProperty("message").ToString();
+                                                _Extension.Description = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
                                                 break;
                                             }
                                             else if (Vars[0] == "Name")
                                             {
-                                                _Extension.Name = Messages.GetProperty(Vars[1].Remove(0, 5).Trim('_')).GetProperty("message").ToString();
+                                                _Extension.Name = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
                                                 break;
                                             }
                                         }
@@ -728,7 +693,7 @@ namespace SLBr
                 return "Program";
             else if (Utils.IsCode(Text))
                 return "Code";
-            else if (Text.StartsWith("file:///", StringComparison.Ordinal))
+            else if (Text.StartsWith("file:///"))
                 return "File";
             else if (Utils.IsUrl(Text))
                 return "Url";
@@ -748,7 +713,7 @@ namespace SLBr
                     if (!Match.TryGetProperty("context", out JsonElement context))
                         continue;
 
-                    List<string> Suggestions = new();
+                    List<string> Suggestions = [];
                     if (Match.TryGetProperty("replacements", out JsonElement replacements))
                     {
                         foreach (JsonElement repl in replacements.EnumerateArray())
@@ -767,15 +732,15 @@ namespace SLBr
 
         public static string GetMiniSearchType(string Text)
         {
-            if (Text.StartsWith("search:", StringComparison.Ordinal))
+            if (Text.StartsWith("search:"))
                 return "S";
-            else if (Text.StartsWith("domain:", StringComparison.Ordinal))
+            else if (Text.StartsWith("domain:"))
                 return "W";
             else if (Utils.IsProgramUrl(Text))
                 return "P";
             else if (Utils.IsCode(Text))
                 return "C";
-            else if (Text.StartsWith("file:///", StringComparison.Ordinal))
+            else if (Text.StartsWith("file:///"))
                 return "F";
             else if (Utils.IsUrl(Text))
                 return "W";
@@ -797,11 +762,10 @@ namespace SLBr
             return "None";
         }
 
-        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, string Type, SolidColorBrush Color, CancellationToken Token)
+        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, string Type, SolidColorBrush Color)
         {
-            OmniSuggestion Suggestion = new OmniSuggestion { Text = Text, Display = Text, Color = Color };
+            OmniSuggestion Suggestion = new() { Text = Text, Display = Text, Color = Color, Icon = "\xE721" };
 
-            Suggestion.Icon = "\xE721";
             switch (Type)
             {
                 case "Math":
@@ -871,7 +835,7 @@ namespace SLBr
                     try
                     {
                         string WeatherEndpoint = $"https://api.openweathermap.org/data/2.5/weather?lang=en&q={Location}&appid={SECRETS.WEATHER_API_KEY}&units=metric";
-                        using (HttpClient Client = new HttpClient())
+                        using (HttpClient Client = new())
                         {
                             HttpResponseMessage Response = Client.GetAsync(WeatherEndpoint).Result;
                             if (Response.IsSuccessStatusCode)
@@ -896,11 +860,11 @@ namespace SLBr
         public bool Background = false;
 
         public BitmapFrame Icon;
-        public static HttpClient MiniHttpClient = new HttpClient();
-        public static Random MiniRandom = new Random();
-        public static QREncoder MiniQREncoder = new QREncoder();
+        public static HttpClient MiniHttpClient = new();
+        public static Random MiniRandom = new();
+        public static QREncoder MiniQREncoder = new();
 
-        public List<IntPtr> WebView2DevTools = new List<IntPtr>();
+        public List<IntPtr> WebView2DevTools = [];
 
         private void InitializeApp()
         {
@@ -909,7 +873,7 @@ namespace SLBr
             string CommandLineUrl = string.Empty;
             foreach (string Flag in Args)
             {
-                if (Flag.StartsWith("--user=", StringComparison.Ordinal))
+                if (Flag.StartsWith("--user="))
                 {
                     Username = Flag.Replace("--user=", string.Empty).Replace(" ", "-");
                     if (Utils.IsEmptyOrWhiteSpace(Username))
@@ -932,7 +896,7 @@ namespace SLBr
                 }
                 else
                 {
-                    if (Flag.StartsWith("--", StringComparison.Ordinal))
+                    if (Flag.StartsWith("--"))
                         continue;
                     CommandLineUrl = Flag;
                 }
@@ -1103,51 +1067,39 @@ namespace SLBr
         public Theme GenerateTheme(Color BaseColor, string Name = "Temp")
         {
             double a = 1 - (0.299 * BaseColor.R + 0.587 * BaseColor.G + 0.114 * BaseColor.B) / 255;
-            Theme SiteTheme = null;
+            Theme SiteTheme;
             if (a < 0.4)
             {
-                SiteTheme = new Theme(Name, Themes[0]);
-                SiteTheme.FontColor = Colors.Black;
-                SiteTheme.DarkTitleBar = false;
-                SiteTheme.DarkWebPage = false;
+                SiteTheme = new Theme(Name, Themes[0])
+                {
+                    FontColor = Colors.Black,
+                    DarkTitleBar = false,
+                    DarkWebPage = false
+                };
             }
             else if (a < 0.7)
             {
-                SiteTheme = new Theme(Name, Themes[0]);
-                SiteTheme.FontColor = Colors.White;
-                SiteTheme.DarkTitleBar = false;
-                SiteTheme.DarkWebPage = false;
-                SiteTheme.SecondaryColor = Color.FromArgb(BaseColor.A,
-                    (byte)Math.Min(255, BaseColor.R * 0.95f),
-                    (byte)Math.Min(255, BaseColor.G * 0.95f),
-                    (byte)Math.Min(255, BaseColor.B * 0.95f));
-                SiteTheme.BorderColor = Color.FromArgb(BaseColor.A,
-                    (byte)Math.Min(255, BaseColor.R * 0.90f),
-                    (byte)Math.Min(255, BaseColor.G * 0.90f),
-                    (byte)Math.Min(255, BaseColor.B * 0.90f));
-                SiteTheme.GrayColor = Color.FromArgb(BaseColor.A,
-                    (byte)Math.Min(255, BaseColor.R * 0.75f),
-                    (byte)Math.Min(255, BaseColor.G * 0.75f),
-                    (byte)Math.Min(255, BaseColor.B * 0.75f));
+                SiteTheme = new Theme(Name, Themes[0])
+                {
+                    FontColor = Colors.White,
+                    DarkTitleBar = false,
+                    DarkWebPage = false,
+                    SecondaryColor = Color.FromArgb(BaseColor.A, (byte)Math.Min(255, BaseColor.R * 0.95f), (byte)Math.Min(255, BaseColor.G * 0.95f), (byte)Math.Min(255, BaseColor.B * 0.95f)),
+                    BorderColor = Color.FromArgb(BaseColor.A, (byte)Math.Min(255, BaseColor.R * 0.90f), (byte)Math.Min(255, BaseColor.G * 0.90f), (byte)Math.Min(255, BaseColor.B * 0.90f)),
+                    GrayColor = Color.FromArgb(BaseColor.A, (byte)Math.Min(255, BaseColor.R * 0.75f), (byte)Math.Min(255, BaseColor.G * 0.75f), (byte)Math.Min(255, BaseColor.B * 0.75f))
+                };
             }
             else
             {
-                SiteTheme = new Theme(Name, Themes[1]);
-                SiteTheme.FontColor = Colors.White;
-                SiteTheme.DarkTitleBar = true;
-                SiteTheme.DarkWebPage = true;
-                SiteTheme.SecondaryColor = Color.FromArgb(BaseColor.A,
-                    (byte)Math.Max(0, BaseColor.R * 1.25f),
-                    (byte)Math.Max(0, BaseColor.G * 1.25f),
-                    (byte)Math.Max(0, BaseColor.B * 1.25f));
-                SiteTheme.BorderColor = Color.FromArgb(BaseColor.A,
-                    (byte)Math.Max(0, BaseColor.R * 1.35f),
-                    (byte)Math.Max(0, BaseColor.G * 1.35f),
-                    (byte)Math.Max(0, BaseColor.B * 1.35f));
-                SiteTheme.GrayColor = Color.FromArgb(BaseColor.A,
-                    (byte)Math.Max(0, BaseColor.R * 1.95f),
-                    (byte)Math.Max(0, BaseColor.G * 1.95f),
-                    (byte)Math.Max(0, BaseColor.B * 1.95f));
+                SiteTheme = new Theme(Name, Themes[1])
+                {
+                    FontColor = Colors.White,
+                    DarkTitleBar = true,
+                    DarkWebPage = true,
+                    SecondaryColor = Color.FromArgb(BaseColor.A, (byte)Math.Max(0, BaseColor.R * 1.25f), (byte)Math.Max(0, BaseColor.G * 1.25f), (byte)Math.Max(0, BaseColor.B * 1.25f)),
+                    BorderColor = Color.FromArgb(BaseColor.A, (byte)Math.Max(0, BaseColor.R * 1.35f), (byte)Math.Max(0, BaseColor.G * 1.35f), (byte)Math.Max(0, BaseColor.B * 1.35f)),
+                    GrayColor = Color.FromArgb(BaseColor.A, (byte)Math.Max(0, BaseColor.R * 1.95f), (byte)Math.Max(0, BaseColor.G * 1.95f), (byte)Math.Max(0, BaseColor.B * 1.95f))
+                };
             }
             SiteTheme.PrimaryColor = BaseColor;
             return SiteTheme;
@@ -1169,7 +1121,7 @@ namespace SLBr
                 CheckUpdate();
             if (Environment.IsPrivilegedProcess)
             {
-                InformationDialogWindow InfoWindow = new InformationDialogWindow("Warning", "Elevated Privileges Detected", "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights.", "\ue7ba");
+                InformationDialogWindow InfoWindow = new("Warning", "Elevated Privileges Detected", "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights.", "\ue7ba");
                 InfoWindow.Topmost = true;
                 InfoWindow.ShowDialog();
             }
@@ -1177,14 +1129,14 @@ namespace SLBr
 
         public void CheckUpdate()
         {
-            using (WebClient _WebClient = new WebClient())
+            using (WebClient _WebClient = new())
             {
                 try
                 {
                     _WebClient.Headers.Add("User-Agent", UserAgentGenerator.BuildChromeBrand());
                     _WebClient.Headers.Add("Accept", "*/*");
                     string NewVersion = JsonDocument.Parse(_WebClient.DownloadString("https://api.github.com/repos/slt-world/slbr/releases/latest")).RootElement.GetProperty("tag_name").ToString();
-                    if (!NewVersion.StartsWith(ReleaseVersion, StringComparison.Ordinal))
+                    if (!NewVersion.StartsWith(ReleaseVersion))
                     {
                         UpdateAvailable = NewVersion;
                         foreach (MainWindow _Window in AllWindows)
@@ -1195,7 +1147,7 @@ namespace SLBr
                                 _Browser.NewUpdateMenuSeparator.Visibility = Visibility.Visible;
                             }
                         }
-                        InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
+                        InformationDialogWindow InfoWindow = new("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
                         InfoWindow.Topmost = true;
                         if (InfoWindow.ShowDialog() == true)
                             Update();
@@ -1405,14 +1357,10 @@ Inner Exception: ```{7} ```";
             foreach (MainWindow _Window in AllWindows)
                 _Window.UpdateUnloadTimer();
         }
-        public void OpenFileExplorer(string Url)
-        {
-            Process.Start(new ProcessStartInfo { Arguments = $"/select, \"{Url}\"", FileName = "explorer.exe" });
-        }
 
         public void SwitchUserPopup()
         {
-            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Prompt", "Switch Profile", new List<InputField> { new InputField { Name = "Enter profile username to switch to:", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B");
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Switch Profile", new List<InputField> { new InputField { Name = "Enter profile username to switch to:", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B");
             _DynamicDialogWindow.Topmost = true;
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
@@ -1455,10 +1403,10 @@ Inner Exception: ```{7} ```";
             catch { }
         }
 
-        public ObservableCollection<ActionStorage> Languages = new ObservableCollection<ActionStorage>();
+        public ObservableCollection<ActionStorage> Languages = [];
         public ActionStorage Locale;
 
-        public Dictionary<string, string> AllLocales = new Dictionary<string, string>
+        public Dictionary<string, string> AllLocales = new()
         {
             { "af", "Afrikaans" },
             { "af-ZA", "Afrikaans (South Africa)" },
@@ -1579,17 +1527,17 @@ Inner Exception: ```{7} ```";
         };
         public List<string> LocaleNames = null;
 
-        public string GetLocaleIcon(string ISO)
+        public static string GetLocaleIcon(string ISO)
         {
-            if (ISO.StartsWith("zh-TW", StringComparison.Ordinal))
+            if (ISO.StartsWith("zh-TW"))
                 return "\xe981";
-            else if (ISO.StartsWith("zh", StringComparison.Ordinal))
+            else if (ISO.StartsWith("zh"))
                 return "\xE982";
-            else if (ISO.StartsWith("ja", StringComparison.Ordinal))
+            else if (ISO.StartsWith("ja"))
                 return "\xe985";
-            else if (ISO.StartsWith("ko", StringComparison.Ordinal))
+            else if (ISO.StartsWith("ko"))
                 return "\xe97d";
-            else if (ISO.StartsWith("en", StringComparison.Ordinal))
+            else if (ISO.StartsWith("en"))
                 return "\xe97e";
             return "\xf2b7";
         }
@@ -1634,21 +1582,21 @@ Inner Exception: ```{7} ```";
             {
                 for (int i = 0; i < SearchCount; i++)
                 {
-                    SearchProvider _SearchProvider = new SearchProvider();
+                    SearchProvider _SearchProvider = new();
                     var Values = SearchSave.Get($"{i}").Split("<#>");
                     if (Values.Length != 3)
                     {
-                        DefaultSearchProvider = new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
-                        SearchEngines = new List<SearchProvider>
-                        {
+                        DefaultSearchProvider = new() { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
+                        SearchEngines =
+                        [
                             DefaultSearchProvider,
-                            new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
-                            new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?q={0}&type=list" },
-                            new SearchProvider { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
-                            new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
-                            new SearchProvider { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
-                            new SearchProvider { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
-                        };
+                            new() { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
+                            new() { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?q={0}&type=list" },
+                            new() { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
+                            new() { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
+                            new() { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
+                            new() { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
+                        ];
                         break;
                     }
                     else
@@ -1664,8 +1612,8 @@ Inner Exception: ```{7} ```";
             else
             {
                 DefaultSearchProvider = new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
-                SearchEngines = new List<SearchProvider>
-                {
+                SearchEngines =
+                [
                     DefaultSearchProvider,
                     new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
                     new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" },
@@ -1673,13 +1621,10 @@ Inner Exception: ```{7} ```";
                     new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
                     new SearchProvider { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
                     new SearchProvider { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
-                };
+                ];
             }
             string SearchEngineName = GlobalSave.Get("SearchEngine", "Google");
-            DefaultSearchProvider = SearchEngines.Find(i => i.Name == SearchEngineName);
-            if (DefaultSearchProvider == null)
-                DefaultSearchProvider = SearchEngines.Find(i => i.SearchUrl.Contains("google.com", StringComparison.Ordinal));
-
+            DefaultSearchProvider = SearchEngines.Find(i => i.Name == SearchEngineName) ?? SearchEngines.Find(i => i.SearchUrl.Contains("google.com"));
             int AllowListCount = AllowListSave.GetInt("Count", -1);
             if (AllowListCount != -1)
             {
@@ -1860,7 +1805,7 @@ Inner Exception: ```{7} ```";
             {
                 foreach (Saving TabsSave in WindowsSaves)
                 {
-                    MainWindow _Window = new MainWindow();
+                    MainWindow _Window = new();
                     if (Background)
                     {
                         _Window.WindowState = WindowState.Minimized;
@@ -1912,7 +1857,7 @@ Inner Exception: ```{7} ```";
             MainWindow CurrentWindow = CurrentFocusedWindow();
             if (ForceClose && !CurrentWindow.IsFullscreen)
                 return;
-            CurrentWindow.Fullscreen(ForceClose ? false : !CurrentWindow.IsFullscreen);
+            CurrentWindow.Fullscreen(!ForceClose && !CurrentWindow.IsFullscreen);
         }
         public void DevTools(string Id = "") =>
             CurrentFocusedWindow().DevTools(Id);
@@ -1922,14 +1867,14 @@ Inner Exception: ```{7} ```";
             CurrentFocusedWindow().Screenshot();
         public void NewWindow()
         {
-            MainWindow _Window = new MainWindow();
+            MainWindow _Window = new();
             _Window.Show();
             _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
             _Window.TabsUI.Visibility = Visibility.Visible;
         }
 
         //TODO: Automatically fetch & update blocklists from online sources
-        public static FastHashSet<string> FailedScripts = new();
+        public static FastHashSet<string> FailedScripts = [];
         public static readonly string[] BlockedAdPatterns = ["ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
                         "googleadservices.com", "doubleclick.net", "google-analytics.com",
                         "syndicatedsearch.goog", "*.doubleclick.net", "*.g.doubleclick.net",
@@ -2075,7 +2020,7 @@ Inner Exception: ```{7} ```";
             "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
             "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com"];
 
-        public static readonly string[] HasInLink = {
+        public static readonly string[] HasInLink = [
             //https://github.com/the-advoid/ad-void/blob/main/AdVoid.Full.txt
             //https://github.com/hoshsadiq/adblock-nocoin-list/blob/master/nocoin.txt
             "/ads.js", "/ads.min.js", "/ad.js", "/ad.min.js", "/pagead.js",
@@ -2099,11 +2044,8 @@ Inner Exception: ```{7} ```";
             "admanager.js", "usync.js", "moneybid.js", "miner.js", "prebid",
             "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
             "google.com/ads", "play.google.com/log"*//*, "youtube.com/ptracking", "youtube.com/pagead/adview", "youtube.com/api/stats/ads", "youtube.com/pagead/interaction",*/
-        };
-        public static readonly Regex HasInLinkRegex = new Regex(
-            string.Join("|", HasInLink.Select(Regex.Escape)),
-            RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase
-        );
+        ];
+        public static readonly Regex HasInLinkRegex = new(string.Join("|", HasInLink.Select(Regex.Escape)),RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
         /*public static readonly Trie MinersFiles = new Trie {
          //https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
             "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",
@@ -2117,7 +2059,7 @@ Inner Exception: ```{7} ```";
             //https://github.com/hoshsadiq/adblock-nocoin-list/blob/master/hosts.txt
             "jsecoin.com", "crypto-loot.com", "minerad.com"
         };*/
-        public static readonly DomainList Ads = new DomainList {
+        public static readonly DomainList Ads = [
             "ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
 
             "syndicatedsearch.goog", "*.doubleclick.net", "*.g.doubleclick.net",
@@ -2197,8 +2139,8 @@ Inner Exception: ```{7} ```";
 
             "h.seznam.cz", "d.seznam.cz", "ssp.seznam.cz",
             "cdn.performax.cz", "dale.performax.cz", "chip.performax.cz"
-        };
-        public static readonly DomainList Analytics = new DomainList { "ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "*.google-analytics.com",
+        ];
+        public static readonly DomainList Analytics = [ "ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "*.google-analytics.com",
             "analytics.google.com", "*.googleanalytics.com", "*.admobclick.com", "firebaselogging-pa.googleapis.com",
             "sp.ecosia.org",
             "analytics.facebook.com", "pixel.facebook.com",
@@ -2293,7 +2235,7 @@ Inner Exception: ```{7} ```";
             "collect.mopinion.com", "pb-server.ezoic.com",
             "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
             "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com"
-        };
+        ];
 
         public WebRiskHandler _WebRiskHandler;
 
@@ -2340,7 +2282,7 @@ Inner Exception: ```{7} ```";
 
             string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
 
-            WebViewSettings Settings = new WebViewSettings();
+            WebViewSettings Settings = new();
             Settings.RegisterProtocol("gemini", WebViewManager.GeminiHandler);
             Settings.RegisterProtocol("gopher", WebViewManager.GopherHandler);
             Settings.RegisterProtocol("slbr", WebViewManager.SLBrHandler);
@@ -2436,48 +2378,9 @@ Inner Exception: ```{7} ```";
                 }
         #endif*/
 
-        public string GenerateCannotConnect(string Url, int ErrorCode, string ErrorText)
+        public static string GenerateCannotConnect(string Url, int ErrorCode, string ErrorText)
         {
-            string Host = Utils.Host(Url);
-            string HTML = Cannot_Connect_Error.Replace("{Site}", Host).Replace("{Error}", ErrorText);
-            switch (ErrorCode)
-            {
-                /*case CefErrorCode.ConnectionTimedOut:
-                    HTML = HTML.Replace("{Description}", $"{Host} took too long to respond.");
-                    break;
-                case CefErrorCode.ConnectionReset:
-                    HTML = HTML.Replace("{Description}", $"The connection was reset.");
-                    break;
-                case CefErrorCode.ConnectionFailed:
-                    HTML = HTML.Replace("{Description}", $"The connection failed.");
-                    break;
-                case CefErrorCode.ConnectionRefused:
-                    HTML = HTML.Replace("{Description}", $"{Host} refused to connect.");
-                    break;
-                case CefErrorCode.ConnectionClosed:
-                    HTML = HTML.Replace("{Description}", $"{Host} unexpectedly closed the connection.");
-                    break;
-                case CefErrorCode.InternetDisconnected:
-                    HTML = HTML.Replace("{Description}", $"Internet was disconnected.");
-                    break;
-                case CefErrorCode.NameNotResolved:
-                    HTML = HTML.Replace("{Description}", $"The URL entered could not be resolved.");
-                    break;
-                case CefErrorCode.NetworkChanged:
-                    HTML = HTML.Replace("{Description}", $"{Host} took too long to respond.");
-                    break;
-                case CefErrorCode.CertInvalid:
-                case CefErrorCode.CertDateInvalid:
-                case CefErrorCode.CertAuthorityInvalid:
-                case CefErrorCode.CertCommonNameInvalid:
-                    HTML = HTML.Replace("{Description}", $"The connection to {Host} is not private.");
-                    break;*/
-                //TODO
-                default:
-                    HTML = HTML.Replace("{Description}", $"Error Code: {ErrorCode}");
-                    break;
-            }
-            return HTML;
+            return Cannot_Connect_Error.Replace("{Site}", Utils.Host(Url)).Replace("{Error}", ErrorText).Replace("{Description}", $"Error Code: {ErrorCode}");
         }
 
         public const string Cannot_Connect_Error = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
@@ -2920,7 +2823,7 @@ Inner Exception: ```{7} ```";
             Settings.AddFlag("disable-component-extensions-with-background-pages");
         }
 
-        private void SetSecurityFlags(WebViewSettings Settings)
+        private static void SetSecurityFlags(WebViewSettings Settings)
         {
             Settings.AddFlag("unsafely-disable-devtools-self-xss-warnings");
             Settings.AddFlag("disallow-doc-written-script-loads");
@@ -3132,7 +3035,7 @@ Inner Exception: ```{7} ```";
             Settings.JavaScriptFlags = JsFlags;
         }
 
-        private void SetEdgeFlags(WebViewSettings Settings)
+        private static void SetEdgeFlags(WebViewSettings Settings)
         {
             // Does this actually work? Disabling msSmartScreenProtection in --disable-features does seem to work
             //msLocalSpellcheck,msFreezeAdFramesImmediately,msEdgeAdaptiveCPUThrottling
@@ -3191,7 +3094,7 @@ Inner Exception: ```{7} ```";
                     }
                 }
             }
-            InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", $"Settings", "All browsing data has been cleared.", "\ue713");
+            InformationDialogWindow InfoWindow = new("Information", $"Settings", "All browsing data has been cleared.", "\ue713");
             InfoWindow.Topmost = true;
             InfoWindow.ShowDialog();
         }
@@ -3217,7 +3120,7 @@ Inner Exception: ```{7} ```";
             SearchSave.Save();
 
             AllowListSave.Clear();
-            AllowListSave.Set("Count", AdBlockAllowList.AllDomains.Count().ToString(), false);
+            AllowListSave.Set("Count", AdBlockAllowList.AllDomains.Count.ToString(), false);
             int DomainIndex = 0;
             foreach (string Domain in AdBlockAllowList.AllDomains)
             {
@@ -3302,7 +3205,7 @@ Inner Exception: ```{7} ```";
                             string GIconUrl = "https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false);
                             /*if (FaviconCache.TryGetValue(GIconUrl, out BitmapImage GCachedImage))
                                 return GCachedImage;*/
-                            BitmapImage _GImage = new BitmapImage(new Uri(GIconUrl));
+                            BitmapImage _GImage = new(new Uri(GIconUrl));
                             if (_GImage.CanFreeze)
                                 _GImage.Freeze();
                             //FaviconCache[GIconUrl] = _GImage;
@@ -3311,7 +3214,7 @@ Inner Exception: ```{7} ```";
                             string YIconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url);
                             /*if (FaviconCache.TryGetValue(YIconUrl, out BitmapImage YCachedImage))
                                 return YCachedImage;*/
-                            BitmapImage _YImage = new BitmapImage(new Uri(YIconUrl));
+                            BitmapImage _YImage = new(new Uri(YIconUrl));
                             if (_YImage.CanFreeze)
                                 _YImage.Freeze();
                             //FaviconCache[YIconUrl] = _YImage;
@@ -3320,7 +3223,7 @@ Inner Exception: ```{7} ```";
                             string DIconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico";
                             /*if (FaviconCache.TryGetValue(DIconUrl, out BitmapImage DCachedImage))
                                 return DCachedImage;*/
-                            BitmapImage _DImage = new BitmapImage(new Uri(DIconUrl));
+                            BitmapImage _DImage = new(new Uri(DIconUrl));
                             if (_DImage.CanFreeze)
                                 _DImage.Freeze();
                             //FaviconCache[DIconUrl] = _DImage;
@@ -3329,18 +3232,18 @@ Inner Exception: ```{7} ```";
                             string AIconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url);
                             /*if (FaviconCache.TryGetValue(AIconUrl, out BitmapImage ACachedImage))
                                 return ACachedImage;*/
-                            BitmapImage _AImage = new BitmapImage(new Uri(AIconUrl));
+                            BitmapImage _AImage = new(new Uri(AIconUrl));
                             if (_AImage.CanFreeze)
                                 _AImage.Freeze();
                             //FaviconCache[AIconUrl] = _AImage;
                             return _AImage;
                     }
                 }
-                else if (Url.StartsWith("slbr://settings", StringComparison.Ordinal))
+                else if (Url.StartsWith("slbr://settings"))
                     return SettingsTabIcon;
-                else if (Url.StartsWith("slbr://history", StringComparison.Ordinal))
+                else if (Url.StartsWith("slbr://history"))
                     return HistoryTabIcon;
-                else if (Url.StartsWith("slbr://downloads", StringComparison.Ordinal))
+                else if (Url.StartsWith("slbr://downloads"))
                     return DownloadsTabIcon;
                 return IsPrivate ? PrivateIcon : TabIcon;
             }
@@ -3361,23 +3264,16 @@ Inner Exception: ```{7} ```";
         }*/
         public static RenderTargetBitmap GenerateProfileIcon(string BaseIconPath, string Initial, int Size = 64)//,ProfileIconStyle IconStyle = ProfileIconStyle.Default
         {
-            BitmapImage BaseBitmap = new BitmapImage(new Uri(BaseIconPath));
-            var BaseImage = new Image
-            {
-                Source = BaseBitmap,
-                Width = Size,
-                Height = Size
-            };
-
-            DrawingVisual Visual = new DrawingVisual();
+            BitmapImage BaseBitmap = new(new Uri(BaseIconPath));
+            DrawingVisual Visual = new();
             using (var Context = Visual.RenderOpen())
             {
-                Context.DrawImage(BaseBitmap, new Rect(0, 0, Size, Size));
+                Context.DrawImage(BaseBitmap, new(0, 0, Size, Size));
 
                 int BadgeSize = Size / 2;
-                SolidColorBrush BadgeColor = new SolidColorBrush(Color.FromRgb((byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255)));
-                Rect BadgeRect = new Rect(Size - BadgeSize, Size - BadgeSize, BadgeSize, BadgeSize);
-                Point BadgeCenter = new Point(BadgeRect.X + BadgeSize / 2, BadgeRect.Y + BadgeSize / 2);
+                SolidColorBrush BadgeColor = new(Color.FromRgb((byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255)));
+                Rect BadgeRect = new(Size - BadgeSize, Size - BadgeSize, BadgeSize, BadgeSize);
+                Point BadgeCenter = new(BadgeRect.X + BadgeSize / 2, BadgeRect.Y + BadgeSize / 2);
                 Context.DrawEllipse(BadgeColor, null, BadgeCenter, BadgeSize / 2, BadgeSize / 2);
                 /*switch (IconStyle)
                 {
@@ -3395,7 +3291,7 @@ Inner Exception: ```{7} ```";
                         break;
                 }*/
 
-                FormattedText FormattedText = new FormattedText(
+                FormattedText FormattedText = new(
                     Initial,
                     CultureInfo.InvariantCulture,
                     FlowDirection.LeftToRight,
@@ -3413,20 +3309,20 @@ Inner Exception: ```{7} ```";
                 };
                 Context.DrawText(FormattedText, Location);*/
 
-                Point Location = new Point(BadgeRect.X + (BadgeSize - FormattedText.Width) / 2, BadgeRect.Y + (BadgeSize - FormattedText.Height) / 2);
+                Point Location = new(BadgeRect.X + (BadgeSize - FormattedText.Width) / 2, BadgeRect.Y + (BadgeSize - FormattedText.Height) / 2);
                 Context.DrawText(FormattedText, Location);
             }
 
-            RenderTargetBitmap Bitmap = new RenderTargetBitmap(Size, Size, 96, 96, PixelFormats.Pbgra32);
+            RenderTargetBitmap Bitmap = new(Size, Size, 96, 96, PixelFormats.Pbgra32);
             Bitmap.Render(Visual);
             if (Bitmap.CanFreeze)
                 Bitmap.Freeze();
             return Bitmap;
         }
 
-        private static readonly Dictionary<string, BitmapImage?> FaviconCache = new();
-        private static readonly Dictionary<string, Task<BitmapImage?>> DownloadingFavicons = new();
-        private static readonly LinkedList<string> CacheOrder = new();
+        private static readonly Dictionary<string, BitmapImage?> FaviconCache = [];
+        private static readonly Dictionary<string, Task<BitmapImage?>> DownloadingFavicons = [];
+        private static readonly LinkedList<string> CacheOrder = [];
         private const int MaxCacheSize = 500;
         private static void CacheFavicon(string Key, BitmapImage? Bitmap)
         {
@@ -3459,8 +3355,8 @@ Inner Exception: ```{7} ```";
                             byte[]? ImageData = await DownloadFaviconAsync(IconUrl);
                             if (ImageData != null)
                             {
-                                BitmapImage Bitmap = new BitmapImage();
-                                using (MemoryStream Stream = new MemoryStream(ImageData))
+                                BitmapImage Bitmap = new();
+                                using (MemoryStream Stream = new(ImageData))
                                 {
                                     Bitmap.BeginInit();
                                     Bitmap.StreamSource = Stream;
@@ -3482,7 +3378,7 @@ Inner Exception: ```{7} ```";
                     }
                     catch { }
                 }
-                else if (IconUrl.StartsWith("data:image/", StringComparison.Ordinal))
+                else if (IconUrl.StartsWith("data:image/"))
                 {
                     try
                     {
@@ -3490,11 +3386,11 @@ Inner Exception: ```{7} ```";
                     }
                     catch { }
                 }
-                else if (Url.StartsWith("slbr://settings", StringComparison.Ordinal))
+                else if (Url.StartsWith("slbr://settings"))
                     return SettingsTabIcon;
-                else if (Url.StartsWith("slbr://history", StringComparison.Ordinal))
+                else if (Url.StartsWith("slbr://history"))
                     return HistoryTabIcon;
-                else if (Url.StartsWith("slbr://downloads", StringComparison.Ordinal))
+                else if (Url.StartsWith("slbr://downloads"))
                     return DownloadsTabIcon;
                 return IsPrivate ? PrivateIcon : TabIcon;
             }
@@ -3506,7 +3402,7 @@ Inner Exception: ```{7} ```";
             Debug.Write("Downloaded\n");
             if (string.IsNullOrEmpty(Url))
                 return null;
-            using (WebClient _WebClient = new WebClient())
+            using (WebClient _WebClient = new())
             {
                 try
                 {
@@ -3526,19 +3422,19 @@ Inner Exception: ```{7} ```";
             MobileView = Toggle;
             UserAgentData = new WebUserAgentMetaData
             {
-                Brands = new List<WebUserAgentBrand>
-                {
-                    new WebUserAgentBrand
+                Brands =
+                [
+                    new()
                     {
                         Brand = "SLBr",
                         Version = ReleaseVersion.Split('.')[0]
                     },
-                    new WebUserAgentBrand
+                    new()
                     {
                         Brand = "Chromium",
                         Version = Cef.ChromiumVersion.Split('.')[0]
                     }
-                },
+                ],
                 Architecture = Toggle ? "arm" : UserAgentGenerator.GetCPUArchitecture(),
                 Model = string.Empty,
                 Platform = Toggle ? "Android" : "Windows",
@@ -3612,11 +3508,9 @@ Inner Exception: ```{7} ```";
             CurrentTheme = _Theme;
             GlobalSave.Set("Theme", CurrentTheme.Name);
 
-            //FontColor = new SolidColorBrush(_Theme.FontColor);
-
             int IconSize = 40;
             int DPI = 95;
-            TextBlock _TextBlock = new TextBlock
+            TextBlock _TextBlock = new()
             {
                 FontFamily = IconFont,
                 Text = "\uEC6C",
@@ -3626,21 +3520,21 @@ Inner Exception: ```{7} ```";
                 TextAlignment = TextAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Foreground = CurrentTheme.DarkWebPage ? new SolidColorBrush(Colors.White) : new SolidColorBrush(Colors.Black),
-                Margin = new Thickness(1, 2, 0, 0)
+                Foreground = new SolidColorBrush(CurrentTheme.DarkWebPage ? Colors.White : Colors.Black),
+                Margin = new(1, 2, 0, 0)
             };
-            RenderTargetBitmap RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderTargetBitmap RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            PngBitmapEncoder Encoder = new PngBitmapEncoder();
+            PngBitmapEncoder Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3652,18 +3546,18 @@ Inner Exception: ```{7} ```";
             }
 
             _TextBlock.Text = "\uEA90";
-            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            Encoder = new PngBitmapEncoder();
+            Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3675,18 +3569,18 @@ Inner Exception: ```{7} ```";
             }
 
             _TextBlock.Text = "\uE727";
-            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            Encoder = new PngBitmapEncoder();
+            Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3698,18 +3592,18 @@ Inner Exception: ```{7} ```";
             }
 
             _TextBlock.Text = "\ue767";
-            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            Encoder = new PngBitmapEncoder();
+            Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3721,18 +3615,18 @@ Inner Exception: ```{7} ```";
             }
 
             _TextBlock.Text = "\uE713";
-            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            Encoder = new PngBitmapEncoder();
+            Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3744,18 +3638,18 @@ Inner Exception: ```{7} ```";
             }
 
             _TextBlock.Text = "\ue81c";
-            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            Encoder = new PngBitmapEncoder();
+            Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3767,18 +3661,18 @@ Inner Exception: ```{7} ```";
             }
 
             _TextBlock.Text = "\ue896";
-            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            Encoder = new PngBitmapEncoder();
+            Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3791,18 +3685,18 @@ Inner Exception: ```{7} ```";
 
             _TextBlock.Text = "\uEC0A";
             _TextBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3AE872"));
-            RenderBitmap = new RenderTargetBitmap(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
             _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
             RenderBitmap.Render(_TextBlock);
-            Encoder = new PngBitmapEncoder();
+            Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new MemoryStream())
+            using (MemoryStream Stream = new())
             {
                 Encoder.Save(Stream);
                 Stream.Seek(0, SeekOrigin.Begin);
 
-                BitmapImage _BitmapImage = new BitmapImage();
+                BitmapImage _BitmapImage = new();
                 _BitmapImage.BeginInit();
                 _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                 _BitmapImage.StreamSource = Stream;
@@ -3979,8 +3873,8 @@ Inner Exception: ```{7} ```";
         public bool TryMatch(string Url, out string? ResolvedPath)
         {
             ResolvedPath = null;
-            if (!Url.StartsWith(Prefix, StringComparison.Ordinal)) return false;
-            if (!Url.EndsWith(Suffix, StringComparison.Ordinal)) return false;
+            if (!Url.StartsWith(Prefix)) return false;
+            if (!Url.EndsWith(Suffix)) return false;
             int VersionStart = Prefix.Length;
             int VersionEnd = Url.Length - Suffix.Length;
             if (VersionEnd <= VersionStart) return false;
@@ -4662,7 +4556,7 @@ return 1;
         [JsonPropertyName("display")] public string Display { get; set; } = "standalone";
         [JsonPropertyName("background_color")] public string BackgroundColor { get; set; }
         [JsonPropertyName("theme_color")] public string ThemeColor { get; set; }
-        [JsonPropertyName("icons")] public List<ManifestIcon> Icons { get; set; } = new();
+        [JsonPropertyName("icons")] public List<ManifestIcon> Icons { get; set; } = [];
     }
 
     public class ManifestIcon

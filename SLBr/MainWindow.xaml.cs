@@ -1,4 +1,5 @@
-﻿using SLBr.Controls;
+﻿using CefSharp.DevTools.Autofill;
+using SLBr.Controls;
 using SLBr.Pages;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -11,6 +12,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Windows.Security.Cryptography.Certificates;
 using WinUI;
 
 namespace SLBr
@@ -26,7 +28,7 @@ namespace SLBr
 
         public int ID;
 
-        private ObservableCollection<BrowserTabItem> _Tabs = new ObservableCollection<BrowserTabItem>();
+        private ObservableCollection<BrowserTabItem> _Tabs = [];
         public ObservableCollection<BrowserTabItem> Tabs
         {
             get { return _Tabs; }
@@ -92,16 +94,16 @@ namespace SLBr
             ID = Utils.GenerateRandomId();
             WindowInterop = new WindowInteropHelper(this);
             HwndSource HwndSource = HwndSource.FromHwnd(WindowInterop.EnsureHandle());
-            HwndSource.AddHook(new HwndSourceHook(WndProc));
+            HwndSource.AddHook(new(WndProc));
             int trueValue = 0x01;
             DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
 
             App.Instance.AllWindows.Add(this);
             if (App.Instance.WindowsSaves.Count < App.Instance.AllWindows.Count)
-                App.Instance.WindowsSaves.Add(new Saving($"Window_{App.Instance.WindowsSaves.Count}.bin", App.Instance.UserApplicationWindowsPath));
+                App.Instance.WindowsSaves.Add(new($"Window_{App.Instance.WindowsSaves.Count}.bin", App.Instance.UserApplicationWindowsPath));
             InitializeComponent();
             UpdateUnloadTimer();
-            NewTabTab = new BrowserTabItem(null)
+            NewTabTab = new(null)
             {
                 TabStyle = (Style)FindResource("IconTabButton")
             };
@@ -204,12 +206,152 @@ namespace SLBr
                     return true;
             return false;
         }*/
+
+        /*public static (string, string) ParseCertificateIssueSpan(string Certificate)
+        {
+            ReadOnlySpan<char> Span = Certificate.AsSpan().Trim();
+            string CN = null;
+            string O = null;
+            while (!Span.IsEmpty)
+            {
+                int Comma = Span.IndexOf(",");
+                ReadOnlySpan<char> Part = Comma >= 0 ? Span[..Comma] : Span;
+                int Equal = Part.IndexOf("=");
+                if (Equal > 0)
+                {
+                    ReadOnlySpan<char> Key = Part[..Equal].Trim();
+                    ReadOnlySpan<char> Value = Part[(Equal + 1)..].Trim();
+                    if (Key.Equals("CN", StringComparison.Ordinal))
+                        CN = Value.ToString();
+                    else if (Key.Equals("O", StringComparison.Ordinal))
+                        O = Value.ToString();
+                }
+                Span = Comma >= 0 ? Span[(Comma + 1)..].TrimStart() : default;
+            }
+            return (CN ?? string.Empty, O ?? string.Empty);
+        }
+
+        public static (string, string) ParseCertificateIssueString(string Certificate)
+        {
+            if (string.IsNullOrWhiteSpace(Certificate))
+                return (string.Empty, string.Empty);
+
+            string CN = "";
+            string O = "";
+
+            string Remaining = Certificate.Trim();
+
+            while (Remaining.Length > 0)
+            {
+                int Comma = Remaining.IndexOf(',');
+                string Part = Comma >= 0 ? Remaining.Substring(0, Comma) : Remaining;
+
+                int Equal = Part.IndexOf('=');
+                if (Equal > 0)
+                {
+                    string Key = Part.Substring(0, Equal).Trim();
+                    string Value = Part.Substring(Equal + 1).Trim();
+                    if (Key == "CN")
+                        CN = Value;
+                    else if (Key == "O")
+                        O = Value;
+                }
+
+                if (Comma >= 0)
+                    Remaining = Remaining.Substring(Comma + 1).TrimStart();
+                else
+                    break;
+            }
+
+            return (CN ?? string.Empty, O ?? string.Empty);
+        }*/
+
+
         //const int Iterations = 5_000_000;
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             SetAppearance(App.Instance.CurrentTheme);
 
             //Benchmark.Clear();
+            /*Benchmark.Run("Boolean", Iterations, () =>//Best
+            {
+                _ = true == false;
+            });
+            Benchmark.Run("Boolean (Integer based)", Iterations, () =>
+            {
+                _ = 1 == 0;
+            });
+            Benchmark.Run("Boolean String", Iterations, () =>
+            {
+                _ = "true" == "false";
+            });
+            Benchmark.Run("Boolean String (Integer based)", Iterations, () =>
+            {
+                _ = "1" == "0";
+            });*/
+            /*Benchmark.Run("Contains", Iterations, () =>//Fastest
+            {
+                _ = "https://googleads.youtube.com/watch?v=/pagead/js/ads.js".Contains("youtube.com/watch?v=");
+            });
+            Benchmark.Run("IndexOf", Iterations, () =>
+            {
+                _ = "https://googleads.youtube.com/watch?v=/pagead/js/ads.js".IndexOf("youtube.com/watch?v=") >= 0;
+            });
+            Benchmark.Run("IndexOf Span", Iterations, () =>
+            {
+                _ = "https://googleads.youtube.com/watch?v=/pagead/js/ads.js".AsSpan().IndexOf("youtube.com/watch?v=") >= 0;
+            });*/
+            /*Benchmark.Run("Span", Iterations, () =>
+            {
+                _ = ParseCertificateIssueSpan("CN:Hello,O:EEEE");
+            });
+            Benchmark.Run("String", Iterations, () =>//Faster, but uses more memory
+            {
+                _ = ParseCertificateIssueString("CN:Hello,O:EEEE");
+            });*/
+            /*Benchmark.Run("Normal", Iterations, () =>
+            {
+                _ = "O" == "O";
+            });
+            Benchmark.Run("Equals", Iterations, () =>
+            {
+                _ = "O".Equals("O", StringComparison.Ordinal);
+            });
+            Benchmark.Run("Normal Span", Iterations, () =>
+            {
+                ReadOnlySpan<char> Span = "O".AsSpan().Trim();
+                _ = Span == "O";
+            });
+            Benchmark.Run("Equals Span", Iterations, () =>
+            {
+                ReadOnlySpan<char> Span = "O".AsSpan().Trim();
+                Span.Equals("O", StringComparison.Ordinal);
+            });*/
+            /*//Normal contains is found to be significantly superior in Release build with less time taken & memory.
+            Benchmark.Run("Normal", Iterations, () =>
+            {
+                _ = "https://googleads.g.doubleclick.net/pagead/js/ads.js".Contains("googleads.g.doubleclick.net/pagead/js/ads.js");
+            });
+            Benchmark.Run("Ordinal", Iterations, () =>
+            {
+                _ = "https://googleads.g.doubleclick.net/pagead/js/ads.js".Contains("googleads.g.doubleclick.net/pagead/js/ads.js");
+            });
+            Benchmark.Run("OrdinalIgnoreCase", Iterations, () =>
+            {
+                _ = "https://googleads.g.doubleclick.net/pagead/js/ads.js".Contains("googleads.g.doubleclick.net/pagead/js/ads.js", StringComparison.OrdinalIgnoreCase);
+            });
+            Benchmark.Run("Normal IndexOf", Iterations, () => //Worst performing
+            {
+                _ = "https://googleads.g.doubleclick.net/pagead/js/ads.js".IndexOf("googleads.g.doubleclick.net/pagead/js/ads.js");
+            });
+            Benchmark.Run("Ordinal IndexOf", Iterations, () =>
+            {
+                _ = "https://googleads.g.doubleclick.net/pagead/js/ads.js".IndexOf("googleads.g.doubleclick.net/pagead/js/ads.js");
+            });
+            Benchmark.Run("OrdinalIgnoreCase IndexOf", Iterations, () =>
+            {
+                _ = "https://googleads.g.doubleclick.net/pagead/js/ads.js".IndexOf("googleads.g.doubleclick.net/pagead/js/ads.js", StringComparison.OrdinalIgnoreCase);
+            });*/
             /*Benchmark.Run("FastHost", Iterations, () =>
             {
                 _ = Utils.FastHost("https://googleads.g.doubleclick.net/pagead/js/ads.js");
@@ -558,8 +700,7 @@ namespace SLBr
         public void Fullscreen(bool Fullscreen, Browser BrowserView = null)
         {
             IsFullscreen = Fullscreen;
-            if (BrowserView == null)
-                BrowserView = GetTab().Content;
+            BrowserView ??= GetTab().Content;
             if (BrowserView != null)
             {
                 if (Fullscreen)
@@ -578,7 +719,7 @@ namespace SLBr
                     if (bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup")))
                     {
                         FullscreenPopup.IsOpen = true;
-                        FullscreenPopupTimer = new DispatcherTimer();
+                        FullscreenPopupTimer = new();
                         FullscreenPopupTimer.Interval = TimeSpan.FromSeconds(3);
                         FullscreenPopupTimer.Tick += FullscreenPopupTimer_Tick;
                         FullscreenPopupTimer.Start();
@@ -617,7 +758,7 @@ namespace SLBr
                 WindowState = WindowState.Normal;
                 Activate();
             }
-            BrowserTabItem _Tab = new BrowserTabItem(this) { Header = Utils.CleanUrl(Url, true, true, true, true), BrowserCommandsVisibility = Visibility.Collapsed };
+            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true), BrowserCommandsVisibility = Visibility.Collapsed };
             _Tab.Content = new Browser(Url, _Tab, IsPrivate);
             if (VerticalTabs)
                 Tabs.Insert(Index != -1 ? Index : Tabs.Count, _Tab);
@@ -653,23 +794,23 @@ namespace SLBr
             BrowserTabItem _Tab = Id == -1 ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(Id);
             if (Tabs.Count > 2)
             {
-                bool IsSelected = Id != -1 ? _Tab == Tabs[TabsUI.SelectedIndex] : true;
+                bool IsSelected = Id == -1 || _Tab == Tabs[TabsUI.SelectedIndex];
                 _Tab.Content.Dispose();
                 if (IsSelected)
                 {
                     if (VerticalTabs)
                     {
                         if (TabsUI.SelectedIndex > 1)
-                            TabsUI.SelectedIndex = TabsUI.SelectedIndex - 1;
+                            TabsUI.SelectedIndex--;
                         else
-                            TabsUI.SelectedIndex = TabsUI.SelectedIndex + 1;
+                            TabsUI.SelectedIndex++;
                     }
                     else
                     {
                         if (TabsUI.SelectedIndex > 0)
-                            TabsUI.SelectedIndex = TabsUI.SelectedIndex - 1;
+                            TabsUI.SelectedIndex--;
                         else
-                            TabsUI.SelectedIndex = TabsUI.SelectedIndex + 1;
+                            TabsUI.SelectedIndex++;
                     }
                 }
                 Tabs.Remove(_Tab);
@@ -961,8 +1102,7 @@ namespace SLBr
     {
         public override Style SelectStyle(object item, DependencyObject container)
         {
-            var _TabItem = item as BrowserTabItem;
-            if (_TabItem != null)
+            if (item is BrowserTabItem _TabItem)
             {
                 if (Application.Current.MainWindow != null)
                     return _TabItem.TabStyle;

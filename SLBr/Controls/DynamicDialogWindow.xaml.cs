@@ -80,7 +80,7 @@ namespace SLBr.Controls
          * - Dropdown
          * - Date & time? Maybe useless
          */
-        public ObservableCollection<InputField> InputFields { get; set; } = new ObservableCollection<InputField>();
+        public ObservableCollection<InputField> InputFields { get; set; } = [];
 
         public DynamicDialogWindow(string _Title, string Question, List<InputField> DefaultFields, string Icon = "", string PositiveText = "OK", string NegativeText = "Cancel")
         {

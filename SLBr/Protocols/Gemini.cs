@@ -48,7 +48,7 @@ namespace SLBr.Protocols
         {
             const string linkSym = "=&gt;";
 
-            if (!input.StartsWith(linkSym, StringComparison.Ordinal)) { return input; }
+            if (!input.StartsWith(linkSym)) { return input; }
             char[] whitespace = [' ', '\t'];
 
             string remainder = input.Substring(linkSym.Length).Trim();
@@ -72,16 +72,16 @@ namespace SLBr.Protocols
                 label = remainder.Substring(firstWhitespace).Trim();
             }
 
-            if (url.StartsWith("://", StringComparison.Ordinal)) { url = "gemini" + url; }
-            else if (url.StartsWith("//", StringComparison.Ordinal)) { url = "gemini:" + url; }
+            if (url.StartsWith("://")) { url = "gemini" + url; }
+            else if (url.StartsWith("//")) { url = "gemini:" + url; }
             return $"<div><a href=\"{url}\">{label}</a></div>";
             //return $"<div>[{count}] <a href=\"{url}\">{label}</a></div>";
         }
         private static string FormatLineAsEmbed(string input)
         {
-            if (!input.StartsWith("&gt; ", StringComparison.Ordinal))
+            if (!input.StartsWith("&gt; "))
                 return input;
-            string template = "<div class=\"Embed\"><div style=\"display: inline-block; background: gray; width: 2px; height: 12.5px; margin-right: 5px; margin-left: 5px;\"></div>{0}</div>";
+            string template = "<div class=\"embed\"><div style=\"display: inline-block; background: gray; width: 2px; height: 12.5px; margin-right: 5px; margin-left: 5px;\"></div>{0}</div>";
             input = input.Replace("&gt; ", string.Empty);
             return string.Format(template, input);
         }
@@ -93,12 +93,12 @@ namespace SLBr.Protocols
             StringBuilder sb = new StringBuilder("<!DOCTYPE html><html>\r\n");
             sb.Append("<style>" +
                     "html {height: 100%;}" +
-                "body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: repeating-linear-gradient(45deg, black, transparent 100px);}" +
+                "body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: white;}" +
                 "h1, h2, h3 {margin: 0;}" +
                 "pre {background: white; border-radius: 5px; padding: 10px;}" +
-                ".Content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}" +
-                ".Embed {background: white; border-radius: 5px; padding: 5px;}" +
-                "</style><body><div class=\"Content\">\r\n");
+                ".content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}" +
+                ".embed {background: white; border-radius: 5px; padding: 5px;}" +
+                "</style><body><div class=\"content\">\r\n");
             foreach (char c in input)
             {
                 switch (c)
@@ -134,13 +134,13 @@ namespace SLBr.Protocols
                     {
                         lineout = FormatLineAsTitle(lineout);
                         lineout = FormatLineAsEmbed(lineout);
-                        if (lineout.StartsWith("=&gt;", StringComparison.Ordinal))
+                        if (lineout.StartsWith("=&gt;"))
                             LinkCount++;
                         lineout = FormatLineAsLink(lineout, LinkCount);
                     }
                     else
                         lineout = lineout.Replace("<br/>", string.Empty);
-                    if (line.StartsWith("```", StringComparison.Ordinal))
+                    if (line.StartsWith("```"))
                     {
                         is_literal = !is_literal;
 

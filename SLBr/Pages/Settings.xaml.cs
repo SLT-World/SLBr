@@ -211,7 +211,7 @@ namespace SLBr.Pages
                 foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
                 {
                     if (!ISOs.Contains(Locale.Key))
-                        AddableLanguages.Add(new ActionStorage(Locale.Value, App.Instance.GetLocaleIcon(Locale.Key), Locale.Key));
+                        AddableLanguages.Add(new ActionStorage(Locale.Value, App.GetLocaleIcon(Locale.Key), Locale.Key));
                 }
                 AddableLanguages = new ObservableCollection<ActionStorage>(AddableLanguages.OrderBy(x => x.Tooltip));
             }
@@ -235,7 +235,7 @@ namespace SLBr.Pages
             SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
 
             HomepageTextBox.Text = App.Instance.GlobalSave.Get("Homepage");
-            bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab", StringComparison.Ordinal);
+            bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab");
             HomepageBackgroundComboBox.IsEnabled = IsNewTab;
             BingBackgroundComboBox.IsEnabled = IsNewTab;
             BackgroundImageTextBox.IsEnabled = IsNewTab;
@@ -404,7 +404,7 @@ namespace SLBr.Pages
 
             AboutVersion.Text = $"Version {App.Instance.ReleaseVersion}";
             ChromiumVersion.Text = $"Chromium: {Cef.ChromiumVersion}";
-            CEFVersion.Text = $"CEF: {(Cef.CefVersion.StartsWith("r", StringComparison.Ordinal) ? Cef.CefVersion.Substring(1, Cef.CefVersion.IndexOf("-") - 10) : Cef.CefVersion.Substring(0, Cef.CefVersion.IndexOf("-") - 10))}";
+            CEFVersion.Text = $"CEF: {(Cef.CefVersion.StartsWith('r') ? Cef.CefVersion.Substring(1, Cef.CefVersion.IndexOf('-') - 10) : Cef.CefVersion.Substring(0, Cef.CefVersion.IndexOf('-') - 10))}";
             try { WebView2Version.Text = $"WebView2: {CoreWebView2Environment.GetAvailableBrowserVersionString()}"; }
             catch (WebView2RuntimeNotFoundException) { WebView2Version.Text = $"WebView2: Unavailable"; }
             switch (WebViewManager.Settings.TridentVersion)
@@ -681,7 +681,7 @@ namespace SLBr.Pages
             {
                 HomepageTextBox.Text = Utils.FixUrl(HomepageTextBox.Text);
                 App.Instance.GlobalSave.Set("Homepage", HomepageTextBox.Text);
-                bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab", StringComparison.Ordinal);
+                bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab");
                 HomepageBackgroundComboBox.IsEnabled = IsNewTab;
                 BingBackgroundComboBox.IsEnabled = IsNewTab;
                 BackgroundImageTextBox.IsEnabled = IsNewTab;
@@ -1271,8 +1271,8 @@ namespace SLBr.Pages
                 {
                     Name = _DynamicDialogWindow.InputFields[0].Value.Trim(),
                     Host = Utils.FastHost(_DynamicDialogWindow.InputFields[1].Value),
-                    SearchUrl = _DynamicDialogWindow.InputFields[1].Value + (_DynamicDialogWindow.InputFields[1].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"),
-                    SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"))
+                    SearchUrl = _DynamicDialogWindow.InputFields[1].Value + (_DynamicDialogWindow.InputFields[1].Value.Contains("{0}") ? string.Empty : "{0}"),
+                    SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}") ? string.Empty : "{0}"))
                 };
                 App.Instance.SearchEngines.Add(_SearchProvider);
                 SearchEngineComboBox.Items.Add(_SearchProvider.Name);
@@ -1291,8 +1291,8 @@ namespace SLBr.Pages
             {
                 _SearchProvider.Name = _DynamicDialogWindow.InputFields[0].Value.Trim();
                 _SearchProvider.Host = Utils.FastHost(_DynamicDialogWindow.InputFields[1].Value);
-                _SearchProvider.SearchUrl = _DynamicDialogWindow.InputFields[1].Value + (_DynamicDialogWindow.InputFields[1].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}");
-                _SearchProvider.SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}", StringComparison.Ordinal) ? string.Empty : "{0}"));
+                _SearchProvider.SearchUrl = _DynamicDialogWindow.InputFields[1].Value + (_DynamicDialogWindow.InputFields[1].Value.Contains("{0}") ? string.Empty : "{0}");
+                _SearchProvider.SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}") ? string.Empty : "{0}"));
                 App.Instance.SearchEngines[SelectedIndex] = _SearchProvider;
                 SearchEngineComboBox.SelectionChanged -= SearchEngineComboBox_SelectionChanged;
                 SearchEngineComboBox.Items[SelectedIndex] = _SearchProvider.Name;

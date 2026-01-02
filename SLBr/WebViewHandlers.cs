@@ -758,9 +758,7 @@ namespace SLBr
     }
     public class ChromiumPermissionHandler : IPermissionHandler
     {
-        public void OnDismissPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, PermissionRequestResult result)
-        {
-        }
+        public void OnDismissPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, PermissionRequestResult result) { }
 
         public bool OnRequestMediaAccessPermission(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, string requestingOrigin, MediaAccessPermissionType requestedPermissions, IMediaAccessCallback callback)
         {
@@ -925,7 +923,7 @@ namespace SLBr
         public void OnBeforeContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
         {
             //Both CefSharp & WebView2 suffer from the same spellcheck issue.
-            if (parameters.FrameUrl.StartsWith("devtools:", StringComparison.Ordinal))
+            if (parameters.FrameUrl.StartsWith("devtools:"))
                 return;
             model.Clear();
             WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaiseContextMenu(new WebContextMenuEventArgs

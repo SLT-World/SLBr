@@ -941,9 +941,9 @@ namespace SLBr
             {
                 Json = e.Message?.ToString() ?? string.Empty;
             }
-            if (Settings.AudioListener && Json.EndsWith(@"""type"":""__cef_audio__""}", StringComparison.Ordinal))
+            if (Settings.AudioListener && Json.EndsWith(@"""type"":""__cef_audio__""}"))
             {
-                SetAudioPlaying(Json.StartsWith(@"{""playing"":1", StringComparison.Ordinal));
+                SetAudioPlaying(Json.StartsWith(@"{""playing"":1"));
                 return;
             }
             JavaScriptMessageReceived.RaiseUIAsync(this, Json);
@@ -984,7 +984,7 @@ namespace SLBr
             CanReload = e.CanReload;
             IsLoading = e.IsLoading;
             NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
-            IsSecure = _NavigationEntry != null ? _NavigationEntry.SslStatus.IsSecureConnection : Address.StartsWith("https:", StringComparison.Ordinal);
+            IsSecure = _NavigationEntry != null ? _NavigationEntry.SslStatus.IsSecureConnection : Address.StartsWith("https:");
             LoadingStateChanged?.RaiseUIAsync(this, e.IsLoading);
         }
 
@@ -1306,8 +1306,8 @@ namespace SLBr
         {
             if (urls.Count != 0)
             {
-                string Url = urls.OrderBy(url => url.EndsWith(".ico", StringComparison.Ordinal) ? 0 : url.EndsWith(".png", StringComparison.Ordinal) ? 1 : 2).ToList().First();
-                if (!Url.EndsWith(".svg", StringComparison.Ordinal))
+                string Url = urls.OrderBy(url => url.EndsWith(".ico") ? 0 : url.EndsWith(".png") ? 1 : 2).ToList().First();
+                if (!Url.EndsWith(".svg"))
                     FaviconChanged?.RaiseUIAsync(this, Url);
             }
         }
@@ -1801,7 +1801,7 @@ namespace SLBr
             IsSecure = false;
             if (e.IsSuccess)
             {
-                if (BrowserCore.Source.StartsWith("https:", StringComparison.Ordinal))
+                if (BrowserCore.Source.StartsWith("https:"))
                     IsSecure = e.WebErrorStatus == CoreWebView2WebErrorStatus.Unknown;
             }
             else
@@ -2238,7 +2238,7 @@ namespace SLBr
         {
             ResourceResponded?.RaiseUIAsync(this, new ResourceRespondedResult(e.Uri?.AbsoluteUri ?? Address, ResourceRequestType.SubResource));
             IsLoading = false;
-            //IsSecure = Address.StartsWith("https:", StringComparison.Ordinal);
+            //IsSecure = Address.StartsWith("https:");
             FrameLoadEnd?.RaiseUIAsync(this, e.Uri?.AbsoluteUri ?? Address);
             LoadingStateChanged?.RaiseUIAsync(this, IsLoading);
 

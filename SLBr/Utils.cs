@@ -248,10 +248,12 @@ namespace SLBr
         {
             IntPtr StringMessageBuffer = Marshal.StringToHGlobalUni(msg);
 
-            COPYDATASTRUCT CopyData = new COPYDATASTRUCT();
-            CopyData.dwData = IntPtr.Zero;
-            CopyData.lpData = StringMessageBuffer;
-            CopyData.cbData = msg.Length * 2;
+            COPYDATASTRUCT CopyData = new()
+            {
+                dwData = IntPtr.Zero,
+                lpData = StringMessageBuffer,
+                cbData = msg.Length * 2
+            };
             IntPtr CopyDataBuffer = IntPtrAlloc(CopyData);
 
             DllUtils.SendMessage(DllUtils.HWND_BROADCAST, DllUtils.WM_COPYDATA, IntPtr.Zero, CopyDataBuffer);
@@ -522,7 +524,7 @@ namespace SLBr
         {
             if (Self.Length <= MaxLength)
                 return Self;
-            return Self.Substring(0, MaxLength - (AddEllipsis ? 3 : 0)) + (AddEllipsis ? "..." : string.Empty);
+            return string.Concat(Self.AsSpan(0, MaxLength - (AddEllipsis ? 3 : 0)), AddEllipsis ? "..." : string.Empty);
         }
         /*public static uint ToUInt(this System.Drawing.Color color) =>
                (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));*/
@@ -540,18 +542,21 @@ namespace SLBr
 
     public static partial class Utils
     {
+        public static void OpenFileExplorer(string Url) =>
+            Process.Start(new ProcessStartInfo { Arguments = $"/select, \"{Url}\"", FileName = "explorer.exe" });
+
         public static async void DownloadAndCopyImage(string ImageUrl)
         {
             try
             {
-                using (var _HttpClient = new HttpClient())
+                using (HttpClient _HttpClient = new())
                 {
                     byte[] ImageData = await _HttpClient.GetByteArrayAsync(ImageUrl);
                     if (ImageData != null)
                     {
-                        using (MemoryStream stream = new MemoryStream(ImageData))
+                        using (MemoryStream stream = new(ImageData))
                         {
-                            BitmapImage Bitmap = new BitmapImage();
+                            BitmapImage Bitmap = new();
                             Bitmap.BeginInit();
                             Bitmap.CacheOption = BitmapCacheOption.OnLoad;
                             Bitmap.StreamSource = stream;
@@ -628,13 +633,13 @@ namespace SLBr
                 return null;
             if (IsHttpScheme(Href))
                 return Href;
-            int SlashIndex = BaseUrl.IndexOf("/", 8, StringComparison.Ordinal);
+            int SlashIndex = BaseUrl.IndexOf("/", 8);
             string Origin = SlashIndex > 0 ? BaseUrl.Substring(0, SlashIndex) : BaseUrl;
-            if (Href.StartsWith("/", StringComparison.Ordinal))
+            if (Href.StartsWith("/"))
                 return Origin + Href;
             else
             {
-                int LastSlash = BaseUrl.LastIndexOf("/", StringComparison.Ordinal);
+                int LastSlash = BaseUrl.LastIndexOf("/");
                 if (LastSlash >= 0)
                     return BaseUrl.Substring(0, LastSlash + 1) + Href;
                 else
@@ -644,7 +649,7 @@ namespace SLBr
 
         public static string? GetAMPUrl(string Url)
         {
-            using (HttpClient Client = new HttpClient())
+            using (HttpClient Client = new())
             {
                 string Payload = $"{{\"urls\":\"{Url}\"}}";
                 try
@@ -689,7 +694,7 @@ namespace SLBr
 
         public static MColor ParseThemeColor(string ColorString)
         {
-            if (ColorString.StartsWith("rgb", StringComparison.Ordinal))
+            if (ColorString.StartsWith("rgb"))
             {
                 var Numbers = Regex.Matches(ColorString, @"\d+").Cast<Match>().Select(m => byte.Parse(m.Value)).ToArray();
                 return MColor.FromRgb(Numbers[0], Numbers[1], Numbers[2]);
@@ -729,7 +734,7 @@ namespace SLBr
             int Hi = Convert.ToInt32(Math.Floor(Hue / 60)) % 6;
             double F = Hue / 60 - Math.Floor(Hue / 60);
 
-            Value = Value * 255;
+            Value *= 255;
             byte V = (byte)Value;
             byte P = (byte)(Value * (1 - Saturation));
             byte Q = (byte)(Value * (1 - F * Saturation));
@@ -771,9 +776,9 @@ namespace SLBr
 
         public static void SaveImage(BitmapSource Bitmap, string FilePath)
         {
-            using (FileStream _FileStream = new FileStream(FilePath, FileMode.Create))
+            using (FileStream _FileStream = new(FilePath, FileMode.Create))
             {
-                PngBitmapEncoder PNGEncoder = new PngBitmapEncoder();
+                PngBitmapEncoder PNGEncoder = new();
                 PNGEncoder.Frames.Add(BitmapFrame.Create(Bitmap));
                 PNGEncoder.Save(_FileStream);
             }
@@ -781,12 +786,12 @@ namespace SLBr
 
         public static BitmapImage ConvertBase64ToBitmapImage(string Base64)
         {
-            int base64Start = Base64.IndexOf("base64,", StringComparison.Ordinal);
-            if (Base64.StartsWith("data:image/", StringComparison.Ordinal) && base64Start != -1)
-                Base64 = Base64.Substring(base64Start + 7);
-            using (MemoryStream _Stream = new MemoryStream(Convert.FromBase64String(Base64)))
+            int Base64Start = Base64.IndexOf("base64,");
+            if (Base64.StartsWith("data:image/") && Base64Start != -1)
+                Base64 = Base64.Substring(Base64Start + 7);
+            using (MemoryStream _Stream = new(Convert.FromBase64String(Base64)))
             {
-                BitmapImage _Bitmap = new BitmapImage();
+                BitmapImage _Bitmap = new();
                 _Bitmap.BeginInit();
                 _Bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 _Bitmap.StreamSource = _Stream;
@@ -875,13 +880,13 @@ namespace SLBr
         public static (string, string) ParseCertificateIssue(string Certificate)
         {
             ReadOnlySpan<char> Span = Certificate.AsSpan().Trim();
-            string CN = null;
-            string O = null;
+            string CN = string.Empty;
+            string O = string.Empty;
             while (!Span.IsEmpty)
             {
-                int Comma = Span.IndexOf(",", StringComparison.Ordinal);
+                int Comma = Span.IndexOf(",");
                 ReadOnlySpan<char> Part = Comma >= 0 ? Span[..Comma] : Span;
-                int Equal = Part.IndexOf("=", StringComparison.Ordinal);
+                int Equal = Part.IndexOf("=");
                 if (Equal > 0)
                 {
                     ReadOnlySpan<char> Key = Part[..Equal].Trim();
@@ -893,12 +898,12 @@ namespace SLBr
                 }
                 Span = Comma >= 0 ? Span[(Comma + 1)..].TrimStart() : default;
             }
-            return (CN ?? string.Empty, O ?? string.Empty);
+            return (CN, O);
         }
 
         public static string GetScheme(string Url)
         {
-            int SchemeSeparatorIndex = Url.IndexOf(":");
+            int SchemeSeparatorIndex = Url.IndexOf(':');
             if (SchemeSeparatorIndex != -1)
                 return Url.Substring(0, SchemeSeparatorIndex);
             return string.Empty;
@@ -907,35 +912,35 @@ namespace SLBr
         public static string GetFileExtension(string Url)
         {
             ReadOnlySpan<char> Span = Url.AsSpan();
-            int Query = Span.IndexOf("?", StringComparison.Ordinal);
+            int Query = Span.IndexOf("?");
             if (Query >= 0)
                 Span = Span[..Query];
 
-            int Hash = Span.IndexOf("#", StringComparison.Ordinal);
+            int Hash = Span.IndexOf("#");
             if (Hash >= 0)
                 Span = Span[..Hash];
 
-            int Slash = Span.LastIndexOf("/", StringComparison.Ordinal);
+            int Slash = Span.LastIndexOf("/");
             if (Slash >= 0)
                 Span = Span[(Slash + 1)..];
 
-            int Dot = Span.LastIndexOf(".", StringComparison.Ordinal);
+            int Dot = Span.LastIndexOf(".");
             return Dot >= 0 ? Span[Dot..].ToString() : string.Empty;
         }
         
         public static bool IsProgramUrl(string Url) =>
-            Url.StartsWith("callto:", StringComparison.Ordinal) || Url.StartsWith("mailto:", StringComparison.Ordinal) || Url.StartsWith("news:", StringComparison.Ordinal) || Url.StartsWith("feed:", StringComparison.Ordinal);
+            Url.StartsWith("callto:") || Url.StartsWith("mailto:") || Url.StartsWith("news:") || Url.StartsWith("feed:");
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
              _ResourceType is ResourceType.Xhr or ResourceType.Media or ResourceType.Script or ResourceType.SubFrame or ResourceType.Image;
         public static bool IsPossiblyAd(ResourceRequestType _ResourceType) =>
              _ResourceType is ResourceRequestType.XMLHTTPRequest or ResourceRequestType.Media or ResourceRequestType.Script or ResourceRequestType.SubFrame or ResourceRequestType.Image;
         public static bool IsHttpScheme(string Url) =>
-            Url.StartsWith("https:", StringComparison.Ordinal) || Url.StartsWith("http:", StringComparison.Ordinal);
+            Url.StartsWith("https:") || Url.StartsWith("http:");
         
         public static bool IsDomain(string Url)
         {
             string Host = FastHost(Url);
-            int LastDot = Host.LastIndexOf(".", StringComparison.Ordinal);
+            int LastDot = Host.LastIndexOf('.');
             if (LastDot <= 0 || LastDot == Host.Length - 1)
                 return false;
             string TLD = Host[(LastDot + 1)..];
@@ -955,7 +960,7 @@ namespace SLBr
         //https://xn--j1ay.xn--p1ai/
         static bool IsPunycodeTLD(string TLD)
         {
-            if (!TLD.StartsWith("xn--", StringComparison.Ordinal))
+            if (!TLD.StartsWith("xn--"))
                 return false;
             if (TLD.Length <= 4)
                 return false;
@@ -971,10 +976,10 @@ namespace SLBr
             !IsHttpScheme(Url) && IsProtocol(Url);
         public static bool IsProtocol(string Url)
         {
-            int Colon = Url.IndexOf(":", StringComparison.Ordinal);
+            int Colon = Url.IndexOf(':');
             if (Colon < 0)
                 return false;
-            int Dot = Url.IndexOf(".", StringComparison.Ordinal);
+            int Dot = Url.IndexOf('.');
             return Dot < 0 || Colon < Dot;
         }
         //TODO: Validate domain TLDs from https://data.iana.org/TLD/tlds-alpha-by-domain.txt
@@ -984,10 +989,10 @@ namespace SLBr
                 return false;
             if (!Uri.IsWellFormedUriString(Url, UriKind.RelativeOrAbsolute))
                 return false;
-            return IsProtocol(Url) || IsDomain(Url) || Url.EndsWith("/", StringComparison.Ordinal);
+            return IsProtocol(Url) || IsDomain(Url) || Url.EndsWith('/');
         }
         public static bool IsCode(string Url) =>
-            Url.StartsWith("javascript:", StringComparison.Ordinal) || Url.StartsWith("view-source:", StringComparison.Ordinal) || Url.StartsWith("localhost:", StringComparison.Ordinal) || Url.StartsWith("data:", StringComparison.Ordinal) || Url.StartsWith("blob:", StringComparison.Ordinal);
+            Url.StartsWith("javascript:") || Url.StartsWith("view-source:") || Url.StartsWith("localhost:") || Url.StartsWith("data:") || Url.StartsWith("blob:");
         public static bool IsCustomScheme(string Url) =>
             !IsHttpScheme(Url) && !IsCode(Url) && IsProtocol(Url);
         public static bool IsProprietaryCodec(string Extension) =>
@@ -996,7 +1001,7 @@ namespace SLBr
 
         public static string EscapeDataString(string Input)
         {
-            StringBuilder _StringBuilder = new StringBuilder(Input.Length + 8);
+            StringBuilder _StringBuilder = new(Input.Length + 8);
             foreach (char Character in Input)
             {
                 if ((Character >= 'A' && Character <= 'Z') || (Character >= 'a' && Character <= 'z') || (Character >= '0' && Character <= '9') || Character == '-' || Character == '_' || Character == '.' || Character == '~')
@@ -1026,14 +1031,11 @@ namespace SLBr
 
         public static string GenerateSID()
         {
-            long unixTimeMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            string timePart = unixTimeMs.ToString("x");
-
-            byte[] randomBytes = new byte[8];
-            RandomNumberGenerator.Fill(randomBytes);
-
-            string randomPart = BitConverter.ToString(randomBytes).Replace("-", "").ToLower();
-            return (timePart + randomPart).Substring(0, 16);
+            string TimePart = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString("x");
+            byte[] RandomBytes = new byte[8];
+            RandomNumberGenerator.Fill(RandomBytes);
+            string RandomPart = BitConverter.ToString(RandomBytes).Replace("-", "").ToLower();
+            return (TimePart + RandomPart).Substring(0, 16);
         }
 
         public static string GetProtocolAppName(string Protocol)
@@ -1060,11 +1062,7 @@ namespace SLBr
                 string Command = (string)CommandKey?.GetValue(null);
                 if (!string.IsNullOrWhiteSpace(Command))
                 {
-                    string _ExecutablePath = string.Empty;
-                    if (Command.StartsWith("\"", StringComparison.Ordinal))
-                        _ExecutablePath = Command.Split('"')[1];
-                    else
-                        _ExecutablePath = Command.Split(' ')[0];
+                    string _ExecutablePath = Command.Split('"')[Command.StartsWith('"') ? 1 : 0];
                     if (File.Exists(_ExecutablePath))
                     {
                         FileVersionInfo Info = FileVersionInfo.GetVersionInfo(_ExecutablePath);
@@ -1088,7 +1086,7 @@ namespace SLBr
             };
         }
 
-        public static string RemovePrefix(string Input, string Prefix, bool CaseSensitive = false, bool FromEnd = false, bool ReturnCaseSensitive = true)
+        public static string RemovePrefix(string Input, string Prefix, bool CaseSensitive = false, bool FromEnd = false)
         {
             ReadOnlySpan<char> InputSpan = Input.AsSpan();
             ReadOnlySpan<char> PrefixSpan = Prefix.AsSpan();
@@ -1115,7 +1113,7 @@ namespace SLBr
 
             Url = Url.Trim();
 
-            if (!Url.StartsWith("domain:", StringComparison.Ordinal) && !Url.StartsWith("search:", StringComparison.Ordinal))
+            if (!Url.StartsWith("domain:") && !Url.StartsWith("search:"))
             {
                 if (IsProgramUrl(Url))
                 {
@@ -1130,13 +1128,13 @@ namespace SLBr
                 Url = "search:" + Url;
             }
             ReadOnlySpan<char> Span = Url.AsSpan();
-            if (Span.StartsWith("search:", StringComparison.Ordinal))
+            if (Span.StartsWith("search:"))
             {
                 ReadOnlySpan<char> Query = Span[7..];
                 string Encoded = EscapeDataString(Query.ToString());
                 return string.IsNullOrEmpty(SearchEngineUrl) ? FixUrl(Encoded) : FixUrl(string.Format(SearchEngineUrl, Encoded));
             }
-            if (Span.StartsWith("domain:", StringComparison.Ordinal))
+            if (Span.StartsWith("domain:"))
                 return FixUrl(Span[7..].ToString());
             return Url;
         }
@@ -1146,15 +1144,15 @@ namespace SLBr
                 return Url;
             ReadOnlySpan<char> Span = Url.AsSpan();
 
-            int Protocol = Span.IndexOf("://", StringComparison.Ordinal);
+            int Protocol = Span.IndexOf("://");
             if (Protocol >= 0)
                 Span = Span[(Protocol + 3)..];
 
             if (RemoveTrivialSubdomain)
             {
-                if (Span.StartsWith("www.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Span[4..]))
+                if (Span.StartsWith("www.") && CanRemoveTrivialSubdomain(Span[4..]))
                     Span = Span[4..];
-                else if (Span.StartsWith("m.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Span[2..]))
+                else if (Span.StartsWith("m.") && CanRemoveTrivialSubdomain(Span[2..]))
                     Span = Span[2..];
             }
 
@@ -1167,9 +1165,9 @@ namespace SLBr
         public static string Host(string Url, bool RemoveTrivialSubdomain = true)
         {
             string Host = CleanUrl(Url, true, false, true, RemoveTrivialSubdomain);
-            if (IsHttpScheme(Url) || Url.StartsWith("file:///", StringComparison.Ordinal))
+            if (IsHttpScheme(Url) || Url.StartsWith("file:///"))
             {
-                int SlashIndex = Host.IndexOf('/', StringComparison.Ordinal);
+                int SlashIndex = Host.IndexOf('/');
                 return SlashIndex >= 0 ? Host.Substring(0, SlashIndex) : Host;
             }
             return Host;
@@ -1196,13 +1194,13 @@ namespace SLBr
             ReadOnlySpan<char> Span = Url.AsSpan().Trim();
             if (RemoveParameters)
             {
-                int ToRemoveIndex = Span.LastIndexOf("?", StringComparison.Ordinal);
+                int ToRemoveIndex = Span.LastIndexOf("?");
                 if (ToRemoveIndex >= 0)
                     Span = Span[..ToRemoveIndex];
             }
             if (RemoveFragment)
             {
-                int ToRemoveIndex = Span.LastIndexOf("#", StringComparison.Ordinal);
+                int ToRemoveIndex = Span.LastIndexOf("#");
                 if (ToRemoveIndex >= 0)
                     Span = Span[..ToRemoveIndex];
             }
@@ -1220,9 +1218,9 @@ namespace SLBr
 
             if (RemoveTrivialSubdomain)
             {
-                if (Url.StartsWith("www.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Url[4..]))
+                if (Url.StartsWith("www.") && CanRemoveTrivialSubdomain(Url[4..]))
                     Url = Url[4..];
-                else if (Url.StartsWith("m.", StringComparison.Ordinal) && CanRemoveTrivialSubdomain(Url[2..]))
+                else if (Url.StartsWith("m.") && CanRemoveTrivialSubdomain(Url[2..]))
                     Url = Url[2..];
             }
             return Url;
@@ -1247,7 +1245,7 @@ namespace SLBr
         const string KeySeparator = "<,>";
         const string ValueSeparator = "<|>";
         const string KeyValueSeparator = "<:>";
-        Dictionary<string, string> Data = new Dictionary<string, string>();
+        Dictionary<string, string> Data = [];
         public string SaveFolderPath;
         public string SaveFilePath;
 
@@ -1324,7 +1322,7 @@ namespace SLBr
             if (!File.Exists(SaveFilePath))
                 File.Create(SaveFilePath).Close();
 
-            using StreamWriter Writer = new StreamWriter(SaveFilePath, false);
+            using StreamWriter Writer = new(SaveFilePath, false);
             foreach (KeyValuePair<string, string> Entry in Data)
             {
                 Writer.Write(Entry.Key);

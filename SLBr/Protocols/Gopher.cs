@@ -49,11 +49,11 @@ namespace SLBr.Protocols
                 }
             }
 
-            if (url.StartsWith("://", StringComparison.Ordinal))
+            if (url.StartsWith("://"))
                 url = "gopher" + url;
-            else if (url.StartsWith("//", StringComparison.Ordinal))
+            else if (url.StartsWith("//"))
                 url = "gopher:" + url;
-            else if (!url.StartsWith("gopher://", StringComparison.Ordinal))
+            else if (!url.StartsWith("gopher://"))
                 url = "gopher://" + url;
             return $"<div><a href=\"{url}\">{label}</a></div>";
             //return $"<div>[{count}] <a href=\"{url}\">{label}</a></div>";
@@ -69,12 +69,12 @@ namespace SLBr.Protocols
                 StringBuilder sb = new StringBuilder("<!DOCTYPE html><html>\r\n");
                 sb.Append("<style>" +
                     "html {height: 100%;}" +
-                    "body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: repeating-linear-gradient(45deg, black, transparent 100px);}" +
+                    "body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: white;}" +
                     "h1, h2, h3, p {margin: 0;}" +
                     "pre {background: white; border-radius: 5px; padding: 10px;}" +
-                    ".Content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}" +
-                    ".Embed {background: white; border-radius: 5px; padding: 5px;}" +
-                    "</style><body><div class=\"Content\">\r\n");
+                    ".content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}" +
+                    ".embed {background: white; border-radius: 5px; padding: 5px;}" +
+                    "</style><body><div class=\"content\">\r\n");
                 bool ConstructingText = false;
                 foreach (char c in input)
                 {

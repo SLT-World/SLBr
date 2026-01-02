@@ -47,8 +47,7 @@ namespace SLBr.Controls
         {
             if (args.NewSource != null)
             {
-                Window _Window = ((HwndSource)args.NewSource).RootVisual as Window;
-                if (_Window != null)
+                if (((HwndSource)args.NewSource).RootVisual is Window _Window)
                 {
                     if (CleanupElement == null)
                         CleanupElement = _Window;
@@ -98,8 +97,7 @@ namespace SLBr.Controls
                 SizeChanged -= OnSizeChanged;
                 Loaded -= HwndHoster_Loaded;
                 PresentationSource.RemoveSourceChangedHandler(this, PresentationSourceChangedHandler);
-                if (CleanupElement != null)
-                    CleanupElement.Unloaded -= OnCleanupElementUnloaded;
+                CleanupElement?.Unloaded -= OnCleanupElementUnloaded;
             }
         }
 
@@ -119,10 +117,8 @@ namespace SLBr.Controls
 
         protected virtual void OnCleanupElementChanged(FrameworkElement oldValue, FrameworkElement newValue)
         {
-            if (oldValue != null)
-                oldValue.Unloaded -= OnCleanupElementUnloaded;
-            if (newValue != null)
-                newValue.Unloaded += OnCleanupElementUnloaded;
+            oldValue?.Unloaded -= OnCleanupElementUnloaded;
+            newValue?.Unloaded += OnCleanupElementUnloaded;
         }
 
         private void OnCleanupElementUnloaded(object sender, RoutedEventArgs e)
