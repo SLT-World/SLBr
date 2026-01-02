@@ -1611,8 +1611,8 @@ namespace SLBr.Pages
                 {
                     //Warning: WebView2 somehow forgets the auto dark mode after a while
                     SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
-                    //if (WebView2DevToolsHWND != IntPtr.Zero)
-                    //    WebView2DevTools_SizeChanged(null, null);
+                    if (WebView2DevToolsHWND != IntPtr.Zero)
+                        UpdateDevToolsPosition();
                     if (App.Instance.LiteMode && WebView != null && WebView.IsBrowserInitialized)
                     {
                         WebView?.CallDevToolsAsync("Page.setWebLifecycleState", new
@@ -2246,7 +2246,7 @@ namespace SLBr.Pages
         bool IsUtilityContainerOpen;
         IWindowInfo SideBarWindowInfo;
         public HwndHoster DevToolsHost;
-        //public IntPtr WebView2DevToolsHWND = IntPtr.Zero;
+        public IntPtr WebView2DevToolsHWND = IntPtr.Zero;
         public void ToggleSideBar(bool ForceClose = false)
         {
             DevToolsToolBar.Visibility = Visibility.Collapsed;
@@ -2264,13 +2264,12 @@ namespace SLBr.Pages
                 {
                     SideBarCoreContainer.Children.Clear();
                     _NewsFeed = null;
-                    /*if (WebView2DevToolsHWND != IntPtr.Zero)
+                    if (WebView2DevToolsHWND != IntPtr.Zero)
                     {
                         App.Instance.WebView2DevTools.Remove(WebView2DevToolsHWND);
-                        DllUtils.SetParent(WebView2DevToolsHWND, DllUtils.GetDesktopWindow());
                         DllUtils.PostMessage(WebView2DevToolsHWND, DllUtils.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
                         WebView2DevToolsHWND = IntPtr.Zero;
-                    }*/
+                    }
                     if (DevToolsHost != null)
                     {
                         if (WebView is ChromiumWebView ChromiumView)
@@ -2301,16 +2300,11 @@ namespace SLBr.Pages
                     ToggleSideBar(ForceClose);
                     return;
                 }
-                if (WebView.Engine != WebEngineType.Chromium)
+                if (WebView.Engine == WebEngineType.Trident)
                 {
-                    if (WebView is ChromiumEdgeWebView EdgeWebView)
-                        ((WebView2)EdgeWebView.Control).CoreWebView2.OpenDevToolsWindow();
-                    else
-                    {
-                        InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Inspector Unavailable", "Trident webview does not support an inspector tool.", "\uec7a");
-                        InfoWindow.Topmost = true;
-                        InfoWindow.ShowDialog();
-                    }
+                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "Inspector Unavailable", "Trident webview does not support an inspector tool.", "\uec7a");
+                    InfoWindow.Topmost = true;
+                    InfoWindow.ShowDialog();
                     return;
                 }
             }
@@ -2336,8 +2330,7 @@ namespace SLBr.Pages
                             SideBarWindowInfo.SetAsChild(DevToolsHost.Handle);
                             ((ChromiumWebBrowser)ChromiumView.Control)?.BrowserCore?.ShowDevTools(SideBarWindowInfo, XCoord, YCoord);
                         }
-                        //Damn you webview2, docked devtools works, except for the fact that it can't handle keyboard input
-                        /*else if (WebView is ChromiumEdgeWebView EdgeWebView)
+                        else if (WebView is ChromiumEdgeWebView EdgeWebView)
                         {
                             Dispatcher.BeginInvoke(async () =>
                             {
@@ -2361,33 +2354,38 @@ namespace SLBr.Pages
                                 if (WebView2DevToolsHWND != IntPtr.Zero)
                                 {
                                     App.Instance.WebView2DevTools.Add(WebView2DevToolsHWND);
-                                    DllUtils.SetParent(WebView2DevToolsHWND, DevToolsHost.Handle);
 
                                     int DevToolsWindowStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE);
-                                    DevToolsWindowStyle &= ~(DllUtils.WS_OVERLAPPEDWINDOW | DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX | DllUtils.WS_SYSMENU);
-                                    DevToolsWindowStyle |= DllUtils.WS_CHILD | DllUtils.WS_VISIBLE;
+                                    DevToolsWindowStyle &= ~(DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_SYSMENU | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX);
+                                    DevToolsWindowStyle |= DllUtils.WS_POPUP;
                                     DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE, DevToolsWindowStyle);
 
                                     int DevToolsWindowExStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE);
-                                    DevToolsWindowExStyle &= ~(DllUtils.WS_EX_DLGMODALFRAME | DllUtils.WS_EX_CLIENTEDGE | DllUtils.WS_EX_STATICEDGE);
+                                    DevToolsWindowExStyle &= ~DllUtils.WS_EX_APPWINDOW;
+                                    DevToolsWindowExStyle |= DllUtils.WS_EX_TOOLWINDOW;
                                     DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE, DevToolsWindowExStyle);
 
-                                    WebView2DevTools_SizeChanged(null, null);
-
-                                    DevToolsHost.SizeChanged += WebView2DevTools_SizeChanged;
+                                    UpdateDevToolsPosition();
+                                    DevToolsHost.SizeChanged += (s, e) => UpdateDevToolsPosition();
+                                    Tab.ParentWindow.LocationChanged += (s, e) => UpdateDevToolsPosition();
+                                    Tab.ParentWindow.SizeChanged += (s, e) => UpdateDevToolsPosition();
+                                    Tab.ParentWindow.StateChanged += (s, e) => DllUtils.ShowWindow(WebView2DevToolsHWND, Tab.ParentWindow.WindowState == WindowState.Minimized ? DllUtils.SW_HIDE : DllUtils.SW_SHOWNA);;
                                 }
                             });
-                        }*/
+                        }
                     }
                 };
             }
             SideBar.Visibility = IsUtilityContainerOpen ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        /*private void WebView2DevTools_SizeChanged(object sender, SizeChangedEventArgs e)
+        void UpdateDevToolsPosition()
         {
-            DllUtils.SetWindowPos(WebView2DevToolsHWND, IntPtr.Zero, -7, -30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOZORDER | DllUtils.SWP_FRAMECHANGED | DllUtils.SWP_SHOWWINDOW);
-        }*/
+            if (WebView2DevToolsHWND == IntPtr.Zero) return;
+            Point TopLeft = DevToolsHost.PointToScreen(new Point(0, 0));
+            DllUtils.SetWindowPos(WebView2DevToolsHWND, new IntPtr(-1), (int)TopLeft.X - 7, (int)TopLeft.Y - 30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOACTIVATE | DllUtils.SWP_SHOWWINDOW | DllUtils.SWP_FRAMECHANGED);
+            DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37), true);
+        }
 
         bool PIsReaderMode = false;
         bool IsReaderMode

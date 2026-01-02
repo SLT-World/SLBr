@@ -7,33 +7,7 @@ namespace SLBr.Controls
 {
     public class HwndHoster : HwndHost
     {
-        [DllImport("user32.dll", EntryPoint = "CreateWindowEx", CharSet = CharSet.Unicode)]
-        private static extern IntPtr CreateWindowEx(int dwExStyle,
-                                              string lpszClassName,
-                                              string lpszWindowName,
-                                              int style,
-                                              int x, int y,
-                                              int width, int height,
-                                              IntPtr hwndParent,
-                                              IntPtr hMenu,
-                                              IntPtr hInst,
-                                              [MarshalAs(UnmanagedType.AsAny)] object pvParam);
-
-        [DllImport("user32.dll", EntryPoint = "DestroyWindow", CharSet = CharSet.Unicode)]
-        private static extern bool DestroyWindow(IntPtr hwnd);
-
-        private const int WS_CHILD = 0x40000000,
-            WS_VISIBLE = 0x10000000,
-            HOST_ID = 0x00000002,
-            WS_CLIPCHILDREN = 0x02000000,
-            WM_SIZE = 0x0005,
-            SWP_NOMOVE = 0x0002,
-            SWP_NOZORDER = 0x0004,
-            WM_SETFOCUS = 0x0007,
-            WM_MOUSEACTIVATE = 0x0021;
-
-
-        private IntPtr hwndHost;
+        private IntPtr HwndHost;
         private static bool DesignMode;
         private int disposeSignaled;
         public bool IsDisposed
@@ -65,51 +39,43 @@ namespace SLBr.Controls
 
         private void HwndHoster_Loaded(object sender, RoutedEventArgs e)
         {
-            EnumChildWindows(hwndHost, new EnumWindowsProc(EnumChildProc), IntPtr.Zero);
-            SetWindowPos(firstChildHwnd, IntPtr.Zero, 0, 0, (int)ActualWidth, (int)ActualHeight, SWP_NOZORDER | SWP_NOMOVE);
+            DllUtils.EnumChildWindows(HwndHost, new DllUtils.EnumWindowsProc(EnumChildProc), IntPtr.Zero);
+            DllUtils.SetWindowPos(FirstChildHwnd, IntPtr.Zero, 0, 0, (int)ActualWidth, (int)ActualHeight, DllUtils.SWP_NOZORDER | DllUtils.SWP_NOMOVE);
         }
 
         private void PresentationSourceChangedHandler(object sender, SourceChangedEventArgs args)
         {
             if (args.NewSource != null)
             {
-                var window = ((HwndSource)args.NewSource).RootVisual as Window;
-                if (window != null)
+                Window _Window = ((HwndSource)args.NewSource).RootVisual as Window;
+                if (_Window != null)
                 {
                     if (CleanupElement == null)
-                        CleanupElement = window;
-                    else if (CleanupElement is Window parent && parent != window)
-                        CleanupElement = window;
+                        CleanupElement = _Window;
+                    else if (CleanupElement is Window Parent && Parent != _Window)
+                        CleanupElement = _Window;
                 }
             }
         }
 
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
         {
-            if (hwndHost == IntPtr.Zero)
-            {
-                hwndHost = CreateWindowEx(0, "static", "",
-                            WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WM_SIZE,
-                            0, 0,
-                            (int)ActualWidth, (int)ActualHeight,
-                            hwndParent.Handle,
-                            HOST_ID,
-                            IntPtr.Zero,
-                            0);
-            }
-            return new HandleRef(null, hwndHost);
+            if (HwndHost == IntPtr.Zero)
+                HwndHost = DllUtils.CreateWindowEx(0, "static", "", DllUtils.WS_CHILD | DllUtils.WS_VISIBLE | DllUtils.WS_CLIPCHILDREN | DllUtils.WM_SIZE, 0, 0, (int)ActualWidth, (int)ActualHeight, hwndParent.Handle, DllUtils.HOST_ID, IntPtr.Zero, 0);
+            return new HandleRef(null, HwndHost);
         }
 
         protected override void DestroyWindowCore(HandleRef hwnd)
         {
-            DestroyWindow(hwnd.Handle);
+            DllUtils.DestroyWindow(hwnd.Handle);
         }
+
         protected override IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             switch (msg)
             {
-                case WM_SETFOCUS:
-                case WM_MOUSEACTIVATE:
+                case DllUtils.WM_SETFOCUS:
+                case DllUtils.WM_MOUSEACTIVATE:
                     return IntPtr.Zero;
             }
             return base.WndProc(hwnd, msg, wParam, lParam, ref handled);
@@ -123,6 +89,7 @@ namespace SLBr.Controls
                 InternalDispose(disposing);
             base.Dispose(disposing);
         }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void InternalDispose(bool disposing)
         {
@@ -165,27 +132,17 @@ namespace SLBr.Controls
 
         private void OnSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            EnumChildWindows(hwndHost, new EnumWindowsProc(EnumChildProc), IntPtr.Zero);
-            if (firstChildHwnd != IntPtr.Zero)
-                SetWindowPos(firstChildHwnd, IntPtr.Zero, 0, 0, (int)e.NewSize.Width, (int)e.NewSize.Height, SWP_NOZORDER | SWP_NOMOVE);
+            DllUtils.EnumChildWindows(HwndHost, new DllUtils.EnumWindowsProc(EnumChildProc), IntPtr.Zero);
+            if (FirstChildHwnd != IntPtr.Zero)
+                DllUtils.SetWindowPos(FirstChildHwnd, IntPtr.Zero, 0, 0, (int)e.NewSize.Width, (int)e.NewSize.Height, DllUtils.SWP_NOZORDER | DllUtils.SWP_NOMOVE);
         }
 
-        private IntPtr firstChildHwnd = IntPtr.Zero;
+        private IntPtr FirstChildHwnd = IntPtr.Zero;
         private bool EnumChildProc(IntPtr hWnd, IntPtr lParam)
         {
-            if (firstChildHwnd == IntPtr.Zero)
-                firstChildHwnd = hWnd;
+            if (FirstChildHwnd == IntPtr.Zero)
+                FirstChildHwnd = hWnd;
             return true;
         }
-
-        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
     }
 }

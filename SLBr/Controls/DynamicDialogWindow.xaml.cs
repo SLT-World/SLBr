@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -28,7 +29,9 @@ namespace SLBr.Controls
     {
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
-        private void RaisePropertyChanged(string name) => PropertyChanged(this, new PropertyChangedEventArgs(name));
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
         #endregion
 
         private string _Value = "";
@@ -46,7 +49,7 @@ namespace SLBr.Controls
                 if (_Value != value)
                 {
                     _Value = value;
-                    RaisePropertyChanged(nameof(Value));
+                    RaisePropertyChanged();
                 }
             }
         }
@@ -59,7 +62,7 @@ namespace SLBr.Controls
                 if (_BoolValue != value)
                 {
                     _BoolValue = value;
-                    RaisePropertyChanged(nameof(BoolValue));
+                    RaisePropertyChanged();
                 }
             }
         }

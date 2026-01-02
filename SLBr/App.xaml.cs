@@ -13,6 +13,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -29,28 +30,19 @@ using System.Xml.Linq;
 
 namespace SLBr
 {
-    public class HotKey
+    public class HotKey(Action _Callback, int _KeyCode, bool HasControl, bool HasShift, bool HasAlt)
     {
-        public HotKey(Action _Callback, int _KeyCode, bool HasControl, bool HasShift, bool HasAlt)
-        {
-            Callback = _Callback;
-            KeyCode = _KeyCode;
-            Control = HasControl;
-            Shift = HasShift;
-            Alt = HasAlt;
-        }
+        public int KeyCode { get; } = _KeyCode;
+        public bool Control { get; } = HasControl;
+        public bool Shift { get; } = HasShift;
+        public bool Alt { get; } = HasAlt;
 
-        public int KeyCode { get; }
-        public bool Control { get; }
-        public bool Shift { get; }
-        public bool Alt { get; }
-
-        public Action Callback { get; }
+        public Action Callback { get; } = _Callback;
     }
 
     public static class HotKeyManager
     {
-        public static HashSet<HotKey> HotKeys = new HashSet<HotKey>();
+        public static HashSet<HotKey> HotKeys = [];
 
         public static void HandleKeyDown(KeyEventArgs e)
         {
@@ -75,10 +67,8 @@ namespace SLBr
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
-        private void RaisePropertyChanged(string name)
-        {
-            PropertyChanged(this, new PropertyChangedEventArgs(name));
-        }
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
         #endregion
 
         private string PID;
@@ -88,7 +78,7 @@ namespace SLBr
             set
             {
                 PID = value;
-                RaisePropertyChanged(nameof(ID));
+                RaisePropertyChanged();
             }
         }
 
@@ -99,7 +89,7 @@ namespace SLBr
             set
             {
                 PName = value;
-                RaisePropertyChanged(nameof(Name));
+                RaisePropertyChanged();
             }
         }
 
@@ -110,7 +100,7 @@ namespace SLBr
             set
             {
                 PPopup = value;
-                RaisePropertyChanged(nameof(Popup));
+                RaisePropertyChanged();
             }
         }
 
@@ -121,7 +111,7 @@ namespace SLBr
             set
             {
                 PVersion = value;
-                RaisePropertyChanged(nameof(Version));
+                RaisePropertyChanged();
             }
         }
 
@@ -154,7 +144,7 @@ namespace SLBr
             set
             {
                 PDescription = value;
-                RaisePropertyChanged(nameof(Description));
+                RaisePropertyChanged();
             }
         }
 
@@ -192,10 +182,8 @@ namespace SLBr
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
-        private void RaisePropertyChanged(string name)
-        {
-            PropertyChanged(this, new PropertyChangedEventArgs(name));
-        }
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
         #endregion
 
         private string PID;
@@ -205,7 +193,7 @@ namespace SLBr
             set
             {
                 PID = value;
-                RaisePropertyChanged(nameof(ID));
+                RaisePropertyChanged();
             }
         }
 
@@ -216,7 +204,7 @@ namespace SLBr
             set
             {
                 PFileName = value;
-                RaisePropertyChanged(nameof(FileName));
+                RaisePropertyChanged();
             }
         }
 
@@ -227,7 +215,7 @@ namespace SLBr
             set
             {
                 PIcon = value;
-                RaisePropertyChanged(nameof(Icon));
+                RaisePropertyChanged();
             }
         }
 
@@ -238,7 +226,7 @@ namespace SLBr
             set
             {
                 PPercentComplete = value;
-                RaisePropertyChanged(nameof(PercentComplete));
+                RaisePropertyChanged();
             }
         }
 
@@ -249,7 +237,7 @@ namespace SLBr
             set
             {
                 PFormattedProgress = value;
-                RaisePropertyChanged(nameof(FormattedProgress));
+                RaisePropertyChanged();
             }
         }
 
@@ -260,7 +248,7 @@ namespace SLBr
             set
             {
                 POpen = value;
-                RaisePropertyChanged(nameof(Open));
+                RaisePropertyChanged();
             }
         }
 
@@ -271,7 +259,7 @@ namespace SLBr
             set
             {
                 PStop = value;
-                RaisePropertyChanged(nameof(Stop));
+                RaisePropertyChanged();
             }
         }
 
@@ -282,7 +270,7 @@ namespace SLBr
             set
             {
                 PProgress = value;
-                RaisePropertyChanged(nameof(Progress));
+                RaisePropertyChanged();
             }
         }
 
@@ -293,7 +281,7 @@ namespace SLBr
             set
             {
                 PIsIndeterminate = value;
-                RaisePropertyChanged(nameof(IsIndeterminate));
+                RaisePropertyChanged();
             }
         }
     }
@@ -304,18 +292,18 @@ namespace SLBr
 
         public const string AMPEndpoint = "https://acceleratedmobilepageurl.googleapis.com/v1/ampUrls:batchGet";
 
-        public List<MainWindow> AllWindows = new List<MainWindow>();
-        public List<SearchProvider> SearchEngines = new List<SearchProvider>();
+        public List<MainWindow> AllWindows = [];
+        public List<SearchProvider> SearchEngines = [];
         public SearchProvider DefaultSearchProvider;
-        public List<Theme> Themes = new List<Theme>()
-        {
+        public List<Theme> Themes =
+        [
             new Theme("Light", Colors.White, Colors.WhiteSmoke, Colors.Gainsboro, Colors.Gray, Colors.Black, (Color)ColorConverter.ConvertFromString("#3399FF"), false, false),
             new Theme("Dark", (Color)ColorConverter.ConvertFromString("#202225"), (Color)ColorConverter.ConvertFromString("#2F3136"), (Color)ColorConverter.ConvertFromString("#36393F"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#3399FF"), true, true),
             new Theme("Purple", (Color)ColorConverter.ConvertFromString("#191025"), (Color)ColorConverter.ConvertFromString("#251C31"), (Color)ColorConverter.ConvertFromString("#2B2237"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#934CFE"), true, true),
-        };
-        public DomainList AdBlockAllowList = new DomainList();
+        ];
+        public DomainList AdBlockAllowList = [];
 
-        public IdnMapping _IdnMapping = new IdnMapping();
+        public IdnMapping _IdnMapping = new();
 
         public Saving GlobalSave;
         public Saving FavouritesSave;
@@ -324,7 +312,7 @@ namespace SLBr
         public Saving LanguagesSave;
         public Saving AllowListSave;
 
-        public List<Saving> WindowsSaves = new List<Saving>();
+        public List<Saving> WindowsSaves = [];
 
         public SolidColorBrush FavouriteColor;
         public SolidColorBrush SLBrColor;
@@ -348,18 +336,18 @@ namespace SLBr
         bool AppInitialized;
 
         public static readonly string[] URLConfusables =
-        {
+        [
             "rn",//m, rnicrosoft
             "vv",//w
             "cl",//d
             "0",//o
             "1",//l
             "5",//S
-        };
+        ];
 
-        public ObservableCollection<ActionStorage> Favourites = new ObservableCollection<ActionStorage>();
-        public ObservableCollection<ActionStorage> History = new ObservableCollection<ActionStorage>();
-        private List<Extension> PrivateExtensions = new List<Extension>();
+        public ObservableCollection<ActionStorage> Favourites = [];
+        public ObservableCollection<ActionStorage> History = [];
+        private List<Extension> PrivateExtensions = [];
         public List<Extension> Extensions
         {
             get { return PrivateExtensions; }
@@ -373,7 +361,7 @@ namespace SLBr
                         {
                             foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
                             {
-                                BrowserView.ExtensionsButton.Visibility = value.Any() ? Visibility.Visible : Visibility.Collapsed;
+                                BrowserView.ExtensionsButton.Visibility = value.Count != 0 ? Visibility.Visible : Visibility.Collapsed;
                                 BrowserView.ExtensionsMenu.ItemsSource = Extensions;
                             }
                         }
@@ -402,7 +390,7 @@ namespace SLBr
             }
         }
 
-        public Dictionary<string, WebAppManifest> AvailableWebAppManifests = new Dictionary<string, WebAppManifest>();
+        public Dictionary<string, WebAppManifest> AvailableWebAppManifests = [];
 
         public void AddHistory(string Url, string Title)
         {
@@ -435,8 +423,8 @@ namespace SLBr
             RecentJumpList.JumpItems.Add(NewWindowTask);
             JumpList.SetJumpList(Application.Current, RecentJumpList);*/
         }
-        public ObservableCollection<DownloadEntry> VisibleDownloads = new ObservableCollection<DownloadEntry>();
-        public Dictionary<string, WebDownloadItem> Downloads = new Dictionary<string, WebDownloadItem>();
+        public ObservableCollection<DownloadEntry> VisibleDownloads = [];
+        public Dictionary<string, WebDownloadItem> Downloads = [];
         public void UpdateDownloadItem(WebDownloadItem Item)
         {
             Downloads[Item.ID] = Item;
@@ -708,7 +696,7 @@ namespace SLBr
 
         public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush Color, string SubText = "", string? Actual = null)
         {
-            OmniSuggestion Suggestion = new OmniSuggestion { Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText };
+            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText };
             switch (Type)
             {
                 case "S":
@@ -902,7 +890,6 @@ namespace SLBr
                     catch { Suggestion.SubText = "- Unavailable"; }
                     break;
             }
-
             return Suggestion;
         }
 
@@ -913,7 +900,7 @@ namespace SLBr
         public static Random MiniRandom = new Random();
         public static QREncoder MiniQREncoder = new QREncoder();
 
-        //public List<IntPtr> WebView2DevTools = new List<IntPtr>();
+        public List<IntPtr> WebView2DevTools = new List<IntPtr>();
 
         private void InitializeApp()
         {
@@ -3921,10 +3908,8 @@ Inner Exception: ```{7} ```";
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
-        private void RaisePropertyChanged(string Name)
-        {
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
             PropertyChanged(this, new PropertyChangedEventArgs(Name));
-        }
         #endregion
 
         public ActionStorage(string _Name, string _Arguments, string _Tooltip, bool _Toggle = false)
@@ -3941,7 +3926,7 @@ Inner Exception: ```{7} ```";
             set
             {
                 DName = value;
-                RaisePropertyChanged("Name");
+                RaisePropertyChanged();
             }
         }
         public string Arguments
@@ -3950,7 +3935,7 @@ Inner Exception: ```{7} ```";
             set
             {
                 DArguments = value;
-                RaisePropertyChanged("Arguments");
+                RaisePropertyChanged();
             }
         }
         public string Tooltip
@@ -3959,7 +3944,7 @@ Inner Exception: ```{7} ```";
             set
             {
                 DTooltip = value;
-                RaisePropertyChanged("Tooltip");
+                RaisePropertyChanged();
             }
         }
         public bool Toggle
@@ -3968,7 +3953,7 @@ Inner Exception: ```{7} ```";
             set
             {
                 DToggle = value;
-                RaisePropertyChanged("Toggle");
+                RaisePropertyChanged();
             }
         }
 

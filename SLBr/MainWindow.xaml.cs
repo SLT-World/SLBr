@@ -2,6 +2,7 @@
 using SLBr.Pages;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,10 +20,8 @@ namespace SLBr
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
-        private void RaisePropertyChanged(string Name)
-        {
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
             PropertyChanged(this, new PropertyChangedEventArgs(Name));
-        }
         #endregion
 
         public int ID;
@@ -34,7 +33,7 @@ namespace SLBr
             set
             {
                 _Tabs = value;
-                RaisePropertyChanged("Tabs");
+                RaisePropertyChanged();
             }
         }
 
@@ -44,7 +43,7 @@ namespace SLBr
             set
             {
                 _DimUnloadedIcon = value;
-                RaisePropertyChanged("DimUnloadedIcon");
+                RaisePropertyChanged();
             }
         }
         private bool _DimUnloadedIcon;
@@ -58,7 +57,7 @@ namespace SLBr
         {
             switch (msg)
             {
-                case MessageHelper.WM_COPYDATA:
+                case DllUtils.WM_COPYDATA:
                     COPYDATASTRUCT _dataStruct = Marshal.PtrToStructure<COPYDATASTRUCT>(lParam);
                     string Data = Marshal.PtrToStringUni(_dataStruct.lpData, _dataStruct.cbData / 2);
                     List<string> Datas = Data.Split("<|>").ToList();
@@ -707,10 +706,16 @@ namespace SLBr
                     if (_Tab.Content == _Control)
                         return _Tab;
                 }
-                return null;
             }
-            else
-                return Tabs[TabsUI.SelectedIndex];
+            else if (TabsUI != null && Tabs.Count != 0)
+            {
+                try
+                {
+                    return Tabs[TabsUI.SelectedIndex];
+                }
+                catch { }
+            }
+            return null;
         }
 
         bool WasPrivate = false;
@@ -776,10 +781,8 @@ namespace SLBr
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
-        private void RaisePropertyChanged(string Name)
-        {
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
             PropertyChanged(this, new PropertyChangedEventArgs(Name));
-        }
         #endregion
 
         public BrowserTabItem(MainWindow _ParentWindow)
@@ -797,7 +800,7 @@ namespace SLBr
             set
             {
                 _TabStyle = value;
-                RaisePropertyChanged("TabStyle");
+                RaisePropertyChanged();
             }
         }
         private Style _TabStyle;
@@ -808,7 +811,7 @@ namespace SLBr
             set
             {
                 _IsUnloaded = value;
-                RaisePropertyChanged("IsUnloaded");
+                RaisePropertyChanged();
             }
         }
         private bool _IsUnloaded;
@@ -818,7 +821,7 @@ namespace SLBr
             set
             {
                 _Header = value;
-                RaisePropertyChanged("Header");
+                RaisePropertyChanged();
             }
         }
         private string _Header;
@@ -828,7 +831,7 @@ namespace SLBr
             set
             {
                 _Icon = value;
-                RaisePropertyChanged("Icon");
+                RaisePropertyChanged();
             }
         }
         private BitmapImage _Icon;
@@ -841,7 +844,7 @@ namespace SLBr
             {
                 FavouriteCommandHeader = "Add to favourites";
                 _ID = value;
-                RaisePropertyChanged("ID");
+                RaisePropertyChanged();
             }
         }
         private int _ID;
@@ -856,7 +859,7 @@ namespace SLBr
                 CloseCommand = $"6<,>{ID}<,>{value}";
                 UnloadCommand = $"8<,>{ID}";
                 _ParentWindowID = value;
-                RaisePropertyChanged("ParentWindowID");
+                RaisePropertyChanged();
             }
         }
         private int _ParentWindowID;
@@ -867,7 +870,7 @@ namespace SLBr
             set
             {
                 _Progress = value;
-                RaisePropertyChanged("Progress");
+                RaisePropertyChanged();
             }
         }
         private double _Progress = 0;
@@ -878,7 +881,7 @@ namespace SLBr
             set
             {
                 _ProgressBarVisibility = value;
-                RaisePropertyChanged("ProgressBarVisibility");
+                RaisePropertyChanged();
             }
         }
         private Visibility _ProgressBarVisibility;
@@ -888,7 +891,7 @@ namespace SLBr
             set
             {
                 _BrowserCommandsVisibility = value;
-                RaisePropertyChanged("BrowserCommandsVisibility");
+                RaisePropertyChanged();
             }
         }
         private Visibility _BrowserCommandsVisibility;
@@ -898,7 +901,7 @@ namespace SLBr
             set
             {
                 _DuplicateCommand = value;
-                RaisePropertyChanged("DuplicateCommand");
+                RaisePropertyChanged();
             }
         }
         private string _DuplicateCommand;
@@ -908,7 +911,7 @@ namespace SLBr
             set
             {
                 _RefreshCommand = value;
-                RaisePropertyChanged("RefreshCommand");
+                RaisePropertyChanged();
             }
         }
         private string _RefreshCommand;
@@ -918,7 +921,7 @@ namespace SLBr
             set
             {
                 _UnloadCommand = value;
-                RaisePropertyChanged("UnloadCommand");
+                RaisePropertyChanged();
             }
         }
         private string _UnloadCommand;
@@ -928,7 +931,7 @@ namespace SLBr
             set
             {
                 _AddToFavouritesCommand = value;
-                RaisePropertyChanged("AddToFavouritesCommand");
+                RaisePropertyChanged();
             }
         }
         private string _AddToFavouritesCommand;
@@ -938,7 +941,7 @@ namespace SLBr
             set
             {
                 _CloseCommand = value;
-                RaisePropertyChanged("CloseCommand");
+                RaisePropertyChanged();
             }
         }
         private string _CloseCommand;
@@ -948,7 +951,7 @@ namespace SLBr
             set
             {
                 _FavouriteCommandHeader = value;
-                RaisePropertyChanged("FavouriteCommandHeader");
+                RaisePropertyChanged();
             }
         }
         private string _FavouriteCommandHeader;

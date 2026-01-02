@@ -131,8 +131,25 @@ namespace SLBr
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll", EntryPoint = "CreateWindowEx", CharSet = CharSet.Unicode)]
+        public static extern IntPtr CreateWindowEx(int dwExStyle, string lpszClassName, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr hwndParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam);
+
+        [DllImport("user32.dll", EntryPoint = "DestroyWindow", CharSet = CharSet.Unicode)]
+        public static extern bool DestroyWindow(IntPtr hwnd);
+        
+        [DllImport("gdi32.dll")]
+        public static extern IntPtr CreateRectRgn(int nLeft, int nTop, int nRight, int nBottom);
+
+        [DllImport("user32.dll")]
+        public static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
+
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string lpszClass, string lpszWindow);
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
         public static string GetWindowTextRaw(IntPtr hWnd)
         {
@@ -141,8 +158,15 @@ namespace SLBr
             return Builder.ToString();
         }
 
-        public const uint WM_KEYDOWN = 0x0100;
-        public const uint WM_KEYUP = 0x0101;
+        public const int SW_SHOWNA = 8;
+        public const int SW_HIDE = 0;
+        //public const int SW_SHOWNORMAL = 1;
+        //public const int SW_SHOWMINIMIZED = 2;
+        //public const int SW_SHOWMAXIMIZED = 3;
+        //public const int SW_SHOWNOACTIVATE = 4;
+        //public const int SW_SHOW = 5;
+        //public const int SW_MINIMIZE = 6;
+        //public const int SW_SHOWDEFAULT = 10;
 
         public const int GWL_STYLE = -16;
         public const int GWL_EXSTYLE = -20;
@@ -154,42 +178,49 @@ namespace SLBr
         public const int WS_MAXIMIZE = 0x01000000;
         public const int WS_SYSMENU = 0x00080000;
 
-        public const int WS_EX_DLGMODALFRAME = 0x00000001;
-        public const int WS_EX_CLIENTEDGE = 0x00000200;
-        public const int WS_EX_STATICEDGE = 0x00020000;
+        //public const int WS_EX_LAYERED = 0x80000;
+        //public const int WS_EX_NOACTIVATE = 0x08000000;
+        //public const int WS_EX_DLGMODALFRAME = 0x00000001;
+        //public const int WS_EX_CLIENTEDGE = 0x00000200;
+        //public const int WS_EX_STATICEDGE = 0x00020000;
 
         public const uint SWP_NOZORDER = 0x0004;
         public const uint SWP_FRAMECHANGED = 0x0020;
         public const uint SWP_SHOWWINDOW = 0x0040;
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const int SWP_NOMOVE = 0x0002;
 
-        public const int WS_OVERLAPPED = 0x00000000;
+        public const int HOST_ID = 0x00000002;
+
+        public const int WM_SIZE = 0x0005;
+        public const int WM_SETFOCUS = 0x0007;
+        public const int WM_MOUSEACTIVATE = 0x0021;
+        //public const int WS_OVERLAPPED = 0x00000000;
         public const int WS_POPUP = unchecked((int)0x80000000);
         public const int WS_VISIBLE = 0x10000000;
-        public const int WS_DISABLED = 0x08000000;
-        public const int WS_CLIPSIBLINGS = 0x04000000;
+        //public const int WS_DISABLED = 0x08000000;
+        //public const int WS_CLIPSIBLINGS = 0x04000000;
         public const int WS_CLIPCHILDREN = 0x02000000;
-        public const int WS_BORDER = 0x00800000;
-        public const int WS_DLGFRAME = 0x00400000;
-        public const int WS_VSCROLL = 0x00200000;
-        public const int WS_HSCROLL = 0x00100000;
-        public const int WS_GROUP = 0x00020000;
-        public const int WS_TABSTOP = 0x00010000;
+        //public const int WS_BORDER = 0x00800000;
+        //public const int WS_DLGFRAME = 0x00400000;
+        //public const int WS_VSCROLL = 0x00200000;
+        //public const int WS_HSCROLL = 0x00100000;
+        //public const int WS_GROUP = 0x00020000;
+        //public const int WS_TABSTOP = 0x00010000;
         public const int WS_MINIMIZEBOX = 0x00020000;
         public const int WS_MAXIMIZEBOX = 0x00010000;
 
-        public const int WS_OVERLAPPEDWINDOW = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+        //public const int WS_OVERLAPPEDWINDOW = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
-        public const int WS_POPUPWINDOW = WS_POPUP | WS_BORDER | WS_SYSMENU;
+        //public const int WS_POPUPWINDOW = WS_POPUP | WS_BORDER | WS_SYSMENU;
 
-        public const int WS_CHILDWINDOW = WS_CHILD;
-
-        public const int WS_EX_NOPARENTNOTIFY = 0x00000004;
+        /*public const int WS_EX_NOPARENTNOTIFY = 0x00000004;
         public const int WS_EX_TOPMOST = 0x00000008;
         public const int WS_EX_ACCEPTFILES = 0x00000010;
         public const int WS_EX_TRANSPARENT = 0x00000020;
-        public const int WS_EX_MDICHILD = 0x00000040;
+        public const int WS_EX_MDICHILD = 0x00000040;*/
         public const int WS_EX_TOOLWINDOW = 0x00000080;
-        public const int WS_EX_WINDOWEDGE = 0x00000100;
+        /*public const int WS_EX_WINDOWEDGE = 0x00000100;
         public const int WS_EX_CONTEXTHELP = 0x00000400;
         public const int WS_EX_RIGHT = 0x00001000;
         public const int WS_EX_LEFT = 0x00000000;
@@ -197,25 +228,22 @@ namespace SLBr
         public const int WS_EX_LTRREADING = 0x00000000;
         public const int WS_EX_LEFTSCROLLBAR = 0x00004000;
         public const int WS_EX_RIGHTSCROLLBAR = 0x00000000;
-        public const int WS_EX_CONTROLPARENT = 0x00010000;
+        public const int WS_EX_CONTROLPARENT = 0x00010000;*/
         public const int WS_EX_APPWINDOW = 0x00040000;
 
-        public const int WS_EX_OVERLAPPEDWINDOW = WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE;
-        public const int WS_EX_PALETTEWINDOW = WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
+        /*public const int WS_EX_OVERLAPPEDWINDOW = WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE;
+        public const int WS_EX_PALETTEWINDOW = WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST;*/
 
         public const int WM_SYSCOMMAND = 0x0112;
         public const int SC_MOVE = 0xF010;
 
         public const uint WM_CLOSE = 0x0010;
+
+        public const int WM_COPYDATA = 0x004A;
+        public const int HWND_BROADCAST = 0xffff;
     }
     static class MessageHelper
     {
-        public const int WM_COPYDATA = 0x004A;
-        public const int HWND_BROADCAST = 0xffff;
-
-        [DllImport("user32", EntryPoint = "SendMessageA")]
-        private static extern int SendMessage(IntPtr Hwnd, int wMsg, IntPtr wParam, IntPtr lParam);
-
         public static void SendDataMessage(Process targetProcess, string msg)
         {
             IntPtr StringMessageBuffer = Marshal.StringToHGlobalUni(msg);
@@ -226,7 +254,7 @@ namespace SLBr
             CopyData.cbData = msg.Length * 2;
             IntPtr CopyDataBuffer = IntPtrAlloc(CopyData);
 
-            SendMessage(HWND_BROADCAST, WM_COPYDATA, IntPtr.Zero, CopyDataBuffer);
+            DllUtils.SendMessage(DllUtils.HWND_BROADCAST, DllUtils.WM_COPYDATA, IntPtr.Zero, CopyDataBuffer);
 
             Marshal.FreeHGlobal(CopyDataBuffer);
             Marshal.FreeHGlobal(StringMessageBuffer);

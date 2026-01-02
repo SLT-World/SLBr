@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
@@ -23,10 +24,9 @@ namespace SLBr.Pages
     public partial class Settings : UserControl
     {
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
-        private void RaisePropertyChanged(string Name)
-        {
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
             PropertyChanged(this, new PropertyChangedEventArgs(Name));
-        }
 
         private ObservableCollection<ActionStorage> PrivateAddableLanguages = new ObservableCollection<ActionStorage>();
         public ObservableCollection<ActionStorage> AddableLanguages
@@ -35,7 +35,7 @@ namespace SLBr.Pages
             set
             {
                 PrivateAddableLanguages = value;
-                RaisePropertyChanged("AddableLanguages");
+                RaisePropertyChanged();
             }
         }
 
@@ -82,7 +82,7 @@ namespace SLBr.Pages
                     PrivateAddableLanguages.Clear();
                     foreach (var item in sortedList)
                         PrivateAddableLanguages.Add(item);
-                    RaisePropertyChanged("AddableLanguages");
+                    RaisePropertyChanged();
                 }
             }
             catch { }
