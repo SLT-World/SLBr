@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -89,16 +90,23 @@ namespace SLBr.Protocols
         public static string NewFormat(GeminiGopherIResponse Response)//, bool IsRaw = false)
         {
             bool is_literal = false;
+            string title = "";
             string input = Encoding.UTF8.GetString(Response.Bytes.ToArray());
-            StringBuilder sb = new StringBuilder("<!DOCTYPE html><html>\r\n");
-            sb.Append("<style>" +
-                    "html {height: 100%;}" +
-                "body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: white;}" +
-                "h1, h2, h3 {margin: 0;}" +
-                "pre {background: white; border-radius: 5px; padding: 10px;}" +
-                ".content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}" +
-                ".embed {background: white; border-radius: 5px; padding: 5px;}" +
-                "</style><body><div class=\"content\">\r\n");
+            StringBuilder sb = new StringBuilder(@"<!DOCTYPE html>
+<html>
+<head>
+    <style>
+html {height: 100%;}
+body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: white;}
+h1, h2, h3 {margin: 0;}
+pre {background: white; border-radius: 5px; padding: 10px;}
+.content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}
+.embed {background: white; border-radius: 5px; padding: 5px;}
+    </style>
+</head>
+<body>
+    <div class=""content"">
+");
             foreach (char c in input)
             {
                 switch (c)
@@ -133,6 +141,8 @@ namespace SLBr.Protocols
                     if (!is_literal)
                     {
                         lineout = FormatLineAsTitle(lineout);
+                        if (string.IsNullOrEmpty(title) && lineout.StartsWith("<h1>"))
+                            title = lineout.Substring(4, lineout.Length - 9);
                         lineout = FormatLineAsEmbed(lineout);
                         if (lineout.StartsWith("=&gt;"))
                             LinkCount++;
@@ -153,7 +163,11 @@ namespace SLBr.Protocols
                     output.WriteLine(lineout);
                 }
             }
-            return output.ToString();
+
+            string Result = output.ToString();
+            if (!string.IsNullOrEmpty(title))
+                Result = Result.Replace("</head>", $"<title>{WebUtility.HtmlEncode(title)}</title>\r\n</head>");
+            return Result;
         }
     }
 

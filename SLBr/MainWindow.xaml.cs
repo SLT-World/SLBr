@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -273,6 +274,23 @@ namespace SLBr
             SetAppearance(App.Instance.CurrentTheme);
 
             //Benchmark.Clear();
+            /*string E = "<h1>Hello</h1>";
+            Benchmark.Run("Replace", Iterations, () =>
+            {
+                _ = E.Replace("<h1>", "").Replace("</h1>", "");
+            });
+            Benchmark.Run("Regex", Iterations, () =>
+            {
+                _ = Regex.Replace(E, "<.*?>", string.Empty);
+            });
+            Benchmark.Run("Substring", Iterations, () =>//Best
+            {
+                _ = E.Substring(4, E.Length - 9);
+            });
+            Benchmark.Run("Prefix", Iterations, () =>
+            {
+                _ = Utils.RemovePrefix(Utils.RemovePrefix(E, "<h1>"), "</h1>", false, true);
+            });*/
             /*Benchmark.Run("Boolean", Iterations, () =>//Best
             {
                 _ = true == false;
