@@ -1,7 +1,6 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Win32;
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -15,8 +14,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WinRT;

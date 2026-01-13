@@ -3142,24 +3142,27 @@ Inner Exception: ```{7} ```";
             {
                 foreach (MainWindow _Window in AllWindows)
                 {
-                    Saving TabsSave = WindowsSaves[AllWindows.IndexOf(_Window)];
-                    TabsSave.Clear();
-                    int Count = 0;
-                    int SelectedIndex = 0;
-                    int OriginalSelectedIndex = _Window.TabsUI.SelectedIndex;
-                    for (int i = 0; i < _Window.Tabs.Count; i++)
+                    if (_Window.Tabs.Count > 1)
                     {
-                        BrowserTabItem Tab = _Window.Tabs[i];
-                        if (Tab.ParentWindow != null && !Tab.Content.Private)
+                        Saving TabsSave = WindowsSaves[AllWindows.IndexOf(_Window)];
+                        TabsSave.Clear();
+                        int Count = 0;
+                        int SelectedIndex = 0;
+                        int OriginalSelectedIndex = _Window.TabsUI.SelectedIndex;
+                        for (int i = 0; i < _Window.Tabs.Count; i++)
                         {
-                            TabsSave.Set(Count.ToString(), Tab.Content.Address, false);
-                            if (i == OriginalSelectedIndex)
-                                SelectedIndex = Count;
-                            Count++;
+                            BrowserTabItem Tab = _Window.Tabs[i];
+                            if (Tab.ParentWindow != null && !Tab.Content.Private)
+                            {
+                                TabsSave.Set(Count.ToString(), Tab.Content.Address, false);
+                                if (i == OriginalSelectedIndex)
+                                    SelectedIndex = Count;
+                                Count++;
+                            }
                         }
+                        TabsSave.Set("Selected", SelectedIndex.ToString());
+                        TabsSave.Set("Count", Count.ToString());
                     }
-                    TabsSave.Set("Selected", SelectedIndex.ToString());
-                    TabsSave.Set("Count", Count.ToString());
                 }
             }
         }

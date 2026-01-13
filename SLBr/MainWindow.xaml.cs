@@ -1,11 +1,8 @@
-﻿using CefSharp.DevTools.Autofill;
-using SLBr.Controls;
-using SLBr.Pages;
+﻿using SLBr.Pages;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,7 +10,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Windows.Security.Cryptography.Certificates;
 using WinUI;
 
 namespace SLBr
@@ -642,6 +638,20 @@ namespace SLBr
         {
             if (WindowState != WindowState.Minimized)
                 Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
+            foreach (BrowserTabItem Tab in Tabs)
+                Tab.Content?.UpdateDevToolsPosition();
+        }
+
+        private void Window_LocationChanged(object sender, EventArgs e)
+        {
+            foreach (BrowserTabItem Tab in Tabs)
+                Tab.Content?.UpdateDevToolsPosition();
+        }
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            foreach (BrowserTabItem Tab in Tabs)
+                Tab.Content?.UpdateDevToolsPosition();
         }
 
         public void UnloadTabs()
@@ -836,7 +846,12 @@ namespace SLBr
                     TabsUI.SelectedIndex = Tabs.Count - 1;
             }
             else
+            {
+                TabsUI.Visibility = Visibility.Collapsed;
+                _Tab.Content.Dispose();
+                Tabs.Remove(_Tab);
                 Close();
+            }
         }
         public void Find(string Text = "")
         {

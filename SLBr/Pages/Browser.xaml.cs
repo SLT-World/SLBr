@@ -421,7 +421,7 @@ namespace SLBr.Pages
 
         private async void WebView_IsBrowserInitializedChanged(object? sender, EventArgs e)
         {
-            if (WebView.IsBrowserInitialized)
+            if (WebView != null && WebView.IsBrowserInitialized)
             {
                 CoreContainer.Visibility = Visibility.Visible;
                 Tab.IsUnloaded = false;
@@ -1557,7 +1557,7 @@ namespace SLBr.Pages
         public void UnFocus()
         {
             //SLBr seems to freeze when switching from a loaded tab with devtools to an unloaded tab
-            DevTools(true);
+            //DevTools(true);
             if (App.Instance.LiteMode && WebView != null && WebView.Engine == WebEngineType.ChromiumEdge && WebView.IsBrowserInitialized)
             {
                 WebView?.CallDevToolsAsync("Page.setWebLifecycleState", new
@@ -2353,12 +2353,9 @@ namespace SLBr.Pages
                                     DevToolsWindowExStyle &= ~DllUtils.WS_EX_APPWINDOW;
                                     DevToolsWindowExStyle |= DllUtils.WS_EX_TOOLWINDOW;
                                     DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE, DevToolsWindowExStyle);
-
+                                    
                                     UpdateDevToolsPosition();
                                     DevToolsHost.SizeChanged += (s, e) => UpdateDevToolsPosition();
-                                    Tab.ParentWindow.LocationChanged += (s, e) => UpdateDevToolsPosition();
-                                    Tab.ParentWindow.SizeChanged += (s, e) => UpdateDevToolsPosition();
-                                    Tab.ParentWindow.StateChanged += (s, e) => DllUtils.ShowWindow(WebView2DevToolsHWND, Tab.ParentWindow.WindowState == WindowState.Minimized ? DllUtils.SW_HIDE : DllUtils.SW_SHOWNA);;
                                 }
                             });
                         }
@@ -2368,9 +2365,16 @@ namespace SLBr.Pages
             SideBar.Visibility = IsUtilityContainerOpen ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        void UpdateDevToolsPosition()
+        public void UpdateDevToolsPosition()
         {
             if (WebView2DevToolsHWND == IntPtr.Zero) return;
+            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.Tabs[Tab.ParentWindow.TabsUI.SelectedIndex] != Tab)
+            {
+                DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_HIDE);
+                //DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 0, 0, 0), true); 
+                return;
+            }
+            DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_SHOWNA);
             Point TopLeft = DevToolsHost.PointToScreen(new Point(0, 0));
             DllUtils.SetWindowPos(WebView2DevToolsHWND, new IntPtr(-1), (int)TopLeft.X - 7, (int)TopLeft.Y - 30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOACTIVATE | DllUtils.SWP_SHOWWINDOW | DllUtils.SWP_FRAMECHANGED);
             DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37), true);
@@ -3309,36 +3313,38 @@ namespace SLBr.Pages
 
             if (WebView != null)
             {
-                if (WebView.IsBrowserInitialized)
-                    Address = WebView.Address;
-                WebView?.IsBrowserInitializedChanged -= WebView_IsBrowserInitializedChanged;
-                //WebView?.Control.PreviewMouseWheel -= Chromium_PreviewMouseWheel;
+                IWebView DisposingWebView = WebView;
+                WebView = null;
+                //WARNING: Prevent renavigation.
+                if (DisposingWebView.IsBrowserInitialized)
+                    Address = DisposingWebView.Address;
+                DisposingWebView?.IsBrowserInitializedChanged -= WebView_IsBrowserInitializedChanged;
+                //DisposingWebView?.Control.PreviewMouseWheel -= Chromium_PreviewMouseWheel;
 
-                WebView?.FaviconChanged -= WebView_FaviconChanged;
-                WebView?.AuthenticationRequested -= WebView_AuthenticationRequested;
-                WebView?.BeforeNavigation -= WebView_BeforeNavigation;
-                WebView?.ContextMenuRequested -= WebView_ContextMenuRequested;
-                WebView?.ExternalProtocolRequested -= WebView_ExternalProtocolRequested;
-                //WebView?.FindResult -= WebView_FindResult;
-                WebView?.FrameLoadStart -= WebView_FrameLoadStart;
-                WebView?.FullscreenChanged -= WebView_FullscreenChanged;
-                WebView?.JavaScriptMessageReceived -= WebView_JavaScriptMessageReceived;
-                WebView?.LoadingStateChanged -= WebView_LoadingStateChanged;
-                WebView?.NavigationError -= WebView_NavigationError;
-                WebView?.NewTabRequested -= WebView_NewTabRequested;
-                WebView?.PermissionRequested -= WebView_PermissionRequested;
-                WebView?.ResourceLoaded -= WebView_ResourceLoaded;
-                WebView?.ResourceRequested -= WebView_ResourceRequested;
-                //WebView?.ResourceResponded -= WebView_ResourceResponded;
-                WebView?.ScriptDialogOpened -= WebView_ScriptDialogOpened;
-                WebView?.StatusMessage -= WebView_StatusMessage;
-                WebView?.TitleChanged -= WebView_TitleChanged;
+                DisposingWebView?.FaviconChanged -= WebView_FaviconChanged;
+                DisposingWebView?.AuthenticationRequested -= WebView_AuthenticationRequested;
+                DisposingWebView?.BeforeNavigation -= WebView_BeforeNavigation;
+                DisposingWebView?.ContextMenuRequested -= WebView_ContextMenuRequested;
+                DisposingWebView?.ExternalProtocolRequested -= WebView_ExternalProtocolRequested;
+                //DisposingWebView?.FindResult -= WebView_FindResult;
+                DisposingWebView?.FrameLoadStart -= WebView_FrameLoadStart;
+                DisposingWebView?.FullscreenChanged -= WebView_FullscreenChanged;
+                DisposingWebView?.JavaScriptMessageReceived -= WebView_JavaScriptMessageReceived;
+                DisposingWebView?.LoadingStateChanged -= WebView_LoadingStateChanged;
+                DisposingWebView?.NavigationError -= WebView_NavigationError;
+                DisposingWebView?.NewTabRequested -= WebView_NewTabRequested;
+                DisposingWebView?.PermissionRequested -= WebView_PermissionRequested;
+                DisposingWebView?.ResourceLoaded -= WebView_ResourceLoaded;
+                DisposingWebView?.ResourceRequested -= WebView_ResourceRequested;
+                //DisposingWebView?.ResourceResponded -= WebView_ResourceResponded;
+                DisposingWebView?.ScriptDialogOpened -= WebView_ScriptDialogOpened;
+                DisposingWebView?.StatusMessage -= WebView_StatusMessage;
+                DisposingWebView?.TitleChanged -= WebView_TitleChanged;
 
-                WebView?.Dispose();
+                DisposingWebView?.Dispose();
             }
             _Settings?.Dispose();
             _Settings = null;
-            WebView = null;
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }

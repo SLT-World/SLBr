@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SLBr"
         xmlns:WinUI="clr-namespace:WinUI"
         mc:Ignorable="d"
-        Title="SLBr" Height="450" Width="800" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" WindowState="Maximized" StateChanged="Window_StateChanged">
+        Title="SLBr" Height="450" Width="800" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" WindowState="Maximized" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
