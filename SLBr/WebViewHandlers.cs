@@ -215,12 +215,18 @@ namespace SLBr
             WebView2ControllerOptions = WebView2Environment.CreateCoreWebView2ControllerOptions();
             WebView2ControllerOptions.DefaultBackgroundColor = Color.Black;
             //WebView2ControllerOptions.ProfileName = "Default";
-            WebView2ControllerOptions.AllowHostInputProcessing = true;
+
+            //WARNING: Enabling AllowHostInputProcessing freezes WebView2 on drag & drop.
+            //Related? https://github.com/MicrosoftEdge/WebView2Feedback/issues/5141
+            //To no avail https://gist.github.com/ivanjx/b026ba331796e20a717778ae56760e3c, Disabling AllowExternalDrop may help, investigate?
+
+            //Ignore above, keyboard hotkeys remain functional on disabled AllowHostInputProcessing.
+            WebView2ControllerOptions.AllowHostInputProcessing = false;
 
             WebView2PrivateControllerOptions = WebView2Environment.CreateCoreWebView2ControllerOptions();
-            WebView2PrivateControllerOptions.DefaultBackgroundColor = Color.Black;
-            WebView2PrivateControllerOptions.AllowHostInputProcessing = true;
             WebView2PrivateControllerOptions.IsInPrivateModeEnabled = true;
+            WebView2PrivateControllerOptions.DefaultBackgroundColor = Color.Black;
+            WebView2PrivateControllerOptions.AllowHostInputProcessing = false;
 
             WebView2CancelResponse = WebView2Environment.CreateWebResourceResponse(Stream.Null, 403, "Blocked", "Content-Type: text/plain");
 
