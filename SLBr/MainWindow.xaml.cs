@@ -808,6 +808,7 @@ namespace SLBr
         }
         public void CloseTab(int Id, int WindowId)
         {
+            ShowPreview(null);
             if (WindowId != ID)
             {
                 foreach (MainWindow _Window in App.Instance.AllWindows)
@@ -943,6 +944,24 @@ namespace SLBr
             GC.SuppressFinalize(this);
         }
 
+        //TODO: Investigate obstructiveness of previews for vertical tabs. 
+        public void ShowPreview(BrowserTabItem? Tab, FrameworkElement Anchor = null)
+        {
+            if (Tab == null)
+                TabPreviewPopup.IsOpen = false;
+            else
+            {
+                TabPreviewHeader.Text = Tab.Header;
+                if (Tab.Content != null)
+                    TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab.Content.Address);
+                TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xec4a";
+                TabPreviewState.Text = Tab.IsUnloaded ? "Unloaded" : "Loaded";
+                TabPreviewImage.Source = Tab.Preview;
+                TabPreviewPopup.PlacementTarget = Anchor;
+                TabPreviewPopup.IsOpen = true;
+            }
+        }
+
         protected override void OnClosing(CancelEventArgs e)
         {
             base.OnClosing(e);
@@ -968,6 +987,7 @@ namespace SLBr
                 ParentWindowID = _ParentWindow.ID;
             }
         }
+        public ImageSource Preview { get; set; }
         public Style TabStyle
         {
             get { return _TabStyle; }

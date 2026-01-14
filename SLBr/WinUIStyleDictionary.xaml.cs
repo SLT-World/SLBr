@@ -72,5 +72,42 @@ namespace SLBr
                 e.Handled = true;
             }
         }
+
+        CancellationTokenSource TabHoverToken;
+
+        private async void TabItem_MouseEnter(object sender, MouseEventArgs e)
+        {
+            TabHoverToken?.Cancel();
+            TabHoverToken = new CancellationTokenSource();
+
+            FrameworkElement Element = (FrameworkElement)sender;
+            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
+            if (Tab == null || Tab?.ParentWindow == null) return;
+
+            try
+            {
+                await Task.Delay(400, TabHoverToken.Token);
+                Tab.ParentWindow.ShowPreview(Tab, Element);
+            }
+            catch { }
+        }
+
+        private void TabItem_MouseLeave(object sender, MouseEventArgs e)
+        {
+            TabHoverToken?.Cancel();
+            FrameworkElement Element = (FrameworkElement)sender;
+            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
+            if (Tab == null || Tab?.ParentWindow == null) return;
+            Tab?.ParentWindow.ShowPreview(null);
+        }
+
+        private void TabItem_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            TabHoverToken?.Cancel();
+            FrameworkElement Element = (FrameworkElement)sender;
+            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
+            if (Tab == null || Tab?.ParentWindow == null) return;
+            Tab?.ParentWindow.ShowPreview(null);
+        }
     }
 }

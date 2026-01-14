@@ -1357,12 +1357,12 @@ namespace SLBr
                 WebViewManager.DeleteWebView2HighDPIRegistry();
                 Browser.EnsureCoreWebView2Async(WebViewManager.WebView2Environment, Settings.Private ? WebViewManager.WebView2PrivateControllerOptions : WebViewManager.WebView2ControllerOptions);
             }
-            Browser.LostFocus += Browser_LostFocus;
+            //Browser.LostFocus += Browser_LostFocus;
             Browser.KeyDown += (s, e) => HotKeyManager.HandleKeyDown(e);
             ZoomFactor = 1;
         }
 
-        private void Browser_LostFocus(object sender, RoutedEventArgs e)
+        /*private void Browser_LostFocus(object sender, RoutedEventArgs e)
         {
             if (Keyboard.Modifiers == ModifierKeys.None && (Keyboard.IsKeyDown(Key.Up) || Keyboard.IsKeyDown(Key.Down) || Keyboard.IsKeyDown(Key.Left) || Keyboard.IsKeyDown(Key.Right) || Keyboard.IsKeyDown(Key.Tab)))
             {
@@ -1384,7 +1384,7 @@ namespace SLBr
                         ExecuteScript($@"document.dispatchEvent(new KeyboardEvent('keydown',{{key:'{JSKey}',code:'{JSKey}',keyCode:{JSKeyCode},which:{JSKeyCode},bubbles:true}}));document.dispatchEvent(new KeyboardEvent('keyup',{{key:'{JSKey}',code:'{JSKey}',keyCode:{JSKeyCode},which:{JSKeyCode},bubbles:true}}));");
                 }, System.Windows.Threading.DispatcherPriority.Input);
             }
-        }
+        }*/
 
         private void Browser_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
         {
@@ -1836,9 +1836,9 @@ namespace SLBr
             set { Browser.ZoomFactor = value; }
         }
 
-        public void Navigate(string Url) { try { BrowserCore.Navigate(Url); } catch { } }
-        public void Back() { if (CanGoBack) Browser.GoBack(); }
-        public void Forward() { if (CanGoForward) Browser.GoForward(); }
+        public void Navigate(string Url) { try { BrowserCore?.Navigate(Url); } catch { } }
+        public void Back() { if (CanGoBack) Browser?.GoBack(); }
+        public void Forward() { if (CanGoForward) Browser?.GoForward(); }
 
         public void Refresh(bool IgnoreCache = false, bool ClearCache = false)
         {
@@ -1847,7 +1847,7 @@ namespace SLBr
 );*/
             if (ClearCache)
                 BrowserCore?.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.DiskCache);
-            Browser.Reload();
+            Browser?.Reload();
         }
         public void Stop() => Browser.Stop();
         public void Print() => BrowserCore?.ShowPrintUI();

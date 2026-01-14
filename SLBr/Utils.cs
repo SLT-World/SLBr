@@ -1169,6 +1169,19 @@ namespace SLBr
             }
             return Host;
         }
+        public static string HostOnlyHTTP(string Url, bool RemoveTrivialSubdomain = true)
+        {
+            string Host = CleanUrl(Url, true, true, true, RemoveTrivialSubdomain, false);
+            if (IsHttpScheme(Url))
+            {
+                int Protocol = Host.IndexOf("://");
+                if (Protocol >= 0)
+                    Host = Host[(Protocol + 3)..];
+                int SlashIndex = Host.IndexOf('/');
+                return SlashIndex >= 0 ? Host.Substring(0, SlashIndex) : Host;
+            }
+            return Host;
+        }
         //TODO: Switch to public suffix list detection
         public static bool CanRemoveTrivialSubdomain(ReadOnlySpan<char> Host)
         {
