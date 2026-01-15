@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -490,10 +491,10 @@ namespace SLBr
             Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
 
+            SetTabAlignment();
+
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.SetAppearance(_Theme);
-
-            SetTabAlignment();
 
             HwndSource HwndSource = HwndSource.FromHwnd(WindowInterop.EnsureHandle());
             int trueValue = 0x01;
@@ -502,7 +503,6 @@ namespace SLBr
                 DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
             else
                 DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
-
         }
 
         public void SetTabAlignment()
@@ -520,42 +520,70 @@ namespace SLBr
                 {
                     Tab.Content?.WebContainer.Margin = new Thickness(0);
                     Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(0);
-                    Tab.Content?.CompactTabButton.Visibility = Visibility.Collapsed;
+                    Tab.Content?.NewTabButton.Visibility = Visibility.Collapsed;
                 }
             }
             else
             {
                 VerticalTabs = true;
                 TabsUI.Style = Resources["VerticalTabControl"] as Style;
-                TabsUI.Resources[typeof(TabItem)] = App.Instance.CompactTab ? (Style)FindResource("MinimizedVerticalTab") : (Style)FindResource("VerticalTab");
-                NewTabTab.TabStyle = App.Instance.CompactTab ? (Style)FindResource("MinimizedVerticalIconTabButton") : (Style)FindResource("VerticalIconTabButton");
-                
+                TabsUI.ApplyTemplate();
+                TabsUI.Resources[typeof(TabItem)] = (Style)FindResource("VerticalTab");
+                NewTabTab.TabStyle = (Style)FindResource("VerticalIconTabButton");
                 Tabs.Remove(NewTabTab);
                 Tabs.Insert(0, NewTabTab);
-                TabsUI.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    float ToolBarHeight = 41;
-                    if (App.Instance.ShowFavouritesBar == 0)
-                    {
-                        if (App.Instance.Favourites.Count == 0)
-                            ToolBarHeight += 5;
-                        else
-                            ToolBarHeight += 41.25f;
-                    }
-                    else if (App.Instance.ShowFavouritesBar == 1)
-                        ToolBarHeight += 41.25f;
-                    else if (App.Instance.ShowFavouritesBar == 2)
-                        ToolBarHeight += 5;
-                    TabsUI.Padding = new Thickness(0, ToolBarHeight, 0, 0);
-                    foreach (BrowserTabItem Tab in Tabs)
-                    {
-                        Tab.Content?.WebContainer.Margin = new Thickness(5 + (App.Instance.CompactTab ? 40 : 245), 0, 0, 0);
-                        Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(1, 0, 0, 0);
-                        Tab.Content?.CompactTabButton.Visibility = Visibility.Visible;
-                    }
-                }));
+                TabsUI.LayoutUpdated += TabsUI_LayoutUpdated;
             }
         }
+        private void TabsUI_LayoutUpdated(object? sender, EventArgs e)
+        {
+            TabsUI.LayoutUpdated -= TabsUI_LayoutUpdated;
+            float ToolBarHeight = 41;
+            if (App.Instance.ShowFavouritesBar == 0)
+            {
+                if (App.Instance.Favourites.Count == 0)
+                    ToolBarHeight += 5;
+                else
+                    ToolBarHeight += 41.25f;
+            }
+            else if (App.Instance.ShowFavouritesBar == 1)
+                ToolBarHeight += 41.25f;
+            else if (App.Instance.ShowFavouritesBar == 2)
+                ToolBarHeight += 5;
+            TabsUI.Padding = new Thickness(0, ToolBarHeight, 0, 0);
+
+            TabPanelScroll = TabsUI.Template.FindName("TabPanelScroll", TabsUI) as ScrollViewer;
+            TabResizeThumb = TabsUI.Template.FindName("TabResizeThumb", TabsUI) as Thumb;
+            if (TabPanelScroll == null || TabResizeThumb == null)
+                return;
+            TabPanelScroll.Width = App.Instance.VerticalTabWidth;
+            TabResizeThumb.Margin = new Thickness(App.Instance.VerticalTabWidth - 5, TabsUI.Padding.Top, 0, 0);
+            foreach (BrowserTabItem Tab in Tabs)
+            {
+                Tab.Content?.WebContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
+                Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(1, 0, 0, 0);
+                Tab.Content?.NewTabButton.Visibility = Visibility.Visible;
+            }
+            TabResizeThumb.DragDelta -= TabResizeThumb_DragDelta;
+            TabResizeThumb.DragDelta += TabResizeThumb_DragDelta;
+        }
+
+        private void TabResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            App.Instance.VerticalTabWidth = Math.Max(45, Math.Min(250, App.Instance.VerticalTabWidth + e.HorizontalChange));
+            App.Instance.GlobalSave.Set("VerticalTabWidth", App.Instance.VerticalTabWidth);
+            TabPanelScroll.Width = App.Instance.VerticalTabWidth;
+            TabResizeThumb.Margin = new Thickness(App.Instance.VerticalTabWidth - 5, TabsUI.Padding.Top, 0, 0);
+            foreach (BrowserTabItem Tab in Tabs)
+            {
+                Tab.Content?.WebContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
+                Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(1, 0, 0, 0);
+                Tab.Content?.NewTabButton.Visibility = Visibility.Visible;
+            }
+        }
+
+        public ScrollViewer TabPanelScroll = null;
+        Thumb TabResizeThumb = null;
 
         private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {

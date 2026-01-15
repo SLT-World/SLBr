@@ -26,7 +26,7 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5,5,0,0">
-                    <Button Visibility="Collapsed" Click="ButtonAction" BorderThickness="0" Tag="55" x:Name="CompactTabButton" ToolTip="Toggle Compact Tabs" Content="&#xe90c;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
+                    <Button Visibility="Collapsed" Click="ButtonAction" BorderThickness="0" Tag="55" x:Name="NewTabButton" ToolTip="New Tab" Content="&#xe710;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
                     <WinUI:DropDownButton ToolTip="Options" BorderThickness="0" Content="&#xE712;" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu>

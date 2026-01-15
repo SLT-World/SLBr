@@ -1815,7 +1815,7 @@ Inner Exception: ```{7} ```";
                 Favourites.Add(new ActionStorage(Value[1], $"4<,>{Value[0]}", Value[0]));
             }
             Favourites.CollectionChanged += Favourites_CollectionChanged;
-            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), bool.Parse(GlobalSave.Get("CompactTab", true.ToString())), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
+            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
             bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
             if (bool.Parse(GlobalSave.Get("RestoreTabs", false.ToString())))
             {
@@ -3117,39 +3117,41 @@ Inner Exception: ```{7} ```";
 
         public void Save()
         {
+            GlobalSave.Save();
+
             StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
             StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
 
             FavouritesSave.Clear();
-            FavouritesSave.Set("Count", Favourites.Count.ToString(), false);
+            FavouritesSave.Set("Count", Favourites.Count.ToString());
             for (int i = 0; i < Favourites.Count; i++)
-                FavouritesSave.Set(i.ToString(), Favourites[i].Tooltip, Favourites[i].Name, false);
+                FavouritesSave.Set(i.ToString(), Favourites[i].Tooltip, Favourites[i].Name);
             FavouritesSave.Save();
 
             SearchSave.Clear();
-            SearchSave.Set("Count", SearchEngines.Count.ToString(), false);
+            SearchSave.Set("Count", SearchEngines.Count.ToString());
             for (int i = 0; i < SearchEngines.Count; i++)
             {
                 SearchProvider _SearchProvider = SearchEngines[i];
-                SearchSave.Set(i.ToString(), $"{_SearchProvider.Name}<#>{_SearchProvider.SearchUrl}<#>{_SearchProvider.SuggestUrl}", false);
+                SearchSave.Set(i.ToString(), $"{_SearchProvider.Name}<#>{_SearchProvider.SearchUrl}<#>{_SearchProvider.SuggestUrl}");
             }
             SearchSave.Save();
 
             AllowListSave.Clear();
-            AllowListSave.Set("Count", AdBlockAllowList.AllDomains.Count.ToString(), false);
+            AllowListSave.Set("Count", AdBlockAllowList.AllDomains.Count.ToString());
             int DomainIndex = 0;
             foreach (string Domain in AdBlockAllowList.AllDomains)
             {
-                AllowListSave.Set(DomainIndex.ToString(), Domain, false);
+                AllowListSave.Set(DomainIndex.ToString(), Domain);
                 DomainIndex++;
             }
             AllowListSave.Save();
 
             LanguagesSave.Clear();
-            LanguagesSave.Set("Count", Languages.Count.ToString(), false);
-            LanguagesSave.Set("Selected", Languages.IndexOf(Locale), false);
+            LanguagesSave.Set("Count", Languages.Count.ToString());
+            LanguagesSave.Set("Selected", Languages.IndexOf(Locale));
             for (int i = 0; i < Languages.Count; i++)
-                LanguagesSave.Set(i.ToString(), Languages[i].Tooltip, false);
+                LanguagesSave.Set(i.ToString(), Languages[i].Tooltip);
             LanguagesSave.Save();
 
             foreach (FileInfo _File in new DirectoryInfo(UserApplicationWindowsPath).GetFiles())
@@ -3170,7 +3172,7 @@ Inner Exception: ```{7} ```";
                             BrowserTabItem Tab = _Window.Tabs[i];
                             if (Tab.ParentWindow != null && !Tab.Content.Private)
                             {
-                                TabsSave.Set(Count.ToString(), Tab.Content.Address, false);
+                                TabsSave.Set(Count.ToString(), Tab.Content.Address);
                                 if (i == OriginalSelectedIndex)
                                     SelectedIndex = Count;
                                 Count++;
@@ -3501,8 +3503,8 @@ Inner Exception: ```{7} ```";
         public int ShowExtensionButton;
         public int ShowFavouritesBar;
         public int TabAlignment;
-        public bool CompactTab;
-        public void SetAppearance(Theme _Theme, int _TabAlignment, bool _CompactTab, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowReaderModeButton, int _ShowExtensionButton, int _ShowFavouritesBar, bool _AllowQRButton, bool _AllowWebEngineButton)
+        public double VerticalTabWidth;
+        public void SetAppearance(Theme _Theme, int _TabAlignment, double _VerticalTabWidth, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowReaderModeButton, int _ShowExtensionButton, int _ShowFavouritesBar, bool _AllowQRButton, bool _AllowWebEngineButton)
         {
             AllowHomeButton = _AllowHomeButton;
             AllowTranslateButton = _AllowTranslateButton;
@@ -3512,10 +3514,10 @@ Inner Exception: ```{7} ```";
             ShowExtensionButton = _ShowExtensionButton;
             ShowFavouritesBar = _ShowFavouritesBar;
             TabAlignment = _TabAlignment;
-            CompactTab = _CompactTab;
+            VerticalTabWidth = _VerticalTabWidth;
 
             GlobalSave.Set("TabAlignment", TabAlignment);
-            GlobalSave.Set("CompactTab", CompactTab);
+            GlobalSave.Set("VerticalTabWidth", _VerticalTabWidth);
             GlobalSave.Set("TranslateButton", AllowTranslateButton);
             GlobalSave.Set("HomeButton", AllowHomeButton);
             GlobalSave.Set("ReaderButton", AllowReaderModeButton);
@@ -3809,7 +3811,6 @@ Inner Exception: ```{7} ```";
         HardRefresh = 50,
         ClearCacheHardRefresh = 51,
 
-        ToggleCompactTabs = 55,
         InstallWebApp = 56,
         QR = 57,
         SwitchWebEngine = 58,

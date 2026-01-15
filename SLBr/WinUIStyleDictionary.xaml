@@ -2586,7 +2586,7 @@ Margin="{TemplateBinding Padding}"/>
     <Style TargetType="{x:Type TabItem}" x:Key="VerticalTab">
         <Setter Property="ContextMenu" Value="{StaticResource TabItemContextMenu}"/>
         <Setter Property="Height" Value="40"/>
-        <Setter Property="Width" Value="240"/>
+        <Setter Property="Width" Value="Auto"/>
         <Setter Property="MinWidth" Value="35"/>
         <Setter Property="MaxWidth" Value="240"/>
         <Setter Property="Padding" Value="0"/>
@@ -2804,14 +2804,6 @@ Margin="{TemplateBinding Padding}"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-    </Style>
-
-    <Style x:Key="MinimizedVerticalTab" TargetType="{x:Type TabItem}" BasedOn="{StaticResource VerticalTab}">
-        <Setter Property="Width" Value="35"/>
-    </Style>
-
-    <Style x:Key="MinimizedVerticalIconTabButton" TargetType="{x:Type TabItem}" BasedOn="{StaticResource VerticalIconTabButton}">
-        <Setter Property="Width" Value="35"/>
     </Style>
     <Style TargetType="{x:Type TabItem}" x:Key="WinUITabItem">
         <Setter Property="Height" Value="40"/>
@@ -3068,9 +3060,10 @@ Margin="{TemplateBinding Padding}"/>
                             <ScrollViewer VerticalScrollBarVisibility="Hidden">
                                 <ContentPresenter ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0"/>
                             </ScrollViewer>
-                            <ScrollViewer x:Name="TabPanelScroll" VerticalScrollBarVisibility="Hidden" HorizontalAlignment="Left" Margin="{TemplateBinding Padding}">
-                                <TabPanel Grid.Column="0" Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
+                            <ScrollViewer Width="250" MinWidth="45" MaxWidth="250" x:Name="TabPanelScroll" VerticalScrollBarVisibility="Hidden" HorizontalAlignment="Left" Margin="{TemplateBinding Padding}">
+                                <TabPanel Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
                             </ScrollViewer>
+                            <Thumb Opacity="0" x:Name="TabResizeThumb" Width="5" HorizontalAlignment="Left" Cursor="SizeWE"/>
                         </Grid>
                     </Border>
                 </ControlTemplate>

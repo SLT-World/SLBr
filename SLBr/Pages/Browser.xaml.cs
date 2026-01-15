@@ -239,9 +239,6 @@ namespace SLBr.Pages
                 case Actions.ZoomReset:
                     Zoom(0);
                     break;*/
-                case Actions.ToggleCompactTabs:
-                    App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.TabAlignment, !App.Instance.CompactTab, App.Instance.AllowHomeButton, App.Instance.AllowTranslateButton, App.Instance.AllowReaderModeButton, App.Instance.ShowExtensionButton, App.Instance.ShowFavouritesBar, App.Instance.AllowQRButton, App.Instance.AllowWebEngineButton);
-                    break;
                 case Actions.InstallWebApp:
                     Dispatcher.Invoke(async () =>
                     {
@@ -3311,6 +3308,13 @@ namespace SLBr.Pages
                 ExtensionsButton.Visibility = Visibility.Visible;
             else
                 ExtensionsButton.Visibility = Visibility.Collapsed;
+
+            if (App.Instance.TabAlignment == 1)
+            {
+                WebContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
+                WebContainerBorder.BorderThickness = new Thickness(1, 0, 0, 0);
+                NewTabButton.Visibility = Visibility.Visible;
+            }
 
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;

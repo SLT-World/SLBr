@@ -1271,34 +1271,22 @@ namespace SLBr
         public void Remove(string Key) =>
             Data.Remove(Key);
 
-        public void Set(string Key, string Value, bool _Save = true)
-        {
+        public void Set(string Key, string Value) =>
             Data[Key] = Value;
-            if (_Save)
-                Save();
-        }
-        public void Set(string Key, bool Value, bool _Save = true)
-        {
+        public void Set(string Key, bool Value) =>
             Data[Key] = Value.ToString();
-            if (_Save)
-                Save();
-        }
-        public void Set(string Key, int Value, bool _Save = true)
-        {
+        public void Set(string Key, double Value) =>
             Data[Key] = Value.ToString();
-            if (_Save)
-                Save();
-        }
-        public void Set(string Key, float Value, bool _Save = true)
-        {
+        public void Set(string Key, int Value) =>
             Data[Key] = Value.ToString();
-            if (_Save)
-                Save();
-        }
+        public void Set(string Key, float Value) =>
+            Data[Key] = Value.ToString();
+        /*public void Set(string Key, object Value) =>
+            Data[Key] = Value.ToString();*/
 
-        public void Set(string Key, string Value_1, string Value_2, bool _Save = true)
+        public void Set(string Key, string Value_1, string Value_2)
         {
-            Set(Key, string.Join(ValueSeparator, Value_1, Value_2), _Save);
+            Set(Key, string.Join(ValueSeparator, Value_1, Value_2));
         }
         public string Get(string Key, string Default = "NOTFOUND")
         {

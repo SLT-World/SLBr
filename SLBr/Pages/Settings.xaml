@@ -223,7 +223,6 @@
                                         <ComboBoxItem>Vertical</ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
-                                <CheckBox Margin="0,0,0,10" x:Name="CompactTabCheckBox" Width="Auto" Click="CompactTabCheckBox_Click" Content="Compact tabs"/>
                                 <DockPanel>
                                     <TextBlock VerticalAlignment="Center" Text="Favourites bar"/>
                                     <ComboBox x:Name="FavouritesBarComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FavouritesBarComboBox_SelectionChanged">
