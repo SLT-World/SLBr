@@ -1274,6 +1274,21 @@ Inner Exception: ```{7} ```";
         public bool SkipAds;
         public bool ExternalFonts;
         public bool SmartDarkMode;
+        public bool TabPreview;
+
+        public void SetTabPreview(bool Toggle)
+        {
+            GlobalSave.Set("TabPreview", Toggle.ToString());
+            TabPreview = Toggle;
+            if (!Toggle)
+            {
+                foreach (MainWindow _Window in AllWindows)
+                {
+                    foreach (BrowserTabItem Tab in _Window.Tabs)
+                        Tab.Preview = null;
+                }
+            }
+        }
 
         public void SetSmartDarkMode(bool Toggle)
         {
@@ -1784,6 +1799,7 @@ Inner Exception: ```{7} ```";
         private void InitializeUISaves(string CommandLineUrl = "")
         {
             SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", true.ToString())));
+            SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", true.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
             SetTrimURL(bool.Parse(GlobalSave.Get("TrimURL", true.ToString())));
             SetHomographProtection(bool.Parse(GlobalSave.Get("HomographProtection", true.ToString())));

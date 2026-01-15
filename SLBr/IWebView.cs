@@ -838,7 +838,7 @@ namespace SLBr
         event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format);
+        Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null);
         Task<string> GetSourceAsync();
 
         void Download(string Url);
@@ -1147,10 +1147,14 @@ namespace SLBr
             return Result.Success ? Result.Result?.ToString() : null;
         }
 
-        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format)
+        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
         {
-            var ContentSize = await Browser.GetContentSizeAsync();
-            return await Browser.CaptureScreenshotAsync(Format.ToCefScreenshotFormat(), null, new CefSharp.DevTools.Page.Viewport { Width = ContentSize.Width, Height = ContentSize.Height }, true, true);
+            if (Viewport == null)
+            {
+                var ContentSize = await Browser.GetContentSizeAsync();
+                Viewport = new Size { Height = ContentSize.Height, Width = ContentSize.Width };
+            }
+            return await Browser.CaptureScreenshotAsync(Format.ToCefScreenshotFormat(), null, new CefSharp.DevTools.Page.Viewport { Width = (int)Viewport?.Width, Height = (int)Viewport?.Height }, true, true);
         }
         public async Task<string> GetSourceAsync() => await Browser.GetSourceAsync();
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null)
@@ -1916,7 +1920,7 @@ namespace SLBr
             return Result;
         }
 
-        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format)
+        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
         {
             using var Stream = new MemoryStream();
             await BrowserCore.CapturePreviewAsync(Format.ToWebView2ScreenshotFormat(), Stream);
@@ -2425,13 +2429,13 @@ namespace SLBr
             return Task.Task;
         }
 
-        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format)
+        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
         {
             var HWND = Browser.Handle;
             if (HWND == IntPtr.Zero) return Array.Empty<byte>();
 
-            var Width = (int)Browser.ActualWidth;
-            var Height = (int)Browser.ActualHeight;
+            var Width = (int)(Viewport?.Width ?? Browser.ActualWidth);
+            var Height = (int)(Viewport?.Height ?? Browser.ActualHeight);
 
             var hdcSrc = DllUtils.GetWindowDC(HWND);
             var hdcDest = DllUtils.CreateCompatibleDC(hdcSrc);

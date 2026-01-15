@@ -247,6 +247,8 @@ namespace SLBr.Pages
             PrivateTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs"));
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
 
+            TabPreviewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabPreview"));
+
             bool DownloadFavicons = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
             DownloadFaviconsCheckBox.IsChecked = DownloadFavicons;
             FaviconServiceComboBox.IsEnabled = DownloadFavicons;
@@ -286,8 +288,6 @@ namespace SLBr.Pages
 
             MobileViewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("MobileView"));
             ForceLazyCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ForceLazy"));
-
-
 
             bool AntiTamperChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiTamper"));
             AntiTamperCheckBox.IsChecked = AntiTamperChecked;
@@ -717,6 +717,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetSmartDarkMode(SmartDarkModeCheckBox.IsChecked.ToBool());
+        }
+        private void TabPreviewCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetTabPreview(TabPreviewCheckBox.IsChecked.ToBool());
         }
         private void AdaptiveThemeCheckBox_Click(object sender, RoutedEventArgs e)
         {

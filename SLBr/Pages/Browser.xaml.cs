@@ -461,7 +461,7 @@ namespace SLBr.Pages
         private void WebView_TitleChanged(object? sender, string e)
         {
             Tab.Header = e;
-            if (Tab == Tab.ParentWindow.Tabs[Tab.ParentWindow.TabsUI.SelectedIndex])
+            if (Tab == Tab.ParentWindow.GetTab())
                 Title = e + " - SLBr";
         }
 
@@ -1554,17 +1554,45 @@ namespace SLBr.Pages
                 SetIcon(await App.Instance.SetIcon(e, Address, Private));
         }
 
-        public void UnFocus()
+        public async void UnFocus()
         {
             //SLBr seems to freeze when switching from a loaded tab with devtools to an unloaded tab
             //DevTools(true);
-            if (App.Instance.LiteMode && WebView != null && WebView.Engine == WebEngineType.ChromiumEdge && WebView.IsBrowserInitialized)
+            if (App.Instance.LiteMode)
             {
-                WebView?.CallDevToolsAsync("Page.setWebLifecycleState", new
+                if (WebView != null && WebView.Engine == WebEngineType.ChromiumEdge && WebView.IsBrowserInitialized)
                 {
-                    state = "frozen"
-                });
+                    WebView?.CallDevToolsAsync("Page.setWebLifecycleState", new
+                    {
+                        state = "frozen"
+                    });
+                }
             }
+            /*else
+            {
+                if (WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null)// && Tab == Tab.ParentWindow.GetTab())
+                {
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+                    await Dispatcher.InvokeAsync(async () =>
+                    {
+                        BitmapImage _BitmapImage = new();
+
+                        var Width = (int)CoreContainerSizeEmulator.ActualWidth;
+                        var Height = (int)CoreContainerSizeEmulator.ActualHeight;
+                        using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = Height, Width = Width })))
+                        {
+                            _BitmapImage.BeginInit();
+                            _BitmapImage.DecodePixelWidth = 275;
+                            _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                            _BitmapImage.StreamSource = Stream;
+                            _BitmapImage.EndInit();
+                            _BitmapImage.Freeze();
+                        }
+                        Tab.Preview = _BitmapImage;
+                        SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
+                    }, DispatcherPriority.Render);
+                }
+            }*/
         }
 
         public void ReFocus()
@@ -1782,6 +1810,7 @@ namespace SLBr.Pages
                 Translated = false;
             if (IsReaderMode)
                 IsReaderMode = false;
+            Tab.Preview = null;
             if (IsLoading != null)
             {
                 SiteInformationIcon.FontFamily = App.Instance.IconFont;
@@ -1960,6 +1989,25 @@ namespace SLBr.Pages
                     else
                         ReaderModeButton.Visibility = Visibility.Collapsed;
                     SiteInformationPopupButton.IsEnabled = true;
+                    //TODO: Investigate movement to Unfocus for optimization
+                    if (App.Instance.TabPreview && WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null && Tab == Tab.ParentWindow.GetTab() && WebView?.Control?.Visibility != Visibility.Collapsed)
+                    {
+                        BitmapImage _BitmapImage = new();
+
+                        var Width = (int)CoreContainerSizeEmulator.ActualWidth;
+                        var Height = (int)CoreContainerSizeEmulator.ActualHeight;
+                        using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = Height, Width = Width })))
+                        {
+                            _BitmapImage.BeginInit();
+                            _BitmapImage.DecodePixelWidth = 275;
+                            _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                            _BitmapImage.StreamSource = Stream;
+                            _BitmapImage.EndInit();
+                            _BitmapImage.Freeze();
+                        }
+                        Tab.Preview = _BitmapImage;
+                        SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
+                    }
                 }
                 else if (SiteInformationText.Text != "Loading")
                 {
@@ -2032,6 +2080,7 @@ namespace SLBr.Pages
             Tab.IsUnloaded = true;
             Tab.BrowserCommandsVisibility = Visibility.Collapsed;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
+            Tab.Preview = null;
         }
         private void Browser_GotFocus(object sender, RoutedEventArgs e)
         {
@@ -2368,7 +2417,7 @@ namespace SLBr.Pages
         public void UpdateDevToolsPosition()
         {
             if (WebView2DevToolsHWND == IntPtr.Zero) return;
-            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.Tabs[Tab.ParentWindow.TabsUI.SelectedIndex] != Tab)
+            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.GetTab() != Tab)
             {
                 DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_HIDE);
                 //DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 0, 0, 0), true); 
@@ -2538,6 +2587,7 @@ namespace SLBr.Pages
                 DateTime CurrentTime = DateTime.Now;
                 string Url = Path.Combine(ScreenshotPath, Regex.Replace($"{WebView?.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", string.Empty));
                 File.WriteAllBytes(Url, await WebView?.TakeScreenshotAsync(ScreenshotFormat));
+                SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
                 Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true });
             }
             catch { }

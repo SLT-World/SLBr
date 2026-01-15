@@ -90,7 +90,8 @@
                                 <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
                                 <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
                                 <!--<CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>-->
-                                <CheckBox Margin="0,0,0,0" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
+                                <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
+                                <CheckBox Margin="0,0,0,0" x:Name="TabPreviewCheckBox" Width="Auto" Click="TabPreviewCheckBox_Click" Content="Show a preview image in tab tooltips"/>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>

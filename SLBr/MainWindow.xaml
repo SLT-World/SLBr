@@ -54,7 +54,7 @@
                         </Grid.RowDefinitions>
                         <TextBlock x:Name="TabPreviewHeader" Margin="10,0" FontWeight="Bold" Foreground="{StaticResource FontBrush}"/>
                         <TextBlock x:Name="TabPreviewHost" Grid.Row="1" Margin="10,0,10,10" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
-                        <Image MaxHeight="150" Grid.Row="2" x:Name="TabPreviewImage" Stretch="Uniform"/>
+                        <Image RenderOptions.BitmapScalingMode="LowQuality" MaxHeight="150" Grid.Row="2" x:Name="TabPreviewImage" Stretch="Uniform"/>
                         <Border Grid.Row="3" Background="{StaticResource SecondaryBrush}" CornerRadius="0,0,5,5">
                             <Grid>
                                 <Grid.ColumnDefinitions>

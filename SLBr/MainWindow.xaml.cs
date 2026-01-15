@@ -957,6 +957,7 @@ namespace SLBr
                 TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xec4a";
                 TabPreviewState.Text = Tab.IsUnloaded ? "Unloaded" : "Loaded";
                 TabPreviewImage.Source = Tab.Preview;
+                TabPreviewImage.UpdateLayout();
                 TabPreviewPopup.PlacementTarget = Anchor;
                 TabPreviewPopup.IsOpen = true;
             }
