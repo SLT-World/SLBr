@@ -522,6 +522,9 @@ namespace SLBr
                     Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(0);
                     Tab.Content?.NewTabButton.Visibility = Visibility.Collapsed;
                 }
+                TabPreviewPopup.Placement = PlacementMode.Bottom;
+                TabPreviewPopup.VerticalOffset = -7.5;
+                TabPreviewPopup.HorizontalOffset = -10;
             }
             else
             {
@@ -533,6 +536,9 @@ namespace SLBr
                 Tabs.Remove(NewTabTab);
                 //Tabs.Insert(0, NewTabTab);
                 TabsUI.LayoutUpdated += TabsUI_LayoutUpdated;
+                TabPreviewPopup.Placement = PlacementMode.Right;
+                TabPreviewPopup.VerticalOffset = -10;
+                TabPreviewPopup.HorizontalOffset = -7.5;
             }
         }
         private void TabsUI_LayoutUpdated(object? sender, EventArgs e)
@@ -972,7 +978,6 @@ namespace SLBr
             GC.SuppressFinalize(this);
         }
 
-        //TODO: Investigate obstructiveness of previews for vertical tabs. 
         public async void ShowPreview(BrowserTabItem? Tab, FrameworkElement Anchor = null)
         {
             if (Tab == null)

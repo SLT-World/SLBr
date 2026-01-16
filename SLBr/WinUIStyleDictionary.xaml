@@ -2597,7 +2597,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
 
         <Setter Property="Header" Value="{Binding Header}"/>
-        <Setter Property="ToolTip" Value="{Binding Header}"/>
+        <!--<Setter Property="ToolTip" Value="{Binding Header}"/>-->
         <Setter Property="Tag" Value="{Binding ID}"/>
         <Setter Property="AllowDrop" Value="True"/>
         <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
@@ -2608,7 +2608,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border Opacity="0" Name="BorderMouseOver" Background="{DynamicResource BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0,5,0,0"/>
                         <Border Name="Border" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0,5,0,0"/>
-                        <Border Background="Transparent" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0,5,0,0">
+                        <Border MouseDown="TabItem_MouseDown" MouseEnter="TabItem_MouseEnter" MouseLeave="TabItem_MouseLeave" Background="Transparent" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0,5,0,0">
                             <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto" Margin="5,5" MaxWidth="{TemplateBinding Width}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
