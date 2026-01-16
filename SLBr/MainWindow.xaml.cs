@@ -531,7 +531,7 @@ namespace SLBr
                 TabsUI.Resources[typeof(TabItem)] = (Style)FindResource("VerticalTab");
                 NewTabTab.TabStyle = (Style)FindResource("VerticalIconTabButton");
                 Tabs.Remove(NewTabTab);
-                Tabs.Insert(0, NewTabTab);
+                //Tabs.Insert(0, NewTabTab);
                 TabsUI.LayoutUpdated += TabsUI_LayoutUpdated;
             }
         }
@@ -973,17 +973,21 @@ namespace SLBr
         }
 
         //TODO: Investigate obstructiveness of previews for vertical tabs. 
-        public void ShowPreview(BrowserTabItem? Tab, FrameworkElement Anchor = null)
+        public async void ShowPreview(BrowserTabItem? Tab, FrameworkElement Anchor = null)
         {
             if (Tab == null)
                 TabPreviewPopup.IsOpen = false;
             else
             {
                 TabPreviewHeader.Text = Tab.Header;
-                if (Tab.Content != null)
-                    TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab.Content.Address);
-                TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xec4a";
                 TabPreviewState.Text = Tab.IsUnloaded ? "Unloaded" : "Loaded";
+                if (Tab.Content != null)
+                {
+                    TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab.Content.Address);
+                    if (App.Instance.TabMemory && !Tab.IsUnloaded && Tab.Content.WebView?.Engine != WebEngineType.Trident)
+                        TabPreviewState.Text = $"Memory usage: {await Tab.Content.WebView?.EvaluateScriptAsync(Scripts.EstimatedMemoryUsageScript)} MB";
+                }
+                TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xec4a";
                 TabPreviewImage.Source = Tab.Preview;
                 TabPreviewImage.UpdateLayout();
                 TabPreviewPopup.PlacementTarget = Anchor;

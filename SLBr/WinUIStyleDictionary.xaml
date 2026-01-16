@@ -3061,7 +3061,7 @@ Margin="{TemplateBinding Padding}"/>
                                 <ContentPresenter ContentSource="SelectedContent" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0"/>
                             </ScrollViewer>
                             <ScrollViewer Width="250" MinWidth="45" MaxWidth="250" x:Name="TabPanelScroll" VerticalScrollBarVisibility="Hidden" HorizontalAlignment="Left" Margin="{TemplateBinding Padding}">
-                                <TabPanel Panel.ZIndex="1" Margin="5" IsItemsHost="True" Background="Transparent"/>
+                                <TabPanel Panel.ZIndex="1" Margin="5,0" IsItemsHost="True" Background="Transparent"/>
                             </ScrollViewer>
                             <Thumb Opacity="0" x:Name="TabResizeThumb" Width="5" HorizontalAlignment="Left" Cursor="SizeWE"/>
                         </Grid>

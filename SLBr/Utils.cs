@@ -1328,10 +1328,6 @@ namespace SLBr
                 Writer.Write(Entry.Value);
                 Writer.Write(KeySeparator);
             }
-            /*List<string> Contents = new List<string>();
-            foreach (KeyValuePair<string, string> KVP in Data)
-                Contents.Add(KVP.Key + KeyValueSeparator + KVP.Value);
-            File.WriteAllText(SaveFilePath, string.Join(KeySeparator, Contents));*/
         }
         public void Load()
         {

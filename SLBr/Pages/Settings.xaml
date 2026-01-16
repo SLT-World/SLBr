@@ -90,8 +90,7 @@
                                 <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
                                 <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
                                 <!--<CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>-->
-                                <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
-                                <CheckBox Margin="0,0,0,0" x:Name="TabPreviewCheckBox" Width="Auto" Click="TabPreviewCheckBox_Click" Content="Show a preview image in tab tooltips"/>
+                                <CheckBox Margin="0,0,0,0" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
@@ -293,6 +292,12 @@
                             <StackPanel>
                                 <CheckBox x:Name="TrimURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="TrimURLCheckBox_Click" Content="Show simplified URLs"/>
                                 <CheckBox x:Name="HomographProtectionCheckBox" Width="Auto" Click="HomographProtectionCheckBox_Click" Content="Highlight deceptive characters"/>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10" Header="Tab tooltips">
+                            <StackPanel>
+                                <CheckBox Margin="0,0,0,10" x:Name="TabPreviewCheckBox" Width="Auto" Click="TabPreviewCheckBox_Click" Content="Show tab preview images"/>
+                                <CheckBox Margin="0,0,0,0" x:Name="TabMemoryCheckBox" Width="Auto" Click="TabMemoryCheckBox_Click" Content="Show tab estimated memory usage"/>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Margin="0,0,0,10">
@@ -544,6 +549,7 @@
                                         <ComboBoxItem Content="Turbo"></ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
+                                <CheckBox x:Name="ReduceDiskCheckBox" Click="ReduceDiskCheckBox_Click" Margin="0,0,0,10" Content="Reduce disk activity" Width="Auto"/>
                                 <CheckBox x:Name="StartupBoostCheckBox" Click="StartupBoostCheckBox_Click" Margin="0,0,0,10" Content="Startup Boost" Width="Auto"/>
                                 <CheckBox x:Name="AMPCheckBox" Click="AMPCheckBox_Click" Margin="0,0,0,10" Content="Prefer AMP pages" Width="Auto"/>
                                 <CheckBox x:Name="ForceLazyCheckBox" Click="ForceLazyCheckBox_Click" Margin="0,0,0,10" Content="Force lazy loading" Width="Auto"/>

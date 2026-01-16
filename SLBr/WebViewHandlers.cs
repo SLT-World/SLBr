@@ -743,7 +743,6 @@ namespace SLBr
         }
         public bool OnProtocolExecution(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request)
         {
-            //TODO: Origin URLs is always none
             ExternalProtocolEventArgs Args = new ExternalProtocolEventArgs(request.Url, frame.Url);
             WebView.RaiseExternalProtocolRequested(Args);
             if (Args.Launch)

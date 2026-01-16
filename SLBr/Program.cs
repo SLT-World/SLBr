@@ -3,11 +3,9 @@ using CefSharp.BrowserSubprocess;
 using CefSharp.Wpf.HwndHost;
 using SLBr.Controls;
 using SLBr.Handlers;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime;
-using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace SLBr
@@ -17,12 +15,6 @@ namespace SLBr
         [STAThread]
         private static int Main(string[] args)
         {
-            //https://github.com/dotnet/runtime/issues/93914
-            //https://learn.microsoft.com/en-us/dotnet/core/runtime-config/garbage-collector
-            /*Environment.SetEnvironmentVariable("DOTNET_gcServer", "1");
-            Environment.SetEnvironmentVariable("DOTNET_GCHeapCount", "16");
-            Environment.SetEnvironmentVariable("DOTNET_GCConserveMemory", "5");*/
-
             /*string Username = "Default";
             IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
             foreach (string Flag in Args)
@@ -36,15 +28,11 @@ namespace SLBr
             */
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
-            MinimizeMemory();
             if (args.Length > 0 && args[0].StartsWith("--type="))
                 return SelfHost.Main(args);
             else if (args.Length > 0 && args[0].StartsWith("--app="))
             {
-                BackgroundWorker Worker = new BackgroundWorker();
-                Worker.DoWork += Worker_DoWork;
-                Worker.RunWorkerAsync();
-
+                //TODO: Switchable web views for Web Apps
                 CefSettings Settings = new CefSettings();
                 Settings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
 
@@ -178,131 +166,10 @@ namespace SLBr
             }
             else
             {
-                //DispatcherTimer FlushTimer = new DispatcherTimer();
-                //FlushTimer.Interval = new TimeSpan(500);
-                //FlushTimer.Tick += FlushTimer_Tick;
-                BackgroundWorker Worker = new BackgroundWorker();
-                Worker.DoWork += Worker_DoWork;
-                Worker.RunWorkerAsync();
                 App.Main();
-
                 Cef.Shutdown();
                 return Environment.ExitCode;
             }
-
-            /*BackgroundWorker Worker = new BackgroundWorker();
-            Worker.DoWork += Worker_DoWork;
-            Worker.RunWorkerAsync();
-
-            WebViewSettings Settings = new WebViewSettings();
-            Settings.RegisterProtocol("gemini", WebViewManager.GeminiHandler);
-            Settings.RegisterProtocol("gopher", WebViewManager.GopherHandler);
-            Settings.RegisterProtocol("slbr", WebViewManager.SLBrHandler);
-
-            string EnableFeatures = "HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
-            string DisableFeatures = "LensOverlay,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
-            string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
-            string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI,DocumentPictureInPictureAPI";
-
-            Settings.AddNoErrorFlag("disable-features", DisableFeatures);
-            Settings.AddNoErrorFlag("enable-features", EnableFeatures);
-            Settings.AddNoErrorFlag("enable-blink-features", EnableBlinkFeatures);
-            Settings.AddNoErrorFlag("disable-blink-features", DisableBlinkFeatures);
-            Settings.CefRuntimeStyle = CefRuntimeStyle.Chrome;
-
-            Settings.UserDataPath = "";
-            string UserApplicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", "Default");
-            string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
-            Settings.LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log"));
-
-            WebViewManager.Settings = Settings;
-            WebViewManager.RuntimeSettings.PDFViewer = false;
-
-            Application CleanApp = new Application();
-
-            WebViewDemo Window = new WebViewDemo();
-
-            CleanApp.Run(Window);
-
-            Cef.Shutdown();
-            return Environment.ExitCode;*/
         }
-        private static void Worker_DoWork(object? sender, DoWorkEventArgs e)
-        {
-            OptimizeMemoryUsage();
-        }
-        private static void OptimizeMemoryUsage()
-        {
-            while (true)
-            {
-                try
-                {
-                    FlushMemory();
-                    MinimizeFootprint();
-                }
-                finally
-                {
-                    Thread.Sleep(60000);
-                }
-            }
-        }
-
-        private static void FlushMemory()
-        {
-            GC.Collect(2, GCCollectionMode.Forced);
-            GC.WaitForPendingFinalizers();
-            /*if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                if (IntPtr.Size == 8)
-                    SetProcessWorkingSetSize64(Process.GetCurrentProcess().Handle, -1, -1);
-                else
-                    SetProcessWorkingSetSize32(Process.GetCurrentProcess().Handle, -1, -1);
-            }*/
-        }
-
-        private static void MinimizeFootprint()
-        {
-            DllUtils.EmptyWorkingSet(Process.GetCurrentProcess().Handle);
-        }
-
-        /*private static void FlushTimer_Tick(object? sender, EventArgs e)
-        {
-            Process[] SubProcesses = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName);
-            foreach (Process SubProcess in SubProcesses)
-            {
-                int CurrentMemoryUsage = (int)SubProcess.WorkingSet64;
-                int CurrentMemoryMB = (CurrentMemoryUsage / 1024 / 1024);
-                int MaxMemoryUsage = (int)Math.Round(CurrentMemoryMB * 0.3f);
-                Utils.LimitMemoryUsage(SubProcess.Handle, MaxMemoryUsage);
-            }
-            Utils.LimitMemoryUsage(Process.GetCurrentProcess().Handle, 10);
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            Chromium.ExecuteScriptAsync("window.gc();");
-        }*/
-
-        private static void MinimizeMemory()
-        {
-            Process CurrentProcess = Process.GetCurrentProcess();
-            //SetCpuAffinity(0x0001);
-            /*CurrentProcess.PriorityBoostEnabled = false;
-            CurrentProcess.PriorityClass = ProcessPriorityClass.Idle;
-            Thread.CurrentThread.Priority = ThreadPriority.Lowest;*/
-
-            //GC.Collect(GC.MaxGeneration);
-            //GC.WaitForPendingFinalizers();
-            //if (Environment.OSVersion.Platform == PlatformID.Win32NT) //It will only run on Windows regardless
-            DllUtils.SetProcessWorkingSetSize(CurrentProcess.Handle, -1, -1);
-            //EmptyWorkingSet(CurrentProcess.Handle);
-        }
-
-        /*[DllImport("kernel32.dll")]
-        private static extern bool SetProcessAffinityMask(IntPtr handle, IntPtr affinity);
-
-        public static void SetCpuAffinity(int affinityMask)
-        {
-            Process process = Process.GetCurrentProcess();
-            SetProcessAffinityMask(process.Handle, (IntPtr)affinityMask);
-        }*/
     }
 }

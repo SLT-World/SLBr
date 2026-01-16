@@ -1,12 +1,10 @@
 ﻿using CefSharp;
-using CefSharp.DevTools.CSS;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -14,7 +12,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using System.Windows.Threading;
-using Windows.UI.Text;
 
 namespace SLBr.Pages
 {
@@ -248,6 +245,7 @@ namespace SLBr.Pages
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
 
             TabPreviewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabPreview"));
+            TabMemoryCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabMemory"));
 
             bool DownloadFavicons = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
             DownloadFaviconsCheckBox.IsChecked = DownloadFavicons;
@@ -335,6 +333,8 @@ namespace SLBr.Pages
             PDFViewerToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PDF"));
 
             PerformanceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("Performance");
+            ReduceDiskCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ReduceDisk"));
+            ReduceDiskCheckBox.IsEnabled = PerformanceComboBox.SelectedIndex == 0;
 
             RenderModeComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("RenderMode");
             BingBackgroundComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("BingBackground");
@@ -720,6 +720,11 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.SetTabPreview(TabPreviewCheckBox.IsChecked.ToBool());
         }
+        private void TabMemoryCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetTabMemory(TabMemoryCheckBox.IsChecked.ToBool());
+        }
         private void AdaptiveThemeCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -949,6 +954,11 @@ namespace SLBr.Pages
                 App.Instance.GlobalSave.Set("StartupBoost", Value.ToString());
             }
         }
+        private void ReduceDiskCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("ReduceDisk", ReduceDiskCheckBox.IsChecked.ToBool().ToString());
+        }
 
         private void TranslateButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
@@ -1064,6 +1074,7 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 App.Instance.GlobalSave.Set("Performance", PerformanceComboBox.SelectedIndex);
+                ReduceDiskCheckBox.IsEnabled = PerformanceComboBox.SelectedIndex == 0;
                 App.Instance.LiteMode = PerformanceComboBox.SelectedIndex == 0;
                 App.Instance.HighPerformanceMode = PerformanceComboBox.SelectedIndex == 2;
             }

@@ -1553,6 +1553,8 @@ namespace SLBr.Pages
 
         public async void UnFocus()
         {
+            OmniBoxFastTimer?.Stop();
+            OmniBoxSmartTimer?.Stop();
             //SLBr seems to freeze when switching from a loaded tab with devtools to an unloaded tab
             //DevTools(true);
             if (App.Instance.LiteMode)

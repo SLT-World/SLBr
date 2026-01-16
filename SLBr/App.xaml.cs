@@ -1275,6 +1275,13 @@ Inner Exception: ```{7} ```";
         public bool ExternalFonts;
         public bool SmartDarkMode;
         public bool TabPreview;
+        public bool TabMemory;
+
+        public void SetTabMemory(bool Toggle)
+        {
+            GlobalSave.Set("TabMemory", Toggle.ToString());
+            TabMemory = Toggle;
+        }
 
         public void SetTabPreview(bool Toggle)
         {
@@ -1735,6 +1742,8 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("BrowserHardwareAcceleration", (RenderCapability.Tier >> 16) != 0);
             if (!GlobalSave.Has("ExperimentalFeatures"))
                 GlobalSave.Set("ExperimentalFeatures", false);
+            if (!GlobalSave.Has("ReduceDisk"))
+                GlobalSave.Set("ReduceDisk", false);
             if (!GlobalSave.Has("Performance"))
                 GlobalSave.Set("Performance", 1);
             LiteMode = GlobalSave.GetInt("Performance") == 0;
@@ -1799,6 +1808,7 @@ Inner Exception: ```{7} ```";
         private void InitializeUISaves(string CommandLineUrl = "")
         {
             SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", true.ToString())));
+            SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
             SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", true.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
             SetTrimURL(bool.Parse(GlobalSave.Get("TrimURL", true.ToString())));
@@ -2654,12 +2664,26 @@ Inner Exception: ```{7} ```";
                 //https://chromium-review.googlesource.com/c/chromium/src/+/2816118
 
                 Settings.AddFlag("gpu-program-cache-size-kb", $"{128 * 1024}");
-                Settings.AddFlag("gpu-disk-cache-size-kb", $"{128 * 1024}");
 
                 Settings.AddFlag("force-effective-connection-type", "Slow-2G-On-Cellular");
                 //Settings.AddFlag("num-raster-threads", "4"); //RETIRED FLAG
                 Settings.AddFlag("renderer-process-limit", "4");
-                //Settings.AddFlag("use-mobile-user-agent");
+
+                if (bool.Parse(GlobalSave.Get("ReduceDisk")))
+                {
+                    Settings.AddFlag("v8-cache-options", "none");
+                    Settings.AddFlag("disk-cache-size", "1");
+                    Settings.AddFlag("gpu-disk-cache-size-kb", "1");
+                    Settings.AddFlag("skia-font-cache-limit-mb", "1");
+                    Settings.AddFlag("skia-resource-cache-limit-mb", "1");
+                    //Settings.AddFlag("disable-gpu-program-cache");
+                    Settings.AddFlag("disable-gpu-shader-disk-cache");
+                }
+                else
+                {
+                    Settings.AddFlag("gpu-disk-cache-size-kb", $"{128 * 1024}");
+                    Settings.AddFlag("disk-cache-size", $"{80 * 1024 * 1024}");//https://chromium.googlesource.com/chromium/src/+/master/net/disk_cache/cache_util.cc
+                }
             }
             else
             {
@@ -2687,6 +2711,7 @@ Inner Exception: ```{7} ```";
                 }
                 else
                 {
+                    Settings.AddFlag("renderer-process-limit", "10");
                     Settings.AddFlag("gpu-program-cache-size-kb", $"{2 * 1024 * 1024}");
                     Settings.AddFlag("gpu-disk-cache-size-kb", $"{2 * 1024 * 1024}");
                     //Settings.AddFlag("component-updater", "fast-update");
@@ -2701,13 +2726,10 @@ Inner Exception: ```{7} ```";
             Settings.AddFlag("disable-component-update");
             Settings.AddFlag("component-updater", "disable-background-downloads,disable-delta-updates"); //https://source.chromium.org/chromium/chromium/src/+/main:components/component_updater/component_updater_command_line_config_policy.cc
 
-
             //https://github.com/portapps/brave-portable/issues/26
             //https://github.com/chromium/chromium/blob/2ca8c5037021c9d2ecc00b787d58a31ed8fc8bcb/third_party/blink/renderer/bindings/core/v8/v8_cache_options.h
-            //Settings.AddFlag("v8-cache-options");
 
             //Settings.AddFlag("disable-v8-idle-tasks");
-
 
             Settings.AddFlag("enable-parallel-downloading");
         }
@@ -4565,6 +4587,14 @@ return avg < 110;
 
 if (detectDarkAppearance()) return 0;
 return 1;
+}})();";
+
+        public const string EstimatedMemoryUsageScript = @"(function() {{
+const domMemory = document.getElementsByTagName('*').length * 2048;
+const imageMemory = [...document.images].reduce((sum, img) => sum + (img.naturalWidth * img.naturalHeight * 4), 0);
+const canvasMemory = [...document.querySelectorAll('canvas')].reduce((sum, c) => sum + (c.width * c.height * 4), 0);
+const total = performance.memory.totalJSHeapSize + domMemory + imageMemory + canvasMemory;
+return Math.round(total / (1024 * 1024) * 10) / 10;
 }})();";
     }
 
