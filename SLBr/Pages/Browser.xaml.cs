@@ -1174,10 +1174,6 @@ namespace SLBr.Pages
                     WebView?.ExecuteScript($"internal.receive(\"downloads={JsonSerializer.Serialize(App.Instance.Downloads).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
                     break;
 
-                case "History":
-                    WebView?.ExecuteScript($"internal.receive(\"history={JsonSerializer.Serialize(App.Instance.History).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
-                    break;
-
                 case "background":
                     string Url = string.Empty;
                     try
@@ -1234,10 +1230,6 @@ namespace SLBr.Pages
 
                 case "CancelDownload":
                     App.Instance.Downloads.GetValueOrDefault((string)Message["variable"])?.Cancel();
-                    break;
-
-                case "ClearHistory":
-                    Dispatcher.BeginInvoke(App.Instance.History.Clear);
                     break;
 
                 case "Search":

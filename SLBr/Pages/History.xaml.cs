@@ -20,9 +20,9 @@ namespace SLBr.Pages
     /// <summary>
     /// Interaction logic for Settings.xaml
     /// </summary>
-    public partial class Favourites : UserControl, IPageOverlay
+    public partial class History : UserControl, IPageOverlay
     {
-        public Favourites(Browser _BrowserView)
+        public History(Browser _BrowserView)
         {
             InitializeComponent();
             BrowserView = _BrowserView;
@@ -40,7 +40,7 @@ namespace SLBr.Pages
             BrowserView.Tab.ParentWindow.NewTab(Values[1], true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
         }
 
-        private void FavouriteButton_MouseUp(object sender, MouseButtonEventArgs e)
+        private void HistoryButton_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Middle)
             {
@@ -49,27 +49,9 @@ namespace SLBr.Pages
             }
         }
 
-        private void NewFavouriteButton_Click(object sender, RoutedEventArgs e)
-        {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Favourite",
-                new List<InputField>
-                {
-                        new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text },
-                        new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
-                },
-                "\ue946"
-            );
-            _DynamicDialogWindow.Topmost = true;
-            if (_DynamicDialogWindow.ShowDialog() == true)
-            {
-                string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                App.Instance.Favourites.Add(new ActionStorage(_DynamicDialogWindow.InputFields[0].Value, $"4<,>{URL}", URL));
-            }
-        }
-
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            FavouritesList.ItemsSource = App.Instance.Favourites;
+            HistoryList.ItemsSource = App.Instance.History;
             ApplyTheme(App.Instance.CurrentTheme);
         }
 
@@ -85,25 +67,25 @@ namespace SLBr.Pages
 
         private void DeleteSelectedButton_Click(object sender, RoutedEventArgs e)
         {
-            List<ActionStorage> Selected = FavouritesList.SelectedItems.Cast<ActionStorage>().ToList();
-            foreach (ActionStorage Favourite in Selected)
-                App.Instance.Favourites.Remove(Favourite);
+            List<ActionStorage> Selected = HistoryList.SelectedItems.Cast<ActionStorage>().ToList();
+            foreach (ActionStorage HistoryEntry in Selected)
+                App.Instance.History.Remove(HistoryEntry);
         }
 
         private void DeleteSingleButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button _Button && _Button.DataContext is ActionStorage Favourite)
-                App.Instance.Favourites.Remove(Favourite);
+            if (sender is Button _Button && _Button.DataContext is ActionStorage HistoryEntry)
+                App.Instance.History.Remove(HistoryEntry);
         }
 
-        private void FavouritesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void HistoryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            DeleteSelectedButton.Visibility = FavouritesList.SelectedItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            DeleteSelectedButton.Visibility = HistoryList.SelectedItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void FavouritesList_KeyDown(object sender, KeyEventArgs e)
+        private void HistoryList_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Delete && FavouritesList.SelectedItems.Count > 0)
+            if (e.Key == Key.Delete && HistoryList.SelectedItems.Count > 0)
             {
                 DeleteSelectedButton_Click(sender, e);
                 e.Handled = true;
@@ -114,9 +96,9 @@ namespace SLBr.Pages
         {
             string SearchText = SearchBox.Text.ToLowerInvariant();
             if (SearchText.Length == 0)
-                FavouritesList.ItemsSource = App.Instance.Favourites;
+                HistoryList.ItemsSource = App.Instance.History;
             else
-                FavouritesList.ItemsSource = App.Instance.Favourites.Where(i => (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(SearchText) ?? false));
+                HistoryList.ItemsSource = App.Instance.History.Where(i => (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(SearchText) ?? false));
         }
     }
 }

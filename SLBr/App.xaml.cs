@@ -1253,6 +1253,7 @@ namespace SLBr
         {
             { "settings", typeof(Settings) },
             { "favourites", typeof(Favourites) },
+            { "history", typeof(History) },
         };
 
         const string ReportExceptionText = @"**Automatic Report**
@@ -4335,17 +4336,11 @@ document.querySelectorAll('tbody > tr').forEach(row => {
     downloads: function() {
         engine.postMessage({type:""Internal"",function:'Downloads'});
     },
-    history: function() {
-        engine.postMessage({type:""Internal"",function:'History'});
-    },
     openDownload: function(num) {
         engine.postMessage({type:""Internal"",function:'OpenDownload',variable:num});
     },
     cancelDownload: function(num) {
         engine.postMessage({type:""Internal"",function:'CancelDownload',variable:num});
-    },
-    clearHistory: function(num) {
-        engine.postMessage({type:""Internal"",function:'ClearHistory'});
     },
     search: function(val) {
         engine.postMessage({type:""Internal"",function:'Search',variable:val});
