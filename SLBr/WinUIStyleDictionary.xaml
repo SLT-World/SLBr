@@ -6,6 +6,7 @@
         Segoe Fluent Icons, Segoe MDL2 Assets
     </FontFamily>
 
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
     <controls:LessThanConverter x:Key="WidthLessThan60" Threshold="60"/>
     
     <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderBrushColor}"/>

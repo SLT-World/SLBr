@@ -34,7 +34,14 @@
                         <ItemsControl.Resources>
                             <DataTemplate x:Key="TextTemplate">
                                 <StackPanel Margin="0,0,0,10">
-                                    <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,0,5"/>
+                                    <Grid Margin="0,0,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,5,0"/>
+                                        <Ellipse ToolTip="Required" Grid.Column="1" Fill="Red" VerticalAlignment="Center" Height="5" Width="5" Visibility="{Binding IsRequired, Converter={StaticResource BooleanToVisibility}}"/>
+                                    </Grid>
                                     <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyUp="ValidateInputs" Width="Auto"/>
                                 </StackPanel>
                             </DataTemplate>

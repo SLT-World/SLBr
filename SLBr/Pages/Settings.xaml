@@ -985,7 +985,7 @@
                                 </StackPanel>
                             </DockPanel>
                         </GroupBox>
-                        <TextBlock Text="Copyright © 2022-2025 SLT Softwares. All rights reserved."/>
+                        <TextBlock Text="Copyright © 2022-2026 SLT Softwares. All rights reserved."/>
                         <TextBlock>
                         Licensed under the
                         <Hyperlink ToolTip="https://raw.githubusercontent.com/SLT-World/SLBr/refs/heads/main/LICENSE" NavigateUri="https://raw.githubusercontent.com/SLT-World/SLBr/refs/heads/main/LICENSE" RequestNavigate="Hyperlink_RequestNavigate">GNU General Public License v3.0</Hyperlink>.

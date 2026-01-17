@@ -2493,7 +2493,7 @@ namespace SLBr.Pages
                         new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Title },
                         new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Address },
                     },
-                    "\ue946"
+                    "\ueb51"
                 );
                 _DynamicDialogWindow.Topmost = true;
                 if (_DynamicDialogWindow.ShowDialog() == true)

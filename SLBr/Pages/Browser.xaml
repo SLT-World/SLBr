@@ -436,29 +436,29 @@
                                                             <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued to" FontWeight="Bold"/>
                                                             <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
                                                                 <TextBlock Text="Common Name:" Width="125"/>
-                                                                <TextBlock x:Name="IssueToCommonName" Text="google.com"/>
+                                                                <TextBlock x:Name="IssueToCommonName"/>
                                                             </StackPanel>
                                                             <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
                                                                 <TextBlock Text="Company:" Width="125"/>
-                                                                <TextBlock x:Name="IssueToCompany" Text=""/>
+                                                                <TextBlock x:Name="IssueToCompany"/>
                                                             </StackPanel>
                                                             <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Issued by" FontWeight="Bold"/>
                                                             <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
                                                                 <TextBlock Text="Common Name:" Width="125"/>
-                                                                <TextBlock x:Name="IssueByCommonName" Text="WR2"/>
+                                                                <TextBlock x:Name="IssueByCommonName"/>
                                                             </StackPanel>
                                                             <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
                                                                 <TextBlock Text="Company:" Width="125"/>
-                                                                <TextBlock x:Name="IssueByCompany" Text="Google Trust Services"/>
+                                                                <TextBlock x:Name="IssueByCompany"/>
                                                             </StackPanel>
                                                             <TextBlock Margin="0,0,0,10" VerticalAlignment="Center" Text="Validity period" FontWeight="Bold"/>
                                                             <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
                                                                 <TextBlock Text="Start:" Width="125"/>
-                                                                <TextBlock x:Name="CertificateStart" Text="12/09/2024"/>
+                                                                <TextBlock x:Name="CertificateStart"/>
                                                             </StackPanel>
                                                             <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
                                                                 <TextBlock Text="End:" Width="125"/>
-                                                                <TextBlock x:Name="CertificateEnd" Text="03/03/2025"/>
+                                                                <TextBlock x:Name="CertificateEnd"/>
                                                             </StackPanel>
                                                         </StackPanel>
                                                     </Expander>

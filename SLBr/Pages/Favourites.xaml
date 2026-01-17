@@ -87,8 +87,9 @@
                                 <DataTemplate>
                                     <Border Width="Auto" HorizontalAlignment="Stretch">
                                         <DockPanel Margin="5">
-                                            <Button DockPanel.Dock="Right" Click="DeleteSingleButton_Click" ToolTip="Remove" Content="&#xe711;" Margin="0" Style="{StaticResource ToolBarIconButton}"/>
-                                            <Button DockPanel.Dock="Right" MouseUp="FavouriteButton_MouseUp" Click="HyperlinkButton_Click" Content="&#xe8a7;" ToolTip="Open" Tag="{Binding Arguments}" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
+                                            <Button DockPanel.Dock="Right" Click="DeleteSingleButton_Click" ToolTip="Remove" Content="&#xe711;" Margin="0" Style="{StaticResource IconButton}"/>
+                                            <Button DockPanel.Dock="Right" MouseUp="FavouriteButton_MouseUp" Click="HyperlinkButton_Click" Content="&#xe8a7;" ToolTip="Open" Tag="{Binding Arguments}" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
+                                            <Button DockPanel.Dock="Right" Click="EditButton_Click" Content="&#xe70f;" ToolTip="Edit" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                                             <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xeb41;"/>
                                             <TextBlock Margin="0,0,5,0" Width="Auto" VerticalAlignment="Center" DockPanel.Dock="Left" Text="{Binding Name}" HorizontalAlignment="Stretch"/>
                                             <TextBlock Margin="0,0,5,0" FontSize="10" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center" Text="{Binding Tooltip}" HorizontalAlignment="Stretch" Width="Auto"/>

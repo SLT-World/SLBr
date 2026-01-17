@@ -96,6 +96,29 @@ namespace SLBr.Pages
                 App.Instance.Favourites.Remove(Favourite);
         }
 
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button _Button && _Button.DataContext is ActionStorage Favourite)
+            {
+                DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite",
+                    new List<InputField>
+                    {
+                        new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
+                        new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Tooltip },
+                    },
+                    "\ue70f"
+                );
+                _DynamicDialogWindow.Topmost = true;
+                if (_DynamicDialogWindow.ShowDialog() == true)
+                {
+                    Favourite.Name = _DynamicDialogWindow.InputFields[0].Value;
+                    string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
+                    Favourite.Tooltip = URL;
+                    Favourite.Arguments = $"4<,>{URL}";
+                }
+            }
+        }
+
         private void FavouritesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             DeleteSelectedButton.Visibility = FavouritesList.SelectedItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;

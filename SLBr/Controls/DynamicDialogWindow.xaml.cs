@@ -38,7 +38,19 @@ namespace SLBr.Controls
         private bool _BoolValue = false;
 
         public string Name { get; set; } = "";
-        public bool IsRequired { get; set; }
+        public bool _IsRequired { get; set; }
+        public bool IsRequired
+        {
+            get => _IsRequired;
+            set
+            {
+                if (_IsRequired != value)
+                {
+                    _IsRequired = value;
+                    RaisePropertyChanged();
+                }
+            }
+        }
         public DialogInputType Type { get; set; } = DialogInputType.Text;
 
         public string Value
