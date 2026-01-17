@@ -15,10 +15,14 @@ using System.Windows.Threading;
 
 namespace SLBr.Pages
 {
+    public interface IPageOverlay : IDisposable
+    {
+    }
+
     /// <summary>
     /// Interaction logic for Settings.xaml
     /// </summary>
-    public partial class Settings : UserControl
+    public partial class Settings : UserControl, IPageOverlay
     {
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 

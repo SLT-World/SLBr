@@ -39,7 +39,7 @@
                                 <MenuItem Icon="&#xE81C;" Header="History">
                                     <MenuItem.ItemsSource>
                                         <CompositeCollection>
-                                            <MenuItem Header="History" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://history/"/>
+                                            <MenuItem Header="History Manager" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://history/"/>
                                             <Separator/>
                                             <CollectionContainer x:Name="HistoryListMenu"/>
                                         </CompositeCollection>
@@ -54,10 +54,17 @@
                                     </MenuItem.ItemContainerStyle>
                                 </MenuItem>
                                 <MenuItem Icon="&#xE896;" Header="Downloads" Click="ButtonAction" Tag="5&lt;,&gt;slbr://downloads/"/>
-                                <MenuItem Icon="&#xEB51;" x:Name="FavouriteListMenu" Header="Favourites">
+                                <MenuItem Icon="&#xEB51;" Header="Favourites">
+                                    <MenuItem.ItemsSource>
+                                        <CompositeCollection>
+                                            <MenuItem Header="Favourites Manager" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://favourites/"/>
+                                            <Separator/>
+                                            <CollectionContainer x:Name="FavouriteListMenu"/>
+                                        </CompositeCollection>
+                                    </MenuItem.ItemsSource>
                                     <MenuItem.ItemContainerStyle>
                                         <Style TargetType="MenuItem">
-                                            <Setter Property="Icon" Value="&#xEB51;"/>
+                                            <Setter Property="Icon" Value="&#xEB41;"/>
                                             <Setter Property="Header" Value="{Binding Name}"/>
                                             <Setter Property="Tag" Value="{Binding Arguments}"/>
                                             <Setter Property="ToolTip" Value="{Binding Tooltip}"/>

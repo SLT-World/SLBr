@@ -324,7 +324,7 @@ namespace SLBr
                 string Host = _Uri.Host.ToLower();
                 string Page = _Uri.AbsolutePath.TrimStart('/');
 
-                string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris"];
+                string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris", "favourites"];
                 if (SLBrURLs.Contains(Host))
                 {
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;

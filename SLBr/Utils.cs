@@ -1333,8 +1333,8 @@ namespace SLBr
         {
             if (!File.Exists(SaveFilePath))
             {
-                Directory.CreateDirectory(SaveFolderPath);
-                File.Create(SaveFilePath).Close();
+                //Directory.CreateDirectory(SaveFolderPath);
+                //File.Create(SaveFilePath).Close();
                 return;
             }
             var Content = File.ReadAllText(SaveFilePath);

@@ -40,7 +40,11 @@ namespace SLBr.Pages
         public BrowserTabItem Tab;
 
         public IWebView WebView;
-        public Settings _Settings;
+        public IPageOverlay? PageOverlay;
+        public UserControl? PageOverlayControl
+        {
+            get => PageOverlay as UserControl;
+        }
 
         public bool Private = false;
         public bool UserAgentBranding = true;
@@ -57,7 +61,7 @@ namespace SLBr.Pages
             SetAudioState(false);
             DownloadsPopup.ItemsSource = App.Instance.VisibleDownloads;
             FavouritesPanel.ItemsSource = App.Instance.Favourites;
-            FavouriteListMenu.ItemsSource = App.Instance.Favourites;
+            FavouriteListMenu.Collection = App.Instance.Favourites;
             HistoryListMenu.Collection = App.Instance.History;
             ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working so turned it into a list
             SetAppearance(App.Instance.CurrentTheme);
@@ -1599,24 +1603,30 @@ namespace SLBr.Pages
             if (Tab.IsUnloaded)
             {
                 InitializeBrowserComponent();
-                if (Address.StartsWith("slbr://settings"))
+                if (Address.StartsWith("slbr://") && App.CustomPageOverlays.TryGetValue(Utils.FastHost(Address), out Type OverlayType))
                 {
                     WebView?.Control?.Visibility = Visibility.Collapsed;
-                    if (_Settings == null)
+                    if (PageOverlay != null && PageOverlay.GetType() != OverlayType)
                     {
-                        _Settings = new Settings(this);
-                        CoreContainer.Children.Add(_Settings);
+                        CoreContainer.Children.Remove(PageOverlayControl);
+                        PageOverlay?.Dispose();
+                        PageOverlay = null;
                     }
-                    _Settings.Visibility = Visibility.Visible;
+                    if (PageOverlay == null)
+                    {
+                        PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType, this)!;
+                        CoreContainer.Children.Add(PageOverlayControl);
+                    }
+                    PageOverlayControl?.Visibility = Visibility.Visible;
                 }
                 else
                 {
                     WebView?.Control?.Visibility = Visibility.Visible;//VIDEO
-                    if (_Settings != null)
+                    if (PageOverlay != null)
                     {
-                        CoreContainer.Children.Remove(_Settings);
-                        _Settings?.Dispose();
-                        _Settings = null;
+                        CoreContainer.Children.Remove(PageOverlayControl);
+                        PageOverlay?.Dispose();
+                        PageOverlay = null;
                     }
                 }
             }
@@ -1773,26 +1783,31 @@ namespace SLBr.Pages
                 FavouriteButton.ToolTip = "Add to favourites";
                 Tab.FavouriteCommandHeader = "Add to favourites";
             }
-            if (Address.StartsWith("slbr://settings"))
+
+            if (Address.StartsWith("slbr://") && App.CustomPageOverlays.TryGetValue(Utils.FastHost(Address), out Type OverlayType))
             {
-                if (WebView != null)
-                    WebView?.Control?.Visibility = Visibility.Collapsed;
-                if (_Settings == null)
+                WebView?.Control?.Visibility = Visibility.Collapsed;
+                if (PageOverlay != null && PageOverlay.GetType() != OverlayType)
                 {
-                    _Settings = new Settings(this);
-                    CoreContainer.Children.Add(_Settings);
+                    CoreContainer.Children.Remove(PageOverlayControl);
+                    PageOverlay?.Dispose();
+                    PageOverlay = null;
                 }
-                _Settings.Visibility = Visibility.Visible;
+                if (PageOverlay == null)
+                {
+                    PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType, this)!;
+                    CoreContainer.Children.Add(PageOverlayControl);
+                }
+                PageOverlayControl?.Visibility = Visibility.Visible;
             }
             else
             {
-                if (WebView != null)
-                    WebView?.Control?.Visibility = Visibility.Visible;//VIDEO
-                if (_Settings != null)
+                WebView?.Control?.Visibility = Visibility.Visible;//VIDEO
+                if (PageOverlay != null)
                 {
-                    CoreContainer.Children.Remove(_Settings);
-                    _Settings?.Dispose();
-                    _Settings = null;
+                    CoreContainer.Children.Remove(PageOverlayControl);
+                    PageOverlay?.Dispose();
+                    PageOverlay = null;
                 }
             }
             bool IsHTTP = Utils.IsHttpScheme(Address);
@@ -3344,7 +3359,7 @@ namespace SLBr.Pages
                     LoadingStoryboard.Remove();
                     DownloadsPopup.ItemsSource = null;
                     FavouritesPanel.ItemsSource = null;
-                    FavouriteListMenu.ItemsSource = null;
+                    FavouriteListMenu.Collection = null;
                     HistoryListMenu.Collection = null;
                     ExtensionsMenu.ItemsSource = null;
                 }
@@ -3399,8 +3414,8 @@ namespace SLBr.Pages
 
                 DisposingWebView?.Dispose();
             }
-            _Settings?.Dispose();
-            _Settings = null;
+            PageOverlay?.Dispose();
+            PageOverlay = null;
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }

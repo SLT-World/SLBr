@@ -12,7 +12,23 @@
         <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
     </UserControl.Resources>
     <Grid Background="{StaticResource SecondaryBrush}">
-        <WinUI:WinUITabControl Style="{StaticResource WinUITabControl}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Border BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Padding="15,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <TextBlock FontWeight="DemiBold" Margin="0,0,10,0" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xe713;"/>
+
+                <TextBlock Grid.Column="1" FontWeight="DemiBold" FontSize="25">Settings</TextBlock>
+            </Grid>
+        </Border>
+        <WinUI:WinUITabControl Grid.Row="1" Style="{StaticResource WinUITabControl}">
             <TabItem Header="Browser" Tag="&#xec6c;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">

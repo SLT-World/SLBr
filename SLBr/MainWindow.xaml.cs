@@ -431,8 +431,8 @@ namespace SLBr
                     foreach (BrowserTabItem _Tab in Tabs)
                     {
                         _Tab.ProgressBarVisibility = Visibility.Collapsed;
-                        if (_Tab.Content != null && _Tab.Content._Settings != null)
-                            _Tab.Content._Settings.UnloadProgressBar.Value = 0;
+                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is Settings SettingsPage)
+                            SettingsPage.UnloadProgressBar.Value = 0;
                     }
                     GCTimer.Tick += GCCollect_EfficientTick;
                     GCTimer.Interval = new TimeSpan(0, GCTimerDuration, 0);
@@ -445,8 +445,8 @@ namespace SLBr
                 foreach (BrowserTabItem _Tab in Tabs)
                 {
                     _Tab.ProgressBarVisibility = Visibility.Collapsed;
-                    if (!_Tab.IsUnloaded && _Tab.Content != null && _Tab.Content._Settings != null)
-                            _Tab.Content._Settings.UnloadProgressBar.Value = 0;
+                    if (!_Tab.IsUnloaded && _Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is Settings SettingsPage)
+                        SettingsPage.UnloadProgressBar.Value = 0;
                 }
             }
         }
@@ -469,8 +469,8 @@ namespace SLBr
                     else
                     {
                         _Tab.Progress = VisualProgress;
-                        if (_Tab.Content != null && _Tab.Content._Settings != null)
-                            _Tab.Content._Settings.UnloadProgressBar.Value = VisualProgress;
+                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is Settings SettingsPage)
+                            SettingsPage.UnloadProgressBar.Value = VisualProgress;
                     }
                 }
             }
@@ -986,11 +986,18 @@ namespace SLBr
             {
                 TabPreviewHeader.Text = Tab.Header;
                 TabPreviewState.Text = Tab.IsUnloaded ? "Unloaded" : "Loaded";
-                if (Tab.Content != null)
+                try
                 {
-                    TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab.Content.Address);
-                    if (App.Instance.TabMemory && !Tab.IsUnloaded && Tab.Content.WebView?.Engine != WebEngineType.Trident)
-                        TabPreviewState.Text = $"Memory usage: {await Tab.Content.WebView?.EvaluateScriptAsync(Scripts.EstimatedMemoryUsageScript)} MB";
+                    if (Tab?.Content != null)
+                    {
+                        TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab?.Content?.Address);
+                        if (App.Instance.TabMemory && !Tab.IsUnloaded && Tab?.Content?.WebView != null && Tab?.Content?.WebView?.Engine != WebEngineType.Trident)
+                            TabPreviewState.Text = $"Memory usage: {await Tab?.Content?.WebView?.EvaluateScriptAsync(Scripts.EstimatedMemoryUsageScript)} MB";
+                    }
+                }
+                catch
+                {
+                    TabPreviewHost.Text = Tab.Header;
                 }
                 TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xec4a";
                 TabPreviewImage.Source = Tab.Preview;

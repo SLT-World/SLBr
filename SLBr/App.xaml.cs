@@ -1249,6 +1249,12 @@ namespace SLBr
             return Builder.Length == 0 ? "None" : Builder.ToString();
         }
 
+        public static readonly Dictionary<string, Type> CustomPageOverlays = new Dictionary<string, Type>
+        {
+            { "settings", typeof(Settings) },
+            { "favourites", typeof(Favourites) },
+        };
+
         const string ReportExceptionText = @"**Automatic Report**
 > - Version: `{0}`
 > - CEF: `{1}`
@@ -3182,26 +3188,27 @@ Inner Exception: ```{7} ```";
             {
                 foreach (MainWindow _Window in AllWindows)
                 {
-                    if (_Window.Tabs.Count > 1)
+                    Saving TabsSave = WindowsSaves[AllWindows.IndexOf(_Window)];
+                    TabsSave.Clear();
+                    int Count = 0;
+                    int SelectedIndex = 0;
+                    int OriginalSelectedIndex = _Window.TabsUI.SelectedIndex;
+                    for (int i = 0; i < _Window.Tabs.Count; i++)
                     {
-                        Saving TabsSave = WindowsSaves[AllWindows.IndexOf(_Window)];
-                        TabsSave.Clear();
-                        int Count = 0;
-                        int SelectedIndex = 0;
-                        int OriginalSelectedIndex = _Window.TabsUI.SelectedIndex;
-                        for (int i = 0; i < _Window.Tabs.Count; i++)
+                        BrowserTabItem Tab = _Window.Tabs[i];
+                        if (Tab.ParentWindow != null && !Tab.Content.Private)
                         {
-                            BrowserTabItem Tab = _Window.Tabs[i];
-                            if (Tab.ParentWindow != null && !Tab.Content.Private)
-                            {
-                                TabsSave.Set(Count.ToString(), Tab.Content.Address);
-                                if (i == OriginalSelectedIndex)
-                                    SelectedIndex = Count;
-                                Count++;
-                            }
+                            TabsSave.Set(Count.ToString(), Tab.Content.Address);
+                            if (i == OriginalSelectedIndex)
+                                SelectedIndex = Count;
+                            Count++;
                         }
+                    }
+                    if (Count != 0)
+                    {
                         TabsSave.Set("Selected", SelectedIndex.ToString());
                         TabsSave.Set("Count", Count.ToString());
+                        TabsSave.Save();
                     }
                 }
             }
@@ -3233,6 +3240,7 @@ Inner Exception: ```{7} ```";
         public BitmapImage PDFTabIcon;
         public BitmapImage SettingsTabIcon;
         public BitmapImage HistoryTabIcon;
+        public BitmapImage FavouritesTabIcon;
         public BitmapImage DownloadsTabIcon;
         public BitmapImage UnloadedIcon;
 
@@ -3286,6 +3294,8 @@ Inner Exception: ```{7} ```";
                     return SettingsTabIcon;
                 else if (Url.StartsWith("slbr://history"))
                     return HistoryTabIcon;
+                else if (Url.StartsWith("slbr://favourites"))
+                    return FavouritesTabIcon;
                 else if (Url.StartsWith("slbr://downloads"))
                     return DownloadsTabIcon;
                 return IsPrivate ? PrivateIcon : TabIcon;
@@ -3433,6 +3443,8 @@ Inner Exception: ```{7} ```";
                     return SettingsTabIcon;
                 else if (Url.StartsWith("slbr://history"))
                     return HistoryTabIcon;
+                else if (Url.StartsWith("slbr://favourites"))
+                    return FavouritesTabIcon;
                 else if (Url.StartsWith("slbr://downloads"))
                     return DownloadsTabIcon;
                 return IsPrivate ? PrivateIcon : TabIcon;
@@ -3703,6 +3715,29 @@ Inner Exception: ```{7} ```";
                 HistoryTabIcon = _BitmapImage;
             }
 
+            _TextBlock.Text = "\ueb51";
+            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+            _TextBlock.Measure(new Size(IconSize, IconSize));
+            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
+            RenderBitmap.Render(_TextBlock);
+            Encoder = new();
+            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
+            using (MemoryStream Stream = new())
+            {
+                Encoder.Save(Stream);
+                Stream.Seek(0, SeekOrigin.Begin);
+
+                BitmapImage _BitmapImage = new();
+                _BitmapImage.BeginInit();
+                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                _BitmapImage.StreamSource = Stream;
+                _BitmapImage.EndInit();
+                if (_BitmapImage.CanFreeze)
+                    _BitmapImage.Freeze();
+
+                FavouritesTabIcon = _BitmapImage;
+            }
+
             _TextBlock.Text = "\ue896";
             RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
             _TextBlock.Measure(new Size(IconSize, IconSize));
@@ -3848,12 +3883,11 @@ Inner Exception: ```{7} ```";
             PropertyChanged(this, new PropertyChangedEventArgs(Name));
         #endregion
 
-        public ActionStorage(string _Name, string _Arguments, string _Tooltip, bool _Toggle = false)
+        public ActionStorage(string _Name, string _Arguments, string _Tooltip)
         {
             Name = _Name;
             Arguments = _Arguments;
             Tooltip = _Tooltip;
-            Toggle = _Toggle;
         }
 
         public string Name
@@ -3883,20 +3917,10 @@ Inner Exception: ```{7} ```";
                 RaisePropertyChanged();
             }
         }
-        public bool Toggle
-        {
-            get { return DToggle; }
-            set
-            {
-                DToggle = value;
-                RaisePropertyChanged();
-            }
-        }
 
         private string DName { get; set; }
         private string DArguments { get; set; }
         private string DTooltip { get; set; }
-        private bool DToggle { get; set; }
     }
 
     /*public struct CdnEntry
