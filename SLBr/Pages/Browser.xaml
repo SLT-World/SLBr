@@ -124,9 +124,17 @@
 
                     <WinUI:PopupButton BorderThickness="0" x:Name="OpenDownloadsButton" ToolTip="Downloads" Content="&#xE896;" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" DockPanel.Dock="Right">
                         <WinUI:PopupButton.PopupContent>
-                            <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5,2.5">
+                            <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5">
                                 <StackPanel>
-                                    <ItemsControl x:Name="DownloadsPopup">
+                                    <Border CornerRadius="5,5,0,0" Background="{StaticResource SecondaryBrush}" Padding="10">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Background="Transparent" Width="Auto" Height="Auto" Click="ButtonAction" BorderThickness="0" Tag="5&lt;,&gt;slbr://downloads" Content="&#xe9a4;" Margin="0,0,0,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Downloads Manager"/>
+                                            <Button DockPanel.Dock="Right" Background="Transparent" Width="Auto" Height="Auto" Click="DownloadsFolderButton_Click" BorderThickness="0" Content="&#xe8b7;" Margin="0,0,10,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Open downloads folder"/>
+
+                                            <TextBlock VerticalAlignment="Center" Text="Downloads"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <ItemsControl Margin="5,2.5" x:Name="DownloadsPopup">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Margin="0,2.5" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5">

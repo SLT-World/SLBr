@@ -1170,10 +1170,6 @@ namespace SLBr.Pages
                 return;
             switch (Value?.ToString())
             {
-                case "Downloads":
-                    WebView?.ExecuteScript($"internal.receive(\"downloads={JsonSerializer.Serialize(App.Instance.Downloads).Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
-                    break;
-
                 case "background":
                     string Url = string.Empty;
                     try
@@ -1220,16 +1216,6 @@ namespace SLBr.Pages
                     catch { }
                     if (!string.IsNullOrEmpty(Url))
                         WebView?.ExecuteScript($"document.documentElement.style.backgroundImage = \"url('{Url}')\";");
-                    break;
-
-                case "OpenDownload":
-                    WebDownloadItem? Item = App.Instance.Downloads.GetValueOrDefault((string)Message["variable"]);
-                    if (Item != null)
-                        Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{Item.FullPath}\"") { UseShellExecute = true });
-                    break;
-
-                case "CancelDownload":
-                    App.Instance.Downloads.GetValueOrDefault((string)Message["variable"])?.Cancel();
                     break;
 
                 case "Search":
@@ -3635,6 +3621,11 @@ namespace SLBr.Pages
                 string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
                 Tab.ParentWindow.NewTab(Values[1], false, -1, Private);
             }
+        }
+
+        private void DownloadsFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{App.Instance.GlobalSave.Get("DownloadPath")}\"") { UseShellExecute = true });
         }
     }
 }

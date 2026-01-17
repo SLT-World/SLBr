@@ -34,8 +34,8 @@
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="800">
                         <DockPanel Margin="0,0,0,25" VerticalAlignment="Center" Width="Auto" HorizontalAlignment="Stretch" Height="35">
-                            <Button DockPanel.Dock="Right" Click="NewFavouriteButton_Click" x:Name="NewFavouriteButton" ToolTip="Add favourite" Content="&#xe710;" Margin="0,0,0,0" Style="{StaticResource ToolBarIconButton}"/>
-                            <Button Visibility="Collapsed" Foreground="Red" DockPanel.Dock="Right" Click="DeleteSelectedButton_Click" x:Name="DeleteSelectedButton" ToolTip="Delete selected" Content="&#xe74d;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
+                            <Button DockPanel.Dock="Right" Click="NewFavouriteButton_Click" x:Name="NewFavouriteButton" ToolTip="Add favourite" Content="&#xe710;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
+                            <Button Visibility="Collapsed" Foreground="Red" DockPanel.Dock="Right" Click="DeleteSelectedButton_Click" x:Name="DeleteSelectedButton" ToolTip="Delete selected" Content="&#xe74d;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
                             <TextBlock TextAlignment="Left" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" FontWeight="DemiBold" FontSize="25">Favourites bar</TextBlock>
                         </DockPanel>
                         <ListBox KeyDown="FavouritesList_KeyDown" SelectionChanged="FavouritesList_SelectionChanged" SelectionMode="Extended" VirtualizingPanel.VirtualizationMode="Recycling" x:Name="FavouritesList" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">

@@ -102,6 +102,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Pages\Downloads.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Pages\History.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -1254,6 +1254,7 @@ namespace SLBr
             { "settings", typeof(Settings) },
             { "favourites", typeof(Favourites) },
             { "history", typeof(History) },
+            { "downloads", typeof(Downloads) },
         };
 
         const string ReportExceptionText = @"**Automatic Report**
@@ -4332,15 +4333,6 @@ document.querySelectorAll('tbody > tr').forEach(row => {
             UpdateList(value);
             break;
         }
-    },
-    downloads: function() {
-        engine.postMessage({type:""Internal"",function:'Downloads'});
-    },
-    openDownload: function(num) {
-        engine.postMessage({type:""Internal"",function:'OpenDownload',variable:num});
-    },
-    cancelDownload: function(num) {
-        engine.postMessage({type:""Internal"",function:'CancelDownload',variable:num});
     },
     search: function(val) {
         engine.postMessage({type:""Internal"",function:'Search',variable:val});
