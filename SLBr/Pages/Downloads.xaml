@@ -16,7 +16,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Border BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Padding="15,10">
+        <Border BorderThickness="0,0,0,1" Height="60" BorderBrush="{StaticResource BorderBrush}" Padding="15,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>

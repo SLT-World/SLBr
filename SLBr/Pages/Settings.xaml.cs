@@ -1274,7 +1274,7 @@ namespace SLBr.Pages
 
         private void AddSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
-            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query (optional)", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa");
+            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa");
             _DynamicDialogWindow.Topmost = true;
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
@@ -1296,7 +1296,7 @@ namespace SLBr.Pages
             int SelectedIndex = SearchEngineComboBox.SelectedIndex;
             SearchProvider _SearchProvider = App.Instance.SearchEngines[SelectedIndex];
 
-            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query (optional)", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f");
+            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f");
             _DynamicDialogWindow.Topmost = true;
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
