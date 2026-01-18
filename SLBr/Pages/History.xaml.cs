@@ -1,19 +1,6 @@
-﻿using CefSharp;
-using CefSharp.DevTools.Autofill;
-using Microsoft.Web.WebView2.Core;
-using Microsoft.Win32;
-using SLBr.Controls;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Navigation;
-using System.Windows.Threading;
 
 namespace SLBr.Pages
 {

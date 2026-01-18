@@ -2856,7 +2856,10 @@ namespace SLBr.Pages
 
         public void OmniBoxEnter()
         {
-            string Url = Utils.FilterUrlForBrowser(OmniBox.Text, (OmniBoxOverrideSearch ?? App.Instance.DefaultSearchProvider).SearchUrl);
+            string SearchUrl = App.Instance.DefaultSearchProvider.SearchUrl;
+            if (OmniBoxOverrideSearch != null && !string.IsNullOrEmpty(OmniBoxOverrideSearch.SearchUrl))
+                SearchUrl = OmniBoxOverrideSearch.SearchUrl;
+            string Url = Utils.FilterUrlForBrowser(OmniBox.Text, SearchUrl);
             if (Url.StartsWith("javascript:"))
             {
                 WebView?.ExecuteScript(Url.Substring(11));
@@ -2893,11 +2896,11 @@ namespace SLBr.Pages
             }
         }
 
-        private static bool IsIgnorableKey(Key key)
+        private static bool IsIgnorableKey(Key Key)
         {
-            if (key >= Key.F1 && key <= Key.F24)
+            if (Key >= Key.F1 && Key <= Key.F24)
                 return true;
-            return key switch
+            return Key switch
             {
                 Key.Escape or Key.PrintScreen or Key.Pause or Key.Scroll
                 or Key.Insert or Key.Delete or Key.Home or Key.End
@@ -2940,7 +2943,21 @@ namespace SLBr.Pages
                 {
                     OmniBox.Text = string.Empty;
                     OmniBoxStatus.Visibility = Visibility.Collapsed;
-                    OmniBoxOverrideSearch = App.Instance.SearchEngines[(int)OmniBoxStatus.Tag];
+                    string SelectedProvider = OmniBoxStatus.Tag.ToString()!;
+                    if (SelectedProvider.StartsWith("S"))
+                        OmniBoxOverrideSearch = App.Instance.AllSystemSearchEngines[int.Parse(SelectedProvider[1..])];
+                    else
+                        OmniBoxOverrideSearch = App.Instance.SearchEngines[int.Parse(SelectedProvider)];
+                    SetTemporarySiteInformation();
+                    e.Handled = true;
+                }
+            }
+            else if (e.Key == Key.Back && OmniBox.Text.Length == 0)
+            {
+                if (OmniBoxOverrideSearch != null)
+                {
+                    OmniBoxStatus.Visibility = Visibility.Collapsed;
+                    OmniBoxOverrideSearch = null;
                     SetTemporarySiteInformation();
                     e.Handled = true;
                 }
@@ -2949,43 +2966,31 @@ namespace SLBr.Pages
 
         private void OmniBox_PreviewKeyUp(object sender, KeyEventArgs e)
         {
-            if (OmniBox.Text.Trim().Length > 0)
+            if (e.Key == Key.Return)
             {
-                if (e.Key == Key.Return)
+                if (OmniBox.Text.Trim().Length > 0)
                     OmniBoxEnter();
-                else
+            }
+            else
+            {
+                if (IsIgnorableKey(e.Key) || Keyboard.Modifiers == ModifierKeys.Control || Keyboard.Modifiers == ModifierKeys.Alt || Keyboard.Modifiers == ModifierKeys.Windows)
+                    return;
+                LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
+                LoadingStoryboard?.Seek(TimeSpan.Zero);
+                LoadingStoryboard?.Stop();
+                SetTemporarySiteInformation();
+                if (!Private && bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
                 {
-                    if (IsIgnorableKey(e.Key) || Keyboard.Modifiers == ModifierKeys.Control || Keyboard.Modifiers == ModifierKeys.Alt || Keyboard.Modifiers == ModifierKeys.Windows)
-                        return;
-                    LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-                    LoadingStoryboard?.Seek(TimeSpan.Zero);
-                    LoadingStoryboard?.Stop();
-                    if (OmniBox.Text.Length != 0)
-                    {
-                        SetTemporarySiteInformation();
-
-                        if (!Private && bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
-                        {
-                            OmniBoxFastTimer.Stop();
-                            OmniBoxSmartTimer.Stop();
-                            OmniBoxFastTimer.Start();
-                            if (OmniBoxOverrideSearch == null && bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions")))
-                                OmniBoxSmartTimer.Start();
-                        }
-                    }
-                    else
-                    {
-                        SiteInformationIcon.FontFamily = App.Instance.IconFont;
-                        SiteInformationIcon.Text = "\xE721";
-                        SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                        SiteInformationText.Text = $"Search";
-                        SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text}";
-                    }
-                    if (OmniBox.IsDropDownOpen)
-                    {
-                        OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);
-                        OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
-                    }
+                    OmniBoxFastTimer.Stop();
+                    OmniBoxSmartTimer.Stop();
+                    OmniBoxFastTimer.Start();
+                    if (OmniBoxOverrideSearch == null && bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions")))
+                        OmniBoxSmartTimer.Start();
+                }
+                if (OmniBox.IsDropDownOpen)
+                {
+                    OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);
+                    OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
                 }
             }
         }
@@ -3038,28 +3043,53 @@ namespace SLBr.Pages
             }
             else
             {
-                switch (OmniBoxOverrideSearch.Name)
+                if (OmniBoxOverrideSearch.Host == "__Program__")
                 {
-                    case "YouTube":
-                        SiteInformationIcon.Text = "\xE786";
-                        SiteInformationIcon.Foreground = App.Instance.RedColor;
-                        break;
-                    case "ChatGPT":
-                        SiteInformationIcon.Text = "\xe713";
-                        SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#10A37F");
-                        break;
-                    case "Perplexity":
-                        SiteInformationIcon.Text = "\xedad";
-                        SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#21808D");
-                        break;
-                    case "Wikipedia":
-                        SiteInformationIcon.Text = "\xe8f1";
-                        SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                        break;
-                    default:
-                        SiteInformationIcon.Text = "\xE721";
-                        SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                        break;
+                    switch (OmniBoxOverrideSearch.Name)
+                    {
+                        case "Tabs":
+                            SiteInformationIcon.Text = "\xec6c";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                            break;
+                        case "History":
+                            SiteInformationIcon.Text = "\xe81c";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                            break;
+                        case "Favourites":
+                            SiteInformationIcon.Text = "\xeb51";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                            break;
+                        default:
+                            SiteInformationIcon.Text = "\xE721";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (OmniBoxOverrideSearch.Name)
+                    {
+                        case "YouTube":
+                            SiteInformationIcon.Text = "\xE786";
+                            SiteInformationIcon.Foreground = App.Instance.RedColor;
+                            break;
+                        case "ChatGPT":
+                            SiteInformationIcon.Text = "\xe713";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#10A37F");
+                            break;
+                        case "Perplexity":
+                            SiteInformationIcon.Text = "\xedad";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#21808D");
+                            break;
+                        case "Wikipedia":
+                            SiteInformationIcon.Text = "\xe8f1";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                            break;
+                        default:
+                            SiteInformationIcon.Text = "\xE721";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                            break;
+                    }
                 }
                 SiteInformationText.Text = OmniBoxOverrideSearch.Name;
                 SiteInformationPopupButton.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBox.Text.Trim()}";
@@ -3418,35 +3448,78 @@ namespace SLBr.Pages
             SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
             Suggestions.Clear();
             OmniBox.Text = CurrentText;
-            string FirstType = App.GetMiniSearchType(CurrentText);
-            if (FirstType == "W")
+            if (!string.IsNullOrEmpty(CurrentText))
             {
-                Suggestions.Add(App.GenerateSuggestion(CurrentText, FirstType, LinkColor, "- Visit"));
-                Suggestions.Add(App.GenerateSuggestion(CurrentText, "S", Color, "- Search", $"search:{CurrentText}"));
-            }
-            else
-                Suggestions.Add(App.GenerateSuggestion(CurrentText, FirstType, Color));
-            try
-            {
-                if (CurrentText.Length <= 60)
+                string FirstType = App.GetMiniSearchType(CurrentText);
+                if (FirstType == "W")
                 {
-                    string SuggestionsUrl = string.Format((OmniBoxOverrideSearch ?? App.Instance.DefaultSearchProvider).SuggestUrl, Uri.EscapeDataString(CurrentText));
-                    if (!string.IsNullOrEmpty(SuggestionsUrl))
+                    Suggestions.Add(App.GenerateSuggestion(CurrentText, FirstType, LinkColor, "- Visit"));
+                    Suggestions.Add(App.GenerateSuggestion(CurrentText, "S", Color, "- Search", $"search:{CurrentText}"));
+                }
+                else
+                    Suggestions.Add(App.GenerateSuggestion(CurrentText, FirstType, Color));
+                try
+                {
+                    if (CurrentText.Length <= 60)
                     {
-                        string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
-                        using (JsonDocument Document = JsonDocument.Parse(ResponseText))
+                        string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
+                        if (!string.IsNullOrEmpty(SuggestionsUrl))
                         {
-                            foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
+                            string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
+                            using (JsonDocument Document = JsonDocument.Parse(ResponseText))
                             {
-                                string SuggestionStr = Suggestion.GetString();
-                                string SuggestionType = App.GetMiniSearchType(SuggestionStr);
-                                Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color));
+                                foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())
+                                {
+                                    string SuggestionStr = Suggestion.GetString();
+                                    string SuggestionType = App.GetMiniSearchType(SuggestionStr);
+                                    Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color));
+                                }
+                            }
+                        }
+                        else if (OmniBoxOverrideSearch.Host == "__Program__")
+                        {
+                            CurrentText = CurrentText.ToLowerInvariant();
+                            switch (OmniBoxOverrideSearch.Name)
+                            {
+                                case "Tabs":
+                                    break;
+                                case "History":
+                                    List<ActionStorage> HistoryCollection = App.Instance.History.Where(i => (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
+                                    foreach (ActionStorage Entry in HistoryCollection.Take(10))
+                                        Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip));
+                                    break;
+                                case "Favourites":
+                                    List<ActionStorage> FavouritesCollection = App.Instance.Favourites.Where(i => (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
+                                    foreach (ActionStorage Entry in FavouritesCollection.Take(10))
+                                        Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip));
+                                    break;
                             }
                         }
                     }
                 }
+                catch { }
             }
-            catch { }
+            else
+            {
+                if (OmniBoxOverrideSearch != null && OmniBoxOverrideSearch.Host == "__Program__")
+                {
+                    switch (OmniBoxOverrideSearch.Name)
+                    {
+                        case "Tabs":
+                            break;
+                        case "History":
+                            List<ActionStorage> HistoryCollection = App.Instance.History.ToList();
+                            foreach (ActionStorage Entry in HistoryCollection.Take(10))
+                                Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip));
+                            break;
+                        case "Favourites":
+                            List<ActionStorage> FavouritesCollection = App.Instance.Favourites.ToList();
+                            foreach (ActionStorage Entry in FavouritesCollection.Take(10))
+                                Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip));
+                            break;
+                    }
+                }
+            }
             OmniBox.IsDropDownOpen = Suggestions.Count > 0;
             OmniBoxIsDropdown = true;
 
@@ -3464,6 +3537,19 @@ namespace SLBr.Pages
                         OmniBoxStatusText.Text = $"Search {Search.Name}";
                         OmniBoxStatus.Visibility = Visibility.Visible;
                         return;
+                    }
+                }
+                if (OmniBox.Text.Length > 1 && OmniBox.Text.StartsWith("@", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (SearchProvider Search in App.Instance.AllSystemSearchEngines)
+                    {
+                        if (Search.Name.StartsWith(OmniBox.Text[1..], StringComparison.OrdinalIgnoreCase))
+                        {
+                            OmniBoxStatus.Tag = "S" + App.Instance.AllSystemSearchEngines.IndexOf(Search);
+                            OmniBoxStatusText.Text = $"Search {Search.Name}";
+                            OmniBoxStatus.Visibility = Visibility.Visible;
+                            return;
+                        }
                     }
                 }
             }

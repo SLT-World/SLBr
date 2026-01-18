@@ -292,6 +292,12 @@ namespace SLBr
 
         public const string AMPEndpoint = "https://acceleratedmobilepageurl.googleapis.com/v1/ampUrls:batchGet";
 
+        public List<SearchProvider> AllSystemSearchEngines = [
+            //new() { Host = "__Program__", Name = "Tabs" },//TODO: Add tab search omnibox shortcut
+            new() { Host = "__Program__", Name = "History" },
+            new() { Host = "__Program__", Name = "Favourites" }
+        ];
+
         public List<MainWindow> AllWindows = [];
         public List<SearchProvider> SearchEngines = [];
         public SearchProvider DefaultSearchProvider;
