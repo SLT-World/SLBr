@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SLBr"
+        xmlns:controls="clr-namespace:SLBr.Controls"
         xmlns:WinUI="clr-namespace:WinUI"
         mc:Ignorable="d"
         Title="SLBr" Height="450" Width="800" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" WindowState="Maximized" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged">
@@ -13,10 +14,16 @@
                 <ResourceDictionary Source="WinUIStyleDictionary.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <local:TabItemStyleSelector x:Key="TabItemStyleSelector"/>
+            <DataTemplate x:Key="OverlayIcon">
+                <Grid Width="16" Height="16">
+                    <Ellipse Fill="{Binding Background}"/>
+                    <TextBlock Text="{Binding Text}" TextAlignment="Center" Foreground="{Binding Foreground}" FontWeight="ExtraBold" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                </Grid>
+            </DataTemplate>
         </ResourceDictionary>
     </Window.Resources>
     <Window.TaskbarItemInfo>
-        <TaskbarItemInfo x:Name="TaskbarProgress" ProgressState="Normal" ProgressValue="0"/>
+        <TaskbarItemInfo x:Name="TaskbarItem" ProgressState="Normal" ProgressValue="0" controls:TaskbarItemOverlay.Template="{StaticResource OverlayIcon}"/>
     </Window.TaskbarItemInfo>
     <Grid Background="{StaticResource SecondaryBrush}">
         <!--<Grid.LayoutTransform>

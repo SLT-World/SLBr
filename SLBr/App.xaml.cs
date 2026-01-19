@@ -14,6 +14,7 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -437,7 +438,7 @@ namespace SLBr
             Dispatcher.BeginInvoke(() =>
             {
                 foreach (MainWindow _Window in AllWindows)
-                    _Window.TaskbarProgress.ProgressValue = Item.State == WebDownloadState.Completed ? 0 : Item.Progress;
+                    _Window.TaskbarItem.ProgressValue = Item.State == WebDownloadState.Completed ? 0 : Item.Progress;
                 DownloadEntry _Entry = VisibleDownloads.FirstOrDefault(d => d.ID == Item.ID);
                 if (_Entry != null)
                 {
@@ -865,7 +866,6 @@ namespace SLBr
 
         public bool Background = false;
 
-        public BitmapFrame Icon;
         public static HttpClient MiniHttpClient = new();
         public static Random MiniRandom = new();
         public static QREncoder MiniQREncoder = new();
@@ -961,12 +961,7 @@ namespace SLBr
             InitializeSaves();
 
             if (Username != "Default")
-            {
-                string IconPath = Path.Combine(UserApplicationDataPath, "Icon.png");
-                if (!File.Exists(IconPath))
-                    Utils.SaveImage(GenerateProfileIcon("pack://application:,,,/Resources/SLBr.ico", Username.Substring(0, 1).ToUpper()), IconPath);
-                Icon = BitmapFrame.Create(new Uri(IconPath, UriKind.Absolute));
-            }
+                GenerateTaskbarProfileOverlay(Username);
 
             FavouriteColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
             SLBrColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#0092FF");
@@ -3323,63 +3318,27 @@ Inner Exception: ```{7} ```";
             Flat,
             Square,
         }*/
-        public static RenderTargetBitmap GenerateProfileIcon(string BaseIconPath, string Initial, int Size = 64)//,ProfileIconStyle IconStyle = ProfileIconStyle.Default
+
+        public void GenerateTaskbarProfileOverlay(string Name)
         {
-            BitmapImage BaseBitmap = new(new Uri(BaseIconPath));
-            DrawingVisual Visual = new();
-            using (var Context = Visual.RenderOpen())
+            using var _MD5 = MD5.Create();
+            byte[] Hash = _MD5.ComputeHash(Encoding.UTF8.GetBytes(Name));
+
+            byte R = (byte)(Hash[0] % 128 + 64);
+            byte G = (byte)(Hash[1] % 128 + 64);
+            byte B = (byte)(Hash[2] % 128 + 64);
+
+            SolidColorBrush BrushColor = new SolidColorBrush(Color.FromRgb(R, G, B));
+
+            ProfileOverlay = new()
             {
-                Context.DrawImage(BaseBitmap, new(0, 0, Size, Size));
-
-                int BadgeSize = Size / 2;
-                SolidColorBrush BadgeColor = new(Color.FromRgb((byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255), (byte)MiniRandom.Next(100, 255)));
-                Rect BadgeRect = new(Size - BadgeSize, Size - BadgeSize, BadgeSize, BadgeSize);
-                Point BadgeCenter = new(BadgeRect.X + BadgeSize / 2, BadgeRect.Y + BadgeSize / 2);
-                Context.DrawEllipse(BadgeColor, null, BadgeCenter, BadgeSize / 2, BadgeSize / 2);
-                /*switch (IconStyle)
-                {
-                    case ProfileIconStyle.CircleOverlay:
-                        Context.DrawEllipse(BadgeColor, null, BadgeCenter, BadgeSize, BadgeSize);
-                        break;
-                    case ProfileIconStyle.Flat:
-                        Context.DrawRectangle(BadgeColor, null, new Rect(0, 0, Size, Size));
-                        break;
-                    case ProfileIconStyle.Square:
-                        Context.DrawRectangle(BadgeColor, null, BadgeRect);
-                        break;
-                    default:
-                        Context.DrawEllipse(BadgeColor, null, BadgeCenter, BadgeSize / 2, BadgeSize / 2);
-                        break;
-                }*/
-
-                FormattedText FormattedText = new(
-                    Initial,
-                    CultureInfo.InvariantCulture,
-                    FlowDirection.LeftToRight,
-                    new Typeface("Segoe UI Bold"),
-                    BadgeSize / 1.25,
-                    GetContrastBrush(BadgeColor.Color),
-                    1.25
-                );
-
-                /*Point Location = IconStyle switch
-                {
-                    ProfileIconStyle.Flat => new Point((Size - FormattedText.Width) / 2, (Size - FormattedText.Height) / 2),
-                    ProfileIconStyle.CircleOverlay => new Point((Size - FormattedText.Width) / 2, (Size - FormattedText.Height) / 2),
-                    _ => new Point(BadgeRect.X + (BadgeSize - FormattedText.Width) / 2, BadgeRect.Y + (BadgeSize - FormattedText.Height) / 2)
-                };
-                Context.DrawText(FormattedText, Location);*/
-
-                Point Location = new(BadgeRect.X + (BadgeSize - FormattedText.Width) / 2, BadgeRect.Y + (BadgeSize - FormattedText.Height) / 2);
-                Context.DrawText(FormattedText, Location);
-            }
-
-            RenderTargetBitmap Bitmap = new(Size, Size, 96, 96, PixelFormats.Pbgra32);
-            Bitmap.Render(Visual);
-            if (Bitmap.CanFreeze)
-                Bitmap.Freeze();
-            return Bitmap;
+                Text = Name[0].ToString().ToUpper(),
+                Foreground = GetContrastBrush(BrushColor.Color),
+                Background = BrushColor
+            };
         }
+
+        public TaskbarOverlayModel? ProfileOverlay = null;
 
         private static readonly Dictionary<string, BitmapImage?> FaviconCache = [];
         private static readonly Dictionary<string, Task<BitmapImage?>> DownloadingFavicons = [];

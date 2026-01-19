@@ -27,7 +27,9 @@ namespace SLBr
 
         private void TabItem_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            if (Mouse.PrimaryDevice.LeftButton == MouseButtonState.Pressed || Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
+            //Interferes with close button
+            //if (Mouse.PrimaryDevice.LeftButton == MouseButtonState.Pressed || Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
+            if (Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
             {
                 TabItem _TabItem = (TabItem)e.Source;
                 DragDrop.DoDragDrop(_TabItem, _TabItem, DragDropEffects.All);

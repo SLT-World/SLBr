@@ -1,4 +1,5 @@
-﻿using SLBr.Pages;
+﻿using SLBr.Controls;
+using SLBr.Pages;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -87,8 +88,6 @@ namespace SLBr
 
         private void InitializeWindow()
         {
-            if (App.Instance.Icon != null)
-                Icon = App.Instance.Icon;
             ID = Utils.GenerateRandomId();
             WindowInterop = new WindowInteropHelper(this);
             HwndSource HwndSource = HwndSource.FromHwnd(WindowInterop.EnsureHandle());
@@ -100,6 +99,12 @@ namespace SLBr
             if (App.Instance.WindowsSaves.Count < App.Instance.AllWindows.Count)
                 App.Instance.WindowsSaves.Add(new($"Window_{App.Instance.WindowsSaves.Count}.bin", App.Instance.UserApplicationWindowsPath));
             InitializeComponent();
+            if (App.Instance.ProfileOverlay != null)
+            {
+                TaskbarItemOverlay.SetContent(TaskbarItem, App.Instance.ProfileOverlay.Text);
+                TaskbarItemOverlay.SetBackground(TaskbarItem, App.Instance.ProfileOverlay.Background);
+                TaskbarItemOverlay.SetForeground(TaskbarItem, App.Instance.ProfileOverlay.Foreground);
+            }
             UpdateUnloadTimer();
             NewTabTab = new(null)
             {
