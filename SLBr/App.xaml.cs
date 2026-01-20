@@ -63,6 +63,98 @@ namespace SLBr
         }
     }
 
+    public class Profile : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        private string PName;
+        public string Name
+        {
+            get { return PName; }
+            set
+            {
+                PName = value;
+                Initial = value[0].ToString().ToUpper();
+
+                using var _MD5 = MD5.Create();
+                byte[] Hash = _MD5.ComputeHash(Encoding.UTF8.GetBytes(value));
+
+                byte R = (byte)(Hash[0] % 128 + 64);
+                byte G = (byte)(Hash[1] % 128 + 64);
+                byte B = (byte)(Hash[2] % 128 + 64);
+
+                Brush = new SolidColorBrush(Color.FromRgb(R, G, B));
+                Foreground = (SolidColorBrush)Utils.GetContrastBrush(Brush.Color);
+                RaisePropertyChanged();
+            }
+        }
+
+        private string PInitial;
+        public string Initial
+        {
+            get { return PInitial; }
+            set
+            {
+                PInitial = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        private SolidColorBrush PBrush;
+        public SolidColorBrush Brush
+        {
+            get { return PBrush; }
+            set
+            {
+                PBrush = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        private SolidColorBrush PForeground;
+        public SolidColorBrush Foreground
+        {
+            get { return PForeground; }
+            set
+            {
+                PForeground = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        /*private string PIcon;
+        public string Icon
+        {
+            get { return PIcon; }
+            set
+            {
+                PIcon = value;
+                RaisePropertyChanged(nameof(Icon));
+            }
+        }*/
+        public ProfileType Type { get; set; } = ProfileType.User;
+        private bool PDefault = false;
+        public bool Default
+        {
+            get { return PDefault; }
+            set
+            {
+                PDefault = value;
+                RaisePropertyChanged();
+            }
+        }
+    }
+    public enum ProfileType
+    {
+        User,
+        System
+    }
+
     public class Extension : INotifyPropertyChanged
     {
         #region INotifyPropertyChanged
@@ -312,6 +404,7 @@ namespace SLBr
 
         public IdnMapping _IdnMapping = new();
 
+        public Saving AppSave;
         public Saving GlobalSave;
         public Saving FavouritesSave;
         public Saving SearchSave;
@@ -332,7 +425,8 @@ namespace SLBr
         public FontFamily IconFont;
         public FontFamily SLBrFont;
 
-        public string Username = "Default";
+        public Profile CurrentProfile;
+        public string ApplicationLocalDataPath;
         public string UserApplicationWindowsPath;
         public string UserApplicationDataPath;
         public string ExecutablePath;
@@ -340,7 +434,7 @@ namespace SLBr
         public string ResourcesPath;
         //public string CdnPath;
 
-        bool AppInitialized;
+        public bool AppInitialized;
 
         public static readonly string[] URLConfusables =
         [
@@ -541,29 +635,95 @@ namespace SLBr
                 Output += $" {FileSizes[i]}";
             return Output;
         }
+        public ObservableCollection<Profile> Profiles { get; set; } = [
+            new() { Name = "Guest", Type = ProfileType.System},
+            new() { Name = "Add", Type = ProfileType.System},
+        ];
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            ApplicationLocalDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr");
+            if (!Directory.Exists(ApplicationLocalDataPath))
+                Directory.CreateDirectory(ApplicationLocalDataPath);
             Instance = this;
-            InitializeApp();
-            JumpList jumpList = new()
+            try
             {
-                ShowRecentCategory = true,
-                ShowFrequentCategory = true
-            };
-            JumpTask NewWindowTask = new()
+                using (var Key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", true))
+                    CurrentTheme = Key.GetValue("SystemUsesLightTheme") as int? == 1 ? Themes[0] : Themes[1];
+            }
+            catch { CurrentTheme = Themes[0]; }
+            AppSave = new Saving("App.bin", ApplicationLocalDataPath);
+            ExecutablePath = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
+            string[] ProfileDirectories = Directory.GetDirectories(ApplicationLocalDataPath, "*", SearchOption.TopDirectoryOnly);
+
+            foreach (string DirectoryPath in ProfileDirectories)
             {
-                Title = "New window",
-                Description = "Open a new browser window",
-                ApplicationPath = ExecutablePath,
-                Arguments = "--window",
-                IconResourcePath = ExecutablePath,
-                IconResourceIndex = 0
-            };
-            jumpList.JumpItems.Add(NewWindowTask);
-            JumpList.SetJumpList(Current, jumpList);
-            jumpList.Apply();
+                DirectoryInfo _DirectoryInfo = new DirectoryInfo(DirectoryPath);
+                Profiles.Insert(0, new Profile { Name = _DirectoryInfo.Name, Type = ProfileType.User });
+            }
+            Profile? DefaultProfile = null;
+            if (!AppSave.Has("StartupProfiles"))
+                AppSave.Set("StartupProfiles", true);
+            if (AppSave.Has("Default"))
+            {
+                string ProfileName = AppSave.Get("Default");
+                foreach (Profile _Profile in Profiles)
+                {
+                    if (_Profile.Name == ProfileName)
+                    {
+                        DefaultProfile = _Profile;
+                        break;
+                    }
+                }
+            }
+            if (DefaultProfile == null)
+            {
+                DefaultProfile = Profiles[0];
+                if (DefaultProfile.Type != ProfileType.User)
+                    DefaultProfile = null;
+            }
+            //WARNING: Keep the ifs separate.
+            if (DefaultProfile != null)
+            {
+                DefaultProfile.Default = true;
+                AppSave.Set("Default", DefaultProfile.Name);
+                AppSave.Save();
+            }
+            IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
+            bool OpenProfileManager = true;
+            foreach (string Flag in Args)
+            {
+                if (Flag.StartsWith("--user="))
+                {
+                    OpenProfileManager = false;
+                    break;
+                }
+                else if (Flag == "--guest")
+                {
+                    OpenProfileManager = false;
+                    break;
+                }
+            }
+            Profile? ProfileOverride = null;
+
+            if (!bool.Parse(AppSave.Get("StartupProfiles")))
+            {
+                if (DefaultProfile == null)
+                    OpenProfileManager = true;
+                else
+                {
+                    OpenProfileManager = false;
+                    ProfileOverride = DefaultProfile;
+                }
+            }
+            if (OpenProfileManager)
+            {
+                ProfileManagerWindow ProfileManager = new();
+                ProfileManager.Show();
+            }
+            else
+                InitializeApp(Args, ProfileOverride);
         }
 
         static Mutex _Mutex;
@@ -872,21 +1032,42 @@ namespace SLBr
 
         public List<IntPtr> WebView2DevTools = [];
 
-        private void InitializeApp()
+        public void InitializeApp(IEnumerable<string> Args, Profile? UsernameOverride = null)
         {
-            IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
+            JumpList _JumpList = new()
+            {
+                ShowRecentCategory = true,
+                ShowFrequentCategory = true
+            };
+            JumpTask NewWindowTask = new()
+            {
+                Title = "New window",
+                Description = "Open a new browser window",
+                ApplicationPath = ExecutablePath,
+                Arguments = "--window",
+                IconResourcePath = ExecutablePath,
+                IconResourceIndex = 0
+            };
+            _JumpList.JumpItems.Add(NewWindowTask);
+            JumpList.SetJumpList(Current, _JumpList);
+            _JumpList.Apply();
+
             string AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30}";
             string CommandLineUrl = string.Empty;
             foreach (string Flag in Args)
             {
                 if (Flag.StartsWith("--user="))
                 {
-                    Username = Flag.Replace("--user=", string.Empty).Replace(" ", "-");
-                    if (Utils.IsEmptyOrWhiteSpace(Username))
-                        Username = "Default";
-                    else if (Username != "Default")
-                        AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30-" + Username + "}";
+                    string Username = Flag.Replace("--user=", string.Empty).Replace(" ", "-");
+                    CurrentProfile = Profiles.FirstOrDefault(i => i.Name == Username);
+                    if (CurrentProfile == null)
+                    {
+                        CurrentProfile = new Profile { Name = Username };
+                        Profiles.Insert(0, CurrentProfile);
+                    }
                 }
+                else if (Flag == "--guest")
+                    CurrentProfile = Profiles.First(i => i.Type == ProfileType.System && i.Name == "Guest");
                 else if (Flag == "--background")
                     Background = true;
                 else if (Flag == "--window")
@@ -907,6 +1088,18 @@ namespace SLBr
                     CommandLineUrl = Flag;
                 }
             }
+            if (UsernameOverride != null)
+                CurrentProfile = UsernameOverride;
+            if (CurrentProfile == null)
+            {
+                CurrentProfile = Profiles.FirstOrDefault(i => i.Default);
+                if (CurrentProfile == null)
+                {
+                    CurrentProfile = new Profile { Name = "Default", Default = true };
+                    Profiles.Insert(0, CurrentProfile);
+                }
+            }
+            AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30-" + CurrentProfile.Name + "}";
             DllUtils.SetCurrentProcessExplicitAppUserModelID(AppUserModelID);
 
             _Mutex = new Mutex(true, AppUserModelID);
@@ -916,7 +1109,7 @@ namespace SLBr
                 {
                     Process OtherInstance = Utils.GetAlreadyRunningInstance(Process.GetCurrentProcess());
                     if (OtherInstance != null)
-                        MessageHelper.SendDataMessage(OtherInstance, "Start<|>" + Username);
+                        MessageHelper.SendDataMessage(OtherInstance, "Start<|>" + CurrentProfile.Name);
                     Shutdown(1);
                     Environment.Exit(0);
                     return;
@@ -940,6 +1133,12 @@ namespace SLBr
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             DispatcherUnhandledException += App_DispatcherUnhandledException;
             Dispatcher.UnhandledException += App_DispatcherUnhandledException;
+
+            /*TODO: Investigate error "A Task's exception(s) were not observed either by Waiting on the Task or accessing its Exception property. As a result, the unobserved exception was rethrown by the finalizer thread. (Hwnd of zero is not valid.)" "System.ArgumentException: Hwnd of zero is not valid."
+             * Reproduction: Delete AppData\Local\SLBr, run in Debug, create & open new profile, observe MessageBox.
+             * Issue only reproducable on first-time run of profile.
+             */
+
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             ReleaseVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
@@ -949,9 +1148,8 @@ namespace SLBr
             Environment.SetEnvironmentVariable("GOOGLE_DEFAULT_CLIENT_ID", SECRETS.GOOGLE_DEFAULT_CLIENT_ID);
             Environment.SetEnvironmentVariable("GOOGLE_DEFAULT_CLIENT_SECRET", SECRETS.GOOGLE_DEFAULT_CLIENT_SECRET);
 
-            UserApplicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", Username);
+            UserApplicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", CurrentProfile.Name);
             UserApplicationWindowsPath = Path.Combine(UserApplicationDataPath, "Windows");
-            ExecutablePath = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
             ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             //CdnPath = Path.Combine(ResourcesPath, "cdn");
@@ -959,9 +1157,6 @@ namespace SLBr
             LocaleNames = AllLocales.Select(i => i.Value).ToList();
 
             InitializeSaves();
-
-            if (Username != "Default")
-                GenerateTaskbarProfileOverlay(Username);
 
             FavouriteColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
             SLBrColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#0092FF");
@@ -1192,7 +1387,7 @@ namespace SLBr
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
         {
-            ReportError(e.Exception);
+            ReportError(e.Exception.Flatten());
 #if !DEBUG
             Save();
             e.SetObserved();
@@ -1232,6 +1427,7 @@ namespace SLBr
                 DiscordWebhookSendInfo(Report);
 #if DEBUG
             MessageBox.Show(Report);
+            Dispatcher.BeginInvoke(() => Clipboard.SetText(Report));
 #endif
         }
 
@@ -1391,14 +1587,16 @@ Inner Exception: ```{7} ```";
 
         public void SwitchUserPopup()
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Switch Profile", new List<InputField> { new InputField { Name = "Enter profile username to switch to:", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B");
+            ProfileManagerWindow ProfileManager = new();
+            ProfileManager.Show();
+            /*DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Switch Profile", new List<InputField> { new InputField { Name = "Enter profile username to switch to:", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B");
             _DynamicDialogWindow.Topmost = true;
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
-                if (Input != Username)
+                if (Input != CurrentProfile.Name)
                     Process.Start(new ProcessStartInfo() { FileName = ExecutablePath, Arguments = $"--user={Input}" });
-            }
+            }*/
         }
 
         public void SaveOpenSearch(string Name, string Url)
@@ -1591,21 +1789,24 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("StartupBoost", true.ToString());
             }
 
-            if (!Directory.Exists(UserApplicationWindowsPath))
+            if (!(CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest"))
             {
-                Directory.CreateDirectory(UserApplicationWindowsPath);
-                WindowsSaves.Add(new Saving($"Window_0.bin", UserApplicationWindowsPath));
-            }
-            else
-            {
-                int WindowsSavesCount = Directory.EnumerateFiles(UserApplicationWindowsPath).Count();
-                if (WindowsSavesCount != 0)
+                if (!Directory.Exists(UserApplicationWindowsPath))
                 {
-                    for (int i = 0; i < WindowsSavesCount; i++)
-                        WindowsSaves.Add(new Saving($"Window_{i}.bin", UserApplicationWindowsPath));
+                    Directory.CreateDirectory(UserApplicationWindowsPath);
+                    WindowsSaves.Add(new Saving($"Window_0.bin", UserApplicationWindowsPath));
                 }
                 else
-                    WindowsSaves.Add(new Saving($"Window_0.bin", UserApplicationWindowsPath));
+                {
+                    int WindowsSavesCount = Directory.EnumerateFiles(UserApplicationWindowsPath).Count();
+                    if (WindowsSavesCount != 0)
+                    {
+                        for (int i = 0; i < WindowsSavesCount; i++)
+                            WindowsSaves.Add(new Saving($"Window_{i}.bin", UserApplicationWindowsPath));
+                    }
+                    else
+                        WindowsSaves.Add(new Saving($"Window_0.bin", UserApplicationWindowsPath));
+                }
             }
 
             int SearchCount = SearchSave.GetInt("Count", 0);
@@ -1865,6 +2066,21 @@ Inner Exception: ```{7} ```";
                     }
                     else
                         _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, PrivateTabs);
+                    _Window.TabsUI.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                MainWindow _Window = new();
+                if (Background)
+                {
+                    _Window.WindowState = WindowState.Minimized;
+                    _Window.ShowInTaskbar = false;
+                }
+                else
+                {
+                    _Window.Show();
+                    _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, PrivateTabs);
                     _Window.TabsUI.Visibility = Visibility.Visible;
                 }
             }
@@ -2315,8 +2531,6 @@ Inner Exception: ```{7} ```";
             //Settings.UserAgentProduct = $"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}";
             //Settings.UserAgent = UserAgent;
 
-            string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
-
             WebViewSettings Settings = new();
             Settings.RegisterProtocol("gemini", WebViewManager.GeminiHandler);
             Settings.RegisterProtocol("gopher", WebViewManager.GopherHandler);
@@ -2331,8 +2545,8 @@ Inner Exception: ```{7} ```";
                 case 3: Settings.TridentVersion = TridentEmulationVersion.IE10; break;
                 case 4: Settings.TridentVersion = TridentEmulationVersion.IE11; break;
             }
-
-            Settings.UserDataPath = UserDataPath;
+            if (!(CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest"))
+                Settings.UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
             Settings.Language = Locale.Tooltip;
             Settings.Languages = Languages.Select(i => i.Tooltip).ToArray();
             Settings.LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log"));
@@ -3148,6 +3362,8 @@ Inner Exception: ```{7} ```";
 
         public void Save()
         {
+            if (CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest")
+                return;
             GlobalSave.Save();
 
             StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
@@ -3306,39 +3522,6 @@ Inner Exception: ```{7} ```";
             else
                 return PDFTabIcon;
         }
-
-        public static Brush GetContrastBrush(Color bgColor)
-        {
-            return (0.299 * bgColor.R + 0.587 * bgColor.G + 0.114 * bgColor.B) / 255 > 0.6 ? Brushes.Black : Brushes.White;
-        }
-        /*public enum ProfileIconStyle
-        {
-            Default, //Chrome-like
-            CircleOverlay,
-            Flat,
-            Square,
-        }*/
-
-        public void GenerateTaskbarProfileOverlay(string Name)
-        {
-            using var _MD5 = MD5.Create();
-            byte[] Hash = _MD5.ComputeHash(Encoding.UTF8.GetBytes(Name));
-
-            byte R = (byte)(Hash[0] % 128 + 64);
-            byte G = (byte)(Hash[1] % 128 + 64);
-            byte B = (byte)(Hash[2] % 128 + 64);
-
-            SolidColorBrush BrushColor = new SolidColorBrush(Color.FromRgb(R, G, B));
-
-            ProfileOverlay = new()
-            {
-                Text = Name[0].ToString().ToUpper(),
-                Foreground = GetContrastBrush(BrushColor.Color),
-                Background = BrushColor
-            };
-        }
-
-        public TaskbarOverlayModel? ProfileOverlay = null;
 
         private static readonly Dictionary<string, BitmapImage?> FaviconCache = [];
         private static readonly Dictionary<string, Task<BitmapImage?>> DownloadingFavicons = [];

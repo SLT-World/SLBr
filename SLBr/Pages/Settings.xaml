@@ -28,8 +28,8 @@
                 <TextBlock Grid.Column="1" FontWeight="DemiBold" FontSize="25">Settings</TextBlock>
             </Grid>
         </Border>
-        <WinUI:WinUITabControl Grid.Row="1" Style="{StaticResource WinUITabControl}">
-            <TabItem Header="Browser" Tag="&#xec6c;">
+        <WinUI:WinUITabControl x:Name="SettingsTabControl" Grid.Row="1" Style="{StaticResource WinUITabControl}">
+            <TabItem x:Name="BrowserTab" Header="Browser" Tag="&#xec6c;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Browser</TextBlock>
@@ -112,7 +112,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Appearance" Tag="&#xE790;">
+            <TabItem x:Name="AppearanceTab" Header="Appearance" Tag="&#xE790;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Appearance</TextBlock>
@@ -357,7 +357,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Privacy &amp; Security" Tag="&#xE72E;">
+            <TabItem x:Name="PrivacyTab" Header="Privacy &amp; Security" Tag="&#xE72E;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Privacy &amp; Security</TextBlock>
@@ -487,7 +487,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Search &amp; Services" Tag="&#xE773;">
+            <TabItem x:Name="ServicesTab" Header="Search &amp; Services" Tag="&#xE773;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, 
            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
@@ -551,7 +551,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Performance" Tag="&#xEC4A;">
+            <TabItem x:Name="PerformanceTab" Header="Performance" Tag="&#xEC4A;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Performance</TextBlock>
@@ -625,8 +625,8 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Style="{DynamicResource TabSeparator}" Margin="0,-5"/>
-            <TabItem Header="Languages" Tag="&#xE8C1;">
+            <TabItem x:Name="TabSeparator1" Style="{DynamicResource TabSeparator}" Margin="0,-5"/>
+            <TabItem x:Name="LanguagesTab" Header="Languages" Tag="&#xE8C1;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, 
            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
@@ -738,7 +738,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Downloads" Tag="&#xE896;">
+            <TabItem x:Name="DownloadsTab" Header="Downloads" Tag="&#xE896;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, 
            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
@@ -769,7 +769,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Extensions" Tag="&#xEA86;">
+            <TabItem x:Name="ExtensionsTab" Header="Extensions" Tag="&#xEA86;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Extensions</TextBlock>
@@ -881,7 +881,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="System" Tag="&#xE90F;">
+            <TabItem x:Name="SystemTab" Header="System" Tag="&#xE90F;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, 
            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
@@ -950,8 +950,8 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Style="{DynamicResource TabSeparator}" Margin="0,-5"/>
-            <TabItem Header="About" Tag="&#xe946;">
+            <TabItem x:Name="TabSeparator2" Style="{DynamicResource TabSeparator}" Margin="0,-5"/>
+            <TabItem x:Name="AboutTab" Header="About" Tag="&#xe946;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, 
            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">

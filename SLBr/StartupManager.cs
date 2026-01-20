@@ -9,15 +9,15 @@ namespace SLBr
 
         public static void EnableStartup()
         {
-            string KeyName = App.Instance.Username == "Default" ? "SLBr" : $"SLBr-{App.Instance.Username}";
-            string Arguments = "--background" + (App.Instance.Username != "Default" ? $" --user={App.Instance.Username}" : "");
+            string KeyName = $"SLBr-{App.Instance.CurrentProfile}";
+            string Arguments = $"--background --user={App.Instance.CurrentProfile}";
             using RegistryKey Key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
             Key.SetValue(KeyName, $"\"{Process.GetCurrentProcess().MainModule.FileName}\" {Arguments}");
         }
 
         public static void DisableStartup()
         {
-            string KeyName = App.Instance.Username == "Default" ? "SLBr" : $"SLBr-{App.Instance.Username}";
+            string KeyName = $"SLBr-{App.Instance.CurrentProfile}";
             using RegistryKey Key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
             Key.DeleteValue(KeyName, false);
         }

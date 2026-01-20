@@ -2,10 +2,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:WinUI="clr-namespace:WinUI" xmlns:controls="clr-namespace:SLBr.Controls"
                     x:Class="SLBr.WinUIStyleDictionary">
-    <FontFamily x:Key="IconFontFamily">
-        Segoe Fluent Icons, Segoe MDL2 Assets
-    </FontFamily>
+    <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
+    <controls:BooleanToVisibilityConverter x:Key="OppositeBooleanToVisibility" Invert="True"/>
     <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
     <controls:LessThanConverter x:Key="WidthLessThan60" Threshold="60"/>
     

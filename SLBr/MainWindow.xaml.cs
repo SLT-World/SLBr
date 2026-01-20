@@ -68,7 +68,7 @@ namespace SLBr
                     {
                         if (Datas[0] == "Url")
                             NewTab(Datas[1], true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
-                        else if (Datas[0] == "Start" && App.Instance.Username == Datas[1])
+                        else if (Datas[0] == "Start" && App.Instance.CurrentProfile.Name == Datas[1])
                         {
                             if (App.Instance.Background)
                                 App.Instance.ContinueBackgroundInitialization();
@@ -99,12 +99,8 @@ namespace SLBr
             if (App.Instance.WindowsSaves.Count < App.Instance.AllWindows.Count)
                 App.Instance.WindowsSaves.Add(new($"Window_{App.Instance.WindowsSaves.Count}.bin", App.Instance.UserApplicationWindowsPath));
             InitializeComponent();
-            if (App.Instance.ProfileOverlay != null)
-            {
-                TaskbarItemOverlay.SetContent(TaskbarItem, App.Instance.ProfileOverlay.Text);
-                TaskbarItemOverlay.SetBackground(TaskbarItem, App.Instance.ProfileOverlay.Background);
-                TaskbarItemOverlay.SetForeground(TaskbarItem, App.Instance.ProfileOverlay.Foreground);
-            }
+            if (!App.Instance.CurrentProfile.Default)
+                TaskbarItemOverlay.SetProfile(TaskbarItem, App.Instance.CurrentProfile);
             UpdateUnloadTimer();
             NewTabTab = new(null)
             {

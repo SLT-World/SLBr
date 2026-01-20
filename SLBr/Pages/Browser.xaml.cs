@@ -51,7 +51,7 @@ namespace SLBr.Pages
 
         Storyboard LoadingStoryboard;
 
-        public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false) 
+        public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false)
         {
             InitializeComponent();
             Tab = _Tab ?? Tab.ParentWindow.GetTab(this);

@@ -539,6 +539,8 @@ namespace SLBr
 
     public static partial class Utils
     {
+        public static Brush GetContrastBrush(Color BackgroundColor) =>
+            (0.299 * BackgroundColor.R + 0.587 * BackgroundColor.G + 0.114 * BackgroundColor.B) / 255 > 0.6 ? Brushes.Black : Brushes.White;
         public static void OpenFileExplorer(string Url) =>
             Process.Start(new ProcessStartInfo { Arguments = $"/select, \"{Url}\"", FileName = "explorer.exe" });
 

@@ -1,0 +1,93 @@
+﻿<!--Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+
+<html style="background-repeat: no-repeat;background-size: cover;background-position: center;">
+<head>
+    <meta charset="utf-8" />
+    <title>New Tab</title>
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+</head>
+<body>
+    <style>
+html {
+    background-repeat: no-repeat;
+    background-size: auto;
+}
+
+ul.nav {
+    padding-left: 0px;
+    background-color: transparent;
+    text-align: center;
+    margin-top: 15px;
+    width: auto;
+    list-style-position: inside;
+    font-size: 0;
+}
+
+ul.nav > li {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
+    text-align: center;
+    background-color: white;
+    border: 1px solid gainsboro;
+    border-radius: 10px;
+    margin: 0 10px;
+    font-size: 14px;
+}
+
+ul.nav > li:hover {
+    background-color: whitesmoke;
+}
+
+ul.nav > li > a {
+    color: white;
+    text-decoration: none;
+    vertical-align: middle;
+    text-align: center;
+    height: 100%;
+}
+h4 {
+    margin: 0 0 7.5px 0;
+}
+.card {
+    background-color: transparent;
+    margin: 15px 15px 0 15px;
+    max-width: 550px;
+    padding: 10px;
+}
+    </style>
+    <div class="Center NewTabSearchContainer">
+        <div>
+            <div class="Center" style="padding-bottom: 25px;">
+                <img class="Center SLBrIcon" style="user-select: none;" src="./SLBr.ico" width="100" height="100" />
+            </div>
+            <div class="SearchInput">
+                <span data-title="Search" class="font-icon"></span>
+                <input type="text" id="SearchField" autocomplete="off" />
+            </div>
+            <div class="Center">
+                <div class="card">
+                    <h4>Guest Mode is enabled</h4>
+                    <p>
+                        Settings changes are disabled, browsing data will not be saved, and tabs will not be restored after closing the browser.
+                        <br>
+                        Create or choose a profile to enable full functionality and data saving.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        document.getElementById('SearchField').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                search(document.getElementById("SearchField").value);
+            }
+        });
+        async function search(value) {
+            internal.search(value);
+        };
+    </script>
+</body>
+</html>

@@ -132,6 +132,9 @@
     <None Update="Resources\history.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\guest.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\private.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

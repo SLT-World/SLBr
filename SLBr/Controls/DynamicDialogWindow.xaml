@@ -53,10 +53,7 @@
                             </DataTemplate>
                         </ItemsControl.Resources>
                         <ItemsControl.ItemTemplateSelector>
-                            <local:InputFieldTemplateSelector 
-TextTemplate="{StaticResource TextTemplate}"
-LabelTemplate="{StaticResource LabelTemplate}"
-BoolTemplate="{StaticResource BoolTemplate}"/>
+                            <local:InputFieldTemplateSelector TextTemplate="{StaticResource TextTemplate}" LabelTemplate="{StaticResource LabelTemplate}" BoolTemplate="{StaticResource BoolTemplate}"/>
                         </ItemsControl.ItemTemplateSelector>
                         <!--<ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -68,7 +65,6 @@ BoolTemplate="{StaticResource BoolTemplate}"/>
                         </ItemsControl.ItemTemplate>-->
                     </ItemsControl>
                 </StackPanel>
-
                 <WrapPanel Grid.Row="3" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                     <Button BorderBrush="{StaticResource BorderBrush}" IsDefault="True" x:Name="PositiveButton" Click="PositiveButton_Click" MinWidth="60">OK</Button>
                     <Button BorderBrush="{StaticResource BorderBrush}" IsCancel="True" x:Name="NegativeButton" MinWidth="60" Margin="10,0,0,0">Cancel</Button>

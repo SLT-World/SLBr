@@ -94,8 +94,11 @@ namespace SLBr
             CefSettings ChromiumSettings = new CefSettings();
             ChromiumSettings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
 
-            ChromiumSettings.CachePath = Path.GetFullPath(Path.Combine(Settings.UserDataPath, "Cache"));
-            ChromiumSettings.RootCachePath = Settings.UserDataPath;
+            if (Settings.UserDataPath != null)
+            {
+                ChromiumSettings.CachePath = Path.GetFullPath(Path.Combine(Settings.UserDataPath, "Cache"));
+                ChromiumSettings.RootCachePath = Settings.UserDataPath;
+            }
             ChromiumSettings.PersistSessionCookies = false;
 
             ChromiumSettings.LogFile = Settings.LogFile;
@@ -213,6 +216,8 @@ namespace SLBr
             WebView2Environment = await CoreWebView2Environment.CreateAsync(null, Settings.UserDataPath, EnvironmentOptions);
 
             WebView2ControllerOptions = WebView2Environment.CreateCoreWebView2ControllerOptions();
+            if (Settings.UserDataPath == null)
+                WebView2ControllerOptions.IsInPrivateModeEnabled = true;
             WebView2ControllerOptions.DefaultBackgroundColor = Color.Black;
             //WebView2ControllerOptions.ProfileName = "Default";
 
@@ -328,8 +333,13 @@ namespace SLBr
                 if (SLBrURLs.Contains(Host))
                 {
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;
-                    if (Extra == "1" && Host == "newtab")
-                        FileName = string.IsNullOrWhiteSpace(Page) ? $"private.html" : Page;
+                    if (string.IsNullOrWhiteSpace(Page) && Host == "newtab")
+                    {
+                        if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
+                            FileName = "guest.html";
+                        if (Extra == "1")
+                            FileName = "private.html";
+                    }
                     string FilePath = Path.Combine(ResourcesPath, FileName);
                     if (!File.Exists(FilePath))
                         return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html");
@@ -434,7 +444,7 @@ namespace SLBr
         public string Language;
         public string[] Languages = Array.Empty<string>();
 
-        public string UserDataPath;
+        public string? UserDataPath = null;
         public string LogFile;
         public string DownloadFolderPath = string.Empty;
         public bool DownloadPrompt = true;

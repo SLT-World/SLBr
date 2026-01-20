@@ -43,6 +43,21 @@ namespace SLBr.Pages
         public Settings(Browser _BrowserView)
         {
             InitializeComponent();
+            if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
+            {
+                BrowserTab.Visibility = Visibility.Collapsed;
+                AppearanceTab.Visibility = Visibility.Collapsed;
+                PrivacyTab.Visibility = Visibility.Collapsed;
+                ServicesTab.Visibility = Visibility.Collapsed;
+                PerformanceTab.Visibility = Visibility.Collapsed;
+                TabSeparator1.Visibility = Visibility.Collapsed;
+                LanguagesTab.Visibility = Visibility.Collapsed;
+                DownloadsTab.Visibility = Visibility.Collapsed;
+                ExtensionsTab.Visibility = Visibility.Collapsed;
+                SystemTab.Visibility = Visibility.Collapsed;
+                TabSeparator2.Visibility = Visibility.Collapsed;
+                SettingsTabControl.SelectedItem = AboutTab;
+            }
             BrowserView = _BrowserView;
         }
 
@@ -524,7 +539,7 @@ namespace SLBr.Pages
             App.Instance.LoadExtensions();
             ExtensionsList.ItemsSource = App.Instance.Extensions;
 
-            UsernameText.Text = App.Instance.Username;
+            UsernameText.Text = App.Instance.CurrentProfile.Name;
 
             ApplyTheme(App.Instance.CurrentTheme);
             SettingsInitialized = true;
@@ -1052,10 +1067,10 @@ namespace SLBr.Pages
 
         private void ClearAllDataButton_Click(object sender, RoutedEventArgs e)
         {
-            var infoWindow = new InformationDialogWindow("Warning", "Clear Browsing Data", "This will permanently delete all browsing data. Do you want to continue?", "\uea99", "Yes", "No");
-            infoWindow.Topmost = true;
+            InformationDialogWindow InfoWindow = new("Warning", "Clear Browsing Data", "This will permanently delete all browsing data. Do you want to continue?", "\uea99", "Yes", "No");
+            InfoWindow.Topmost = true;
 
-            if (infoWindow.ShowDialog() == true)
+            if (InfoWindow.ShowDialog() == true)
                 App.Instance.ClearAllData();
         }
 

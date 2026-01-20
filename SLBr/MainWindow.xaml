@@ -16,8 +16,8 @@
             <local:TabItemStyleSelector x:Key="TabItemStyleSelector"/>
             <DataTemplate x:Key="OverlayIcon">
                 <Grid Width="16" Height="16">
-                    <Ellipse Fill="{Binding Background}"/>
-                    <TextBlock Text="{Binding Text}" TextAlignment="Center" Foreground="{Binding Foreground}" FontWeight="ExtraBold" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                    <Ellipse Fill="{Binding Brush}"/>
+                    <TextBlock Text="{Binding Initial}" TextAlignment="Center" Foreground="{Binding Foreground}" FontWeight="ExtraBold" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
                 </Grid>
             </DataTemplate>
         </ResourceDictionary>
