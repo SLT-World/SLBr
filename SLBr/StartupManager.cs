@@ -7,17 +7,17 @@ namespace SLBr
     {
         private const string RegistryRunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
-        public static void EnableStartup()
+        public static void EnableStartup(string ProfileName)
         {
-            string KeyName = $"SLBr-{App.Instance.CurrentProfile}";
-            string Arguments = $"--background --user={App.Instance.CurrentProfile}";
+            string KeyName = $"SLBr-{ProfileName}";
+            string Arguments = $"--background --user={ProfileName}";
             using RegistryKey Key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
             Key.SetValue(KeyName, $"\"{Process.GetCurrentProcess().MainModule.FileName}\" {Arguments}");
         }
 
-        public static void DisableStartup()
+        public static void DisableStartup(string ProfileName)
         {
-            string KeyName = $"SLBr-{App.Instance.CurrentProfile}";
+            string KeyName = $"SLBr-{ProfileName}";
             using RegistryKey Key = Registry.CurrentUser.OpenSubKey(RegistryRunPath, true);
             Key.DeleteValue(KeyName, false);
         }

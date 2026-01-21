@@ -15,7 +15,7 @@
 </div>
 
 ## SLBr
-SLBr is an open-source, lightweight web browser based on Chromium. Built with .NET, WPF, and [CefSharp (CEF) / WebView2] to provide a modern browsing experience while remaining lightweight.
+SLBr is an open-source, lightweight web browser based on Chromium. Built with .NET, WPF, CefSharp (CEF), and WebView2 to provide a modern browsing experience while remaining lightweight.
 
 ## Notable Features
 See the full feature list, [here](https://slt-world.github.io/slbr/)

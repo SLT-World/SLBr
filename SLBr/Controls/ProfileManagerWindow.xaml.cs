@@ -55,8 +55,19 @@ namespace SLBr.Controls
         {
             if (App.Instance.AppInitialized)
             {
-                if (App.Instance.CurrentProfile.Name != _Profile.Name)
-                    Process.Start(new ProcessStartInfo() { FileName = App.Instance.ExecutablePath, Arguments = $"--user={_Profile.Name}" });
+                if (App.Instance.CurrentProfile.Name == _Profile.Name && App.Instance.CurrentProfile.Type == _Profile.Type)
+                {
+                    MainWindow CurrentWindow = App.Instance.CurrentFocusedWindow();
+                    CurrentWindow.WindowState = WindowState.Normal;
+                    CurrentWindow.Activate();
+                }
+                else
+                {
+                    if (_Profile.Type == ProfileType.User)
+                        Process.Start(new ProcessStartInfo() { FileName = App.Instance.ExecutablePath, Arguments = $"--user={_Profile.Name}" });
+                    else if (_Profile.Name == "Guest")
+                        Process.Start(new ProcessStartInfo() { FileName = App.Instance.ExecutablePath, Arguments = $"--guest" });
+                }
             }
             else
             {
@@ -109,6 +120,7 @@ namespace SLBr.Controls
                 InfoWindow.Topmost = true;
                 if (InfoWindow.ShowDialog() == true)
                 {
+                    StartupManager.DisableStartup(_Profile.Name);
                     Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", _Profile.Name), true);
                     App.Instance.Profiles.Remove(_Profile);
                 }

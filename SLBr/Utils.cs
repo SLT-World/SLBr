@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WinRT;
@@ -938,10 +939,14 @@ namespace SLBr
         
         public static bool IsDomain(string Url)
         {
-            string Host = FastHost(Url);
+            string Host = new IdnMapping().GetAscii(FastHost(Url));
             int LastDot = Host.LastIndexOf('.');
             if (LastDot <= 0 || LastDot == Host.Length - 1)
                 return false;
+            string SLD = Host[..LastDot];
+            foreach (char _Char in SLD)
+                if (!char.IsLetterOrDigit(_Char) && _Char != '_' && _Char != '-' && _Char != '.')
+                    return false;
             string TLD = Host[(LastDot + 1)..];
             if (IsAlphabeticalTLD(TLD))
                 return true;
@@ -949,7 +954,7 @@ namespace SLBr
                 return true;
             return false;
         }
-        static bool IsAlphabeticalTLD(string TLD)
+        public static bool IsAlphabeticalTLD(string TLD)
         {
             foreach (char _Char in TLD)
                 if (!char.IsLetter(_Char))
@@ -957,7 +962,7 @@ namespace SLBr
             return TLD.Length >= 2;
         }
         //https://xn--j1ay.xn--p1ai/
-        static bool IsPunycodeTLD(string TLD)
+        public static bool IsPunycodeTLD(string TLD)
         {
             if (!TLD.StartsWith("xn--"))
                 return false;
@@ -976,7 +981,7 @@ namespace SLBr
         public static bool IsProtocol(string Url)
         {
             int Colon = Url.IndexOf(':');
-            if (Colon < 0)
+            if (Colon < 1)
                 return false;
             int Dot = Url.IndexOf('.');
             return Dot < 0 || Colon < Dot;
@@ -986,9 +991,52 @@ namespace SLBr
         {
             if (IsCode(Url))
                 return false;
-            if (!Uri.IsWellFormedUriString(Url, UriKind.RelativeOrAbsolute))
-                return false;
-            return IsProtocol(Url) || IsDomain(Url) || Url.EndsWith('/');
+            if (Uri.IsWellFormedUriString(Url, UriKind.RelativeOrAbsolute))// && !Uri.IsWellFormedUriString(Uri.EscapeDataString(Url), UriKind.RelativeOrAbsolute))
+                return true;
+
+            ReadOnlySpan<char> Scheme = string.Empty;
+
+            Url = CleanUrl(Url, true, true, true, false, false);
+
+            ReadOnlySpan<char> _Span = Url.AsSpan();
+            int Protocol = _Span.IndexOf(":///");
+            if (Protocol >= 0)
+            {
+                Scheme = _Span[..Protocol];
+                _Span = _Span[(Protocol + 4)..];
+            }
+            else
+            {
+                Protocol = _Span.IndexOf("://");
+                if (Protocol >= 0)
+                {
+                    Scheme = _Span[..Protocol];
+                    _Span = _Span[(Protocol + 3)..];
+                }
+                else
+                {
+                    Protocol = _Span.IndexOf(":");
+                    if (Protocol >= 0)
+                    {
+                        Scheme = _Span[..Protocol];
+                        _Span = _Span[(Protocol + 1)..];
+                    }
+                }
+            }
+
+            int HostEnd = _Span.IndexOfAny('/', '?', '#');
+            ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
+
+            if (Protocol == -1 || Scheme is "http" or "https")
+                return IsDomain(Host.ToString());
+            else
+                return true;
+
+            //TODO: Validate path?
+            /*if (HostEnd >= 0)
+            {
+                ReadOnlySpan<char> _Path = _Span[HostEnd..];
+            }*/
         }
         public static bool IsCode(string Url) =>
             Url.StartsWith("javascript:") || Url.StartsWith("view-source:") || Url.StartsWith("localhost:") || Url.StartsWith("data:") || Url.StartsWith("blob:");

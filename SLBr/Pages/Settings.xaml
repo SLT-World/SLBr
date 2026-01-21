@@ -35,8 +35,8 @@
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Browser</TextBlock>
                         <GroupBox Margin="0,0,0,10">
                             <DockPanel Height="35">
-                                <Border Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
-                                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE77B;"/>
+                                <Border x:Name="UsernameBackground" Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
+                                    <TextBlock x:Name="UsernameInitial" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" FontSize="18" Text="D" FontWeight="SemiBold"/>
                                 </Border>
                                 <Button DockPanel.Dock="Right" Click="SwitchUserButton_Click">
                                     <DockPanel VerticalAlignment="Center">

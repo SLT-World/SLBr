@@ -539,6 +539,9 @@ namespace SLBr.Pages
             App.Instance.LoadExtensions();
             ExtensionsList.ItemsSource = App.Instance.Extensions;
 
+            UsernameInitial.Text = App.Instance.CurrentProfile.Initial;
+            UsernameInitial.Foreground = App.Instance.CurrentProfile.Foreground;
+            UsernameBackground.Background = App.Instance.CurrentProfile.Brush;
             UsernameText.Text = App.Instance.CurrentProfile.Name;
 
             ApplyTheme(App.Instance.CurrentTheme);
@@ -968,8 +971,8 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 bool Value = StartupBoostCheckBox.IsChecked.ToBool();
-                if (Value) StartupManager.EnableStartup();
-                else StartupManager.DisableStartup();
+                if (Value) StartupManager.EnableStartup(App.Instance.CurrentProfile.Name);
+                else StartupManager.DisableStartup(App.Instance.CurrentProfile.Name);
                 App.Instance.GlobalSave.Set("StartupBoost", Value.ToString());
             }
         }

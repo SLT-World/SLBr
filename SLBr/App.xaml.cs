@@ -646,6 +646,19 @@ namespace SLBr
             ApplicationLocalDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr");
             if (!Directory.Exists(ApplicationLocalDataPath))
                 Directory.CreateDirectory(ApplicationLocalDataPath);
+
+            /*MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
+            MessageBox.Show(Utils.IsDomain("る.com").ToString());//T
+            MessageBox.Show(Utils.IsDomain("a b").ToString());//F
+
+            MessageBox.Show(Utils.IsUrl("る.com").ToString());//T
+            MessageBox.Show(Utils.IsUrl("http://www.🌾.com/").ToString());//T
+            MessageBox.Show(Utils.IsUrl("file:///Z:/A B").ToString());//T
+            MessageBox.Show(Utils.IsUrl("http://www.a&b.com").ToString());//F
+            MessageBox.Show(Utils.IsUrl("http://www.a b.com").ToString());//F
+            MessageBox.Show(Utils.IsUrl("http://www.a\b.com").ToString());//F
+            MessageBox.Show(Utils.IsUrl("invalid://a b").ToString());//T*/
+
             Instance = this;
             try
             {
@@ -690,40 +703,38 @@ namespace SLBr
                 AppSave.Set("Default", DefaultProfile.Name);
                 AppSave.Save();
             }
+
             IEnumerable<string> Args = Environment.GetCommandLineArgs().Skip(1);
-            bool OpenProfileManager = true;
+            Profile? SelectedProfile = null;
             foreach (string Flag in Args)
             {
                 if (Flag.StartsWith("--user="))
                 {
-                    OpenProfileManager = false;
+                    string Username = Flag.Replace("--user=", string.Empty).Replace(" ", "-");
+                    SelectedProfile = Profiles.FirstOrDefault(i => i.Name == Username);
+                    if (SelectedProfile == null)
+                    {
+                        SelectedProfile = new Profile { Name = Username };
+                        Profiles.Insert(0, CurrentProfile);
+                    }
                     break;
                 }
                 else if (Flag == "--guest")
                 {
-                    OpenProfileManager = false;
+                    SelectedProfile = Profiles.First(i => i.Type == ProfileType.System && i.Name == "Guest");
                     break;
                 }
             }
-            Profile? ProfileOverride = null;
-
-            if (!bool.Parse(AppSave.Get("StartupProfiles")))
-            {
-                if (DefaultProfile == null)
-                    OpenProfileManager = true;
-                else
-                {
-                    OpenProfileManager = false;
-                    ProfileOverride = DefaultProfile;
-                }
-            }
-            if (OpenProfileManager)
+            if (SelectedProfile == null && DefaultProfile != null && !bool.Parse(AppSave.Get("StartupProfiles")))
+                SelectedProfile = DefaultProfile;
+            //Warning: Keep separate.
+            if (SelectedProfile == null)
             {
                 ProfileManagerWindow ProfileManager = new();
                 ProfileManager.Show();
             }
             else
-                InitializeApp(Args, ProfileOverride);
+                InitializeApp(Args, SelectedProfile);
         }
 
         static Mutex _Mutex;
@@ -1032,7 +1043,7 @@ namespace SLBr
 
         public List<IntPtr> WebView2DevTools = [];
 
-        public void InitializeApp(IEnumerable<string> Args, Profile? UsernameOverride = null)
+        public void InitializeApp(IEnumerable<string> Args, Profile? SelectedProfile = null)
         {
             JumpList _JumpList = new()
             {
@@ -1056,19 +1067,7 @@ namespace SLBr
             string CommandLineUrl = string.Empty;
             foreach (string Flag in Args)
             {
-                if (Flag.StartsWith("--user="))
-                {
-                    string Username = Flag.Replace("--user=", string.Empty).Replace(" ", "-");
-                    CurrentProfile = Profiles.FirstOrDefault(i => i.Name == Username);
-                    if (CurrentProfile == null)
-                    {
-                        CurrentProfile = new Profile { Name = Username };
-                        Profiles.Insert(0, CurrentProfile);
-                    }
-                }
-                else if (Flag == "--guest")
-                    CurrentProfile = Profiles.First(i => i.Type == ProfileType.System && i.Name == "Guest");
-                else if (Flag == "--background")
+                if (Flag == "--background")
                     Background = true;
                 else if (Flag == "--window")
                 {
@@ -1088,8 +1087,7 @@ namespace SLBr
                     CommandLineUrl = Flag;
                 }
             }
-            if (UsernameOverride != null)
-                CurrentProfile = UsernameOverride;
+            CurrentProfile = SelectedProfile;
             if (CurrentProfile == null)
             {
                 CurrentProfile = Profiles.FirstOrDefault(i => i.Default);
@@ -1785,7 +1783,7 @@ Inner Exception: ```{7} ```";
 
             if (!GlobalSave.Has("StartupBoost"))
             {
-                StartupManager.EnableStartup();
+                StartupManager.EnableStartup(CurrentProfile.Name);
                 GlobalSave.Set("StartupBoost", true.ToString());
             }
 
