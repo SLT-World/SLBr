@@ -647,7 +647,8 @@ namespace SLBr
             if (!Directory.Exists(ApplicationLocalDataPath))
                 Directory.CreateDirectory(ApplicationLocalDataPath);
 
-            /*MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
+            /*MessageBox.Show(Utils.IsDomain("ñ.com").ToString());//T
+            MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
             MessageBox.Show(Utils.IsDomain("る.com").ToString());//T
             MessageBox.Show(Utils.IsDomain("a b").ToString());//F
 
@@ -692,9 +693,12 @@ namespace SLBr
             }
             if (DefaultProfile == null)
             {
-                DefaultProfile = Profiles[0];
-                if (DefaultProfile.Type != ProfileType.User)
-                    DefaultProfile = null;
+                DefaultProfile = Profiles.FirstOrDefault(i => i.Type == ProfileType.User);
+                if (DefaultProfile == null)
+                {
+                    AppSave.Remove("Default");
+                    AppSave.Save();
+                }
             }
             //WARNING: Keep the ifs separate.
             if (DefaultProfile != null)

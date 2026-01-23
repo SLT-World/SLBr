@@ -54,7 +54,7 @@
                                 </Border>
                                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Grid.Row="1" Padding="10" Height="60">
                                     <DockPanel>
-                                        <Button Visibility="{Binding Default, Converter={StaticResource OppositeBooleanToVisibility}}" Click="DeleteButton_Click" DockPanel.Dock="Right" ToolTip="Delete" Content="&#xe74d;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
+                                        <Button Click="DeleteButton_Click" DockPanel.Dock="Right" ToolTip="Delete" Content="&#xe74d;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
                                         <Button Visibility="{Binding Default, Converter={StaticResource OppositeBooleanToVisibility}}" Click="SetDefaultButton_Click" DockPanel.Dock="Right" ToolTip="Set as Default" Content="&#xe734;" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                                         <TextBlock VerticalAlignment="Center" ToolTip="{Binding Name}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" DockPanel.Dock="Left"/>
                                     </DockPanel>

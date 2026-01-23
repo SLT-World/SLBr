@@ -123,6 +123,18 @@ namespace SLBr.Controls
                     StartupManager.DisableStartup(_Profile.Name);
                     Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", _Profile.Name), true);
                     App.Instance.Profiles.Remove(_Profile);
+                    if (_Profile.Default)
+                    {
+                        Profile? DefaultProfile = App.Instance.Profiles.FirstOrDefault(i => i.Type == ProfileType.User);
+                        if (DefaultProfile != null)
+                        {
+                            DefaultProfile.Default = true;
+                            App.Instance.AppSave.Set("Default", DefaultProfile.Name);
+                        }
+                        else
+                            App.Instance.AppSave.Remove("Default");
+                        App.Instance.AppSave.Save();
+                    }
                 }
             }
         }

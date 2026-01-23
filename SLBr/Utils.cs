@@ -14,7 +14,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WinRT;
@@ -945,6 +944,7 @@ namespace SLBr
                 return false;
             string SLD = Host[..LastDot];
             foreach (char _Char in SLD)
+                //INFO: Underscores are allowed in Chromium "a_b.com"
                 if (!char.IsLetterOrDigit(_Char) && _Char != '_' && _Char != '-' && _Char != '.')
                     return false;
             string TLD = Host[(LastDot + 1)..];
