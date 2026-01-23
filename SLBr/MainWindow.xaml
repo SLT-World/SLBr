@@ -13,7 +13,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="WinUIStyleDictionary.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <local:TabItemStyleSelector x:Key="TabItemStyleSelector"/>
             <DataTemplate x:Key="OverlayIcon">
                 <Grid Width="16" Height="16">
                     <Ellipse Fill="{Binding Brush}"/>
@@ -35,9 +34,6 @@
                     <UserControl Content="{Binding Content}" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </DataTemplate>
             </TabControl.ContentTemplate>
-            <TabControl.ItemContainerStyleSelector>
-                <StaticResource ResourceKey="TabItemStyleSelector"/>
-            </TabControl.ItemContainerStyleSelector>
         </WinUI:WinUITabControl>
         <Grid x:Name="FullscreenContainer" Visibility="Visible">
             <Popup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">

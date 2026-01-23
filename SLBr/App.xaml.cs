@@ -63,6 +63,107 @@ namespace SLBr
         }
     }
 
+    public class BrowserTabItem : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        public BrowserTabItem(MainWindow _ParentWindow)
+        {
+            if (_ParentWindow != null)
+            {
+                ID = Utils.GenerateRandomId();
+                ParentWindow = _ParentWindow;
+            }
+        }
+        public BrowserTabType Type { get; set; } = BrowserTabType.Navigation;
+        public ImageSource Preview { get; set; }
+        public bool IsUnloaded
+        {
+            get { return _IsUnloaded; }
+            set
+            {
+                _IsUnloaded = value;
+                RaisePropertyChanged();
+            }
+        }
+        private bool _IsUnloaded;
+        public string Header
+        {
+            get { return _Header; }
+            set
+            {
+                _Header = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Header;
+        public BitmapImage Icon
+        {
+            get { return _Icon; }
+            set
+            {
+                _Icon = value;
+                RaisePropertyChanged();
+            }
+        }
+        private BitmapImage _Icon;
+        public Browser Content { get; set; }
+        public MainWindow ParentWindow { get; set; }
+        public int ID
+        {
+            get { return _ID; }
+            set
+            {
+                FavouriteCommandHeader = "Add to favourites";
+                _ID = value;
+                RaisePropertyChanged();
+            }
+        }
+        private int _ID;
+
+        public double Progress
+        {
+            get { return _Progress; }
+            set
+            {
+                _Progress = value;
+                RaisePropertyChanged();
+            }
+        }
+        private double _Progress = 0;
+
+        public Visibility ProgressBarVisibility
+        {
+            get { return _ProgressBarVisibility; }
+            set
+            {
+                _ProgressBarVisibility = value;
+                RaisePropertyChanged();
+            }
+        }
+        private Visibility _ProgressBarVisibility;
+        public string FavouriteCommandHeader
+        {
+            get { return _FavouriteCommandHeader; }
+            set
+            {
+                _FavouriteCommandHeader = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _FavouriteCommandHeader;
+    }
+    public enum BrowserTabType
+    {
+        Navigation,
+        Add
+    }
+
     public class Profile : INotifyPropertyChanged
     {
         #region INotifyPropertyChanged

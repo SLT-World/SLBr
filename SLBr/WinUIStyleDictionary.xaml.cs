@@ -8,16 +8,9 @@ namespace SLBr
     {
         private void TabIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
         {
-            int TabId = int.Parse(((Image)sender).Tag.ToString()!);
-            foreach (MainWindow _Window in App.Instance.AllWindows)
-            {
-                BrowserTabItem CurrentTab = _Window.GetBrowserTabWithId(TabId);
-                if (CurrentTab != null)
-                {
-                    CurrentTab.Icon = App.Instance.TabIcon;
-                    break;
-                }
-            }
+            BrowserTabItem CurrentTab = (BrowserTabItem)((TabItem)e.Source).DataContext;
+            if (CurrentTab != null)
+                CurrentTab.Icon = App.Instance.TabIcon;
         }
 
         public void ButtonAction(object sender, RoutedEventArgs e)
@@ -39,7 +32,7 @@ namespace SLBr
         private void TabItem_Drop(object sender, DragEventArgs e)
         {
             MainWindow FocusedWindow = App.Instance.CurrentFocusedWindow();
-            BrowserTabItem CurrentTab = FocusedWindow.GetBrowserTabWithId(int.Parse(((TabItem)e.Source).Tag.ToString()!));
+            BrowserTabItem CurrentTab = (BrowserTabItem)((TabItem)e.Source).DataContext;
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 int TargetIndex = FocusedWindow.Tabs.IndexOf(CurrentTab);
@@ -103,8 +96,8 @@ namespace SLBr
             if (e.Data.GetDataPresent(typeof(TabItem)))
             {
                 TabItem SourceTabItem = (TabItem)e.Data.GetData(typeof(TabItem))!;
-
-                int OldIndex = FocusedWindow.Tabs.IndexOf(FocusedWindow.GetBrowserTabWithId(int.Parse(SourceTabItem.Tag.ToString()!)));
+                BrowserTabItem Tab = (BrowserTabItem)SourceTabItem.DataContext;
+                int OldIndex = FocusedWindow.Tabs.IndexOf(Tab);
                 int NewIndex = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
 
                 if (OldIndex == NewIndex || OldIndex == NewIndex - 1)

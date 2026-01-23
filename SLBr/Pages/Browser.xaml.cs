@@ -360,7 +360,6 @@ namespace SLBr.Pages
                 return;
             Address = Url;
             Tab.IsUnloaded = true;
-            Tab.BrowserCommandsVisibility = Visibility.Collapsed;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
             switch (Engine)
             {
@@ -426,7 +425,6 @@ namespace SLBr.Pages
             {
                 CoreContainer.Visibility = Visibility.Visible;
                 Tab.IsUnloaded = false;
-                Tab.BrowserCommandsVisibility = Visibility.Visible;
                 if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                     Tab.ProgressBarVisibility = Visibility.Visible;
                 if (bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit")))
@@ -2070,7 +2068,6 @@ namespace SLBr.Pages
                 SetIcon(App.Instance.UnloadedIcon, true);
             DisposeBrowserCore();
             Tab.IsUnloaded = true;
-            Tab.BrowserCommandsVisibility = Visibility.Collapsed;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
             Tab.Preview = null;
         }

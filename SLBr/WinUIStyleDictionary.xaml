@@ -2347,23 +2347,24 @@ Margin="{TemplateBinding Padding}"/>
         <!--"&#xE737;"-->
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
         <!--<MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="5&lt;,&gt;{CurrentUrl}&lt;,&gt;CurrentIndex"/>-->
-        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="{Binding DuplicateCommand}"/>
+        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="5"/>
         <Separator/>
-        <MenuItem Icon="&#xe72c;" Visibility="{Binding BrowserCommandsVisibility}" Click="ButtonAction" Header="Refresh" Tag="{Binding RefreshCommand}"/>
-        <MenuItem Icon="&#xec0a;" Visibility="{Binding BrowserCommandsVisibility}" Click="ButtonAction" Header="Unload" Tag="{Binding UnloadCommand}"/>
+        <MenuItem Icon="&#xe72c;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Refresh" Tag="3"/>
+        <MenuItem Icon="&#xec0a;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Unload" Tag="8"/>
         <!--<MenuItem Icon="&#xf78a;" Header="Duplicate"/>-->
         <!--<MenuItem Icon="&#xe718;" Header="Pin"/>-->
         <!--<MenuItem Icon="&#xe72d;" Header="Share"/>-->
-        <!--<MenuItem Icon="&#xec0a;" Visibility="{Binding BrowserCommandsVisibility}" Click="ButtonAction" Header="Force unload" Tag="{Binding ForceUnloadCommand}"/>-->
-        <Separator Visibility="{Binding BrowserCommandsVisibility}"/>
-        <!--<MenuItem Icon="&#xE767;" Visibility="{Binding BrowserCommandsVisibility}" Click="ButtonAction" Header="{Binding MuteCommandHeader}" Tag="{Binding MuteCommand}"/>-->
-        <MenuItem Icon="&#xEB51;" Visibility="{Binding BrowserCommandsVisibility}" Click="ButtonAction" Header="{Binding FavouriteCommandHeader}" Tag="{Binding AddToFavouritesCommand}"/>
-        <Separator Visibility="{Binding BrowserCommandsVisibility}"/>
-        <MenuItem Click="ButtonAction" Header="Close Tab" Tag="{Binding CloseCommand}"/>
+        <Separator Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}"/>
+        <!--<MenuItem Icon="&#xE767;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="{Binding MuteCommandHeader}" Tag="{Binding MuteCommand}"/>-->
+        <MenuItem Icon="&#xEB51;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="{Binding FavouriteCommandHeader}" Tag="12"/>
+        <Separator Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}"/>
+        <MenuItem Click="ButtonAction" Header="Close Tab" Tag="6"/>
     </ContextMenu>
 
+    <controls:BrowserTabItemStyleSelector x:Key="BrowserTabItemStyleSelector" NavigationStyle="{StaticResource DefaultTab}" AddStyle="{StaticResource IconTabButton}"/>
+    <controls:BrowserTabItemStyleSelector x:Key="VerticalBrowserTabItemStyleSelector" NavigationStyle="{StaticResource VerticalTab}" AddStyle="{StaticResource VerticalIconTabButton}"/>
 
-    <Style TargetType="{x:Type TabItem}">
+    <Style TargetType="{x:Type TabItem}" x:Key="DefaultTab">
         <Setter Property="ContextMenu" Value="{StaticResource TabItemContextMenu}"/>
         <Setter Property="Height" Value="35"/>
         <Setter Property="Width" Value="250"/>
@@ -2414,7 +2415,7 @@ Margin="{TemplateBinding Padding}"/>
                                 </Grid.ColumnDefinitions>
                                 <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" DockPanel.Dock="Left">
                                     <Grid x:Name="IconContainer" VerticalAlignment="Center" HorizontalAlignment="Left" Height="20" Width="20" Margin="1.5,0,0,0">
-                                        <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" Tag="{Binding ID}" x:Name="Icon"/>
+                                        <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" x:Name="Icon"/>
                                         <Grid.OpacityMask>
                                             <VisualBrush>
                                                 <VisualBrush.Visual>
@@ -2451,7 +2452,7 @@ Margin="{TemplateBinding Padding}"/>
                                         </ContentPresenter.Resources>
                                     </ContentPresenter>
                                 </DockPanel>
-                                <Button Click="ButtonAction" BorderBrush="{TemplateBinding BorderBrush}" Tag="{Binding CloseCommand}" ToolTip="Close Tab" Visibility="Visible" Grid.Column="1" x:Name="CloseButton" DockPanel.Dock="Right" Margin="0,0,1.5,0" FontSize="10" BorderThickness="1" Padding="1.5,1.5,0,0" Background="Transparent" Foreground="{DynamicResource GrayBrush}" Style="{DynamicResource TabIconButton}" Width="20" Height="20" VerticalAlignment="Center" Content="&#xE8BB;"/>
+                                <Button Click="ButtonAction" BorderBrush="{TemplateBinding BorderBrush}" Tag="6" ToolTip="Close Tab" Visibility="Visible" Grid.Column="1" x:Name="CloseButton" DockPanel.Dock="Right" Margin="0,0,1.5,0" FontSize="10" BorderThickness="1" Padding="1.5,1.5,0,0" Background="Transparent" Foreground="{DynamicResource GrayBrush}" Style="{DynamicResource TabIconButton}" Width="20" Height="20" VerticalAlignment="Center" Content="&#xE8BB;"/>
                             </Grid>
                         </Border>
                         <ProgressBar x:Name="UnloadProgress" Visibility="{Binding ProgressBarVisibility}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="5,0,10,3.5" Value="{Binding Progress}" Height="2" Foreground="#3AE872" Background="{DynamicResource BorderBrush}" BorderBrush="{DynamicResource BorderBrush}">
@@ -2531,6 +2532,8 @@ Margin="{TemplateBinding Padding}"/>
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource DefaultTab}"></Style>
     <Style TargetType="{x:Type TabItem}" x:Key="IconTabButton">
         <Setter Property="ContextMenu" Value="{x:Null}"/>
         <Setter Property="Height" Value="35"/>
@@ -2618,7 +2621,7 @@ Margin="{TemplateBinding Padding}"/>
                                 </Grid.ColumnDefinitions>
                                 <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" DockPanel.Dock="Left">
                                     <Grid x:Name="IconContainer" VerticalAlignment="Center" HorizontalAlignment="Left" Height="20" Width="20" Margin="1.5,0,0,0">
-                                        <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" Tag="{Binding ID}" x:Name="Icon"/>
+                                        <Image RenderOptions.BitmapScalingMode="Fant" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" x:Name="Icon"/>
                                         <Grid.OpacityMask>
                                             <VisualBrush>
                                                 <VisualBrush.Visual>
@@ -2635,7 +2638,7 @@ Margin="{TemplateBinding Padding}"/>
                                         </ContentPresenter.Resources>
                                     </ContentPresenter>
                                 </DockPanel>
-                                <Button Click="ButtonAction" BorderBrush="{TemplateBinding BorderBrush}" Tag="{Binding CloseCommand}" ToolTip="Close Tab" Visibility="Visible" Grid.Column="1" x:Name="CloseButton" DockPanel.Dock="Right" Margin="0,0,1.5,0" FontSize="10" BorderThickness="1" Padding="1.5,1.5,0,0" Background="Transparent" Foreground="{DynamicResource GrayBrush}" Style="{DynamicResource TabIconButton}" Width="20" Height="20" VerticalAlignment="Center" Content="&#xE8BB;"/>
+                                <Button Click="ButtonAction" BorderBrush="{TemplateBinding BorderBrush}" Tag="6" ToolTip="Close Tab" Visibility="Visible" Grid.Column="1" x:Name="CloseButton" DockPanel.Dock="Right" Margin="0,0,1.5,0" FontSize="10" BorderThickness="1" Padding="1.5,1.5,0,0" Background="Transparent" Foreground="{DynamicResource GrayBrush}" Style="{DynamicResource TabIconButton}" Width="20" Height="20" VerticalAlignment="Center" Content="&#xE8BB;"/>
                             </Grid>
                         </Border>
                         <ProgressBar x:Name="UnloadProgress" Visibility="{Binding ProgressBarVisibility}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="5,5,5,3.5" Value="{Binding Progress}" Height="2" Foreground="#3AE872" Background="{DynamicResource BorderBrush}" BorderBrush="{DynamicResource BorderBrush}">
@@ -3024,6 +3027,7 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
     <Style TargetType="{x:Type WinUI:WinUITabControl}">
+        <Setter Property="ItemContainerStyleSelector" Value="{StaticResource BrowserTabItemStyleSelector}"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Padding" Value="0"/>
@@ -3048,6 +3052,7 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
     <Style TargetType="{x:Type WinUI:WinUITabControl}" x:Key="VerticalTabControl">
+        <Setter Property="ItemContainerStyleSelector" Value="{StaticResource VerticalBrowserTabItemStyleSelector}"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Padding" Value="0"/>

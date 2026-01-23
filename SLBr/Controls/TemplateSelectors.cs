@@ -49,4 +49,24 @@ namespace SLBr.Controls
             return base.SelectTemplate(Item, Container);
         }
     }
+
+    public class BrowserTabItemStyleSelector : StyleSelector
+    {
+        public Style NavigationStyle { get; set; }
+        public Style AddStyle { get; set; }
+        public override Style SelectStyle(object Item, DependencyObject Container)
+        {
+            if (Item is BrowserTabItem _TabItem)
+            {
+                switch (_TabItem.Type)
+                {
+                    case BrowserTabType.Navigation:
+                        return NavigationStyle;
+                    case BrowserTabType.Add:
+                        return AddStyle;
+                }
+            }
+            return base.SelectStyle(Item, Container);
+        }
+    }
 }

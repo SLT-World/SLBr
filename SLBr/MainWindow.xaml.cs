@@ -9,8 +9,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WinUI;
 
@@ -104,7 +102,7 @@ namespace SLBr
             UpdateUnloadTimer();
             NewTabTab = new(null)
             {
-                TabStyle = (Style)FindResource("IconTabButton")
+                Type = BrowserTabType.Add
             };
             Tabs.Add(NewTabTab);
             DimUnloadedIcon = bool.Parse(App.Instance.GlobalSave.Get("DimUnloadedIcon"));
@@ -512,8 +510,6 @@ namespace SLBr
             {
                 VerticalTabs = false;
                 TabsUI.Style = FindResource(typeof(WinUITabControl)) as Style;
-                TabsUI.Resources[typeof(TabItem)] = FindResource(typeof(TabItem)) as Style;
-                NewTabTab.TabStyle = (Style)FindResource("IconTabButton");
                 Tabs.Remove(NewTabTab);
                 Tabs.Add(NewTabTab);
                 TabsUI.Padding = new Thickness(0);
@@ -532,8 +528,6 @@ namespace SLBr
                 VerticalTabs = true;
                 TabsUI.Style = Resources["VerticalTabControl"] as Style;
                 TabsUI.ApplyTemplate();
-                TabsUI.Resources[typeof(TabItem)] = (Style)FindResource("VerticalTab");
-                NewTabTab.TabStyle = (Style)FindResource("VerticalIconTabButton");
                 Tabs.Remove(NewTabTab);
                 //Tabs.Insert(0, NewTabTab);
                 TabsUI.LayoutUpdated += TabsUI_LayoutUpdated;
@@ -592,24 +586,16 @@ namespace SLBr
         public ScrollViewer TabPanelScroll = null;
         Thumb TabResizeThumb = null;
 
-        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
-        {
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                if (child is T t)
-                    return t;
-
-                var result = FindVisualChild<T>(child);
-                if (result != null)
-                    return result;
-            }
-            return null;
-        }
-
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
-            var Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>", StringSplitOptions.None);
+            FrameworkElement Element = (FrameworkElement)sender;
+            string[] Values = Element.Tag.ToString().Split("<,>", StringSplitOptions.None);
+            if (Values.Length == 1 && Element.DataContext is BrowserTabItem Tab)
+            {
+                Array.Resize(ref Values, Values.Length + 2);
+                Values[1] = Tab.ID.ToString();
+                Values[2] = Values[0] == "5" ? "Tab" : Tab.ParentWindow.ID.ToString();
+            }
             Action((Actions)int.Parse(Values[0]), (Values.Length > 1) ? Values[1] : string.Empty, (Values.Length > 2) ? Values[2] : string.Empty, (Values.Length > 3) ? Values[3] : string.Empty);
         }
 
@@ -821,7 +807,7 @@ namespace SLBr
                 WindowState = WindowState.Normal;
                 Activate();
             }
-            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true), BrowserCommandsVisibility = Visibility.Collapsed };
+            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true) };
             _Tab.Content = new Browser(Url, _Tab, IsPrivate);
             if (VerticalTabs)
                 Tabs.Insert(Index != -1 ? Index : Tabs.Count, _Tab);
@@ -1012,201 +998,6 @@ namespace SLBr
         {
             base.OnClosing(e);
             ExecuteCloseEvent();
-        }
-    }
-
-    public class BrowserTabItem : INotifyPropertyChanged
-    {
-        #region INotifyPropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged = delegate { };
-
-        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
-            PropertyChanged(this, new PropertyChangedEventArgs(Name));
-        #endregion
-
-        public BrowserTabItem(MainWindow _ParentWindow)
-        {
-            if (_ParentWindow != null)
-            {
-                ID = Utils.GenerateRandomId();
-                ParentWindow = _ParentWindow;
-                ParentWindowID = _ParentWindow.ID;
-            }
-        }
-        public ImageSource Preview { get; set; }
-        public Style TabStyle
-        {
-            get { return _TabStyle; }
-            set
-            {
-                _TabStyle = value;
-                RaisePropertyChanged();
-            }
-        }
-        private Style _TabStyle;
-
-        public bool IsUnloaded
-        {
-            get { return _IsUnloaded; }
-            set
-            {
-                _IsUnloaded = value;
-                RaisePropertyChanged();
-            }
-        }
-        private bool _IsUnloaded;
-        public string Header
-        {
-            get { return _Header; }
-            set
-            {
-                _Header = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _Header;
-        public BitmapImage Icon
-        {
-            get { return _Icon; }
-            set
-            {
-                _Icon = value;
-                RaisePropertyChanged();
-            }
-        }
-        private BitmapImage _Icon;
-        public Browser Content { get; set; }
-        public MainWindow ParentWindow { get; set; }
-        public int ID
-        {
-            get { return _ID; }
-            set
-            {
-                FavouriteCommandHeader = "Add to favourites";
-                _ID = value;
-                RaisePropertyChanged();
-            }
-        }
-        private int _ID;
-        public int ParentWindowID
-        {
-            get { return _ParentWindowID; }
-            set
-            {
-                DuplicateCommand = $"5<,>{ID}<,>Tab";
-                RefreshCommand = $"3<,>{ID}";
-                AddToFavouritesCommand = $"12<,>{ID}";
-                CloseCommand = $"6<,>{ID}<,>{value}";
-                UnloadCommand = $"8<,>{ID}";
-                _ParentWindowID = value;
-                RaisePropertyChanged();
-            }
-        }
-        private int _ParentWindowID;
-
-        public double Progress
-        {
-            get { return _Progress; }
-            set
-            {
-                _Progress = value;
-                RaisePropertyChanged();
-            }
-        }
-        private double _Progress = 0;
-
-        public Visibility ProgressBarVisibility
-        {
-            get { return _ProgressBarVisibility; }
-            set
-            {
-                _ProgressBarVisibility = value;
-                RaisePropertyChanged();
-            }
-        }
-        private Visibility _ProgressBarVisibility;
-        public Visibility BrowserCommandsVisibility
-        {
-            get { return _BrowserCommandsVisibility; }
-            set
-            {
-                _BrowserCommandsVisibility = value;
-                RaisePropertyChanged();
-            }
-        }
-        private Visibility _BrowserCommandsVisibility;
-        public string DuplicateCommand
-        {
-            get { return _DuplicateCommand; }
-            set
-            {
-                _DuplicateCommand = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _DuplicateCommand;
-        public string RefreshCommand
-        {
-            get { return _RefreshCommand; }
-            set
-            {
-                _RefreshCommand = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _RefreshCommand;
-        public string UnloadCommand
-        {
-            get { return _UnloadCommand; }
-            set
-            {
-                _UnloadCommand = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _UnloadCommand;
-        public string AddToFavouritesCommand
-        {
-            get { return _AddToFavouritesCommand; }
-            set
-            {
-                _AddToFavouritesCommand = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _AddToFavouritesCommand;
-        public string CloseCommand
-        {
-            get { return _CloseCommand; }
-            set
-            {
-                _CloseCommand = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _CloseCommand;
-        public string FavouriteCommandHeader
-        {
-            get { return _FavouriteCommandHeader; }
-            set
-            {
-                _FavouriteCommandHeader = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _FavouriteCommandHeader;
-    }
-
-    public class TabItemStyleSelector : StyleSelector
-    {
-        public override Style SelectStyle(object item, DependencyObject container)
-        {
-            if (item is BrowserTabItem _TabItem)
-            {
-                if (Application.Current.MainWindow != null)
-                    return _TabItem.TabStyle;
-            }
-            return base.SelectStyle(item, container);
         }
     }
 }
