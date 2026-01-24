@@ -175,7 +175,7 @@ namespace SLBr
             int MaxIndex = Panel.Children.Count;
             for (int i = 0; i < Panel.Children.Count; i++)
             {
-                if (CurrentWindow.Tabs[i]?.ParentWindow == null)
+                if (CurrentWindow.Tabs[i]?.ParentWindow == null && i > 0)
                 {
                     MaxIndex = i;
                     break;

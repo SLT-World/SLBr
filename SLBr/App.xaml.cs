@@ -63,6 +63,48 @@ namespace SLBr
         }
     }
 
+    public class TabGroup : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        public TabGroup() { }
+        public bool IsCollapsed
+        {
+            get { return _IsCollapsed; }
+            set
+            {
+                _IsCollapsed = value;
+                RaisePropertyChanged();
+            }
+        }
+        private bool _IsCollapsed;
+        public string Header
+        {
+            get { return _Header; }
+            set
+            {
+                _Header = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Header;
+        public SolidColorBrush Background
+        {
+            get { return _Background; }
+            set
+            {
+                _Background = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush _Background;
+    }
+
     public class BrowserTabItem : INotifyPropertyChanged
     {
         #region INotifyPropertyChanged
@@ -112,6 +154,16 @@ namespace SLBr
             }
         }
         private BitmapImage _Icon;
+        public TabGroup TabGroup
+        {
+            get { return _TabGroup; }
+            set
+            {
+                _TabGroup = value;
+                RaisePropertyChanged();
+            }
+        }
+        private TabGroup _TabGroup = null;
         public Browser Content { get; set; }
         public MainWindow ParentWindow { get; set; }
         public int ID
@@ -161,7 +213,8 @@ namespace SLBr
     public enum BrowserTabType
     {
         Navigation,
-        Add
+        Add,
+        Group
     }
 
     public class Profile : INotifyPropertyChanged

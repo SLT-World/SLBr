@@ -6,6 +6,7 @@
 
     <controls:BooleanToVisibilityConverter x:Key="OppositeBooleanToVisibility" Invert="True"/>
     <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
+    <controls:NullToVisibilityConverter x:Key="NullToVisibility"/>
     <controls:LessThanConverter x:Key="WidthLessThan60" Threshold="60"/>
     
     <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderBrushColor}"/>
@@ -2283,22 +2284,6 @@ Margin="{TemplateBinding Padding}"/>
         </Style.Triggers>
     </Style>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     <Style TargetType="{x:Type Button}" x:Key="ToolBarIconButton" BasedOn="{StaticResource IconButton}">
         <Setter Property="Template">
             <Setter.Value>
@@ -2342,27 +2327,60 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
 
-
     <ContextMenu x:Key="TabItemContextMenu">
-        <!--"&#xE737;"-->
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
-        <!--<MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="5&lt;,&gt;{CurrentUrl}&lt;,&gt;CurrentIndex"/>-->
-        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="Duplicate Tab" Tag="5"/>
+        <MenuItem Icon="&#xe8c8;" Click="ButtonAction" Header="Duplicate Tab" Tag="5"/>
         <Separator/>
         <MenuItem Icon="&#xe72c;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Refresh" Tag="3"/>
         <MenuItem Icon="&#xec0a;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Unload" Tag="8"/>
-        <!--<MenuItem Icon="&#xf78a;" Header="Duplicate"/>-->
-        <!--<MenuItem Icon="&#xe718;" Header="Pin"/>-->
-        <!--<MenuItem Icon="&#xe72d;" Header="Share"/>-->
         <Separator Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}"/>
-        <!--<MenuItem Icon="&#xE767;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="{Binding MuteCommandHeader}" Tag="{Binding MuteCommand}"/>-->
         <MenuItem Icon="&#xEB51;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="{Binding FavouriteCommandHeader}" Tag="12"/>
         <Separator Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}"/>
-        <MenuItem Click="ButtonAction" Header="Close Tab" Tag="6"/>
+        <MenuItem Icon="&#xe711;" Click="ButtonAction" Header="Close Tab" Tag="6"/>
     </ContextMenu>
 
-    <controls:BrowserTabItemStyleSelector x:Key="BrowserTabItemStyleSelector" NavigationStyle="{StaticResource DefaultTab}" AddStyle="{StaticResource IconTabButton}"/>
-    <controls:BrowserTabItemStyleSelector x:Key="VerticalBrowserTabItemStyleSelector" NavigationStyle="{StaticResource VerticalTab}" AddStyle="{StaticResource VerticalIconTabButton}"/>
+    <controls:BrowserTabItemStyleSelector x:Key="BrowserTabItemStyleSelector" NavigationStyle="{StaticResource DefaultTab}" AddStyle="{StaticResource IconTabButton}" GroupStyle="{StaticResource TabGroupButton}"/>
+    <controls:BrowserTabItemStyleSelector x:Key="VerticalBrowserTabItemStyleSelector" NavigationStyle="{StaticResource VerticalTab}" AddStyle="{StaticResource VerticalIconTabButton}" GroupStyle="{StaticResource VerticalTabGroupButton}"/>
+
+    <Style TargetType="{x:Type TabItem}" x:Key="TabGroupButton">
+        <Setter Property="ContextMenu" Value="{x:Null}"/>
+        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Height" Value="35"/>
+        <Setter Property="Width" Value="75"/>
+        <Setter Property="MinWidth" Value="40"/>
+        <Setter Property="MaxWidth" Value="65"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Background" Value="{Binding TabGroup.Background}"/>
+
+        <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
+        <Setter Property="AllowDrop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Margin="0,5,5,5">
+                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto" Margin="5,5" MaxWidth="{TemplateBinding Width}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter HorizontalAlignment="Stretch" Width="Auto" x:Name="ContentSite" TextBlock.TextAlignment="Center" VerticalAlignment="Center" ContentSource="Header">
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+                            </Grid>
+                        </Border>
+                        <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="0,0,5,0" Height="2" Background="{Binding TabGroup.Background}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <Style TargetType="{x:Type TabItem}" x:Key="DefaultTab">
         <Setter Property="ContextMenu" Value="{StaticResource TabItemContextMenu}"/>
@@ -2378,7 +2396,6 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
 
         <Setter Property="Header" Value="{Binding Header}"/>
-        <!--<Setter Property="ToolTip" Value="{Binding Header}"/>-->
         <Setter Property="Tag" Value="{Binding ID}"/>
         <Setter Property="AllowDrop" Value="True"/>
         <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
@@ -2476,6 +2493,7 @@ Margin="{TemplateBinding Padding}"/>
                                 </Style>
                             </ProgressBar.Style>
                         </ProgressBar>
+                        <Border Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="-5,0,5,0" Height="2" Background="{Binding TabGroup.Background}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsUnloaded}" Value="True">
@@ -2545,6 +2563,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="ToolTip" Value="New Tab"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
@@ -2601,7 +2620,6 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
 
         <Setter Property="Header" Value="{Binding Header}"/>
-        <!--<Setter Property="ToolTip" Value="{Binding Header}"/>-->
         <Setter Property="Tag" Value="{Binding ID}"/>
         <Setter Property="AllowDrop" Value="True"/>
         <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
@@ -2662,6 +2680,7 @@ Margin="{TemplateBinding Padding}"/>
                                 </Style>
                             </ProgressBar.Style>
                         </ProgressBar>
+                        <Border Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Stretch" HorizontalAlignment="Left" Height="Auto" Margin="-5,0,0,0" Width="2" Background="{Binding TabGroup.Background}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsUnloaded}" Value="True">
@@ -2718,11 +2737,51 @@ Margin="{TemplateBinding Padding}"/>
             </Setter.Value>
         </Setter>
     </Style>
+    <Style TargetType="{x:Type TabItem}" x:Key="VerticalTabGroupButton">
+        <Setter Property="ContextMenu" Value="{x:Null}"/>
+        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Width" Value="Auto"/>
+        <Setter Property="MinWidth" Value="25"/>
+        <Setter Property="MaxWidth" Value="240"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Background" Value="{Binding TabGroup.Background}"/>
+
+        <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
+        <Setter Property="AllowDrop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" Width="Auto" HorizontalAlignment="Left" CornerRadius="5" Margin="0,5,0,0">
+                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto" Margin="5,5" MaxWidth="{TemplateBinding Width}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Width="Auto" x:Name="ContentSite" TextBlock.TextAlignment="Center" VerticalAlignment="Center" ContentSource="Header">
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+                            </Grid>
+                        </Border>
+                        <Border Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Stretch" HorizontalAlignment="Left" Height="Auto" Margin="-5,5,0,0" Width="2" Background="{Binding TabGroup.Background}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style TargetType="{x:Type TabItem}" x:Key="VerticalIconTabButton" BasedOn="{StaticResource VerticalTab}">
         <Setter Property="ContextMenu" Value="{x:Null}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Height" Value="40"/>
         <Setter Property="Header" Value="New Tab"/>
+        <Setter Property="ToolTip" Value="New Tab"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">

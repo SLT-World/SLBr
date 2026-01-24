@@ -54,6 +54,7 @@ namespace SLBr.Controls
     {
         public Style NavigationStyle { get; set; }
         public Style AddStyle { get; set; }
+        public Style GroupStyle { get; set; }
         public override Style SelectStyle(object Item, DependencyObject Container)
         {
             if (Item is BrowserTabItem _TabItem)
@@ -64,6 +65,8 @@ namespace SLBr.Controls
                         return NavigationStyle;
                     case BrowserTabType.Add:
                         return AddStyle;
+                    case BrowserTabType.Group:
+                        return GroupStyle;
                 }
             }
             return base.SelectStyle(Item, Container);

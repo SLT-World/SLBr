@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 using WinUI;
 
@@ -32,6 +33,17 @@ namespace SLBr
             set
             {
                 _Tabs = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        private ObservableCollection<TabGroup> _TabGroup = [];
+        public ObservableCollection<TabGroup> TabGroups
+        {
+            get { return _TabGroup; }
+            set
+            {
+                _TabGroup = value;
                 RaisePropertyChanged();
             }
         }
@@ -800,14 +812,23 @@ namespace SLBr
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             _Tab.Content?.DevTools();//(false, XCoord, YCoord);
         }
+        public TabGroup NewTabGroup(string Header)
+        {
+            TabGroup NewTabGroup = new() { Background = new SolidColorBrush(Colors.RoyalBlue), Header = Header, IsCollapsed = false };
+            TabGroups.Add(NewTabGroup);
+            Tabs.Insert(0, new BrowserTabItem(null) { TabGroup = NewTabGroup, Type = BrowserTabType.Group });
+            return NewTabGroup;
+        }
         public IWebView NewTab(string Url, bool IsSelected = false, int Index = -1, bool IsPrivate = false)
         {
+            //if (TabGroups.Count == 0)
+            //    NewTabGroup("Test");
             if (!App.Instance.Background && WindowState == WindowState.Minimized)
             {
                 WindowState = WindowState.Normal;
                 Activate();
             }
-            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true) };
+            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true) };//, TabGroup = TabGroups[0]
             _Tab.Content = new Browser(Url, _Tab, IsPrivate);
             if (VerticalTabs)
                 Tabs.Insert(Index != -1 ? Index : Tabs.Count, _Tab);
@@ -920,7 +941,7 @@ namespace SLBr
         {
             try
             {
-                if (Tabs[TabsUI.SelectedIndex].ParentWindow == null)
+                if (Tabs[TabsUI.SelectedIndex].Type == BrowserTabType.Add)
                 {
                     if (TabsUI.Visibility == Visibility.Visible)
                         NewTab(App.Instance.GlobalSave.Get("Homepage"), true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));

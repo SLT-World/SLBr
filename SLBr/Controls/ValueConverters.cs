@@ -17,9 +17,8 @@ namespace SLBr.Controls
                 return Length < Threshold;
             return false;
         }
-
-        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture)
-            => throw new NotImplementedException();
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            throw new NotImplementedException();
     }
 
     public class BooleanToVisibilityConverter : IValueConverter
@@ -28,8 +27,15 @@ namespace SLBr.Controls
         public object Convert(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
             (Invert ? !(bool)Value : (bool)Value) ? Visibility.Visible : Visibility.Collapsed;
 
-        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture)
-            => throw new NotImplementedException();
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            throw new NotImplementedException();
+    }
+    public class NullToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            Value != null ? Visibility.Visible : Visibility.Collapsed;
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            throw new NotImplementedException();
     }
 
     public class StringToColorConverter : IValueConverter
@@ -50,8 +56,7 @@ namespace SLBr.Controls
 
             return new SolidColorBrush(Color.FromRgb(R, G, B));
         }
-
-        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture)
-            => throw new NotImplementedException();
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            throw new NotImplementedException();
     }
 }
