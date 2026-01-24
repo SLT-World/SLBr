@@ -2344,24 +2344,27 @@ Margin="{TemplateBinding Padding}"/>
 
     <Style TargetType="{x:Type TabItem}" x:Key="TabGroupButton">
         <Setter Property="ContextMenu" Value="{x:Null}"/>
-        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
         <Setter Property="Height" Value="35"/>
-        <Setter Property="Width" Value="75"/>
+        <Setter Property="Width" Value="45"/>
         <Setter Property="MinWidth" Value="40"/>
-        <Setter Property="MaxWidth" Value="65"/>
+        <Setter Property="MaxWidth" Value="35"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="Background" Value="{Binding TabGroup.Background}"/>
 
         <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
-        <Setter Property="AllowDrop" Value="False"/>
+        <Setter Property="ToolTip" Value="{Binding TabGroup.Header}"/>
+        <Setter Property="AllowDrop" Value="True"/>
+        <EventSetter Event="DragOver" Handler="TabItem_DragOver"/>
+        <EventSetter Event="Drop" Handler="TabItem_Drop"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
                     <Grid>
-                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Margin="0,5,5,5">
-                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto" Margin="5,5" MaxWidth="{TemplateBinding Width}">
+                        <Border PreviewMouseDown="TabGroup_PreviewMouseDown" Background="{TemplateBinding Background}" CornerRadius="5" Margin="0,5,5,5">
+                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto" Margin="5,0" MaxWidth="{TemplateBinding Width}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -2392,6 +2395,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Visibility" Value="{Binding TabGroup.IsCollapsed, Converter={StaticResource OppositeBooleanToVisibility}}"/>
         <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
 
@@ -2616,6 +2620,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Visibility" Value="{Binding TabGroup.IsCollapsed, Converter={StaticResource OppositeBooleanToVisibility}}"/>
         <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
 
@@ -2739,10 +2744,10 @@ Margin="{TemplateBinding Padding}"/>
     </Style>
     <Style TargetType="{x:Type TabItem}" x:Key="VerticalTabGroupButton">
         <Setter Property="ContextMenu" Value="{x:Null}"/>
-        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
         <Setter Property="Height" Value="30"/>
         <Setter Property="Width" Value="Auto"/>
-        <Setter Property="MinWidth" Value="25"/>
+        <Setter Property="MinWidth" Value="35"/>
         <Setter Property="MaxWidth" Value="240"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Margin" Value="0"/>
@@ -2750,13 +2755,16 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Background" Value="{Binding TabGroup.Background}"/>
 
         <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
-        <Setter Property="AllowDrop" Value="False"/>
+        <Setter Property="ToolTip" Value="{Binding TabGroup.Header}"/>
+        <Setter Property="AllowDrop" Value="True"/>
+        <EventSetter Event="DragOver" Handler="TabItem_DragOver"/>
+        <EventSetter Event="Drop" Handler="TabItem_Drop"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
                     <Grid>
-                        <Border Background="{TemplateBinding Background}" Width="Auto" HorizontalAlignment="Left" CornerRadius="5" Margin="0,5,0,0">
-                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto" Margin="5,5" MaxWidth="{TemplateBinding Width}">
+                        <Border PreviewMouseDown="TabGroup_PreviewMouseDown" Background="{TemplateBinding Background}" MinWidth="{TemplateBinding MinWidth}" Width="Auto" MaxWidth="{TemplateBinding MaxWidth}" HorizontalAlignment="Left" CornerRadius="5" Margin="0,5,0,0">
+                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto" Margin="5,0" MaxWidth="{TemplateBinding Width}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -3138,10 +3146,6 @@ Margin="{TemplateBinding Padding}"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Style.Resources>
-            <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource VerticalTab}"/>
-            <Style TargetType="{x:Type TabItem}" x:Key="IconTabButton" BasedOn="{StaticResource VerticalIconTabButton}"/>
-        </Style.Resources>
     </Style>
     <Style TargetType="{x:Type WinUI:WinUITabControl}" x:Key="NormalVerticalTabControl">
         <Setter Property="SnapsToDevicePixels" Value="True"/>

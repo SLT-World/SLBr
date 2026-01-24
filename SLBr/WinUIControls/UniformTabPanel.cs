@@ -78,7 +78,7 @@ namespace WinUI
             }
         }
 
-        private void SetChildrenMaxWidths(double MaxWidth)
+        public void SetChildrenMaxWidths(double MaxWidth)
         {
             double _Width = 0.0;
             _RowHeight = 0.0;

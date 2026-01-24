@@ -812,28 +812,61 @@ namespace SLBr
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             _Tab.Content?.DevTools();//(false, XCoord, YCoord);
         }
-        public TabGroup NewTabGroup(string Header)
+        public TabGroup NewTabGroup(string Header, Color Background)
         {
-            TabGroup NewTabGroup = new() { Background = new SolidColorBrush(Colors.RoyalBlue), Header = Header, IsCollapsed = false };
+            TabGroup NewTabGroup = new() { Background = new SolidColorBrush(Background), Header = Header, IsCollapsed = false };
             TabGroups.Add(NewTabGroup);
-            Tabs.Insert(0, new BrowserTabItem(null) { TabGroup = NewTabGroup, Type = BrowserTabType.Group });
+            Tabs.Insert(0, new BrowserTabItem(this) { TabGroup = NewTabGroup, Type = BrowserTabType.Group });
             return NewTabGroup;
         }
-        public IWebView NewTab(string Url, bool IsSelected = false, int Index = -1, bool IsPrivate = false)
+        int GetGroupOrder(BrowserTabItem Tab)
         {
-            //if (TabGroups.Count == 0)
-            //    NewTabGroup("Test");
+            if (Tab.Type == BrowserTabType.Group)
+                return 0;
+            if (Tab.TabGroup != null)
+                return 1;
+            return 2;
+        }
+        public void ReorderTabs()
+        {
+            BrowserTabItem Selected = Tabs[TabsUI.SelectedIndex];
+            List<BrowserTabItem> Ordered = Tabs
+                .Select((Tab, Index) => new { Tab, Index })
+                .OrderBy(x => x.Tab.TabGroup != null ? 0 : 1)
+                .ThenBy(x => x.Tab.TabGroup?.ID)
+                .ThenBy(x => GetGroupOrder(x.Tab))
+                .ThenBy(x => x.Index)
+                .Select(x => x.Tab)
+                .ToList();
+
+            for (int i = 0; i < Ordered.Count; i++)
+            {
+                int CurrentIndex = Tabs.IndexOf(Ordered[i]);
+                if (CurrentIndex != i)
+                    Tabs.Move(CurrentIndex, i);
+            }
+            TabsUI.SelectedIndex = Tabs.IndexOf(Selected);
+        }
+        public IWebView NewTab(string Url, bool IsSelected = false, int Index = -1, bool IsPrivate = false, TabGroup? Group = null)
+        {
+            /*if (TabGroups.Count == 0)
+            {
+                NewTabGroup("Blue", Colors.RoyalBlue);
+                NewTabGroup("Purple", Colors.Purple);
+                NewTabGroup("Orange", Colors.Orange);
+            }*/
             if (!App.Instance.Background && WindowState == WindowState.Minimized)
             {
                 WindowState = WindowState.Normal;
                 Activate();
             }
-            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true) };//, TabGroup = TabGroups[0]
+            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true), TabGroup = Group };// ?? (new Random().Next(0, 2) == 1 ? TabGroups[new Random().Next(0, 3)] : null)
             _Tab.Content = new Browser(Url, _Tab, IsPrivate);
             if (VerticalTabs)
                 Tabs.Insert(Index != -1 ? Index : Tabs.Count, _Tab);
             else
                 Tabs.Insert(Index != -1 ? Index : Tabs.Count - 1, _Tab);
+            ReorderTabs();
             if (IsSelected)
                 TabsUI.SelectedIndex = Tabs.IndexOf(_Tab);
             return _Tab.Content.WebView;

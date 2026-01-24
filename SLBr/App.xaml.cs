@@ -103,6 +103,7 @@ namespace SLBr
             }
         }
         private SolidColorBrush _Background;
+        public Guid ID { get; } = Guid.NewGuid();
     }
 
     public class BrowserTabItem : INotifyPropertyChanged
@@ -154,7 +155,7 @@ namespace SLBr
             }
         }
         private BitmapImage _Icon;
-        public TabGroup TabGroup
+        public TabGroup? TabGroup
         {
             get { return _TabGroup; }
             set
@@ -163,7 +164,7 @@ namespace SLBr
                 RaisePropertyChanged();
             }
         }
-        private TabGroup _TabGroup = null;
+        private TabGroup? _TabGroup = null;
         public Browser Content { get; set; }
         public MainWindow ParentWindow { get; set; }
         public int ID
@@ -2208,17 +2209,16 @@ Inner Exception: ```{7} ```";
                     int TabCount = TabsSave.GetInt("Count", 0);
                     if (TabCount != 0)
                     {
+                        int SelectedIndex = TabsSave.GetInt("Selected", 0);
+                        if (GlobalSave.GetInt("TabAlignment", 0) == 1)
+                            SelectedIndex += 1;
                         for (int i = 0; i < TabCount; i++)
                         {
                             string Url = TabsSave.Get(i.ToString(), "slbr://newtab");
                             if (Utils.IsEmptyOrWhiteSpace(Url))
                                 Url = "slbr://newtab";
-                            _Window.NewTab(Url, false, -1, PrivateTabs);
+                            _Window.NewTab(Url, i == SelectedIndex, -1, PrivateTabs);
                         }
-                        if (GlobalSave.GetInt("TabAlignment", 0) == 1)
-                            _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0) + 1;
-                        else
-                            _Window.TabsUI.SelectedIndex = TabsSave.GetInt("Selected", 0);
                     }
                     else
                         _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, PrivateTabs);
@@ -3571,7 +3571,7 @@ Inner Exception: ```{7} ```";
                     for (int i = 0; i < _Window.Tabs.Count; i++)
                     {
                         BrowserTabItem Tab = _Window.Tabs[i];
-                        if (Tab.ParentWindow != null && !Tab.Content.Private)
+                        if (Tab.Type == BrowserTabType.Navigation && !Tab.Content.Private)
                         {
                             TabsSave.Set(Count.ToString(), Tab.Content.Address);
                             if (i == OriginalSelectedIndex)

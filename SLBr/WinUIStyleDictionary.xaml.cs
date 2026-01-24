@@ -1,6 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using WinUI;
 
 namespace SLBr
 {
@@ -33,6 +35,23 @@ namespace SLBr
         {
             MainWindow FocusedWindow = App.Instance.CurrentFocusedWindow();
             BrowserTabItem CurrentTab = (BrowserTabItem)((TabItem)e.Source).DataContext;
+            if (CurrentTab.Type == BrowserTabType.Group && e.Data.GetData(typeof(TabItem)) != null)
+            {
+                TabItem TabItemSource = (TabItem)e.Data.GetData(typeof(TabItem));
+                BrowserTabItem Tab = (BrowserTabItem)TabItemSource.DataContext;
+                Tab.TabGroup = CurrentTab.TabGroup;
+                int OldIndex = FocusedWindow.Tabs.IndexOf(Tab);
+                int NewIndex = FocusedWindow.Tabs.IndexOf(CurrentTab) + 1;
+                if (OldIndex == NewIndex || OldIndex == NewIndex - 1)
+                    return;
+                if (NewIndex > OldIndex)
+                    NewIndex--;
+                FocusedWindow.Tabs.Move(OldIndex, NewIndex);
+                FocusedWindow.TabsUI.SelectedIndex = NewIndex;
+                Tab.ParentWindow.ReorderTabs();
+                e.Handled = true;
+            }
+            else
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 int TargetIndex = FocusedWindow.Tabs.IndexOf(CurrentTab);
@@ -42,7 +61,7 @@ namespace SLBr
                     if (i == 0)
                         CurrentTab.Content?.Address = Files[i];
                     else
-                        FocusedWindow.NewTab(Files[i], false, TargetIndex + 1);
+                        FocusedWindow.NewTab(Files[i], false, TargetIndex + 1, CurrentTab.Content != null ? CurrentTab.Content.Private : false, CurrentTab.TabGroup);
                 }
                 e.Handled = true;
             }
@@ -56,7 +75,7 @@ namespace SLBr
 
         private void TabItem_DragOver(object sender, DragEventArgs e)
         {
-            if (!e.Data.GetDataPresent(typeof(TabItem)))
+            if (!e.Data.GetDataPresent(typeof(TabItem)) || (((FrameworkElement)sender).DataContext is BrowserTabItem Tab && Tab.Type == BrowserTabType.Group))
             {
                 e.Effects = DragDropEffects.Copy;
                 e.Handled = true;
@@ -108,6 +127,21 @@ namespace SLBr
 
                 FocusedWindow.Tabs.Move(OldIndex, NewIndex);
                 FocusedWindow.TabsUI.SelectedIndex = NewIndex;
+                if (FocusedWindow.TabGroups.Count != 0)
+                {
+                    BrowserTabItem LeftTab = null;
+                    BrowserTabItem RightTab = null;
+                    if (NewIndex > 0)
+                        LeftTab = FocusedWindow.Tabs[NewIndex - 1];
+                    if (NewIndex < FocusedWindow.Tabs.Count - 1)
+                        //WARNING: Functions as intended, do not modify.
+                        RightTab = FocusedWindow.Tabs[NewIndex + 1];
+
+                    if (LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
+                        Tab.TabGroup = LeftTab.TabGroup;
+                    else
+                        Tab.TabGroup = null;
+                }
                 e.Handled = true;
             }
             else if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -146,6 +180,21 @@ namespace SLBr
                 Point Position = LastTab.TranslatePoint(new Point(LastTab.ActualWidth, 0), Panel);
                 Offset = Vertical ? Position.Y : Position.X;
             }
+            if (Window.GetWindow(_TabControl) is MainWindow FocusedWindow && FocusedWindow.TabGroups.Count != 0)
+            {
+                BrowserTabItem LeftTab = null;
+                BrowserTabItem RightTab = null;
+                if (Index > 0)
+                    LeftTab = FocusedWindow.Tabs[Index - 1];
+                if (Index < FocusedWindow.Tabs.Count - 1)
+                    //WARNING: Functions as intended, do not modify.
+                    RightTab = FocusedWindow.Tabs[Index];
+
+                if (LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
+                    InsertIndicator.Background = LeftTab.TabGroup.Background;
+                else
+                    InsertIndicator.Background = (SolidColorBrush)Application.Current.FindResource("IndicatorBrush");
+            }
             InsertIndicator.Margin = Vertical ? new Thickness(7.5, Offset + 1.25, 7.5, 0) : new Thickness(Offset + 1.25, 7.5, 0, 7.5);
         }
 
@@ -153,6 +202,7 @@ namespace SLBr
         {
             TabControl _TabControl = Panel.TemplatedParent as TabControl;
             Border InsertIndicator = _TabControl?.Template.FindName("InsertIndicator", _TabControl) as Border;
+            InsertIndicator.Background = (SolidColorBrush)Application.Current.FindResource("IndicatorBrush");
             InsertIndicator?.Visibility = Visibility.Collapsed;
         }
 
@@ -175,13 +225,13 @@ namespace SLBr
             int MaxIndex = Panel.Children.Count;
             for (int i = 0; i < Panel.Children.Count; i++)
             {
-                if (CurrentWindow.Tabs[i]?.ParentWindow == null && i > 0)
+                if (CurrentWindow.Tabs[i]?.Type == BrowserTabType.Add && i > 0)
                 {
                     MaxIndex = i;
                     break;
                 }
             }
-            return Math.Clamp(Index, CurrentWindow.Tabs[0]?.ParentWindow != null ? 0 : 1, MaxIndex);
+            return Math.Clamp(Index, CurrentWindow.Tabs[0]?.Type == BrowserTabType.Add ? 0 : 1, MaxIndex);
         }
 
         CancellationTokenSource TabHoverToken;
@@ -193,7 +243,7 @@ namespace SLBr
 
             FrameworkElement Element = (FrameworkElement)sender;
             BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
-            if (Tab == null || Tab?.ParentWindow == null) return;
+            if (Tab == null || Tab?.Type != BrowserTabType.Navigation) return;
 
             try
             {
@@ -208,7 +258,7 @@ namespace SLBr
             TabHoverToken?.Cancel();
             FrameworkElement Element = (FrameworkElement)sender;
             BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
-            if (Tab == null || Tab?.ParentWindow == null) return;
+            if (Tab == null || Tab?.Type != BrowserTabType.Navigation) return;
             Tab?.ParentWindow.ShowPreview(null);
         }
 
@@ -217,8 +267,24 @@ namespace SLBr
             TabHoverToken?.Cancel();
             FrameworkElement Element = (FrameworkElement)sender;
             BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
-            if (Tab == null || Tab?.ParentWindow == null) return;
+            if (Tab == null || Tab?.Type != BrowserTabType.Navigation) return;
             Tab?.ParentWindow.ShowPreview(null);
+        }
+
+        private void TabGroup_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left) return;
+            FrameworkElement Element = (FrameworkElement)sender;
+            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
+            if (Tab == null || Tab?.Type != BrowserTabType.Group) return;
+            e.Handled = true;
+            Tab.TabGroup.IsCollapsed = !Tab.TabGroup.IsCollapsed;
+            WinUITabControl _TabControl = Tab.ParentWindow.TabsUI;
+            if (_TabControl.TabStripPlacement == Dock.Top)
+            {
+                TabPanel Panel = _TabControl?.Template.FindName("HeaderPanel", _TabControl) as TabPanel;
+                Panel?.SetChildrenMaxWidths(Panel.ActualWidth);
+            }
         }
     }
 }
