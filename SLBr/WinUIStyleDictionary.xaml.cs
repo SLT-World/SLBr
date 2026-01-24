@@ -35,7 +35,30 @@ namespace SLBr
         {
             MainWindow FocusedWindow = App.Instance.CurrentFocusedWindow();
             BrowserTabItem CurrentTab = (BrowserTabItem)((TabItem)e.Source).DataContext;
-            if (CurrentTab.Type == BrowserTabType.Group && e.Data.GetData(typeof(TabItem)) != null)
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                int NewIndex = FocusedWindow.Tabs.IndexOf(CurrentTab) + 1;
+                string[] Files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                for (int i = 0; i < Files.Length; i++)
+                {
+                    if (i == 0 && CurrentTab.Type == BrowserTabType.Navigation)
+                        CurrentTab.Content?.Address = Files[i];
+                    else
+                        FocusedWindow.NewTab(Files[i], false, NewIndex, CurrentTab.Content != null ? CurrentTab.Content.Private : false, CurrentTab.TabGroup);
+                }
+                e.Handled = true;
+            }
+            else if (e.Data.GetDataPresent(DataFormats.StringFormat))
+            {
+                string Data = (string)e.Data.GetData(DataFormats.StringFormat);
+                string Url = Utils.FilterUrlForBrowser(Data, App.Instance.DefaultSearchProvider.SearchUrl);
+                if (CurrentTab.Type == BrowserTabType.Navigation)
+                    CurrentTab.Content?.Address = Url;
+                else
+                    FocusedWindow.NewTab(Url, false, FocusedWindow.Tabs.IndexOf(CurrentTab) + 1, CurrentTab.Content != null ? CurrentTab.Content.Private : false, CurrentTab.TabGroup);
+                e.Handled = true;
+            }
+            else if (CurrentTab.Type == BrowserTabType.Group && e.Data.GetData(typeof(TabItem)) != null)
             {
                 TabItem TabItemSource = (TabItem)e.Data.GetData(typeof(TabItem));
                 BrowserTabItem Tab = (BrowserTabItem)TabItemSource.DataContext;
@@ -49,26 +72,6 @@ namespace SLBr
                 FocusedWindow.Tabs.Move(OldIndex, NewIndex);
                 FocusedWindow.TabsUI.SelectedIndex = NewIndex;
                 Tab.ParentWindow.ReorderTabs();
-                e.Handled = true;
-            }
-            else
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                int TargetIndex = FocusedWindow.Tabs.IndexOf(CurrentTab);
-                string[] Files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                for (int i = 0; i < Files.Length; i++)
-                {
-                    if (i == 0)
-                        CurrentTab.Content?.Address = Files[i];
-                    else
-                        FocusedWindow.NewTab(Files[i], false, TargetIndex + 1, CurrentTab.Content != null ? CurrentTab.Content.Private : false, CurrentTab.TabGroup);
-                }
-                e.Handled = true;
-            }
-            else if (e.Data.GetDataPresent(DataFormats.StringFormat))
-            {
-                string Data = (string)e.Data.GetData(DataFormats.StringFormat);
-                CurrentTab.Content?.Address = Utils.FilterUrlForBrowser(Data, App.Instance.DefaultSearchProvider.SearchUrl);
                 e.Handled = true;
             }
         }
@@ -137,7 +140,7 @@ namespace SLBr
                         //WARNING: Functions as intended, do not modify.
                         RightTab = FocusedWindow.Tabs[NewIndex + 1];
 
-                    if (LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
+                    if (LeftTab != null && RightTab != null && LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
                         Tab.TabGroup = LeftTab.TabGroup;
                     else
                         Tab.TabGroup = null;
@@ -190,7 +193,7 @@ namespace SLBr
                     //WARNING: Functions as intended, do not modify.
                     RightTab = FocusedWindow.Tabs[Index];
 
-                if (LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
+                if (LeftTab != null && RightTab != null && LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
                     InsertIndicator.Background = LeftTab.TabGroup.Background;
                 else
                     InsertIndicator.Background = (SolidColorBrush)Application.Current.FindResource("IndicatorBrush");
@@ -278,13 +281,15 @@ namespace SLBr
             BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
             if (Tab == null || Tab?.Type != BrowserTabType.Group) return;
             e.Handled = true;
+            //if (Tab.ParentWindow.Tabs.Any(i => i.Type == BrowserTabType.Navigation && i.TabGroup == Tab.TabGroup))
+            //{
             Tab.TabGroup.IsCollapsed = !Tab.TabGroup.IsCollapsed;
-            WinUITabControl _TabControl = Tab.ParentWindow.TabsUI;
-            if (_TabControl.TabStripPlacement == Dock.Top)
+            if (Tab.ParentWindow.TabsUI.TabStripPlacement == Dock.Top)
             {
-                TabPanel Panel = _TabControl?.Template.FindName("HeaderPanel", _TabControl) as TabPanel;
+                TabPanel Panel = Tab.ParentWindow.TabsUI?.Template.FindName("HeaderPanel", Tab.ParentWindow.TabsUI) as TabPanel;
                 Panel?.SetChildrenMaxWidths(Panel.ActualWidth);
             }
+            //}
         }
     }
 }

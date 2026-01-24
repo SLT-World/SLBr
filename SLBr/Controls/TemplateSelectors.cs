@@ -9,6 +9,7 @@ namespace SLBr.Controls
         public DataTemplate TextTemplate { get; set; }
         public DataTemplate LabelTemplate { get; set; }
         public DataTemplate BoolTemplate { get; set; }
+        public DataTemplate ColorTemplate { get; set; }
 
         public override DataTemplate SelectTemplate(object Item, DependencyObject Container)
         {
@@ -18,6 +19,7 @@ namespace SLBr.Controls
                 {
                     DialogInputType.Label => LabelTemplate,
                     DialogInputType.Boolean => BoolTemplate,
+                    DialogInputType.Color => ColorTemplate,
                     _ => TextTemplate
                 };
             }

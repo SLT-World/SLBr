@@ -602,11 +602,27 @@ namespace SLBr
         {
             FrameworkElement Element = (FrameworkElement)sender;
             string[] Values = Element.Tag.ToString().Split("<,>", StringSplitOptions.None);
-            if (Values.Length == 1 && Element.DataContext is BrowserTabItem Tab)
+            if (Element.DataContext is BrowserTabItem Tab)
             {
-                Array.Resize(ref Values, Values.Length + 2);
-                Values[1] = Tab.ID.ToString();
-                Values[2] = Values[0] == "5" ? "Tab" : Tab.ParentWindow.ID.ToString();
+                if (Tab.Type == BrowserTabType.Group)
+                {
+                    Array.Resize(ref Values, Values.Length + 3);
+                    if (Values[0] == "5")
+                        Values[3] = Tab.ID.ToString();
+                    else if (Values[0] == "6")
+                    {
+                        Values[1] = Tab.ID.ToString();
+                        Values[2] = Tab.ParentWindow.ID.ToString();
+                    }
+                    else
+                        Values[1] = Tab.ID.ToString();
+                }
+                else if (Tab.Type == BrowserTabType.Navigation && Values.Length == 1)
+                {
+                    Array.Resize(ref Values, Values.Length + 2);
+                    Values[1] = Tab.ID.ToString();
+                    Values[2] = Values[0] == "5" ? "Tab" : Tab.ParentWindow.ID.ToString();
+                }
             }
             Action((Actions)int.Parse(Values[0]), (Values.Length > 1) ? Values[1] : string.Empty, (Values.Length > 2) ? Values[2] : string.Empty, (Values.Length > 3) ? Values[3] : string.Empty);
         }
@@ -645,6 +661,11 @@ namespace SLBr
                     }
                     else if (V2 == "Private")
                         NewTab(V1, true, -1, true);
+                    else if (V2 == "Group")
+                    {
+                        BrowserTabItem _Tab = GetBrowserTabWithId(int.Parse(V3));
+                        NewTab(V1, true, Tabs.IndexOf(_Tab) + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")), _Tab.TabGroup);
+                    }
                     else
                         NewTab(V1, true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                     break;
@@ -663,6 +684,15 @@ namespace SLBr
                     break;
                 case Actions.Favourite:
                     Favourite(V1);
+                    break;
+                case Actions.CreateGroup:
+                    CreateGroup();
+                    break;
+                case Actions.Ungroup:
+                    Ungroup(V1);
+                    break;
+                case Actions.ModifyGroup:
+                    ModifyGroup(V1);
                     break;
             }
         }
@@ -751,6 +781,43 @@ namespace SLBr
                 _Tab.Content.Refresh(IgnoreCache);
             else
                 _Tab.Content.Stop();
+        }
+        public void CreateGroup()
+        {
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Create Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = "" }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Colors.White) } }, "\xf16b");
+            _DynamicDialogWindow.Topmost = true;
+            if (_DynamicDialogWindow.ShowDialog() == true)
+            {
+                string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
+                string Color = _DynamicDialogWindow.InputFields[1].Value.Trim();
+                NewTabGroup(Input, Utils.HexToColor(Color));
+            }
+        }
+        public void Ungroup(string Id = "")
+        {
+            BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
+            List<BrowserTabItem> ProcessTabs = Tabs.Where(i => i.TabGroup == _Tab.TabGroup).ToList();
+            //BrowserTabItem TabGroupButton = ProcessTabs.FirstOrDefault(i => i.Type == BrowserTabType.Group);
+            Tabs.Remove(_Tab);
+            foreach (BrowserTabItem _FTab in ProcessTabs)
+            {
+                _FTab.TabGroup = null;
+            }
+            TabGroups.Remove(_Tab.TabGroup);
+        }
+        public void ModifyGroup(string Id = "")
+        {
+            BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
+            TabGroup Group = _Tab.TabGroup;
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Group.Header }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Group.Background.Color) } }, "\xe70f");
+            _DynamicDialogWindow.Topmost = true;
+            if (_DynamicDialogWindow.ShowDialog() == true)
+            {
+                string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
+                Group.Header = Input;
+                string Color = _DynamicDialogWindow.InputFields[1].Value.Trim();
+                Group.Background = new SolidColorBrush(Utils.HexToColor(Color));
+            }
         }
         public void Navigate(string Url)
         {
@@ -854,13 +921,14 @@ namespace SLBr
                 NewTabGroup("Blue", Colors.RoyalBlue);
                 NewTabGroup("Purple", Colors.Purple);
                 NewTabGroup("Orange", Colors.Orange);
+                NewTabGroup("White", Colors.White);
             }*/
             if (!App.Instance.Background && WindowState == WindowState.Minimized)
             {
                 WindowState = WindowState.Normal;
                 Activate();
             }
-            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true), TabGroup = Group };// ?? (new Random().Next(0, 2) == 1 ? TabGroups[new Random().Next(0, 3)] : null)
+            BrowserTabItem _Tab = new(this) { Header = Utils.CleanUrl(Url, true, true, true, true), TabGroup = Group/* ?? (new Random().Next(0, 2) == 1 ? TabGroups[new Random().Next(0, 4)] : null)*/ };
             _Tab.Content = new Browser(Url, _Tab, IsPrivate);
             if (VerticalTabs)
                 Tabs.Insert(Index != -1 ? Index : Tabs.Count, _Tab);
@@ -894,38 +962,53 @@ namespace SLBr
                         return;
                     }
                 }
+                return;
             }
             BrowserTabItem _Tab = Id == -1 ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(Id);
-            if (Tabs.Count > 2)
+            if (_Tab.Type == BrowserTabType.Navigation)
             {
+                /*
+                            Guid TabGroupGUID = Guid.Parse(V3);
+                            TabGroup Group = TabGroups.FirstOrDefault(i => i.ID == TabGroupGUID);
+                            BrowserTabItem Tab = Tabs.FirstOrDefault(i => i.Type == BrowserTabType.Group && i.TabGroup == Group);*/
                 bool IsSelected = Id == -1 || _Tab == Tabs[TabsUI.SelectedIndex];
-                _Tab.Content.Dispose();
-                if (IsSelected)
+                _Tab.Content?.Dispose();
+                Tabs.Remove(_Tab);
+                if (IsSelected && Tabs.Any(i => i.Type == BrowserTabType.Navigation))
                 {
-                    if (VerticalTabs)
-                    {
-                        if (TabsUI.SelectedIndex > 1)
-                            TabsUI.SelectedIndex--;
-                        else
-                            TabsUI.SelectedIndex++;
-                    }
+                    if (TabsUI.SelectedIndex > 0)
+                        TabsUI.SelectedIndex--;
                     else
+                        TabsUI.SelectedIndex++;
+                    if (TabsUI.SelectedIndex > Tabs.Count - 1)
+                        TabsUI.SelectedIndex = Tabs.Count - 1;
+                }
+            }
+            else if (_Tab.Type == BrowserTabType.Group)
+            {
+                Tabs.Remove(_Tab);
+                List<BrowserTabItem> ProcessTabs = Tabs.Where(i => i.TabGroup == _Tab.TabGroup).ToList();
+
+                for (int i = 0; i < ProcessTabs.Count(); i++)
+                {
+                    var _FTab = ProcessTabs[i];
+                    bool IsSelected = Id == -1 || _FTab == Tabs[TabsUI.SelectedIndex];
+                    _Tab.Content?.Dispose();
+                    Tabs.Remove(_FTab);
+                    if (IsSelected && Tabs.Any(i => i.Type == BrowserTabType.Navigation))
                     {
                         if (TabsUI.SelectedIndex > 0)
                             TabsUI.SelectedIndex--;
                         else
                             TabsUI.SelectedIndex++;
+                        if (TabsUI.SelectedIndex > Tabs.Count - 1)
+                            TabsUI.SelectedIndex = Tabs.Count - 1;
                     }
                 }
-                Tabs.Remove(_Tab);
-                if (IsSelected && TabsUI.SelectedIndex > Tabs.Count - 1)
-                    TabsUI.SelectedIndex = Tabs.Count - 1;
             }
-            else
+            if (!Tabs.Any(i => i.Type == BrowserTabType.Navigation))
             {
                 TabsUI.Visibility = Visibility.Collapsed;
-                _Tab.Content.Dispose();
-                Tabs.Remove(_Tab);
                 Close();
             }
         }

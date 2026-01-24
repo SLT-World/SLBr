@@ -2327,6 +2327,11 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
 
+    <ContextMenu x:Key="AddTabContextMenu">
+        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
+        <MenuItem Icon="&#xf16b;" Click="ButtonAction" Header="New Group" Tag="80"/>
+    </ContextMenu>
+
     <ContextMenu x:Key="TabItemContextMenu">
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
         <MenuItem Icon="&#xe8c8;" Click="ButtonAction" Header="Duplicate Tab" Tag="5"/>
@@ -2339,11 +2344,20 @@ Margin="{TemplateBinding Padding}"/>
         <MenuItem Icon="&#xe711;" Click="ButtonAction" Header="Close Tab" Tag="6"/>
     </ContextMenu>
 
+    <ContextMenu x:Key="TabGroupContextMenu">
+        <MenuItem Icon="&#xeccd;" Click="ButtonAction" Header="New Tab in group" Tag="5&lt;,&gt;{Homepage}&lt;,&gt;Group"/>
+        <Separator/>
+        <MenuItem Icon="&#xe70f;" Click="ButtonAction" Header="Edit" Tag="82"/>
+        <Separator/>
+        <MenuItem Icon="&#xe8a7;" Click="ButtonAction" Header="Ungroup" Tag="81"/>
+        <MenuItem Icon="&#xf165;" Click="ButtonAction" Header="Close Group" Tag="6"/>
+    </ContextMenu>
+
     <controls:BrowserTabItemStyleSelector x:Key="BrowserTabItemStyleSelector" NavigationStyle="{StaticResource DefaultTab}" AddStyle="{StaticResource IconTabButton}" GroupStyle="{StaticResource TabGroupButton}"/>
     <controls:BrowserTabItemStyleSelector x:Key="VerticalBrowserTabItemStyleSelector" NavigationStyle="{StaticResource VerticalTab}" AddStyle="{StaticResource VerticalIconTabButton}" GroupStyle="{StaticResource VerticalTabGroupButton}"/>
 
     <Style TargetType="{x:Type TabItem}" x:Key="TabGroupButton">
-        <Setter Property="ContextMenu" Value="{x:Null}"/>
+        <Setter Property="ContextMenu" Value="{StaticResource TabGroupContextMenu}"/>
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="Height" Value="35"/>
         <Setter Property="Width" Value="45"/>
@@ -2351,7 +2365,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="MaxWidth" Value="35"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Margin" Value="0"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{Binding TabGroup.Foreground}"/>
         <Setter Property="Background" Value="{Binding TabGroup.Background}"/>
 
         <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
@@ -2378,7 +2392,7 @@ Margin="{TemplateBinding Padding}"/>
                                 </ContentPresenter>
                             </Grid>
                         </Border>
-                        <Border VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="0,0,5,0" Height="2" Background="{Binding TabGroup.Background}"/>
+                        <Border Visibility="{Binding TabGroup.IsCollapsed, Converter={StaticResource OppositeBooleanToVisibility}}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="0,0,5,0" Height="2" Background="{Binding TabGroup.Background}"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -2557,7 +2571,7 @@ Margin="{TemplateBinding Padding}"/>
 
     <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource DefaultTab}"></Style>
     <Style TargetType="{x:Type TabItem}" x:Key="IconTabButton">
-        <Setter Property="ContextMenu" Value="{x:Null}"/>
+        <Setter Property="ContextMenu" Value="{StaticResource AddTabContextMenu}"/>
         <Setter Property="Height" Value="35"/>
         <Setter Property="Width" Value="35"/>
         <Setter Property="MinWidth" Value="35"/>
@@ -2743,7 +2757,7 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
     <Style TargetType="{x:Type TabItem}" x:Key="VerticalTabGroupButton">
-        <Setter Property="ContextMenu" Value="{x:Null}"/>
+        <Setter Property="ContextMenu" Value="{StaticResource TabGroupContextMenu}"/>
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="Height" Value="30"/>
         <Setter Property="Width" Value="Auto"/>
@@ -2751,7 +2765,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="MaxWidth" Value="240"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Margin" Value="0"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{Binding TabGroup.Foreground}"/>
         <Setter Property="Background" Value="{Binding TabGroup.Background}"/>
 
         <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
@@ -2778,14 +2792,14 @@ Margin="{TemplateBinding Padding}"/>
                                 </ContentPresenter>
                             </Grid>
                         </Border>
-                        <Border Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Stretch" HorizontalAlignment="Left" Height="Auto" Margin="-5,5,0,0" Width="2" Background="{Binding TabGroup.Background}"/>
+                        <Border Visibility="{Binding TabGroup.IsCollapsed, Converter={StaticResource OppositeBooleanToVisibility}}" VerticalAlignment="Stretch" HorizontalAlignment="Left" Height="Auto" Margin="-5,5,0,0" Width="2" Background="{Binding TabGroup.Background}"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
     <Style TargetType="{x:Type TabItem}" x:Key="VerticalIconTabButton" BasedOn="{StaticResource VerticalTab}">
-        <Setter Property="ContextMenu" Value="{x:Null}"/>
+        <Setter Property="ContextMenu" Value="{StaticResource AddTabContextMenu}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Height" Value="40"/>
         <Setter Property="Header" Value="New Tab"/>

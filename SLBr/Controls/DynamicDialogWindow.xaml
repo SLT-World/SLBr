@@ -49,20 +49,84 @@
                                 <TextBlock Text="{Binding Name}" Margin="0,0,0,10" TextTrimming="CharacterEllipsis"/>
                             </DataTemplate>
                             <DataTemplate x:Key="BoolTemplate">
-                                <CheckBox Content="{Binding Name}" IsChecked="{Binding BoolValue, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Width="Auto"/>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding BoolValue, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,5,0" Width="Auto"/>
+                                    <Ellipse ToolTip="Required" Grid.Column="1" Fill="Red" VerticalAlignment="Center" Height="5" Width="5" Visibility="{Binding IsRequired, Converter={StaticResource BooleanToVisibility}}"/>
+                                </Grid>
+                            </DataTemplate>
+                            <DataTemplate x:Key="ColorTemplate">
+                                <StackPanel Margin="0,0,0,10">
+                                    <Grid Margin="0,0,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,5,0"/>
+                                        <Ellipse ToolTip="Required" Grid.Column="1" Fill="Red" VerticalAlignment="Center" Height="5" Width="5" Visibility="{Binding IsRequired, Converter={StaticResource BooleanToVisibility}}"/>
+                                    </Grid>
+                                    <ListBox SelectionChanged="ColorList_SelectionChanged" SelectionMode="Single" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                        <ListBox.Resources>
+                                            <Style TargetType="{x:Type ListBoxItem}">
+                                                <Setter Property="BorderThickness" Value="0"/>
+                                                <Setter Property="Margin" Value="0,0,10,0"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                            <Grid Width="30" Height="30">
+                                                                <Border Name="ItemBorder" CornerRadius="1000" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
+                                                                <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="1000"/>
+                                                                <TextBlock Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center" FontSize="16" FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Content}"/>
+                                                            </Grid>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                                    <Trigger.EnterActions>
+                                                                        <BeginStoryboard>
+                                                                            <Storyboard>
+                                                                                <DoubleAnimation Storyboard.TargetName="Border" Duration="0:0:0.250" To="1.0" Storyboard.TargetProperty="Opacity"/>
+                                                                            </Storyboard>
+                                                                        </BeginStoryboard>
+                                                                    </Trigger.EnterActions>
+                                                                    <Trigger.ExitActions>
+                                                                        <BeginStoryboard>
+                                                                            <Storyboard>
+                                                                                <DoubleAnimation Storyboard.TargetName="Border" Duration="0:0:0.250" To="0.0" Storyboard.TargetProperty="Opacity"/>
+                                                                            </Storyboard>
+                                                                        </BeginStoryboard>
+                                                                    </Trigger.ExitActions>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.Resources>
+                                        <ListBoxItem Background="White" ToolTip="White"/>
+                                        <ListBoxItem Background="RoyalBlue" ToolTip="Blue"/>
+                                        <ListBoxItem Background="Red" ToolTip="Red"/>
+                                        <ListBoxItem Background="Gold" ToolTip="Yellow"/>
+                                        <ListBoxItem Background="MediumSeaGreen" ToolTip="Green"/>
+                                        <ListBoxItem Background="HotPink" ToolTip="Pink"/>
+                                        <ListBoxItem Background="MediumPurple" ToolTip="Purple"/>
+                                        <ListBoxItem Background="Cyan" ToolTip="Cyan"/>
+                                        <ListBoxItem Background="Orange" ToolTip="Orange"/>
+                                        <ListBoxItem Background="Transparent" ToolTip="Custom" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Content="&#xef3c;" Margin="0" Foreground="{StaticResource SecondaryBrush}"/>
+                                    </ListBox>
+                                </StackPanel>
                             </DataTemplate>
                         </ItemsControl.Resources>
                         <ItemsControl.ItemTemplateSelector>
-                            <local:InputFieldTemplateSelector TextTemplate="{StaticResource TextTemplate}" LabelTemplate="{StaticResource LabelTemplate}" BoolTemplate="{StaticResource BoolTemplate}"/>
+                            <local:InputFieldTemplateSelector TextTemplate="{StaticResource TextTemplate}" LabelTemplate="{StaticResource LabelTemplate}" BoolTemplate="{StaticResource BoolTemplate}" ColorTemplate="{StaticResource ColorTemplate}"/>
                         </ItemsControl.ItemTemplateSelector>
-                        <!--<ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="0,0,0,10">
-                                    <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,0,5"/>
-                                    <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyUp="ValidateInputs" Width="Auto"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>-->
                     </ItemsControl>
                 </StackPanel>
                 <WrapPanel Grid.Row="3" HorizontalAlignment="Right" VerticalAlignment="Bottom">

@@ -99,10 +99,22 @@ namespace SLBr
             set
             {
                 _Background = value;
+                Foreground = (SolidColorBrush)Utils.GetContrastBrush(value.Color);
                 RaisePropertyChanged();
             }
         }
         private SolidColorBrush _Background;
+
+        public SolidColorBrush Foreground
+        {
+            get { return _Foreground; }
+            set
+            {
+                _Foreground = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush _Foreground;
         public Guid ID { get; } = Guid.NewGuid();
     }
 
@@ -1746,14 +1758,6 @@ Inner Exception: ```{7} ```";
         {
             ProfileManagerWindow ProfileManager = new();
             ProfileManager.Show();
-            /*DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Switch Profile", new List<InputField> { new InputField { Name = "Enter profile username to switch to:", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B");
-            _DynamicDialogWindow.Topmost = true;
-            if (_DynamicDialogWindow.ShowDialog() == true)
-            {
-                string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
-                if (Input != CurrentProfile.Name)
-                    Process.Start(new ProcessStartInfo() { FileName = ExecutablePath, Arguments = $"--user={Input}" });
-            }*/
         }
 
         public void SaveOpenSearch(string Name, string Url)
@@ -4177,7 +4181,11 @@ Inner Exception: ```{7} ```";
         InstallWebApp = 56,
         QR = 57,
         SwitchWebEngine = 58,
-        Translate = 59
+        Translate = 59,
+
+        CreateGroup = 80,
+        Ungroup = 81,
+        ModifyGroup = 82,
     }
 
     public class ActionStorage : INotifyPropertyChanged

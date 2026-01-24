@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using CefSharp.DevTools.CSS;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace SLBr.Controls
 {
@@ -22,7 +15,8 @@ namespace SLBr.Controls
     {
         Text,
         Label,
-        Boolean
+        Boolean,
+        Color
     }
 
     public class InputField : INotifyPropertyChanged
@@ -144,19 +138,94 @@ namespace SLBr.Controls
             DialogResult = true;
         }
 
-        private void Window_ContentRendered(object sender, EventArgs e)
+        public static IEnumerable<T> FindVisualChildren<T>(DependencyObject Root) where T : DependencyObject
         {
-            TextBox FirstTextBox = InputStack.Children.OfType<TextBox>().FirstOrDefault();
-            if (FirstTextBox != null)
+            if (Root == null)
+                yield break;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(Root); i++)
             {
-                FirstTextBox.SelectAll();
-                FirstTextBox.Focus();
+                DependencyObject Child = VisualTreeHelper.GetChild(Root, i);
+                if (Child is T t)
+                    yield return t;
+                foreach (T Descendant in FindVisualChildren<T>(Child))
+                    yield return Descendant;
             }
         }
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            TextBox? FirstTextBox = FindVisualChildren<TextBox>(InputsList).FirstOrDefault();
+            FirstTextBox?.SelectAll();
+            FirstTextBox?.Focus();
+            foreach (ListBox List in FindVisualChildren<ListBox>(InputsList))
+            {
+                if (List.DataContext is not InputField Field)
+                    continue;
+                if (Field.Type != DialogInputType.Color)
+                    continue;
+                if (string.IsNullOrWhiteSpace(Field.Value))
+                {
+                    List.SelectedIndex = 0;
+                    Field.Value = Utils.ColorToHex(Colors.White);
+                    continue;
+                }
+                foreach (ListBoxItem Item in List.Items)
+                {
+                    if (Item.Background is SolidColorBrush Background)
+                    {
+                        if (string.Equals(Utils.ColorToHex(Background.Color), Field.Value, StringComparison.OrdinalIgnoreCase))
+                        {
+                            List.SelectedItem = Item;
+                            break;
+                        }
+                        else if (Item.ToolTip?.ToString() == "Custom")
+                        {
+                            Color Value = Utils.HexToColor(Field.Value);
+                            Item.Background = new SolidColorBrush(Value);
+                            Item.Foreground = Utils.GetContrastBrush(Value);
+                            List.SelectedItem = Item;
+                            break;
+                        }
+                    }
+                }
+            }
+            Initialized = true;
+        }
+
+        bool Initialized = false;
 
         private void ValidateInputs(object sender, KeyEventArgs e)
         {
             PositiveButton.IsEnabled = InputFields.All(i => i.Type != DialogInputType.Text || !i.IsRequired || !string.IsNullOrWhiteSpace(i.Value));
+        }
+
+        private void ColorList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!Initialized)
+                return;
+            if (sender is not ListBox List)
+                return;
+            if (List.DataContext is not InputField Field)
+                return;
+            if (List.SelectedItem is not ListBoxItem Item)
+                return;
+            if (Item.ToolTip?.ToString() == "Custom")
+            {
+                ColorPickerWindow Picker = new(Utils.HexToColor(Field.Value));
+                Picker.Topmost = true;
+                if (Picker.ShowDialog() == true)
+                {
+                    Field.Value = Utils.ColorToHex(Picker.UserInput.Color);
+                    Item.Background = new SolidColorBrush(Picker.UserInput.Color);
+                    Item.Foreground = Utils.GetContrastBrush(Picker.UserInput.Color);
+                }
+                else
+                    List.SelectedIndex = 0;
+                return;
+            }
+            if (Item.Background is SolidColorBrush Background)
+                Field.Value = Utils.ColorToHex(Background.Color);
+            ValidateInputs(null, null);
         }
     }
 }
