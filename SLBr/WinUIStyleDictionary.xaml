@@ -2198,7 +2198,6 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
 
-
     <Style TargetType="{x:Type Expander}">
         <Setter Property="Background" Value="{DynamicResource SecondaryBrush}" />
         <Setter Property="BorderThickness" Value="1"/>
@@ -2327,7 +2326,7 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
     </Style>
 
-    <ContextMenu x:Key="AddTabContextMenu">
+    <ContextMenu x:Key="AddTabContextMenu" OverridesDefaultStyle="False">
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
         <MenuItem Icon="&#xf16b;" Click="ButtonAction" Header="New Group" Tag="80"/>
     </ContextMenu>
@@ -2582,6 +2581,8 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
         <Setter Property="ToolTip" Value="New Tab"/>
+        <Setter Property="Focusable" Value="False"/>
+        <EventSetter Event="PreviewMouseDown" Handler="NewTab_PreviewMouseDown"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
@@ -2804,6 +2805,8 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Height" Value="40"/>
         <Setter Property="Header" Value="New Tab"/>
         <Setter Property="ToolTip" Value="New Tab"/>
+        <Setter Property="Focusable" Value="False"/>
+        <EventSetter Event="PreviewMouseDown" Handler="NewTab_PreviewMouseDown"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">

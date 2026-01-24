@@ -225,9 +225,9 @@ namespace SLBr
     }
     public enum BrowserTabType
     {
-        Navigation,
-        Add,
-        Group
+        Navigation = 0,
+        Group = 1,
+        Add = 2,
     }
 
     public class Profile : INotifyPropertyChanged
@@ -813,8 +813,8 @@ namespace SLBr
             ApplicationLocalDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr");
             if (!Directory.Exists(ApplicationLocalDataPath))
                 Directory.CreateDirectory(ApplicationLocalDataPath);
-
-            /*MessageBox.Show(Utils.IsDomain("ñ.com").ToString());//T
+            /*MessageBox.Show(Utils.IsUrl("apple").ToString());//F
+            MessageBox.Show(Utils.IsDomain("ñ.com").ToString());//T
             MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
             MessageBox.Show(Utils.IsDomain("る.com").ToString());//T
             MessageBox.Show(Utils.IsDomain("a b").ToString());//F
@@ -825,7 +825,10 @@ namespace SLBr
             MessageBox.Show(Utils.IsUrl("http://www.a&b.com").ToString());//F
             MessageBox.Show(Utils.IsUrl("http://www.a b.com").ToString());//F
             MessageBox.Show(Utils.IsUrl("http://www.a\b.com").ToString());//F
-            MessageBox.Show(Utils.IsUrl("invalid://a b").ToString());//T*/
+            MessageBox.Show(Utils.IsUrl("invalid://a b").ToString());//T
+            MessageBox.Show(Utils.IsUrl("file:///C:/Example/Example/Example").ToString());//T
+            MessageBox.Show(Utils.IsUrl("file:///C:/Foo Bar/").ToString());//T
+            MessageBox.Show(Utils.IsUrl("custom://foo/bar").ToString());//T*/
 
             Instance = this;
             try
@@ -2218,10 +2221,29 @@ Inner Exception: ```{7} ```";
                             SelectedIndex += 1;
                         for (int i = 0; i < TabCount; i++)
                         {
-                            string Url = TabsSave.Get(i.ToString(), "slbr://newtab");
-                            if (Utils.IsEmptyOrWhiteSpace(Url))
-                                Url = "slbr://newtab";
-                            _Window.NewTab(Url, i == SelectedIndex, -1, PrivateTabs);
+                            string[] Data = TabsSave.Get(i.ToString(), true);
+                            string Url = string.Empty;
+                            string TabGroupName = string.Empty;
+                            BrowserTabType TabType;
+                            if (Data.Length == 1)
+                            {
+                                Url = Data[0];
+                                TabType = BrowserTabType.Navigation;
+                            }
+                            else
+                            {
+                                TabType = (BrowserTabType)int.Parse(Data[0]);
+                                Url = Data[1];
+                                TabGroupName = Data[2];
+                            }
+                            if (TabType == BrowserTabType.Navigation)
+                            {
+                                if (Utils.IsEmptyOrWhiteSpace(Url))
+                                    Url = "slbr://newtab";
+                                _Window.NewTab(Url, i == SelectedIndex, -1, PrivateTabs, _Window.TabGroups.FirstOrDefault(i => i.Header == TabGroupName));
+                            }
+                            else if (TabType == BrowserTabType.Group)
+                                _Window.NewTabGroup(TabGroupName, Utils.HexToColor(Url), -1);
                         }
                     }
                     else
@@ -3575,11 +3597,16 @@ Inner Exception: ```{7} ```";
                     for (int i = 0; i < _Window.Tabs.Count; i++)
                     {
                         BrowserTabItem Tab = _Window.Tabs[i];
-                        if (Tab.Type == BrowserTabType.Navigation && !Tab.Content.Private)
+                        if ((Tab.Type == BrowserTabType.Navigation && !Tab.Content.Private) || Tab.Type == BrowserTabType.Group)
                         {
-                            TabsSave.Set(Count.ToString(), Tab.Content.Address);
-                            if (i == OriginalSelectedIndex)
-                                SelectedIndex = Count;
+                            if (Tab.Type == BrowserTabType.Navigation)
+                            {
+                                TabsSave.Set(Count.ToString(), ((int)Tab.Type).ToString(), Tab.Content.Address, Tab.TabGroup?.Header ?? "");
+                                if (i == OriginalSelectedIndex)
+                                    SelectedIndex = Count;
+                            }
+                            else if (Tab.Type == BrowserTabType.Group)
+                                TabsSave.Set(Count.ToString(), ((int)Tab.Type).ToString(), Utils.ColorToHex(Tab.TabGroup.Background.Color), Tab.TabGroup.Header);
                             Count++;
                         }
                     }

@@ -10,7 +10,7 @@ namespace SLBr
     {
         private void TabIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
         {
-            BrowserTabItem CurrentTab = (BrowserTabItem)((TabItem)e.Source).DataContext;
+            BrowserTabItem CurrentTab = (BrowserTabItem)((Image)e.Source).DataContext;
             if (CurrentTab != null)
                 CurrentTab.Icon = App.Instance.TabIcon;
         }
@@ -120,7 +120,13 @@ namespace SLBr
                 TabItem SourceTabItem = (TabItem)e.Data.GetData(typeof(TabItem))!;
                 BrowserTabItem Tab = (BrowserTabItem)SourceTabItem.DataContext;
                 int OldIndex = FocusedWindow.Tabs.IndexOf(Tab);
+
+                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
+
                 int NewIndex = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
+                BrowserTabItem TargetTab = NewIndex > VisibleTabs.Count - 1 ? VisibleTabs.Last() : VisibleTabs[NewIndex];
+                if (FocusedWindow.Tabs[NewIndex] != TargetTab)
+                    NewIndex = FocusedWindow.Tabs.IndexOf(TargetTab);
 
                 if (OldIndex == NewIndex || OldIndex == NewIndex - 1)
                     return;
@@ -164,6 +170,7 @@ namespace SLBr
 
         private void ShowInsertIndicator(Panel Panel, int Index)
         {
+            List<UIElement> VisibleElements = Panel.Children.OfType<UIElement>().Where(i => i.Visibility == Visibility.Visible).ToList();
             TabControl _TabControl = Panel.TemplatedParent as TabControl;
             Border InsertIndicator = _TabControl?.Template.FindName("InsertIndicator", _TabControl) as Border;
             InsertIndicator?.Visibility = Visibility.Visible;
@@ -171,27 +178,28 @@ namespace SLBr
             bool Vertical = _TabControl.TabStripPlacement == Dock.Left || _TabControl.TabStripPlacement == Dock.Right;
 
             double Offset = 0;
-            if (Index < Panel.Children.Count)
+            if (Index < VisibleElements.Count)
             {
-                FrameworkElement TargetTab = (FrameworkElement)Panel.Children[Index];
+                FrameworkElement TargetTab = (FrameworkElement)VisibleElements[Index];
                 Point Position = TargetTab.TranslatePoint(new Point(0, 0), Panel);
                 Offset = Vertical ? Position.Y : Position.X;
             }
-            else if (Panel.Children.Count > 0)
+            else if (VisibleElements.Count > 0)
             {
-                FrameworkElement LastTab = (FrameworkElement)Panel.Children[^1];
+                FrameworkElement LastTab = (FrameworkElement)VisibleElements[^1];
                 Point Position = LastTab.TranslatePoint(new Point(LastTab.ActualWidth, 0), Panel);
                 Offset = Vertical ? Position.Y : Position.X;
             }
             if (Window.GetWindow(_TabControl) is MainWindow FocusedWindow && FocusedWindow.TabGroups.Count != 0)
             {
+                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
                 BrowserTabItem LeftTab = null;
                 BrowserTabItem RightTab = null;
                 if (Index > 0)
-                    LeftTab = FocusedWindow.Tabs[Index - 1];
-                if (Index < FocusedWindow.Tabs.Count - 1)
+                    LeftTab = Index > VisibleTabs.Count ? VisibleTabs.Last() : VisibleTabs[Index - 1];
+                if (Index < VisibleTabs.Count - 1)
                     //WARNING: Functions as intended, do not modify.
-                    RightTab = FocusedWindow.Tabs[Index];
+                    RightTab = VisibleTabs[Index];
 
                 if (LeftTab != null && RightTab != null && LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
                     InsertIndicator.Background = LeftTab.TabGroup.Background;
@@ -212,10 +220,12 @@ namespace SLBr
         private int GetInsertIndex(Panel Panel, Point MousePosition, MainWindow CurrentWindow)
         {
             bool Vertical = Panel.TemplatedParent is TabControl _TabControl && (_TabControl.TabStripPlacement == Dock.Left || _TabControl.TabStripPlacement == Dock.Right);
-            int Index = Panel.Children.Count;
-            for (int i = 0; i < Panel.Children.Count; i++)
+            List<UIElement> VisibleElements = Panel.Children.OfType<UIElement>().Where(i => i.Visibility == Visibility.Visible).ToList();
+            int Index = VisibleElements.Count;
+
+            for (int i = 0; i < VisibleElements.Count; i++)
             {
-                FrameworkElement TargetTab = (FrameworkElement)Panel.Children[i];
+                FrameworkElement TargetTab = (FrameworkElement)VisibleElements[i];
                 Point TabPosition = TargetTab.TranslatePoint(new Point(0, 0), Panel);
                 double Midpoint = Vertical ? TabPosition.Y + TargetTab.ActualHeight / 2 : TabPosition.X + TargetTab.ActualWidth / 2;
                 double MouseAxis = Vertical ? MousePosition.Y : MousePosition.X;
@@ -225,8 +235,8 @@ namespace SLBr
                     break;
                 }
             }
-            int MaxIndex = Panel.Children.Count;
-            for (int i = 0; i < Panel.Children.Count; i++)
+            int MaxIndex = VisibleElements.Count;
+            for (int i = 0; i < VisibleElements.Count; i++)
             {
                 if (CurrentWindow.Tabs[i]?.Type == BrowserTabType.Add && i > 0)
                 {
@@ -290,6 +300,15 @@ namespace SLBr
                 Panel?.SetChildrenMaxWidths(Panel.ActualWidth);
             }
             //}
+        }
+
+        private void NewTab_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left && Window.GetWindow((FrameworkElement)sender) is MainWindow FocusedWindow)
+            {
+                if (FocusedWindow.TabsUI.Visibility == Visibility.Visible)
+                    FocusedWindow.NewTab(App.Instance.GlobalSave.Get("Homepage"), true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+            }
         }
     }
 }

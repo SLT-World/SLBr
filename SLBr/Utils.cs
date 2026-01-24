@@ -938,20 +938,24 @@ namespace SLBr
         
         public static bool IsDomain(string Url)
         {
-            string Host = new IdnMapping().GetAscii(FastHost(Url));
-            int LastDot = Host.LastIndexOf('.');
-            if (LastDot <= 0 || LastDot == Host.Length - 1)
-                return false;
-            string SLD = Host[..LastDot];
-            foreach (char _Char in SLD)
-                //INFO: Underscores are allowed in Chromium "a_b.com"
-                if (!char.IsLetterOrDigit(_Char) && _Char != '_' && _Char != '-' && _Char != '.')
+            try
+            {
+                string Host = new IdnMapping().GetAscii(FastHost(Url));
+                int LastDot = Host.LastIndexOf('.');
+                if (LastDot <= 0 || LastDot == Host.Length - 1)
                     return false;
-            string TLD = Host[(LastDot + 1)..];
-            if (IsAlphabeticalTLD(TLD))
-                return true;
-            if (IsPunycodeTLD(TLD))
-                return true;
+                string SLD = Host[..LastDot];
+                foreach (char _Char in SLD)
+                    //INFO: Underscores are allowed in Chromium "a_b.com"
+                    if (!char.IsLetterOrDigit(_Char) && _Char != '_' && _Char != '-' && _Char != '.')
+                        return false;
+                string TLD = Host[(LastDot + 1)..];
+                if (IsAlphabeticalTLD(TLD))
+                    return true;
+                if (IsPunycodeTLD(TLD))
+                    return true;
+            }
+            catch { }
             return false;
         }
         public static bool IsAlphabeticalTLD(string TLD)
@@ -991,8 +995,8 @@ namespace SLBr
         {
             if (IsCode(Url))
                 return false;
-            if (Uri.IsWellFormedUriString(Url, UriKind.RelativeOrAbsolute))// && !Uri.IsWellFormedUriString(Uri.EscapeDataString(Url), UriKind.RelativeOrAbsolute))
-                return true;
+            /*if (Uri.IsWellFormedUriString(Url, UriKind.RelativeOrAbsolute))// && !Uri.IsWellFormedUriString(Uri.EscapeDataString(Url), UriKind.RelativeOrAbsolute))
+                return true;*/
 
             ReadOnlySpan<char> Scheme = string.Empty;
 
@@ -1334,9 +1338,9 @@ namespace SLBr
         /*public void Set(string Key, object Value) =>
             Data[Key] = Value.ToString();*/
 
-        public void Set(string Key, string Value_1, string Value_2)
+        public void Set(string Key, params string[] Items)
         {
-            Set(Key, string.Join(ValueSeparator, Value_1, Value_2));
+            Set(Key, string.Join(ValueSeparator, Items));
         }
         public string Get(string Key, string Default = "NOTFOUND")
         {

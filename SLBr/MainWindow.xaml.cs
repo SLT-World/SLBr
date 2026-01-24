@@ -879,11 +879,15 @@ namespace SLBr
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             _Tab.Content?.DevTools();//(false, XCoord, YCoord);
         }
-        public TabGroup NewTabGroup(string Header, Color Background)
+        public TabGroup NewTabGroup(string Header, Color Background, int Index = -1)
         {
             TabGroup NewTabGroup = new() { Background = new SolidColorBrush(Background), Header = Header, IsCollapsed = false };
             TabGroups.Add(NewTabGroup);
-            Tabs.Insert(0, new BrowserTabItem(this) { TabGroup = NewTabGroup, Type = BrowserTabType.Group });
+            BrowserTabItem _Tab = new(this) { TabGroup = NewTabGroup, Type = BrowserTabType.Group };
+            if (VerticalTabs)
+                Tabs.Insert(Index != -1 ? Index : Tabs.Count, _Tab);
+            else
+                Tabs.Insert(Index != -1 ? Index : Tabs.Count - 1, _Tab);
             return NewTabGroup;
         }
         int GetGroupOrder(BrowserTabItem Tab)
@@ -896,7 +900,7 @@ namespace SLBr
         }
         public void ReorderTabs()
         {
-            BrowserTabItem Selected = Tabs[TabsUI.SelectedIndex];
+            /*BrowserTabItem Selected = Tabs[TabsUI.SelectedIndex];
             List<BrowserTabItem> Ordered = Tabs
                 .Select((Tab, Index) => new { Tab, Index })
                 .OrderBy(x => x.Tab.TabGroup != null ? 0 : 1)
@@ -912,7 +916,7 @@ namespace SLBr
                 if (CurrentIndex != i)
                     Tabs.Move(CurrentIndex, i);
             }
-            TabsUI.SelectedIndex = Tabs.IndexOf(Selected);
+            TabsUI.SelectedIndex = Tabs.IndexOf(Selected);*/
         }
         public IWebView NewTab(string Url, bool IsSelected = false, int Index = -1, bool IsPrivate = false, TabGroup? Group = null)
         {
@@ -967,28 +971,35 @@ namespace SLBr
             BrowserTabItem _Tab = Id == -1 ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(Id);
             if (_Tab.Type == BrowserTabType.Navigation)
             {
-                /*
-                            Guid TabGroupGUID = Guid.Parse(V3);
-                            TabGroup Group = TabGroups.FirstOrDefault(i => i.ID == TabGroupGUID);
-                            BrowserTabItem Tab = Tabs.FirstOrDefault(i => i.Type == BrowserTabType.Group && i.TabGroup == Group);*/
                 bool IsSelected = Id == -1 || _Tab == Tabs[TabsUI.SelectedIndex];
                 _Tab.Content?.Dispose();
-                Tabs.Remove(_Tab);
-                if (IsSelected && Tabs.Any(i => i.Type == BrowserTabType.Navigation))
+                if (IsSelected && Tabs.Any(i => i != _Tab && i.Type == BrowserTabType.Navigation))
                 {
-                    if (TabsUI.SelectedIndex > 0)
-                        TabsUI.SelectedIndex--;
+                    int SelectedIndex = TabsUI.SelectedIndex;
+                    if (SelectedIndex > 0)
+                        SelectedIndex--;
                     else
-                        TabsUI.SelectedIndex++;
-                    if (TabsUI.SelectedIndex > Tabs.Count - 1)
-                        TabsUI.SelectedIndex = Tabs.Count - 1;
+                        SelectedIndex++;
+                    if (SelectedIndex > Tabs.Count - 1)
+                        SelectedIndex = Tabs.Count - 1;
+                    if (Tabs[SelectedIndex].Type != BrowserTabType.Navigation)
+                    {
+                        BrowserTabItem? TargetTab = Tabs.Where(i => i != _Tab && i.Type == BrowserTabType.Navigation).OrderBy(i => SelectedIndex - Tabs.IndexOf(i)).FirstOrDefault();
+                        if (TargetTab != null)
+                            SelectedIndex = Tabs.IndexOf(TargetTab);
+                        else
+                            SelectedIndex = -1;
+                    }
+                    if (SelectedIndex == -1)
+                        TabsUI.SelectedItem = null;
+                    else
+                        TabsUI.SelectedIndex = SelectedIndex;
                 }
+                Tabs.Remove(_Tab);
             }
             else if (_Tab.Type == BrowserTabType.Group)
             {
-                Tabs.Remove(_Tab);
                 List<BrowserTabItem> ProcessTabs = Tabs.Where(i => i.TabGroup == _Tab.TabGroup).ToList();
-
                 for (int i = 0; i < ProcessTabs.Count(); i++)
                 {
                     var _FTab = ProcessTabs[i];
@@ -997,14 +1008,28 @@ namespace SLBr
                     Tabs.Remove(_FTab);
                     if (IsSelected && Tabs.Any(i => i.Type == BrowserTabType.Navigation))
                     {
-                        if (TabsUI.SelectedIndex > 0)
-                            TabsUI.SelectedIndex--;
+                        int SelectedIndex = TabsUI.SelectedIndex;
+                        if (SelectedIndex > 0)
+                            SelectedIndex--;
                         else
-                            TabsUI.SelectedIndex++;
-                        if (TabsUI.SelectedIndex > Tabs.Count - 1)
-                            TabsUI.SelectedIndex = Tabs.Count - 1;
+                            SelectedIndex++;
+                        if (SelectedIndex > Tabs.Count - 1)
+                            SelectedIndex = Tabs.Count - 1;
+                        if (Tabs[SelectedIndex].Type != BrowserTabType.Navigation)
+                        {
+                            BrowserTabItem? TargetTab = Tabs.Where(i => i != _Tab && i.Type == BrowserTabType.Navigation).OrderBy(i => SelectedIndex - Tabs.IndexOf(i)).FirstOrDefault();
+                            if (TargetTab != null)
+                                SelectedIndex = Tabs.IndexOf(TargetTab);
+                            else
+                                SelectedIndex = -1;
+                        }
+                        if (SelectedIndex == -1)
+                            TabsUI.SelectedItem = null;
+                        else
+                            TabsUI.SelectedIndex = SelectedIndex;
                     }
                 }
+                Tabs.Remove(_Tab);
             }
             if (!Tabs.Any(i => i.Type == BrowserTabType.Navigation))
             {
@@ -1012,6 +1037,7 @@ namespace SLBr
                 Close();
             }
         }
+
         public void Find(string Text = "")
         {
             GetTab().Content?.Find(Text);
@@ -1057,12 +1083,7 @@ namespace SLBr
         {
             try
             {
-                if (Tabs[TabsUI.SelectedIndex].Type == BrowserTabType.Add)
-                {
-                    if (TabsUI.Visibility == Visibility.Visible)
-                        NewTab(App.Instance.GlobalSave.Get("Homepage"), true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
-                }
-                else
+                if (Tabs[TabsUI.SelectedIndex].Type != BrowserTabType.Add)
                 {
                     BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
                     foreach (BrowserTabItem _Tab in Tabs)
