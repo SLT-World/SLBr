@@ -3443,7 +3443,7 @@ namespace SLBr.Pages
         private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
         {
             OmniBoxFastTimer.Stop();
-            string CurrentText = OmniBox.Text.Trim();
+            string CurrentText = OmniBox.Text;
             SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
             SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
             Suggestions.Clear();
@@ -3460,6 +3460,7 @@ namespace SLBr.Pages
                     Suggestions.Add(App.GenerateSuggestion(CurrentText, FirstType, Color));
                 try
                 {
+                    CurrentText = CurrentText.Trim();
                     if (CurrentText.Length <= 60)
                     {
                         string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
