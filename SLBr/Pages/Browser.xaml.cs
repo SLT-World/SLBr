@@ -178,7 +178,7 @@ namespace SLBr.Pages
                     if (V2 == "Tab")
                     {
                         BrowserTabItem _Tab = Tab.ParentWindow.GetBrowserTabWithId(int.Parse(V1));
-                        Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1, Private);
+                        Tab.ParentWindow.NewTab(_Tab.Content.Address, true, Tab.ParentWindow.Tabs.IndexOf(_Tab) + 1, Private, _Tab.TabGroup);
                     }
                     else if (V2 == "Private")
                         Tab.ParentWindow.NewTab(V1, true, -1, true);
@@ -322,7 +322,7 @@ namespace SLBr.Pages
                                 InformationDialogWindow InfoWindow = new("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
                                 InfoWindow.Topmost = true;
                                 if (InfoWindow.ShowDialog() == true)
-                                    Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+                                    Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                                 break;
                             }
                             DisposeBrowserCore();
@@ -1015,7 +1015,7 @@ namespace SLBr.Pages
                 e.WebView = Popup.WebView;
             }
             else
-                e.WebView = Tab.ParentWindow.NewTab(e.Url, !e.Background, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private ? Private : Private);
+                e.WebView = Tab.ParentWindow.NewTab(e.Url, !e.Background, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private ? Private : Private, Tab.TabGroup);
         }
 
         private void WebView_NavigationError(object? sender, NavigationErrorEventArgs e)
@@ -1325,8 +1325,9 @@ namespace SLBr.Pages
                     if (i == WebContextMenuType.Link)
                     {
                         IsPageMenu = false;
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share link", Command = new RelayCommand(_ => Share(e.LinkUrl)) });
                     }
                     else if (i == WebContextMenuType.Selection && !e.IsEditable)
                     {
@@ -1338,7 +1339,7 @@ namespace SLBr.Pages
                     }
                     else if (i == WebContextMenuType.Media)
                     {
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                         if (e.MediaType == WebContextMenuMediaType.Image)
                         {
                             IsPageMenu = false;
@@ -1375,7 +1376,7 @@ namespace SLBr.Pages
                                             Url = $"https://tineye.com/search?url={Uri.EscapeDataString(e.SourceUrl)}";
                                             break;
                                     }
-                                    Tab.ParentWindow.NewTab(Url, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private);
+                                    Tab.ParentWindow.NewTab(Url, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup);
                                 })
                             });
                         }
@@ -1471,7 +1472,7 @@ namespace SLBr.Pages
                 if (!string.IsNullOrEmpty(e.SelectionText))
                 {
                     BrowserMenu.Items.Add(new Separator());
-                    BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
+                    BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                 }
             }
             else if (IsPageMenu)// && e.MediaType == WebContextMenuMediaType.None)
@@ -1502,7 +1503,7 @@ namespace SLBr.Pages
 
                 MenuItem AdvancedSubMenuModel = new() { Icon = "\uec7a", Header = "Advanced" };
                 AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\uec7a", Header = "Inspect", Command = new RelayCommand(_ => DevTools()) });
-                AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab($"view-source:{e.FrameUrl}", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
+                AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab($"view-source:{e.FrameUrl}", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                 BrowserMenu.Items.Add(AdvancedSubMenuModel);
             }
             BrowserMenu.PlacementTarget = WebView?.Control;
@@ -1822,6 +1823,7 @@ namespace SLBr.Pages
                     }
                     if (string.IsNullOrEmpty(SetSiteInfo))
                     {
+                        CertificateInfo.Visibility = Visibility.Collapsed;
                         if (IsHTTP)
                         {
                             SiteInformationCertificate.Visibility = Visibility.Visible;
@@ -1858,15 +1860,13 @@ namespace SLBr.Pages
                                                 CertificateStart.Text = _SSL.X509Certificate.NotBefore.Date.ToShortDateString();
                                                 CertificateEnd.Text = _SSL.X509Certificate.NotAfter.Date.ToShortDateString();
                                             }
-                                            else
-                                                CertificateInfo.Visibility = Visibility.Collapsed;
                                         }
-                                        else
-                                            CertificateInfo.Visibility = Visibility.Collapsed;
                                     }
                                 }
                                 else
+                                {
                                     SetSiteInfo = "Insecure";
+                                }
                             }
                             else
                             {
@@ -1874,12 +1874,10 @@ namespace SLBr.Pages
                                     SetSiteInfo = "Secure";
                                 else
                                     SetSiteInfo = "Insecure";
-                                CertificateInfo.Visibility = Visibility.Collapsed;
                             }
                         }
                         else
                         {
-                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             if (Address.StartsWith("file:"))
                                 SetSiteInfo = "File";
                             else if (Address.StartsWith("slbr:"))
@@ -2100,10 +2098,15 @@ namespace SLBr.Pages
             WebView?.Stop();
         }
 
-        public void Share()
+        public void Share(string? Url = null)
         {
-            if (Uri.TryCreate(Address, UriKind.Absolute, out Uri? _Uri))
-                Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), Title.Length != 0 ? Title : "Shared link", _Uri);
+            if (Uri.TryCreate(Url ?? Address, UriKind.Absolute, out Uri? _Uri))
+            {
+                if (Url != null)
+                    Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), "Shared link", _Uri);
+                else
+                    Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), Title.Length != 0 ? Title : "Shared link", _Uri);
+            }
         }
 
         public static void ActivatePopup(Popup popup)
@@ -3709,6 +3712,35 @@ namespace SLBr.Pages
         private void DownloadsFolderButton_Click(object sender, RoutedEventArgs e)
         {
             Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{App.Instance.GlobalSave.Get("DownloadPath")}\"") { UseShellExecute = true });
+        }
+
+        private void FavouriteAction_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem _MenuItem && _MenuItem.DataContext is ActionStorage Favourite)
+            {
+                string Action = _MenuItem.Header.ToString();
+                if (Action == "Edit")
+                {
+                    DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite",
+                        new List<InputField>
+                        {
+                            new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
+                            new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Tooltip },
+                        },
+                        "\ue70f"
+                    );
+                    _DynamicDialogWindow.Topmost = true;
+                    if (_DynamicDialogWindow.ShowDialog() == true)
+                    {
+                        Favourite.Name = _DynamicDialogWindow.InputFields[0].Value;
+                        string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
+                        Favourite.Tooltip = URL;
+                        Favourite.Arguments = $"4<,>{URL}";
+                    }
+                }
+                else if (Action == "Delete")
+                    App.Instance.Favourites.Remove(Favourite);
+            }
         }
     }
 }

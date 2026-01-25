@@ -120,13 +120,13 @@ namespace SLBr.Pages
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            BrowserView.Tab.ParentWindow.NewTab(e.Uri.ToString(), true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+            BrowserView.Tab.ParentWindow.NewTab(e.Uri.ToString(), true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1, BrowserView.Private, BrowserView.Tab.TabGroup);
             e.Handled = true;
         }
 
         private void HyperlinkButton_Click(object sender, RoutedEventArgs e)
         {
-            BrowserView.Tab.ParentWindow.NewTab(((FrameworkElement)sender).Tag.ToString(), true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+            BrowserView.Tab.ParentWindow.NewTab(((FrameworkElement)sender).Tag.ToString(), true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1, BrowserView.Private, BrowserView.Tab.TabGroup);
         }
 
         private void LanguageSelection_SelectionChanged(object sender, SelectionChangedEventArgs e)

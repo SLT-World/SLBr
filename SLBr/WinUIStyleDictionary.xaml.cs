@@ -71,7 +71,6 @@ namespace SLBr
                     NewIndex--;
                 FocusedWindow.Tabs.Move(OldIndex, NewIndex);
                 FocusedWindow.TabsUI.SelectedIndex = NewIndex;
-                Tab.ParentWindow.ReorderTabs();
                 e.Handled = true;
             }
         }

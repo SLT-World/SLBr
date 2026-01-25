@@ -24,7 +24,7 @@ namespace SLBr.Pages
         private void HyperlinkButton_Click(object sender, RoutedEventArgs e)
         {
             string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
-            BrowserView.Tab.ParentWindow.NewTab(Values[1], true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+            BrowserView.Tab.ParentWindow.NewTab(Values[1], true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1, BrowserView.Private, BrowserView.Tab.TabGroup);
         }
 
         private void HistoryButton_MouseUp(object sender, MouseButtonEventArgs e)
@@ -32,7 +32,7 @@ namespace SLBr.Pages
             if (e.ChangedButton == MouseButton.Middle)
             {
                 string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
-                BrowserView.Tab.ParentWindow.NewTab(Values[1], false, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
+                BrowserView.Tab.ParentWindow.NewTab(Values[1], false, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1, BrowserView.Private, BrowserView.Tab.TabGroup);
             }
         }
 

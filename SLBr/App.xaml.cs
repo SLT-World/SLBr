@@ -72,7 +72,11 @@ namespace SLBr
             PropertyChanged(this, new PropertyChangedEventArgs(Name));
         #endregion
 
-        public TabGroup() { }
+        public TabGroup(MainWindow _ParentWindow)
+        {
+            ParentWindow = _ParentWindow;
+        }
+        public MainWindow ParentWindow { get; set; }
         public bool IsCollapsed
         {
             get { return _IsCollapsed; }
@@ -88,6 +92,8 @@ namespace SLBr
             get { return _Header; }
             set
             {
+                if (ParentWindow.TabGroups.Any(i => i.Header == value))
+                    return;
                 _Header = value;
                 RaisePropertyChanged();
             }
@@ -1949,8 +1955,9 @@ Inner Exception: ```{7} ```";
 
             if (!GlobalSave.Has("StartupBoost"))
             {
-                StartupManager.EnableStartup(CurrentProfile.Name);
-                GlobalSave.Set("StartupBoost", true.ToString());
+                if (CurrentProfile.Default)
+                    StartupManager.EnableStartup(CurrentProfile.Name);
+                GlobalSave.Set("StartupBoost", CurrentProfile.Default.ToString());
             }
 
             if (!(CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest"))
@@ -2143,7 +2150,7 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("TranslationProvider", 0);
 
             if (!GlobalSave.Has("WebEngine"))
-                GlobalSave.Set("WebEngine", 0);
+                GlobalSave.Set("WebEngine", 1);
 
             if (!GlobalSave.Has("AntiTamper"))
                 GlobalSave.Set("AntiTamper", false);

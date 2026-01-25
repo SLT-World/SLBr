@@ -420,7 +420,7 @@
                                                         </StackPanel>
                                                     </DockPanel>
                                                 </StackPanel>
-                                                <StackPanel Margin="0,10,0,0" x:Name="SiteInformationCertificate">
+                                                <StackPanel Visibility="Collapsed" Margin="0,10,0,0" x:Name="SiteInformationCertificate">
                                                     <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
                                                     <DockPanel>
                                                         <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
@@ -509,10 +509,18 @@
                                     <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" MouseUp="FavouriteButton_MouseUp" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
                                         <Button.Resources>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"></Setter>
-                                                <Setter Property="MaxWidth" Value="150"></Setter>
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                <Setter Property="MaxWidth" Value="150"/>
                                             </Style>
                                         </Button.Resources>
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Icon="&#xe70f;" Click="FavouriteAction_Click" Header="Edit"/>
+                                                <MenuItem Icon="&#xe74d;" Click="FavouriteAction_Click" Header="Delete"/>
+                                                <Separator/>
+                                                <MenuItem Header="Favourites Manager" Icon="&#xe9a4;" Click="ButtonAction" Tag="5&lt;,&gt;slbr://favourites/"/>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
                                     </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
