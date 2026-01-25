@@ -1345,9 +1345,6 @@ namespace SLBr
             if (!WebViewManager.IsWebView2Initialized)
                 WebViewManager.InitializeWebView2();
             Browser = new WebView2();
-            /*KeyboardNavigation.SetDirectionalNavigation(Browser, KeyboardNavigationMode.None);
-            KeyboardNavigation.SetTabNavigation(Browser, KeyboardNavigationMode.None);
-            KeyboardNavigation.SetControlTabNavigation(Browser, KeyboardNavigationMode.None);*/
             Browser.CoreWebView2InitializationCompleted += Browser_CoreWebView2InitializationCompleted;
 
             try
@@ -1360,34 +1357,9 @@ namespace SLBr
                 WebViewManager.DeleteWebView2HighDPIRegistry();
                 Browser.EnsureCoreWebView2Async(WebViewManager.WebView2Environment, Settings.Private ? WebViewManager.WebView2PrivateControllerOptions : WebViewManager.WebView2ControllerOptions);
             }
-            //Browser.LostFocus += Browser_LostFocus;
             Browser.KeyDown += (s, e) => HotKeyManager.HandleKeyDown(e);
             ZoomFactor = 1;
         }
-
-        /*private void Browser_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (Keyboard.Modifiers == ModifierKeys.None && (Keyboard.IsKeyDown(Key.Up) || Keyboard.IsKeyDown(Key.Down) || Keyboard.IsKeyDown(Key.Left) || Keyboard.IsKeyDown(Key.Right) || Keyboard.IsKeyDown(Key.Tab)))
-            {
-                e.Handled = true;
-
-                string? JSKey = null;
-                int JSKeyCode = 0;
-
-                if (Keyboard.IsKeyDown(Key.Up)) { JSKey = "ArrowUp"; JSKeyCode = 38; }
-                else if (Keyboard.IsKeyDown(Key.Down)) { JSKey = "ArrowDown"; JSKeyCode = 40; }
-                else if (Keyboard.IsKeyDown(Key.Left)) { JSKey = "ArrowLeft"; JSKeyCode = 37; }
-                else if (Keyboard.IsKeyDown(Key.Right)) { JSKey = "ArrowRight"; JSKeyCode = 39; }
-                else if (Keyboard.IsKeyDown(Key.Tab)) { JSKey = "Tab"; JSKeyCode = 9; }
-                App.Instance.Dispatcher.BeginInvoke(async () =>
-                {
-                    if (!Browser.IsFocused)
-                        Browser.Focus();
-                    if (JSKey != null)
-                        ExecuteScript($@"document.dispatchEvent(new KeyboardEvent('keydown',{{key:'{JSKey}',code:'{JSKey}',keyCode:{JSKeyCode},which:{JSKeyCode},bubbles:true}}));document.dispatchEvent(new KeyboardEvent('keyup',{{key:'{JSKey}',code:'{JSKey}',keyCode:{JSKeyCode},which:{JSKeyCode},bubbles:true}}));");
-                }, System.Windows.Threading.DispatcherPriority.Input);
-            }
-        }*/
 
         private void Browser_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
         {
@@ -1449,8 +1421,6 @@ namespace SLBr
             }
             BrowserCore.ContainsFullScreenElementChanged += (s, e) => FullscreenChanged?.RaiseUIAsync(this, BrowserCore.ContainsFullScreenElement);
             BrowserCore.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
-            //Core.AddWebResourceRequestedFilter("http://*", CoreWebView2WebResourceContext.All);
-            //Core.AddWebResourceRequestedFilter("https://*", CoreWebView2WebResourceContext.All);
             BrowserCore.WebResourceRequested += Browser_WebResourceRequested;
             BrowserCore.WebResourceResponseReceived += Browser_WebResourceResponseReceived;
             if (Settings.JavaScriptMessage)

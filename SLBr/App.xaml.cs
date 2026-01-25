@@ -1,4 +1,5 @@
 ﻿using CefSharp;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
@@ -2150,7 +2151,13 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("TranslationProvider", 0);
 
             if (!GlobalSave.Has("WebEngine"))
-                GlobalSave.Set("WebEngine", 1);
+            {
+                int DefaultEngine = 1;
+                string? AvailableVersion = null;
+                try { AvailableVersion = CoreWebView2Environment.GetAvailableBrowserVersionString(); }
+                catch (WebView2RuntimeNotFoundException) { DefaultEngine = 0; }
+                GlobalSave.Set("WebEngine", DefaultEngine);
+            }
 
             if (!GlobalSave.Has("AntiTamper"))
                 GlobalSave.Set("AntiTamper", false);
@@ -2250,7 +2257,7 @@ Inner Exception: ```{7} ```";
                                 _Window.NewTab(Url, i == SelectedIndex, -1, PrivateTabs, _Window.TabGroups.FirstOrDefault(i => i.Header == TabGroupName));
                             }
                             else if (TabType == BrowserTabType.Group)
-                                _Window.NewTabGroup(TabGroupName, Utils.HexToColor(Url), -1);
+                                _Window.NewTabGroup(TabGroupName, Utils.HexToColor(Url), -1, Data.Length > 3 ? Data[3] == "0" : false);
                         }
                     }
                     else
@@ -3613,7 +3620,7 @@ Inner Exception: ```{7} ```";
                                     SelectedIndex = Count;
                             }
                             else if (Tab.Type == BrowserTabType.Group)
-                                TabsSave.Set(Count.ToString(), ((int)Tab.Type).ToString(), Utils.ColorToHex(Tab.TabGroup.Background.Color), Tab.TabGroup.Header);
+                                TabsSave.Set(Count.ToString(), ((int)Tab.Type).ToString(), Utils.ColorToHex(Tab.TabGroup.Background.Color), Tab.TabGroup.Header, Tab.TabGroup.IsCollapsed ? "0" : "1");
                             Count++;
                         }
                     }

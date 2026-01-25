@@ -34,6 +34,7 @@
                                 <Separator Visibility="Collapsed" x:Name="NewUpdateMenuSeparator"/>
                                 <MenuItem Icon="&#xEC6C;" Header="New Tab" Click="ButtonAction" Tag="5&lt;,&gt;{Homepage}"/>
                                 <MenuItem Icon="&#xE727;" Header="New Private Tab" Click="ButtonAction" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
+                                <MenuItem Icon="&#xf16b;" Header="New Group" Click="ButtonAction" Tag="80"/>
                                 <MenuItem Icon="&#xe737;" Header="New Window" Click="ButtonAction" Tag="7"/>
                                 <Separator/>
                                 <MenuItem Icon="&#xE81C;" Header="History">

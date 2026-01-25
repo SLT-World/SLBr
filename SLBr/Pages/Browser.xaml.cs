@@ -350,6 +350,9 @@ namespace SLBr.Pages
                 case Actions.Translate:
                     Translate(V1 == "1");
                     break;
+                case Actions.CreateGroup:
+                    Tab.ParentWindow.CreateGroup();
+                    break;
             }
         }
         public WriteableBitmap? QRBitmap = null;

@@ -879,9 +879,9 @@ namespace SLBr
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             _Tab.Content?.DevTools();//(false, XCoord, YCoord);
         }
-        public TabGroup NewTabGroup(string Header, Color Background, int Index = -1)
+        public TabGroup NewTabGroup(string Header, Color Background, int Index = -1, bool IsCollapsed = false)
         {
-            TabGroup NewTabGroup = new(this) { Background = new SolidColorBrush(Background), Header = Header, IsCollapsed = false };
+            TabGroup NewTabGroup = new(this) { Background = new SolidColorBrush(Background), Header = Header, IsCollapsed = IsCollapsed };
             TabGroups.Add(NewTabGroup);
             BrowserTabItem _Tab = new(this) { TabGroup = NewTabGroup, Type = BrowserTabType.Group };
             if (VerticalTabs)
