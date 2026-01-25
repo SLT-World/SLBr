@@ -79,12 +79,12 @@ namespace SLBr.Controls
     /// </summary>
     public partial class DynamicDialogWindow : Window
     {
-        /*TODO: Expand features
-         * Can add more input types
-         * - Password
-         * - URL (Validates the input is a valid url)
-         * - Dropdown
-         * - Date & time? Maybe useless
+        /*TODO: Expand input types
+         * PasswordBox
+         * URL (Confirm URL validity)
+         * ComboBox
+         * DatePicker
+         * Slider
          */
         public ObservableCollection<InputField> InputFields { get; set; } = [];
 

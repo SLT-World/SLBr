@@ -3565,6 +3565,8 @@ namespace SLBr.Pages
         private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
         {
             OmniBoxFastTimer.Stop();
+            if (!OmniBox.IsDropDownOpen)
+                return;
             string CurrentText = OmniBox.Text.Trim();
             SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
             SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
@@ -3601,7 +3603,6 @@ namespace SLBr.Pages
             SmartSuggestionCancellation = new CancellationTokenSource();
             var Token = SmartSuggestionCancellation.Token;
             SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
-
             OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type, Color);
             if (!Token.IsCancellationRequested)
             {

@@ -111,14 +111,14 @@
                                             </Style>
                                         </ListBox.Resources>
                                         <ListBoxItem Background="White" ToolTip="White"/>
-                                        <ListBoxItem Background="RoyalBlue" ToolTip="Blue"/>
                                         <ListBoxItem Background="Red" ToolTip="Red"/>
+                                        <ListBoxItem Background="Orange" ToolTip="Orange"/>
                                         <ListBoxItem Background="Gold" ToolTip="Yellow"/>
                                         <ListBoxItem Background="MediumSeaGreen" ToolTip="Green"/>
+                                        <ListBoxItem Background="Cyan" ToolTip="Cyan"/>
+                                        <ListBoxItem Background="RoyalBlue" ToolTip="Blue"/>
                                         <ListBoxItem Background="HotPink" ToolTip="Pink"/>
                                         <ListBoxItem Background="MediumPurple" ToolTip="Purple"/>
-                                        <ListBoxItem Background="Cyan" ToolTip="Cyan"/>
-                                        <ListBoxItem Background="Orange" ToolTip="Orange"/>
                                         <ListBoxItem Background="Transparent" ToolTip="Custom" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Content="&#xef3c;" Margin="0" Foreground="{StaticResource SecondaryBrush}"/>
                                     </ListBox>
                                 </StackPanel>

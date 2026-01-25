@@ -2328,6 +2328,7 @@ Margin="{TemplateBinding Padding}"/>
 
     <ContextMenu x:Key="AddTabContextMenu" OverridesDefaultStyle="False">
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
+        <MenuItem Icon="&#xE727;" Click="ButtonAction" Header="New Private Tab" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
         <MenuItem Icon="&#xf16b;" Click="ButtonAction" Header="New Group" Tag="80"/>
     </ContextMenu>
 
