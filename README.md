@@ -26,11 +26,12 @@ See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Tab Unloading:** Save memory by unloading inactive tabs.
 - **Smart Address Bar:** Search suggestions directly in the address bar, with quick calculations, weather, and translation.
 - **Private Tabs (Incognito Tabs):** Open private browsing sessions that don't store history and cookies.
-- **Clipboard & Download Popup:** Attach recent images from the clipboard/downloads, inspired by Opera's Easy Files. (Only available for the Chromium web engine)
-- **Extension Support:** Supports Chrome web store extensions.
+- **Tab Groups:** Organize tabs with color-coding & naming.
+- **Profile Manager:** Manage multiple profiles on startup.
 - **Web Risk Service:** Protects against malicious websites with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
-- **Direct Translation:** Directly translate websites without proxies with Google, Microsoft, Yandex & Lingvanex providers.
-- **Anti-Tamper Mode:** Keeps browsing unrestricted by allowing text selection, copy/paste, right-click menus, and developer tools on sites that block them.
+- **Web Page Translation:** Directly translate websites without proxies with Google, Microsoft, Yandex & Lingvanex providers.
+- **Clipboard & Download Popup:** Attach recent images from the clipboard/downloads, inspired by Opera's Easy Files. (Only for the Chromium web engine)
+- **Extension Support:** Supports Chrome web store extensions. (Only for the Chromium web engine)
 
 ## Installation
 To install SLBr, follow these steps:
@@ -52,7 +53,7 @@ SLBr is licensed under the [GNU General Public License v3.0](https://github.com/
 Feature suggestions and contributions would be much appreciated. Your input helps improve SLBr.
 Or you can also contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
 
-## Screenshots, Videos & Etc
+## Screenshots & Videos
 
 Website: [SLBr](https://slt-world.github.io/slbr/)
 
@@ -61,6 +62,8 @@ New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
 ![Browser](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/SLBr%20Browser.png)
 ![Performance Settings](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Performance.png)
 ![News Feed](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/News%20Feed.png)
+![Grouped Vertical Tabs](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Grouped%20Vertical%20Tabs.png)
+
 
 Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 
