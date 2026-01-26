@@ -442,6 +442,7 @@ namespace SLBr
         public string SubText { get; set; }
         public string Icon { get; set; }
         public SolidColorBrush Color { get; set; }
+        public SearchProvider? ProviderOverride { get; set; }
     }
 
     public class DownloadEntry : INotifyPropertyChanged
@@ -1018,9 +1019,9 @@ namespace SLBr
             }
         }
 
-        public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush Color, string SubText = "", string? Actual = null)
+        public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null)
         {
-            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText };
+            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride };
             switch (Type)
             {
                 case "S":

@@ -784,7 +784,7 @@ namespace SLBr
         }
         public void CreateGroup()
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Create Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = "" }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Colors.White) } }, "\xf16b");
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Create Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = "" }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Colors.White) } }, "\xF5ED");
             _DynamicDialogWindow.Topmost = true;
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
@@ -1121,7 +1121,7 @@ namespace SLBr
                 {
                     TabPreviewHost.Text = Tab.Header;
                 }
-                TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xec4a";
+                TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xf42f";
                 TabPreviewImage.Source = Tab.Preview;
                 TabPreviewImage.UpdateLayout();
                 TabPreviewPopup.PlacementTarget = Anchor;

@@ -2329,12 +2329,12 @@ Margin="{TemplateBinding Padding}"/>
     <ContextMenu x:Key="AddTabContextMenu" OverridesDefaultStyle="False">
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
         <MenuItem Icon="&#xE727;" Click="ButtonAction" Header="New Private Tab" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
-        <MenuItem Icon="&#xf16b;" Click="ButtonAction" Header="New Group" Tag="80"/>
+        <MenuItem Icon="&#xF5ED;" Click="ButtonAction" Header="New Group" Tag="80"/>
     </ContextMenu>
 
     <ContextMenu x:Key="TabItemContextMenu">
         <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
-        <MenuItem Icon="&#xe8c8;" Click="ButtonAction" Header="Duplicate Tab" Tag="5"/>
+        <MenuItem Icon="&#xEE40;" Click="ButtonAction" Header="Duplicate Tab" Tag="5"/>
         <Separator/>
         <MenuItem Icon="&#xe72c;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Refresh" Tag="3"/>
         <MenuItem Icon="&#xec0a;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Unload" Tag="8"/>
