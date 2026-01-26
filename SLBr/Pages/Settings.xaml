@@ -55,11 +55,15 @@
                                 <CheckBox x:Name="SyncCheckBox" Click="SyncCheckBox_Click" Content="Sync" Width="Auto"/>
                             </GroupBox.Header>
                             <StackPanel>
-                                <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="GitHub Access Token"/>
-                                <TextBox IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="SyncGitHubTextBox" Width="Auto" KeyDown="SyncGitHubTextBox_KeyDown"/>
+                                <DockPanel LastChildFill="True" Margin="0,0,0,10">
+                                    <Button IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" Margin="10,0,0,0" Content="Change" DockPanel.Dock="Right" Click="ChangeSyncGitHubButton_Click"/>
+                                    <Grid>
+                                        <TextBlock VerticalAlignment="Center" Text="GitHub Access Token"/>
+                                    </Grid>
+                                </DockPanel>
                                 <TextBlock Margin="0,0,0,10" FontSize="10" Foreground="{StaticResource GrayBrush}">
                                     GitHub Gist is utilized by SLBr to sync data. Generate a 
-                                    <Hyperlink ToolTip="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" NavigateUri="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" RequestNavigate="Hyperlink_RequestNavigate">GitHub Acccess Token</Hyperlink>.
+                                    <Hyperlink ToolTip="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" NavigateUri="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" RequestNavigate="Hyperlink_RequestNavigate">GitHub Access Token</Hyperlink> to activate sync.
                                 </TextBlock>
                                 <Expander Margin="0,0,0,0" Background="{StaticResource PrimaryBrush}">
                                     <Expander.Header>
@@ -68,18 +72,26 @@
                                     <StackPanel>
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock VerticalAlignment="Center" Text="Favourites"/>
-                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncFavouritesToggleButton" Tag="Favourites" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncFavouritesToggleButton" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                         </DockPanel>
-                                        <DockPanel Margin="0,0,0,10">
+                                        <!--<DockPanel Margin="0,0,0,10">
                                             <TextBlock VerticalAlignment="Center" Text="Tabs"/>
-                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncTabsToggleButton" Tag="Tabs" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                                        </DockPanel>
+                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncTabsToggleButton" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                        </DockPanel>-->
                                         <DockPanel Margin="0,0,0,0">
                                             <TextBlock VerticalAlignment="Center" Text="Settings"/>
-                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncSettingsToggleButton" Tag="Settings" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncSettingsToggleButton" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                         </DockPanel>
                                     </StackPanel>
                                 </Expander>
+                                <GroupBox x:Name="SyncWarning" Visibility="Collapsed" Margin="0,10,0,0" BorderThickness="0" Background="DarkOrange">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock Foreground="White" FontSize="18" FontWeight="UltraLight" FontFamily="{StaticResource IconFontFamily}" VerticalAlignment="Center" Text="&#xec9c;" Margin="0,0,5,0"/>
+                                            <TextBlock Foreground="White" VerticalAlignment="Center" Text="Data is not synchorized."/>
+                                        </DockPanel>
+                                    </StackPanel>
+                                </GroupBox>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
@@ -817,7 +829,7 @@
                             <StackPanel>
                                 <DockPanel>
                                     <TextBlock Foreground="White" FontSize="18" FontWeight="UltraLight" FontFamily="{StaticResource IconFontFamily}" VerticalAlignment="Center" Text="&#xe7ba;" Margin="0,0,5,0"/>
-                                    <TextBlock Foreground="White" VerticalAlignment="Center" Text="Chrome runtime style required"/>
+                                    <TextBlock Foreground="White" VerticalAlignment="Center" Text="Chrome runtime style required."/>
                                 </DockPanel>
                             </StackPanel>
                         </GroupBox>
@@ -981,7 +993,7 @@
                                     <StackPanel>
                                         <DockPanel>
                                             <TextBlock FontSize="18" FontWeight="UltraLight" Foreground="White" FontFamily="{StaticResource IconFontFamily}" VerticalAlignment="Center" Text="&#xe946;" Margin="0,0,5,0"/>
-                                            <TextBlock VerticalAlignment="Center" Foreground="White" Text="Restart for changes to take effect"/>
+                                            <TextBlock VerticalAlignment="Center" Foreground="White" Text="Restart for changes to take effect."/>
                                         </DockPanel>
                                     </StackPanel>
                                 </GroupBox>

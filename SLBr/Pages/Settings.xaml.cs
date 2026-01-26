@@ -4,7 +4,10 @@ using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -222,6 +225,14 @@ namespace SLBr.Pages
                 UpdateStatusDescription.Text = $"Version {App.Instance.ReleaseVersion}";
             }
 
+            SyncCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Sync"));
+            if (SyncCheckBox.IsChecked.ToBool() && !App.Instance.Synchronized)
+                SyncWarning.Visibility = Visibility.Visible;
+            string[] SyncedData = App.Instance.GlobalSave.Get("SyncData").Split(',');
+            SyncFavouritesToggleButton.IsChecked = SyncedData.Contains("Favourites");
+            //SyncTabsToggleButton.IsChecked = SyncedData.Contains("Tabs");
+            SyncSettingsToggleButton.IsChecked = SyncedData.Contains("Settings");
+
             List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
             if (AddableLanguages.Count == 0)
             {
@@ -251,8 +262,6 @@ namespace SLBr.Pages
 
             DownloadPathText.Text = App.Instance.GlobalSave.Get("DownloadPath");
             ScreenshotPathText.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
-
-            SyncCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Sync"));
 
             PrivateTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs"));
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
@@ -736,11 +745,6 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("WarnCodec", WarnCodecCheckBox.IsChecked.ToBool().ToString());
-        }
-        private void SyncCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("Sync", SyncCheckBox.IsChecked.ToBool().ToString());
         }
         private void PrivateTabsCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -1296,15 +1300,68 @@ namespace SLBr.Pages
                 _SearchProvider.SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}") ? string.Empty : "{0}"));
             }
         }
-
-        private void SyncGitHubTextBox_KeyDown(object sender, KeyEventArgs e)
+        private void SyncCheckBox_Click(object sender, RoutedEventArgs e)
         {
-
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("Sync", SyncCheckBox.IsChecked.ToBool().ToString());
         }
 
         private void SyncToggleButton_Click(object sender, RoutedEventArgs e)
         {
-            string Type = ((ToggleButton)sender).Tag.ToString()!;
+            List<string> SyncedData = [];
+            if (SyncFavouritesToggleButton.IsChecked.ToBool()) SyncedData.Add("Favourites");
+            //if (SyncTabsToggleButton.IsChecked.ToBool()) SyncedData.Add("Tabs");
+            if (SyncSettingsToggleButton.IsChecked.ToBool()) SyncedData.Add("Settings");
+            App.Instance.GlobalSave.Set("SyncData", string.Join(',', SyncedData));
+        }
+
+        private async void ChangeSyncGitHubButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Change GitHub Access Token", new List<InputField> { new InputField { Name = "Token", Type = DialogInputType.Text, IsRequired = false, Value = App.Instance.GlobalSave.Get("SyncGitHub") } }, "\xee7e");
+                _DynamicDialogWindow.Topmost = true;
+                if (_DynamicDialogWindow.ShowDialog() == true)
+                {
+                    string Token = _DynamicDialogWindow.InputFields[0].Value.Trim();
+                    if (Token == App.Instance.GlobalSave.Get("SyncGitHub"))
+                        return;
+                    App.Instance.PreventSync = false;
+                    App.Instance.GlobalSave.Set("SyncGitHub", Token);
+                    App.Instance.GlobalSave.Set("SyncGist", "");
+                    if (string.IsNullOrEmpty(Token))
+                    {
+                        App.Instance.GlobalSave.Set("Sync", false);
+                        SyncCheckBox.IsChecked = false;
+                    }
+                    else
+                    {
+                        HttpClient Client = new();
+                        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+                        Client.DefaultRequestHeaders.UserAgent.ParseAdd($"SLBr/{App.Instance.ReleaseVersion}");
+                        var GistResponse = await Client.GetAsync("https://api.github.com/gists");
+                        if (GistResponse.IsSuccessStatusCode)
+                        {
+                            string JSON = await GistResponse.Content.ReadAsStringAsync();
+                            using var _JsonDocument = JsonDocument.Parse(JSON);
+                            foreach (var Gist in _JsonDocument.RootElement.EnumerateArray())
+                            {
+                                if (Gist.GetProperty("description").GetString() == "SLBr Sync")
+                                {
+                                    App.Instance.GlobalSave.Set("SyncGist", Gist.GetProperty("id").GetString());
+
+                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Settings", "Choose Sync Direction", "An existing sync was found for this GitHub account.\n\nDo you want to override existing data with the cloud data on application reboot?", "\ue753", "Yes", "No");
+                                    InfoWindow.Topmost = true;
+                                    if (InfoWindow.ShowDialog() == true)
+                                        App.Instance.PreventSync = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
         }
     }
 }

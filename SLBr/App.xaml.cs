@@ -13,6 +13,7 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -1241,7 +1242,7 @@ namespace SLBr
 
         public List<IntPtr> WebView2DevTools = [];
 
-        public void InitializeApp(IEnumerable<string> Args, Profile? SelectedProfile = null)
+        public async void InitializeApp(IEnumerable<string> Args, Profile? SelectedProfile = null)
         {
             JumpList _JumpList = new()
             {
@@ -1352,7 +1353,7 @@ namespace SLBr
 
             LocaleNames = AllLocales.Select(i => i.Value).ToList();
 
-            InitializeSaves();
+            await InitializeSaves();
 
             FavouriteColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
             SLBrColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#0092FF");
@@ -1362,7 +1363,7 @@ namespace SLBr
             LimeGreenColor = new SolidColorBrush(Colors.LimeGreen);
             GreenColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#3AE872");
             OrangeColor = new SolidColorBrush(Colors.Orange);
-            IconFont = (FontFamily)Application.Current.Resources["IconFontFamily"];
+            IconFont = (FontFamily)Resources["IconFontFamily"];
             SLBrFont = new FontFamily(new Uri("pack://application:,,,/SLBr;component/"), "./Fonts/#SLBr Icons");
 
             InitializeBrowser();
@@ -1962,7 +1963,9 @@ Inner Exception: ```{7} ```";
         public bool LiteMode;
         public bool HighPerformanceMode;
 
-        private void InitializeSaves()
+        public bool Synchronized = false;
+
+        private async Task InitializeSaves()
         {
             GlobalSave = new Saving("Save.bin", UserApplicationDataPath);
             FavouritesSave = new Saving("Favourites.bin", UserApplicationDataPath);
@@ -1970,6 +1973,88 @@ Inner Exception: ```{7} ```";
             StatisticsSave = new Saving("Statistics.bin", UserApplicationDataPath);
             LanguagesSave = new Saving("Languages.bin", UserApplicationDataPath);
             AllowListSave = new Saving("AllowList.bin", UserApplicationDataPath);
+
+            if (!GlobalSave.Has("SyncGitHub"))
+                GlobalSave.Set("SyncGitHub", "");
+            if (!GlobalSave.Has("SyncGist"))
+                GlobalSave.Set("SyncGist", "");
+            if (!GlobalSave.Has("SyncData"))
+                GlobalSave.Set("SyncData", "Favourites,Settings");//,Tabs
+            if (!GlobalSave.Has("Sync"))
+                GlobalSave.Set("Sync", false);
+            //TODO: Implement "Sync Provider" variety [GitHub Gist, Google Drive, OneDrive, etc]
+            //TODO: Implement data compression.
+            else if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("Sync")))
+            {
+                try
+                {
+                    string SyncGitHubToken = GlobalSave.Get("SyncGitHub");
+                    if (!string.IsNullOrEmpty(SyncGitHubToken))
+                    {
+                        string SyncGistID = GlobalSave.Get("SyncGist");
+                        HttpClient Client = new();
+                        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SyncGitHubToken);
+                        Client.DefaultRequestHeaders.UserAgent.ParseAdd($"SLBr/{ReleaseVersion}");
+                        if (string.IsNullOrEmpty(SyncGistID))
+                        {
+                            var GistResponse = await Client.GetAsync("https://api.github.com/gists");
+                            if (GistResponse.IsSuccessStatusCode)
+                            {
+                                string JSON = await GistResponse.Content.ReadAsStringAsync();
+                                using var _JsonDocument = JsonDocument.Parse(JSON);
+                                foreach (var Gist in _JsonDocument.RootElement.EnumerateArray())
+                                {
+                                    if (Gist.GetProperty("description").GetString() == "SLBr Sync")
+                                    {
+                                        SyncGistID = Gist.GetProperty("id").GetString()!;
+                                        GlobalSave.Set("SyncGist", SyncGistID);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        //WARNING: Keep separate.
+                        if (!string.IsNullOrEmpty(SyncGistID))
+                        {
+                            var GistResponse = await Client.GetAsync($"https://api.github.com/gists/{SyncGistID}");
+                            if (GistResponse.IsSuccessStatusCode)
+                            {
+                                string[] SyncedData = GlobalSave.Get("SyncData").Split(',');
+
+                                string JSON = await GistResponse.Content.ReadAsStringAsync();
+                                using var _JsonDocument = JsonDocument.Parse(JSON);
+                                string SyncFileContent = _JsonDocument.RootElement.GetProperty("files").GetProperty("slbr-sync.json").GetProperty("content").GetString()!;
+                                Dictionary<string, string> SyncedFiles = JsonSerializer.Deserialize<Dictionary<string, string>>(SyncFileContent)!;
+                                if (SyncedData.Contains("Settings"))
+                                {
+                                    if (SyncedFiles.TryGetValue("Save.bin", out var SaveRaw))
+                                    {
+                                        GlobalSave.Process(SaveRaw);
+                                        //WARNING: Important, do not remove.
+                                        GlobalSave.Set("Sync", true);
+                                        GlobalSave.Set("SyncGitHub", SyncGitHubToken);
+                                        GlobalSave.Set("SyncGist", SyncGistID);
+                                    }
+                                    if (SyncedFiles.TryGetValue("Search.bin", out var SearchRaw))
+                                        SearchSave.Process(SearchRaw);
+                                    if (SyncedFiles.TryGetValue("Languages.bin", out var LanguagesRaw))
+                                        LanguagesSave.Process(LanguagesRaw);
+                                    if (SyncedFiles.TryGetValue("AllowList.bin", out var AllowListRaw))
+                                        AllowListSave.Process(AllowListRaw);
+                                }
+                                if (SyncedData.Contains("Favourites") && SyncedFiles.TryGetValue("Favourites.bin", out var FavouritesRaw))
+                                    FavouritesSave.Process(FavouritesRaw);
+                                Synchronized = true;
+                                //if (SyncedData.Contains("Tabs"))
+                            }
+                            else
+                                GlobalSave.Set("SyncGist", "");
+                        }
+                    }
+                }
+                catch { }
+                //TODO: Create folders of windows for the tab sync?
+            }
 
             if (!GlobalSave.Has("StartupBoost"))
             {
@@ -2077,9 +2162,6 @@ Inner Exception: ```{7} ```";
             }
 
             SetMobileView(bool.Parse(GlobalSave.Get("MobileView", false.ToString())));
-
-            if (!GlobalSave.Has("Sync"))
-                GlobalSave.Set("Sync", false);
 
             if (!GlobalSave.Has("WarnCodec"))
                 GlobalSave.Set("WarnCodec", true);
@@ -3576,7 +3658,7 @@ Inner Exception: ```{7} ```";
             InfoWindow.ShowDialog();
         }
 
-        public void Save()
+        public async Task Save()
         {
             if (CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest")
                 return;
@@ -3652,9 +3734,71 @@ Inner Exception: ```{7} ```";
                     }
                 }
             }
+
+            try
+            {
+                if (!PreventSync && bool.Parse(GlobalSave.Get("Sync")) && Utils.IsInternetAvailable())
+                {
+                    PreventSync = true;
+                    string SyncGitHubToken = GlobalSave.Get("SyncGitHub");
+                    if (!string.IsNullOrEmpty(SyncGitHubToken))
+                    {
+                        string SyncGistID = GlobalSave.Get("SyncGist");
+                        string[] SyncedData = GlobalSave.Get("SyncData").Split(',');
+                        Dictionary<string, string> SyncData = new();
+                        //if (SyncedData.Contains("Tabs"))
+                        if (SyncedData.Contains("Favourites"))
+                            SyncData["Favourites.bin"] = FavouritesSave.Read();
+                        if (SyncedData.Contains("Settings"))
+                        {
+                            SyncData["Save.bin"] = GlobalSave.Read();
+                            SyncData["Search.bin"] = SearchSave.Read();
+                            SyncData["Languages.bin"] = LanguagesSave.Read();
+                            SyncData["AllowList.bin"] = AllowListSave.Read();
+                        }
+                        string SyncJson = JsonSerializer.Serialize(SyncData, new JsonSerializerOptions { WriteIndented = false });
+                        HttpClient Client = new();
+                        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SyncGitHubToken);
+                        Client.DefaultRequestHeaders.UserAgent.ParseAdd($"SLBr/{ReleaseVersion}");
+                        if (string.IsNullOrEmpty(SyncGistID))
+                        {
+                            var Payload = new
+                            {
+                                description = "SLBr Sync",
+                                @public = false,
+                                files = new Dictionary<string, object>
+                                {
+                                    ["slbr-sync.json"] = new { content = SyncJson }
+                                }
+                            };
+                            var GistResponse = await Client.PostAsync("https://api.github.com/gists", new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json"));
+                            string JSON = await GistResponse.Content.ReadAsStringAsync();
+
+                            using var _JsonDocument = JsonDocument.Parse(JSON);
+                            SyncGistID = _JsonDocument.RootElement.GetProperty("id").GetString()!;
+                            GlobalSave.Set("SyncGist", SyncGistID);
+                            GlobalSave.Save();
+                        }
+                        else
+                        {
+                            var Payload = new
+                            {
+                                files = new Dictionary<string, object>
+                                {
+                                    ["slbr-sync.json"] = new { content = SyncJson }
+                                }
+                            };
+                            await Client.PatchAsync($"https://api.github.com/gists/{SyncGistID}", new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json"));
+                        }
+                    }
+                }
+            }
+            catch { }
         }
 
-        public void CloseSLBr(bool ExecuteCloseEvents = true)
+        public bool PreventSync = false;
+
+        public async void CloseSLBr(bool ExecuteCloseEvents = true)
         {
             new Thread(() => {
                 Thread.Sleep(1000);
@@ -3662,7 +3806,7 @@ Inner Exception: ```{7} ```";
                 catch {}
             }) { IsBackground = true }.Start();
             if (AppInitialized)
-                Save();
+                await Save();
             if (ExecuteCloseEvents)
             {
                 for (int i = 0; i < AllWindows.Count; i++)

@@ -1376,15 +1376,12 @@ namespace SLBr
                 Writer.Write(KeySeparator);
             }
         }
-        public void Load()
+        public void Load() =>
+            Process(Read());
+
+        public void Process(string Content)
         {
-            if (!File.Exists(SaveFilePath))
-            {
-                //Directory.CreateDirectory(SaveFolderPath);
-                //File.Create(SaveFilePath).Close();
-                return;
-            }
-            var Content = File.ReadAllText(SaveFilePath);
+            Data.Clear();
             if (string.IsNullOrWhiteSpace(Content))
                 return;
             foreach (var Entry in Content.Split(KeySeparator, StringSplitOptions.RemoveEmptyEntries))
@@ -1393,6 +1390,13 @@ namespace SLBr
                 if (Values.Length == 2)
                     Data[Values[0]] = Values[1];
             }
+        }
+
+        public string Read()
+        {
+            if (!File.Exists(SaveFilePath))
+                return "";
+            return File.ReadAllText(SaveFilePath);
         }
     }
 
