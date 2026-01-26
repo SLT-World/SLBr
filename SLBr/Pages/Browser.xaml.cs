@@ -1106,7 +1106,7 @@ namespace SLBr.Pages
                             if (!Private && bool.Parse(App.Instance.GlobalSave.Get("OpenSearch")))
                             {
                                 string SiteHost = Utils.FastHost(Address);
-                                if (App.Instance.SearchEngines.Find(i => i.Host == SiteHost) == null)
+                                if (App.Instance.SearchEngines.Any(i => i.Host == SiteHost))
                                     WebView?.ExecuteScript(Scripts.OpenSearchScript);
                             }
 
@@ -1736,11 +1736,13 @@ namespace SLBr.Pages
                     if (Address.StartsWith("slbr://newtab"))
                     {
                         OmniBoxPlaceholder.Visibility = Visibility.Visible;
+                        OmniBoxText = string.Empty;
                         OmniBox.Text = string.Empty;
                     }
                     else
                     {
                         OmniBoxPlaceholder.Visibility = Visibility.Hidden;
+                        OmniBoxText = Address;
                         OmniBox.Text = Address;
                     }
 
@@ -2129,6 +2131,7 @@ namespace SLBr.Pages
                 }
                 catch { }
             }
+            Text = Text.ReplaceLineEndings("");
             FindPopup.IsOpen = true;
             FindTextBox.Text = Text;
             ActivatePopup(FindPopup);
@@ -2869,6 +2872,7 @@ namespace SLBr.Pages
             if (Url.StartsWith("javascript:"))
             {
                 WebView?.ExecuteScript(Url.Substring(11));
+                OmniBoxText = OmniBox.Tag.ToString();
                 OmniBox.Text = OmniBox.Tag.ToString();
             }
             else if (!Utils.IsProgramUrl(Url))
@@ -2949,6 +2953,7 @@ namespace SLBr.Pages
                 }
                 else if (OmniBoxStatus.Visibility == Visibility.Visible)
                 {
+                    OmniBoxText = string.Empty;
                     OmniBox.Text = string.Empty;
                     OmniBoxStatus.Visibility = Visibility.Collapsed;
                     string SelectedProvider = OmniBoxStatus.Tag.ToString()!;
@@ -3076,11 +3081,15 @@ namespace SLBr.Pages
                 }
                 else
                 {
-                    switch (OmniBoxOverrideSearch.Name)
+                    /*switch (OmniBoxOverrideSearch.Name)
                     {
                         case "YouTube":
                             SiteInformationIcon.Text = "\xE786";
                             SiteInformationIcon.Foreground = App.Instance.RedColor;
+                            break;
+                        case "Reddit":
+                            SiteInformationIcon.Text = "\xe99a";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FE4500");
                             break;
                         case "ChatGPT":
                             SiteInformationIcon.Text = "\xe713";
@@ -3094,11 +3103,11 @@ namespace SLBr.Pages
                             SiteInformationIcon.Text = "\xe8f1";
                             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             break;
-                        default:
+                        default:*/
                             SiteInformationIcon.Text = "\xED37";
                             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                            break;
-                    }
+                            /*break;
+                    }*/
                 }
                 SiteInformationText.Text = OmniBoxOverrideSearch.Name;
                 SiteInformationPopupButton.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBox.Text.Trim()}";
@@ -3151,7 +3160,7 @@ namespace SLBr.Pages
                 return;
             }
 
-            Url = Utils.ConvertUrlToReadableUrl(App.Instance._IdnMapping, Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", false));
+            Url = App.Instance._IdnMapping.GetUnicode(Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", false));
 
             SolidColorBrush FontBrush = (SolidColorBrush)FindResource("FontBrush");
             SolidColorBrush GrayBrush = (SolidColorBrush)FindResource("GrayBrush");
@@ -3292,7 +3301,7 @@ namespace SLBr.Pages
             if (HostEnd >= 0)
             {
                 ReadOnlySpan<char> _Path = _Span[HostEnd..];
-                OmniBoxOverlayText.Inlines.Add(new Run(_Path.ToString()) { Foreground = GrayBrush });
+                OmniBoxOverlayText.Inlines.Add(new Run(Utils.UnescapeDataString(_Path.ToString())) { Foreground = GrayBrush });
             }
         }
 
@@ -3643,12 +3652,14 @@ namespace SLBr.Pages
                 {
                     if (Suggestion.Text.Trim().Length > 0)
                     {
+                        OmniBoxText = Suggestion.Text;
                         OmniBox.Text = Suggestion.Text;
                         OmniBoxEnter();
                     }
                 }
                 else
                 {
+                    OmniBoxText = string.Empty;
                     OmniBox.Text = string.Empty;
                     OmniBoxStatus.Visibility = Visibility.Collapsed;
                     OmniBoxOverrideSearch = Suggestion.ProviderOverride;
@@ -3778,7 +3789,7 @@ namespace SLBr.Pages
         private void LoadExtensionPopup(object sender, RoutedEventArgs e)
         {
             //TODO: Use PopupBrowser instead
-            Extension _Extension = App.Instance.Extensions.ToList().Find(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
+            Extension _Extension = App.Instance.Extensions.FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             if (_Extension == null)
                 return;
             ExtensionWindow = new Window();

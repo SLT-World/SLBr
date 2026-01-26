@@ -1295,13 +1295,6 @@ namespace SLBr
                 return Url;
             return IsProtocol(Url) ? Url : "https://" + Url;
         }
-        public static string ConvertUrlToReadableUrl(IdnMapping _IdnMapping, string Url)
-        {
-            if (Url.Length == 0)
-                return Url;
-            try { return UnescapeDataString(_IdnMapping.GetUnicode(Url)); }
-            catch { return Url; }
-        }
     }
 
     public class Saving

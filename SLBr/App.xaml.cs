@@ -427,9 +427,25 @@ namespace SLBr
         }*/
     }
 
-    public class SearchProvider
+    public class SearchProvider : INotifyPropertyChanged
     {
-        public string Name = "";
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        public string Name
+        {
+            get { return _Name; }
+            set
+            {
+                _Name = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Name = "";
         public string Host = "";
         public string SearchUrl = "";
         public string SuggestUrl = "";
@@ -567,7 +583,7 @@ namespace SLBr
         ];
 
         public List<MainWindow> AllWindows = [];
-        public List<SearchProvider> SearchEngines = [];
+        public ObservableCollection<SearchProvider> SearchEngines = [];
         public SearchProvider DefaultSearchProvider;
         public List<Theme> Themes =
         [
@@ -1775,7 +1791,7 @@ Inner Exception: ```{7} ```";
         {
             try
             {
-                if (SearchEngines.Find(x => x.Name == Name) != null)
+                if (SearchEngines.Any(x => x.Name == Name))
                     return;
                 string Response = MiniHttpClient.GetStringAsync(Url).Result;
                 XDocument XML = XDocument.Parse(Response);
@@ -2029,7 +2045,7 @@ Inner Exception: ```{7} ```";
                 ];
             }
             string SearchEngineName = GlobalSave.Get("SearchEngine", "Google");
-            DefaultSearchProvider = SearchEngines.Find(i => i.Name == SearchEngineName) ?? SearchEngines.Find(i => i.SearchUrl.Contains("google.com"));
+            DefaultSearchProvider = SearchEngines.FirstOrDefault(i => i.Name == SearchEngineName) ?? SearchEngines.FirstOrDefault(i => i.SearchUrl.Contains("google.com"));
             int AllowListCount = AllowListSave.GetInt("Count", -1);
             if (AllowListCount != -1)
             {
@@ -2061,6 +2077,9 @@ Inner Exception: ```{7} ```";
             }
 
             SetMobileView(bool.Parse(GlobalSave.Get("MobileView", false.ToString())));
+
+            if (!GlobalSave.Has("Sync"))
+                GlobalSave.Set("Sync", false);
 
             if (!GlobalSave.Has("WarnCodec"))
                 GlobalSave.Set("WarnCodec", true);

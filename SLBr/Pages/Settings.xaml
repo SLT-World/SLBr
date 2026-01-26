@@ -29,14 +29,14 @@
             </Grid>
         </Border>
         <WinUI:WinUITabControl x:Name="SettingsTabControl" Grid.Row="1" Style="{StaticResource WinUITabControl}">
-            <TabItem x:Name="BrowserTab" Header="Browser" Tag="&#xec6c;">
+            <TabItem x:Name="UserTab" Header="User" Tag="&#xe77b;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
-                        <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Browser</TextBlock>
+                        <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">User</TextBlock>
                         <GroupBox Margin="0,0,0,10">
                             <DockPanel Height="35">
                                 <Border x:Name="UsernameBackground" Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
-                                    <TextBlock x:Name="UsernameInitial" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" FontSize="18" Text="D" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="UsernameInitial" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" FontSize="18" FontWeight="SemiBold"/>
                                 </Border>
                                 <Button DockPanel.Dock="Right" Click="SwitchUserButton_Click">
                                     <DockPanel VerticalAlignment="Center">
@@ -45,11 +45,50 @@
                                     </DockPanel>
                                 </Button>
                                 <StackPanel VerticalAlignment="Center" Margin="0">
-                                    <TextBlock x:Name="UsernameText" Text="Username"/>
+                                    <TextBlock x:Name="UsernameText"/>
                                     <!--<TextBlock FontSize="10" Text="Description" Foreground="{StaticResource GrayBrush}"/>-->
                                 </StackPanel>
                             </DockPanel>
                         </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
+                                <CheckBox x:Name="SyncCheckBox" Click="SyncCheckBox_Click" Content="Sync" Width="Auto"/>
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="GitHub Access Token"/>
+                                <TextBox IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="SyncGitHubTextBox" Width="Auto" KeyDown="SyncGitHubTextBox_KeyDown"/>
+                                <TextBlock Margin="0,0,0,10" FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                    GitHub Gist is utilized by SLBr to sync data. Generate a 
+                                    <Hyperlink ToolTip="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" NavigateUri="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" RequestNavigate="Hyperlink_RequestNavigate">GitHub Acccess Token</Hyperlink>.
+                                </TextBlock>
+                                <Expander Margin="0,0,0,0" Background="{StaticResource PrimaryBrush}">
+                                    <Expander.Header>
+                                        Synced Data
+                                    </Expander.Header>
+                                    <StackPanel>
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock VerticalAlignment="Center" Text="Favourites"/>
+                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncFavouritesToggleButton" Tag="Favourites" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                        </DockPanel>
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock VerticalAlignment="Center" Text="Tabs"/>
+                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncTabsToggleButton" Tag="Tabs" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                        </DockPanel>
+                                        <DockPanel Margin="0,0,0,0">
+                                            <TextBlock VerticalAlignment="Center" Text="Settings"/>
+                                            <ToggleButton IsEnabled="{Binding ElementName=SyncCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SyncSettingsToggleButton" Tag="Settings" Click="SyncToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                        </DockPanel>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem x:Name="BrowserTab" Header="Browser" Tag="&#xec6c;">
+                <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
+                    <StackPanel Margin="25" MaxWidth="500">
+                        <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Browser</TextBlock>
                         <GroupBox Margin="0,0,0,10">
                             <GroupBox.Header>
                                 Home
@@ -85,7 +124,7 @@
                                 <CheckBox Margin="0,0,0,10" x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
                                 <DockPanel Margin="0,0,0,0">
                                     <TextBlock VerticalAlignment="Center" Text="Startup Favicon Service"/>
-                                    <ComboBox x:Name="FaviconServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FaviconServiceComboBox_SelectionChanged">
+                                    <ComboBox x:Name="FaviconServiceComboBox" IsEnabled="{Binding ElementName=DownloadFaviconsCheckBox, Path=IsChecked, TargetNullValue=False}" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FaviconServiceComboBox_SelectionChanged">
                                         <ComboBoxItem>Google</ComboBoxItem>
                                         <ComboBoxItem>Yandex</ComboBoxItem>
                                         <ComboBoxItem>DuckDuckGo</ComboBoxItem>
@@ -455,12 +494,12 @@
                                 <CheckBox x:Name="AntiTamperCheckBox" Click="AntiTamperCheckBox_Click" Content="Anti-Tamper Mode" Width="Auto"/>
                             </GroupBox.Header>
                             <StackPanel>
-                                <CheckBox x:Name="BypassSiteMenuCheckBox" Margin="0,0,0,10" Width="Auto" Click="BypassSiteMenuCheckBox_Click" Content="Bypass custom site menus"/>
-                                <CheckBox x:Name="TextSelectionCheckBox" Margin="0,0,0,10" Width="Auto" Click="TextSelectionCheckBox_Click" Content="Re-enable text selection &amp; copy/paste"/>
-                                <CheckBox x:Name="RemoveFilterCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveFilterCheckBox_Click" Content="Remove visual filter effects"/>
-                                <CheckBox x:Name="RemoveOverlayCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveOverlayCheckBox_Click" Content="Remove obstructive overlays"/>
-                                <CheckBox x:Name="AntiInspectDetectCheckBox" Margin="0,0,0,10" Width="Auto" Click="AntiInspectDetectCheckBox_Click" Content="Disable DevTools detection"/>
-                                <CheckBox x:Name="AntiFullscreenCheckBox" Width="Auto" Click="AntiFullscreenCheckBox_Click" Content="Disable Fullscreen API"/>
+                                <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="BypassSiteMenuCheckBox" Margin="0,0,0,10" Width="Auto" Click="BypassSiteMenuCheckBox_Click" Content="Bypass custom site menus"/>
+                                <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="TextSelectionCheckBox" Margin="0,0,0,10" Width="Auto" Click="TextSelectionCheckBox_Click" Content="Re-enable text selection &amp; copy/paste"/>
+                                <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="RemoveFilterCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveFilterCheckBox_Click" Content="Remove visual filter effects"/>
+                                <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="RemoveOverlayCheckBox" Margin="0,0,0,10" Width="Auto" Click="RemoveOverlayCheckBox_Click" Content="Remove obstructive overlays"/>
+                                <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="AntiInspectDetectCheckBox" Margin="0,0,0,10" Width="Auto" Click="AntiInspectDetectCheckBox_Click" Content="Disable DevTools detection"/>
+                                <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="AntiFullscreenCheckBox" Width="Auto" Click="AntiFullscreenCheckBox_Click" Content="Disable Fullscreen API"/>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Margin="0,0,0,10">
@@ -500,11 +539,12 @@
                                 <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Selected engine"/>
                                 <DockPanel LastChildFill="True" Margin="0,0,0,10">
                                     <Button Margin="0,0,10,0" Width="35" Content="&#xe70f;" ToolTip="Edit" DockPanel.Dock="Left" Click="EditSearchEngineButton_Click" FontSize="16" FontFamily="{StaticResource IconFontFamily}"/>
-                                    <Button Margin="10,0,0,0" Content="Add" DockPanel.Dock="Right" Click="AddSearchEngineButton_Click"/>
-                                    <ComboBox x:Name="SearchEngineComboBox" SelectedIndex="0" Width="Auto"/>
+                                    <Button Margin="10,0,0,0" Width="35" Content="&#xe710;" ToolTip="Add" DockPanel.Dock="Right" Click="AddSearchEngineButton_Click" FontSize="16" FontFamily="{StaticResource IconFontFamily}"/>
+                                    <Button Margin="10,0,0,0" Width="35" Content="&#xe74d;" ToolTip="Delete" DockPanel.Dock="Right" Click="RemoveSearchEngineButton_Click" FontSize="16" FontFamily="{StaticResource IconFontFamily}"/>
+                                    <ComboBox x:Name="SearchEngineComboBox" DisplayMemberPath="Name" Width="Auto" SelectionChanged="SearchEngineComboBox_SelectionChanged"/>
                                 </DockPanel>
                                 <CheckBox x:Name="SearchSuggestionsCheckBox" Margin="0,0,0,10" Width="Auto" Click="SearchSuggestionsCheckBox_Click" Content="Search suggestions"/>
-                                <CheckBox x:Name="SmartSuggestionsCheckBox" Margin="0,0,0,10" Width="Auto" Click="SmartSuggestionsCheckBox_Click" Content="Smart suggestions"/>
+                                <CheckBox x:Name="SmartSuggestionsCheckBox" IsEnabled="{Binding ElementName=SearchSuggestionsCheckBox, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" Width="Auto" Click="SmartSuggestionsCheckBox_Click" Content="Smart suggestions"/>
                                 <CheckBox x:Name="OpenSearchCheckBox" Width="Auto" Click="OpenSearchCheckBox_Click" Content="Index other search engines"/>
                             </StackPanel>
                         </GroupBox>
@@ -575,6 +615,26 @@
                         </GroupBox>
                         <GroupBox Margin="0,0,0,10">
                             <GroupBox.Header>
+                                <CheckBox x:Name="TabUnloadingCheckBox" Click="TabUnloadingCheckBox_Click" Content="Unload Tabs" Width="Auto"/>
+                            </GroupBox.Header>
+                            <StackPanel>
+                                <ProgressBar x:Name="UnloadProgressBar" Width="Auto" Margin="0,0,0,10" Foreground="#3AE872"/>
+                                <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                Unloading tabs frees memory and system resources from inactive tabs.
+                                <LineBreak/>
+                                Inactive tabs will automatically reactivate when revisited.
+                                </TextBlock>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Interval (minute)"/>
+                                    <ComboBox IsEnabled="{Binding ElementName=TabUnloadingCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="TabUnloadingTimeComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                </DockPanel>
+                                <CheckBox IsEnabled="{Binding ElementName=TabUnloadingCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="DimIconsWhenUnloadedCheckBox" Click="DimUnloadedIconCheckBox_Click" Margin="0,0,0,10" Content="Dim icon" Width="Auto"/>
+                                <CheckBox IsEnabled="{Binding ElementName=TabUnloadingCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="ShowUnloadedIconCheckBox" Click="ShowUnloadedIconCheckBox_Click" Margin="0,0,0,10" Content="Show leaf icon" Width="Auto"/>
+                                <CheckBox IsEnabled="{Binding ElementName=TabUnloadingCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="ShowUnloadTimeLeftCheckBox" Click="ShowUnloadTimeLeftCheckBox_Click" Content="Show time left" Width="Auto"/>
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox Margin="0,0,0,10">
+                            <GroupBox.Header>
                                 <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Content="Never Slow Mode" Width="Auto"/>
                             </GroupBox.Header>
                             <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
@@ -594,32 +654,12 @@
                                         <ColumnDefinition/>
                                         <ColumnDefinition Width="100px"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="BandwidthTextBox" PreviewTextInput="BandwidthTextBox_PreviewTextInput" KeyUp="BandwidthTextBox_KeyUp" HorizontalAlignment="Stretch" Width="Auto" Margin="0,0,5,0"/>
-                                    <ComboBox Grid.Column="1" x:Name="BandwidthUnitComboBox" SelectionChanged="BandwidthUnitComboBox_SelectionChanged" SelectedIndex="0" HorizontalAlignment="Stretch" Width="Auto">
+                                    <TextBox IsEnabled="{Binding ElementName=NetworkLimitCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="BandwidthTextBox" PreviewTextInput="BandwidthTextBox_PreviewTextInput" KeyUp="BandwidthTextBox_KeyUp" HorizontalAlignment="Stretch" Width="Auto" Margin="0,0,5,0"/>
+                                    <ComboBox IsEnabled="{Binding ElementName=NetworkLimitCheckBox, Path=IsChecked, TargetNullValue=False}" Grid.Column="1" x:Name="BandwidthUnitComboBox" SelectionChanged="BandwidthUnitComboBox_SelectionChanged" SelectedIndex="0" HorizontalAlignment="Stretch" Width="Auto">
                                         <ComboBoxItem Content="Mbps"></ComboBoxItem>
                                         <ComboBoxItem Content="Kbps"></ComboBoxItem>
                                     </ComboBox>
                                 </Grid>
-                            </StackPanel>
-                        </GroupBox>
-                        <GroupBox Margin="0,0,0,10">
-                            <GroupBox.Header>
-                                <CheckBox x:Name="TabUnloadingCheckBox" Click="TabUnloadingCheckBox_Click" Content="Unload Tabs" Width="Auto"/>
-                            </GroupBox.Header>
-                            <StackPanel>
-                                <ProgressBar x:Name="UnloadProgressBar" Width="Auto" Margin="0,0,0,10" Foreground="#3AE872"/>
-                                <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                Unloading tabs frees memory and system resources from inactive tabs.
-                                <LineBreak/>
-                                Inactive tabs will automatically reactivate when revisited.
-                                </TextBlock>
-                                <DockPanel>
-                                    <TextBlock VerticalAlignment="Center" Text="Interval (minute)"/>
-                                    <ComboBox x:Name="TabUnloadingTimeComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
-                                </DockPanel>
-                                <CheckBox x:Name="DimIconsWhenUnloadedCheckBox" Click="DimUnloadedIconCheckBox_Click" Margin="0,0,0,10" Content="Dim icon" Width="Auto"/>
-                                <CheckBox x:Name="ShowUnloadedIconCheckBox" Click="ShowUnloadedIconCheckBox_Click" Margin="0,0,0,10" Content="Show leaf icon" Width="Auto"/>
-                                <CheckBox x:Name="ShowUnloadTimeLeftCheckBox" Click="ShowUnloadTimeLeftCheckBox_Click" Content="Show time left" Width="Auto"/>
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
@@ -752,7 +792,7 @@
                                     <Button Margin="10,0,0,0" Content="Change" DockPanel.Dock="Right" Click="ChangeDownloadPathButton_Click"/>
                                     <Grid>
                                         <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Location"/>
-                                        <TextBlock Text="C://" x:Name="DownloadPathText" DockPanel.Dock="Left" Width="Auto" VerticalAlignment="Bottom" Foreground="{StaticResource GrayBrush}"/>
+                                        <TextBlock x:Name="DownloadPathText" DockPanel.Dock="Left" Width="Auto" VerticalAlignment="Bottom" Foreground="{StaticResource GrayBrush}"/>
                                     </Grid>
                                 </DockPanel>
                                 <CheckBox x:Name="DownloadPromptCheckBox" Click="DownloadPromptCheckBox_Click" Content="Ask before downloading" Width="Auto"/>
@@ -773,7 +813,7 @@
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">
                         <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Extensions</TextBlock>
-                        <GroupBox x:Name="ExtensionWarning" Visibility="Collapsed" Margin="0,0,0,10" BorderBrush="Red" Background="DarkRed">
+                        <GroupBox x:Name="ExtensionWarning" Visibility="Collapsed" Margin="0,0,0,10" BorderThickness="0" Background="DarkOrange">
                             <StackPanel>
                                 <DockPanel>
                                     <TextBlock Foreground="White" FontSize="18" FontWeight="UltraLight" FontFamily="{StaticResource IconFontFamily}" VerticalAlignment="Center" Text="&#xe7ba;" Margin="0,0,5,0"/>
@@ -937,11 +977,11 @@
                                 <CheckBox x:Name="BrowserHardwareAccelerationCheckBox" Click="BrowserHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>
                                 <CheckBox x:Name="JITCheckBox" Click="JITCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable V8 JIT optimizer"/>
                                 <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental web features"/>
-                                <GroupBox BorderBrush="DarkOrange" Background="Orange">
+                                <GroupBox BorderThickness="0" Background="DarkOrange">
                                     <StackPanel>
                                         <DockPanel>
-                                            <TextBlock FontSize="18" FontWeight="UltraLight" FontFamily="{StaticResource IconFontFamily}" VerticalAlignment="Center" Text="&#xe946;" Margin="0,0,5,0"/>
-                                            <TextBlock VerticalAlignment="Center" Text="Restart for changes to take effect"/>
+                                            <TextBlock FontSize="18" FontWeight="UltraLight" Foreground="White" FontFamily="{StaticResource IconFontFamily}" VerticalAlignment="Center" Text="&#xe946;" Margin="0,0,5,0"/>
+                                            <TextBlock VerticalAlignment="Center" Foreground="White" Text="Restart for changes to take effect"/>
                                         </DockPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -986,11 +1026,10 @@
                             </DockPanel>
                         </GroupBox>
                         <TextBlock Text="Copyright © 2022-2026 SLT Softwares. All rights reserved."/>
-                        <TextBlock>
+                        <TextBlock Margin="0,0,0,10">
                         Licensed under the
                         <Hyperlink ToolTip="https://raw.githubusercontent.com/SLT-World/SLBr/refs/heads/main/LICENSE" NavigateUri="https://raw.githubusercontent.com/SLT-World/SLBr/refs/heads/main/LICENSE" RequestNavigate="Hyperlink_RequestNavigate">GNU General Public License v3.0</Hyperlink>.
                         </TextBlock>
-                        <TextBlock Margin="0,0,0,10" Text="Created by Schuyler Tan."/>
 
                         <GroupBox Margin="0,0,0,10">
                             <DockPanel Height="35">
@@ -1018,6 +1057,10 @@
                                 </StackPanel>
                             </DockPanel>
                         </GroupBox>
+                        <TextBlock Margin="0,0,0,0">
+                        Developed and maintained by
+                        <Hyperlink ToolTip="https://github.com/SLT-World/" NavigateUri="https://github.com/SLT-World/" RequestNavigate="Hyperlink_RequestNavigate">Schuyler Tan</Hyperlink>.
+                        </TextBlock>
                         <TextBlock Margin="0,0,0,0">
                         Made possible by
                         <Hyperlink ToolTip="https://github.com/cefsharp/CefSharp" NavigateUri="https://github.com/cefsharp/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">

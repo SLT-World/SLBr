@@ -45,6 +45,7 @@ namespace SLBr.Pages
             InitializeComponent();
             if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
             {
+                UserTab.Visibility = Visibility.Collapsed;
                 BrowserTab.Visibility = Visibility.Collapsed;
                 AppearanceTab.Visibility = Visibility.Collapsed;
                 PrivacyTab.Visibility = Visibility.Collapsed;
@@ -238,17 +239,8 @@ namespace SLBr.Pages
             LanguageSelection.SelectionChanged += LanguageSelection_SelectionChanged;
             AddLanguageListMenu.ItemsSource = AddableLanguages;
 
-            SearchEngineComboBox.SelectionChanged -= SearchEngineComboBox_SelectionChanged;
-            SearchEngineComboBox.Items.Clear();
-            foreach (string Name in App.Instance.SearchEngines.Select(i => i.Name))
-            {
-                if (!SearchEngineComboBox.Items.Contains(Name))
-                    SearchEngineComboBox.Items.Add(Name);
-            }
-            string SearchEngine = App.Instance.DefaultSearchProvider.Name;
-            if (SearchEngineComboBox.Items.Contains(SearchEngine))
-                SearchEngineComboBox.SelectedValue = SearchEngine;
-            SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
+            SearchEngineComboBox.ItemsSource = App.Instance.SearchEngines;
+            SearchEngineComboBox.SelectedValue = App.Instance.DefaultSearchProvider;
 
             HomepageTextBox.Text = App.Instance.GlobalSave.Get("Homepage");
             bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab");
@@ -260,6 +252,8 @@ namespace SLBr.Pages
             DownloadPathText.Text = App.Instance.GlobalSave.Get("DownloadPath");
             ScreenshotPathText.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
 
+            SyncCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Sync"));
+
             PrivateTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs"));
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
 
@@ -268,7 +262,6 @@ namespace SLBr.Pages
 
             bool DownloadFavicons = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
             DownloadFaviconsCheckBox.IsChecked = DownloadFavicons;
-            FaviconServiceComboBox.IsEnabled = DownloadFavicons;
             FaviconServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("FaviconService");
 
             CheckUpdateCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("CheckUpdate"));
@@ -282,10 +275,6 @@ namespace SLBr.Pages
 
             bool TabUnloadingCheck = bool.Parse(App.Instance.GlobalSave.Get("TabUnloading"));
             TabUnloadingCheckBox.IsChecked = TabUnloadingCheck;
-            TabUnloadingTimeComboBox.IsEnabled = TabUnloadingCheck;
-            DimIconsWhenUnloadedCheckBox.IsEnabled = TabUnloadingCheck;
-            ShowUnloadedIconCheckBox.IsEnabled = TabUnloadingCheck;
-            ShowUnloadTimeLeftCheckBox.IsEnabled = TabUnloadingCheck;
 
             AdaptiveThemeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme"));
             WarnCodecCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
@@ -314,12 +303,6 @@ namespace SLBr.Pages
             TextSelectionCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TextSelection"));
             RemoveFilterCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RemoveFilter"));
             RemoveOverlayCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RemoveOverlay"));
-            AntiFullscreenCheckBox.IsEnabled = AntiTamperChecked;
-            AntiInspectDetectCheckBox.IsEnabled = AntiTamperChecked;
-            BypassSiteMenuCheckBox.IsEnabled = AntiTamperChecked;
-            TextSelectionCheckBox.IsEnabled = AntiTamperChecked;
-            RemoveFilterCheckBox.IsEnabled = AntiTamperChecked;
-            RemoveOverlayCheckBox.IsEnabled = AntiTamperChecked;
 
             SendDiagnosticsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SendDiagnostics"));
             WebNotificationsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WebNotifications"));
@@ -334,13 +317,10 @@ namespace SLBr.Pages
 
             bool NetworkLimit = bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit"));
             NetworkLimitCheckBox.IsChecked = NetworkLimit;
-            BandwidthTextBox.IsEnabled = NetworkLimit;
-            BandwidthUnitComboBox.IsEnabled = NetworkLimit;
 
             bool SearchSuggestions = bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions"));
             SearchSuggestionsCheckBox.IsChecked = SearchSuggestions;
             SmartSuggestionsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions"));
-            SmartSuggestionsCheckBox.IsEnabled = SearchSuggestions;
             OpenSearchCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("OpenSearch"));
 
             FullscreenPopupCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup"));
@@ -638,7 +618,7 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                App.Instance.DefaultSearchProvider = App.Instance.SearchEngines[SearchEngineComboBox.SelectedIndex];
+                App.Instance.DefaultSearchProvider = SearchEngineComboBox.SelectedValue as SearchProvider;
                 App.Instance.GlobalSave.Set("SearchEngine", App.Instance.DefaultSearchProvider.Name);
             }
         }
@@ -757,6 +737,11 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("WarnCodec", WarnCodecCheckBox.IsChecked.ToBool().ToString());
         }
+        private void SyncCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("Sync", SyncCheckBox.IsChecked.ToBool().ToString());
+        }
         private void PrivateTabsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -772,7 +757,6 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 bool DownloadFavicons = DownloadFaviconsCheckBox.IsChecked.ToBool();
-                FaviconServiceComboBox.IsEnabled = DownloadFavicons;
                 App.Instance.GlobalSave.Set("Favicons", DownloadFavicons);
             }
         }
@@ -822,7 +806,6 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 bool SearchSuggestions = SearchSuggestionsCheckBox.IsChecked.ToBool();
-                SmartSuggestionsCheckBox.IsEnabled = SearchSuggestions;
                 App.Instance.GlobalSave.Set("SearchSuggestions", SearchSuggestions.ToString());
             }
         }
@@ -858,12 +841,6 @@ namespace SLBr.Pages
             {
                 bool Checked = AntiTamperCheckBox.IsChecked.ToBool();
                 App.Instance.GlobalSave.Set("AntiTamper", Checked.ToString());
-                AntiFullscreenCheckBox.IsEnabled = Checked;
-                AntiInspectDetectCheckBox.IsEnabled = Checked;
-                BypassSiteMenuCheckBox.IsEnabled = Checked;
-                TextSelectionCheckBox.IsEnabled = Checked;
-                RemoveFilterCheckBox.IsEnabled = Checked;
-                RemoveOverlayCheckBox.IsEnabled = Checked;
             }
         }
         private void AntiFullscreenCheckBox_Click(object sender, RoutedEventArgs e)
@@ -907,11 +884,6 @@ namespace SLBr.Pages
             {
                 bool Checked = TabUnloadingCheckBox.IsChecked.ToBool();
                 App.Instance.GlobalSave.Set("TabUnloading", Checked.ToString());
-
-                TabUnloadingTimeComboBox.IsEnabled = Checked;
-                DimIconsWhenUnloadedCheckBox.IsEnabled = Checked;
-                ShowUnloadedIconCheckBox.IsEnabled = Checked;
-                ShowUnloadTimeLeftCheckBox.IsEnabled = Checked;
 
                 App.Instance.UpdateTabUnloadingTimer();
             }
@@ -1238,9 +1210,6 @@ namespace SLBr.Pages
                 bool Checked = NetworkLimitCheckBox.IsChecked.ToBool();
                 App.Instance.GlobalSave.Set("NetworkLimit", Checked.ToString());
 
-                BandwidthTextBox.IsEnabled = Checked;
-                BandwidthUnitComboBox.IsEnabled = Checked;
-
                 float Bandwidth = Checked ? float.Parse(App.Instance.GlobalSave.Get("Bandwidth")) : 0;
                 foreach (MainWindow _Window in App.Instance.AllWindows)
                 {
@@ -1304,16 +1273,19 @@ namespace SLBr.Pages
                     SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}") ? string.Empty : "{0}"))
                 };
                 App.Instance.SearchEngines.Add(_SearchProvider);
-                SearchEngineComboBox.Items.Add(_SearchProvider.Name);
-                SearchEngineComboBox.SelectedValue = _SearchProvider.Name;
+                SearchEngineComboBox.SelectedValue = _SearchProvider;
             }
+        }
+
+        private void RemoveSearchEngineButton_Click(object sender, RoutedEventArgs e)
+        {
+            App.Instance.SearchEngines.Remove(SearchEngineComboBox.SelectedValue as SearchProvider);
+            SearchEngineComboBox.SelectedItem = App.Instance.SearchEngines.FirstOrDefault();
         }
 
         private void EditSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
-            int SelectedIndex = SearchEngineComboBox.SelectedIndex;
-            SearchProvider _SearchProvider = App.Instance.SearchEngines[SelectedIndex];
-
+            SearchProvider _SearchProvider = SearchEngineComboBox.SelectedValue as SearchProvider;
             DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f");
             _DynamicDialogWindow.Topmost = true;
             if (_DynamicDialogWindow.ShowDialog() == true)
@@ -1322,12 +1294,17 @@ namespace SLBr.Pages
                 _SearchProvider.Host = Utils.FastHost(_DynamicDialogWindow.InputFields[1].Value);
                 _SearchProvider.SearchUrl = _DynamicDialogWindow.InputFields[1].Value + (_DynamicDialogWindow.InputFields[1].Value.Contains("{0}") ? string.Empty : "{0}");
                 _SearchProvider.SuggestUrl = _DynamicDialogWindow.InputFields[2].Value + (string.IsNullOrEmpty(_DynamicDialogWindow.InputFields[2].Value) ? string.Empty : (_DynamicDialogWindow.InputFields[2].Value.Contains("{0}") ? string.Empty : "{0}"));
-                App.Instance.SearchEngines[SelectedIndex] = _SearchProvider;
-                SearchEngineComboBox.SelectionChanged -= SearchEngineComboBox_SelectionChanged;
-                SearchEngineComboBox.Items[SelectedIndex] = _SearchProvider.Name;
-                SearchEngineComboBox.SelectionChanged += SearchEngineComboBox_SelectionChanged;
-                SearchEngineComboBox.SelectedIndex = SelectedIndex;
             }
+        }
+
+        private void SyncGitHubTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+
+        }
+
+        private void SyncToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            string Type = ((ToggleButton)sender).Tag.ToString()!;
         }
     }
 }
