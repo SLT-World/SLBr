@@ -8,9 +8,9 @@ namespace SLBr.Pages
     /// <summary>
     /// Interaction logic for Settings.xaml
     /// </summary>
-    public partial class Favourites : UserControl, IPageOverlay
+    public partial class FavouritesPage : UserControl, IPageOverlay
     {
-        public Favourites(Browser _BrowserView)
+        public FavouritesPage(Browser _BrowserView)
         {
             InitializeComponent();
             BrowserView = _BrowserView;
@@ -22,18 +22,14 @@ namespace SLBr.Pages
 
         Browser BrowserView;
 
-        private void HyperlinkButton_Click(object sender, RoutedEventArgs e)
-        {
-            string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
-            BrowserView.Tab.ParentWindow.NewTab(Values[1], true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1, BrowserView.Private, BrowserView.Tab.TabGroup);
-        }
-
         private void FavouriteButton_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Middle)
+            if (((FrameworkElement)sender).DataContext is Favourite Favourite)
             {
-                string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
-                BrowserView.Tab.ParentWindow.NewTab(Values[1], false, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1, BrowserView.Private, BrowserView.Tab.TabGroup);
+                if (e.ChangedButton == MouseButton.Left)
+                    BrowserView.Navigate(Favourite.Url);
+                else if (e.ChangedButton == MouseButton.Middle)
+                    BrowserView.Tab.ParentWindow.NewTab(Favourite.Url, false, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1, BrowserView.Private, BrowserView.Tab.TabGroup);
             }
         }
 
@@ -51,7 +47,7 @@ namespace SLBr.Pages
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                App.Instance.Favourites.Add(new ActionStorage(_DynamicDialogWindow.InputFields[0].Value, $"4<,>{URL}", URL));
+                App.Instance.Favourites.Add(new Favourite() { Type = "url", Url = URL, Name = _DynamicDialogWindow.InputFields[0].Value });
             }
         }
 
@@ -73,26 +69,26 @@ namespace SLBr.Pages
 
         private void DeleteSelectedButton_Click(object sender, RoutedEventArgs e)
         {
-            List<ActionStorage> Selected = FavouritesList.SelectedItems.Cast<ActionStorage>().ToList();
-            foreach (ActionStorage Favourite in Selected)
+            List<Favourite> Selected = FavouritesList.SelectedItems.Cast<Favourite>().ToList();
+            foreach (Favourite Favourite in Selected)
                 App.Instance.Favourites.Remove(Favourite);
         }
 
         private void DeleteSingleButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button _Button && _Button.DataContext is ActionStorage Favourite)
+            if (((FrameworkElement)sender).DataContext is Favourite Favourite)
                 App.Instance.Favourites.Remove(Favourite);
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button _Button && _Button.DataContext is ActionStorage Favourite)
+            if (((FrameworkElement)sender).DataContext is Favourite Favourite)
             {
                 DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite",
                     new List<InputField>
                     {
                         new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
-                        new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Tooltip },
+                        new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url },
                     },
                     "\ue70f"
                 );
@@ -100,9 +96,7 @@ namespace SLBr.Pages
                 if (_DynamicDialogWindow.ShowDialog() == true)
                 {
                     Favourite.Name = _DynamicDialogWindow.InputFields[0].Value;
-                    string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                    Favourite.Tooltip = URL;
-                    Favourite.Arguments = $"4<,>{URL}";
+                    Favourite.Url = _DynamicDialogWindow.InputFields[1].Value.Trim();
                 }
             }
         }
@@ -127,7 +121,7 @@ namespace SLBr.Pages
             if (SearchText.Length == 0)
                 FavouritesList.ItemsSource = App.Instance.Favourites;
             else
-                FavouritesList.ItemsSource = App.Instance.Favourites.Where(i => (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(SearchText) ?? false));
+                FavouritesList.ItemsSource = App.Instance.Favourites.Where(i => i.Type == "url" && (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Url?.ToLowerInvariant().Contains(SearchText) ?? false));
         }
     }
 }

@@ -102,13 +102,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Pages\Downloads.xaml.cs">
+    <Compile Update="Pages\DownloadsPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Pages\History.xaml.cs">
+    <Compile Update="Pages\HistoryPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Pages\Favourites.xaml.cs">
+    <Compile Update="Pages\FavouritesPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Properties\Settings.Designer.cs">

@@ -503,7 +503,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Tooltip}" Margin="0,0,5,0" MouseUp="FavouriteButton_MouseUp" Click="ButtonAction" Tag="{Binding Arguments}" Height="30" Content="{Binding Name}">
+                                    <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Url}" Margin="0,0,5,0" MouseUp="FavouriteButton_MouseUp" Height="30" Content="{Binding Name}">
                                         <Button.Resources>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>

@@ -202,7 +202,7 @@ namespace SLBr.Pages
                     SetSideBarDock(int.Parse(V1));
                     break;
                 case Actions.Favourite:
-                    Favourite();
+                    FavouriteAction();
                     break;
                 case Actions.OpenFileExplorer:
                     Utils.OpenFileExplorer(V1);
@@ -2449,7 +2449,7 @@ namespace SLBr.Pages
                 Refresh();
         }
 
-        News? _NewsFeed;
+        NewsPage? _NewsFeed;
         public void NewsFeed(bool ForceClose = false)
         {
             if (!ForceClose && IsUtilityContainerOpen && (_NewsFeed != null || DevToolsHost != null))
@@ -2461,7 +2461,7 @@ namespace SLBr.Pages
             if (IsUtilityContainerOpen)
             {
                 DevToolsToolBar.Visibility = Visibility.Collapsed;
-                _NewsFeed = new News(this);
+                _NewsFeed = new NewsPage(this);
                 SideBarCoreContainer.Children.Add(_NewsFeed);
                 Grid.SetColumn(_NewsFeed, 1);
                 Grid.SetRow(_NewsFeed, 1);
@@ -2480,7 +2480,7 @@ namespace SLBr.Pages
             SetAudioState(null);
         }
 
-        public void Favourite()
+        public void FavouriteAction()
         {
             int FavouriteExistIndex = FavouriteExists(Address);
             if (FavouriteExistIndex != -1)
@@ -2505,7 +2505,7 @@ namespace SLBr.Pages
                 if (_DynamicDialogWindow.ShowDialog() == true)
                 {
                     string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                    App.Instance.Favourites.Add(new ActionStorage(_DynamicDialogWindow.InputFields[0].Value, $"4<,>{URL}", URL));
+                    App.Instance.Favourites.Add(new Favourite() { Type = "url", Url = URL, Name = _DynamicDialogWindow.InputFields[0].Value });
                     if (URL == Address)
                     {
                         FavouriteButton.Content = "\xEB52";
@@ -2548,7 +2548,7 @@ namespace SLBr.Pages
         {
             if (App.Instance.Favourites.Count == 0)
                 return -1;
-            return App.Instance.Favourites.ToList().FindIndex(0, i => i.Tooltip == Url);
+            return App.Instance.Favourites.ToList().FindIndex(0, i => i.Url == Url);
         }
         /*public void Zoom(int Delta)
         {
@@ -3523,9 +3523,9 @@ namespace SLBr.Pages
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
                                 break;
                             case "Favourites":
-                                List<ActionStorage> FavouritesCollection = App.Instance.Favourites.Where(i => (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
-                                foreach (ActionStorage Entry in FavouritesCollection.Take(10))
-                                    Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
+                                List<Favourite> FavouritesCollection = App.Instance.Favourites.Where(i => i.Type == "url" && (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Url?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
+                                foreach (Favourite Entry in FavouritesCollection.Take(10))
+                                    Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, OmniBoxOverrideSearch));
                                 break;
                         }
                     }
@@ -3619,9 +3619,9 @@ namespace SLBr.Pages
                                 Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
                             break;
                         case "Favourites":
-                            List<ActionStorage> FavouritesCollection = App.Instance.Favourites.ToList();
-                            foreach (ActionStorage Entry in FavouritesCollection.Take(10))
-                                Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
+                            List<Favourite> FavouritesCollection = App.Instance.Favourites.Where(i => i.Type == "url").ToList();
+                            foreach (Favourite Entry in FavouritesCollection.Take(10))
+                                Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, OmniBoxOverrideSearch));
                             break;
                     }
                 }
@@ -3866,10 +3866,12 @@ namespace SLBr.Pages
 
         private void FavouriteButton_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Middle)
+            if (((FrameworkElement)sender).DataContext is Favourite Favourite)
             {
-                string[] Values = ((FrameworkElement)sender).Tag.ToString().Split("<,>");
-                Tab.ParentWindow.NewTab(Values[1], false, -1, Private);
+                if (e.ChangedButton == MouseButton.Left)
+                    Navigate(Favourite.Url);
+                else if (e.ChangedButton == MouseButton.Middle)
+                    Tab.ParentWindow.NewTab(Favourite.Url, false, -1, Private);
             }
         }
 
@@ -3880,7 +3882,7 @@ namespace SLBr.Pages
 
         private void FavouriteAction_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuItem _MenuItem && _MenuItem.DataContext is ActionStorage Favourite)
+            if (sender is MenuItem _MenuItem && _MenuItem.DataContext is Favourite Favourite)
             {
                 string Action = _MenuItem.Header.ToString();
                 if (Action == "Edit")
@@ -3889,7 +3891,7 @@ namespace SLBr.Pages
                         new List<InputField>
                         {
                             new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
-                            new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Tooltip },
+                            new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url },
                         },
                         "\ue70f"
                     );
@@ -3897,9 +3899,7 @@ namespace SLBr.Pages
                     if (_DynamicDialogWindow.ShowDialog() == true)
                     {
                         Favourite.Name = _DynamicDialogWindow.InputFields[0].Value;
-                        string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                        Favourite.Tooltip = URL;
-                        Favourite.Arguments = $"4<,>{URL}";
+                        Favourite.Url = _DynamicDialogWindow.InputFields[1].Value.Trim();
                     }
                 }
                 else if (Action == "Delete")

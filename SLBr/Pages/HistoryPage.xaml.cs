@@ -7,9 +7,9 @@ namespace SLBr.Pages
     /// <summary>
     /// Interaction logic for Settings.xaml
     /// </summary>
-    public partial class History : UserControl, IPageOverlay
+    public partial class HistoryPage : UserControl, IPageOverlay
     {
-        public History(Browser _BrowserView)
+        public HistoryPage(Browser _BrowserView)
         {
             InitializeComponent();
             BrowserView = _BrowserView;

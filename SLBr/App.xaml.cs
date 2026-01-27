@@ -598,7 +598,6 @@ namespace SLBr
 
         public Saving AppSave;
         public Saving GlobalSave;
-        public Saving FavouritesSave;
         public Saving SearchSave;
         public Saving StatisticsSave;
         public Saving LanguagesSave;
@@ -638,7 +637,7 @@ namespace SLBr
             "5",//S
         ];
 
-        public ObservableCollection<ActionStorage> Favourites = [];
+        public ObservableCollection<Favourite> Favourites = [];
         public ObservableCollection<ActionStorage> History = [];
         private List<Extension> PrivateExtensions = [];
         public List<Extension> Extensions
@@ -1446,15 +1445,6 @@ namespace SLBr
             AppInitialized = true;
             if (!Background)
                 ContinueBackgroundInitialization();
-            /*ChromiumBookmarkManager.Bookmarks Bookmarks = ChromiumBookmarkManager.Import(@"User Data\Profile 1\Bookmarks");
-            foreach (var bookmark in Bookmarks.roots.bookmark_bar.children)
-            {
-                if (bookmark.children != null)
-                    continue;
-                if (bookmark.name == "")
-                    continue;
-                MessageBox.Show(bookmark.name + "|" + bookmark.url);
-            }*/
         }
 
         public Theme GenerateTheme(Color BaseColor, string Name = "Temp")
@@ -1645,10 +1635,10 @@ namespace SLBr
 
         public static readonly Dictionary<string, Type> CustomPageOverlays = new Dictionary<string, Type>
         {
-            { "settings", typeof(Settings) },
-            { "favourites", typeof(Favourites) },
-            { "history", typeof(History) },
-            { "downloads", typeof(Downloads) },
+            { "settings", typeof(SettingsPage) },
+            { "favourites", typeof(FavouritesPage) },
+            { "history", typeof(HistoryPage) },
+            { "downloads", typeof(DownloadsPage) },
         };
 
         const string ReportExceptionText = @"**Automatic Report**
@@ -1964,11 +1954,11 @@ Inner Exception: ```{7} ```";
         public bool HighPerformanceMode;
 
         public bool Synchronized = false;
+        public bool FavouritesSetUp = false;
 
         private async Task InitializeSaves()
         {
             GlobalSave = new Saving("Save.bin", UserApplicationDataPath);
-            FavouritesSave = new Saving("Favourites.bin", UserApplicationDataPath);
             SearchSave = new Saving("Search.bin", UserApplicationDataPath);
             StatisticsSave = new Saving("Statistics.bin", UserApplicationDataPath);
             LanguagesSave = new Saving("Languages.bin", UserApplicationDataPath);
@@ -2043,7 +2033,19 @@ Inner Exception: ```{7} ```";
                                         AllowListSave.Process(AllowListRaw);
                                 }
                                 if (SyncedData.Contains("Favourites") && SyncedFiles.TryGetValue("Favourites.bin", out var FavouritesRaw))
-                                    FavouritesSave.Process(FavouritesRaw);
+                                {
+                                    try
+                                    {
+                                        BookmarksManager.Bookmarks BookmarksContainer = JsonSerializer.Deserialize<BookmarksManager.Bookmarks>(FavouritesRaw, new JsonSerializerOptions
+                                        {
+                                            PropertyNameCaseInsensitive = true
+                                        })!;
+                                        foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
+                                            Favourites.Add(Bookmark);
+                                        FavouritesSetUp = true;
+                                    }
+                                    catch { }
+                                }
                                 Synchronized = true;
                                 //if (SyncedData.Contains("Tabs"))
                             }
@@ -2054,6 +2056,25 @@ Inner Exception: ```{7} ```";
                 }
                 catch { }
                 //TODO: Create folders of windows for the tab sync?
+            }
+
+            if (!FavouritesSetUp)
+            {
+                string FavouritesPath = Path.Combine(UserApplicationDataPath, "Favourites.bin");
+                if (File.Exists(FavouritesPath))
+                {
+                    try
+                    {
+                        string FavouritesJSON = File.ReadAllText(FavouritesPath);
+                        BookmarksManager.Bookmarks BookmarksContainer = JsonSerializer.Deserialize<BookmarksManager.Bookmarks>(FavouritesJSON, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        })!;
+                        foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
+                            Favourites.Add(Bookmark);
+                    }
+                    catch { }
+                }
             }
 
             if (!GlobalSave.Has("StartupBoost"))
@@ -2308,13 +2329,9 @@ Inner Exception: ```{7} ```";
             SetAdBlock(GlobalSave.GetInt("AdBlock", 1));
             SetAMP(bool.Parse(GlobalSave.Get("AMP", false.ToString())));
             SetRenderMode(GlobalSave.GetInt("RenderMode", (RenderCapability.Tier >> 16) == 0 ? 1 : 0));
-            
-            for (int i = 0; i < FavouritesSave.GetInt("Count", 0); i++)
-            {
-                string[] Value = FavouritesSave.Get(i.ToString(), true);
-                Favourites.Add(new ActionStorage(Value[1], $"4<,>{Value[0]}", Value[0]));
-            }
+
             Favourites.CollectionChanged += Favourites_CollectionChanged;
+
             SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
             bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
             if (bool.Parse(GlobalSave.Get("RestoreTabs", false.ToString())))
@@ -2809,7 +2826,7 @@ Inner Exception: ```{7} ```";
                     CurrentWindow.GetTab().Content.Stop();
                     break;
                 case 3:
-                    CurrentWindow.GetTab().Content.Favourite();
+                    CurrentWindow.GetTab().Content.FavouriteAction();
                     break;
                 case 4:
                     CurrentWindow.GetTab().Content.WebView?.SaveAs();
@@ -3662,16 +3679,17 @@ Inner Exception: ```{7} ```";
         {
             if (CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest")
                 return;
-            GlobalSave.Save();
+            string GlobalRaw = GlobalSave.Save();
 
             StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
             StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
 
-            FavouritesSave.Clear();
-            FavouritesSave.Set("Count", Favourites.Count.ToString());
-            for (int i = 0; i < Favourites.Count; i++)
-                FavouritesSave.Set(i.ToString(), Favourites[i].Tooltip, Favourites[i].Name);
-            FavouritesSave.Save();
+            string FavouritesRaw = JsonSerializer.Serialize(new BookmarksManager.Bookmarks() { Roots = new() { Bookmarks = new() { Name = "Bookmarks bar", Children = Favourites.ToList(), Type = "folder" } } }, new JsonSerializerOptions
+            {
+                WriteIndented = false,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
+            File.WriteAllText(Path.Combine(UserApplicationDataPath, "Favourites.bin"), FavouritesRaw);
 
             SearchSave.Clear();
             SearchSave.Set("Count", SearchEngines.Count.ToString());
@@ -3680,7 +3698,7 @@ Inner Exception: ```{7} ```";
                 SearchProvider _SearchProvider = SearchEngines[i];
                 SearchSave.Set(i.ToString(), $"{_SearchProvider.Name}<#>{_SearchProvider.SearchUrl}<#>{_SearchProvider.SuggestUrl}");
             }
-            SearchSave.Save();
+            string SearchRaw = SearchSave.Save();
 
             AllowListSave.Clear();
             AllowListSave.Set("Count", AdBlockAllowList.AllDomains.Count.ToString());
@@ -3690,14 +3708,14 @@ Inner Exception: ```{7} ```";
                 AllowListSave.Set(DomainIndex.ToString(), Domain);
                 DomainIndex++;
             }
-            AllowListSave.Save();
+            string AllowListRaw = AllowListSave.Save();
 
             LanguagesSave.Clear();
             LanguagesSave.Set("Count", Languages.Count.ToString());
             LanguagesSave.Set("Selected", Languages.IndexOf(Locale));
             for (int i = 0; i < Languages.Count; i++)
                 LanguagesSave.Set(i.ToString(), Languages[i].Tooltip);
-            LanguagesSave.Save();
+            string LanguagesRaw = LanguagesSave.Save();
 
             foreach (FileInfo _File in new DirectoryInfo(UserApplicationWindowsPath).GetFiles())
                 _File.Delete();
@@ -3748,13 +3766,13 @@ Inner Exception: ```{7} ```";
                         Dictionary<string, string> SyncData = new();
                         //if (SyncedData.Contains("Tabs"))
                         if (SyncedData.Contains("Favourites"))
-                            SyncData["Favourites.bin"] = FavouritesSave.Read();
+                            SyncData["Favourites.bin"] = FavouritesRaw;
                         if (SyncedData.Contains("Settings"))
                         {
-                            SyncData["Save.bin"] = GlobalSave.Read();
-                            SyncData["Search.bin"] = SearchSave.Read();
-                            SyncData["Languages.bin"] = LanguagesSave.Read();
-                            SyncData["AllowList.bin"] = AllowListSave.Read();
+                            SyncData["Save.bin"] = GlobalRaw;
+                            SyncData["Search.bin"] = SearchRaw;
+                            SyncData["Languages.bin"] = LanguagesRaw;
+                            SyncData["AllowList.bin"] = AllowListRaw;
                         }
                         string SyncJson = JsonSerializer.Serialize(SyncData, new JsonSerializerOptions { WriteIndented = false });
                         HttpClient Client = new();

@@ -9,12 +9,12 @@ namespace SLBr.Pages
     /// <summary>
     /// Interaction logic for News.xaml
     /// </summary>
-    public partial class News : UserControl
+    public partial class NewsPage : UserControl
     {
         Browser BrowserView;
         XmlDataProvider NewsXML;
 
-        public News(Browser _BrowserView)
+        public NewsPage(Browser _BrowserView)
         {
             InitializeComponent();
             BrowserView = _BrowserView;

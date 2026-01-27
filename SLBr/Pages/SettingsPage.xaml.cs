@@ -25,7 +25,7 @@ namespace SLBr.Pages
     /// <summary>
     /// Interaction logic for Settings.xaml
     /// </summary>
-    public partial class Settings : UserControl, IPageOverlay
+    public partial class SettingsPage : UserControl, IPageOverlay
     {
         public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
@@ -43,7 +43,7 @@ namespace SLBr.Pages
             }
         }
 
-        public Settings(Browser _BrowserView)
+        public SettingsPage(Browser _BrowserView)
         {
             InitializeComponent();
             if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")

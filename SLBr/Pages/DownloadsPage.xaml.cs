@@ -21,9 +21,9 @@ namespace SLBr.Pages
     /// <summary>
     /// Interaction logic for Settings.xaml
     /// </summary>
-    public partial class Downloads : UserControl, IPageOverlay
+    public partial class DownloadsPage : UserControl, IPageOverlay
     {
-        public Downloads(Browser _BrowserView)
+        public DownloadsPage(Browser _BrowserView)
         {
             InitializeComponent();
             BrowserView = _BrowserView;

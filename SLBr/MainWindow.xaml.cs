@@ -442,7 +442,7 @@ namespace SLBr
                     foreach (BrowserTabItem _Tab in Tabs)
                     {
                         _Tab.ProgressBarVisibility = Visibility.Collapsed;
-                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is Settings SettingsPage)
+                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is SettingsPage SettingsPage)
                             SettingsPage.UnloadProgressBar.Value = 0;
                     }
                     GCTimer.Tick += GCCollect_EfficientTick;
@@ -456,7 +456,7 @@ namespace SLBr
                 foreach (BrowserTabItem _Tab in Tabs)
                 {
                     _Tab.ProgressBarVisibility = Visibility.Collapsed;
-                    if (!_Tab.IsUnloaded && _Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is Settings SettingsPage)
+                    if (!_Tab.IsUnloaded && _Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is SettingsPage SettingsPage)
                         SettingsPage.UnloadProgressBar.Value = 0;
                 }
             }
@@ -480,7 +480,7 @@ namespace SLBr
                     else
                     {
                         _Tab.Progress = VisualProgress;
-                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is Settings SettingsPage)
+                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is SettingsPage SettingsPage)
                             SettingsPage.UnloadProgressBar.Value = VisualProgress;
                     }
                 }
@@ -754,7 +754,7 @@ namespace SLBr
         public void Favourite(string Id = "")
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
-            _Tab.Content?.Favourite();
+            _Tab.Content?.FavouriteAction();
         }
         public void Undo(string Id = "")
         {

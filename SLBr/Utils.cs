@@ -1,17 +1,20 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Win32;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Media;
@@ -1303,6 +1306,7 @@ namespace SLBr
         const string ValueSeparator = "<|>";
         const string KeyValueSeparator = "<:>";
         Dictionary<string, string> Data = [];
+        //Dictionary<string, object> Data = [];
         public string SaveFolderPath;
         public string SaveFilePath;
 
@@ -1335,6 +1339,31 @@ namespace SLBr
         {
             Set(Key, string.Join(ValueSeparator, Items));
         }
+
+        /*public void Set<T>(string Key, T Value)
+        {
+            Data[Key] = Value;
+        }
+        public T Get<T>(string Key, T Default = default)
+        {
+            if (Data.TryGetValue(Key, out var Cached))
+                return (T)Cached;
+            if (Data.TryGetValue(Key, out var _String))
+            {
+                try
+                {
+                    T Value = (T)Convert.ChangeType(_String, typeof(T), CultureInfo.InvariantCulture);
+                    Data[Key] = Value;
+                    return Value;
+                }
+                catch { }
+            }
+
+            Set(Key, Default);
+            Data[Key] = Default;
+            return Default;
+        }*/
+
         public string Get(string Key, string Default = "NOTFOUND")
         {
             if (Data.TryGetValue(Key, out var value))
@@ -1360,24 +1389,26 @@ namespace SLBr
             Get(Key).Split(ValueSeparator, StringSplitOptions.None);
         public void Clear() =>
             Data.Clear();
-        public void Save()
+        public string Save()
         {
             if (!Directory.Exists(SaveFolderPath))
                 Directory.CreateDirectory(SaveFolderPath);
             if (!File.Exists(SaveFilePath))
                 File.Create(SaveFilePath).Close();
 
-            using StreamWriter Writer = new(SaveFilePath, false);
+            StringBuilder Builder = new StringBuilder(Data.Count * 32);
             foreach (KeyValuePair<string, string> Entry in Data)
-            {
-                Writer.Write(Entry.Key);
-                Writer.Write(KeyValueSeparator);
-                Writer.Write(Entry.Value);
-                Writer.Write(KeySeparator);
-            }
+                Builder.Append(Entry.Key).Append(KeyValueSeparator).Append(Entry.Value).Append(KeySeparator);
+            string Content = Builder.ToString();
+            File.WriteAllText(SaveFilePath, Content);
+            return Content;
         }
-        public void Load() =>
-            Process(Read());
+        public void Load()
+        {
+            if (!File.Exists(SaveFilePath))
+                return;
+            Process(File.ReadAllText(SaveFilePath));
+        }
 
         public void Process(string Content)
         {
@@ -1391,55 +1422,79 @@ namespace SLBr
                     Data[Values[0]] = Values[1];
             }
         }
+    }
+    public class Favourite : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
-        public string Read()
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        [JsonPropertyName("children")]
+        public List<Favourite> Children { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name
         {
-            if (!File.Exists(SaveFilePath))
-                return "";
-            return File.ReadAllText(SaveFilePath);
+            get { return _Name; }
+            set
+            {
+                _Name = value;
+                RaisePropertyChanged();
+            }
         }
+        private string _Name;
+
+        [JsonPropertyName("type")]
+        public string Type
+        {
+            get { return _Type; }
+            set
+            {
+                _Type = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Type;
+
+        [JsonPropertyName("url")]
+        public string Url
+        {
+            get { return _Url; }
+            set
+            {
+                _Url = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Url;
     }
 
-    /*public class ChromiumBookmarkManager
+    public class BookmarksManager
     {
         public class Bookmarks
         {
-            public BookmarkRoots roots { get; set; }
+            [JsonPropertyName("roots")]
+            public BookmarkRoots Roots { get; set; }
         }
         public class BookmarkRoots
         {
-            public Bookmark bookmark_bar { get; set; }
-        }
-        public class Bookmark
-        {
-            public List<Bookmark> children { get; set; }
-            public string date_added { get; set; }
-            public string id { get; set; }
-            public string name { get; set; }
-            public string type { get; set; }
-            public string url { get; set; }
+            [JsonPropertyName("bookmark_bar")]
+            public Favourite Bookmarks { get; set; }
         }
 
-        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            WriteIndented = true
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
         public static Bookmarks Import(string _Path)
         {
-            string FileContent = File.ReadAllText(_Path);
-            return Decode<Bookmarks>(FileContent);
+            return JsonSerializer.Deserialize<Bookmarks>(File.ReadAllText(_Path), JsonOptions)!;
         }
-
-        public static string Encode<T>(T data)
-        {
-            return JsonSerializer.Serialize(data, JsonOptions);
-        }
-
-        public static T Decode<T>(string jsonData)
-        {
-            return JsonSerializer.Deserialize<T>(jsonData, JsonOptions)!;
-        }
-    }*/
+    }
 }
