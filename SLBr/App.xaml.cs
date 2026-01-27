@@ -2041,7 +2041,11 @@ Inner Exception: ```{7} ```";
                                             PropertyNameCaseInsensitive = true
                                         })!;
                                         foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
+                                        {
+                                            if (string.IsNullOrEmpty(Bookmark.Name) && !string.IsNullOrEmpty(Bookmark.Url))
+                                                Bookmark.Name = Utils.FastHost(Bookmark.Url);
                                             Favourites.Add(Bookmark);
+                                        }
                                         FavouritesSetUp = true;
                                     }
                                     catch { }
@@ -2071,7 +2075,11 @@ Inner Exception: ```{7} ```";
                             PropertyNameCaseInsensitive = true
                         })!;
                         foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
+                        {
+                            if (string.IsNullOrEmpty(Bookmark.Name) && !string.IsNullOrEmpty(Bookmark.Url))
+                                Bookmark.Name = Utils.FastHost(Bookmark.Url);
                             Favourites.Add(Bookmark);
+                        }
                     }
                     catch { }
                 }
@@ -3684,7 +3692,7 @@ Inner Exception: ```{7} ```";
             StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
             StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
 
-            string FavouritesRaw = JsonSerializer.Serialize(new BookmarksManager.Bookmarks() { Roots = new() { Bookmarks = new() { Name = "Bookmarks bar", Children = Favourites.ToList(), Type = "folder" } } }, new JsonSerializerOptions
+            string FavouritesRaw = JsonSerializer.Serialize(new BookmarksManager.Bookmarks() { Roots = new() { Bookmarks = new() { Name = "Bookmarks bar", Children = Favourites, Type = "folder" } } }, new JsonSerializerOptions
             {
                 WriteIndented = false,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull

@@ -7,6 +7,7 @@
     <controls:BooleanToVisibilityConverter x:Key="OppositeBooleanToVisibility" Invert="True"/>
     <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
     <controls:NullToVisibilityConverter x:Key="NullToVisibility"/>
+    <controls:SubtractConverter x:Key="Subtract"/>
     <controls:LessThanConverter x:Key="WidthLessThan60" Threshold="60"/>
     
     <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderBrushColor}"/>
@@ -1232,7 +1233,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock Margin="{TemplateBinding Padding}" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" TextBlock.TextAlignment="{TemplateBinding HorizontalContentAlignment}" TextBlock.Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1834,18 +1835,16 @@ Margin="{TemplateBinding Padding}"/>
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
-    <ControlTemplate 
-    x:Key="{x:Static MenuItem.SubmenuItemTemplateKey}" 
-    TargetType="{x:Type MenuItem}">
-        <Border Name="Border" CornerRadius="5" Margin="0" Height="35" BorderThickness="1" BorderBrush="Transparent">
+    <ControlTemplate x:Key="{x:Static MenuItem.SubmenuItemTemplateKey}" TargetType="{x:Type MenuItem}">
+        <Border Name="Border" CornerRadius="5" Margin="0" Height="35" BorderThickness="1" BorderBrush="Transparent" MaxWidth="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=MaxWidth, Converter={StaticResource Subtract}, ConverterParameter=10}">
             <Grid Margin="0,1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
-                <Border x:Name="Icon" Width="30" Height="30" Visibility="Visible" Margin="5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
+                <Border x:Name="Icon" Width="30" Height="30" Margin="5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
                     <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}">
                         <ContentPresenter.Resources>
                             <Style TargetType="TextBlock">
@@ -1854,12 +1853,6 @@ Margin="{TemplateBinding Padding}"/>
                                         <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
                                     </Trigger>
                                     <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2600;">
-                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2601;">
-                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2602;">
                                         <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -1874,9 +1867,11 @@ Margin="{TemplateBinding Padding}"/>
           Name="HeaderHost"
           Grid.Column="1"
           ContentSource="Header"
-          RecognizesAccessKey="True" VerticalAlignment="Center" TextBlock.Foreground="{TemplateBinding Foreground}">
+          RecognizesAccessKey="True" VerticalAlignment="Center" Margin="5,0,0,0" TextBlock.Foreground="{TemplateBinding Foreground}">
                     <ContentPresenter.Resources>
                         <Style TargetType="TextBlock">
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="TextWrapping" Value="NoWrap"/>
                             <Style.Triggers>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
@@ -1917,15 +1912,15 @@ Margin="{TemplateBinding Padding}"/>
             </Trigger>
 
             <Trigger Property="Icon" Value="{x:Null}">
-                <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
             </Trigger>
             <Trigger Property="Icon" Value="None">
-                <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
             </Trigger>
             <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="Check" Property="BorderThickness" Value="0"/>
                 <Setter TargetName="Check" Property="Background" Value="{DynamicResource IndicatorBrush}"/>
-                <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
                 <Setter TargetName="Checkmark" Property="Opacity" Value="1"/>
             </Trigger>
             <Trigger Property="IsChecked" Value="False">
@@ -1933,7 +1928,7 @@ Margin="{TemplateBinding Padding}"/>
             </Trigger>
             <Trigger Property="IsCheckable" Value="True">
                 <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
-                <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
             </Trigger>
             <Trigger Property="IsHighlighted" Value="true">
                 <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -1956,7 +1951,7 @@ Margin="{TemplateBinding Padding}"/>
     <ControlTemplate 
     x:Key="{x:Static MenuItem.SubmenuHeaderTemplateKey}" 
     TargetType="{x:Type MenuItem}">
-        <Border Name="Border" CornerRadius="5" Margin="0" Height="35" BorderThickness="1" BorderBrush="Transparent">
+        <Border Name="Border" CornerRadius="5" Margin="0" Height="35" BorderThickness="1" BorderBrush="Transparent" MaxWidth="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=MaxWidth, Converter={StaticResource Subtract}, ConverterParameter=10}">
             <Grid Margin="0,1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
@@ -1964,14 +1959,21 @@ Margin="{TemplateBinding Padding}"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
-                <Border x:Name="Icon" Width="30" Height="30" Visibility="Visible" Margin="5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                <Border x:Name="Icon" Width="30" Height="30" Margin="5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
                     <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}"/>
                 </Border>
                 <ContentPresenter 
           Name="HeaderHost"
           Grid.Column="1"
           ContentSource="Header"
-          RecognizesAccessKey="True" VerticalAlignment="Center" Margin="0,2.5,50,2.5" TextBlock.Foreground="{TemplateBinding Foreground}"/>
+          RecognizesAccessKey="True" VerticalAlignment="Center" Margin="5,2.5,50,2.5" TextBlock.Foreground="{TemplateBinding Foreground}">
+                    <ContentPresenter.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="TextWrapping" Value="NoWrap"/>
+                        </Style>
+                    </ContentPresenter.Resources>
+                </ContentPresenter>
                 <TextBlock x:Name="InputGestureText"
           Grid.Column="2"
           Text="{TemplateBinding InputGestureText}"
@@ -2004,10 +2006,10 @@ Margin="{TemplateBinding Padding}"/>
 
         <ControlTemplate.Triggers>
             <Trigger Property="Icon" Value="{x:Null}">
-                <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
             </Trigger>
             <Trigger Property="Icon" Value="None">
-                <Setter TargetName="Icon" Property="Visibility" Value="Hidden"/>
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
             </Trigger>
             <Trigger Property="IsHighlighted" Value="true">
                 <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>

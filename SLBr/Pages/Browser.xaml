@@ -47,10 +47,10 @@
                                     </MenuItem.ItemsSource>
                                     <MenuItem.ItemContainerStyle>
                                         <Style TargetType="MenuItem">
-                                            <Setter Property="Icon" Value="&#xEB41;" />
-                                            <Setter Property="Header" Value="{Binding Tooltip}" />
-                                            <Setter Property="Tag" Value="{Binding Arguments}" />
-                                            <EventSetter Event="Click" Handler="ButtonAction" />
+                                            <Setter Property="Icon" Value="&#xEB41;"/>
+                                            <Setter Property="Header" Value="{Binding Tooltip}"/>
+                                            <Setter Property="Tag" Value="{Binding Arguments}"/>
+                                            <EventSetter Event="Click" Handler="ButtonAction"/>
                                         </Style>
                                     </MenuItem.ItemContainerStyle>
                                 </MenuItem>
@@ -58,20 +58,26 @@
                                 <MenuItem Icon="&#xEB51;" Header="Favourites">
                                     <MenuItem.ItemsSource>
                                         <CompositeCollection>
-                                            <MenuItem Header="Favourites Manager" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://favourites/"/>
+                                            <MenuItem Header="Favourites Manager" Click="ButtonAction" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://favourites/"/>
                                             <Separator/>
                                             <CollectionContainer x:Name="FavouriteListMenu"/>
                                         </CompositeCollection>
                                     </MenuItem.ItemsSource>
-                                    <MenuItem.ItemContainerStyle>
-                                        <Style TargetType="MenuItem">
+                                    <MenuItem.Resources>
+                                        <Style x:Key="UrlStyle" TargetType="MenuItem">
                                             <Setter Property="Icon" Value="&#xEB41;"/>
                                             <Setter Property="Header" Value="{Binding Name}"/>
-                                            <Setter Property="Tag" Value="{Binding Arguments}"/>
-                                            <Setter Property="ToolTip" Value="{Binding Tooltip}"/>
-                                            <EventSetter Event="Click" Handler="ButtonAction"/>
+                                            <Setter Property="ToolTip" Value="{Binding Url}"/>
+                                            <EventSetter Event="PreviewMouseUp" Handler="FavouriteButton_PreviewMouseUp"/>
                                         </Style>
-                                    </MenuItem.ItemContainerStyle>
+                                        <Style x:Key="FolderStyle" TargetType="MenuItem">
+                                            <Setter Property="Icon" Value="&#xe8b7;"/>
+                                            <Setter Property="Header" Value="{Binding Name}"/>
+                                        </Style>
+                                    </MenuItem.Resources>
+                                    <MenuItem.ItemContainerStyleSelector>
+                                        <controls:FavouriteStyleSelector UrlStyle="{StaticResource UrlStyle}" FolderStyle="{StaticResource FolderStyle}"/>
+                                    </MenuItem.ItemContainerStyleSelector>
                                 </MenuItem>
                                 <!--<MenuItem Icon="&#xea86;" x:Name="ExtensionListMenu" Header="Extensions">
                                     <MenuItem.ItemContainerStyle>
@@ -496,14 +502,9 @@
                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="41.25" Grid.Row="1" HorizontalAlignment="Stretch">
                     <ScrollViewer controls:SmoothScrollBehavior.Enable="True" FontFamily="None" x:Name="FavouriteScrollViewer" Margin="5,0,5,5" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden">
                         <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <DockPanel x:Name="FavouriteDockPanel" IsItemsHost="True" Margin="0" HorizontalAlignment="Left"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Url}" Margin="0,0,5,0" MouseUp="FavouriteButton_MouseUp" Height="30" Content="{Binding Name}">
+                            <ItemsControl.Resources>
+                                <DataTemplate x:Key="UrlTemplate">
+                                    <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Url}" Margin="0,0,5,0" PreviewMouseUp="FavouriteButton_PreviewMouseUp" Height="30" Content="{Binding Name}">
                                         <Button.Resources>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
@@ -520,7 +521,51 @@
                                         </Button.ContextMenu>
                                     </Button>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
+                                <DataTemplate x:Key="FolderTemplate">
+                                    <WinUI:DropDownButton MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" Margin="0,0,5,0" Height="30">
+                                        <WinUI:DropDownButton.Content>
+                                            <DockPanel VerticalAlignment="Center">
+                                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0" FontFamily="{StaticResource IconFontFamily}" Text="&#xe8b7;" FontSize="16"/>
+                                                <TextBlock TextAlignment="Center" Text="{Binding Name}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DockPanel>
+                                        </WinUI:DropDownButton.Content>
+                                        <WinUI:DropDownButton.Resources>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                <Setter Property="MaxWidth" Value="150"/>
+                                            </Style>
+                                        </WinUI:DropDownButton.Resources>
+                                        <WinUI:DropDownButton.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Icon="&#xe70f;" Click="FavouriteAction_Click" Header="Edit"/>
+                                                <MenuItem Icon="&#xe74d;" Click="FavouriteAction_Click" Header="Delete"/>
+                                                <Separator/>
+                                                <MenuItem Header="Favourites Manager" Icon="&#xe9a4;" Click="ButtonAction" Tag="5&lt;,&gt;slbr://favourites/"/>
+                                            </ContextMenu>
+                                        </WinUI:DropDownButton.ContextMenu>
+                                        <WinUI:DropDownButton.Menu>
+                                            <!--TODO: Solve nested folder issue.-->
+                                            <ContextMenu MaxWidth="300" ItemsSource="{Binding Children}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                                                <ContextMenu.ItemContainerStyle>
+                                                    <Style TargetType="MenuItem">
+                                                        <Setter Property="Header" Value="{Binding Name}"/>
+                                                        <Setter Property="ToolTip" Value="{Binding Url}"/>
+                                                        <EventSetter Event="PreviewMouseUp" Handler="FavouriteButton_PreviewMouseUp"/>
+                                                    </Style>
+                                                </ContextMenu.ItemContainerStyle>
+                                            </ContextMenu>
+                                        </WinUI:DropDownButton.Menu>
+                                    </WinUI:DropDownButton>
+                                </DataTemplate>
+                            </ItemsControl.Resources>
+                            <ItemsControl.ItemTemplateSelector>
+                                <controls:FavouriteTemplateSelector UrlTemplate="{StaticResource UrlTemplate}" FolderTemplate="{StaticResource FolderTemplate}"/>
+                            </ItemsControl.ItemTemplateSelector>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <DockPanel x:Name="FavouriteDockPanel" IsItemsHost="True" Margin="0" HorizontalAlignment="Left"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
                         </ItemsControl>
                     </ScrollViewer>
                 </Border>

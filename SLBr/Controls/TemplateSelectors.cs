@@ -52,6 +52,48 @@ namespace SLBr.Controls
         }
     }
 
+    public class FavouriteTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate UrlTemplate { get; set; }
+        public DataTemplate FolderTemplate { get; set; }
+
+        public override DataTemplate SelectTemplate(object Item, DependencyObject Container)
+        {
+            if (Item is Favourite _Favourite)
+            {
+                switch (_Favourite.Type)
+                {
+                    case "url":
+                        return UrlTemplate;
+                    case "folder":
+                        return FolderTemplate;
+                }
+            }
+            return base.SelectTemplate(Item, Container);
+        }
+    }
+
+    public class FavouriteStyleSelector : StyleSelector
+    {
+        public Style UrlStyle { get; set; }
+        public Style FolderStyle { get; set; }
+
+        public override Style SelectStyle(object Item, DependencyObject Container)
+        {
+            if (Item is Favourite _Favourite)
+            {
+                switch (_Favourite.Type)
+                {
+                    case "url":
+                        return UrlStyle;
+                    case "folder":
+                        return FolderStyle;
+                }
+            }
+            return base.SelectStyle(Item, Container);
+        }
+    }
+
     public class BrowserTabItemStyleSelector : StyleSelector
     {
         public Style NavigationStyle { get; set; }

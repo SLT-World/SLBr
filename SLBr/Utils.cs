@@ -1,6 +1,7 @@
 ﻿using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Win32;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -1433,12 +1434,17 @@ namespace SLBr
         #endregion
 
         [JsonPropertyName("children")]
-        public List<Favourite> Children { get; set; }
+        public ObservableCollection<Favourite> Children { get; set; }
 
         [JsonPropertyName("name")]
         public string Name
         {
-            get { return _Name; }
+            get
+            {
+                if (string.IsNullOrEmpty(_Name))
+                    return Url;
+                return _Name;
+            }
             set
             {
                 _Name = value;
@@ -1450,7 +1456,7 @@ namespace SLBr
         [JsonPropertyName("type")]
         public string Type
         {
-            get { return _Type; }
+            get => _Type;
             set
             {
                 _Type = value;
@@ -1462,7 +1468,7 @@ namespace SLBr
         [JsonPropertyName("url")]
         public string Url
         {
-            get { return _Url; }
+            get => _Url;
             set
             {
                 _Url = value;

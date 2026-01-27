@@ -37,6 +37,14 @@ namespace SLBr.Controls
         public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
             throw new NotImplementedException();
     }
+    
+    public class SubtractConverter : IValueConverter
+    {
+        public object Convert(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            (double)Value - double.Parse((string)Parameter);
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            throw new NotImplementedException();
+    }
 
     public class StringToColorConverter : IValueConverter
     {

@@ -3864,7 +3864,7 @@ namespace SLBr.Pages
             Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{App.Instance.Downloads.GetValueOrDefault(((FrameworkElement)sender).Tag.ToString()).FullPath}\"") { UseShellExecute = true });
         }
 
-        private void FavouriteButton_MouseUp(object sender, MouseButtonEventArgs e)
+        private void FavouriteButton_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             if (((FrameworkElement)sender).DataContext is Favourite Favourite)
             {
@@ -3887,19 +3887,18 @@ namespace SLBr.Pages
                 string Action = _MenuItem.Header.ToString();
                 if (Action == "Edit")
                 {
-                    DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite",
-                        new List<InputField>
-                        {
-                            new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
-                            new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url },
-                        },
-                        "\ue70f"
-                    );
+                    List<InputField> Inputs = [
+                        new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
+                    ];
+                    if (Favourite.Type == "url")
+                        Inputs.Add(new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url });
+                    DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite", Inputs, "\ue70f");
                     _DynamicDialogWindow.Topmost = true;
                     if (_DynamicDialogWindow.ShowDialog() == true)
                     {
                         Favourite.Name = _DynamicDialogWindow.InputFields[0].Value;
-                        Favourite.Url = _DynamicDialogWindow.InputFields[1].Value.Trim();
+                        if (Favourite.Type == "url")
+                            Favourite.Url = _DynamicDialogWindow.InputFields[1].Value.Trim();
                     }
                 }
                 else if (Action == "Delete")
