@@ -1835,6 +1835,57 @@ Margin="{TemplateBinding Padding}"/>
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
+    <ControlTemplate x:Key="EmptyMenuItemTemplate" TargetType="{x:Type MenuItem}">
+        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0" MaxWidth="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=MaxWidth, Converter={StaticResource Subtract}, ConverterParameter=10}">
+            <ContentPresenter.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                    <Setter Property="TextWrapping" Value="NoWrap"/>
+                </Style>
+            </ContentPresenter.Resources>
+        </ContentPresenter>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="IconMenuItemTemplate" TargetType="{x:Type MenuItem}">
+        <Border Name="Border" CornerRadius="5" Margin="0" Height="35" Width="35" BorderThickness="1" BorderBrush="Transparent">
+            <Border x:Name="Icon" Width="30" Height="30" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ContentPresenter Margin="0" TextBlock.Foreground="{TemplateBinding Foreground}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}">
+                    <ContentPresenter.Resources>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
+                                </Trigger>
+                                <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2600;">
+                                    <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ContentPresenter.Resources>
+                </ContentPresenter>
+            </Border>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="Icon" Value="{x:Null}">
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+            </Trigger>
+            <Trigger Property="Icon" Value="None">
+                <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
+            </Trigger>
+            <Trigger Property="IsHighlighted" Value="true">
+                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource SecondaryBrush}"/>
+                <Setter TargetName="Icon" Property="BorderBrush" Value="Transparent"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
     <ControlTemplate x:Key="{x:Static MenuItem.SubmenuItemTemplateKey}" TargetType="{x:Type MenuItem}">
         <Border Name="Border" CornerRadius="5" Margin="0" Height="35" BorderThickness="1" BorderBrush="Transparent" MaxWidth="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=MaxWidth, Converter={StaticResource Subtract}, ConverterParameter=10}">
             <Grid Margin="0,1">
@@ -1844,7 +1895,7 @@ Margin="{TemplateBinding Padding}"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
-                <Border x:Name="Icon" Width="30" Height="30" Margin="5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
+                <Border x:Name="Icon" Width="30" Height="30" Margin="0,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
                     <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}">
                         <ContentPresenter.Resources>
                             <Style TargetType="TextBlock">
