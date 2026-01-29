@@ -666,7 +666,7 @@
                                     <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
                                     <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
                                     <Separator/>
-                                    <MenuItem Header="Select All" Command="ApplicationCommands.SelectAll"/>
+                                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
                                 </ContextMenu>
                             </TextBox.ContextMenu>
                         </TextBox>
@@ -790,7 +790,7 @@
                     <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
                     <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
                     <Separator/>
-                    <MenuItem Header="Select All" Command="ApplicationCommands.SelectAll"/>
+                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
                 </ContextMenu>
             </Setter.Value>
         </Setter>
@@ -878,7 +878,7 @@
                     <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
                     <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
                     <Separator/>
-                    <MenuItem Header="Select All" Command="ApplicationCommands.SelectAll"/>
+                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
                 </ContextMenu>
             </Setter.Value>
         </Setter>
@@ -960,7 +960,7 @@
                     <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
                     <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
                     <Separator/>
-                    <MenuItem Header="Select All" Command="ApplicationCommands.SelectAll"/>
+                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
                 </ContextMenu>
             </Setter.Value>
         </Setter>
@@ -1856,9 +1856,6 @@ Margin="{TemplateBinding Padding}"/>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
                                 </Trigger>
-                                <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2600;">
-                                    <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
-                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </ContentPresenter.Resources>
@@ -1895,7 +1892,7 @@ Margin="{TemplateBinding Padding}"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
-                <Border x:Name="Icon" Width="30" Height="30" Margin="0,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
+                <Border x:Name="Icon" Width="30" Height="30" Margin="2.5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
                     <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}">
                         <ContentPresenter.Resources>
                             <Style TargetType="TextBlock">
@@ -1904,6 +1901,12 @@ Margin="{TemplateBinding Padding}"/>
                                         <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
                                     </Trigger>
                                     <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2600;">
+                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2601;">
+                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2602;">
                                         <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -1958,7 +1961,7 @@ Margin="{TemplateBinding Padding}"/>
             <Trigger Property="Header" Value="Paste">
                 <Setter Property="Icon" Value="&#xe77f;"/>
             </Trigger>
-            <Trigger Property="Header" Value="Select All">
+            <Trigger Property="Header" Value="Select all">
                 <Setter Property="Icon" Value="&#xe8b3;"/>
             </Trigger>
 
@@ -2010,7 +2013,7 @@ Margin="{TemplateBinding Padding}"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
-                <Border x:Name="Icon" Width="30" Height="30" Margin="5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                <Border x:Name="Icon" Width="30" Height="30" Margin="2.5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
                     <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}"/>
                 </Border>
                 <ContentPresenter 

@@ -89,6 +89,7 @@ namespace SLBr
     {
         public int X { get; set; }
         public int Y { get; set; }
+        public string LinkText { get; set; }
         public string LinkUrl { get; set; }
         public string MisspelledWord { get; set; }
         public string SourceUrl { get; set; }
@@ -1528,10 +1529,12 @@ namespace SLBr
 
             CoreWebView2ContextMenuTarget? Target = e.ContextMenuTarget;
 
+            string LinkText = string.Empty;
             string LinkUrl = string.Empty;
             string SelectionText = string.Empty;
             string SourceUrl = string.Empty;
             string FrameUrl = string.Empty;
+            try { LinkText = Target.LinkText ?? string.Empty; } catch { }
             try { LinkUrl = Target.LinkUri ?? string.Empty; } catch { }
             try { SelectionText = Target.SelectionText ?? string.Empty; } catch { }
             try { SourceUrl = Target.SourceUri ?? string.Empty; } catch { }
@@ -1545,6 +1548,7 @@ namespace SLBr
                 X = e.Location.X,
                 Y = e.Location.Y,
                 LinkUrl = LinkUrl,
+                LinkText = LinkText,
                 SelectionText = SelectionText,
                 IsEditable = Target?.IsEditable ?? false,
                 DictionarySuggestions = new List<string>(),

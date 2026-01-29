@@ -945,6 +945,8 @@ namespace SLBr
             {
                 X = parameters.XCoord,
                 Y = parameters.YCoord,
+                //TODO: Investigate CefSharp copy link text
+                //LinkText = parameters.SelectionText,
                 LinkUrl = parameters.LinkUrl,
                 FrameUrl = parameters.FrameUrl,
                 SelectionText = parameters.SelectionText,

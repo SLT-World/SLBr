@@ -52,13 +52,11 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                <Border Margin="1.25,2.5">
-                                                    <Grid>
-                                                        <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
-                                                        <ContentPresenter x:Name="Content" Margin="0"/>
-                                                        <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
-                                                    </Grid>
-                                                </Border>
+                                                <Grid Margin="0,2.5">
+                                                    <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
+                                                    <ContentPresenter x:Name="Content" Margin="0"/>
+                                                    <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
+                                                </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsSelected" Value="True">
                                                         <Setter Property="BorderThickness" Value="0"/>

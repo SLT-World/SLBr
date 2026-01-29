@@ -1322,41 +1322,42 @@ namespace SLBr.Pages
             {
                 if (e.MenuType.HasFlag(i))
                 {
-                    //BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = i.ToString(), Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                     if (BrowserMenu.Items.Count != 0 && BrowserMenu.Items[BrowserMenu.Items.Count - 1].GetType() == typeof(MenuItem))
                         BrowserMenu.Items.Add(new Separator());
                     if (i == WebContextMenuType.Link)
                     {
                         IsPageMenu = false;
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open link in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) }); 
+                        BrowserMenu.Items.Add(new MenuItem { IsEnabled = !string.IsNullOrEmpty(e.LinkText?.Trim()), Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkText)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share link", Command = new RelayCommand(_ => Share(e.LinkUrl)) });
                     }
-                    else if (i == WebContextMenuType.Selection && !e.IsEditable && !string.IsNullOrEmpty(e.SelectionText.Trim()))
+                    else if (i == WebContextMenuType.Selection && !e.IsEditable && !string.IsNullOrEmpty(e.SelectionText.ReplaceLineEndings("").Trim()))
                     {
                         IsPageMenu = false;
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                         BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => Clipboard.SetText(e.SelectionText)) });
                         BrowserMenu.Items.Add(new Separator());
-                        BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select All", Command = new RelayCommand(_ => WebView?.SelectAll()) });
+                        BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                     }
                     else if (i == WebContextMenuType.Media)
                     {
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                         if (e.MediaType == WebContextMenuMediaType.Image)
                         {
                             IsPageMenu = false;
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open image in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save image as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem
                             {
                                 Icon = "\xe8b9",
                                 Header = "Copy image",
-                                Command = new RelayCommand(_ => {
+                                Command = new RelayCommand(_ =>
+                                {
                                     try { Utils.DownloadAndCopyImage(e.SourceUrl); }
                                     catch { Clipboard.SetText(e.SourceUrl); }
                                 })
                             });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy image link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save image as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem
                             {
                                 Icon = "\uF6Fa",
@@ -1386,10 +1387,33 @@ namespace SLBr.Pages
                         else if (e.MediaType == WebContextMenuMediaType.Video)
                         {
                             IsPageMenu = false;
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy video link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open video in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save video as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy video link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uee49", Header = "Picture in picture", Command = new RelayCommand(_ => WebView?.ExecuteScript("(async()=>{let playingVideo=Array.from(document.querySelectorAll('video')).find(v=>!v.paused&&!v.ended&&v.readyState>2);if (!playingVideo){playingVideo=document.querySelector('video');}if (playingVideo&&document.pictureInPictureEnabled){await playingVideo.requestPictureInPicture();}})();")) });
                         }
+                        else if (e.MediaType == WebContextMenuMediaType.Audio)
+                        {
+                            IsPageMenu = false;
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open audio in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save audio as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy audio link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
+                        }
+                        //TODO: Canvas handling
+                        /*else if (e.MediaType == WebContextMenuMediaType.Canvas)
+                        {
+                            IsPageMenu = false;
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save image as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem
+                            {
+                                Icon = "\xe8b9",
+                                Header = "Copy image",
+                                Command = new RelayCommand(_ => {
+                                    try { Utils.DownloadAndCopyImage(e.SourceUrl); }
+                                    catch { Clipboard.SetText(e.SourceUrl); }
+                                })
+                            });
+                        }*/
                     }
                 }
             }
@@ -1471,11 +1495,11 @@ namespace SLBr.Pages
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+V", Icon = "\ue77f", Header = "Paste", Command = new RelayCommand(_ => WebView?.Paste()) });
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\ue74d", Header = "Delete", Command = new RelayCommand(_ => WebView?.Delete()) });
                 BrowserMenu.Items.Add(new Separator());
-                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select All", Command = new RelayCommand(_ => WebView?.SelectAll()) });
-                if (!string.IsNullOrEmpty(e.SelectionText.Trim()))
+                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
+                if (!string.IsNullOrEmpty(e.SelectionText.ReplaceLineEndings("").Trim()))
                 {
                     BrowserMenu.Items.Add(new Separator());
-                    BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
+                    BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                 }
             }
             else if (IsPageMenu)// && e.MediaType == WebContextMenuMediaType.None)
@@ -1496,11 +1520,11 @@ namespace SLBr.Pages
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save as", Command = new RelayCommand(_ => WebView?.SaveAs()) });
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\uE749", Header = "Print", Command = new RelayCommand(_ => WebView?.Print()) });
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
-                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select All", Command = new RelayCommand(_ => WebView?.SelectAll()) });
+                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                 BrowserMenu.Items.Add(new Separator());
 
 
-                MenuItem ToolsSubMenuModel = new() { Icon = "\ue821", Header = "More Tools" };
+                MenuItem ToolsSubMenuModel = new() { Icon = "\ue821", Header = "More tools" };
                 ToolsSubMenuModel.Items.Add(new MenuItem { IsEnabled = !IsLoading && !Address.StartsWith("slbr:"), Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
                 ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
                 ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
@@ -3523,15 +3547,24 @@ namespace SLBr.Pages
                         ProcessedText = ProcessedText.ToLowerInvariant();
                         switch (OmniBoxOverrideSearch.Name)
                         {
-                            /*case "Tabs":
-                                break;*/
+                            case "Tabs":
+                                List<BrowserTabItem> TabCollection = [];
+                                foreach (MainWindow _Window in App.Instance.AllWindows)
+                                {
+                                    TabCollection.AddRange(_Window.Tabs.Where(i => i.Type == BrowserTabType.Navigation && i.Content != null && (i.Header.ToLowerInvariant().Contains(CurrentText) || (i.Content?.Address.ToLowerInvariant().Contains(CurrentText) ?? false))).ToList());
+                                    if (TabCollection.Count >= 10)
+                                        break;
+                                }
+                                foreach (BrowserTabItem Entry in TabCollection.Take(10))
+                                    Suggestions.Add(App.GenerateSuggestion(Entry.Header, "T", LinkColor, $"- {Entry.Content?.Address}", Entry.Content?.Address, OmniBoxOverrideSearch, Entry.ID.ToString()));
+                                break;
                             case "History":
                                 List<ActionStorage> HistoryCollection = App.Instance.History.Where(i => (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
                                 foreach (ActionStorage Entry in HistoryCollection.Take(10))
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
                                 break;
                             case "Favourites":
-                                List<Favourite> FavouritesCollection = App.Instance.Favourites.Where(i => i.Type == "url" && (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Url?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
+                                List<Favourite> FavouritesCollection = App.Instance.Favourites.Where(i => i.Type == "url" && ((i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Url?.ToLowerInvariant().Contains(CurrentText) ?? false))).ToList();
                                 foreach (Favourite Entry in FavouritesCollection.Take(10))
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, OmniBoxOverrideSearch));
                                 break;
@@ -3558,9 +3591,9 @@ namespace SLBr.Pages
                                     OmniSuggestion Suggestion = new() { ProviderOverride = Search, Text = $"@{Search.Name.ToLower()}", Display = $"@{Search.Name.ToLower()}", Color = Color, SubText = $"- Search {Search.Name}" };
                                     switch (Search.Name)
                                     {
-                                        /*case "Tabs":
+                                        case "Tabs":
                                             Suggestion.Icon = "\xec6c";
-                                            break;*/
+                                            break;
                                         case "History":
                                             Suggestion.Icon = "\xe81c";
                                             break;
@@ -3580,9 +3613,9 @@ namespace SLBr.Pages
                                 OmniSuggestion Suggestion = new() { ProviderOverride = Search, Text = $"@{Search.Name.ToLower()}", Display = $"@{Search.Name.ToLower()}", Color = Color, SubText = $"- Search {Search.Name}" };
                                 switch (Search.Name)
                                 {
-                                    /*case "Tabs":
+                                    case "Tabs":
                                         Suggestion.Icon = "\xec6c";
-                                        break;*/
+                                        break;
                                     case "History":
                                         Suggestion.Icon = "\xe81c";
                                         break;
@@ -3619,8 +3652,8 @@ namespace SLBr.Pages
                     SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
                     switch (OmniBoxOverrideSearch.Name)
                     {
-                        /*case "Tabs":
-                            break;*/
+                        case "Tabs":
+                            break;
                         case "History":
                             List<ActionStorage> HistoryCollection = App.Instance.History.ToList();
                             foreach (ActionStorage Entry in HistoryCollection.Take(10))
@@ -3658,7 +3691,11 @@ namespace SLBr.Pages
             {
                 if (Suggestion.ProviderOverride == OmniBoxOverrideSearch)
                 {
-                    if (Suggestion.Text.Trim().Length > 0)
+                    if (OmniBoxOverrideSearch != null && OmniBoxOverrideSearch.Host == "__Program__" && OmniBoxOverrideSearch.Name == "Tabs")
+                    {
+                        App.Instance.SwitchTab(int.Parse(Suggestion.Hidden));
+                    }
+                    else if (Suggestion.Text.Trim().Length > 0)
                     {
                         OmniBoxText = Suggestion.Text;
                         OmniBox.Text = Suggestion.Text;

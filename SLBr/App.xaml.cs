@@ -458,6 +458,7 @@ namespace SLBr
         public string Display { get; set; }
         public string SubText { get; set; }
         public string Icon { get; set; }
+        public string Hidden { get; set; }
         public SolidColorBrush Color { get; set; }
         public SearchProvider? ProviderOverride { get; set; }
     }
@@ -578,7 +579,7 @@ namespace SLBr
         public const string AMPEndpoint = "https://acceleratedmobilepageurl.googleapis.com/v1/ampUrls:batchGet";
 
         public List<SearchProvider> AllSystemSearchEngines = [
-            //new() { Host = "__Program__", Name = "Tabs" },//TODO: Add tab search omnibox shortcut
+            new() { Host = "__Program__", Name = "Tabs" },
             new() { Host = "__Program__", Name = "History" },
             new() { Host = "__Program__", Name = "Favourites" }
         ];
@@ -1035,9 +1036,9 @@ namespace SLBr
             }
         }
 
-        public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null)
+        public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null, string? Hidden = null)
         {
-            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride };
+            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride, Hidden = Hidden };
             switch (Type)
             {
                 case "S":
@@ -1054,6 +1055,9 @@ namespace SLBr
                     break;
                 case "F":
                     Suggestion.Icon = "\xe838";//e8b7
+                    break;
+                case "T":
+                    Suggestion.Icon = "\xec6c";
                     break;
             }
             return Suggestion;
@@ -1486,6 +1490,24 @@ namespace SLBr
             }
             SiteTheme.PrimaryColor = BaseColor;
             return SiteTheme;
+        }
+
+        public void SwitchTab(int ID)
+        {
+            foreach (MainWindow _Window in AllWindows)
+            {
+                BrowserTabItem? Tab = _Window.GetBrowserTabWithId(ID);
+                if (Tab != null)
+                {
+                    _Window.TabsUI.SelectedItem = Tab;
+                    if (_Window.WindowState == WindowState.Minimized)
+                        _Window.WindowState = WindowState.Maximized;
+                    _Window.ShowInTaskbar = true;
+                    _Window.Show();
+                    _Window.Activate();
+                    break;
+                }
+            }
         }
 
         public string UpdateAvailable = string.Empty;
@@ -2608,7 +2630,7 @@ Inner Exception: ```{7} ```";
             "miner.js", "miner.min.js", //Don't add / for these miners so they cover deepminer and etc
             "/outbrain.js"
             //"cryptonight.wasm"
-            ///disable-devtool.min.js
+            //disable-devtool.min.js
             //jsdelivr.net/npm/disable-devtool$script
             //redditstatic.com/ads/$script
             //redditstatic.com/ads/pixel.js^$script
@@ -3691,6 +3713,7 @@ Inner Exception: ```{7} ```";
 
             StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
             StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
+            StatisticsSave.Save();
 
             string FavouritesRaw = JsonSerializer.Serialize(new BookmarksManager.Bookmarks() { Roots = new() { Bookmarks = new() { Name = "Bookmarks bar", Children = Favourites, Type = "folder" } } }, new JsonSerializerOptions
             {

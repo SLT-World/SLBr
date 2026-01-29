@@ -35,7 +35,7 @@
                     <StackPanel Margin="25" MaxWidth="800">
                         <DockPanel Margin="0,0,0,25" VerticalAlignment="Center" Width="Auto" HorizontalAlignment="Stretch" Height="35">
                             <Button DockPanel.Dock="Right" Click="NewFavouriteButton_Click" x:Name="NewFavouriteButton" ToolTip="Add favourite" Content="&#xe710;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
-                            <Button Visibility="Collapsed" Foreground="Red" DockPanel.Dock="Right" Click="DeleteSelectedButton_Click" x:Name="DeleteSelectedButton" ToolTip="Delete selected" Content="&#xe74d;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
+                            <Button Visibility="Collapsed" Foreground="Red" DockPanel.Dock="Right" Click="DeleteSelectedButton_Click" x:Name="DeleteSelectedButton" ToolTip="Delete selected" Content="&#xe74d;" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                             <TextBlock TextAlignment="Left" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" FontWeight="DemiBold" FontSize="25">Favourites bar</TextBlock>
                         </DockPanel>
                         <ListBox KeyDown="FavouritesList_KeyDown" SelectionChanged="FavouritesList_SelectionChanged" SelectionMode="Extended" VirtualizingPanel.VirtualizationMode="Recycling" x:Name="FavouritesList" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
@@ -52,13 +52,11 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                <Border Margin="1.25,2.5">
-                                                    <Grid>
-                                                        <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
-                                                        <ContentPresenter x:Name="Content" Margin="0"/>
-                                                        <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
-                                                    </Grid>
-                                                </Border>
+                                                <Grid Margin="0,2.5">
+                                                    <Border Name="ItemBorder" CornerRadius="5" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
+                                                    <ContentPresenter x:Name="Content" Margin="0"/>
+                                                    <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="5"/>
+                                                </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsSelected" Value="True">
                                                         <Setter Property="BorderThickness" Value="0"/>

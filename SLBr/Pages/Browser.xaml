@@ -108,6 +108,10 @@
                                 </MenuItem>
                                 <Separator/>
                                 <MenuItem Icon="&#xE748;" Header="Switch User" Click="ButtonAction" Tag="15"/>
+                                <MenuItem Header="Help" Icon="&#xe897;">
+                                    <MenuItem Header="What's New" Icon="&#xf133;" Click="ButtonAction" Tag="5&lt;,&gt;https://github.com/SLT-World/SLBr/releases/latest"/>
+                                    <MenuItem Header="Report issue" Icon="&#xe7ba;" Click="ButtonAction" Tag="5&lt;,&gt;https://github.com/SLT-World/SLBr/issues"/>
+                                </MenuItem>
                                 <MenuItem Icon="&#xE713;" Header="Settings" Click="ButtonAction" Tag="5&lt;,&gt;slbr://settings"/>
                                 <Separator/>
                                 <MenuItem Header="Exit" Click="ButtonAction" Tag="0"/>

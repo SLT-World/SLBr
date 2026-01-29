@@ -299,14 +299,14 @@
                                 </DockPanel>
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Margin="0,0,0,10">
+                        <GroupBox Margin="0,0,0,10" Header="Toolbar">
                             <StackPanel>
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE80F;" Margin="0,0,10,0"/>
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE80F;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Home button"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Home"/>
                                     <ToggleButton x:Name="HomeButtonToggleButton" Click="HomeButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
@@ -314,7 +314,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE8C1;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Translate button"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Translate"/>
                                     <ToggleButton x:Name="TranslateButtonToggleButton" Click="TranslateButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
@@ -322,7 +322,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Reader Mode button"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Reader Mode"/>
                                     <ToggleButton x:Name="ReaderButtonToggleButton" Click="ReaderButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
@@ -330,7 +330,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Create QR Code button"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Create QR Code"/>
                                     <ToggleButton x:Name="QRButtonToggleButton" Click="QRButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
@@ -338,7 +338,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Switch Web Engine button"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Switch Web Engine"/>
                                     <ToggleButton x:Name="WebEngineButtonToggleButton" Click="WebEngineButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel>
@@ -346,7 +346,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Extension button"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Extension"/>
                                     <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ExtensionButtonComboBox_SelectionChanged">
                                         <ComboBoxItem>Show automatically</ComboBoxItem>
                                         <ComboBoxItem>Always show</ComboBoxItem>
