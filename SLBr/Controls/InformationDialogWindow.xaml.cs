@@ -54,6 +54,7 @@ namespace SLBr.Controls
                 Duration = TimeSpan.FromSeconds(0.125)
             });
             await Task.Delay(0125);
+            //WARNING: Do not uncommet, breaks dialog results.
             //if (IsLoaded && Owner != null)
             DialogResult = true;
             //else

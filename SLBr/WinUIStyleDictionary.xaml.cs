@@ -124,9 +124,10 @@ namespace SLBr
 
                 int NewIndex = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
                 BrowserTabItem TargetTab = NewIndex > VisibleTabs.Count - 1 ? VisibleTabs.Last() : VisibleTabs[NewIndex];
-                if (FocusedWindow.Tabs[NewIndex] != TargetTab)
+                if (NewIndex > FocusedWindow.Tabs.Count - 1)
+                    NewIndex = FocusedWindow.Tabs.IndexOf(TargetTab) + 1;
+                else if (FocusedWindow.Tabs[NewIndex] != TargetTab)
                     NewIndex = FocusedWindow.Tabs.IndexOf(TargetTab);
-
                 if (OldIndex == NewIndex || OldIndex == NewIndex - 1)
                     return;
 
@@ -186,7 +187,7 @@ namespace SLBr
             else if (VisibleElements.Count > 0)
             {
                 FrameworkElement LastTab = (FrameworkElement)VisibleElements[^1];
-                Point Position = LastTab.TranslatePoint(new Point(LastTab.ActualWidth, 0), Panel);
+                Point Position = LastTab.TranslatePoint(new Point(LastTab.ActualWidth, LastTab.ActualHeight), Panel);
                 Offset = Vertical ? Position.Y : Position.X;
             }
             if (Window.GetWindow(_TabControl) is MainWindow FocusedWindow && FocusedWindow.TabGroups.Count != 0)
@@ -234,7 +235,7 @@ namespace SLBr
                     break;
                 }
             }
-            int MaxIndex = VisibleElements.Count;
+            int MaxIndex = VisibleElements.Count + 1;
             for (int i = 0; i < VisibleElements.Count; i++)
             {
                 if (CurrentWindow.Tabs[i]?.Type == BrowserTabType.Add && i > 0)
@@ -243,7 +244,7 @@ namespace SLBr
                     break;
                 }
             }
-            return Math.Clamp(Index, CurrentWindow.Tabs[0]?.Type == BrowserTabType.Add ? 0 : 1, MaxIndex);
+            return Math.Clamp(Index, CurrentWindow.Tabs[0]?.Type == BrowserTabType.Add ? 1 : 0, MaxIndex);
         }
 
         CancellationTokenSource TabHoverToken;

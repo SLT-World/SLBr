@@ -43,6 +43,132 @@ namespace SLBr
         public Action Callback { get; } = _Callback;
     }
 
+    public class InfoBar : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        public InfoBar() { }
+        public bool IsClosable
+        {
+            get => _IsClosable;
+            set
+            {
+                _IsClosable = value;
+                RaisePropertyChanged();
+            }
+        }
+        private bool _IsClosable = true;
+        public string Title
+        {
+            get => _Title;
+            set
+            {
+                _Title = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Title;
+        public string Description
+        {
+            get => _Description;
+            set
+            {
+                _Description = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Description;
+        /*public SolidColorBrush Background
+        {
+            get => _Background;
+            set
+            {
+                _Background = value;
+                Foreground = (SolidColorBrush)Utils.GetContrastBrush(value.Color);
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush _Background;
+
+        public SolidColorBrush Foreground
+        {
+            get => _Foreground;
+            set
+            {
+                _Foreground = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush _Foreground;*/
+        public string? Icon
+        {
+            get => _Icon;
+            set
+            {
+                _Icon = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string? _Icon = null;
+
+        public SolidColorBrush IconForeground
+        {
+            get => _IconForeground;
+            set
+            {
+                _IconForeground = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush _IconForeground;
+        public string? ActionText
+        {
+            get => _ActionText;
+            set
+            {
+                _ActionText = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string? _ActionText = null;
+        public ICommand ActionCommand
+        {
+            get => _ActionCommand;
+            set
+            {
+                _ActionCommand = value;
+                RaisePropertyChanged();
+            }
+        }
+        private ICommand _ActionCommand;
+        public SolidColorBrush ActionBackground
+        {
+            get => _ActionBackground;
+            set
+            {
+                _ActionBackground = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush _ActionBackground;
+
+        public SolidColorBrush ActionForeground
+        {
+            get => _ActionForeground;
+            set
+            {
+                _ActionForeground = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush _ActionForeground;
+    }
+
     public static class HotKeyManager
     {
         public static HashSet<HotKey> HotKeys = [];
@@ -585,6 +711,7 @@ namespace SLBr
         ];
 
         public List<MainWindow> AllWindows = [];
+        public ObservableCollection<InfoBar> InfoBars = [];
         public ObservableCollection<SearchProvider> SearchEngines = [];
         public SearchProvider DefaultSearchProvider;
         public List<Theme> Themes =
@@ -612,6 +739,7 @@ namespace SLBr
         public SolidColorBrush CornflowerBlueColor;
         public SolidColorBrush NavajoWhiteColor;
         public SolidColorBrush LimeGreenColor;
+        public SolidColorBrush WhiteColor;
         public SolidColorBrush OrangeColor;
         public SolidColorBrush GreenColor;
         public FontFamily IconFont;
@@ -1356,7 +1484,7 @@ namespace SLBr
 
             LocaleNames = AllLocales.Select(i => i.Value).ToList();
 
-            await InitializeSaves();
+            InfoBars.CollectionChanged += InfoBars_CollectionChanged;
 
             FavouriteColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
             SLBrColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#0092FF");
@@ -1366,8 +1494,11 @@ namespace SLBr
             LimeGreenColor = new SolidColorBrush(Colors.LimeGreen);
             GreenColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#3AE872");
             OrangeColor = new SolidColorBrush(Colors.Orange);
+            WhiteColor = new SolidColorBrush(Colors.White);
             IconFont = (FontFamily)Resources["IconFontFamily"];
             SLBrFont = new FontFamily(new Uri("pack://application:,,,/SLBr;component/"), "./Fonts/#SLBr Icons");
+
+            await InitializeSaves();
 
             InitializeBrowser();
             InitializeUISaves(CommandLineUrl);
@@ -1451,6 +1582,15 @@ namespace SLBr
                 ContinueBackgroundInitialization();
         }
 
+        private void InfoBars_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser _Browser in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                    _Browser.SyncInfobars();
+            }
+        }
+
         public Theme GenerateTheme(Color BaseColor, string Name = "Temp")
         {
             double a = 1 - (0.299 * BaseColor.R + 0.587 * BaseColor.G + 0.114 * BaseColor.B) / 255;
@@ -1525,11 +1665,7 @@ namespace SLBr
             if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("CheckUpdate")))
                 CheckUpdate();
             if (Environment.IsPrivilegedProcess)
-            {
-                InformationDialogWindow InfoWindow = new("Warning", "Elevated Privileges Detected", "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights.", "\ue7ba");
-                InfoWindow.Topmost = true;
-                InfoWindow.ShowDialog();
-            }
+                InfoBars.Add(new() { Icon = "\ue7ba", IconForeground = OrangeColor, Title = "Elevated Privileges Detected", Description = "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights." });
         }
 
         public void CheckUpdate()
@@ -1552,16 +1688,37 @@ namespace SLBr
                                 _Browser.NewUpdateMenuSeparator.Visibility = Visibility.Visible;
                             }
                         }
-                        InformationDialogWindow InfoWindow = new("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
-                        InfoWindow.Topmost = true;
-                        if (InfoWindow.ShowDialog() == true)
-                            Update();
+                        ShowUpdateInfoBar();
                     }
                     else
                         UpdateAvailable = ReleaseVersion;
                 }
                 catch { }
             }
+        }
+
+        public void ShowUpdateInfoBar()
+        {
+            if (NewUpdateInfoBar != null)
+                return;
+            NewUpdateInfoBar = new()
+            {
+                Icon = "\xe895",
+                Title = "Update Available",
+                Description = "A newer version of SLBr is ready for download.",
+                ActionText = "Update",
+                ActionCommand = new RelayCommand(() => { CloseInfoBar(NewUpdateInfoBar); Update(); })
+            };
+            InfoBars.Add(NewUpdateInfoBar);
+        }
+
+        InfoBar? NewUpdateInfoBar = null;
+
+        private void CloseInfoBar(InfoBar Bar)
+        {
+            InfoBars.Remove(Bar);
+            if (Bar == NewUpdateInfoBar)
+                NewUpdateInfoBar = null;
         }
 
         public void Update()
@@ -1996,92 +2153,105 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("Sync", false);
             //TODO: Implement "Sync Provider" variety [GitHub Gist, Google Drive, OneDrive, etc]
             //TODO: Implement data compression.
-            else if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("Sync")))
+            else if (bool.Parse(GlobalSave.Get("Sync")))
             {
-                try
+                if (Utils.IsInternetAvailable())
                 {
-                    string SyncGitHubToken = GlobalSave.Get("SyncGitHub");
-                    if (!string.IsNullOrEmpty(SyncGitHubToken))
+                    try
                     {
-                        string SyncGistID = GlobalSave.Get("SyncGist");
-                        HttpClient Client = new();
-                        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SyncGitHubToken);
-                        Client.DefaultRequestHeaders.UserAgent.ParseAdd($"SLBr/{ReleaseVersion}");
-                        if (string.IsNullOrEmpty(SyncGistID))
+                        string SyncGitHubToken = GlobalSave.Get("SyncGitHub");
+                        if (!string.IsNullOrEmpty(SyncGitHubToken))
                         {
-                            var GistResponse = await Client.GetAsync("https://api.github.com/gists");
-                            if (GistResponse.IsSuccessStatusCode)
+                            string SyncGistID = GlobalSave.Get("SyncGist");
+                            HttpClient Client = new();
+                            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SyncGitHubToken);
+                            Client.DefaultRequestHeaders.UserAgent.ParseAdd($"SLBr/{ReleaseVersion}");
+                            if (string.IsNullOrEmpty(SyncGistID))
                             {
-                                string JSON = await GistResponse.Content.ReadAsStringAsync();
-                                using var _JsonDocument = JsonDocument.Parse(JSON);
-                                foreach (var Gist in _JsonDocument.RootElement.EnumerateArray())
+                                var GistResponse = await Client.GetAsync("https://api.github.com/gists");
+                                if (GistResponse.IsSuccessStatusCode)
                                 {
-                                    if (Gist.GetProperty("description").GetString() == "SLBr Sync")
+                                    string JSON = await GistResponse.Content.ReadAsStringAsync();
+                                    using var _JsonDocument = JsonDocument.Parse(JSON);
+                                    foreach (var Gist in _JsonDocument.RootElement.EnumerateArray())
                                     {
-                                        SyncGistID = Gist.GetProperty("id").GetString()!;
-                                        GlobalSave.Set("SyncGist", SyncGistID);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        //WARNING: Keep separate.
-                        if (!string.IsNullOrEmpty(SyncGistID))
-                        {
-                            var GistResponse = await Client.GetAsync($"https://api.github.com/gists/{SyncGistID}");
-                            if (GistResponse.IsSuccessStatusCode)
-                            {
-                                string[] SyncedData = GlobalSave.Get("SyncData").Split(',');
-
-                                string JSON = await GistResponse.Content.ReadAsStringAsync();
-                                using var _JsonDocument = JsonDocument.Parse(JSON);
-                                string SyncFileContent = _JsonDocument.RootElement.GetProperty("files").GetProperty("slbr-sync.json").GetProperty("content").GetString()!;
-                                Dictionary<string, string> SyncedFiles = JsonSerializer.Deserialize<Dictionary<string, string>>(SyncFileContent)!;
-                                if (SyncedData.Contains("Settings"))
-                                {
-                                    if (SyncedFiles.TryGetValue("Save.bin", out var SaveRaw))
-                                    {
-                                        GlobalSave.Process(SaveRaw);
-                                        //WARNING: Important, do not remove.
-                                        GlobalSave.Set("Sync", true);
-                                        GlobalSave.Set("SyncGitHub", SyncGitHubToken);
-                                        GlobalSave.Set("SyncGist", SyncGistID);
-                                    }
-                                    if (SyncedFiles.TryGetValue("Search.bin", out var SearchRaw))
-                                        SearchSave.Process(SearchRaw);
-                                    if (SyncedFiles.TryGetValue("Languages.bin", out var LanguagesRaw))
-                                        LanguagesSave.Process(LanguagesRaw);
-                                    if (SyncedFiles.TryGetValue("AllowList.bin", out var AllowListRaw))
-                                        AllowListSave.Process(AllowListRaw);
-                                }
-                                if (SyncedData.Contains("Favourites") && SyncedFiles.TryGetValue("Favourites.bin", out var FavouritesRaw))
-                                {
-                                    try
-                                    {
-                                        BookmarksManager.Bookmarks BookmarksContainer = JsonSerializer.Deserialize<BookmarksManager.Bookmarks>(FavouritesRaw, new JsonSerializerOptions
+                                        if (Gist.GetProperty("description").GetString() == "SLBr Sync")
                                         {
-                                            PropertyNameCaseInsensitive = true
-                                        })!;
-                                        foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
-                                        {
-                                            if (string.IsNullOrEmpty(Bookmark.Name) && !string.IsNullOrEmpty(Bookmark.Url))
-                                                Bookmark.Name = Utils.FastHost(Bookmark.Url);
-                                            Favourites.Add(Bookmark);
+                                            SyncGistID = Gist.GetProperty("id").GetString()!;
+                                            GlobalSave.Set("SyncGist", SyncGistID);
+                                            break;
                                         }
-                                        FavouritesSetUp = true;
                                     }
-                                    catch { }
                                 }
-                                Synchronized = true;
-                                //if (SyncedData.Contains("Tabs"))
                             }
-                            else
-                                GlobalSave.Set("SyncGist", "");
+                            //WARNING: Keep separate.
+                            if (!string.IsNullOrEmpty(SyncGistID))
+                            {
+                                var GistResponse = await Client.GetAsync($"https://api.github.com/gists/{SyncGistID}");
+                                if (GistResponse.IsSuccessStatusCode)
+                                {
+                                    string[] SyncedData = GlobalSave.Get("SyncData").Split(',');
+
+                                    string JSON = await GistResponse.Content.ReadAsStringAsync();
+                                    using var _JsonDocument = JsonDocument.Parse(JSON);
+                                    string SyncFileContent = _JsonDocument.RootElement.GetProperty("files").GetProperty("slbr-sync.json").GetProperty("content").GetString()!;
+                                    Dictionary<string, string> SyncedFiles = JsonSerializer.Deserialize<Dictionary<string, string>>(SyncFileContent)!;
+                                    if (SyncedData.Contains("Settings"))
+                                    {
+                                        if (SyncedFiles.TryGetValue("Save.bin", out var SaveRaw))
+                                        {
+                                            GlobalSave.Process(SaveRaw);
+                                            //WARNING: Important, do not remove.
+                                            GlobalSave.Set("Sync", true);
+                                            GlobalSave.Set("SyncGitHub", SyncGitHubToken);
+                                            GlobalSave.Set("SyncGist", SyncGistID);
+                                        }
+                                        if (SyncedFiles.TryGetValue("Search.bin", out var SearchRaw))
+                                            SearchSave.Process(SearchRaw);
+                                        if (SyncedFiles.TryGetValue("Languages.bin", out var LanguagesRaw))
+                                            LanguagesSave.Process(LanguagesRaw);
+                                        if (SyncedFiles.TryGetValue("AllowList.bin", out var AllowListRaw))
+                                            AllowListSave.Process(AllowListRaw);
+                                    }
+                                    if (SyncedData.Contains("Favourites") && SyncedFiles.TryGetValue("Favourites.bin", out var FavouritesRaw))
+                                    {
+                                        try
+                                        {
+                                            BookmarksManager.Bookmarks BookmarksContainer = JsonSerializer.Deserialize<BookmarksManager.Bookmarks>(FavouritesRaw, new JsonSerializerOptions
+                                            {
+                                                PropertyNameCaseInsensitive = true
+                                            })!;
+                                            foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
+                                            {
+                                                if (string.IsNullOrEmpty(Bookmark.Name) && !string.IsNullOrEmpty(Bookmark.Url))
+                                                    Bookmark.Name = Utils.FastHost(Bookmark.Url);
+                                                Favourites.Add(Bookmark);
+                                            }
+                                            FavouritesSetUp = true;
+                                        }
+                                        catch { }
+                                    }
+                                    Synchronized = true;
+                                    //if (SyncedData.Contains("Tabs"))
+                                }
+                                else
+                                    GlobalSave.Set("SyncGist", "");
+                            }
                         }
                     }
+                    catch { }
+                    //TODO: Create folders of windows for the tab sync?
                 }
-                catch { }
-                //TODO: Create folders of windows for the tab sync?
+                if (!Synchronized)
+                {
+                    InfoBars.Add(new()
+                    {
+                        Icon = "\xec9c",
+                        IconForeground = OrangeColor,
+                        Title = "Sync Failed",
+                        Description = "SLBr failed to synchronize data."
+                    });
+                }
             }
 
             if (!FavouritesSetUp)
@@ -3450,6 +3620,8 @@ Inner Exception: ```{7} ```";
                 Settings.AddFlag("enable-lite-video");
                 Settings.AddFlag("lite-video-force-override-decision");
             }
+
+            Settings.AddFlag("enable-jxl-image-format");
 
             //FLAG SEEMS TO NOT EXIST BUT IT DOES WORK
             Settings.AddFlag("enable-speech-input");

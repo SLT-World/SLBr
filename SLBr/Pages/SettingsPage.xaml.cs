@@ -161,12 +161,7 @@ namespace SLBr.Pages
 
         public void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
-            //InformationDialogWindow InfoWindow = new InformationDialogWindow("Alert", "Update SLBr", "A new update for SLBr is available and will be automatically downloaded.", "\ue895", "Update", "Later");
-
-            InformationDialogWindow InfoWindow = new InformationDialogWindow("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
-            InfoWindow.Topmost = true;
-            if (InfoWindow.ShowDialog() == true)
-                App.Instance.Update();
+            App.Instance.ShowUpdateInfoBar();
         }
 
         public void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
@@ -225,9 +220,16 @@ namespace SLBr.Pages
                 UpdateStatusDescription.Text = $"Version {App.Instance.ReleaseVersion}";
             }
 
+            SyncWarning.Visibility = Visibility.Collapsed;
             SyncCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Sync"));
             if (SyncCheckBox.IsChecked.ToBool() && !App.Instance.Synchronized)
+            {
+                if (string.IsNullOrEmpty(App.Instance.GlobalSave.Get("SyncGitHub")))
+                    SyncWarningText.Text = "No access token found.";
+                else
+                    SyncWarningText.Text = "Data is not synchorized.";
                 SyncWarning.Visibility = Visibility.Visible;
+            }
             string[] SyncedData = App.Instance.GlobalSave.Get("SyncData").Split(',');
             SyncFavouritesToggleButton.IsChecked = SyncedData.Contains("Favourites");
             //SyncTabsToggleButton.IsChecked = SyncedData.Contains("Tabs");
@@ -1303,7 +1305,18 @@ namespace SLBr.Pages
         private void SyncCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
+            {
                 App.Instance.GlobalSave.Set("Sync", SyncCheckBox.IsChecked.ToBool().ToString());
+                SyncWarning.Visibility = Visibility.Collapsed;
+                if (SyncCheckBox.IsChecked.ToBool())
+                {
+                    if (string.IsNullOrEmpty(App.Instance.GlobalSave.Get("SyncGitHub")))
+                    {
+                        SyncWarningText.Text = "No access token found.";
+                        SyncWarning.Visibility = Visibility.Visible;
+                    }
+                }
+            }
         }
 
         private void SyncToggleButton_Click(object sender, RoutedEventArgs e)
@@ -1329,6 +1342,7 @@ namespace SLBr.Pages
                     App.Instance.PreventSync = false;
                     App.Instance.GlobalSave.Set("SyncGitHub", Token);
                     App.Instance.GlobalSave.Set("SyncGist", "");
+                    SyncWarning.Visibility = Visibility.Collapsed;
                     if (string.IsNullOrEmpty(Token))
                     {
                         App.Instance.GlobalSave.Set("Sync", false);

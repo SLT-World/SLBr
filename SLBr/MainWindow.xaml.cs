@@ -699,6 +699,7 @@ namespace SLBr
 
         private void Window_StateChanged(object sender, EventArgs e)
         {
+            TabPreviewPopup.IsOpen = false;
             if (WindowState != WindowState.Minimized)
                 Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
             foreach (BrowserTabItem Tab in Tabs)
@@ -707,12 +708,14 @@ namespace SLBr
 
         private void Window_LocationChanged(object sender, EventArgs e)
         {
+            TabPreviewPopup.IsOpen = false;
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.UpdateDevToolsPosition();
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
+            TabPreviewPopup.IsOpen = false;
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.UpdateDevToolsPosition();
         }
@@ -1121,7 +1124,17 @@ namespace SLBr
                 {
                     TabPreviewHost.Text = Tab.Header;
                 }
-                TabPreviewStateIcon.Text = Tab.IsUnloaded ? "\xf1e8" : "\xf42f";
+                if (Tab.IsUnloaded)
+                {
+                    TabPreviewStateIcon.Text = "\xf1e8";
+                    TabPreviewStateIcon.Foreground = App.Instance.GreenColor;
+                }
+                else
+                {
+                    //TODO: Replace with audio indicator
+                    TabPreviewStateIcon.Text = "\xf42f";
+                    TabPreviewStateIcon.Foreground = (SolidColorBrush)FindResource("GrayBrush");
+                }
                 TabPreviewImage.Source = Tab.Preview;
                 TabPreviewImage.UpdateLayout();
                 TabPreviewPopup.PlacementTarget = Anchor;

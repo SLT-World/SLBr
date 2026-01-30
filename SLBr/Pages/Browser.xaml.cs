@@ -1,4 +1,5 @@
 ﻿using CefSharp;
+using CefSharp.DevTools.Network;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -12,6 +13,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -49,6 +51,9 @@ namespace SLBr.Pages
         public bool Private = false;
         public bool UserAgentBranding = true;
 
+        public ObservableCollection<InfoBar> LocalInfoBars = [];
+        public ObservableCollection<InfoBar> VisibleInfoBars = [];
+
         Storyboard LoadingStoryboard;
 
         public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false)
@@ -64,6 +69,7 @@ namespace SLBr.Pages
             FavouriteListMenu.Collection = App.Instance.Favourites;
             HistoryListMenu.Collection = App.Instance.History;
             ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working so turned it into a list
+            InfoBarList.ItemsSource = VisibleInfoBars;
             SetAppearance(App.Instance.CurrentTheme);
 
             if (!Private)
@@ -78,7 +84,23 @@ namespace SLBr.Pages
             LoadingStoryboard?.Begin();
             TranslateComboBox.ItemsSource = App.Instance.LocaleNames;
             TranslateComboBox.SelectedValue = App.Instance.Locale.Name;
+            LocalInfoBars.CollectionChanged += LocalInfoBars_CollectionChanged;
+            SyncInfobars();
             InitializeBrowserComponent();
+        }
+
+        private void LocalInfoBars_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            SyncInfobars();
+        }
+
+        public void SyncInfobars()
+        {
+            VisibleInfoBars.Clear();
+            foreach (InfoBar Bar in App.Instance.InfoBars)
+                VisibleInfoBars.Add(Bar);
+            foreach (InfoBar Bar in LocalInfoBars)
+                VisibleInfoBars.Add(Bar);
         }
 
         public void InitializeBrowserComponent()
@@ -132,10 +154,7 @@ namespace SLBr.Pages
 
         public void UpdateSLBr(object sender, RoutedEventArgs e)
         {
-            InformationDialogWindow InfoWindow = new("Information", "Update Available", "A newer version of SLBr is ready for download.", "\ue895", "Download", "Dismiss");
-            InfoWindow.Topmost = true;
-            if (InfoWindow.ShowDialog() == true)
-                App.Instance.Update();
+            App.Instance.ShowUpdateInfoBar();
         }
 
         public void ButtonAction(object sender, RoutedEventArgs e)
@@ -298,7 +317,7 @@ namespace SLBr.Pages
                         case "0":
                             if (WebView?.Engine == WebEngineType.Chromium)
                             {
-                                InformationDialogWindow InfoWindow = new("Information", "Already Using Chromium web engine", "This tab is already running with the Chromium web engine. No changes are necessary.");
+                                InformationDialogWindow InfoWindow = new("Information", "Already using Chromium web engine", "This tab is already running with the Chromium web engine. No changes are necessary.");
                                 InfoWindow.ShowDialog();
                                 break;
                             }
@@ -308,7 +327,7 @@ namespace SLBr.Pages
                         case "1":
                             if (WebView?.Engine == WebEngineType.ChromiumEdge)
                             {
-                                InformationDialogWindow InfoWindow = new("Information", "Already Using Edge web engine", "This tab is already running with the Edge web engine. No changes are necessary.");
+                                InformationDialogWindow InfoWindow = new("Information", "Already using Edge web engine", "This tab is already running with the Edge web engine. No changes are necessary.");
                                 InfoWindow.ShowDialog();
                                 break;
                             }
@@ -331,7 +350,7 @@ namespace SLBr.Pages
                         case "2":
                             if (WebView?.Engine == WebEngineType.Trident)
                             {
-                                InformationDialogWindow InfoWindow = new("Information", "Already Using Trident web engine", "This tab is already running with the Trident web engine. No changes are necessary.");
+                                InformationDialogWindow InfoWindow = new("Information", "Already using Trident web engine", "This tab is already running with the Trident web engine. No changes are necessary.");
                                 InfoWindow.ShowDialog();
                                 break;
                             }
@@ -612,54 +631,58 @@ namespace SLBr.Pages
             }
             if (App.Instance.AdBlock == 1)
             {
+                bool ContinueAdBlock = true;
                 if (string.IsNullOrEmpty(e.FocusedUrl))
                 {
                     string Host = Utils.FastHost(e.FocusedUrl);
                     if (App.Instance.AdBlockAllowList.Has(Host))
                     {
                         e.Cancel = false;
-                        return;
+                        ContinueAdBlock = false;
                     }
                 }
-                if (e.ResourceRequestType == ResourceRequestType.Ping)
+                if (ContinueAdBlock)
                 {
-                    Interlocked.Increment(ref App.Instance.TrackersBlocked);
-                    e.Cancel = true;
-                    return;
-                }
-                else if (Utils.IsPossiblyAd(e.ResourceRequestType))
-                {
-                    string Host = Utils.FastHost(e.Url);
-                    bool Cached = HostCache.TryGetValue(Host, out bool Blocked);
-                    if (Blocked)
+                    if (e.ResourceRequestType == ResourceRequestType.Ping)
                     {
+                        Interlocked.Increment(ref App.Instance.TrackersBlocked);
                         e.Cancel = true;
                         return;
                     }
-                    if (!Cached)
+                    else if (Utils.IsPossiblyAd(e.ResourceRequestType))
                     {
-                        if (App.Ads.Has(Host))
+                        string Host = Utils.FastHost(e.Url);
+                        bool Cached = HostCache.TryGetValue(Host, out bool Blocked);
+                        if (Blocked)
                         {
-                            Interlocked.Increment(ref App.Instance.AdsBlocked);
-                            HostCache[Host] = true;
                             e.Cancel = true;
                             return;
                         }
-                        else if (App.Analytics.Has(Host))
+                        if (!Cached)
                         {
-                            Interlocked.Increment(ref App.Instance.TrackersBlocked);
-                            HostCache[Host] = true;
-                            e.Cancel = true;
-                            return;
+                            if (App.Ads.Has(Host))
+                            {
+                                Interlocked.Increment(ref App.Instance.AdsBlocked);
+                                HostCache[Host] = true;
+                                e.Cancel = true;
+                                return;
+                            }
+                            else if (App.Analytics.Has(Host))
+                            {
+                                Interlocked.Increment(ref App.Instance.TrackersBlocked);
+                                HostCache[Host] = true;
+                                e.Cancel = true;
+                                return;
+                            }
+                            HostCache[Host] = false;
                         }
-                        HostCache[Host] = false;
-                    }
-                    if (e.ResourceRequestType == ResourceRequestType.Script)
-                    {
-                        if (App.HasInLinkRegex.IsMatch(e.Url))
+                        if (e.ResourceRequestType == ResourceRequestType.Script)
                         {
-                            e.Cancel = true;
-                            return;
+                            if (App.HasInLinkRegex.IsMatch(e.Url))
+                            {
+                                e.Cancel = true;
+                                return;
+                            }
                         }
                     }
                 }
@@ -669,35 +692,26 @@ namespace SLBr.Pages
                 e.ModifiedHeaders.Add("Save-Data", "on");
             if (UserAgentBranding)
             {
+                //TODO: Fix turnstile issue, UA changes not applied in WebView2.
                 e.ModifiedHeaders.Add("User-Agent", App.Instance.UserAgent);
                 e.ModifiedHeaders.Add("Sec-Ch-Ua", App.Instance.UserAgentBrandsString);
             }
-            if (ProprietaryCodecsDialogWindow == null && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
+            if (ProprietaryCodecsInfoBar == null && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
             {
                 bool WarnCodec = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
                 if (WarnCodec)
                 {
                     Dispatcher.BeginInvoke(() =>
                     {
-                        ProprietaryCodecsDialogWindow = new("Information", "Proprietary Codecs Detected",
-                            new List<InputField>
-                            {
-                                new InputField { Name = "This site is trying to play media using formats not supported by Chromium (CEF).\nDo you want to switch to the Edge (WebView2) engine?", Type = DialogInputType.Label },
-                                new InputField { Name = "Do not show this message again", Type = DialogInputType.Boolean, BoolValue = !WarnCodec }
-                            },
-                            "\xe8ab", "Yes", "No"
-                        );
-                        ProprietaryCodecsDialogWindow.Topmost = true;
-                        if (ProprietaryCodecsDialogWindow.ShowDialog() == true)
-                            Action(Actions.SwitchWebEngine, "1");
-                        App.Instance.GlobalSave.Set("WarnCodec", !ProprietaryCodecsDialogWindow.InputFields[1].BoolValue);
-                        ProprietaryCodecsDialogWindow = null;
+                        ProprietaryCodecsInfoBar = new() { Icon = "\xea69", Title = "Proprietary Codecs Detected", Description = "This site is trying to play media using formats not supported by Chromium (CEF). Do you want to switch to the Edge (WebView2) engine?",
+                            ActionText = "Switch",
+                            ActionCommand = new RelayCommand(() => { CloseInfoBar(ProprietaryCodecsInfoBar); Action(Actions.SwitchWebEngine, "1"); })
+                        };
+                        LocalInfoBars.Add(ProprietaryCodecsInfoBar);
                     });
                 }
             }
         }
-
-        DynamicDialogWindow? ProprietaryCodecsDialogWindow;
 
         private void WebView_ResourceLoaded(object? sender, ResourceLoadedResult e)
         {
@@ -1023,6 +1037,41 @@ namespace SLBr.Pages
 
         private void WebView_NavigationError(object? sender, NavigationErrorEventArgs e)
         {
+            //https://github.com/brave/brave-core/blob/master/components/brave_wayback_machine/brave_wayback_machine_tab_helper.cc
+            if (e.ErrorCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526)
+            {
+                Dispatcher.BeginInvoke(async () =>
+                {
+                    WaybackInfoBar = new()
+                    {
+                        Icon = "\xf384",
+                        IconForeground = App.Instance.OrangeColor,
+                        Title = "Page Not Found",
+                        Description = "Do you want to check if a saved version is available on the Wayback Machine?",
+                        ActionText = "Check for saved version",
+                        ActionBackground = (SolidColorBrush)FindResource("IndicatorBrush"),
+                        ActionForeground = App.Instance.WhiteColor,
+                        ActionCommand = new RelayCommand(async () => {
+                            CloseInfoBar(WaybackInfoBar);
+                            try
+                            {
+                                using (HttpClient Client = new())
+                                {
+                                    Client.DefaultRequestHeaders.Add("User-Agent", App.Instance.UserAgent);
+                                    string Json = await Client.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={e.Url}");
+                                    using JsonDocument Document = JsonDocument.Parse(Json);
+                                    if (Document.RootElement.TryGetProperty("archived_snapshots", out JsonElement Snapshots) && Snapshots.TryGetProperty("closest", out JsonElement Closest) && Closest.TryGetProperty("available", out JsonElement Available) && Available.GetBoolean() && Closest.TryGetProperty("url", out var Url))
+                                    {
+                                        Navigate(Url.GetString());
+                                    }
+                                }
+                            }
+                            catch { }
+                        })
+                    };
+                    LocalInfoBars.Add(WaybackInfoBar);
+                });
+            }
             if (WebView.Engine == WebEngineType.ChromiumEdge && e.ErrorText == "Unknown") //For Edge's SmartScreen error page
                 return;
             if (WebView.Engine == WebEngineType.Trident && e.ErrorCode == -2146697203) //Custom protocols in IE
@@ -1248,14 +1297,16 @@ namespace SLBr.Pages
                         HandleInternalMessage(Message);
                     break;
                 case "Notification":
-                    var DataJson = Message["Data"]?.ToString();
-                    if (string.IsNullOrWhiteSpace(DataJson))
-                        return;
-                    var Data = JsonSerializer.Deserialize<List<object>>(DataJson);
-                    if (Data != null && Data.Count == 2)
+                    try
                     {
-                        var ToastXML = new Windows.Data.Xml.Dom.XmlDocument();
-                        ToastXML.LoadXml(@$"<toast>
+                        var DataJson = Message["data"]?.ToString();
+                        if (string.IsNullOrWhiteSpace(DataJson))
+                            return;
+                        var Data = JsonSerializer.Deserialize<List<object>>(DataJson);
+                        if (Data != null && Data.Count == 2)
+                        {
+                            var ToastXML = new Windows.Data.Xml.Dom.XmlDocument();
+                            ToastXML.LoadXml(@$"<toast>
     <visual>
         <binding template=""ToastText04"">
             <text id=""1"">{Data[0]}</text>
@@ -1264,8 +1315,10 @@ namespace SLBr.Pages
         </binding>
     </visual>
 </toast>");
-                        ToastNotificationManager.CreateToastNotifier("SLBr").Show(new ToastNotification(ToastXML));
+                            ToastNotificationManager.CreateToastNotifier("SLBr").Show(new ToastNotification(ToastXML));
+                        }
                     }
+                    catch { }
                     break;
             }
         }
@@ -1583,6 +1636,8 @@ namespace SLBr.Pages
                     });
                 }
             }
+            if (WebView2DevToolsHWND != IntPtr.Zero)
+                UpdateDevToolsPosition();
             /*else
             {
                 if (WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null)// && Tab == Tab.ParentWindow.GetTab())
@@ -1882,6 +1937,7 @@ namespace SLBr.Pages
                                             }*/
                                             if (_NavigationEntry.HttpStatusCode == 418)
                                                 SetSiteInfo = "Teapot";
+                                            //TODO: Implement teapot easter egg on WebView2 & Trident web engines
 
                                             CertificateValidation.Text = _NavigationEntry.SslStatus.IsSecureConnection ? "Certificate is valid" : "Certificate is invalid";
                                             SslStatus _SSL = _NavigationEntry.SslStatus;
@@ -1901,9 +1957,7 @@ namespace SLBr.Pages
                                     }
                                 }
                                 else
-                                {
                                     SetSiteInfo = "Insecure";
-                                }
                             }
                             else
                             {
@@ -2153,7 +2207,7 @@ namespace SLBr.Pages
 
         public async void Find(string Text, bool Forward = true, bool FindNext = false)
         {
-            if (Text == string.Empty)
+            if (string.IsNullOrEmpty(Text))
             {
                 try
                 {
@@ -2370,9 +2424,7 @@ namespace SLBr.Pages
                 }
                 if (WebView.Engine == WebEngineType.Trident)
                 {
-                    InformationDialogWindow InfoWindow = new("Error", "Inspector Unavailable", "Trident webview does not support an inspector tool.", "\uec7a");
-                    InfoWindow.Topmost = true;
-                    InfoWindow.ShowDialog();
+                    LocalInfoBars.Add(new() { Title = "Inspector Unavailable", Description = "Trident webview does not support an inspector tool." });
                     return;
                 }
             }
@@ -2449,8 +2501,8 @@ namespace SLBr.Pages
             if (WebView2DevToolsHWND == IntPtr.Zero) return;
             if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.GetTab() != Tab)
             {
+                DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 0, 0, 0), true);
                 DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_HIDE);
-                //DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 0, 0, 0), true); 
                 return;
             }
             DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_SHOWNA);
@@ -2469,7 +2521,7 @@ namespace SLBr.Pages
                 if (value)
                     Dispatcher.BeginInvoke(() => ReaderModeButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
                 else
-                    Dispatcher.BeginInvoke(() => ReaderModeButton.ClearValue(Control.ForegroundProperty));
+                    Dispatcher.BeginInvoke(() => ReaderModeButton.ClearValue(ForegroundProperty));
             }
         }
         public async void ToggleReaderMode()
@@ -2633,7 +2685,7 @@ namespace SLBr.Pages
                 if (value)
                     Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
                 else
-                    Dispatcher.BeginInvoke(() => TranslateButton.ClearValue(Control.ForegroundProperty));
+                    Dispatcher.BeginInvoke(() => TranslateButton.ClearValue(ForegroundProperty));
             }
         }
 
@@ -2747,9 +2799,7 @@ namespace SLBr.Pages
                             {
                                 Dispatcher.BeginInvoke(() => {
                                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                    InformationDialogWindow InfoWindow = new("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                                    InfoWindow.Topmost = true;
-                                    InfoWindow.ShowDialog();
+                                    LocalInfoBars.Add(new() { Title = "Translation Unavailable", Description = "Unable to translate website." });
                                 });
                                 return;
                             }
@@ -2763,9 +2813,7 @@ namespace SLBr.Pages
                     {
                         Dispatcher.BeginInvoke(() => {
                             TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                            InformationDialogWindow InfoWindow = new("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                            InfoWindow.Topmost = true;
-                            InfoWindow.ShowDialog();
+                            LocalInfoBars.Add(new() { Title = "Translation Unavailable", Description = "Unable to translate website." });
                         });
                         return;
                     }
@@ -2864,9 +2912,7 @@ namespace SLBr.Pages
             {
                 Dispatcher.BeginInvoke(() => {
                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                    InformationDialogWindow InfoWindow = new("Error", "Translation Unavailable", "Unable to translate website.", "\uE8C1");
-                    InfoWindow.Topmost = true;
-                    InfoWindow.ShowDialog();
+                    LocalInfoBars.Add(new() { Title = "Translation Unavailable", Description = "Unable to translate website." });
                 });
                 return;
             }
@@ -2895,8 +2941,8 @@ namespace SLBr.Pages
         public void OmniBoxEnter()
         {
             SmartSuggestionCancellation?.Cancel();
-            OmniBoxFastTimer.Stop();
-            OmniBoxSmartTimer.Stop();
+            OmniBoxFastTimer?.Stop();
+            OmniBoxSmartTimer?.Stop();
             string SearchUrl = App.Instance.DefaultSearchProvider.SearchUrl;
             if (OmniBoxOverrideSearch != null && !string.IsNullOrEmpty(OmniBoxOverrideSearch.SearchUrl))
                 SearchUrl = OmniBoxOverrideSearch.SearchUrl;
@@ -2911,8 +2957,8 @@ namespace SLBr.Pages
                 Address = Url;
             if (!Private && bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
             {
-                OmniBoxFastTimer.Stop();
-                OmniBoxSmartTimer.Stop();
+                OmniBoxFastTimer?.Stop();
+                OmniBoxSmartTimer?.Stop();
             }
             OmniBox.IsDropDownOpen = false;
             Keyboard.ClearFocus();
@@ -2989,10 +3035,7 @@ namespace SLBr.Pages
                     OmniBox.Text = string.Empty;
                     OmniBoxStatus.Visibility = Visibility.Collapsed;
                     string SelectedProvider = OmniBoxStatus.Tag.ToString()!;
-                    if (SelectedProvider.StartsWith("S"))
-                        OmniBoxOverrideSearch = App.Instance.AllSystemSearchEngines[int.Parse(SelectedProvider[1..])];
-                    else
-                        OmniBoxOverrideSearch = App.Instance.SearchEngines[int.Parse(SelectedProvider)];
+                    OmniBoxOverrideSearch = SelectedProvider.StartsWith("S") ? App.Instance.AllSystemSearchEngines[int.Parse(SelectedProvider[1..])] : App.Instance.SearchEngines[int.Parse(SelectedProvider)];
                     SetTemporarySiteInformation();
                     ShowOmniBoxSuggestions();
                     e.Handled = true;
@@ -3113,33 +3156,8 @@ namespace SLBr.Pages
                 }
                 else
                 {
-                    /*switch (OmniBoxOverrideSearch.Name)
-                    {
-                        case "YouTube":
-                            SiteInformationIcon.Text = "\xE786";
-                            SiteInformationIcon.Foreground = App.Instance.RedColor;
-                            break;
-                        case "Reddit":
-                            SiteInformationIcon.Text = "\xe99a";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#FE4500");
-                            break;
-                        case "ChatGPT":
-                            SiteInformationIcon.Text = "\xe713";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#10A37F");
-                            break;
-                        case "Perplexity":
-                            SiteInformationIcon.Text = "\xedad";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#21808D");
-                            break;
-                        case "Wikipedia":
-                            SiteInformationIcon.Text = "\xe8f1";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                            break;
-                        default:*/
-                            SiteInformationIcon.Text = "\xED37";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                            /*break;
-                    }*/
+                    SiteInformationIcon.Text = "\xED37";
+                    SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                 }
                 SiteInformationText.Text = OmniBoxOverrideSearch.Name;
                 SiteInformationPopupButton.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBox.Text.Trim()}";
@@ -3193,8 +3211,6 @@ namespace SLBr.Pages
             }
 
             Url = App.Instance._IdnMapping.GetUnicode(Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", false));
-
-            SolidColorBrush FontBrush = (SolidColorBrush)FindResource("FontBrush");
             SolidColorBrush GrayBrush = (SolidColorBrush)FindResource("GrayBrush");
 
             string Scheme = Utils.GetScheme(Url);
@@ -3254,6 +3270,7 @@ namespace SLBr.Pages
             int HostEnd = _Span.IndexOfAny('/', '?', '#');
             ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
 
+            SolidColorBrush FontBrush = (SolidColorBrush)FindResource("FontBrush");
             if (HighlightSuspicious)
             {
                 //vvikipedia.com
@@ -3420,6 +3437,7 @@ namespace SLBr.Pages
                     FavouriteListMenu.Collection = null;
                     HistoryListMenu.Collection = null;
                     ExtensionsMenu.ItemsSource = null;
+                    InfoBarList.ItemsSource = null;
                 }
                 Disposed = true;
             }
@@ -3497,34 +3515,7 @@ namespace SLBr.Pages
                 return;
             OmniBoxStatus.Visibility = Visibility.Collapsed;
             Suggestions.Clear();
-            /*while (Suggestions.Count > 1)
-            {
-                Suggestions.RemoveAt(Suggestions.Count - 1);
-            }*/
             string ProcessedText = CurrentText.Trim();
-            /*SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
-            SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
-            string FirstType = App.GetMiniSearchType(ProcessedText);
-            if (Suggestions.Count == 0)
-            {
-                if (FirstType == "W")
-                {
-                    Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, LinkColor, "- Visit"));
-                    Suggestions.Add(App.GenerateSuggestion(ProcessedText, "S", Color, "- Search", $"search:{ProcessedText}"));
-                }
-                else
-                    Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, Color));
-            }
-            else
-            {
-                if (FirstType == "W")
-                {
-                    Suggestions[0] = App.GenerateSuggestion(ProcessedText, FirstType, LinkColor, "- Visit");
-                    Suggestions[0] = App.GenerateSuggestion(ProcessedText, "S", Color, "- Search", $"search:{ProcessedText}");
-                }
-                else
-                    Suggestions[0] = App.GenerateSuggestion(ProcessedText, FirstType, Color);
-            }*/
             if (!string.IsNullOrEmpty(ProcessedText))
             {
                 SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
@@ -3540,8 +3531,8 @@ namespace SLBr.Pages
                 try
                 {
                     SmartSuggestionCancellation?.Cancel();
-                    OmniBoxFastTimer.Stop();
-                    OmniBoxSmartTimer.Stop();
+                    
+                    OmniBoxSmartTimer?.Stop();
                     if (OmniBoxOverrideSearch?.Host == "__Program__")
                     {
                         ProcessedText = ProcessedText.ToLowerInvariant();
@@ -3645,8 +3636,8 @@ namespace SLBr.Pages
             else
             {
                 SmartSuggestionCancellation?.Cancel();
-                OmniBoxFastTimer.Stop();
-                OmniBoxSmartTimer.Stop();
+                OmniBoxFastTimer?.Stop();
+                OmniBoxSmartTimer?.Stop();
                 if (OmniBoxOverrideSearch != null && OmniBoxOverrideSearch.Host == "__Program__")
                 {
                     SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
@@ -3726,7 +3717,7 @@ namespace SLBr.Pages
 
         private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
         {
-            OmniBoxFastTimer.Stop();
+            OmniBoxFastTimer?.Stop();
             if (!OmniBox.IsDropDownOpen)
                 return;
             string CurrentText = OmniBox.Text.Trim();
@@ -3754,7 +3745,7 @@ namespace SLBr.Pages
 
         private async void OmniBoxSmartTimer_Tick(object? sender, EventArgs e)
         {
-            OmniBoxSmartTimer.Stop();
+            OmniBoxSmartTimer?.Stop();
             if (!OmniBox.IsDropDownOpen)
                 return;
             string Text = OmniBox.Text.Trim();
@@ -3950,5 +3941,24 @@ namespace SLBr.Pages
                     App.Instance.Favourites.Remove(Favourite);
             }
         }
+
+        private void CloseInfoBarButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (((FrameworkElement)sender).DataContext is InfoBar Bar)
+                CloseInfoBar(Bar);
+        }
+
+        private void CloseInfoBar(InfoBar Bar)
+        {
+            LocalInfoBars.Remove(Bar);
+            App.Instance.InfoBars.Remove(Bar);
+            if (Bar == ProprietaryCodecsInfoBar)
+                ProprietaryCodecsInfoBar = null;
+            else if (Bar == WaybackInfoBar)
+                WaybackInfoBar = null;
+        }
+
+        InfoBar? ProprietaryCodecsInfoBar;
+        InfoBar? WaybackInfoBar;
     }
 }

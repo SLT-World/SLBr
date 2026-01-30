@@ -91,6 +91,8 @@ namespace SLBr
         {
             if (IsCefInitialized)
                 return;
+            if (string.IsNullOrEmpty(SECRETS.GOOGLE_API_KEY))
+                App.Instance.InfoBars.Add(new() { Title = "Missing API Keys", Description = "Google API keys are missing. Some functionality of Chromium (CEF) will be disabled." });
             CefSettings ChromiumSettings = new CefSettings();
             ChromiumSettings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
 
