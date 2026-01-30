@@ -1,5 +1,4 @@
 ﻿using CefSharp;
-using CefSharp.DevTools.Network;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -7,13 +6,13 @@ using SLBr.Controls;
 using SLBr.Handlers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -698,14 +697,19 @@ namespace SLBr.Pages
             }
             if (ProprietaryCodecsInfoBar == null && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
             {
-                bool WarnCodec = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
-                if (WarnCodec)
+                if (bool.Parse(App.Instance.GlobalSave.Get("WarnCodec")))
                 {
                     Dispatcher.BeginInvoke(() =>
                     {
-                        ProprietaryCodecsInfoBar = new() { Icon = "\xea69", Title = "Proprietary Codecs Detected", Description = "This site is trying to play media using formats not supported by Chromium (CEF). Do you want to switch to the Edge (WebView2) engine?",
-                            ActionText = "Switch",
-                            ActionCommand = new RelayCommand(() => { CloseInfoBar(ProprietaryCodecsInfoBar); Action(Actions.SwitchWebEngine, "1"); })
+                        ProprietaryCodecsInfoBar = new()
+                        {
+                            Icon = "\xea69",
+                            Title = "Proprietary Codecs Detected",
+                            Description = "This site is trying to play media using formats not supported by Chromium (CEF). Do you want to switch to the Edge (WebView2) engine?",
+                            Actions = [
+                                new() { Text = "Switch", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(() => { CloseInfoBar(ProprietaryCodecsInfoBar); Action(Actions.SwitchWebEngine, "1"); }) },
+                                new() { Text = "Do not ask again", Command = new RelayCommand(async () => { CloseInfoBar(WaybackInfoBar); App.Instance.GlobalSave.Set("WarnCodec", false); }) }
+                            ]
                         };
                         LocalInfoBars.Add(ProprietaryCodecsInfoBar);
                     });
@@ -1038,7 +1042,7 @@ namespace SLBr.Pages
         private void WebView_NavigationError(object? sender, NavigationErrorEventArgs e)
         {
             //https://github.com/brave/brave-core/blob/master/components/brave_wayback_machine/brave_wayback_machine_tab_helper.cc
-            if (e.ErrorCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526)
+            if (WaybackInfoBar == null && e.ErrorCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526 && Utils.IsHttpScheme(e.Url) && bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar")) && Utils.FastHost(e.Url) != "web.archive.org")
             {
                 Dispatcher.BeginInvoke(async () =>
                 {
@@ -1046,28 +1050,30 @@ namespace SLBr.Pages
                     {
                         Icon = "\xf384",
                         IconForeground = App.Instance.OrangeColor,
-                        Title = "Page Not Found",
-                        Description = "Do you want to check if a saved version is available on the Wayback Machine?",
-                        ActionText = "Check for saved version",
-                        ActionBackground = (SolidColorBrush)FindResource("IndicatorBrush"),
-                        ActionForeground = App.Instance.WhiteColor,
-                        ActionCommand = new RelayCommand(async () => {
-                            CloseInfoBar(WaybackInfoBar);
-                            try
-                            {
-                                using (HttpClient Client = new())
+                        Title = "Page Missing",
+                        Description = "Do you want to check if a snapshot is available on the Wayback Machine?",
+                        Actions = [
+                            new() { Text = "Check", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(async () => {
+                                WaybackInfoBar.Actions[0].IsEnabled = false;
+                                try
                                 {
-                                    Client.DefaultRequestHeaders.Add("User-Agent", App.Instance.UserAgent);
-                                    string Json = await Client.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={e.Url}");
-                                    using JsonDocument Document = JsonDocument.Parse(Json);
-                                    if (Document.RootElement.TryGetProperty("archived_snapshots", out JsonElement Snapshots) && Snapshots.TryGetProperty("closest", out JsonElement Closest) && Closest.TryGetProperty("available", out JsonElement Available) && Available.GetBoolean() && Closest.TryGetProperty("url", out var Url))
+                                    using (HttpClient Client = new())
                                     {
-                                        Navigate(Url.GetString());
+                                        Client.DefaultRequestHeaders.Add("User-Agent", App.Instance.UserAgent);
+                                        string Json = await Client.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={WebUtility.UrlEncode(e.Url)}");
+                                        CloseInfoBar(WaybackInfoBar);
+                                        using JsonDocument Document = JsonDocument.Parse(Json);
+                                        if (Document.RootElement.TryGetProperty("archived_snapshots", out JsonElement Snapshots) && Snapshots.TryGetProperty("closest", out JsonElement Closest) && Closest.TryGetProperty("available", out JsonElement Available) && Available.GetBoolean() && Closest.TryGetProperty("url", out var Url))
+                                            Navigate(Url.GetString());
                                     }
                                 }
-                            }
-                            catch { }
-                        })
+                                catch { CloseInfoBar(WaybackInfoBar); }
+                            }) },
+                            new() { Text = "Do not ask again", Command = new RelayCommand(async () => {
+                                CloseInfoBar(WaybackInfoBar);
+                                App.Instance.GlobalSave.Set("WaybackInfoBar", false);
+                            }) }
+                        ]
                     };
                     LocalInfoBars.Add(WaybackInfoBar);
                 });
@@ -1133,6 +1139,11 @@ namespace SLBr.Pages
             CurrentWebAppManifest = null;
             CurrentWebAppManifestUrl = string.Empty;
             InstallWebAppButton.Visibility = Visibility.Collapsed;
+            if (WaybackInfoBar != null)
+            {
+                CloseInfoBar(WaybackInfoBar);
+                WaybackInfoBar = null;
+            }
             BrowserLoadChanged(Address, IsLoading);
             if (!IsLoading)
             {
@@ -1918,11 +1929,11 @@ namespace SLBr.Pages
                         CertificateInfo.Visibility = Visibility.Collapsed;
                         if (IsHTTP)
                         {
-                            SiteInformationCertificate.Visibility = Visibility.Visible;
                             if (WebView != null && WebView.IsBrowserInitialized)
                             {
                                 if (WebView.IsSecure)
                                 {
+                                    SiteInformationCertificate.Visibility = Visibility.Visible;
                                     SetSiteInfo = "Secure";
                                     if (WebView is ChromiumWebView ChromiumView)
                                     {

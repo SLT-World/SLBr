@@ -1407,6 +1407,7 @@ namespace SLBr
             BrowserCore.FrameNavigationStarting += (s, e) => FrameLoadStart?.RaiseUIAsync(this, e.Uri);
             BrowserCore.FrameNavigationCompleted += (s, e) => FrameLoadEnd?.RaiseUIAsync(this, Address);
             BrowserCore.NavigationCompleted += Browser_NavigationCompleted;
+            BrowserCore.ServerCertificateErrorDetected += Browser_ServerCertificateErrorDetected;
 
             BrowserCore.DocumentTitleChanged += (s, e) => TitleChanged?.RaiseUIAsync(this, BrowserCore.DocumentTitle);
             BrowserCore.FaviconChanged += (s, e) => FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
@@ -1449,6 +1450,13 @@ namespace SLBr
             }*/
 
             BrowserCore.Navigate(InitialUrl);
+        }
+
+        bool CertificateError = false;
+        private void Browser_ServerCertificateErrorDetected(object? sender, CoreWebView2ServerCertificateErrorDetectedEventArgs e)
+        {
+            CertificateError = true;
+            IsSecure = false;
         }
 
         private void Core_IsDefaultDownloadDialogOpenChanged(object? sender, object e)
@@ -1772,17 +1780,12 @@ namespace SLBr
         {
             IsLoading = false;
             IsSecure = false;
-            if (e.IsSuccess)
-            {
-                if (BrowserCore.Source.StartsWith("https:"))
-                    IsSecure = e.WebErrorStatus == CoreWebView2WebErrorStatus.Unknown;
-            }
-            else
-            {
-                if (e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted)
-                    return;
+
+            if (BrowserCore.Source.StartsWith("https:"))
+                IsSecure = !CertificateError;
+
+            if (!e.IsSuccess && e.WebErrorStatus != CoreWebView2WebErrorStatus.ConnectionAborted)
                 NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(e.HttpStatusCode, e.WebErrorStatus.ToString(), Address));
-            }
             LoadingStateChanged?.RaiseUIAsync(this, IsLoading);
         }
 
@@ -1902,12 +1905,19 @@ namespace SLBr
         public async Task<string> GetSourceAsync() => await EvaluateScriptAsync("document.documentElement.outerHTML");
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null)
         {
-            string Json = Parameters != null ? JsonSerializer.Serialize(Parameters, new JsonSerializerOptions
+            try
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            }) : "{}";
-            return await BrowserCore.CallDevToolsProtocolMethodAsync(Method, Json);
+                string Json = Parameters != null ? JsonSerializer.Serialize(Parameters, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                }) : "{}";
+                return await BrowserCore?.CallDevToolsProtocolMethodAsync(Method, Json) ?? "";
+            }
+            catch
+            {
+                return "";
+            }
         }
 
         public FrameworkElement Control => Browser;
@@ -1936,6 +1946,7 @@ namespace SLBr
                     Core.FrameNavigationStarting -= (s, e) => FrameLoadStart?.RaiseUIAsync(this, e.Uri);
                     Core.FrameNavigationCompleted -= (s, e) => FrameLoadEnd?.RaiseUIAsync(this, Address);
                     Core.NavigationCompleted -= Browser_NavigationCompleted;
+                    Core.ServerCertificateErrorDetected -= Browser_ServerCertificateErrorDetected;
 
                     Core.DocumentTitleChanged -= (s, e) => TitleChanged?.RaiseUIAsync(this, Core.DocumentTitle);
                     Core.FaviconChanged -= (s, e) => FaviconChanged?.RaiseUIAsync(this, Core.FaviconUri);

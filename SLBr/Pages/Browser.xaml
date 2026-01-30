@@ -595,8 +595,19 @@
                                                 <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" TextTrimming="CharacterEllipsis" FontWeight="Medium" Text="{Binding Title}"/>
                                                 <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" TextTrimming="CharacterEllipsis" Text="{Binding Description}" Foreground="{StaticResource GrayBrush}"/>
                                             </DockPanel>
-                                            <Button Padding="5,0" Width="Auto" BorderThickness="{Binding ActionBackground, TargetNullValue={StaticResource BorderBrush}}" Foreground="{Binding ActionForeground, TargetNullValue={StaticResource FontBrush}}" Background="{Binding ActionBackground, TargetNullValue={StaticResource PrimaryBrush}}" Visibility="{Binding ActionText, Converter={StaticResource NullToVisibility}}" Content="{Binding ActionText}" Command="{Binding ActionCommand}" Grid.Column="1" DockPanel.Dock="Right" Margin="0,0,10,0" Height="30"/>
-                                            <Button Visibility="{Binding IsClosable, Converter={StaticResource BooleanToVisibility}}" Click="CloseInfoBarButton_Click" Grid.Column="2" BorderThickness="0" DockPanel.Dock="Right" Margin="0,0,2.5,0" Background="Transparent" Style="{StaticResource IconButton}" Height="30" Width="30" ToolTip="Close" Content="&#xe711;"/>
+                                            <ItemsControl ItemsSource="{Binding Actions}" VirtualizingPanel.VirtualizationMode="Recycling" Grid.Column="1" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button IsEnabled="{Binding IsEnabled}" Padding="10,0" Width="Auto" BorderThickness="{Binding Background, TargetNullValue={StaticResource BorderBrush}}" Foreground="{Binding Foreground, TargetNullValue={StaticResource FontBrush}}" Background="{Binding Background, TargetNullValue={StaticResource PrimaryBrush}}" Content="{Binding Text}" Command="{Binding Command}" Margin="0,0,10,0" Height="30"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <Button Visibility="{Binding IsClosable, Converter={StaticResource BooleanToVisibility}}" Click="CloseInfoBarButton_Click" Grid.Column="2" BorderThickness="0" Margin="0,0,2.5,0" Background="Transparent" Style="{StaticResource IconButton}" Height="30" Width="30" ToolTip="Close" Content="&#xe711;"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

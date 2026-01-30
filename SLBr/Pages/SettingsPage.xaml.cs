@@ -289,6 +289,7 @@ namespace SLBr.Pages
 
             AdaptiveThemeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme"));
             WarnCodecCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
+            WaybackInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar"));
 
 
             NeverSlowModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NeverSlowMode"));
@@ -747,6 +748,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("WarnCodec", WarnCodecCheckBox.IsChecked.ToBool().ToString());
+        }
+        private void WaybackInfoBarCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("WaybackInfoBar", WaybackInfoBarCheckBox.IsChecked.ToBool().ToString());
         }
         private void PrivateTabsCheckBox_Click(object sender, RoutedEventArgs e)
         {

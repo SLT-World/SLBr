@@ -150,6 +150,7 @@
                                 Browser
                             </GroupBox.Header>
                             <StackPanel>
+                                <CheckBox Margin="0,0,0,10" x:Name="WaybackInfoBarCheckBox" Width="Auto" Click="WaybackInfoBarCheckBox_Click" Content="Show Wayback Machine bar on 404 pages"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="WarnCodecCheckBox" Width="Auto" Click="WarnCodecCheckBox_Click" Content="Warn when unsupported proprietary codecs are requested"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="FullscreenPopupCheckBox" Width="Auto" Click="FullscreenPopupCheckBox_Click" Content="Show fullscreen warning"/>
                                 <CheckBox x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>

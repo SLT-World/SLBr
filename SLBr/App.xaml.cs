@@ -83,28 +83,7 @@ namespace SLBr
             }
         }
         private string _Description;
-        /*public SolidColorBrush Background
-        {
-            get => _Background;
-            set
-            {
-                _Background = value;
-                Foreground = (SolidColorBrush)Utils.GetContrastBrush(value.Color);
-                RaisePropertyChanged();
-            }
-        }
-        private SolidColorBrush _Background;
-
-        public SolidColorBrush Foreground
-        {
-            get => _Foreground;
-            set
-            {
-                _Foreground = value;
-                RaisePropertyChanged();
-            }
-        }
-        private SolidColorBrush _Foreground;*/
+        //TODO: Replace Icon with UIElementLayer list for layering based on order.
         public string? Icon
         {
             get => _Icon;
@@ -126,47 +105,95 @@ namespace SLBr
             }
         }
         private SolidColorBrush _IconForeground;
-        public string? ActionText
-        {
-            get => _ActionText;
-            set
-            {
-                _ActionText = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string? _ActionText = null;
-        public ICommand ActionCommand
-        {
-            get => _ActionCommand;
-            set
-            {
-                _ActionCommand = value;
-                RaisePropertyChanged();
-            }
-        }
-        private ICommand _ActionCommand;
-        public SolidColorBrush ActionBackground
-        {
-            get => _ActionBackground;
-            set
-            {
-                _ActionBackground = value;
-                RaisePropertyChanged();
-            }
-        }
-        private SolidColorBrush _ActionBackground;
 
-        public SolidColorBrush ActionForeground
+        public List<UIElementLayer> Actions { get; set; } = [];
+    }
+
+    public class UIElementLayer : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        public bool IsEnabled
         {
-            get => _ActionForeground;
+            get => _IsEnabled;
             set
             {
-                _ActionForeground = value;
+                _IsEnabled = value;
                 RaisePropertyChanged();
             }
         }
-        private SolidColorBrush _ActionForeground;
+        private bool _IsEnabled = true;
+
+        public string? Text
+        {
+            get => _Text;
+            set
+            {
+                _Text = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string? _Text;
+
+        public ICommand? Command
+        {
+            get => _Command;
+            set
+            {
+                _Command = value;
+                RaisePropertyChanged();
+            }
+        }
+        private ICommand? _Command;
+
+        public SolidColorBrush? Background
+        {
+            get => _Background;
+            set
+            {
+                _Background = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush? _Background;
+
+        public SolidColorBrush? Foreground
+        {
+            get => _Foreground;
+            set
+            {
+                _Foreground = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush? _Foreground;
+
+        public SolidColorBrush? BorderBrush
+        {
+            get => _BorderBrush;
+            set
+            {
+                _BorderBrush = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush? _BorderBrush;
+
+        public double? BorderThickness
+        {
+            get => _BorderThickness;
+            set
+            {
+                _BorderThickness = value;
+                RaisePropertyChanged();
+            }
+        }
+        private double? _BorderThickness;
     }
 
     public static class HotKeyManager
@@ -1706,8 +1733,7 @@ namespace SLBr
                 Icon = "\xe895",
                 Title = "Update Available",
                 Description = "A newer version of SLBr is ready for download.",
-                ActionText = "Update",
-                ActionCommand = new RelayCommand(() => { CloseInfoBar(NewUpdateInfoBar); Update(); })
+                Actions = [new() { Text = "Update", Command = new RelayCommand(() => { CloseInfoBar(NewUpdateInfoBar); Update(); }) }]
             };
             InfoBars.Add(NewUpdateInfoBar);
         }
@@ -2386,6 +2412,8 @@ Inner Exception: ```{7} ```";
 
             if (!GlobalSave.Has("WarnCodec"))
                 GlobalSave.Set("WarnCodec", true);
+            if (!GlobalSave.Has("WaybackInfoBar"))
+                GlobalSave.Set("WaybackInfoBar", true);
             if (!GlobalSave.Has("CheckUpdate"))
                 GlobalSave.Set("CheckUpdate", true);
             if (!GlobalSave.Has("PrivateTabs"))
