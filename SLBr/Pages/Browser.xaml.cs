@@ -1505,38 +1505,29 @@ namespace SLBr.Pages
                     if (Results.Count != 0)
                     {
                         int Count = 0;
-
                         MenuItem? SuggestionsSubMenuModel = null;
                         foreach ((string Word, List<string> Suggestions) in Results)
                         {
                             foreach (string Suggestion in Suggestions)
                             {
-                                if (Count < 3)
+                                MenuItem SuggestionItem = new()
                                 {
-                                    BrowserMenu.Items.Add(new MenuItem
+                                    Icon = "\uf87b",
+                                    Header = Suggestion,
+                                    Command = new RelayCommand(_ =>
                                     {
-                                        Icon = "\uf87b",
-                                        Header = Suggestion,
-                                        Command = new RelayCommand(_ =>
-                                        {
-                                            if (WebView is ChromiumWebView ChromiumWebView)
-                                                ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().ReplaceMisspelling(Suggestion);
-                                        })
-                                    });
-                                }
+                                        if (WebView is ChromiumWebView ChromiumWebView)
+                                            ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().ReplaceMisspelling(Suggestion);
+                                        else if (WebView is ChromiumEdgeWebView EdgeWebView)
+                                            EdgeWebView.ExecuteScript(Scripts.WebView2ReplaceMisspelling.Replace("{0}", Suggestion));
+                                    })
+                                };
+                                if (Count < 3)
+                                    BrowserMenu.Items.Add(SuggestionItem);
                                 else
                                 {
                                     SuggestionsSubMenuModel ??= new MenuItem { Icon = "\ue82d", Header = "More" };
-                                    SuggestionsSubMenuModel.Items.Add(new MenuItem
-                                    {
-                                        Icon = "\uf87b",
-                                        Header = Suggestion,
-                                        Command = new RelayCommand(_ =>
-                                        {
-                                            if (WebView is ChromiumWebView ChromiumWebView)
-                                                ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().ReplaceMisspelling(Suggestion);
-                                        })
-                                    });
+                                    SuggestionsSubMenuModel.Items.Add(SuggestionItem);
                                 }
                                 Count++;
                             }

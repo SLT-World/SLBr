@@ -91,7 +91,8 @@ Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 >         public const string LINGVANEX_ENDPOINT = "";
 >         public const string YANDEX_LANGUAGE_DETECTION_ENDPOINT = "";
 >         public const string YANDEX_ENDPOINT = "";
->         public const string SPELLCHECK_ENDPOINT = "";
+>         public const string LANGUAGETOOL_SPELLCHECK_ENDPOINT = "";
+>         public const string MICROSOFT_SPELLCHECK_ENDPOINT = "";
 >     }
 > }
 > ```

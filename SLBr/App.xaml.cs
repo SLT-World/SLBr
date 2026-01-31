@@ -1277,24 +1277,54 @@ namespace SLBr
                     break;
                 case 1:
                     {
-                        string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
+                        HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.MICROSOFT_SPELLCHECK_ENDPOINT, new StringContent($"{{\"SessionId\": \"\",\"AppId\": \"Edge_Win32\",\"LanguageUxId\": \"{Locale.Tooltip}\",\"Content\": [{{\"TileId\": \"{Locale.Tooltip}\",\"RevisionId\": \"0\",\"TileElements\": [{{\"LanguageId\": \"{Locale.Tooltip}\",\"Text\": \"{Text}\",\"TextUnit\": 8}}]}}],\"Descriptors\":[{{\"Name\": \"FlightIds\",\"Value\": \"wac-wordeditorservicemultiplegrammarcritiquespersentence-treatment\"}},{{\"Name\": \"LicenseType\",\"Value\": \"NoLicense\"}}]}}", Encoding.UTF8, "application/json"));
+                        Response.EnsureSuccessStatusCode();
+                        string Json = await Response.Content.ReadAsStringAsync();
+
+                        using JsonDocument Document = JsonDocument.Parse(Json);
+                        if (Document.RootElement.TryGetProperty("Critiques", out JsonElement Critiques))
+                        {
+                            foreach (JsonElement Critique in Critiques.EnumerateArray())
+                            {
+                                if (!Critique.TryGetProperty("Context", out JsonElement Context))
+                                    continue;
+
+                                List<string> Suggestions = [];
+                                if (Critique.TryGetProperty("Suggestions", out JsonElement Replacements))
+                                {
+                                    foreach (JsonElement Replacement in Replacements.EnumerateArray())
+                                        Suggestions.Add(Replacement.GetProperty("Text").GetString()!);
+                                }
+
+                                string ContextText = Context.GetString()!;
+                                int Offset = Critique.GetProperty("Start").GetInt32();
+                                int Length = Critique.GetProperty("Length").GetInt32();
+
+                                Results.Add((ContextText.Substring(Offset, Length), Suggestions));
+                            }
+                        }
+                        break;
+                    }
+                case 2:
+                    {
+                        string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.LANGUAGETOOL_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
 
                         using JsonDocument Document = JsonDocument.Parse(Json);
                         if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches))
                         {
                             foreach (JsonElement Match in Matches.EnumerateArray())
                             {
-                                if (!Match.TryGetProperty("context", out JsonElement context))
+                                if (!Match.TryGetProperty("context", out JsonElement Context))
                                     continue;
 
                                 List<string> Suggestions = [];
-                                if (Match.TryGetProperty("replacements", out JsonElement replacements))
+                                if (Match.TryGetProperty("replacements", out JsonElement Replacements))
                                 {
-                                    foreach (JsonElement repl in replacements.EnumerateArray())
-                                        Suggestions.Add(repl.GetProperty("value").GetString());
+                                    foreach (JsonElement Replacement in Replacements.EnumerateArray())
+                                        Suggestions.Add(Replacement.GetProperty("value").GetString()!);
                                 }
 
-                                string ContextText = context.GetProperty("text").GetString();
+                                string ContextText = Context.GetProperty("text").GetString()!;
                                 int Offset = Match.GetProperty("offset").GetInt32();
                                 int Length = Match.GetProperty("length").GetInt32();
 
@@ -4782,6 +4812,22 @@ Inner Exception: ```{7} ```";
 
     public static class Scripts
     {
+        public const string WebView2ReplaceMisspelling = @"(function () {
+    const active = document.activeElement;
+    if (active && (active.tagName === ""INPUT"" || active.tagName === ""TEXTAREA"")) {
+        const start = active.selectionStart;
+        const end = active.selectionEnd;
+        if (start === null || end === null || start === end) return;
+        const before = active.value.substring(0, start);
+        const after = active.value.substring(end);
+        active.focus();
+        active.select();
+        const text = before + ""{0}"" + after;
+        if (!document.execCommand('insertText', false, text)) active.setRangeText(text);
+        active.selectionStart = active.selectionEnd = start + ""{0}"".length;
+    }
+})();";
+        
         public const string GetFaviconScript = @"(function() { var links = document.getElementsByTagName('link'); for (var i = 0; i < links.length; i++) { var rel = links[i].getAttribute('rel'); if (rel && rel.toLowerCase().indexOf('icon') !== -1) { return links[i].href; } } return ''; })();";
 
         public const string ReaderModeScript = @"(function() {

@@ -694,7 +694,8 @@
                                     <ComboBox IsEnabled="{Binding ElementName=SpellCheckCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SpellcheckProviderComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SpellcheckProviderComboBox_SelectionChanged">
                                         <ComboBoxItem>Basic</ComboBoxItem>
                                         <!--<ComboBoxItem>Google</ComboBoxItem>-->
-                                        <ComboBoxItem>Enhanced</ComboBoxItem>
+                                        <ComboBoxItem>Microsoft</ComboBoxItem>
+                                        <ComboBoxItem>LanguageTool</ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
                                 <DockPanel>
