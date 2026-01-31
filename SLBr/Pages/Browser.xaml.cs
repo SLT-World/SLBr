@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -705,7 +706,7 @@ namespace SLBr.Pages
                         {
                             Icon = "\xea69",
                             Title = "Proprietary Codecs Detected",
-                            Description = "This site is trying to play media using formats not supported by Chromium (CEF). Do you want to switch to the Edge (WebView2) engine?",
+                            Description = [new() { Text = "This site is trying to play media using formats not supported by Chromium (CEF). Do you want to switch to the Edge (WebView2) engine?" }],
                             Actions = [
                                 new() { Text = "Switch", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(() => { CloseInfoBar(ProprietaryCodecsInfoBar); Action(Actions.SwitchWebEngine, "1"); }) },
                                 new() { Text = "Do not ask again", Command = new RelayCommand(async () => { CloseInfoBar(WaybackInfoBar); App.Instance.GlobalSave.Set("WarnCodec", false); }) }
@@ -1051,7 +1052,7 @@ namespace SLBr.Pages
                         Icon = "\xf384",
                         IconForeground = App.Instance.OrangeColor,
                         Title = "Page Missing",
-                        Description = "Do you want to check if a snapshot is available on the Wayback Machine?",
+                        Description = [new() { Text =  "Do you want to check if a snapshot is available on the Wayback Machine?" }],
                         Actions = [
                             new() { Text = "Check", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(async () => {
                                 WaybackInfoBar.Actions[0].IsEnabled = false;
@@ -1139,11 +1140,8 @@ namespace SLBr.Pages
             CurrentWebAppManifest = null;
             CurrentWebAppManifestUrl = string.Empty;
             InstallWebAppButton.Visibility = Visibility.Collapsed;
-            if (WaybackInfoBar != null)
-            {
-                CloseInfoBar(WaybackInfoBar);
-                WaybackInfoBar = null;
-            }
+            for (int i = 0; i < LocalInfoBars.Count; i++)
+                CloseInfoBar(LocalInfoBars[i]);
             BrowserLoadChanged(Address, IsLoading);
             if (!IsLoading)
             {
@@ -2433,9 +2431,10 @@ namespace SLBr.Pages
                     ToggleSideBar(ForceClose);
                     return;
                 }
-                if (WebView.Engine == WebEngineType.Trident)
+                if (WebView.Engine == WebEngineType.Trident && UnavailableInspectorInfoBar == null)
                 {
-                    LocalInfoBars.Add(new() { Title = "Inspector Unavailable", Description = "Trident webview does not support an inspector tool." });
+                    UnavailableInspectorInfoBar = new() { Title = "Inspector Unavailable", Description = [new() { Text = "Trident webview does not support an inspector tool." }] };
+                    LocalInfoBars.Add(UnavailableInspectorInfoBar);
                     return;
                 }
             }
@@ -2810,7 +2809,11 @@ namespace SLBr.Pages
                             {
                                 Dispatcher.BeginInvoke(() => {
                                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                    LocalInfoBars.Add(new() { Title = "Translation Unavailable", Description = "Unable to translate website." });
+                                    if (UnavailableTranslationInfoBar == null)
+                                    {
+                                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate website." }] };
+                                        LocalInfoBars.Add(UnavailableTranslationInfoBar);
+                                    }
                                 });
                                 return;
                             }
@@ -2824,7 +2827,11 @@ namespace SLBr.Pages
                     {
                         Dispatcher.BeginInvoke(() => {
                             TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                            LocalInfoBars.Add(new() { Title = "Translation Unavailable", Description = "Unable to translate website." });
+                            if (UnavailableTranslationInfoBar == null)
+                            {
+                                UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate website." }] };
+                                LocalInfoBars.Add(UnavailableTranslationInfoBar);
+                            }
                         });
                         return;
                     }
@@ -2923,7 +2930,11 @@ namespace SLBr.Pages
             {
                 Dispatcher.BeginInvoke(() => {
                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                    LocalInfoBars.Add(new() { Title = "Translation Unavailable", Description = "Unable to translate website." });
+                    if (UnavailableTranslationInfoBar == null)
+                    {
+                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate website." }] };
+                        LocalInfoBars.Add(UnavailableTranslationInfoBar);
+                    }
                 });
                 return;
             }
@@ -3221,7 +3232,7 @@ namespace SLBr.Pages
                 return;
             }
 
-            Url = App.Instance._IdnMapping.GetUnicode(Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", false));
+            Url = Utils.CleanUrl(Url, false, TruncateURL, TruncateURL, TruncateURL && SiteInformationText.Text != "Danger", false);
             SolidColorBrush GrayBrush = (SolidColorBrush)FindResource("GrayBrush");
 
             string Scheme = Utils.GetScheme(Url);
@@ -3265,6 +3276,7 @@ namespace SLBr.Pages
             }
 
             //www.com, m.com
+            //WARNING: Potential attack vector via subdomain hijacking, "m.paypal.com" rendered as "paypal.com"
             if (_Span.StartsWith("www.") && Utils.CanRemoveTrivialSubdomain(_Span[4..]))
             {
                 if (!TruncateURL)
@@ -3281,14 +3293,80 @@ namespace SLBr.Pages
             int HostEnd = _Span.IndexOfAny('/', '?', '#');
             ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
 
+            //Opportunity cost of rendering punycode as unicode
+            if (!App.Instance.PunycodeURL)
+            {
+                int HostIndex = 0;
+                StringBuilder HostBuffer = new(Host.Length);
+
+                while (HostIndex < Host.Length)
+                {
+                    int Dot = Host.Slice(HostIndex).IndexOf('.');
+                    ReadOnlySpan<char> Label;
+                    if (Dot == -1)
+                    {
+                        Label = Host[HostIndex..];
+                        HostIndex = Host.Length;
+                    }
+                    else
+                    {
+                        Label = Host.Slice(HostIndex, Dot);
+                        HostIndex += Dot + 1;
+                    }
+                    if (Label.StartsWith("xn--", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try { HostBuffer.Append(App.Instance._IdnMapping.GetUnicode(Label.ToString())); }
+                        catch { HostBuffer.Append(Label); }
+                    }
+                    else
+                        HostBuffer.Append(Label);
+                    if (HostIndex < Host.Length)
+                        HostBuffer.Append('.');
+                }
+                Host = HostBuffer.ToString().AsSpan();
+                /*TODO: Replace with deception warning page*
+                 * Flag suspicious punycode URLs in WebRiskHandler?
+                 * Obstructive to user experience.
+                 * Consider opposite, replace warning page with infobox?
+                 */
+                if (HomographInfoBar == null && Scheme is "https" or "http" && bool.Parse(App.Instance.GlobalSave.Get("HomographInfoBar")))
+                {
+                    //https://aws.amazon.com/blogs/machine-learning/infoblox-inc-built-a-patent-pending-homograph-attack-detection-model-for-dns-with-amazon-sagemaker/
+                    //https://issues.chromium.org/issues/40083641
+                    string PerceivedHost = Utils.BuildTextSkeleton(Host.ToString());
+                    bool IsHomograph = !string.Equals(Host.ToString(), PerceivedHost, StringComparison.OrdinalIgnoreCase);
+                    //MessageBox.Show($"{PerceivedHost} {Host.ToString()} {IsHomograph}");
+                    if (IsHomograph)
+                    {
+                        HomographInfoBar = new()
+                        {
+                            Icon = "\ue730",
+                            IconForeground = App.Instance.RedColor,
+                            Title = "Suspicious Address",
+                            Description = [
+                                new() { Text = "Did you mean to go to " },
+                            new() { Text = PerceivedHost, Foreground = App.Instance.CornflowerBlueColor, Command = new RelayCommand(() => Navigate(Utils.FixUrl(PerceivedHost))) },
+                            new() { Text = "?" }
+                            ],
+                            Actions = [
+                                new() { Text = "Do not ask again", Command = new RelayCommand(async () => { CloseInfoBar(HomographInfoBar); App.Instance.GlobalSave.Set("HomographInfoBar", false); }) }
+                            ]
+                        };
+                        LocalInfoBars.Add(HomographInfoBar);
+                    }
+                }
+            }
+
             SolidColorBrush FontBrush = (SolidColorBrush)FindResource("FontBrush");
             if (HighlightSuspicious)
             {
                 //vvikipedia.com
                 //xn--micrsoft-qbh.com
                 //xn--l-7sba6dbr.com
-                //xn--80ak6aa92e.com
                 //xn--pple-zld.com
+                //xn--80ak6aa92e.com
+                //www.xn--80a6aa.com
+                //adoḅe.com
                 int HostIndex = 0;
                 StringBuilder HostBuffer = new();
                 bool IsNormal = false;
@@ -3967,9 +4045,27 @@ namespace SLBr.Pages
                 ProprietaryCodecsInfoBar = null;
             else if (Bar == WaybackInfoBar)
                 WaybackInfoBar = null;
+            else if (Bar == UnavailableInspectorInfoBar)
+                UnavailableInspectorInfoBar = null;
+            else if (Bar == UnavailableTranslationInfoBar)
+                UnavailableTranslationInfoBar = null;
+            else if (Bar == HomographInfoBar)
+                HomographInfoBar = null;
         }
 
+        InfoBar? UnavailableTranslationInfoBar;
+        InfoBar? UnavailableInspectorInfoBar;
         InfoBar? ProprietaryCodecsInfoBar;
         InfoBar? WaybackInfoBar;
+        InfoBar? HomographInfoBar;
+
+        private void InfoBarRun_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (((FrameworkElement)sender).DataContext is UIElementLayer Element)
+            {
+                if (Element.Command != null && Element.Command.CanExecute(null))
+                    Element.Command.Execute(null);
+            }
+        }
     }
 }

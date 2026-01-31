@@ -1299,6 +1299,119 @@ namespace SLBr
                 return Url;
             return IsProtocol(Url) ? Url : "https://" + Url;
         }
+
+        private static readonly Dictionary<char, char> DeceptiveCharMap = new()
+        {
+            //Cyrillic
+            ['а'] = 'a',
+            ['А'] = 'A',
+            ['В'] = 'B',
+            ['е'] = 'e',
+            ['Е'] = 'E',
+            ['к'] = 'k',
+            ['К'] = 'K',
+            ['М'] = 'M',
+            ['Н'] = 'H',
+            ['о'] = 'o',
+            ['О'] = 'O',
+            ['р'] = 'p',
+            ['Р'] = 'P',
+            ['с'] = 'c',
+            ['С'] = 'C',
+            ['Т'] = 'T',
+            ['у'] = 'y',
+            ['У'] = 'Y',
+            ['х'] = 'x',
+            ['Х'] = 'X',
+            ['ӏ'] = 'l',
+
+            ['в'] = 'b',
+            ['д'] = 'n',
+            ['л'] = 'n',
+            ['п'] = 'n',
+            ['ѕ'] = 's',
+            ['ѵ'] = 'v',
+            ['і'] = 'i',
+            ['ј'] = 'j',
+            ['ѡ'] = 'w',
+
+            //Greek
+            ['Α'] = 'A',
+            ['β'] = 'B',
+            ['Β'] = 'B',
+            ['Ε'] = 'E',
+            ['Ζ'] = 'Z',
+            ['Η'] = 'H',
+            ['Ι'] = 'I',
+            ['Κ'] = 'K',
+            ['Μ'] = 'M',
+            ['Ν'] = 'N',
+            ['Ο'] = 'O',
+            ['Ρ'] = 'P',
+            ['Τ'] = 'T',
+            ['Υ'] = 'Y',
+            ['Χ'] = 'X',
+
+            ['α'] = 'a',
+            ['ε'] = 'e',
+            ['η'] = 'n',
+            ['ι'] = 'i',
+            ['κ'] = 'k',
+            ['μ'] = 'u',
+            ['ν'] = 'v',
+            ['ο'] = 'o',
+            ['ρ'] = 'p',
+            ['τ'] = 't',
+            ['υ'] = 'u',
+            ['χ'] = 'x',
+            ['γ'] = 'y',
+            ['δ'] = 'd',
+            ['λ'] = 'l',
+            ['ξ'] = 'x',
+            ['σ'] = 'o',
+            ['ς'] = 'o',
+            ['ω'] = 'w',
+            ['ϲ'] = 'c',
+
+            ['ı'] = 'i',
+            ['ł'] = 'l',
+            ['đ'] = 'd',
+            ['ħ'] = 'h',
+            ['ŧ'] = 't',
+            ['Ɩ'] = 'l',
+            ['Ɨ'] = 'I',
+            ['Ɵ'] = 'O',
+
+            ['ℓ'] = 'l',
+            ['℮'] = 'e',
+            ['ℴ'] = 'o',
+            ['K'] = 'K',
+            ['Å'] = 'A',
+        };
+
+        /*TODO: Investigate usage of https://www.unicode.org/Public/security/8.0.0/confusables.txt
+         * https://www.unicode.org/reports/tr36/confusables.txt
+         * https://github.com/wanderingstan/Confusables
+         * https://medium.com/grindr-engineering/confusable-character-detection-in-erlang-98aa47abc9ab
+         * https://www.unicode.org/reports/tr39/
+         */
+        public static string BuildTextSkeleton(string Text)
+        {
+            Text = Text.Normalize(NormalizationForm.FormD);
+            StringBuilder Builder = new(Text.Length);
+            foreach (char _Char in Text)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(_Char) == UnicodeCategory.NonSpacingMark)
+                    continue;
+                if (_Char <= 127)
+                    Builder.Append(_Char);
+                else if (DeceptiveCharMap.TryGetValue(_Char, out char Mapped))
+                    Builder.Append(Mapped);
+                else
+                    Builder.Append(_Char);
+            }
+            return Builder.ToString();
+        }
     }
 
     public class Saving

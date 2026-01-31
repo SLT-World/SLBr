@@ -150,6 +150,7 @@
                                 Browser
                             </GroupBox.Header>
                             <StackPanel>
+                                <CheckBox IsEnabled="{Binding ElementName=PunycodeURLCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="HomographInfoBarCheckBox" Width="Auto" Click="HomographInfoBarCheckBox_Click" Content="Show homograph warning on suspicious pages"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="WaybackInfoBarCheckBox" Width="Auto" Click="WaybackInfoBarCheckBox_Click" Content="Show Wayback Machine bar on 404 pages"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="WarnCodecCheckBox" Width="Auto" Click="WarnCodecCheckBox_Click" Content="Warn when unsupported proprietary codecs are requested"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="FullscreenPopupCheckBox" Width="Auto" Click="FullscreenPopupCheckBox_Click" Content="Show fullscreen warning"/>
@@ -359,6 +360,7 @@
                         <GroupBox Margin="0,0,0,10" Header="Omnibox">
                             <StackPanel>
                                 <CheckBox x:Name="TrimURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="TrimURLCheckBox_Click" Content="Show simplified URLs"/>
+                                <CheckBox x:Name="PunycodeURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="PunycodeURLCheckBox_Click" Content="Show punycode"/>
                                 <CheckBox x:Name="HomographProtectionCheckBox" Width="Auto" Click="HomographProtectionCheckBox_Click" Content="Highlight deceptive characters"/>
                             </StackPanel>
                         </GroupBox>

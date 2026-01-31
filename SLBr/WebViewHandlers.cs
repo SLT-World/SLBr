@@ -92,7 +92,21 @@ namespace SLBr
             if (IsCefInitialized)
                 return;
             if (string.IsNullOrEmpty(SECRETS.GOOGLE_API_KEY))
-                App.Instance.InfoBars.Add(new() { Title = "Missing API Keys", Description = "Google API keys are missing. Some functionality of Chromium (CEF) will be disabled." });
+            {
+                InfoBar GoogleAPIKeyInfoBar = null;
+                GoogleAPIKeyInfoBar = new()
+                {
+                    Title = "Missing API Keys",
+                    Description = [new() { Text = "Google API keys are missing. Some functionality of Chromium (CEF) will be disabled." }],
+                    Actions = [
+                        new() { Text = "Learn more", Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Transparent), Foreground = App.Instance.CornflowerBlueColor, Command = new RelayCommand(() => {
+                            App.Instance.CloseInfoBar(GoogleAPIKeyInfoBar);
+                            App.Instance.CurrentFocusedWindow().NewTab("https://www.chromium.org/developers/how-tos/api-keys/", true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                        }) },
+                    ]
+                };
+                App.Instance.InfoBars.Add(GoogleAPIKeyInfoBar);
+            }
             CefSettings ChromiumSettings = new CefSettings();
             ChromiumSettings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
 

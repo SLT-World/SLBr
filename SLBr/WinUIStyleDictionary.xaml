@@ -6,6 +6,7 @@
 
     <controls:BooleanToVisibilityConverter x:Key="OppositeBooleanToVisibility" Invert="True"/>
     <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
+    <controls:InvertBooleanConverter x:Key="InvertBoolean"/>
     <controls:NullToVisibilityConverter x:Key="NullToVisibility"/>
     <controls:SubtractConverter x:Key="Subtract"/>
     <controls:LessThanConverter x:Key="WidthLessThan60" Threshold="60"/>

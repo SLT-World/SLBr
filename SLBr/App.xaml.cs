@@ -73,16 +73,7 @@ namespace SLBr
             }
         }
         private string _Title;
-        public string Description
-        {
-            get => _Description;
-            set
-            {
-                _Description = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _Description;
+        public List<UIElementLayer> Description { get; set; } = [];
         //TODO: Replace Icon with UIElementLayer list for layering based on order.
         public string? Icon
         {
@@ -128,6 +119,17 @@ namespace SLBr
             }
         }
         private bool _IsEnabled = true;
+
+        public string? ToolTip
+        {
+            get => _ToolTip;
+            set
+            {
+                _ToolTip = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string? _ToolTip;
 
         public string? Text
         {
@@ -989,10 +991,25 @@ namespace SLBr
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            base.OnStartup(e);
+            base.OnStartup(e); 
             ApplicationLocalDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr");
             if (!Directory.Exists(ApplicationLocalDataPath))
                 Directory.CreateDirectory(ApplicationLocalDataPath);
+            /*string[] Tests = ["Tổng cộng", "арр", "𐌁𝕠𝖇", "https://github.com∕kubernetes∕kubernetes∕archive∕refs∕tags∕@v1271.zip", "https://www.google.com∕search∕.o7.fi/", "https://poliisi.fi⁄.nettivinkki.fi/", "аррӏе"];
+            foreach (string ToTest in Tests)
+            {
+                string ReadTest = Utils.BuildTextSkeleton(ToTest);
+                List<char> Different = [];
+                foreach (char _Char in ReadTest)
+                {
+                    if (_Char > 127)
+                    {
+                        Different.Add(_Char);
+                        continue;
+                    }
+                }
+                MessageBox.Show($"{ReadTest} {Different.Count} LEFT: {string.Join("|", Different)}");
+            }*/
             /*MessageBox.Show(Utils.IsUrl("apple").ToString());//F
             MessageBox.Show(Utils.IsDomain("ñ.com").ToString());//T
             MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
@@ -1692,7 +1709,7 @@ namespace SLBr
             if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("CheckUpdate")))
                 CheckUpdate();
             if (Environment.IsPrivilegedProcess)
-                InfoBars.Add(new() { Icon = "\ue7ba", IconForeground = OrangeColor, Title = "Elevated Privileges Detected", Description = "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights." });
+                InfoBars.Add(new() { Icon = "\ue7ba", IconForeground = OrangeColor, Title = "Elevated Privileges Detected", Description = [new() { Text = "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights." }] });
         }
 
         public void CheckUpdate()
@@ -1732,7 +1749,7 @@ namespace SLBr
             {
                 Icon = "\xe895",
                 Title = "Update Available",
-                Description = "A newer version of SLBr is ready for download.",
+                Description = [new() { Text = "A newer version of SLBr is ready for download." }],
                 Actions = [new() { Text = "Update", Command = new RelayCommand(() => { CloseInfoBar(NewUpdateInfoBar); Update(); }) }]
             };
             InfoBars.Add(NewUpdateInfoBar);
@@ -1740,7 +1757,7 @@ namespace SLBr
 
         InfoBar? NewUpdateInfoBar = null;
 
-        private void CloseInfoBar(InfoBar Bar)
+        public void CloseInfoBar(InfoBar Bar)
         {
             InfoBars.Remove(Bar);
             if (Bar == NewUpdateInfoBar)
@@ -1866,6 +1883,7 @@ Inner Exception: ```{7} ```";
         //https://chromium-review.googlesource.com/c/chromium/src/+/1265506
         public bool NeverSlowMode;
 
+        public bool PunycodeURL;
         public bool TrimURL;
         public bool HomographProtection;
         public bool SkipAds;
@@ -1917,6 +1935,19 @@ Inner Exception: ```{7} ```";
         {
             GlobalSave.Set("TrimURL", Toggle.ToString());
             TrimURL = Toggle;
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                {
+                    if (BrowserView.OmniBoxOverlayText.Visibility == Visibility.Visible)
+                        BrowserView.SetOverlayDisplay(TrimURL, HomographProtection);
+                }
+            }
+        }
+        public void SetPunycodeURL(bool Toggle)
+        {
+            GlobalSave.Set("PunycodeURL", Toggle.ToString());
+            PunycodeURL = Toggle;
             foreach (MainWindow _Window in AllWindows)
             {
                 foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
@@ -2275,7 +2306,7 @@ Inner Exception: ```{7} ```";
                         Icon = "\xec9c",
                         IconForeground = OrangeColor,
                         Title = "Sync Failed",
-                        Description = "SLBr failed to synchronize data."
+                        Description = [new() { Text = "SLBr failed to synchronize data." }]
                     });
                 }
             }
@@ -2414,6 +2445,8 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("WarnCodec", true);
             if (!GlobalSave.Has("WaybackInfoBar"))
                 GlobalSave.Set("WaybackInfoBar", true);
+            if (!GlobalSave.Has("HomographInfoBar"))
+                GlobalSave.Set("HomographInfoBar", true);
             if (!GlobalSave.Has("CheckUpdate"))
                 GlobalSave.Set("CheckUpdate", true);
             if (!GlobalSave.Has("PrivateTabs"))
@@ -2550,6 +2583,7 @@ Inner Exception: ```{7} ```";
             SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
             SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", true.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
+            SetPunycodeURL(bool.Parse(GlobalSave.Get("PunycodeURL", false.ToString())));
             SetTrimURL(bool.Parse(GlobalSave.Get("TrimURL", true.ToString())));
             SetHomographProtection(bool.Parse(GlobalSave.Get("HomographProtection", true.ToString())));
             SetYouTube(bool.Parse(GlobalSave.Get("SkipAds", false.ToString())));

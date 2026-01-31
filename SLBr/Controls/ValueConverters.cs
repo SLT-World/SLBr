@@ -21,6 +21,15 @@ namespace SLBr.Controls
             throw new NotImplementedException();
     }
 
+    public class InvertBooleanConverter : IValueConverter
+    {
+        public object Convert(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            !(bool)Value;
+
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            throw new NotImplementedException();
+    }
+
     public class BooleanToVisibilityConverter : IValueConverter
     {
         public bool Invert { get; set; } = false;

@@ -593,7 +593,18 @@
                                             <DockPanel Margin="10,5">
                                                 <TextBlock Visibility="{Binding Icon, Converter={StaticResource NullToVisibility}}" Foreground="{Binding IconForeground, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,10,0" Text="{Binding Icon}"/>
                                                 <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" TextTrimming="CharacterEllipsis" FontWeight="Medium" Text="{Binding Title}"/>
-                                                <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" TextTrimming="CharacterEllipsis" Text="{Binding Description}" Foreground="{StaticResource GrayBrush}"/>
+                                                <ItemsControl ItemsSource="{Binding Description}" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock ToolTip="{Binding ToolTip}" TextTrimming="CharacterEllipsis" PreviewMouseUp="InfoBarRun_PreviewMouseUp" Text="{Binding Text}" Foreground="{Binding Foreground, TargetNullValue={StaticResource GrayBrush}}"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </DockPanel>
                                             <ItemsControl ItemsSource="{Binding Actions}" VirtualizingPanel.VirtualizationMode="Recycling" Grid.Column="1" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
                                                 <ItemsControl.ItemsPanel>
@@ -603,7 +614,7 @@
                                                 </ItemsControl.ItemsPanel>
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Button IsEnabled="{Binding IsEnabled}" Padding="10,0" Width="Auto" BorderThickness="{Binding Background, TargetNullValue={StaticResource BorderBrush}}" Foreground="{Binding Foreground, TargetNullValue={StaticResource FontBrush}}" Background="{Binding Background, TargetNullValue={StaticResource PrimaryBrush}}" Content="{Binding Text}" Command="{Binding Command}" Margin="0,0,10,0" Height="30"/>
+                                                        <Button ToolTip="{Binding ToolTip}" IsEnabled="{Binding IsEnabled}" Padding="10,0" Width="Auto" BorderThickness="{Binding Background, TargetNullValue={StaticResource BorderBrush}}" Foreground="{Binding Foreground, TargetNullValue={StaticResource FontBrush}}" Background="{Binding Background, TargetNullValue={StaticResource PrimaryBrush}}" Content="{Binding Text}" Command="{Binding Command}" Margin="0,0,10,0" Height="30"/>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>

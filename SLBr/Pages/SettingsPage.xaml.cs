@@ -290,7 +290,7 @@ namespace SLBr.Pages
             AdaptiveThemeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme"));
             WarnCodecCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
             WaybackInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar"));
-
+            HomographInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographInfoBar"));
 
             NeverSlowModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NeverSlowMode"));
             AMPCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AMP"));
@@ -299,6 +299,7 @@ namespace SLBr.Pages
             WebRiskServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebRiskService");
 
             TrimURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TrimURL"));
+            PunycodeURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PunycodeURL"));
             HomographProtectionCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographProtection"));
 
             SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
@@ -714,6 +715,11 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.SetTrimURL(TrimURLCheckBox.IsChecked.ToBool());
         }
+        private void PunycodeURLCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetPunycodeURL(PunycodeURLCheckBox.IsChecked.ToBool());
+        }
         private void HomographProtectionCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
@@ -753,6 +759,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("WaybackInfoBar", WaybackInfoBarCheckBox.IsChecked.ToBool().ToString());
+        }
+        private void HomographInfoBarCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("HomographInfoBar", HomographInfoBarCheckBox.IsChecked.ToBool().ToString());
         }
         private void PrivateTabsCheckBox_Click(object sender, RoutedEventArgs e)
         {
