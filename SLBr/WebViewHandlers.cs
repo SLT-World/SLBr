@@ -749,7 +749,7 @@ namespace SLBr
             if (Args.ModifiedHeaders != null && Args.ModifiedHeaders.Count != 0)
             {
                 foreach (var Header in Args.ModifiedHeaders)
-                    request.Headers[Header.Key] = Header.Value;
+                    request.SetHeaderByName(Header.Key, Header.Value, true);
             }
             return CefReturnValue.Continue;
         }

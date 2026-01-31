@@ -455,7 +455,7 @@ namespace SLBr.Pages
                     LimitNetwork(0, Bandwidth, Bandwidth);
                 }
                 await ToggleEfficientAdBlock(App.Instance.AdBlock == 2);
-                UserAgentBranding = !Private;
+                UserAgentBranding = !Private && WebView.Engine == WebEngineType.Chromium;
                 if (UserAgentBranding)
                 {
                     await WebView?.CallDevToolsAsync("Emulation.setUserAgentOverride", new
