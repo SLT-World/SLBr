@@ -352,6 +352,7 @@ namespace SLBr.Pages
             BingBackgroundComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("BingBackground");
             ImageSearchComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ImageSearch");
             TranslationProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TranslationProvider");
+            SpellcheckProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("SpellcheckProvider");
             WebEngineComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebEngine");
             TridentVersionComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TridentVersion");
 
@@ -598,6 +599,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("TranslationProvider", TranslationProviderComboBox.SelectedIndex);
+        }
+        private void SpellcheckProviderComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("SpellcheckProvider", SpellcheckProviderComboBox.SelectedIndex);
         }
         private void WebEngineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

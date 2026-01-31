@@ -25,6 +25,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shell;
@@ -1254,30 +1255,54 @@ namespace SLBr
 
         public async Task<List<(string Word, List<string> Suggestions)>> SpellCheck(string Text)
         {
+            /*TODO: Investigate implementation of post request https://www.googleapis.com/spelling/v2/spelling/check?key=AIzaSyA2KlwBX3mkFo30om9LUFYQhpqLoa_BNhE
+             *JSON: {"text":"edgium","language":"en","originCountry":"USA"}
+             *Python testing ineffective, yielded 0 results
+             */
             var Results = new List<(string, List<string>)>();
-            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
-
-            using JsonDocument Document = JsonDocument.Parse(Json);
-            if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches))
+            switch (GlobalSave.GetInt("SpellcheckProvider"))
             {
-                foreach (JsonElement Match in Matches.EnumerateArray())
-                {
-                    if (!Match.TryGetProperty("context", out JsonElement context))
-                        continue;
-
-                    List<string> Suggestions = [];
-                    if (Match.TryGetProperty("replacements", out JsonElement replacements))
+                case 0:
+                    TextBox SpellCheckTextBox = new TextBox();
+                    SpellCheckTextBox.SpellCheck.IsEnabled = true;
+                    SpellCheckTextBox.Language = XmlLanguage.GetLanguage(Locale.Tooltip);
+                    string[] Words = Text.Split([' ', ',', ';', '.']);
+                    foreach (string Word in Words)
                     {
-                        foreach (JsonElement repl in replacements.EnumerateArray())
-                            Suggestions.Add(repl.GetProperty("value").GetString());
+                        SpellCheckTextBox.Text = Word;
+                        var spellErrors = SpellCheckTextBox.GetSpellingError(0);
+                        if (spellErrors != null)
+                            Results.Add((Word, new List<string>(spellErrors.Suggestions)));
                     }
+                    break;
+                case 1:
+                    {
+                        string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
 
-                    string ContextText = context.GetProperty("text").GetString();
-                    int Offset = Match.GetProperty("offset").GetInt32();
-                    int Length = Match.GetProperty("length").GetInt32();
+                        using JsonDocument Document = JsonDocument.Parse(Json);
+                        if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches))
+                        {
+                            foreach (JsonElement Match in Matches.EnumerateArray())
+                            {
+                                if (!Match.TryGetProperty("context", out JsonElement context))
+                                    continue;
 
-                    Results.Add((ContextText.Substring(Offset, Length), Suggestions));
-                }
+                                List<string> Suggestions = [];
+                                if (Match.TryGetProperty("replacements", out JsonElement replacements))
+                                {
+                                    foreach (JsonElement repl in replacements.EnumerateArray())
+                                        Suggestions.Add(repl.GetProperty("value").GetString());
+                                }
+
+                                string ContextText = context.GetProperty("text").GetString();
+                                int Offset = Match.GetProperty("offset").GetInt32();
+                                int Length = Match.GetProperty("length").GetInt32();
+
+                                Results.Add((ContextText.Substring(Offset, Length), Suggestions));
+                            }
+                        }
+                        break;
+                    }
             }
             return Results;
         }
@@ -2533,6 +2558,8 @@ Inner Exception: ```{7} ```";
                 GlobalSave.Set("ImageSearch", 0);
             if (!GlobalSave.Has("TranslationProvider"))
                 GlobalSave.Set("TranslationProvider", 0);
+            if (!GlobalSave.Has("SpellcheckProvider"))
+                GlobalSave.Set("SpellcheckProvider", 0);
 
             if (!GlobalSave.Has("WebEngine"))
             {
