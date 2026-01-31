@@ -692,7 +692,7 @@ namespace SLBr.Pages
                 e.ModifiedHeaders.Add("Save-Data", "on");
             if (UserAgentBranding)
             {
-                //TODO: Fix turnstile issue, UA changes not applied in WebView2.
+                //TODO: Fix turnstile issue, UA changes not applied in all web views.
                 e.ModifiedHeaders.Add("User-Agent", App.Instance.UserAgent);
                 e.ModifiedHeaders.Add("Sec-Ch-Ua", App.Instance.UserAgentBrandsString);
             }

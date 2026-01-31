@@ -692,9 +692,9 @@
                                 <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Spellcheck provider"/>
                                     <ComboBox IsEnabled="{Binding ElementName=SpellCheckCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SpellcheckProviderComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SpellcheckProviderComboBox_SelectionChanged">
-                                        <ComboBoxItem>System</ComboBoxItem>
+                                        <ComboBoxItem>Basic</ComboBoxItem>
                                         <!--<ComboBoxItem>Google</ComboBoxItem>-->
-                                        <ComboBoxItem>LanguageTool</ComboBoxItem>
+                                        <ComboBoxItem>Enhanced</ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
                                 <DockPanel>

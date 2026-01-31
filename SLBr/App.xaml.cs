@@ -1257,7 +1257,7 @@ namespace SLBr
         {
             /*TODO: Investigate implementation of post request https://www.googleapis.com/spelling/v2/spelling/check?key=AIzaSyA2KlwBX3mkFo30om9LUFYQhpqLoa_BNhE
              *JSON: {"text":"edgium","language":"en","originCountry":"USA"}
-             *Python testing ineffective, yielded 0 results
+             *Python testing proved ineffective, yielded 0 results
              */
             var Results = new List<(string, List<string>)>();
             switch (GlobalSave.GetInt("SpellcheckProvider"))
