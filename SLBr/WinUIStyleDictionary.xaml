@@ -2568,7 +2568,7 @@ Margin="{TemplateBinding Padding}"/>
                                 </Style>
                             </ProgressBar.Style>
                         </ProgressBar>
-                        <Border Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="-5,0,5,0" Height="2" Background="{Binding TabGroup.Background}"/>
+                        <Border x:Name="TabGroupIndicator" Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Width="Auto" Margin="-5,0,5,0" Height="2" Background="{Binding TabGroup.Background}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsUnloaded}" Value="True">
@@ -2620,10 +2620,18 @@ Margin="{TemplateBinding Padding}"/>
                                 </BeginStoryboard>
                             </MultiTrigger.ExitActions>
                         </MultiTrigger>
+                        <DataTrigger Binding="{Binding TabGroup.IsCollapsed}" Value="True">
+                            <Setter TargetName="TabGroupIndicator" Property="Margin" Value="0,0,5,0"/>
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Visibility" Value="Visible"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource DefaultTab}"></Style>
@@ -2758,7 +2766,7 @@ Margin="{TemplateBinding Padding}"/>
                                 </Style>
                             </ProgressBar.Style>
                         </ProgressBar>
-                        <Border Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Stretch" HorizontalAlignment="Left" Height="Auto" Margin="-5,0,0,0" Width="2" Background="{Binding TabGroup.Background}"/>
+                        <Border x:Name="TabGroupIndicator" Visibility="{Binding TabGroup, Converter={StaticResource NullToVisibility}}" VerticalAlignment="Stretch" HorizontalAlignment="Left" Height="Auto" Margin="-5,0,0,0" Width="2" Background="{Binding TabGroup.Background}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsUnloaded}" Value="True">
@@ -2810,10 +2818,18 @@ Margin="{TemplateBinding Padding}"/>
                                 </BeginStoryboard>
                             </MultiTrigger.ExitActions>
                         </MultiTrigger>
+                        <DataTrigger Binding="{Binding TabGroup.IsCollapsed}" Value="True">
+                            <Setter TargetName="TabGroupIndicator" Property="Margin" Value="-5,5,0,0"/>
+                        </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Visibility" Value="Visible"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
     <Style TargetType="{x:Type TabItem}" x:Key="VerticalTabGroupButton">
         <Setter Property="ContextMenu" Value="{StaticResource TabGroupContextMenu}"/>

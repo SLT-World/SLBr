@@ -120,7 +120,7 @@ namespace SLBr
                 BrowserTabItem Tab = (BrowserTabItem)SourceTabItem.DataContext;
                 int OldIndex = FocusedWindow.Tabs.IndexOf(Tab);
 
-                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
+                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i == FocusedWindow.TabsUI.SelectedItem || i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
 
                 int NewIndex = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
                 BrowserTabItem TargetTab = NewIndex > VisibleTabs.Count - 1 ? VisibleTabs.Last() : VisibleTabs[NewIndex];
@@ -192,7 +192,7 @@ namespace SLBr
             }
             if (Window.GetWindow(_TabControl) is MainWindow FocusedWindow && FocusedWindow.TabGroups.Count != 0)
             {
-                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
+                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i == FocusedWindow.TabsUI.SelectedItem || i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
                 BrowserTabItem LeftTab = null;
                 BrowserTabItem RightTab = null;
                 if (Index > 0)

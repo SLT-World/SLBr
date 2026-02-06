@@ -9,7 +9,6 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.Dynamic;
-using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -455,6 +454,7 @@ namespace SLBr.Pages
                     LimitNetwork(0, Bandwidth, Bandwidth);
                 }
                 await ToggleEfficientAdBlock(App.Instance.AdBlock == 2);
+                //TODO: Apply UA branding on Edge & Trident web views.
                 UserAgentBranding = !Private && WebView.Engine == WebEngineType.Chromium;
                 if (UserAgentBranding)
                 {
@@ -692,7 +692,6 @@ namespace SLBr.Pages
                 e.ModifiedHeaders.Add("Save-Data", "on");
             if (UserAgentBranding)
             {
-                //TODO: Fix turnstile issue, UA changes not applied in all web views.
                 e.ModifiedHeaders.Add("User-Agent", App.Instance.UserAgent);
                 e.ModifiedHeaders.Add("Sec-Ch-Ua", App.Instance.UserAgentBrandsString);
             }
@@ -3211,7 +3210,6 @@ namespace SLBr.Pages
         }
 
         //Protection against homograph attacks https://www.xudongz.com/blog/2017/idn-phishing/
-        //TODO: Add "Did you mean apple.com?", visit xn--80ak6aa92e.com in Chrome to see the error page.
         public void SetOverlayDisplay(bool TruncateURL = true, bool HighlightSuspicious = true)
         {
             OmniBoxOverlayText.Inlines.Clear();
@@ -3483,6 +3481,7 @@ namespace SLBr.Pages
 
             if (App.Instance.TabAlignment == 1)
             {
+                InfoBarContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
                 WebContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
                 WebContainerBorder.BorderThickness = new Thickness(1, 0, 0, 0);
                 NewTabButton.Visibility = Visibility.Visible;

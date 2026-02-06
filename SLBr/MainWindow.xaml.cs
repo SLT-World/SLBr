@@ -527,6 +527,7 @@ namespace SLBr
                 TabsUI.Padding = new Thickness(0);
                 foreach (BrowserTabItem Tab in Tabs)
                 {
+                    Tab.Content?.InfoBarContainer.Margin = new Thickness(0);
                     Tab.Content?.WebContainer.Margin = new Thickness(0);
                     Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(0);
                     Tab.Content?.NewTabButton.Visibility = Visibility.Collapsed;
@@ -573,6 +574,7 @@ namespace SLBr
             TabResizeThumb.Margin = new Thickness(App.Instance.VerticalTabWidth - 5, TabsUI.Padding.Top, 0, 0);
             foreach (BrowserTabItem Tab in Tabs)
             {
+                Tab.Content?.InfoBarContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
                 Tab.Content?.WebContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
                 Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(1, 0, 0, 0);
                 Tab.Content?.NewTabButton.Visibility = Visibility.Visible;
@@ -589,6 +591,7 @@ namespace SLBr
             TabResizeThumb.Margin = new Thickness(App.Instance.VerticalTabWidth - 5, TabsUI.Padding.Top, 0, 0);
             foreach (BrowserTabItem Tab in Tabs)
             {
+                Tab.Content?.InfoBarContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
                 Tab.Content?.WebContainer.Margin = new Thickness(App.Instance.VerticalTabWidth, 0, 0, 0);
                 Tab.Content?.WebContainerBorder.BorderThickness = new Thickness(1, 0, 0, 0);
                 Tab.Content?.NewTabButton.Visibility = Visibility.Visible;
