@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -35,12 +36,12 @@ namespace SLBr.Protocols
                 label = remainder.Substring(0, firstSlash).Trim();
                 url = remainder.Substring(firstSlash).Trim();
             }
-            int firstWhitespace = url.IndexOfAny(new char[] { '\t' });
+            int firstWhitespace = url.IndexOfAny(['\t']);
             if (firstWhitespace != -1)
             {
                 string hostport = url.Substring(firstWhitespace).Trim();
                 url = url.Substring(0, firstWhitespace).Trim();
-                int firstURLWhitespace = hostport.IndexOfAny(new char[] { '\t' });
+                int firstURLWhitespace = hostport.IndexOfAny(['\t']);
                 if (firstURLWhitespace != -1)
                 {
                     host = hostport.Substring(0, firstURLWhitespace).Trim();
@@ -136,51 +137,58 @@ namespace SLBr.Protocols
         }
     }
 
-    public struct GopherResponse : GeminiGopherIResponse
+    public class GopherResponse : GeminiGopherIResponse
     {
         public List<byte> Bytes { get; set; }
-        public string Mime { get; set; }
-        public string _Encoding { get; set; }
+        public string Mime { get; set; } = "application/octet-stream";
+        public string _Encoding { get; set; } = "UTF-8";
         public Uri _Uri { get; set; }
-
-        public GopherResponse(List<byte> buffer, int bytes, Uri uri)
-        {
-            int pyldStart = 0;
-            int pyldLen = bytes - pyldStart;
-            byte[] metaraw = buffer.ToArray();
-            Bytes = buffer.Skip(pyldStart).Take(pyldLen).ToList();
-            Mime = "application/octet-stream";
-            _Encoding = "UTF-8";
-            _Uri = uri;
-        }
+        public WebSSLStatus SSLStatus { get; set; }
     }
 
     public class Gopher
     {
-        static GopherResponse ReadMessage(Stream _Stream, Uri URI, int axSize, int AbandonAfterSeconds)
+        static GopherResponse ErrorResponse(Uri _Uri, string Message)
         {
+            return new()
+            {
+                _Uri = _Uri,
+                Mime = "text/plain",
+                SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None },
+                Bytes = Encoding.UTF8.GetBytes(Message).ToList(),
+            };
+        }
+
+        static async Task ReadMessage(GopherResponse Response, Stream _Stream, int MaxSize, int AbandonAfterSeconds)
+        {
+            DateTime AbandonTime = DateTime.Now.AddSeconds(AbandonAfterSeconds);
+
             byte[] Buffer = new byte[2048];
-            int Bytes = -1;
+            int Bytes = await _Stream.ReadAsync(Buffer);
+            var MaxSizeBytes = MaxSize * 1024;
 
-            var AbandonTime = DateTime.Now.AddSeconds(AbandonAfterSeconds);
-            var MaxSizeBytes = axSize * 1024;
-
-            Bytes = _Stream.Read(Buffer, 0, Buffer.Length);
-            GopherResponse Resp = new GopherResponse(Buffer.ToList(), Bytes, URI);
+            Response.Bytes = Buffer.Take(Bytes).ToList();
 
             while (Bytes != 0)
             {
-                Bytes = _Stream.Read(Buffer, 0, Buffer.Length);
-                Resp.Bytes.AddRange(Buffer.Take(Bytes));
+                Bytes = await _Stream.ReadAsync(Buffer);
+                Response.Bytes.AddRange(Buffer.Take(Bytes));
 
-                if (Resp.Bytes.Count > MaxSizeBytes)
-                    return Resp;
-                //throw new Exception("Abort due to resource exceeding max size (" + axSize + "Kb)");
-                if (DateTime.Now >= AbandonTime)
-                    return Resp;
-                //throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
+                if (Response.Bytes.Count > MaxSizeBytes)
+                {
+                    //Response.CodeMajor = '4';
+                    //Response.CodeMinor = '3';
+                    Response.Bytes = Encoding.UTF8.GetBytes("Resource too large").ToList();
+                    break;
+                }
+                else if (DateTime.Now >= AbandonTime)
+                {
+                    //Response.CodeMajor = '4';
+                    //Response.CodeMinor = '4';
+                    Response.Bytes = Encoding.UTF8.GetBytes("Read timeout").ToList();
+                    break;
+                }
             }
-            return Resp;
         }
 
         private static string GetMime(Uri URI)
@@ -221,36 +229,34 @@ namespace SLBr.Protocols
         }
 
 
-        public static GeminiGopherIResponse Fetch(Uri HostURL, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5)
+        public static async Task<GeminiGopherIResponse> Fetch(Uri HostURL, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5)
         {
             int Port = HostURL.Port;
             if (Port == -1)
                 Port = 70;
 
-            TcpClient _Client;
+            TcpClient _Client = new TcpClient();
             try
             {
-                _Client = new TcpClient(HostURL.Host, Port);
+                await _Client.ConnectAsync(HostURL.Host, Port);
             }
-            catch
+            catch (SocketException ex)
             {
-                return null;
+                return ErrorResponse(HostURL, $"Network error: {ex.Message}");
             }
 
             Stream Stream = _Client.GetStream();
 
             var TrimmedUrl = HostURL.AbsolutePath;
-
             if (HostURL.AbsolutePath.Length > 1)
                 TrimmedUrl = TrimmedUrl.Substring(1);
 
             byte[] Message = Encoding.UTF8.GetBytes(Uri.UnescapeDataString(TrimmedUrl) + "\r\n");
-            Stream.Write(Message, 0, Message.Count());
-            Stream.Flush();
-            GopherResponse Response = ReadMessage(Stream, HostURL, AbandonReadSizeKb, AbandonReadTimes);
+            await Stream.WriteAsync(Message, 0, Message.Count());
+            await Stream.FlushAsync();
+            GopherResponse Response = new GopherResponse() { _Uri = HostURL, Mime = GetMime(HostURL), SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None } };
+            await ReadMessage(Response, Stream, AbandonReadSizeKb, AbandonReadTimes);
             _Client.Close();
-
-            Response.Mime = GetMime(HostURL);
 
             return Response;
         }

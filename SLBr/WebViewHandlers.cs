@@ -322,21 +322,40 @@ namespace SLBr
             }
         }
 
-        public static ProtocolResponse GopherHandler(string Url, string Extra = "")
+        public static async Task<ProtocolResponse> GopherHandler(string Url, string Extra = "")
         {
-            GeminiGopherIResponse Response = Gopher.Fetch(new Uri(Url));
-            if (Response == null)
-                return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html");
+            GeminiGopherIResponse Response;
+            try
+            {
+                Response = await Gopher.Fetch(new Uri(Url));
+            }
+            catch (Exception _Exception)
+            {
+                return ProtocolResponse.FromString($"<h1>Gopher Error</h1><pre>{_Exception.Message}</pre>", "text/html");
+            }
             return ProtocolResponse.FromString(TextGopher.NewFormat(Response), Response.Mime.Contains("application/gopher-menu") ? "text/html" : Response.Mime);
         }
-        public static ProtocolResponse GeminiHandler(string Url, string Extra = "")
+        public static async Task<ProtocolResponse> GeminiHandler(string Url, string Extra = "")
         {
-            GeminiGopherIResponse Response = Gemini.Fetch(new Uri(Url));
-            if (Response == null)
-                return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html");
+            GeminiGopherIResponse Response;
+            try
+            {
+                Response = await Gemini.Fetch(new Uri(Url));
+            }
+            catch (Exception _Exception)
+            {
+                return ProtocolResponse.FromString($"<h1>Gemini Error</h1><pre>{_Exception.Message}</pre>", "text/html");
+            }
+            /*if (Response.SSLStatus.X509Certificate != null)
+            {
+                MessageBox.Show(Response.SSLStatus.X509Certificate.Subject);
+                MessageBox.Show(Response.SSLStatus.X509Certificate.Issuer);
+                MessageBox.Show(Response.SSLStatus.X509Certificate.NotBefore.Date.ToShortDateString());
+                MessageBox.Show(Response.SSLStatus.X509Certificate.NotAfter.Date.ToShortDateString());
+            }*/
             return ProtocolResponse.FromString(TextGemini.NewFormat(Response), Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime);
         }
-        public static ProtocolResponse SLBrHandler(string Url, string Extra = "")
+        public static async Task<ProtocolResponse> SLBrHandler(string Url, string Extra = "")
         {
             try
             {
@@ -379,10 +398,7 @@ namespace SLBr
             }
             catch (Exception ex)
             {
-                return ProtocolResponse.FromString(
-                    $"<h1>Error</h1><pre>{System.Net.WebUtility.HtmlEncode(ex.Message)}</pre>",
-                    "text/html"
-                );
+                return ProtocolResponse.FromString($"<h1>Error</h1><pre>{System.Net.WebUtility.HtmlEncode(ex.Message)}</pre>", "text/html");
             }
         }
         public static ProtocolResponse OverrideHandler(string Url, string Extra = "")
@@ -1034,8 +1050,40 @@ namespace SLBr
                     break;
                 }
             }
-            ProtocolResponse Response = Handler(request.Url, ChromiumWebView?.Settings.Private.ToInt().ToString() ?? string.Empty);
-            return ResourceHandler.FromByteArray(Response.Data, Response.MimeType);
+            return new ChromiumResourceHandler(Handler, request.Url, ChromiumWebView?.Settings.Private.ToInt().ToString() ?? string.Empty);
+        }
+    }
+    public class ChromiumResourceHandler : ResourceHandler
+    {
+        private readonly ProtocolHandler Handler;
+        private readonly string Url;
+        private readonly string Extra;
+
+        public ChromiumResourceHandler(ProtocolHandler _Handler, string _Url, string _Extra)
+        {
+            Handler = _Handler;
+            Url = _Url;
+            Extra = _Extra;
+        }
+
+        public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
+        {
+            Task.Run(async () =>
+            {
+                using (callback)
+                {
+                    var Response = await Handler(Url, Extra);
+
+                    Stream = new MemoryStream(Response.Data);
+                    MimeType = Response.MimeType;
+                    StatusCode = 200;
+                    StatusText = "OK";
+
+                    callback.Continue();
+                }
+            });
+
+            return CefReturnValue.ContinueAsync;
         }
     }
     public class ChromiumFindHandler : IFindHandler

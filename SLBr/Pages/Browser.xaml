@@ -407,15 +407,15 @@
                                     </TextBlock>
                                     <TextBlock DockPanel.Dock="Right" x:Name="SiteInformationText" Visibility="Collapsed" Margin="5,0,0,0" Text="-" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </DockPanel>
-                                <WinUI:PopupButton x:Name="SiteInformationPopupButton" Width="Auto" Height="Auto" Background="Transparent" Opacity="0" BorderThickness="0" Style="{StaticResource PopupIconButton}">
+                                <WinUI:PopupButton x:Name="SiteInformationPopupButton" IsEnabled="False" Width="Auto" Height="Auto" Background="Transparent" Opacity="0" BorderThickness="0" Style="{StaticResource PopupIconButton}">
                                     <WinUI:PopupButton.PopupContent>
                                         <Border Width="300" Padding="10" Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
                                             <StackPanel>
                                                 <DockPanel>
                                                     <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                        <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xE72E;"/>
+                                                        <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18"/>
                                                     </Border>
-                                                    <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText" Text="Connection is secure"/>
+                                                    <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText"/>
                                                 </DockPanel>
                                                 <StackPanel Margin="0,10,0,0" x:Name="AdBlockContainer">
                                                     <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>

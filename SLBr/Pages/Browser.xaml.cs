@@ -2425,10 +2425,13 @@ namespace SLBr.Pages
                     ToggleSideBar(ForceClose);
                     return;
                 }
-                if (WebView.Engine == WebEngineType.Trident && UnavailableInspectorInfoBar == null)
+                if (WebView.Engine == WebEngineType.Trident)
                 {
-                    UnavailableInspectorInfoBar = new() { Title = "Inspector Unavailable", Description = [new() { Text = "Trident webview does not support an inspector tool." }] };
-                    LocalInfoBars.Add(UnavailableInspectorInfoBar);
+                    if (UnavailableInspectorInfoBar == null)
+                    {
+                        UnavailableInspectorInfoBar = new() { Title = "Inspector Unavailable", Description = [new() { Text = "Trident webview does not support an inspector tool." }] };
+                        LocalInfoBars.Add(UnavailableInspectorInfoBar);
+                    }
                     return;
                 }
             }
@@ -2467,7 +2470,7 @@ namespace SLBr.Pages
                                     Process _Process = Process.GetProcessById((int)pid);
                                     if (_Process.ProcessName.Contains("msedgewebview2", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        if (DllUtils.IsWindowVisible(hWnd) && (DllUtils.GetWindowTextRaw(hWnd) == DevToolsName || DevToolsName.StartsWith(DllUtils.GetWindowTextRaw(hWnd))) && !App.Instance.WebView2DevTools.Contains(hWnd))
+                                        if (DllUtils.IsWindowVisible(hWnd) && !App.Instance.WebView2DevTools.Contains(hWnd) && DevToolsName.StartsWith(DllUtils.GetWindowTextRaw(hWnd)))
                                         {
                                             WebView2DevToolsHWND = hWnd;
                                             return false;

@@ -170,155 +170,187 @@ pre {background: white; border-radius: 5px; padding: 10px;}
             return Result;
         }
     }
-
+    public class WebSSLStatus
+    {
+        public X509Certificate2 X509Certificate { get; set; }
+        public SslPolicyErrors PolicyErrors { get; set; }
+        public bool IsSecure => X509Certificate != null && PolicyErrors == SslPolicyErrors.None;
+    }
     public interface GeminiGopherIResponse
     {
         List<byte> Bytes { get; }
         string Mime { get; }
         Uri _Uri { get; }
         string _Encoding { get; }
+        WebSSLStatus SSLStatus { get; }
     }
-    public struct GeminiResponse : GeminiGopherIResponse
+
+    public class GeminiResponse : GeminiGopherIResponse
     {
         public char CodeMajor;
         public char CodeMinor;
         public string Meta;
         public Uri _Uri { get; set; }
-        public List<byte> Bytes { get; set; }
-        public string Mime { get; set; }
-        public string _Encoding { get; set; }
+        public List<byte> Bytes { get; set; } = new List<byte>();
+        public string Mime { get; set; } = "text/gemini";
+        public string _Encoding { get; set; } = "UTF-8";
+        public WebSSLStatus SSLStatus { get; set; }
 
-        public GeminiResponse(Stream responseStream, Uri uri)
+        public async Task SetResponseHeader(Stream _Stream)
         {
-            byte[] statusText = { (byte)'4', (byte)'1' };
-            var statusBytes = responseStream.Read(statusText, 0, 2);
-            //if (statusBytes != 2)
-            //    throw new Exception("malformed Gemini response - no status");
+            byte[] StatusText = { (byte)'4', (byte)'1' };
+            await _Stream.ReadAsync(StatusText, 0, 2);
+            //if (await _Stream.ReadAsync(StatusText, 0, 2) != 2)
+            //    throw new Exception("Malformed Gemini response (no status)");
 
-            var status = Encoding.UTF8.GetChars(statusText);
-            CodeMajor = status[0];
-            CodeMinor = status[1];
+            var Status = Encoding.UTF8.GetChars(StatusText);
+            CodeMajor = Status[0];
+            CodeMinor = Status[1];
 
-            byte[] space = { 0 };
-            var spaceBytes = responseStream.Read(space, 0, 1);
-            //if (spaceBytes != 1 || space[0] != (byte)' ')
-            //    throw new Exception("malformed Gemini response - missing space after status");
+            int Space = _Stream.ReadByte();
+            if (Space != ' ')
+                return;
+            //throw new Exception("Malformed Gemini response (missing space)");
 
-            List<byte> metaBuffer = new List<byte>();
-            byte[] tempMetaBuffer = { 0 };
-            byte currentChar;
-            while (responseStream.Read(tempMetaBuffer, 0, 1) == 1)
+            List<byte> MetaBuffer = [];
+            int Byte;
+            while ((Byte = _Stream.ReadByte()) != -1)
             {
-                currentChar = tempMetaBuffer[0];
-                if (currentChar == (byte)'\r')
+                if (Byte == '\r')
                 {
-                    responseStream.Read(tempMetaBuffer, 0, 1);
-                    currentChar = tempMetaBuffer[0];
-                    //if (currentChar != (byte)'\n')
-                    //    throw new Exception("malformed Gemini header - missing LF after CR");
+                    _Stream.ReadByte();
                     break;
                 }
-                metaBuffer.Add(currentChar);
+                MetaBuffer.Add((byte)Byte);
             }
-
-            Meta = Encoding.UTF8.GetString(metaBuffer.ToArray());
-            Bytes = new List<byte>();
-            Mime = "text/gemini";
-            _Encoding = "UTF-8";
-            _Uri = uri;
+            Meta = Encoding.UTF8.GetString(MetaBuffer.ToArray());
         }
+
         public override string ToString() =>
             $"{CodeMajor}{CodeMinor}: {Meta}";
     }
     public class Gemini
     {
-        public static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        static GeminiResponse ErrorResponse(Uri _Uri, char Major, char Minor, string Message)
         {
-            if (sslPolicyErrors == SslPolicyErrors.None)
-                return true;
-            var expireDate = DateTime.Parse(certificate.GetExpirationDateString());
-            if (expireDate < DateTime.Now)
-                return false;
-            if (sslPolicyErrors == SslPolicyErrors.RemoteCertificateChainErrors)
-                return true;
-            return false;
+            return new GeminiResponse
+            {
+                CodeMajor = Major,
+                CodeMinor = Minor,
+                Meta = Message,
+                _Uri = _Uri,
+                Mime = "text/plain",
+                SSLStatus = new WebSSLStatus() { PolicyErrors = SslPolicyErrors.None },
+                Bytes = Encoding.UTF8.GetBytes($"{Major}{Minor}: {Message}").ToList()
+            };
         }
-        public static bool AlwaysAccept(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+
+        static async Task ReadMessage(GeminiResponse Response, SslStream _Stream, int MaxSize, int AbandonAfterSeconds)
         {
-            return true;
-        }
-        static GeminiResponse ReadMessage(SslStream SSLStream, Uri URI, int MaxSize, int AbandonAfterSeconds)
-        {
+            await Response.SetResponseHeader(_Stream);
+            if (Response.CodeMajor == '4' || Response.CodeMajor == '5')
+                return;
+            DateTime AbandonTime = DateTime.Now.AddSeconds(AbandonAfterSeconds);
+
             byte[] Buffer = new byte[2048];
-            int Bytes = -1;
-
-            var AbandonTime = DateTime.Now.AddSeconds(AbandonAfterSeconds);
-            GeminiResponse Response = new GeminiResponse(SSLStream, URI);
-
-            Bytes = SSLStream.Read(Buffer, 0, Buffer.Length);
-            var maxSizeBytes = MaxSize * 1024;
+            int Bytes = await _Stream.ReadAsync(Buffer);
+            var MaxSizeBytes = MaxSize * 1024;
             while (Bytes != 0)
             {
                 Response.Bytes.AddRange(Buffer.Take(Bytes));
-                Bytes = SSLStream.Read(Buffer, 0, Buffer.Length);
+                Bytes = await _Stream.ReadAsync(Buffer);
 
-                if (Response.Bytes.Count > maxSizeBytes)
-                    return Response;
+                if (Response.Bytes.Count > MaxSizeBytes)
+                {
+                    Response.CodeMajor = '4';
+                    Response.CodeMinor = '3';
+                    Response.Meta = "Resource too large";
+                    break;
+                }
                 //throw new Exception("Abort due to resource exceeding max size (" + MaxSize + "Kb)");
-                if (DateTime.Now >= AbandonTime)
-                    return Response;
+                else if (DateTime.Now >= AbandonTime)
+                {
+                    Response.CodeMajor = '4';
+                    Response.CodeMinor = '4';
+                    Response.Meta = "Read timeout";
+                    break;
+                }
                 //throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
             }
-            return Response;
         }
-        public static GeminiGopherIResponse Fetch(Uri HostURL, X509Certificate2 ClientCertificate = null, string proxy = "", bool Insecure = false, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5)
+        public static async Task<GeminiGopherIResponse> Fetch(Uri HostURL, X509Certificate2 ClientCertificate = null, string Proxy = "", bool Insecure = false, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5)
         {
-            int refetchCount = 0;
+            int RefetchCount = 0;
         Refetch:
-            //if (refetchCount >= 5)
-            //    throw new Exception(string.Format("Too many redirects!"));
-            refetchCount += 1;
+            if (RefetchCount >= 5)
+                return ErrorResponse(HostURL, '5', '1', "Too many redirects");
+            RefetchCount += 1;
 
             var ServerHost = HostURL.Host;
             int Port = HostURL.Port;
             if (Port == -1)
                 Port = 1965;
 
-            if (proxy.Length > 0)
+            if (Proxy.Length > 0)
             {
-                var proxySplit = proxy.Split(':');
-                ServerHost = proxySplit[0];
-                Port = int.Parse(proxySplit[1]);
+                string[] ProxyValues = Proxy.Split(':');
+                ServerHost = ProxyValues[0];
+                Port = int.Parse(ProxyValues[1]);
             }
-
-            TcpClient _Client;
+            TcpClient _Client = new TcpClient();
             try
             {
-                _Client = new TcpClient(ServerHost, Port);
+                await _Client.ConnectAsync(ServerHost, Port);
             }
-            catch { return null; }
+            catch (SocketException ex)
+            {
+                return ErrorResponse(HostURL, '5', '1', $"Network error: {ex.Message}");
+            }
 
-            RemoteCertificateValidationCallback _Callback = new RemoteCertificateValidationCallback(ValidateServerCertificate);
-            if (Insecure)
-                _Callback = new RemoteCertificateValidationCallback(AlwaysAccept);
+            WebSSLStatus SSLStatus = new WebSSLStatus();
 
+            RemoteCertificateValidationCallback _Callback = (Sender, Certificate, Chain, Errors) =>
+            {
+                if (Certificate is X509Certificate2 Certificate2)
+                    SSLStatus.X509Certificate = new X509Certificate2(Certificate2);
+                SSLStatus.PolicyErrors = Errors;
+
+                if (Insecure)
+                    return true;
+                if (Errors == SslPolicyErrors.None)
+                    return true;
+
+                DateTime ExpirationDate = DateTime.Parse(Certificate.GetExpirationDateString());
+                if (ExpirationDate < DateTime.Now)
+                    return false;
+
+                return Errors == SslPolicyErrors.RemoteCertificateChainErrors;
+            };
             SslStream SSLStream = new SslStream(_Client.GetStream(), false, _Callback, null);
 
-            var certs = new X509CertificateCollection();
+            var Certificates = new X509CertificateCollection();
             if (ClientCertificate != null)
-                certs.Add(ClientCertificate);
+                Certificates.Add(ClientCertificate);
 
-            SSLStream.AuthenticateAsClient(ServerHost, certs, SslProtocols.Tls12, !Insecure);
+            try
+            {
+                await SSLStream.AuthenticateAsClientAsync(ServerHost, Certificates, SslProtocols.Tls12, !Insecure);
+            }
+            catch (AuthenticationException ex)
+            {
+                return ErrorResponse(HostURL, '5', '9', $"TLS authentication failed: {ex.Message}");
+            }
 
+
+            GeminiResponse Response = new GeminiResponse() { _Uri = HostURL, SSLStatus = SSLStatus };
             byte[] Message = Encoding.UTF8.GetBytes(HostURL.AbsoluteUri + "\r\n");
-            GeminiResponse resp = new GeminiResponse();
             try
             {
                 SSLStream.ReadTimeout = AbandonReadTimes * 1000;
 
-                SSLStream.Write(Message, 0, Message.Count());
-                SSLStream.Flush();
-                resp = ReadMessage(SSLStream, HostURL, AbandonReadSizeKb, AbandonReadTimes);
+                await SSLStream.WriteAsync(Message, 0, Message.Count());
+                await SSLStream.FlushAsync();
+                await ReadMessage(Response, SSLStream, AbandonReadSizeKb, AbandonReadTimes);
             }
             catch
             {
@@ -334,30 +366,31 @@ pre {background: white; border-radius: 5px; padding: 10px;}
                 _Client.Dispose();
             }
 
-            switch (resp.CodeMajor)
+            switch (Response.CodeMajor)
             {
-                case '1':
+                case '1'://Input required
                     break;
-                case '2':
-                    resp.Mime = resp.Meta;
+                case '2'://Success
+                    Response.Mime = Response.Meta;
                     break;
-                case '3':
+                case '3'://Redirect
                     Uri redirectUri;
-                    redirectUri = resp.Meta.Contains("://") ? new Uri(resp.Meta) : new Uri(HostURL, resp.Meta);
+                    redirectUri = Response.Meta.Contains("://") ? new Uri(Response.Meta) : new Uri(HostURL, Response.Meta);
                     //if (redirectUri.Scheme != HostURL.Scheme)
                     //    throw new Exception("Cannot redirect to a URI with a different scheme: " + redirectUri.Scheme);
                     HostURL = redirectUri;
                     goto Refetch;
-                case '4':
-                case '5':
-                case '6':
-                    resp.Bytes = Encoding.UTF8.GetBytes(resp.ToString()).ToList();
+                case '4'://Temporary failure
+                case '5'://Permanent failure
+                case '6'://Client certificate required
+                    if (Response.Bytes.Count == 0)
+                        Response.Bytes = Encoding.UTF8.GetBytes(Response.ToString()).ToList();
                     break;
                 //default:
                 //    throw new Exception(string.Format("Invalid response code {0}", resp.CodeMajor));
             }
 
-            return resp;
+            return Response;
         }
     }
 }

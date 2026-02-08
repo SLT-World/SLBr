@@ -119,7 +119,7 @@ namespace SLBr
         public Action? Cancel { get; set; }
     }
 
-    public delegate ProtocolResponse ProtocolHandler(string Url, string Extra = "");
+    public delegate Task<ProtocolResponse> ProtocolHandler(string Url, string Extra = "");
 
     public class ProtocolResponse
     {
@@ -1656,13 +1656,7 @@ namespace SLBr
             else
             {
                 if (Utils.IsCustomScheme(e.Request.Uri))
-                {
-                    if (WebViewManager.Settings.Schemes.TryGetValue(Utils.GetScheme(e.Request.Uri), out var Handler))
-                    {
-                        ProtocolResponse Response = Handler(e.Request.Uri, Settings.Private.ToInt().ToString());
-                        e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(Response.Data), 200, "OK", $"Content-Type: {Response.MimeType}");
-                    }
-                }
+                    _ = HandleWebResourceRequestedAsync(e, e.GetDeferral());
                 else
                 {
                     if (Args.ModifiedHeaders != null && Args.ModifiedHeaders.Count != 0)
@@ -1677,6 +1671,23 @@ namespace SLBr
                         }
                     }
                 }
+            }
+        }
+
+
+        private async Task HandleWebResourceRequestedAsync(CoreWebView2WebResourceRequestedEventArgs e, CoreWebView2Deferral Deferral)
+        {
+            try
+            {
+                if (WebViewManager.Settings.Schemes.TryGetValue(Utils.GetScheme(e.Request.Uri), out var Handler))
+                {
+                    ProtocolResponse Response = await Handler(e.Request.Uri, Settings.Private.ToInt().ToString());
+                    e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(Response.Data), 200, "OK", $"Content-Type: {Response.MimeType}");
+                }
+            }
+            finally
+            {
+                Deferral.Complete();
             }
         }
 
@@ -2254,7 +2265,7 @@ namespace SLBr
                     if (WebViewManager.Settings.Schemes.TryGetValue(Utils.GetScheme(Url), out var Handler))
                     {
                         OverrideAddress = Url;
-                        Browser.NavigateToStream(new MemoryStream(Handler(Url, Settings.Private.ToInt().ToString()).Data));
+                        Browser.NavigateToStream(new MemoryStream(Handler(Url, Settings.Private.ToInt().ToString()).Result.Data));
                     }
                 }
             }

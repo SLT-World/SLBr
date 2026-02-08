@@ -132,7 +132,7 @@
                                 Start
                             </GroupBox.Header>
                             <StackPanel>
-                                <CheckBox Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
+                                <CheckBox IsEnabled="{Binding ElementName=PrivateTabsCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
                                 <DockPanel Margin="0,0,0,0">
                                     <TextBlock VerticalAlignment="Center" Text="Startup Favicon Service"/>
