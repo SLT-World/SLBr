@@ -503,45 +503,59 @@ namespace SLBr.Pages
 
         private void WebView_ScriptDialogOpened(object? sender, ScriptDialogEventArgs e)
         {
-            if (e.DialogType == ScriptDialogType.Alert)
+            Window? OpenedWindow = null;
+            try
             {
-                InformationDialogWindow InfoWindow = new("Alert", $"{Utils.Host(e.Url)}", e.Text);
-                InfoWindow.Topmost = true;
-                e.Handled = true;
-                e.Result = InfoWindow.ShowDialog() == true;
-            }
-            else if (e.DialogType == ScriptDialogType.Confirm)
-            {
-                InformationDialogWindow InfoWindow = new("Confirmation", $"{Utils.Host(e.Url)}", e.Text, string.Empty, "OK", "Cancel");
-                InfoWindow.Topmost = true;
-                e.Handled = true;
-                e.Result = InfoWindow.ShowDialog() == true;
-            }
-            else if (e.DialogType == ScriptDialogType.Prompt)
-            {
-                DynamicDialogWindow _DynamicDialogWindow = new("Prompt", Utils.Host(e.Url),
-                    new List<InputField>
-                    {
-                        new InputField { Name = e.Text, IsRequired = false, Type = DialogInputType.Text, Value = e.DefaultPrompt }
-                    },
-                    "\ue946"
-                );
-                _DynamicDialogWindow.Topmost = true;
-                e.Handled = true;
-                if (_DynamicDialogWindow.ShowDialog() == true)
+                if (e.DialogType == ScriptDialogType.Alert)
                 {
-                    e.PromptResult = _DynamicDialogWindow.InputFields[0].Value;
-                    e.Result = true;
+                    InformationDialogWindow InfoWindow = new("Alert", $"{Utils.Host(e.Url)}", e.Text);
+                    OpenedWindow = InfoWindow;
+                    InfoWindow.Topmost = true;
+                    e.Handled = true;
+                    e.Result = InfoWindow.ShowDialog() == true;
                 }
-                else
-                    e.Result = false;
+                else if (e.DialogType == ScriptDialogType.Confirm)
+                {
+                    InformationDialogWindow InfoWindow = new("Confirmation", $"{Utils.Host(e.Url)}", e.Text, string.Empty, "OK", "Cancel");
+                    OpenedWindow = InfoWindow;
+                    InfoWindow.Topmost = true;
+                    e.Handled = true;
+                    e.Result = InfoWindow.ShowDialog() == true;
+                }
+                else if (e.DialogType == ScriptDialogType.Prompt)
+                {
+                    DynamicDialogWindow _DynamicDialogWindow = new("Prompt", Utils.Host(e.Url),
+                    new List<InputField>
+                        {
+                        new InputField { Name = e.Text, IsRequired = false, Type = DialogInputType.Text, Value = e.DefaultPrompt }
+                        },
+                        "\ue946"
+                    );
+                    OpenedWindow = _DynamicDialogWindow;
+                    _DynamicDialogWindow.Topmost = true;
+                    e.Handled = true;
+                    if (_DynamicDialogWindow.ShowDialog() == true)
+                    {
+                        e.PromptResult = _DynamicDialogWindow.InputFields[0].Value;
+                        e.Result = true;
+                    }
+                    else
+                        e.Result = false;
+                }
+                else if (e.DialogType == ScriptDialogType.BeforeUnload)
+                {
+                    InformationDialogWindow InfoWindow = new("Warning", e.IsReload ? "Reload site?" : "Leave site?", "You may lose unsaved changes. Do you want to continue?", string.Empty, e.IsReload ? "Reload" : "Leave", "Cancel");
+                    OpenedWindow = InfoWindow;
+                    InfoWindow.Topmost = true;
+                    e.Handled = true;
+                    e.Result = InfoWindow.ShowDialog() == true;
+                }
             }
-            else if (e.DialogType == ScriptDialogType.BeforeUnload)
+            catch
             {
-                InformationDialogWindow InfoWindow = new("Warning", e.IsReload ? "Reload site?" : "Leave site?", "You may lose unsaved changes. Do you want to continue?", string.Empty, e.IsReload ? "Reload" : "Leave", "Cancel");
-                InfoWindow.Topmost = true;
+                OpenedWindow?.Close();
                 e.Handled = true;
-                e.Result = InfoWindow.ShowDialog() == true;
+                e.Result = false;
             }
         }
 

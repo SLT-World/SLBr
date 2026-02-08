@@ -11,162 +11,168 @@ namespace SLBr.Protocols
 {
     public class TextGemini
     {
-        private static string FormatLineAsTitle(string input)
+        const string LinkSymbol = "=&gt;";
+        const string BlockquoteSymbol = "&gt; ";
+        private static string FormatTitle(string Input)
         {
-            int level = 0;
-            string template = "<div><u>{0}</u></div>";
-
-            foreach (char c in input.Take(3))
+            int Level = 0;
+            string Template = "<div><u>{0}</u></div>";
+            foreach (char Character in Input.Take(3))
             {
-                if (c == '#')
-                    level += 1;
+                if (Character == '#')
+                    Level += 1;
                 else
                     break;
             }
-            if (level == 0)
-                return input;
-
-            switch (level)
+            if (Level == 0)
+                return Input;
+            switch (Level)
             {
                 case 1:
-                    template = "<h1>{0}</h1>";
+                    Template = "<h1>{0}</h1>";
                     break;
                 case 2:
-                    template = "<h2>{0}</h2>";
+                    Template = "<h2>{0}</h2>";
                     break;
                 case 3:
-                    template = "<h3>{0}</h3>";
+                    Template = "<h3>{0}</h3>";
                     break;
             }
-
-            string heading = input.Substring(level).Trim();
-            if (heading.EndsWith("<br/>"))
-                heading = heading.Substring(0, heading.Length - "<br/>".Length);
-
-            return string.Format(template, heading);
+            string Heading = Input.Substring(Level).Trim();
+            if (Heading.EndsWith("<br/>"))
+                Heading = Heading.Substring(0, Heading.Length - "<br/>".Length);
+            return string.Format(Template, Heading);
         }
-        private static string FormatLineAsLink(string input, int count)
+        private static string FormatLink(string Input)
         {
-            const string linkSym = "=&gt;";
+            if (!Input.StartsWith(LinkSymbol))
+                return Input;
+            Input = Input.Substring(LinkSymbol.Length).Trim();
+            if (Input.EndsWith("<br/>"))
+                Input = Input[..^"<br/>".Length].Trim();
+            int FirstWhitespace = Input.IndexOfAny([' ', '\t']);
+            string Url = FirstWhitespace == -1 ? Input : Input[..FirstWhitespace].Trim();
+            string Label = FirstWhitespace == -1 ? Input : Input[FirstWhitespace..].Trim();
 
-            if (!input.StartsWith(linkSym)) { return input; }
-            char[] whitespace = [' ', '\t'];
-
-            string remainder = input.Substring(linkSym.Length).Trim();
-            int firstWhitespace = remainder.IndexOfAny(whitespace);
-            string url;
-            string label;
-
-            if (remainder.EndsWith("<br/>"))
-            {
-                remainder = remainder.Substring(0, remainder.Length - "<br/>".Length).Trim();
-            }
-
-            if (firstWhitespace == -1)
-            {
-                url = remainder;
-                label = remainder;
-            }
-            else
-            {
-                url = remainder.Substring(0, firstWhitespace).Trim();
-                label = remainder.Substring(firstWhitespace).Trim();
-            }
-
-            if (url.StartsWith("://")) { url = "gemini" + url; }
-            else if (url.StartsWith("//")) { url = "gemini:" + url; }
-            return $"<div><a href=\"{url}\">{label}</a></div>";
-            //return $"<div>[{count}] <a href=\"{url}\">{label}</a></div>";
+            if (Url.StartsWith("://")) Url = "gemini" + Url;
+            else if (Url.StartsWith("//")) Url = "gemini:" + Url;
+            bool _IsSearch = IsSearch(Url, Label);
+            if (_IsSearch)
+                return $@"<div><a href=""#"" onclick=""geminiSearch('{WebUtility.HtmlEncode(Url)}')"">🔍 {WebUtility.HtmlEncode(Label)}</a></div>";
+            return$@"<div><a href=""{WebUtility.HtmlEncode(Url)}"">{WebUtility.HtmlEncode(Label)}</a></div>";
         }
-        private static string FormatLineAsEmbed(string input)
+        private static string FormatEmbed(string Input)
         {
-            if (!input.StartsWith("&gt; "))
-                return input;
-            string template = "<div class=\"embed\"><div style=\"display: inline-block; background: gray; width: 2px; height: 12.5px; margin-right: 5px; margin-left: 5px;\"></div>{0}</div>";
-            input = input.Replace("&gt; ", string.Empty);
-            return string.Format(template, input);
+            if (!Input.StartsWith(BlockquoteSymbol))
+                return Input;
+            return $"<div class=\"embed\"><div></div>{Input.Substring(BlockquoteSymbol.Length).Trim()}</div>";
+        }
+        static bool IsSearch(string Url, string Label)
+        {
+            if (!string.IsNullOrEmpty(Path.GetExtension(Url)))
+                return false;
+            Label = Label.ToLowerInvariant();
+            return Label.StartsWith("search") || Label.StartsWith("find") || Label.Contains(" search");
         }
 
-        public static string NewFormat(GeminiGopherIResponse Response)//, bool IsRaw = false)
+        public static string NewFormat(GeminiGopherIResponse Response)
         {
-            bool is_literal = false;
-            string title = "";
-            string input = Encoding.UTF8.GetString(Response.Bytes.ToArray());
-            StringBuilder sb = new StringBuilder(@"<!DOCTYPE html>
+            StringBuilder Builder = new StringBuilder(@"<!DOCTYPE html>
 <html>
 <head>
-    <style>
+<meta charset=""utf-8""/>
+<style>
 html {height: 100%;}
 body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: white;}
 h1, h2, h3 {margin: 0;}
 pre {background: white; border-radius: 5px; padding: 10px;}
 .content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}
 .embed {background: white; border-radius: 5px; padding: 5px;}
-    </style>
+.embed > div:first-child {display: inline-block; background: gray; width: 2px; height: 12.5px; margin-right: 5px; margin-left: 5px;}
+ul {margin: 0;padding-left: 0;list-style-position: inside;}
+</style>
+<script>
+function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.href=url+""?""+encodeURIComponent(q))}
+</script>
 </head>
 <body>
-    <div class=""content"">
-");
-            foreach (char c in input)
+<div class=""content"">
+");//WARNING: New line required
+            bool IsLiteral = false;
+            string Title = "";
+            string Input = Encoding.UTF8.GetString(Response.Bytes.ToArray());
+            foreach (char Character in Input)
             {
-                switch (c)
+                switch (Character)
                 {
                     case '<':
-                        sb.Append("&lt;");
+                        Builder.Append("&lt;");
                         continue;
                     case '>':
-                        sb.Append("&gt;");
+                        Builder.Append("&gt;");
                         continue;
                     case '\r':
                         continue;
                     case '\n':
-                        sb.Append("<br/>");
+                        Builder.Append("<br/>");
                         break;
                 }
-                sb.Append(c);
+                Builder.Append(Character);
             }
-            sb.Append("\r\n</div></body></html>");
+            Builder.Append("</div></body></html>");
 
-            int LinkCount = -1;
-            StringWriter output = new StringWriter();
-            using (StringReader reader = new StringReader(Regex.Replace(sb.ToString(), @"[^\u0000-\u007F]+", string.Empty, RegexOptions.Compiled)))
+            StringWriter Output = new StringWriter();
+            using (StringReader Reader = new StringReader(Regex.Replace(Builder.ToString(), @"[^\u0000-\u007F]+", string.Empty, RegexOptions.Compiled)))
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                string Line;
+                bool InList = false;
+                while ((Line = Reader.ReadLine()) != null)
                 {
-                    string lineout = line;
-
-                    //if (!IsRaw)
-                    //{
-                    if (!is_literal)
+                    string Lineout = Line;
+                    if (!IsLiteral)
                     {
-                        lineout = FormatLineAsTitle(lineout);
-                        if (string.IsNullOrEmpty(title) && lineout.StartsWith("<h1>"))
-                            title = lineout.Substring(4, lineout.Length - 9);
-                        lineout = FormatLineAsEmbed(lineout);
-                        if (lineout.StartsWith("=&gt;"))
-                            LinkCount++;
-                        lineout = FormatLineAsLink(lineout, LinkCount);
+                        if (Line.StartsWith("* "))
+                        {
+                            if (!InList)
+                            {
+                                Output.WriteLine("<ul>");
+                                InList = true;
+                            }
+                            Output.WriteLine($"<li>{Line.Substring(2)}</li>");
+                            continue;
+                        }
+                        else if (InList)
+                        {
+                            Output.WriteLine("</ul>");
+                            InList = false;
+                        }
+                        Lineout = FormatTitle(Lineout);
+                        if (string.IsNullOrEmpty(Title) && Lineout.StartsWith("<h1>"))
+                            Title = Lineout.Substring(4, Lineout.Length - 9);
+                        Lineout = FormatEmbed(Lineout);
+                        Lineout = FormatLink(Lineout);
                     }
                     else
-                        lineout = lineout.Replace("<br/>", string.Empty);
-                    if (line.StartsWith("```"))
+                        Lineout = Lineout.Replace("<br/>", string.Empty);
+                    if (Line.StartsWith("```"))
                     {
-                        is_literal = !is_literal;
-
-                        if (is_literal)
-                            lineout = "<pre>";
-                        else
-                            lineout = "</pre>";
+                        if (InList)
+                        {
+                            Output.WriteLine("</ul>");
+                            InList = false;
+                        }
+                        IsLiteral = !IsLiteral;
+                        Lineout = IsLiteral ? "<pre>" : "</pre>";
                     }
-                    //}
-                    output.WriteLine(lineout);
+                    Output.WriteLine(Lineout);
                 }
+                if (InList)
+                    Output.WriteLine("</ul>");
             }
 
-            string Result = output.ToString();
-            if (!string.IsNullOrEmpty(title))
-                Result = Result.Replace("</head>", $"<title>{WebUtility.HtmlEncode(title)}</title>\r\n</head>");
+            string Result = Output.ToString();
+            if (!string.IsNullOrEmpty(Title))
+                Result = Result.Replace("</head>", $"<title>{WebUtility.HtmlEncode(Title)}</title></head>");
             return Result;
         }
     }
@@ -368,17 +374,16 @@ pre {background: white; border-radius: 5px; padding: 10px;}
 
             switch (Response.CodeMajor)
             {
-                case '1'://Input required
-                    break;
+                /*case '1'://Input required
+                    break;*/
                 case '2'://Success
                     Response.Mime = Response.Meta;
                     break;
                 case '3'://Redirect
-                    Uri redirectUri;
-                    redirectUri = Response.Meta.Contains("://") ? new Uri(Response.Meta) : new Uri(HostURL, Response.Meta);
+                    Uri RedirectUri = Response.Meta.Contains("://") ? new Uri(Response.Meta) : new Uri(HostURL, Response.Meta);
                     //if (redirectUri.Scheme != HostURL.Scheme)
                     //    throw new Exception("Cannot redirect to a URI with a different scheme: " + redirectUri.Scheme);
-                    HostURL = redirectUri;
+                    HostURL = RedirectUri;
                     goto Refetch;
                 case '4'://Temporary failure
                 case '5'://Permanent failure
@@ -393,4 +398,26 @@ pre {background: white; border-radius: 5px; padding: 10px;}
             return Response;
         }
     }
+
+    /*enum GeminiStatus
+    {
+        INPUT = 10,
+        SENSITIVE_INPUT = 11,
+        SUCCESS = 20,
+        REDIRECT_TEMPORARY = 30,
+        REDIRECT_PERMANENT = 31,
+        TEMPORARY_FAILURE = 40,
+        SERVER_UNAVAILABLE = 41,
+        CGI_ERROR = 42,
+        PROXY_ERROR = 43,
+        SLOW_DOWN = 44,
+        PERMANENT_FAILURE = 50,
+        NOT_FOUND = 51,
+        GONE = 52,
+        PROXY_REQUEST_REFUSED = 53,
+        BAD_REQUEST = 59,
+        CLIENT_CERTIFICATE_REQUIRED = 60,
+        CERTIFICATE_NOT_AUTHORISED = 61,
+        CERTIFICATE_NOT_VALID = 62
+    }*/
 }

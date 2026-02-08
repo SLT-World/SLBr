@@ -1,138 +1,73 @@
 ﻿using System.IO;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace SLBr.Protocols
 {
     public class TextGopher
     {
-        private static string FormatLineAsLink(string input, int count)
-        {
-            if (string.IsNullOrEmpty(input))
-                return input;
-            if (!char.IsNumber(input.First()))
-                return input;
-            string remainder = input.Substring(1).Trim().Replace("<p>", "i").Replace("</p>", "0");
-            int firstSlash = remainder.IndexOfAny(['/']);
-            string url;
-            string host = string.Empty;
-            string port = string.Empty;
-            string label;
-
-            if (remainder.EndsWith("+"))
-            {
-                remainder = remainder.Substring(0, remainder.Length - 1).Trim();
-            }
-
-            if (firstSlash == -1)
-            {
-                label = remainder;
-                url = remainder;
-            }
-            else
-            {
-                label = remainder.Substring(0, firstSlash).Trim();
-                url = remainder.Substring(firstSlash).Trim();
-            }
-            int firstWhitespace = url.IndexOfAny(['\t']);
-            if (firstWhitespace != -1)
-            {
-                string hostport = url.Substring(firstWhitespace).Trim();
-                url = url.Substring(0, firstWhitespace).Trim();
-                int firstURLWhitespace = hostport.IndexOfAny(['\t']);
-                if (firstURLWhitespace != -1)
-                {
-                    host = hostport.Substring(0, firstURLWhitespace).Trim();
-                    port = hostport.Substring(firstURLWhitespace).Trim();
-                    url = $"{host}:{port}" + url;
-                }
-            }
-
-            if (url.StartsWith("://"))
-                url = "gopher" + url;
-            else if (url.StartsWith("//"))
-                url = "gopher:" + url;
-            else if (!url.StartsWith("gopher://"))
-                url = "gopher://" + url;
-            return $"<div><a href=\"{url}\">{label}</a></div>";
-            //return $"<div>[{count}] <a href=\"{url}\">{label}</a></div>";
-        }
-
-        public static string NewFormat(GeminiGopherIResponse Response, bool IsRaw = false)
+        public static string NewFormat(GeminiGopherIResponse Response)
         {
             if (Response.Mime != "text/html")
                 return Encoding.UTF8.GetString(Response.Bytes.ToArray());
             else
             {
-                string input = Encoding.UTF8.GetString(Response.Bytes.ToArray());
-                StringBuilder sb = new StringBuilder("<!DOCTYPE html><html>\r\n");
-                sb.Append("<style>" +
-                    "html {height: 100%;}" +
-                    "body {font-family: 'Segoe UI Light', Tahoma, sans-serif; background: white;}" +
-                    "h1, h2, h3, p {margin: 0;}" +
-                    "pre {background: white; border-radius: 5px; padding: 10px;}" +
-                    ".content {background: whitesmoke; border-radius: 10px; margin: 50px; padding: 25px;}" +
-                    ".embed {background: white; border-radius: 5px; padding: 5px;}" +
-                    "</style><body><div class=\"content\">\r\n");
-                bool ConstructingText = false;
-                foreach (char c in input)
+                var Items = Parse(Encoding.UTF8.GetString(Response.Bytes.ToArray()));
+                //TODO: Investigate gopher search functionality.
+                var Builder = new StringBuilder(@"<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""utf-8""/>
+<style>
+html {height: 100%;}
+* {white-space: pre;}
+body {font-family: Consolas, monospace; background: white;}
+.menu {display: flex;flex-direction: column;gap: 5px;background: whitesmoke; border-radius: 10px; width: 900px; max-width: 100%; margin: 50px auto; padding: 25px;}
+</style>
+<script>
+function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=""gopher://""+e+"":""+r+""/""+t.replace(/^\/+/,"""")+""	""+encodeURIComponent(c);window.location.href=h}
+</script>
+</head>
+<body>
+<div class=""menu"">");
+                foreach (var Item in Items)
                 {
-                    bool AppendC = true;
-                    switch (c)
+                    Builder.Append("<div>");
+                    string Url = $"gopher://{Item.Host}:{Item.Port}/{Item.Selector.TrimStart('/')}";
+                    Builder.Append(Item.Type switch
                     {
-                        case '<':
-                            sb.Append("&lt;");
-                            continue;
-                        case '>':
-                            sb.Append("&gt;");
-                            continue;
-                        case '\r':
-                            continue;
-                        /*case '\n':
-                            sb.Append("<br/>");
-                            break;*/
-                        case 'i':
-                            if (!ConstructingText)
-                            {
-                                ConstructingText = true;
-                                sb.Append("<p>");
-                                AppendC = false;
-                            }
-                            break;
-                        case '0':
-                            if (ConstructingText)
-                            {
-                                ConstructingText = false;
-                                sb.Append("</p>");
-                                AppendC = false;
-                            }
-                            break;
-                    }
-                    if (AppendC)
-                        sb.Append(c);
+                        '0' => $"📄 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                        '1' => $"📁 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                        '7' => $@"🔍 <a href=""#"" onclick=""gopherSearch('{WebUtility.HtmlEncode(Item.Host)}','{Item.Port}','{WebUtility.HtmlEncode(Item.Selector)}')"">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                        '9' => $"📦 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                        'g' => $"🖼️ <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                        'I' => $"🖼️ <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                        'h' => $"🌐 <a href=\"{Item.Selector}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                        'i' => $"   <span>{WebUtility.HtmlEncode(Item.Label)}</span>",
+                        _ => $"❓ {WebUtility.HtmlEncode(Item.Label)}"
+                    });
+                    Builder.Append("</div>\n");
                 }
-                sb.Append("\r\n</div></body></html>");
 
-                int LinkCount = -1;
-                StringWriter output = new StringWriter();
-                using (StringReader reader = new StringReader(Regex.Replace(sb.ToString(), @"[^\u0000-\u007F]+", string.Empty, RegexOptions.Compiled)))
-                {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        string lineout = line;
-
-                        if (!IsRaw)
-                        {
-                            lineout = lineout.Replace("\tfake\t(NULL)\t", "<br/>");
-                            lineout = FormatLineAsLink(lineout, LinkCount);
-                        }
-                        output.WriteLine(lineout);
-                    }
-                }
-                return output.ToString();
+                Builder.Append("</div></body></html>");
+                return Builder.ToString();
+            }
+        }
+        static IEnumerable<(char Type, string Label, string Selector, string Host, int Port)> Parse(string Text)
+        {
+            using StringReader Reader = new(Text);
+            string Line;
+            //WARNING: Do not add ` ?? ""`.
+            while ((Line = Reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(Line))
+                    continue;
+                var Parts = Line.Substring(1).Split('\t');
+                if (Parts.Length < 4)
+                    continue;
+                yield return (Line[0], Parts[0], Parts[1], Parts[2], int.TryParse(Parts[3], out var p) ? p : 70);
             }
         }
     }
