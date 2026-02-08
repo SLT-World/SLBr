@@ -1938,6 +1938,7 @@ Inner Exception: ```{7} ```";
         //https://chromium-review.googlesource.com/c/chromium/src/+/1265506
         public bool NeverSlowMode;
 
+        public bool ModernURL;
         public bool PunycodeURL;
         public bool TrimURL;
         public bool HomographProtection;
@@ -1990,6 +1991,19 @@ Inner Exception: ```{7} ```";
         {
             GlobalSave.Set("TrimURL", Toggle.ToString());
             TrimURL = Toggle;
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                {
+                    if (BrowserView.OmniBoxOverlayText.Visibility == Visibility.Visible)
+                        BrowserView.SetOverlayDisplay(TrimURL, HomographProtection);
+                }
+            }
+        }
+        public void SetModernURL(bool Toggle)
+        {
+            GlobalSave.Set("ModernURL", Toggle.ToString());
+            ModernURL = Toggle;
             foreach (MainWindow _Window in AllWindows)
             {
                 foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
@@ -2640,6 +2654,7 @@ Inner Exception: ```{7} ```";
             SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
             SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", true.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
+            SetModernURL(bool.Parse(GlobalSave.Get("ModernURL", false.ToString())));
             SetPunycodeURL(bool.Parse(GlobalSave.Get("PunycodeURL", false.ToString())));
             SetTrimURL(bool.Parse(GlobalSave.Get("TrimURL", true.ToString())));
             SetHomographProtection(bool.Parse(GlobalSave.Get("HomographProtection", true.ToString())));
@@ -2669,8 +2684,6 @@ Inner Exception: ```{7} ```";
                     if (TabCount != 0)
                     {
                         int SelectedIndex = TabsSave.GetInt("Selected", 0);
-                        if (GlobalSave.GetInt("TabAlignment", 0) == 1)
-                            SelectedIndex += 1;
                         for (int i = 0; i < TabCount; i++)
                         {
                             string[] Data = TabsSave.Get(i.ToString(), true);
@@ -3202,6 +3215,7 @@ Inner Exception: ```{7} ```";
             HotKeyManager.HotKeys.Add(new HotKey(() => Fullscreen(), (int)Key.F11, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(2), (int)Key.Escape, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => DevTools(), (int)Key.F12, false, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => DevTools(), (int)Key.I, true, true, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => Find(), (int)Key.F, true, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(0), (int)Key.F6, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(1), (int)Key.T, true, false, false));
@@ -3263,13 +3277,14 @@ Inner Exception: ```{7} ```";
 
         public static string GenerateCannotConnect(string Url, int ErrorCode, string ErrorText)
         {
-            return Cannot_Connect_Error.Replace("{Site}", Utils.Host(Url)).Replace("{Error}", ErrorText).Replace("{Description}", $"Error Code: {ErrorCode}");
+            return CannotConnectError.Replace("{Site}", Utils.Host(Url)).Replace("{Error}", ErrorText).Replace("{Description}", $"Error Code: {ErrorCode}");
         }
 
-        public const string Cannot_Connect_Error = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
-        public const string Process_Crashed_Error = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
-        public const string Deception_Error = @"<html><head><title>Deceptive site ahead</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Deceptive site ahead</h2><h5>The site may contain deceptive content that may trick you into installing software or revealing personal information.</h5></div></body></html>";
-        public const string Malware_Error = @"<html><head><title>Dangerous site ahead</title><style>html{background:darkred;}body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>The site may install harmful and malicious software that may manipulate or steal personal information.</h5></div></body></html>";
+        public const string CannotConnectError = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
+        public const string ProcessCrashedError = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
+        public const string DeceptionError = @"<html><head><title>Deceptive site ahead</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Deceptive site ahead</h2><h5>The site may contain deceptive content that may trick you into installing software or revealing personal information.</h5></div></body></html>";
+        public const string MalwareError = @"<html><head><title>Dangerous site ahead</title><style>html{background:darkred;}body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>The site may install harmful and malicious software that may manipulate or steal personal information.</h5></div></body></html>";
+        public const string HistoryPlaceholder = @"<html><head><script>window.addEventListener(""pageshow"",function(e){e.persisted&&location.reload()});</script></head></html>";
 
         private void SetBrowserFlags(WebViewSettings Settings)
         {

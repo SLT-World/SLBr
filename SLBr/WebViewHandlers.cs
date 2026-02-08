@@ -48,23 +48,23 @@ namespace SLBr
 
         public static string WebView2Version { get; private set; } = "";
 
-        public static IWebView Create(WebEngineType EngineType, string Url, WebViewBrowserSettings _BrowserSettings)
+        public static IWebView Create(WebEngineType EngineType, List<string> Urls, WebViewBrowserSettings _BrowserSettings)
         {
             switch (EngineType)
             {
                 case WebEngineType.Chromium:
-                    return new ChromiumWebView(Url, _BrowserSettings);
+                    return new ChromiumWebView(Urls, _BrowserSettings);
                 case WebEngineType.ChromiumEdge:
                     if (!IsWebView2Initialized)
                     {
                         try { WebView2Version = CoreWebView2Environment.GetAvailableBrowserVersionString(); }
-                        catch (WebView2RuntimeNotFoundException) { return new ChromiumWebView(Url, _BrowserSettings); }
+                        catch (WebView2RuntimeNotFoundException) { return new ChromiumWebView(Urls, _BrowserSettings); }
                     }
-                    return new ChromiumEdgeWebView(Url, _BrowserSettings);
+                    return new ChromiumEdgeWebView(Urls, _BrowserSettings);
                 case WebEngineType.Trident:
-                    return new TridentWebView(Url, _BrowserSettings);
+                    return new TridentWebView(Urls, _BrowserSettings);
                 default:
-                    return new ChromiumWebView(Url, _BrowserSettings);
+                    return new ChromiumWebView(Urls, _BrowserSettings);
             }
         }
         /*public static string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
@@ -730,6 +730,39 @@ namespace SLBr
                 }
             }
             return false;
+        }
+    }
+    public class HistoryResourceRequestHandler : IResourceRequestHandler
+    {
+        public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
+        {
+            //MessageBox.Show($"{request.ResourceType} {request.TransitionType}");
+            if (request.ResourceType == ResourceType.MainFrame && request.TransitionType.HasFlag(TransitionType.Generated))
+                return CefReturnValue.Continue;
+            return CefReturnValue.Cancel;
+        }
+
+        public IResourceHandler GetResourceHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request) => null;
+        public ICookieAccessFilter GetCookieAccessFilter(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request) => null;
+        public void OnResourceRedirect(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, ref string newUrl) { }
+        public bool OnResourceResponse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response) => false;
+        public IResponseFilter GetResourceResponseFilter(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response) => null;
+        public void OnResourceLoadComplete(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, UrlRequestStatus status, long receivedContentLength) { }
+        public bool OnProtocolExecution(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request) => true;
+        public void Dispose()
+        {
+            GC.Collect(GC.MaxGeneration);
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    public class HistoryResourceRequestHandlerFactory : IResourceRequestHandlerFactory
+    {
+        public bool HasHandlers => true;
+
+        IResourceRequestHandler IResourceRequestHandlerFactory.GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
+        {
+            return new InMemoryResourceRequestHandler(ResourceHandler.GetByteArray(App.DeceptionError, Encoding.UTF8), "text/html");
         }
     }
     public class ChromiumResourceRequestHandler : IResourceRequestHandler

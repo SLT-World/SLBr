@@ -28,7 +28,7 @@ namespace SLBr.Controls
                 JavaScriptMessage = false
             };
 
-            WebView = WebViewManager.Create((WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"), _Address, Settings);
+            WebView = WebViewManager.Create((WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"), [_Address], Settings);
             WebView.StatusMessage += WebView_StatusMessage;
             WebView.LoadingStateChanged += WebView_LoadingStateChanged;
             WebView.TitleChanged += WebView_TitleChanged;

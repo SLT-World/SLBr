@@ -28,20 +28,6 @@ namespace SLBr
 {
     static class DllUtils
     {
-        /*[DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr GetWindow(IntPtr hWnd, GetWindowCommand uCmd);
-
-        public enum GetWindowCommand : uint
-        {
-            GW_HWNDFIRST = 0,
-            GW_HWNDLAST = 1,
-            GW_HWNDNEXT = 2,
-            GW_HWNDPREV = 3,
-            GW_OWNER = 4,
-            GW_CHILD = 5,
-            GW_ENABLEDPOPUP = 6
-        }*/
-
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetWindowDisplayAffinity(IntPtr hWnd, WindowDisplayAffinity affinity);
@@ -95,6 +81,9 @@ namespace SLBr
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
 
         [DllImport("user32.dll")]
         public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
@@ -158,6 +147,17 @@ namespace SLBr
             GetWindowText(hWnd, Builder, Builder.Capacity);
             return Builder.ToString();
         }
+
+        /*[DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+
+        public const uint GW_HWNDFIRST = 0;
+        public const uint GW_HWNDLAST = 1;
+        public const uint GW_HWNDNEXT = 2;
+        public const uint GW_HWNDPREV = 3;
+        public const uint GW_OWNER = 4;
+        public const uint GW_CHILD = 5;
+        public const uint GW_ENABLEDPOPUP = 6;*/
 
         public const int SW_SHOWNA = 8;
         public const int SW_HIDE = 0;

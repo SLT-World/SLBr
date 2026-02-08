@@ -700,6 +700,20 @@ namespace SLBr
             }
         }
 
+        private void Window_Activated(object sender, EventArgs e)
+        {
+            TabPreviewPopup.IsOpen = false;
+            foreach (BrowserTabItem Tab in Tabs)
+                Tab.Content?.UpdateDevToolsPosition();
+        }
+
+        private void Window_Deactivated(object sender, EventArgs e)
+        {
+            TabPreviewPopup.IsOpen = false;
+            foreach (BrowserTabItem Tab in Tabs)
+                Tab.Content?.UpdateDevToolsPosition();
+        }
+
         private void Window_StateChanged(object sender, EventArgs e)
         {
             TabPreviewPopup.IsOpen = false;

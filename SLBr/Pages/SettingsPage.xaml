@@ -361,6 +361,7 @@
                             <StackPanel>
                                 <CheckBox x:Name="TrimURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="TrimURLCheckBox_Click" Content="Show simplified URLs"/>
                                 <CheckBox x:Name="PunycodeURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="PunycodeURLCheckBox_Click" Content="Show punycode"/>
+                                <CheckBox IsEnabled="{Binding ElementName=TrimURLCheckBox, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="ModernURLCheckBox" Width="Auto" Click="ModernURLCheckBox_Click" Content="Show modernized URLs"/>
                                 <CheckBox x:Name="HomographProtectionCheckBox" Width="Auto" Click="HomographProtectionCheckBox_Click" Content="Highlight deceptive characters"/>
                             </StackPanel>
                         </GroupBox>

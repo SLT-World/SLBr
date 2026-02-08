@@ -856,11 +856,11 @@ namespace SLBr
     {
         private ChromiumWebBrowser Browser;
         public WebViewBrowserSettings Settings;
-        private readonly string InitialUrl;
+        private readonly List<string> InitialUrls;
 
-        public ChromiumWebView(string _InitialUrl = "about:blank", WebViewBrowserSettings _Settings = null)
+        public ChromiumWebView(List<string> Urls = null, WebViewBrowserSettings _Settings = null)
         {
-            InitialUrl = _InitialUrl;
+            InitialUrls = Urls ?? ["about:blank"];
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
 
@@ -953,15 +953,40 @@ namespace SLBr
         {
             if (e.ErrorCode is CefErrorCode.Aborted or CefErrorCode.IoPending or CefErrorCode.BlockedByClient or CefErrorCode.BlockedByResponse)
                 return;
+            if (InitializingHistory) return;
             NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs((int)e.ErrorCode, e.ErrorText, e.FailedUrl));
         }
         private void Browser_StatusMessage(object? sender, StatusMessageEventArgs e) => StatusMessage?.RaiseUIAsync(this, e.Value);
-        private void Browser_TitleChanged(object sender, DependencyPropertyChangedEventArgs e) => TitleChanged?.RaiseUIAsync(this, Browser.Title);
-        private void Browser_FrameLoadEnd(object? sender, FrameLoadEndEventArgs e) => FrameLoadEnd?.RaiseUIAsync(this, e.Url);
-        private void Browser_IsBrowserInitializedChanged(object? sender, EventArgs e)
+        private void Browser_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (InitializingHistory) return;
+            TitleChanged?.RaiseUIAsync(this, Browser.Title);
+        }
+        private void Browser_FrameLoadEnd(object? sender, FrameLoadEndEventArgs e)
+        {
+            if (InitializingHistory) return;
+            FrameLoadEnd?.RaiseUIAsync(this, e.Url);
+        }
+        bool InitializingHistory = false;
+        private async void Browser_IsBrowserInitializedChanged(object? sender, EventArgs e)
         {
             Browser?.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
-            Browser?.Address = InitialUrl;
+
+            for (int i = 0; i < InitialUrls.Count; i++)
+            {
+                string Url = InitialUrls[i];
+                bool IsHistory = i < InitialUrls.Count - 1;
+                if (IsHistory)
+                    WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
+                await CallDevToolsAsync("Page.navigate", new
+                {
+                    url = Url,
+                    transitionType = "generated"
+                });
+                InitializingHistory = IsHistory;
+                if (IsHistory)
+                    await Task.Delay(TimeSpan.FromMilliseconds(5));
+            }
             /*if (Settings.Private)
             {
                 nint HWND = Browser.GetBrowserHost().GetWindowHandle();
@@ -972,6 +997,7 @@ namespace SLBr
 
         private void Browser_FrameLoadStart(object? sender, FrameLoadStartEventArgs e)
         {
+            if (InitializingHistory) return;
             FrameLoadStart?.RaiseUIAsync(this, e.Url);
             if (Settings.AudioListener)
                 ExecuteScript(Scripts.CefAudioScript);
@@ -979,6 +1005,7 @@ namespace SLBr
 
         private async void Browser_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
         {
+            if (InitializingHistory) return;
             CanGoBack = e.CanGoBack;
             CanGoForward = e.CanGoForward;
             CanReload = e.CanReload;
@@ -991,7 +1018,7 @@ namespace SLBr
         public WebEngineType Engine => WebEngineType.Chromium;
         public string Address
         {
-            get => Browser.Address ?? InitialUrl;
+            get => Browser?.Address ?? InitialUrls.Last();
             set => Navigate(value);
         }
         public string Title => Browser.Title;
@@ -1094,19 +1121,23 @@ namespace SLBr
         public event EventHandler<ResourceLoadedResult> ResourceLoaded;
         public void RaiseResourceRequest(ResourceRequestEventArgs e)
         {
+            if (InitializingHistory) return;
             Browser?.Dispatcher.Invoke(() => ResourceRequested?.Invoke(this, e));
         }
         public void RaiseResourceResponded(ResourceRespondedResult e)
         {
+            if (InitializingHistory) return;
             ResourceResponded?.RaiseUIAsync(this, e);
         }
         public void RaiseResourceLoaded(ResourceLoadedResult Result)
         {
+            if (InitializingHistory) return;
             ResourceLoaded?.RaiseUIAsync(this, Result);
         }
         public event EventHandler<PermissionRequestedEventArgs> PermissionRequested;
         internal void RaisePermissionRequested(PermissionRequestedEventArgs e)
         {
+            if (InitializingHistory) return;
             Browser?.Dispatcher.Invoke(() => PermissionRequested?.Invoke(this, e));
         }
         public void NotifyNewTabRequested(NewTabRequestEventArgs e) => Browser?.Dispatcher.Invoke(() => NewTabRequested?.Invoke(this, e));
@@ -1308,6 +1339,8 @@ namespace SLBr
         public bool OnCursorChange(IWebBrowser chromiumWebBrowser, IBrowser browser, nint cursor, CefSharp.Enums.CursorType type, CefSharp.Structs.CursorInfo customCursorInfo) => false;
         public void OnFaviconUrlChange(IWebBrowser chromiumWebBrowser, IBrowser browser, IList<string> urls)
         {
+            if (InitializingHistory)
+                return;
             if (urls.Count != 0)
             {
                 string Url = urls.OrderBy(url => url.EndsWith(".ico") ? 0 : url.EndsWith(".png") ? 1 : 2).ToList().First();
@@ -1330,18 +1363,18 @@ namespace SLBr
     {
         private WebView2 Browser;
         private WebViewBrowserSettings Settings;
-        private readonly string InitialUrl;
+        private readonly List<string> InitialUrls;
         CoreWebView2 BrowserCore;
 
-        public ChromiumEdgeWebView(string _InitialUrl = "about:blank", WebViewBrowserSettings _Settings = null)
+        public ChromiumEdgeWebView(List<string> Urls = null, WebViewBrowserSettings _Settings = null)
         {
-            InitialUrl = _InitialUrl;
+            InitialUrls = Urls ?? ["about:blank"];
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
-            InitializeAsync(InitialUrl);
+            InitializeAsync();
         }
 
-        private async void InitializeAsync(string InitialUrl)
+        private async void InitializeAsync()
         {
             if (!WebViewManager.IsWebView2Initialized)
                 WebViewManager.InitializeWebView2();
@@ -1362,7 +1395,7 @@ namespace SLBr
             ZoomFactor = 1;
         }
 
-        private void Browser_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
+        private async void Browser_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
         {
             BrowserCore = Browser.CoreWebView2;
             Browser.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
@@ -1404,13 +1437,13 @@ namespace SLBr
             BrowserCore.IsDefaultDownloadDialogOpenChanged += Core_IsDefaultDownloadDialogOpenChanged;
 
             BrowserCore.NavigationStarting += Browser_NavigationStarting;
-            BrowserCore.FrameNavigationStarting += (s, e) => FrameLoadStart?.RaiseUIAsync(this, e.Uri);
-            BrowserCore.FrameNavigationCompleted += (s, e) => FrameLoadEnd?.RaiseUIAsync(this, Address);
+            BrowserCore.FrameNavigationStarting += Browser_FrameNavigationStarting;
+            BrowserCore.FrameNavigationCompleted += Browser_FrameNavigationCompleted;
             BrowserCore.NavigationCompleted += Browser_NavigationCompleted;
             BrowserCore.ServerCertificateErrorDetected += Browser_ServerCertificateErrorDetected;
 
-            BrowserCore.DocumentTitleChanged += (s, e) => TitleChanged?.RaiseUIAsync(this, BrowserCore.DocumentTitle);
-            BrowserCore.FaviconChanged += (s, e) => FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
+            BrowserCore.DocumentTitleChanged += Browser_DocumentTitleChanged;
+            BrowserCore.FaviconChanged += Browser_FaviconChanged;
             BrowserCore.StatusBarTextChanged += (s, e) => StatusMessage?.RaiseUIAsync(this, BrowserCore.StatusBarText);
 
             BrowserCore.PermissionRequested += Browser_PermissionRequested;
@@ -1442,19 +1475,53 @@ namespace SLBr
 
             BrowserCore.LaunchingExternalUriScheme += Browser_LaunchingExternalUriScheme;
 
-            /*if (Settings.Private)
+            for (int i = 0; i < InitialUrls.Count; i++)
             {
-                nint HWND = Browser.Handle;
-                IntPtr ChildHWND = DllUtils.GetWindow(HWND, DllUtils.GetWindowCommand.GW_CHILD);
-                DllUtils.SetWindowDisplayAffinity(ChildHWND, DllUtils.WindowDisplayAffinity.WDA_MONITOR);
-            }*/
-
-            BrowserCore.Navigate(InitialUrl);
+                string Url = InitialUrls[i];
+                bool IsHistory = i < InitialUrls.Count - 1;
+                if (IsHistory)
+                    WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
+                await CallDevToolsAsync("Page.navigate", new
+                {
+                    url = Url,
+                    transitionType = "generated"
+                });
+                InitializingHistory = IsHistory;
+                if (IsHistory)
+                    await Task.Delay(TimeSpan.FromMilliseconds(5));
+            }
         }
+
+        private void Browser_FaviconChanged(object? sender, object e)
+        {
+            if (InitializingHistory) return;
+            FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
+        }
+
+        private void Browser_DocumentTitleChanged(object? sender, object e)
+        {
+            if (InitializingHistory) return;
+            TitleChanged?.RaiseUIAsync(this, BrowserCore.DocumentTitle);
+        }
+
+        private void Browser_FrameNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            if (InitializingHistory) return;
+            FrameLoadEnd?.RaiseUIAsync(this, Address);
+        }
+
+        private void Browser_FrameNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
+        {
+            if (InitializingHistory) return;
+            FrameLoadStart?.RaiseUIAsync(this, e.Uri);
+        }
+
+        bool InitializingHistory = false;
 
         bool CertificateError = false;
         private void Browser_ServerCertificateErrorDetected(object? sender, CoreWebView2ServerCertificateErrorDetectedEventArgs e)
         {
+            if (InitializingHistory) return;
             CertificateError = true;
             IsSecure = false;
         }
@@ -1476,13 +1543,14 @@ namespace SLBr
             }
             Browser.Dispose();
             Browser = null;
-            InitializeAsync(Url);
+            InitializeAsync();
             Parent?.Children.Add(Browser);
         }
 
         private void Browser_LaunchingExternalUriScheme(object? sender, CoreWebView2LaunchingExternalUriSchemeEventArgs e)
         {
             e.Cancel = true;
+            if (InitializingHistory) return;
             ExternalProtocolEventArgs Args = new ExternalProtocolEventArgs(e.Uri, e.InitiatingOrigin);
             Browser?.Dispatcher.Invoke(() => ExternalProtocolRequested?.Invoke(this, Args));
             if (Args.Launch)
@@ -1683,6 +1751,8 @@ namespace SLBr
 
         private void Browser_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
+            CurrentAddress = e.Uri;
+            if (InitializingHistory) return;
             BeforeNavigationEventArgs Args = new BeforeNavigationEventArgs(e.Uri, true);
             Browser?.Dispatcher.Invoke(() => BeforeNavigation?.Invoke(this, Args));
             if (Args.Cancel)
@@ -1778,6 +1848,7 @@ namespace SLBr
 
         private void Browser_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
+            if (InitializingHistory) return;
             IsLoading = false;
             IsSecure = false;
 
@@ -1790,9 +1861,10 @@ namespace SLBr
         }
 
         public WebEngineType Engine => WebEngineType.ChromiumEdge;
+        private string CurrentAddress;
         public string Address
         {
-            get => Browser.Source?.AbsoluteUri ?? InitialUrl;
+            get => Browser.Source != null ? CurrentAddress : InitialUrls.Last();
             set => Navigate(value);
         }
         public string Title => BrowserCore?.DocumentTitle ?? string.Empty;
@@ -1943,13 +2015,13 @@ namespace SLBr
                     Core.IsDefaultDownloadDialogOpenChanged -= Core_IsDefaultDownloadDialogOpenChanged;
 
                     Core.NavigationStarting -= Browser_NavigationStarting;
-                    Core.FrameNavigationStarting -= (s, e) => FrameLoadStart?.RaiseUIAsync(this, e.Uri);
-                    Core.FrameNavigationCompleted -= (s, e) => FrameLoadEnd?.RaiseUIAsync(this, Address);
+                    Core.FrameNavigationStarting -= Browser_FrameNavigationStarting;
+                    Core.FrameNavigationCompleted -= Browser_FrameNavigationCompleted;
                     Core.NavigationCompleted -= Browser_NavigationCompleted;
                     Core.ServerCertificateErrorDetected -= Browser_ServerCertificateErrorDetected;
 
-                    Core.DocumentTitleChanged -= (s, e) => TitleChanged?.RaiseUIAsync(this, Core.DocumentTitle);
-                    Core.FaviconChanged -= (s, e) => FaviconChanged?.RaiseUIAsync(this, Core.FaviconUri);
+                    Core.DocumentTitleChanged -= Browser_DocumentTitleChanged;
+                    Core.FaviconChanged -= Browser_FaviconChanged;
                     Core.StatusBarTextChanged -= (s, e) => StatusMessage?.RaiseUIAsync(this, Core.StatusBarText);
 
                     Core.PermissionRequested -= Browser_PermissionRequested;
@@ -2006,18 +2078,17 @@ namespace SLBr
         SHDocVw.IWebBrowser2 AxBrowser;
         SHDocVw.WebBrowser BrowserCore;
         private WebViewBrowserSettings Settings;
-        private readonly string InitialUrl;
+        private readonly List<string> InitialUrls;
 
-        public TridentWebView(string _InitialUrl = "about:blank", WebViewBrowserSettings _Settings = null)
+        public TridentWebView(List<string> Urls = null, WebViewBrowserSettings _Settings = null)
         {
+            InitialUrls = Urls ?? ["about:blank"];
             //ExecuteScript(@"window.engine = { postMessage: function(message) { window.external.postMessage(message); } };");
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
             if (!WebViewManager.IsTridentInitialized)
                 WebViewManager.InitializeTrident();
             Browser = new WebBrowser();
-
-            InitialUrl = _InitialUrl;
 
             Browser.Loaded += Loaded;
             Browser.Navigating += Navigating;
@@ -2041,7 +2112,7 @@ namespace SLBr
 
             if (Settings.JavaScriptMessage)// || Settings.AudioListener)
                 Browser.ObjectForScripting = new Bridge(this);
-            Navigate(_InitialUrl);
+            Navigate(InitialUrls.Last());
             ZoomFactor = 1;
         }
 
@@ -2145,8 +2216,8 @@ namespace SLBr
             objComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, [true]);*/
             IsBrowserInitialized = true;
             IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
-            if (!string.IsNullOrWhiteSpace(InitialUrl))
-                Navigate(InitialUrl);
+            if (!string.IsNullOrWhiteSpace(InitialUrls.Last()))
+                Navigate(InitialUrls.Last());
             Browser.Loaded -= Loaded;
         }
 
@@ -2250,7 +2321,7 @@ namespace SLBr
         private string? OverrideAddress = null;
         public string Address
         {
-            get => string.IsNullOrEmpty(OverrideAddress) ? (Browser.Source?.AbsoluteUri ?? InitialUrl) : OverrideAddress;
+            get => string.IsNullOrEmpty(OverrideAddress) ? (Browser.Source?.AbsoluteUri ?? InitialUrls.Last()) : OverrideAddress;
             set => Navigate(value);
         }
         public string Title { get; private set; } = string.Empty;

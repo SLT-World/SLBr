@@ -300,6 +300,7 @@ namespace SLBr.Pages
 
             TrimURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TrimURL"));
             PunycodeURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PunycodeURL"));
+            ModernURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ModernURL"));
             HomographProtectionCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographProtection"));
 
             SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
@@ -725,6 +726,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetPunycodeURL(PunycodeURLCheckBox.IsChecked.ToBool());
+        }
+        private void ModernURLCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetModernURL(ModernURLCheckBox.IsChecked.ToBool());
         }
         private void HomographProtectionCheckBox_Click(object sender, RoutedEventArgs e)
         {

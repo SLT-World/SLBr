@@ -213,14 +213,10 @@ namespace SLBr.Controls
             {
                 ColorPickerWindow Picker = new(Utils.HexToColor(Field.Value));
                 Picker.Topmost = true;
-                if (Picker.ShowDialog() == true)
-                {
-                    Field.Value = Utils.ColorToHex(Picker.UserInput.Color);
-                    Item.Background = new SolidColorBrush(Picker.UserInput.Color);
-                    Item.Foreground = Utils.GetContrastBrush(Picker.UserInput.Color);
-                }
-                else
-                    List.SelectedIndex = 0;
+                Color Value = Picker.ShowDialog() == true ? Picker.UserInput.Color : Utils.HexToColor(Field.Value);
+                Field.Value = Utils.ColorToHex(Value);
+                Item.Background = new SolidColorBrush(Value);
+                Item.Foreground = Utils.GetContrastBrush(Value);
                 return;
             }
             if (Item.Background is SolidColorBrush Background)

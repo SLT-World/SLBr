@@ -401,7 +401,9 @@ namespace SLBr.Pages
                 AudioListener = !App.Instance.LiteMode
             };
 
-            WebView = WebViewManager.Create(Engine, Url, WebViewSettings);
+            //TODO: Improve tab session file with firefox sessionstore JSON format.
+            //["slbr://newtab", "https://google.com", Url]
+            WebView = WebViewManager.Create(Engine, [Url], WebViewSettings);
 
             WebView?.Control.AllowDrop = true;
             WebView?.Control.IsManipulationEnabled = true;
@@ -484,6 +486,8 @@ namespace SLBr.Pages
             Tab.Header = e;
             if (Tab == Tab.ParentWindow.GetTab())
                 Title = e + " - SLBr";
+            if (App.Instance.ModernURL && App.Instance.TrimURL && OmniBox.Text == OmniBox.Tag.ToString())
+                SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
         }
 
         private void WebView_StatusMessage(object? sender, string e)
@@ -744,9 +748,9 @@ namespace SLBr.Pages
                         {
                             WebRiskHandler.ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
                             if (_ThreatType is WebRiskHandler.ThreatType.Malware or WebRiskHandler.ThreatType.Unwanted_Software)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.Malware_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.MalwareError, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                             else if (_ThreatType == WebRiskHandler.ThreatType.Social_Engineering)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.Deception_Error, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.DeceptionError, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                         }
                     }
                     else if (e.Url.StartsWith("chrome:"))
@@ -2463,7 +2467,7 @@ namespace SLBr.Pages
                                     Process _Process = Process.GetProcessById((int)pid);
                                     if (_Process.ProcessName.Contains("msedgewebview2", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        if (DllUtils.IsWindowVisible(hWnd) && DllUtils.GetWindowTextRaw(hWnd) == DevToolsName && !App.Instance.WebView2DevTools.Contains(hWnd))
+                                        if (DllUtils.IsWindowVisible(hWnd) && (DllUtils.GetWindowTextRaw(hWnd) == DevToolsName || DevToolsName.StartsWith(DllUtils.GetWindowTextRaw(hWnd))) && !App.Instance.WebView2DevTools.Contains(hWnd))
                                         {
                                             WebView2DevToolsHWND = hWnd;
                                             return false;
@@ -2499,7 +2503,9 @@ namespace SLBr.Pages
         public void UpdateDevToolsPosition()
         {
             if (WebView2DevToolsHWND == IntPtr.Zero) return;
-            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.GetTab() != Tab)
+            /*if (!Tab.ParentWindow.IsActive)
+                Debug.WriteLine($"{DllUtils.GetForegroundWindow()} {WebView2DevToolsHWND} {DevToolsHost.Handle} {Tab.ParentWindow.WindowInterop.EnsureHandle()}");*/
+            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.GetTab() != Tab || (!Tab.ParentWindow.IsActive && DllUtils.GetForegroundWindow() is nint Foreground && (Foreground != WebView2DevToolsHWND && Foreground != Tab.ParentWindow.WindowInterop.EnsureHandle())))
             {
                 DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 0, 0, 0), true);
                 DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_HIDE);
@@ -3212,6 +3218,7 @@ namespace SLBr.Pages
         //Protection against homograph attacks https://www.xudongz.com/blog/2017/idn-phishing/
         public void SetOverlayDisplay(bool TruncateURL = true, bool HighlightSuspicious = true)
         {
+            bool UseModernURL = App.Instance.ModernURL && App.Instance.TrimURL;
             OmniBoxOverlayText.Inlines.Clear();
             OmniBoxOverlayText.Visibility = Visibility.Visible;
             OmniBox.Opacity = 0;
@@ -3243,14 +3250,21 @@ namespace SLBr.Pages
                         OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.RedColor });
                     break;
                 case "slbr":
-                    OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.SLBrColor });
+                    HighlightSuspicious = false;
+                    OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL ? "SLBr" : Scheme) { Foreground = App.Instance.SLBrColor });
                     break;
                 case "file":
-                    OmniBoxOverlayText.Inlines.Add(new Run(TruncateURL ? Url[8..] : Url) { Foreground = GrayBrush });
+                    if (UseModernURL)
+                    {
+                        OmniBoxOverlayText.Inlines.Add(new Run(Url[8..10]) { Foreground = (SolidColorBrush)FindResource("FontBrush") });
+                        OmniBoxOverlayText.Inlines.Add(new Run(Url[10..].Replace("/", " › ")) { Foreground = GrayBrush });
+                    }
+                    else
+                        OmniBoxOverlayText.Inlines.Add(new Run(TruncateURL ? Url[8..] : Url) { Foreground = GrayBrush });
                     return;
                 case "gopher":
                 case "gemini":
-                    OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = GrayBrush });
+                    OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL ? Utils.CapitalizeAllFirstCharacters(Scheme) : Scheme) { Foreground = GrayBrush });
                     break;
                 default:
                     OmniBoxOverlayText.Inlines.Add(new Run(Url) { Foreground = GrayBrush });
@@ -3260,7 +3274,7 @@ namespace SLBr.Pages
             int Protocol = _Span.IndexOf("://");
             if (Protocol >= 0)
             {
-                OmniBoxOverlayText.Inlines.Add(new Run("://") { Foreground = GrayBrush });
+                OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL ? " / " : "://") { Foreground = GrayBrush });
                 _Span = _Span[(Protocol + 3)..];
             }
 
@@ -3423,12 +3437,19 @@ namespace SLBr.Pages
                 }
             }
             else
-                OmniBoxOverlayText.Inlines.Add(new Run(Host.ToString()) { Foreground = FontBrush });
+            {
+                OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL && Scheme == "slbr" ? Utils.CapitalizeAllFirstCharacters(Host.ToString()) : Host.ToString()) { Foreground = FontBrush });
+            }
 
             if (HostEnd >= 0)
             {
-                ReadOnlySpan<char> _Path = _Span[HostEnd..];
-                OmniBoxOverlayText.Inlines.Add(new Run(Utils.UnescapeDataString(_Path.ToString())) { Foreground = GrayBrush });
+                if (UseModernURL && !string.IsNullOrEmpty(WebView.Title))
+                    OmniBoxOverlayText.Inlines.Add(new Run(" / " + WebView.Title) { Foreground = GrayBrush });
+                else
+                {
+                    ReadOnlySpan<char> _Path = _Span[HostEnd..];
+                    OmniBoxOverlayText.Inlines.Add(new Run(Utils.UnescapeDataString(_Path.ToString())) { Foreground = GrayBrush });
+                }
             }
         }
 
