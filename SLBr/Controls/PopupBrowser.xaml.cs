@@ -195,7 +195,7 @@ namespace SLBr.Controls
             Title = e +  " - SLBr";
         }
 
-        private async void WebView_LoadingStateChanged(object? sender, bool e)
+        private async void WebView_LoadingStateChanged(object? sender, LoadingStateResult e)
         {
             await WebView.CallDevToolsAsync("Emulation.setAutoDarkModeOverride", new
             {

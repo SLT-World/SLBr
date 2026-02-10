@@ -333,7 +333,7 @@ namespace SLBr
             {
                 return ProtocolResponse.FromString($"<h1>Gopher Error</h1><pre>{_Exception.Message}</pre>", "text/html");
             }
-            return ProtocolResponse.FromString(TextGopher.NewFormat(Response), Response.Mime.Contains("application/gopher-menu") ? "text/html" : Response.Mime);
+            return ProtocolResponse.FromString(TextGopher.NewFormat(Response), Response.Mime.Contains("application/gopher-menu") ? "text/html" : Response.Mime, Response.StatusCode);
         }
         public static async Task<ProtocolResponse> GeminiHandler(string Url, string Extra = "")
         {
@@ -353,7 +353,7 @@ namespace SLBr
                 MessageBox.Show(Response.SSLStatus.X509Certificate.NotBefore.Date.ToShortDateString());
                 MessageBox.Show(Response.SSLStatus.X509Certificate.NotAfter.Date.ToShortDateString());
             }*/
-            return ProtocolResponse.FromString(TextGemini.NewFormat(Response), Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime);
+            return ProtocolResponse.FromString(TextGemini.NewFormat(Response), Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime, Response.StatusCode);
         }
         public static async Task<ProtocolResponse> SLBrHandler(string Url, string Extra = "")
         {
@@ -394,11 +394,11 @@ namespace SLBr
                     };
                     return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), MimeType);
                 }
-                return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html");
+                return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 200);
             }
             catch (Exception ex)
             {
-                return ProtocolResponse.FromString($"<h1>Error</h1><pre>{System.Net.WebUtility.HtmlEncode(ex.Message)}</pre>", "text/html");
+                return ProtocolResponse.FromString($"<h1>Error</h1><pre>{System.Net.WebUtility.HtmlEncode(ex.Message)}</pre>", "text/html", 200);
             }
         }
         public static ProtocolResponse OverrideHandler(string Url, string Extra = "")
@@ -1076,7 +1076,7 @@ namespace SLBr
 
                     Stream = new MemoryStream(Response.Data);
                     MimeType = Response.MimeType;
-                    StatusCode = 200;
+                    StatusCode = Response.StatusCode;
                     StatusText = "OK";
 
                     callback.Continue();

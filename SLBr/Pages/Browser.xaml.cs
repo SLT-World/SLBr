@@ -1120,7 +1120,7 @@ namespace SLBr.Pages
                     }
                     else
                     {
-                        EventHandler<bool>? DelayHandler = null;
+                        EventHandler<LoadingStateResult>? DelayHandler = null;
                         DelayHandler = async (sender, args) =>
                         {
                             if (WebView.CanExecuteJavascript)
@@ -1143,7 +1143,7 @@ namespace SLBr.Pages
             });
         }
 
-        private async void WebView_LoadingStateChanged(object? sender, bool e)
+        private async void WebView_LoadingStateChanged(object? sender, LoadingStateResult e)
         {
             if (WebView == null || !WebView.IsBrowserInitialized)
                 return;
@@ -1159,7 +1159,7 @@ namespace SLBr.Pages
             InstallWebAppButton.Visibility = Visibility.Collapsed;
             for (int i = 0; i < LocalInfoBars.Count; i++)
                 CloseInfoBar(LocalInfoBars[i]);
-            BrowserLoadChanged(Address, IsLoading);
+            BrowserLoadChanged(Address, IsLoading, e.HttpStatusCode);
             if (!IsLoading)
             {
                 if (!Private)
@@ -1830,7 +1830,7 @@ namespace SLBr.Pages
                 App.Instance.AdBlockAllowList.Add(Host);
         }
 
-        async void BrowserLoadChanged(string Address, bool? IsLoading = null)
+        async void BrowserLoadChanged(string Address, bool? IsLoading = null, int? StatusCode = null)
         {
             if (OmniBox.Text != Address)
             {
@@ -1941,6 +1941,8 @@ namespace SLBr.Pages
                                 {
                                     SiteInformationCertificate.Visibility = Visibility.Visible;
                                     SetSiteInfo = "Secure";
+                                    if (StatusCode == 418)
+                                        SetSiteInfo = "Teapot";
                                     if (WebView is ChromiumWebView ChromiumView)
                                     {
                                         NavigationEntry _NavigationEntry = await ((ChromiumWebBrowser)ChromiumView.Control).GetVisibleNavigationEntryAsync();
@@ -1952,9 +1954,6 @@ namespace SLBr.Pages
                                                 WebView?.Navigate(WebView?.Address);
                                                 return;
                                             }*/
-                                            if (_NavigationEntry.HttpStatusCode == 418)
-                                                SetSiteInfo = "Teapot";
-                                            //TODO: Implement teapot easter egg on WebView2 & Trident web engines
 
                                             CertificateValidation.Text = _NavigationEntry.SslStatus.IsSecureConnection ? "Certificate is valid" : "Certificate is invalid";
                                             SslStatus _SSL = _NavigationEntry.SslStatus;

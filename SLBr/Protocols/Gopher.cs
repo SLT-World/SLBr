@@ -74,6 +74,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
 
     public class GopherResponse : GeminiGopherIResponse
     {
+        public int StatusCode { get; set; } = 200;
         public List<byte> Bytes { get; set; }
         public string Mime { get; set; } = "application/octet-stream";
         public string _Encoding { get; set; } = "UTF-8";
@@ -83,11 +84,12 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
 
     public class Gopher
     {
-        static GopherResponse ErrorResponse(Uri _Uri, string Message)
+        static GopherResponse ErrorResponse(Uri _Uri, string Message, int StatusCode)
         {
             return new()
             {
                 _Uri = _Uri,
+                StatusCode = StatusCode,
                 Mime = "text/plain",
                 SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None },
                 Bytes = Encoding.UTF8.GetBytes(Message).ToList(),
@@ -120,7 +122,8 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
                 {
                     //Response.CodeMajor = '4';
                     //Response.CodeMinor = '4';
-                    Response.Bytes = Encoding.UTF8.GetBytes("Read timeout").ToList();
+                    Response.StatusCode = 408;
+                    Response.Bytes = Encoding.UTF8.GetBytes("Request timeout").ToList();
                     break;
                 }
             }

@@ -123,23 +123,26 @@ namespace SLBr
 
     public class ProtocolResponse
     {
+        public int StatusCode { get; set; }
         public string MimeType { get; set; }
         public byte[] Data { get; set; }
 
-        public static ProtocolResponse FromString(string Content, string _MimeType = "text/html")
+        public static ProtocolResponse FromString(string Content, string _MimeType = "text/html", int _StatusCode = 200)
         {
             return new ProtocolResponse
             {
                 MimeType = _MimeType,
+                StatusCode = _StatusCode,
                 Data = Encoding.UTF8.GetBytes(Content)
             };
         }
 
-        public static ProtocolResponse FromBytes(byte[] Data, string _MimeType = "application/octet-stream")
+        public static ProtocolResponse FromBytes(byte[] Data, string _MimeType = "application/octet-stream", int _StatusCode = 200)
         {
             return new ProtocolResponse
             {
                 MimeType = _MimeType,
+                StatusCode = _StatusCode,
                 Data = Data
             };
         }
@@ -221,6 +224,17 @@ namespace SLBr
         {
             ActiveMatch = _ActiveMatch;
             MatchCount = _MatchCount;
+        }
+    }
+
+    public struct LoadingStateResult
+    {
+        public bool IsLoading { get; }
+        public int? HttpStatusCode { get; }
+        public LoadingStateResult(bool _IsLoading, int? _HttpStatusCode)
+        {
+            IsLoading = _IsLoading;
+            HttpStatusCode = _HttpStatusCode;
         }
     }
 
@@ -816,7 +830,7 @@ namespace SLBr
 
         event EventHandler IsBrowserInitializedChanged;
 
-        event EventHandler<bool> LoadingStateChanged;
+        event EventHandler<LoadingStateResult> LoadingStateChanged;
         event EventHandler<string> TitleChanged;
         event EventHandler<string> StatusMessage;
         event EventHandler<string> FaviconChanged;
@@ -1012,7 +1026,7 @@ namespace SLBr
             IsLoading = e.IsLoading;
             NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
             IsSecure = _NavigationEntry != null ? _NavigationEntry.SslStatus.IsSecureConnection : Address.StartsWith("https:");
-            LoadingStateChanged?.RaiseUIAsync(this, e.IsLoading);
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(e.IsLoading, _NavigationEntry?.HttpStatusCode));
         }
 
         public WebEngineType Engine => WebEngineType.Chromium;
@@ -1110,7 +1124,7 @@ namespace SLBr
         public event EventHandler<string> FrameLoadStart;
         public event EventHandler<string> FrameLoadEnd;
         public event EventHandler IsBrowserInitializedChanged;
-        public event EventHandler<bool> LoadingStateChanged;
+        public event EventHandler<LoadingStateResult> LoadingStateChanged;
         public event EventHandler<string> TitleChanged;
         public event EventHandler<string> StatusMessage;
         public event EventHandler<string> FaviconChanged;
@@ -1682,7 +1696,7 @@ namespace SLBr
                 if (WebViewManager.Settings.Schemes.TryGetValue(Utils.GetScheme(e.Request.Uri), out var Handler))
                 {
                     ProtocolResponse Response = await Handler(e.Request.Uri, Settings.Private.ToInt().ToString());
-                    e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(Response.Data), 200, "OK", $"Content-Type: {Response.MimeType}");
+                    e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(Response.Data), Response.StatusCode, "OK", $"Content-Type: {Response.MimeType}");
                 }
             }
             finally
@@ -1778,7 +1792,7 @@ namespace SLBr
                 return;
             }
             IsLoading = true;
-            LoadingStateChanged?.RaiseUIAsync(this, IsLoading);
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
         }
 
         public Task<CoreWebView2> WaitForCoreWebView2Async()
@@ -1868,7 +1882,7 @@ namespace SLBr
 
             if (!e.IsSuccess && e.WebErrorStatus != CoreWebView2WebErrorStatus.ConnectionAborted)
                 NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(e.HttpStatusCode, e.WebErrorStatus.ToString(), Address));
-            LoadingStateChanged?.RaiseUIAsync(this, IsLoading);
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, e.HttpStatusCode));
         }
 
         public WebEngineType Engine => WebEngineType.ChromiumEdge;
@@ -1947,7 +1961,7 @@ namespace SLBr
         public event EventHandler<string> FrameLoadStart;
         public event EventHandler<string> FrameLoadEnd;
         public event EventHandler IsBrowserInitializedChanged;
-        public event EventHandler<bool> LoadingStateChanged;
+        public event EventHandler<LoadingStateResult> LoadingStateChanged;
         public event EventHandler<string> TitleChanged;
         public event EventHandler<string> StatusMessage;
         public event EventHandler<string> FaviconChanged;
@@ -2117,7 +2131,7 @@ namespace SLBr
             BrowserCore.OnFullScreen += (e) => FullscreenChanged?.RaiseUIAsync(this, e);
             BrowserCore.NavigateError += NavigateError;
             BrowserCore.OnTheaterMode += (e) => FullscreenChanged?.RaiseUIAsync(this, e);
-            BrowserCore.SetSecureLockIcon += (e) => IsSecure = e != 0;
+            BrowserCore.SetSecureLockIcon += (e) => IsSecure = e == 2;//TODO: Display yellow triangular warning for mixed content.
             BrowserCore.DocumentComplete += DocumentComplete;
             BrowserCore.RegisterAsDropTarget = true;
 
@@ -2297,26 +2311,16 @@ namespace SLBr
             }*/
             IsLoading = true;
             FrameLoadStart?.RaiseUIAsync(this, e.Uri?.AbsoluteUri ?? Address);
-            LoadingStateChanged?.RaiseUIAsync(this, IsLoading);
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
             //AxBrowser.Silent = true;
         }
         private void LoadCompleted(object sender, NavigationEventArgs e)
         {
             ResourceResponded?.RaiseUIAsync(this, new ResourceRespondedResult(e.Uri?.AbsoluteUri ?? Address, ResourceRequestType.SubResource));
             IsLoading = false;
-            //IsSecure = Address.StartsWith("https:");
             FrameLoadEnd?.RaiseUIAsync(this, e.Uri?.AbsoluteUri ?? Address);
-            LoadingStateChanged?.RaiseUIAsync(this, IsLoading);
-
-            /*try
-            {
-                Title = Browser.InvokeScript("eval", "document.title").ToString() ?? string.Empty;
-                TitleChanged?.RaiseUIAsync(this, Title);
-            }
-            catch
-            {
-                Title = string.Empty;
-            }*/
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
+            //TODO: Include http status code in result.
 
             try
             {
@@ -2454,7 +2458,7 @@ namespace SLBr
         public event EventHandler<string> FrameLoadStart;
         public event EventHandler<string> FrameLoadEnd;
         public event EventHandler IsBrowserInitializedChanged;
-        public event EventHandler<bool> LoadingStateChanged;
+        public event EventHandler<LoadingStateResult> LoadingStateChanged;
         public event EventHandler<string> TitleChanged;
         public event EventHandler<string> StatusMessage;
         public event EventHandler<string> FaviconChanged;

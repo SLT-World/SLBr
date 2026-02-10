@@ -184,6 +184,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
     }
     public interface GeminiGopherIResponse
     {
+        int StatusCode { get; }
         List<byte> Bytes { get; }
         string Mime { get; }
         Uri _Uri { get; }
@@ -196,6 +197,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
         public char CodeMajor;
         public char CodeMinor;
         public string Meta;
+        public int StatusCode { get; set; } = 200;
         public Uri _Uri { get; set; }
         public List<byte> Bytes { get; set; } = new List<byte>();
         public string Mime { get; set; } = "text/gemini";
@@ -237,7 +239,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
     }
     public class Gemini
     {
-        static GeminiResponse ErrorResponse(Uri _Uri, char Major, char Minor, string Message)
+        static GeminiResponse ErrorResponse(Uri _Uri, char Major, char Minor, string Message, int StatusCode)
         {
             return new GeminiResponse
             {
@@ -245,6 +247,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 CodeMinor = Minor,
                 Meta = Message,
                 _Uri = _Uri,
+                StatusCode = StatusCode,
                 Mime = "text/plain",
                 SSLStatus = new WebSSLStatus() { PolicyErrors = SslPolicyErrors.None },
                 Bytes = Encoding.UTF8.GetBytes($"{Major}{Minor}: {Message}").ToList()
@@ -278,7 +281,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 {
                     Response.CodeMajor = '4';
                     Response.CodeMinor = '4';
-                    Response.Meta = "Read timeout";
+                    Response.Meta = "Request timeout";
                     break;
                 }
                 //throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
