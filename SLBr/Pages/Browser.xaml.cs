@@ -866,7 +866,7 @@ namespace SLBr.Pages
                                 break;
                         }
                         if (Block)
-                            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, -300, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, string.Empty);
+                            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, WebErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, string.Empty);
                     }
                 }
 
@@ -1059,48 +1059,11 @@ namespace SLBr.Pages
 
         private void WebView_NavigationError(object? sender, NavigationErrorEventArgs e)
         {
-            //https://github.com/brave/brave-core/blob/master/components/brave_wayback_machine/brave_wayback_machine_tab_helper.cc
-            if (WaybackInfoBar == null && e.ErrorCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526 && Utils.IsHttpScheme(e.Url) && bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar")) && Utils.FastHost(e.Url) != "web.archive.org")
-            {
-                Dispatcher.BeginInvoke(async () =>
-                {
-                    WaybackInfoBar = new()
-                    {
-                        Icon = "\xf384",
-                        IconForeground = App.Instance.OrangeColor,
-                        Title = "Page Missing",
-                        Description = [new() { Text =  "Do you want to check if a snapshot is available on the Wayback Machine?" }],
-                        Actions = [
-                            new() { Text = "Check", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(async () => {
-                                WaybackInfoBar.Actions[0].IsEnabled = false;
-                                try
-                                {
-                                    using (HttpClient Client = new())
-                                    {
-                                        Client.DefaultRequestHeaders.Add("User-Agent", App.Instance.UserAgent);
-                                        string Json = await Client.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={WebUtility.UrlEncode(e.Url)}");
-                                        CloseInfoBar(WaybackInfoBar);
-                                        using JsonDocument Document = JsonDocument.Parse(Json);
-                                        if (Document.RootElement.TryGetProperty("archived_snapshots", out JsonElement Snapshots) && Snapshots.TryGetProperty("closest", out JsonElement Closest) && Closest.TryGetProperty("available", out JsonElement Available) && Available.GetBoolean() && Closest.TryGetProperty("url", out var Url))
-                                            Navigate(Url.GetString());
-                                    }
-                                }
-                                catch { CloseInfoBar(WaybackInfoBar); }
-                            }) },
-                            new() { Text = "Do not ask again", Command = new RelayCommand(async () => {
-                                CloseInfoBar(WaybackInfoBar);
-                                App.Instance.GlobalSave.Set("WaybackInfoBar", false);
-                            }) }
-                        ]
-                    };
-                    LocalInfoBars.Add(WaybackInfoBar);
-                });
-            }
-            if (WebView.Engine == WebEngineType.ChromiumEdge && e.ErrorText == "Unknown") //For Edge's SmartScreen error page
+            if (WebView.Engine == WebEngineType.ChromiumEdge && e.RawError == "Unknown") //For Edge's SmartScreen error page
                 return;
-            if (WebView.Engine == WebEngineType.Trident && e.ErrorCode == -2146697203) //Custom protocols in IE
+            if (WebView.Engine == WebEngineType.Trident)//Prevents navigation loop.
                 return;
-            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, e.ErrorCode, e.ErrorText), Encoding.UTF8), "text/html", 1);
+            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, e.ErrorCode, e.RawError), Encoding.UTF8), "text/html", 1);
             Navigate(e.Url);
         }
 
@@ -1406,10 +1369,14 @@ namespace SLBr.Pages
                     if (i == WebContextMenuType.Link)
                     {
                         IsPageMenu = false;
+                        bool HasLinkText = !string.IsNullOrEmpty(e.LinkText?.Trim());
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open link in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) }); 
-                        BrowserMenu.Items.Add(new MenuItem { IsEnabled = !string.IsNullOrEmpty(e.LinkText?.Trim()), Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkText)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
+                        if (HasLinkText)
+                            BrowserMenu.Items.Add(new MenuItem { /*IsEnabled = HasLinkText, */Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkText)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share link", Command = new RelayCommand(_ => Share(e.LinkUrl)) });
+                        if (HasLinkText)
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.LinkText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.LinkText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                     }
                     else if (i == WebContextMenuType.Selection && !e.IsEditable && !string.IsNullOrEmpty(e.SelectionText.ReplaceLineEndings("").Trim()))
                     {
@@ -1897,9 +1864,9 @@ namespace SLBr.Pages
                 }
             }
             bool IsHTTP = Utils.IsHttpScheme(Address);
+            string Host = Utils.FastHost(Address);
             if (IsHTTP && App.Instance.AdBlock != 0)
             {
-                string Host = Utils.FastHost(Address);
                 AdBlockHostText.Text = Host;
                 AdBlockToggleButton.IsChecked = !App.Instance.AdBlockAllowList.Has(Host);
                 AdBlockContainer.Visibility = Visibility.Visible;
@@ -1932,6 +1899,7 @@ namespace SLBr.Pages
                     }
                     if (string.IsNullOrEmpty(SetSiteInfo))
                     {
+                        SiteInformationCertificate.Visibility = Visibility.Collapsed;
                         CertificateInfo.Visibility = Visibility.Collapsed;
                         if (IsHTTP)
                         {
@@ -2111,6 +2079,43 @@ namespace SLBr.Pages
                     SiteInformationText.Text = "Loading";
                     LoadingStoryboard?.Begin();
                     SiteInformationPopupButton.IsEnabled = false;
+                }
+                //https://github.com/brave/brave-core/blob/master/components/brave_wayback_machine/brave_wayback_machine_tab_helper.cc
+                if (WaybackInfoBar == null && StatusCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526 && IsHTTP && Host != "web.archive.org" && bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar")))
+                {
+                    Dispatcher.BeginInvoke(async () =>
+                    {
+                        WaybackInfoBar = new()
+                        {
+                            Icon = "\xf384",
+                            IconForeground = App.Instance.OrangeColor,
+                            Title = "Page Missing",
+                            Description = [new() { Text = "Do you want to check if a snapshot is available on the Wayback Machine?" }],
+                            Actions = [
+                                new() { Text = "Check", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(async () => {
+                                WaybackInfoBar.Actions[0].IsEnabled = false;
+                                try
+                                {
+                                    using (HttpClient Client = new())
+                                    {
+                                        Client.DefaultRequestHeaders.Add("User-Agent", App.Instance.UserAgent);
+                                        string Json = await Client.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={WebUtility.UrlEncode(Address)}");
+                                        CloseInfoBar(WaybackInfoBar);
+                                        using JsonDocument Document = JsonDocument.Parse(Json);
+                                        if (Document.RootElement.TryGetProperty("archived_snapshots", out JsonElement Snapshots) && Snapshots.TryGetProperty("closest", out JsonElement Closest) && Closest.TryGetProperty("available", out JsonElement Available) && Available.GetBoolean() && Closest.TryGetProperty("url", out var Url))
+                                            Navigate(Url.GetString());
+                                    }
+                                }
+                                catch { CloseInfoBar(WaybackInfoBar); }
+                            }) },
+                            new() { Text = "Do not ask again", Command = new RelayCommand(async () => {
+                                CloseInfoBar(WaybackInfoBar);
+                                App.Instance.GlobalSave.Set("WaybackInfoBar", false);
+                            }) }
+                            ]
+                        };
+                        LocalInfoBars.Add(WaybackInfoBar);
+                    });
                 }
             }
         }

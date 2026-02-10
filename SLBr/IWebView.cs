@@ -6,6 +6,7 @@ using Microsoft.Web.WebView2.Wpf;
 using SLBr.Handlers;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -71,18 +72,269 @@ namespace SLBr
         DiskCache
     }*/
 
+    //https://chromium.googlesource.com/chromium/src/+/HEAD/net/base/net_error_list.h
+    public enum WebErrorCode
+    {
+        BlobReferencedFileUnavailable = -906,
+        BlobReferencedBlobBroken = -905,
+        BlobDereferencedWhileBuilding = -904,
+        BlobSourceDiedInTransit = -903,
+        BlobFileWriteFailed = -902,
+        BlobOutOfMemory = -901,
+        BlobInvalidConstructionArguments = -900,
+        DnsCacheInvalidationInProgress = -815,
+        DnsSecureProbeRecordInvalid = -814,
+        DnsNoMatchingSupportedAlpn = -811,
+        DnsRequestCancelled = -810,
+        DnsNameHttpsOnly = -809,
+        DnsSecureResolverHostnameResolutionFailed = -808,
+        DnsSortError = -806,
+        DnsSearchEmpty = -805,
+        DnsCacheMiss = -804,
+        DnsTimedOut = -803,
+        DnsServerFailed = -802,
+        DnsServerRequiresTcp = -801,
+        DnsMalformedResponse = -800,
+        CertVerifierChanged = -716,
+        CertDatabaseChanged = -714,
+        SelfSignedCertGenerationFailed = -713,
+        PrivateKeyExportFailed = -712,
+        KeyGenerationFailed = -710,
+        Pkcs12ImportUnsupported = -709,
+        Pkcs12ImportInvalidFile = -708,
+        Pkcs12ImportInvalidMac = -707,
+        ImportServerCertFailed = -706,
+        ImportCaCertFailed = -705,
+        ImportCertAlreadyExists = -704,
+        ImportCaCertNotCa = -703,
+        Pkcs12ImportFailed = -702,
+        Pkcs12ImportBadPassword = -701,
+        TrustTokenOperationSuccessWithoutSendingRequest = -507,
+        TrustTokenOperationFailed = -506,
+        InvalidWebBundle = -505,
+        InvalidSignedExchange = -504,
+        AddUserCertFailed = -503,
+        NoPrivateKeyForCert = -502,
+        InsecureResponse = -501,
+        CacheOpenOrCreateFailure = -413,
+        CacheDoomFailure = -412,
+        CacheEntryNotSuitable = -411,
+        CacheAuthFailureAfterRead = -410,
+        CacheLockTimeout = -409,
+        CacheChecksumMismatch = -408,
+        CacheChecksumReadFailure = -407,
+        CacheRace = -406,
+        CacheCreateFailure = -405,
+        CacheOpenFailure = -404,
+        CacheOperationNotSupported = -403,
+        CacheWriteFailure = -402,
+        CacheReadFailure = -401,
+        CacheMiss = -400,
+        UnexpectedContentDictionaryHeader = -388,
+        DictionaryLoadFailed = -387,
+        ZstdWindowSizeTooBig = -386,
+        BlockedByLocalNetworkAccessChecks = -385,
+        CachedIpAddressSpaceBlockedByLocalNetworkAccessPolicy = -384,
+        InconsistentIpAddressSpace = -383,
+        TooManyAcceptChRestarts = -382,
+        QuicGoawayRequestCanBeRetried = -381,
+        QuicCertRootNotKnown = -380,
+        HttpResponseCodeFailure = -379,
+        Http2StreamClosed = -376,
+        TooManyRetries = -375,
+        Http2RstStreamNoErrorReceived = -372,
+        ContentDecodingInitFailed = -371,
+        InvalidHttpResponse = -370,
+        ProxyRequired = -368,
+        PacScriptTerminated = -367,
+        ProxyHttp11Required = -366,
+        Http11Required = -365,
+        ProxyAuthRequestedWithNoConnection = -364,
+        Http2CompressionError = -363,
+        Http2FrameSizeError = -362,
+        Http2FlowControlError = -361,
+        Http2InadequateTransportSecurity = -360,
+        QuicHandshakeFailed = -358,
+        ResponseHeadersTruncated = -357,
+        QuicProtocolError = -356,
+        IncompleteChunkedEncoding = -355,
+        ContentLengthMismatch = -354,
+        Http2PingFailed = -352,
+        Http2ServerRefusedStream = -351,
+        ResponseHeadersMultipleLocation = -350,
+        ResponseHeadersMultipleContentDisposition = -349,
+        PacNotInDhcp = -348,
+        IncompleteHttp2Headers = -347,
+        ResponseHeadersMultipleContentLength = -346,
+        ResponseBodyTooBigToDrain = -345,
+        UndocumentedSecurityLibraryStatus = -344,
+        MisconfiguredAuthEnvironment = -343,
+        UnexpectedSecurityLibraryStatus = -342,
+        MissingAuthCredentials = -341,
+        EncodingDetectionFailed = -340,
+        UnsupportedAuthScheme = -339,
+        InvalidAuthCredentials = -338,
+        Http2ProtocolError = -337,
+        NoSupportedProxies = -336,
+        UnrecognizedFtpDirectoryListingFormat = -334,
+        EncodingConversionFailed = -333,
+        SynReplyNotReceived = -332,
+        NetworkIoSuspended = -331,
+        ContentDecodingFailed = -330,
+        MalformedIdentity = -329,
+        RequestRangeNotSatisfiable = -328,
+        PacScriptFailed = -327,
+        ResponseHeadersTooBig = -325,
+        EmptyResponse = -324,
+        UnexpectedProxyAuth = -323,
+        MethodNotSupported = -322,
+        InvalidChunkedEncoding = -321,
+        InvalidResponse = -320,
+        UnsafePort = -312,
+        UnsafeRedirect = -311,
+        TooManyRedirects = -310,
+        InvalidRedirect = -303,
+        UnknownUrlScheme = -302,
+        DisallowedUrlScheme = -301,
+        InvalidUrl = -300,
+        CertEnd = -220,
+        CertSelfSignedLocalNetwork = -219,
+        CertKnownInterceptionBlocked = -217,
+        CertificateTransparencyRequired = -214,
+        CertValidityTooLong = -213,
+        CertNameConstraintViolation = -212,
+        CertWeakKey = -211,
+        CertNonUniqueName = -210,
+        CertWeakSignatureAlgorithm = -208,
+        CertInvalid = -207,
+        CertRevoked = -206,
+        CertUnableToCheckRevocation = -205,
+        CertNoRevocationMechanism = -204,
+        CertContainsErrors = -203,
+        CertAuthorityInvalid = -202,
+        CertDateInvalid = -201,
+        CertCommonNameInvalid = -200,
+        ProxyDelegateCanceledConnectResponse = -188,
+        ProxyDelegateCanceledConnectRequest = -187,
+        ProxyUnableToConnectToDestination = -186,
+        EchFallbackCertificateInvalid = -184,
+        EchNotNegotiated = -183,
+        InvalidEchConfigList = -182,
+        SslKeyUsageIncompatible = -181,
+        Tls13DowngradeDetected = -180,
+        WrongVersionOnEarlyData = -179,
+        EarlyDataRejected = -178,
+        SslClientAuthNoCommonAlgorithms = -177,
+        NoBufferSpace = -176,
+        ReadIfReadyNotImplemented = -174,
+        WsUpgrade = -173,
+        SslObsoleteCipher = -172,
+        CtConsistencyProofParsingFailed = -171,
+        UnableToReuseConnectionForProxyAuth = -170,
+        CtSthIncomplete = -169,
+        CtSthParsingFailed = -168,
+        SslServerCertBadFormat = -167,
+        ICANNNameCollision = -166,
+        SslClientAuthCertBadFormat = -164,
+        SocketSendBufferSizeUnchangeable = -163,
+        SocketReceiveBufferSizeUnchangeable = -162,
+        SocketSetSendBufferSizeError = -161,
+        SocketSetReceiveBufferSizeError = -160,
+        SslUnrecognizedNameAlert = -159,
+        SslServerCertChanged = -156,
+        WsThrottleQueueTooLarge = -154,
+        SslDecryptErrorAlert = -153,
+        ClientAuthCertTypeUnsupported = -151,
+        SslPinnedKeyNotInCertChain = -150,
+        SslBadPeerPublicKey = -149,
+        SslHandshakeNotCompleted = -148,
+        AddressInUse = -147,
+        WsProtocolError = -145,
+        MsgTooBig = -142,
+        SslClientAuthSignatureFailed = -141,
+        HttpsProxyTunnelResponseRedirect = -140,
+        TemporarilyThrottled = -139,
+        NetworkAccessDenied = -138,
+        NameResolutionFailed = -137,
+        ProxyCertificateInvalid = -136,
+        SslClientAuthCertNoPrivateKey = -135,
+        SslClientAuthPrivateKeyAccessDenied = -134,
+        PreconnectMaxSocketLimit = -133,
+        MandatoryProxyConfigurationFailed = -131,
+        ProxyConnectionFailed = -130,
+        ProxyAuthRequested = -127,
+        SslBadRecordMacAlert = -126,
+        SslDecompressionFailureAlert = -125,
+        WinsockUnexpectedWrittenBytes = -124,
+        SslNoRenegotiation = -123,
+        AlpnNegotiationFailed = -122,
+        SocksConnectionHostUnreachable = -121,
+        SocksConnectionFailed = -120,
+        HostResolverQueueTooLarge = -119,
+        ConnectionTimedOut = -118,
+        BadSslClientAuthCert = -117,
+        ProxyAuthUnsupported = -115,
+        SslRenegotiationRequested = -114,
+        SslVersionOrCipherMismatch = -113,
+        NoSslVersionsEnabled = -112,
+        TunnelConnectionFailed = -111,
+        SslClientAuthCertNeeded = -110,
+        AddressUnreachable = -109,
+        AddressInvalid = -108,
+        SslProtocolError = -107,
+        InternetDisconnected = -106,
+        NameNotResolved = -105,
+        ConnectionFailed = -104,
+        ConnectionAborted = -103,
+        ConnectionRefused = -102,
+        ConnectionReset = -101,
+        ConnectionClosed = -100,
+        BlockedByFingerprintingProtection = -34,
+        NetworkAccessRevoked = -33,
+        BlockedByOrb = -32,
+        BlockedByCsp = -30,
+        CleartextNotPermitted = -29,
+        BlockedByResponse = -27,
+        ContextShutDown = -26,
+        UploadStreamRewindNotSupported = -25,
+        SocketIsConnected = -23,
+        BlockedByAdministrator = -22,
+        NetworkChanged = -21,
+        BlockedByClient = -20,
+        FileVirusInfected = -19,
+        FileNoSpace = -18,
+        FilePathTooLong = -17,
+        FileExists = -16,
+        SocketNotConnected = -15,
+        UploadFileChanged = -14,
+        OutOfMemory = -13,
+        InsufficientResources = -12,
+        NotImplemented = -11,
+        AccessDenied = -10,
+        Unexpected = -9,
+        FileTooBig = -8,
+        TimedOut = -7,
+        FileNotFound = -6,
+        InvalidHandle = -5,
+        InvalidArgument = -4,
+        Aborted = -3,
+        Failed = -2,
+        IoPending = -1,
+        None = 0
+    }
+
     public class NavigationErrorEventArgs : EventArgs
     {
-        public NavigationErrorEventArgs(int _ErrorCode, string _ErrorText, string _Url)
+        public NavigationErrorEventArgs(WebErrorCode _ErrorCode, string _RawError, string _Url)
         {
             ErrorCode = _ErrorCode;
-            ErrorText = _ErrorText;
+            RawError = _RawError;
             Url = _Url;
         }
 
         public string Url { get; }
-        public int ErrorCode { get; }
-        public string ErrorText { get; }
+        public string RawError { get; }
+        public WebErrorCode ErrorCode { get; }
     }
 
     public class WebContextMenuEventArgs : EventArgs
@@ -123,25 +375,28 @@ namespace SLBr
 
     public class ProtocolResponse
     {
+        public WebErrorCode ErrorCode { get; set; }
         public int StatusCode { get; set; }
         public string MimeType { get; set; }
         public byte[] Data { get; set; }
 
-        public static ProtocolResponse FromString(string Content, string _MimeType = "text/html", int _StatusCode = 200)
+        public static ProtocolResponse FromString(string Content, string _MimeType = "text/html", int _StatusCode = 200, WebErrorCode _ErrorCode = WebErrorCode.None)
         {
             return new ProtocolResponse
             {
                 MimeType = _MimeType,
+                ErrorCode = _ErrorCode,
                 StatusCode = _StatusCode,
                 Data = Encoding.UTF8.GetBytes(Content)
             };
         }
 
-        public static ProtocolResponse FromBytes(byte[] Data, string _MimeType = "application/octet-stream", int _StatusCode = 200)
+        public static ProtocolResponse FromBytes(byte[] Data, string _MimeType = "application/octet-stream", int _StatusCode = 200, WebErrorCode _ErrorCode = WebErrorCode.None)
         {
             return new ProtocolResponse
             {
                 MimeType = _MimeType,
+                ErrorCode = _ErrorCode,
                 StatusCode = _StatusCode,
                 Data = Data
             };
@@ -402,6 +657,94 @@ namespace SLBr
                 ContextMenuMediaType.Image => WebContextMenuMediaType.Image,
                 ContextMenuMediaType.File => WebContextMenuMediaType.File,
                 _ => WebContextMenuMediaType.None
+            };
+        }
+
+        public static WebErrorCode ToWebErrorCode(this CefErrorCode Code)
+        {
+            return (WebErrorCode)Code;
+        }
+
+        public static WebErrorCode ToWebErrorCode(this CoreWebView2WebErrorStatus Code)
+        {
+            return Code switch
+            {
+                CoreWebView2WebErrorStatus.CannotConnect => WebErrorCode.ConnectionFailed,
+                CoreWebView2WebErrorStatus.ConnectionAborted => WebErrorCode.ConnectionAborted,
+                CoreWebView2WebErrorStatus.ConnectionReset => WebErrorCode.ConnectionReset,
+                CoreWebView2WebErrorStatus.Disconnected => WebErrorCode.InternetDisconnected,
+                CoreWebView2WebErrorStatus.ErrorHttpInvalidServerResponse => WebErrorCode.InvalidHttpResponse,
+                CoreWebView2WebErrorStatus.HostNameNotResolved => WebErrorCode.NameNotResolved,
+                CoreWebView2WebErrorStatus.OperationCanceled => WebErrorCode.ConnectionAborted,
+                CoreWebView2WebErrorStatus.RedirectFailed => WebErrorCode.InvalidRedirect,
+                CoreWebView2WebErrorStatus.ServerUnreachable => WebErrorCode.AddressUnreachable,
+                CoreWebView2WebErrorStatus.Timeout => WebErrorCode.TimedOut,
+                CoreWebView2WebErrorStatus.UnexpectedError => WebErrorCode.Unexpected,
+                CoreWebView2WebErrorStatus.ValidAuthenticationCredentialsRequired => WebErrorCode.MissingAuthCredentials,
+                CoreWebView2WebErrorStatus.ValidProxyAuthenticationRequired => WebErrorCode.ProxyAuthRequested,
+                CoreWebView2WebErrorStatus.CertificateIsInvalid => WebErrorCode.CertInvalid,
+                CoreWebView2WebErrorStatus.CertificateExpired => WebErrorCode.CertInvalid,
+                CoreWebView2WebErrorStatus.CertificateRevoked => WebErrorCode.CertRevoked,
+                CoreWebView2WebErrorStatus.CertificateCommonNameIsIncorrect => WebErrorCode.CertCommonNameInvalid,
+                CoreWebView2WebErrorStatus.ClientCertificateContainsErrors => WebErrorCode.CertContainsErrors,
+                CoreWebView2WebErrorStatus.Unknown => WebErrorCode.Failed,
+                _ => WebErrorCode.Failed
+            };
+        }
+
+        //https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.socketerror?view=net-10.0
+        public static WebErrorCode ToWebErrorCode(this SocketError Code)
+        {
+            return Code switch
+            {
+                SocketError.AccessDenied => WebErrorCode.AccessDenied,
+                SocketError.AddressAlreadyInUse => WebErrorCode.AddressInUse,
+                SocketError.AddressFamilyNotSupported => WebErrorCode.AddressInvalid,
+                SocketError.AddressNotAvailable => WebErrorCode.AddressInvalid,
+                SocketError.AlreadyInProgress => WebErrorCode.None,
+                SocketError.ConnectionAborted => WebErrorCode.ConnectionAborted,
+                SocketError.ConnectionReset => WebErrorCode.ConnectionReset,
+                SocketError.ConnectionRefused => WebErrorCode.ConnectionRefused,
+                SocketError.DestinationAddressRequired => WebErrorCode.AddressUnreachable,
+                SocketError.Disconnecting => WebErrorCode.InternetDisconnected,
+                SocketError.Fault => WebErrorCode.Failed,
+                SocketError.HostDown => WebErrorCode.NameNotResolved,
+                SocketError.HostNotFound => WebErrorCode.NameNotResolved,
+                SocketError.HostUnreachable => WebErrorCode.AddressUnreachable,
+                SocketError.InProgress => WebErrorCode.None,
+                SocketError.Interrupted => WebErrorCode.Aborted,
+                SocketError.InvalidArgument => WebErrorCode.InvalidArgument,
+                SocketError.IOPending => WebErrorCode.IoPending,
+                SocketError.IsConnected => WebErrorCode.SocketIsConnected,
+                SocketError.MessageSize => WebErrorCode.MsgTooBig,
+                SocketError.NetworkDown => WebErrorCode.InternetDisconnected,
+                SocketError.NetworkReset => WebErrorCode.NetworkChanged,
+                SocketError.NetworkUnreachable => WebErrorCode.NetworkAccessDenied,
+                SocketError.NoBufferSpaceAvailable => WebErrorCode.NoBufferSpace,
+                SocketError.NoData => WebErrorCode.EmptyResponse,
+                SocketError.NoRecovery => WebErrorCode.Failed,
+                SocketError.NotConnected => WebErrorCode.SocketNotConnected,
+                SocketError.NotInitialized => WebErrorCode.Failed,
+                SocketError.NotSocket => WebErrorCode.Failed,
+                SocketError.OperationAborted => WebErrorCode.Aborted,
+                SocketError.OperationNotSupported => WebErrorCode.MethodNotSupported,
+                SocketError.ProcessLimit => WebErrorCode.PreconnectMaxSocketLimit,
+                SocketError.ProtocolFamilyNotSupported => WebErrorCode.UnknownUrlScheme,
+                SocketError.ProtocolNotSupported => WebErrorCode.UnknownUrlScheme,
+                SocketError.ProtocolOption => WebErrorCode.Failed,
+                SocketError.ProtocolType => WebErrorCode.Failed,
+                SocketError.Shutdown => WebErrorCode.Failed,
+                SocketError.SocketError => WebErrorCode.Failed,
+                SocketError.SocketNotSupported => WebErrorCode.Failed,
+                SocketError.Success => WebErrorCode.None,
+                SocketError.SystemNotReady => WebErrorCode.Failed,
+                SocketError.TimedOut => WebErrorCode.TimedOut,
+                SocketError.TooManyOpenSockets => WebErrorCode.PreconnectMaxSocketLimit,
+                SocketError.TryAgain => WebErrorCode.TooManyRetries,
+                SocketError.TypeNotFound => WebErrorCode.Failed,
+                SocketError.VersionNotSupported => WebErrorCode.Failed,
+                SocketError.WouldBlock => WebErrorCode.BlockedByClient,
+                _ => WebErrorCode.Failed
             };
         }
         /*public static WebContextMenuType ToWebContextMenuType(this ContextMenuType Type)
@@ -968,7 +1311,12 @@ namespace SLBr
             if (e.ErrorCode is CefErrorCode.Aborted or CefErrorCode.IoPending or CefErrorCode.BlockedByClient or CefErrorCode.BlockedByResponse)
                 return;
             if (InitializingHistory) return;
-            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs((int)e.ErrorCode, e.ErrorText, e.FailedUrl));
+            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(e.ErrorCode.ToWebErrorCode(), e.ErrorText, e.FailedUrl));
+        }
+        public void RaiseNavigationError(NavigationErrorEventArgs e)
+        {
+            if (InitializingHistory) return;
+            NavigationError?.RaiseUIAsync(this, e);
         }
         private void Browser_StatusMessage(object? sender, StatusMessageEventArgs e) => StatusMessage?.RaiseUIAsync(this, e.Value);
         private void Browser_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -1532,11 +1880,11 @@ namespace SLBr
 
         bool InitializingHistory = false;
 
-        bool CertificateError = false;
+        bool EncounteredError = false;
         private void Browser_ServerCertificateErrorDetected(object? sender, CoreWebView2ServerCertificateErrorDetectedEventArgs e)
         {
             if (InitializingHistory) return;
-            CertificateError = true;
+            EncounteredError = true;
             IsSecure = false;
         }
 
@@ -1658,6 +2006,7 @@ namespace SLBr
             ProtocolResponse OverrideResponse = WebViewManager.OverrideHandler(e.Request.Uri);
             if (OverrideResponse != null)
             {
+                EncounteredError = true;
                 e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(OverrideResponse.Data), 200, "OK", $"Content-Type: {OverrideResponse.MimeType}");
                 return;
             }
@@ -1697,6 +2046,8 @@ namespace SLBr
                 {
                     ProtocolResponse Response = await Handler(e.Request.Uri, Settings.Private.ToInt().ToString());
                     e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(Response.Data), Response.StatusCode, "OK", $"Content-Type: {Response.MimeType}");
+                    if (Response.ErrorCode != WebErrorCode.None)
+                        NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(Response.ErrorCode, "", e.Request.Uri));
                 }
             }
             finally
@@ -1877,11 +2228,15 @@ namespace SLBr
             IsLoading = false;
             IsSecure = false;
 
-            if (BrowserCore.Source.StartsWith("https:"))
-                IsSecure = !CertificateError;
-
             if (!e.IsSuccess && e.WebErrorStatus != CoreWebView2WebErrorStatus.ConnectionAborted)
-                NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(e.HttpStatusCode, e.WebErrorStatus.ToString(), Address));
+            {
+                //EncounteredError = true;
+                NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(e.WebErrorStatus.ToWebErrorCode(), e.WebErrorStatus.ToString(), Address));
+            }
+
+            if (BrowserCore.Source.StartsWith("https:"))
+                IsSecure = !EncounteredError;
+            EncounteredError = false;
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, e.HttpStatusCode));
         }
 
@@ -2137,7 +2492,6 @@ namespace SLBr
 
             if (Settings.JavaScriptMessage)// || Settings.AudioListener)
                 Browser.ObjectForScripting = new Bridge(this);
-            Navigate(InitialUrls.Last());
             ZoomFactor = 1;
         }
 
@@ -2180,7 +2534,44 @@ namespace SLBr
 
         private void NavigateError(object pDisp, ref object URL, ref object Frame, ref object StatusCode, ref bool Cancel)
         {
-            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs((int)StatusCode, string.Empty, (string)URL));
+            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(ToWebErrorCode((int)StatusCode), "", (string)URL));
+        }
+
+
+
+        //https://learn.microsoft.com/en-us/previous-versions/bb268233(v=vs.85)
+        public static WebErrorCode ToWebErrorCode(int StatusCode)
+        {
+            return StatusCode switch
+            {
+                -2146697214 => WebErrorCode.InvalidUrl,
+                -2146697213 => WebErrorCode.Failed,
+                -2146697212 => WebErrorCode.ConnectionFailed,
+                -2146697211 => WebErrorCode.FileNotFound,
+                -2146697210 => WebErrorCode.FileNotFound,
+                -2146697209 => WebErrorCode.BlobReferencedFileUnavailable,
+                -2146697208 => WebErrorCode.Failed,
+                -2146697207 => WebErrorCode.MissingAuthCredentials,
+                -2146697206 => WebErrorCode.Failed,
+                -2146697205 => WebErrorCode.ConnectionTimedOut,
+                -2146697204 => WebErrorCode.InvalidUrl,
+                -2146697203 => WebErrorCode.UnknownUrlScheme,
+                -2146697202 => WebErrorCode.SslProtocolError,
+                -2146697201 => WebErrorCode.ContentDecodingFailed,
+                -2146697200 => WebErrorCode.ContentDecodingInitFailed,
+                -2146697196 => WebErrorCode.InvalidRedirect,
+                -2146697195 => WebErrorCode.UnsafeRedirect,
+                -2146697194 => WebErrorCode.Failed,
+                -2146697193 => WebErrorCode.Failed,
+                -2146697192 => WebErrorCode.Failed,
+                -2146697191 => WebErrorCode.CertInvalid,
+                -2146696960 => WebErrorCode.Failed,
+                -2146696704 => WebErrorCode.Failed,
+                -2146696448 => WebErrorCode.Failed,
+                -2146695936 => WebErrorCode.BlockedByClient,
+                -2146696192 => WebErrorCode.BlockedByClient,
+                _ => WebErrorCode.Failed
+            };
         }
 
         private void TitleChange(string Text)
@@ -2232,8 +2623,9 @@ namespace SLBr
             //    ExecuteScript(Scripts.TridentAudioScript);
         }
 
-        private void Loaded(object sender, RoutedEventArgs e)
+        private async void Loaded(object sender, RoutedEventArgs e)
         {
+            Browser.Loaded -= Loaded;
             /*FieldInfo fiComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
             if (fiComWebBrowser == null) return;
             object objComWebBrowser = fiComWebBrowser.GetValue(Browser);
@@ -2241,22 +2633,13 @@ namespace SLBr
             objComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, [true]);*/
             IsBrowserInitialized = true;
             IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
+
             if (!string.IsNullOrWhiteSpace(InitialUrls.Last()))
                 Navigate(InitialUrls.Last());
-            Browser.Loaded -= Loaded;
         }
 
         private void Navigating(object sender, NavigatingCancelEventArgs e)
         {
-            /*if (e.Uri != null)
-            {
-                ProtocolResponse OverrideResponse = WebViewManager.OverrideHandler(e.Uri.AbsolutePath);
-                if (OverrideResponse != null)
-                {
-                    OverrideAddress = e.Uri.AbsolutePath;
-                    Browser.NavigateToStream(new MemoryStream(OverrideResponse.Data));
-                }
-            }*/
             string Url = e.Uri?.AbsoluteUri ?? OverrideAddress;
             BeforeNavigationEventArgs Args = new BeforeNavigationEventArgs(Url, true);
             BeforeNavigation?.Invoke(this, Args);
@@ -2279,7 +2662,13 @@ namespace SLBr
                     if (WebViewManager.Settings.Schemes.TryGetValue(Utils.GetScheme(Url), out var Handler))
                     {
                         OverrideAddress = Url;
-                        Browser.NavigateToStream(new MemoryStream(Handler(Url, Settings.Private.ToInt().ToString()).Result.Data));
+                        ProtocolResponse Response = Task.Run(() => Handler(Url, Settings.Private.ToInt().ToString())).GetAwaiter().GetResult();
+                        //TODO: Resolve relative path issue, base tag functionality does not apply for non-http schemes.
+                        //string BaseHref = Url.EndsWith('/') ? Url : Url + '/';
+                        //Browser.NavigateToString(Encoding.UTF8.GetString(Response.Data).Replace("<head>", $"<head>\n<base href=\"{BaseHref}\">"));
+                        Browser.NavigateToStream(new MemoryStream(Response.Data));
+                        if (Response.ErrorCode != WebErrorCode.None)
+                            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(Response.ErrorCode, "", Url));
                     }
                 }
             }

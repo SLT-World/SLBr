@@ -331,9 +331,9 @@ namespace SLBr
             }
             catch (Exception _Exception)
             {
-                return ProtocolResponse.FromString($"<h1>Gopher Error</h1><pre>{_Exception.Message}</pre>", "text/html");
+                return ProtocolResponse.FromString($"<h1>Gopher Error</h1><pre>{_Exception.Message}</pre>", "text/html", 0, WebErrorCode.Failed);
             }
-            return ProtocolResponse.FromString(TextGopher.NewFormat(Response), Response.Mime.Contains("application/gopher-menu") ? "text/html" : Response.Mime, Response.StatusCode);
+            return ProtocolResponse.FromString(TextGopher.NewFormat(Response), Response.Mime.Contains("application/gopher-menu") ? "text/html" : Response.Mime, Response.StatusCode, Response.ErrorCode);
         }
         public static async Task<ProtocolResponse> GeminiHandler(string Url, string Extra = "")
         {
@@ -344,7 +344,7 @@ namespace SLBr
             }
             catch (Exception _Exception)
             {
-                return ProtocolResponse.FromString($"<h1>Gemini Error</h1><pre>{_Exception.Message}</pre>", "text/html");
+                return ProtocolResponse.FromString($"<h1>Gemini Error</h1><pre>{_Exception.Message}</pre>", "text/html", 0, WebErrorCode.Failed);
             }
             /*if (Response.SSLStatus.X509Certificate != null)
             {
@@ -353,7 +353,7 @@ namespace SLBr
                 MessageBox.Show(Response.SSLStatus.X509Certificate.NotBefore.Date.ToShortDateString());
                 MessageBox.Show(Response.SSLStatus.X509Certificate.NotAfter.Date.ToShortDateString());
             }*/
-            return ProtocolResponse.FromString(TextGemini.NewFormat(Response), Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime, Response.StatusCode);
+            return ProtocolResponse.FromString(TextGemini.NewFormat(Response), Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime, Response.StatusCode, Response.ErrorCode);
         }
         public static async Task<ProtocolResponse> SLBrHandler(string Url, string Extra = "")
         {
@@ -377,7 +377,7 @@ namespace SLBr
                     }
                     string FilePath = Path.Combine(ResourcesPath, FileName);
                     if (!File.Exists(FilePath))
-                        return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html");
+                        return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
                     string MimeType = Utils.GetFileExtension(FilePath) switch
                     {
                         ".html" => "text/html",
@@ -392,13 +392,13 @@ namespace SLBr
                         ".ico" => "image/x-icon",
                         _ => "application/octet-stream"
                     };
-                    return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), MimeType);
+                    return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), MimeType, 200);
                 }
-                return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 200);
+                return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
             }
             catch (Exception ex)
             {
-                return ProtocolResponse.FromString($"<h1>Error</h1><pre>{System.Net.WebUtility.HtmlEncode(ex.Message)}</pre>", "text/html", 200);
+                return ProtocolResponse.FromString($"<h1>Error</h1><pre>{System.Net.WebUtility.HtmlEncode(ex.Message)}</pre>", "text/html", 0, WebErrorCode.Failed);
             }
         }
         public static ProtocolResponse OverrideHandler(string Url, string Extra = "")
@@ -1050,17 +1050,19 @@ namespace SLBr
                     break;
                 }
             }
-            return new ChromiumResourceHandler(Handler, request.Url, ChromiumWebView?.Settings.Private.ToInt().ToString() ?? string.Empty);
+            return new ChromiumResourceHandler(Handler, request.Url, ChromiumWebView?.Settings.Private.ToInt().ToString() ?? string.Empty, ChromiumWebView);
         }
     }
     public class ChromiumResourceHandler : ResourceHandler
     {
+        private readonly ChromiumWebView? WebView;
         private readonly ProtocolHandler Handler;
         private readonly string Url;
         private readonly string Extra;
 
-        public ChromiumResourceHandler(ProtocolHandler _Handler, string _Url, string _Extra)
+        public ChromiumResourceHandler(ProtocolHandler _Handler, string _Url, string _Extra, ChromiumWebView? _WebView = null)
         {
+            WebView = _WebView;
             Handler = _Handler;
             Url = _Url;
             Extra = _Extra;
@@ -1080,6 +1082,9 @@ namespace SLBr
                     StatusText = "OK";
 
                     callback.Continue();
+
+                    if (Response.ErrorCode != WebErrorCode.None)
+                        WebView?.RaiseNavigationError(new NavigationErrorEventArgs(Response.ErrorCode, "", Url));
                 }
             });
 

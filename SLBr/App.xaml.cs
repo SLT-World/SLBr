@@ -3275,9 +3275,9 @@ Inner Exception: ```{7} ```";
                 }
         #endif*/
 
-        public static string GenerateCannotConnect(string Url, int ErrorCode, string ErrorText)
+        public static string GenerateCannotConnect(string Url, WebErrorCode ErrorCode, string ErrorText)
         {
-            return CannotConnectError.Replace("{Site}", Utils.Host(Url)).Replace("{Error}", ErrorText).Replace("{Description}", $"Error Code: {ErrorCode}");
+            return CannotConnectError.Replace("{Site}", Utils.Host(Url)).Replace("{Error}", ErrorText).Replace("{Description}", $"Error Code: {ErrorCode.ToString()}");
         }
 
         public const string CannotConnectError = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}#content{width:100%;margin-top:140px;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
@@ -4324,7 +4324,6 @@ Inner Exception: ```{7} ```";
         }
         private async Task<byte[]?> DownloadFaviconAsync(string Url)
         {
-            Debug.Write("Downloaded\n");
             if (string.IsNullOrEmpty(Url))
                 return null;
             using (WebClient _WebClient = new())

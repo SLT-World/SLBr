@@ -51,7 +51,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
                     Builder.Append("</div>\n");
                 }
 
-                Builder.Append("</div></body></html>");
+                Builder.Append("\n</div></body></html>");
                 return Builder.ToString();
             }
         }
@@ -75,6 +75,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
     public class GopherResponse : GeminiGopherIResponse
     {
         public int StatusCode { get; set; } = 200;
+        public WebErrorCode ErrorCode { get; set; } = WebErrorCode.None;
         public List<byte> Bytes { get; set; }
         public string Mime { get; set; } = "application/octet-stream";
         public string _Encoding { get; set; } = "UTF-8";
@@ -84,12 +85,13 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
 
     public class Gopher
     {
-        static GopherResponse ErrorResponse(Uri _Uri, string Message, int StatusCode)
+        static GopherResponse ErrorResponse(Uri _Uri, string Message, WebErrorCode ErrorCode)
         {
             return new()
             {
                 _Uri = _Uri,
-                StatusCode = StatusCode,
+                StatusCode = 0,
+                ErrorCode = ErrorCode,
                 Mime = "text/plain",
                 SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None },
                 Bytes = Encoding.UTF8.GetBytes(Message).ToList(),
@@ -115,6 +117,8 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
                 {
                     //Response.CodeMajor = '4';
                     //Response.CodeMinor = '3';
+                    Response.StatusCode = 0;
+                    Response.ErrorCode = WebErrorCode.FileTooBig;
                     Response.Bytes = Encoding.UTF8.GetBytes("Resource too large").ToList();
                     break;
                 }
@@ -122,7 +126,8 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
                 {
                     //Response.CodeMajor = '4';
                     //Response.CodeMinor = '4';
-                    Response.StatusCode = 408;
+                    Response.StatusCode = 0;
+                    Response.ErrorCode = WebErrorCode.TimedOut;
                     Response.Bytes = Encoding.UTF8.GetBytes("Request timeout").ToList();
                     break;
                 }
@@ -180,7 +185,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
             }
             catch (SocketException ex)
             {
-                return ErrorResponse(HostURL, $"Network error: {ex.Message}");
+                return ErrorResponse(HostURL, $"Network error: {ex.Message}", ex.SocketErrorCode.ToWebErrorCode());
             }
 
             Stream Stream = _Client.GetStream();

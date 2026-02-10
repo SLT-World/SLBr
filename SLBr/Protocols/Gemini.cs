@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using CefSharp.DevTools.Network;
+using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -119,7 +120,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 }
                 Builder.Append(Character);
             }
-            Builder.Append("</div></body></html>");
+            Builder.Append("\n</div></body></html>");
 
             StringWriter Output = new StringWriter();
             using (StringReader Reader = new StringReader(Regex.Replace(Builder.ToString(), @"[^\u0000-\u007F]+", string.Empty, RegexOptions.Compiled)))
@@ -184,6 +185,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
     }
     public interface GeminiGopherIResponse
     {
+        WebErrorCode ErrorCode { get; }
         int StatusCode { get; }
         List<byte> Bytes { get; }
         string Mime { get; }
@@ -198,6 +200,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
         public char CodeMinor;
         public string Meta;
         public int StatusCode { get; set; } = 200;
+        public WebErrorCode ErrorCode { get; set; } = WebErrorCode.None;
         public Uri _Uri { get; set; }
         public List<byte> Bytes { get; set; } = new List<byte>();
         public string Mime { get; set; } = "text/gemini";
@@ -207,9 +210,13 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
         public async Task SetResponseHeader(Stream _Stream)
         {
             byte[] StatusText = { (byte)'4', (byte)'1' };
-            await _Stream.ReadAsync(StatusText, 0, 2);
-            //if (await _Stream.ReadAsync(StatusText, 0, 2) != 2)
-            //    throw new Exception("Malformed Gemini response (no status)");
+            if (await _Stream.ReadAsync(StatusText, 0, 2) != 2)
+            {
+                StatusCode = 0;
+                ErrorCode = WebErrorCode.ContentDecodingFailed;
+                Meta = "Malformed Gemini response (no status)";
+                return;
+            }
 
             var Status = Encoding.UTF8.GetChars(StatusText);
             CodeMajor = Status[0];
@@ -217,8 +224,12 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
 
             int Space = _Stream.ReadByte();
             if (Space != ' ')
+            {
+                StatusCode = 0;
+                ErrorCode = WebErrorCode.ContentDecodingFailed;
+                Meta = "Malformed Gemini response (missing space)";
                 return;
-            //throw new Exception("Malformed Gemini response (missing space)");
+            }
 
             List<byte> MetaBuffer = [];
             int Byte;
@@ -239,7 +250,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
     }
     public class Gemini
     {
-        static GeminiResponse ErrorResponse(Uri _Uri, char Major, char Minor, string Message, int StatusCode)
+        static GeminiResponse ErrorResponse(Uri _Uri, char Major, char Minor, string Message, WebErrorCode ErrorCode)
         {
             return new GeminiResponse
             {
@@ -247,7 +258,8 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 CodeMinor = Minor,
                 Meta = Message,
                 _Uri = _Uri,
-                StatusCode = StatusCode,
+                StatusCode = 0,
+                ErrorCode = ErrorCode,
                 Mime = "text/plain",
                 SSLStatus = new WebSSLStatus() { PolicyErrors = SslPolicyErrors.None },
                 Bytes = Encoding.UTF8.GetBytes($"{Major}{Minor}: {Message}").ToList()
@@ -273,6 +285,8 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 {
                     Response.CodeMajor = '4';
                     Response.CodeMinor = '3';
+                    Response.StatusCode = 0;
+                    Response.ErrorCode = WebErrorCode.FileTooBig;
                     Response.Meta = "Resource too large";
                     break;
                 }
@@ -281,6 +295,8 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 {
                     Response.CodeMajor = '4';
                     Response.CodeMinor = '4';
+                    Response.StatusCode = 0;
+                    Response.ErrorCode = WebErrorCode.TimedOut;
                     Response.Meta = "Request timeout";
                     break;
                 }
@@ -292,7 +308,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             int RefetchCount = 0;
         Refetch:
             if (RefetchCount >= 5)
-                return ErrorResponse(HostURL, '5', '1', "Too many redirects");
+                return ErrorResponse(HostURL, '5', '1', "Too many redirects", WebErrorCode.TooManyRedirects);
             RefetchCount += 1;
 
             var ServerHost = HostURL.Host;
@@ -313,7 +329,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             }
             catch (SocketException ex)
             {
-                return ErrorResponse(HostURL, '5', '1', $"Network error: {ex.Message}");
+                return ErrorResponse(HostURL, '5', '1', $"Network error: {ex.Message}", ex.SocketErrorCode.ToWebErrorCode());
             }
 
             WebSSLStatus SSLStatus = new WebSSLStatus();
@@ -347,7 +363,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             }
             catch (AuthenticationException ex)
             {
-                return ErrorResponse(HostURL, '5', '9', $"TLS authentication failed: {ex.Message}");
+                return ErrorResponse(HostURL, '5', '9', $"TLS authentication failed: {ex.Message}", WebErrorCode.CertAuthorityInvalid);
             }
 
 
