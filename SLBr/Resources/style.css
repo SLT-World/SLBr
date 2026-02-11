@@ -118,7 +118,7 @@ a:hover {
 .SearchInput {
     display: flex;
     align-items: center;
-    outline: 0;
+    outline: 2px solid transparent;
     height: auto;
     padding: 10px 15px;
     border-radius: 1000px;
@@ -127,6 +127,7 @@ a:hover {
     max-width: 560px;
     background: var(--secondary);
     gap: 10px;
+    transition: outline 0.25s ease;
 }
 
 .SearchInput:focus-within {

@@ -2763,11 +2763,11 @@ Inner Exception: ```{7} ```";
             CurrentFocusedWindow().Find(Text);
         public void Screenshot() =>
             CurrentFocusedWindow().Screenshot();
-        public void NewWindow()
+        public void NewWindow(bool ForcePrivate = false)
         {
             MainWindow _Window = new();
             _Window.Show();
-            _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
+            _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, ForcePrivate ? true : bool.Parse(GlobalSave.Get("PrivateTabs")));
             _Window.TabsUI.Visibility = Visibility.Visible;
         }
 
@@ -3169,6 +3169,66 @@ Inner Exception: ```{7} ```";
                 case 6:
                     CurrentWindow.GetTab().Content.WebView?.Print();
                     break;
+                case 7:
+                    int RightCurrentIndex = CurrentWindow.TabsUI.SelectedIndex;
+                    for (int i = 1; i <= CurrentWindow.Tabs.Count; i++)
+                    {
+                        int Index = (RightCurrentIndex + i) % CurrentWindow.Tabs.Count;
+                        if (Index != RightCurrentIndex && CurrentWindow.Tabs[Index].Type == BrowserTabType.Navigation)
+                        {
+                            CurrentWindow.TabsUI.SelectedIndex = Index;
+                            break;
+                        }
+                    }
+                    break;
+                case 8:
+                    int LeftCurrentIndex = CurrentWindow.TabsUI.SelectedIndex;
+                    for (int i = 1; i <= CurrentWindow.Tabs.Count; i++)
+                    {
+                        int Index = (LeftCurrentIndex - i + CurrentWindow.Tabs.Count) % CurrentWindow.Tabs.Count;
+                        if (Index != LeftCurrentIndex && CurrentWindow.Tabs[Index].Type == BrowserTabType.Navigation)
+                        {
+                            CurrentWindow.TabsUI.SelectedIndex = Index;
+                            break;
+                        }
+                    }
+                    break;
+                case 9:
+                    BrowserTabItem? TargetTab = CurrentWindow.Tabs.Where(i => i.Type == BrowserTabType.Navigation).OrderByDescending(i => CurrentWindow.Tabs.IndexOf(i)).FirstOrDefault();
+                    if (TargetTab != null)
+                        CurrentWindow.TabsUI.SelectedItem = TargetTab;
+                    break;
+                case 10:
+                    CurrentWindow.GetTab().Content.Navigate(GlobalSave.Get("Homepage"));
+                    break;
+                case 11:
+                    CurrentWindow.CloseTab(CurrentWindow.GetTab().ID, CurrentWindow.ID);
+                    break;
+                case 12:
+                    CurrentWindow.Close();
+                    break;
+                case 13:
+                    CurrentWindow.NewTab("slbr://history", true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
+                    break;
+                case 14:
+                    CurrentWindow.NewTab("slbr://favourites", true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
+                    break;
+                case 15:
+                    CurrentWindow.NewTab("slbr://downloads", true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
+                    break;
+                case 16:
+                    CurrentWindow.GetTab().Content?.OptionsButton.OpenMenu();
+                    break;
+                case 17:
+                    BrowserTabItem CurrentTab = CurrentWindow.GetTab();
+                    CurrentWindow.NewTab($"view-source:{CurrentTab.Content?.Address}", true, CurrentWindow.TabsUI.SelectedIndex + 1, CurrentTab.Content?.Private ?? bool.Parse(GlobalSave.Get("PrivateTabs")), CurrentTab.TabGroup);
+                    break;
+                case 18:
+                    CurrentWindow.GetTab().Content?.WebView.ExecuteScript("window.scrollTo({top:0,behavior:'smooth'});");
+                    break;
+                case 19:
+                    CurrentWindow.GetTab().Content?.WebView.ExecuteScript("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});");
+                    break;
             }
         }
 
@@ -3209,14 +3269,18 @@ Inner Exception: ```{7} ```";
             WebViewManager.Settings = Settings;
             WebViewManager.RuntimeSettings.PDFViewer = bool.Parse(GlobalSave.Get("PDF"));
 
+            //https://support.google.com/chrome/answer/157179
             HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(), (int)Key.R, true, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(), (int)Key.F5, false, false, false));
-            HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(true), (int)Key.F5, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(true), (int)Key.R, true, true, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => Refresh(true), (int)Key.F5, false, true, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => Fullscreen(), (int)Key.F11, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(2), (int)Key.Escape, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => DevTools(), (int)Key.F12, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => DevTools(), (int)Key.I, true, true, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => DevTools(), (int)Key.J, true, true, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => Find(), (int)Key.F, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => Find(), (int)Key.F3, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(0), (int)Key.F6, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(1), (int)Key.T, true, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(3), (int)Key.D, true, false, false));
@@ -3225,6 +3289,32 @@ Inner Exception: ```{7} ```";
             //For some reason Chrome runtime style opens a new chrome window
             //HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(6), (int)Key.N, true, true, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(6), (int)Key.P, true, false, false));
+
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(7), (int)Key.Tab, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(8), (int)Key.Tab, true, true, false));
+
+            //HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(7), (int)Key.PageUp, true, false, false));
+            //HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(8), (int)Key.PageDown, true, false, false));
+
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(9), (int)Key.NumPad9, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(9), (int)Key.D9, true, false, false));
+
+            HotKeyManager.HotKeys.Add(new HotKey(() => NewWindow(), (int)Key.N, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => NewWindow(true), (int)Key.N, true, true, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(10), (int)Key.Home, false, false, true));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(11), (int)Key.W, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(11), (int)Key.F4, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(12), (int)Key.W, true, true, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(12), (int)Key.F4, false, false, true));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(13), (int)Key.H, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(14), (int)Key.O, true, true, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(15), (int)Key.J, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(16), (int)Key.F, false, false, true));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(16), (int)Key.E, false, false, true));
+            HotKeyManager.HotKeys.Add(new HotKey(() => SwitchUserPopup(), (int)Key.M, true, true, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(17), (int)Key.U, true, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(18), (int)Key.Home, false, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(19), (int)Key.End, false, false, false));
 
             WebViewManager.DownloadManager.DownloadStarted += UpdateDownloadItem;
             WebViewManager.DownloadManager.DownloadUpdated += UpdateDownloadItem;

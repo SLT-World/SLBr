@@ -64,6 +64,18 @@ namespace SLBr
             InitializeWindow();
         }
 
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            HotKeyManager.HandleKeyDown(e);
+        }
+
+        /*protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+            HotKeyManager.HandleKeyDown(e);
+        }*/
+
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             switch (msg)

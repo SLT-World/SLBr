@@ -65,5 +65,21 @@ namespace WinUI
                 Menu.IsOpen = true;
             }
         }
+
+        public void OpenMenu()
+        {
+            if (Menu != null)
+            {
+                Menu.PlacementTarget = this;
+                Menu.Placement = PlacementMode.Bottom;
+                Menu.IsOpen = true;
+            }
+        }
+
+        public void CloseMenu()
+        {
+            if (Menu != null)
+                Menu.IsOpen = false;
+        }
     }
 }

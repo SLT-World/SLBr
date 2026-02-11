@@ -28,17 +28,16 @@ ul.nav {
             height: 40px;
             vertical-align: middle;
             text-align: center;
-            background-color: var(--secondary);
+            background-color: color-mix(in srgb, var(--secondary), transparent);
+            backdrop-filter: blur(5px);
             border-radius: 10px;
             margin: 10px 10px 0 10px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.25s ease;
         }
-        ul.nav > li:hover {
-            background-color: var(--tertiary);
-        }
+            ul.nav > li:hover {
+                background-color: color-mix(in srgb, var(--tertiary), transparent);
+            }
             ul.nav > li > a {
-                color: var(--primary);
-                text-decoration: none;
                 vertical-align: middle;
                 text-align: center;
                 height: 100%;
@@ -51,7 +50,7 @@ ul.nav {
             </div>
             <div class="SearchInput">
                 <span class="font-icon"></span>
-                <input type="text" id="SearchField" autocomplete="off" />
+                <input type="text" id="SearchField" autocomplete="off" placeholder="Search or enter address"/>
             </div>
             <div class="Center">
                 <ul class="nav">

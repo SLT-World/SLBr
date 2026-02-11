@@ -27,7 +27,7 @@
 
                 <DockPanel x:Name="ToolBarPanel" Grid.Row="0" Margin="5,5,0,0">
                     <Button Visibility="Collapsed" Click="ButtonAction" BorderThickness="0" Tag="5&lt;,&gt;{Homepage}" x:Name="NewTabButton" ToolTip="New Tab" Content="&#xe710;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}" ContextMenu="{StaticResource AddTabContextMenu}"/>
-                    <WinUI:DropDownButton ToolTip="Options" BorderThickness="0" Content="&#xE712;" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <WinUI:DropDownButton x:Name="OptionsButton" ToolTip="Options" BorderThickness="0" Content="&#xE712;" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu>
                                 <MenuItem Visibility="Collapsed" Icon="&#xea6a;" Header="New Update" x:Name="NewUpdateMenu" Foreground="Orange" Click="UpdateSLBr"/>
