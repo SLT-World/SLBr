@@ -1,5 +1,4 @@
-﻿using CefSharp.DevTools.Network;
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;

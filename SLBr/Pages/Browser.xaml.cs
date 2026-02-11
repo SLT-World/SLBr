@@ -3906,6 +3906,7 @@ namespace SLBr.Pages
         private void Browser_Loaded(object sender, RoutedEventArgs e)
         {
             Loaded -= Browser_Loaded;
+            MaxHeight = Tab.ParentWindow.TabsUI.ActualHeight;
             OmniTextBox = OmniBox.Template.FindName("PART_EditableTextBox", OmniBox) as TextBox;
             OmniTextBox.PreviewKeyDown += (sender, args) =>
             {

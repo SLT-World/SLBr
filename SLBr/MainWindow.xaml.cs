@@ -734,7 +734,11 @@ namespace SLBr
         {
             TabPreviewPopup.IsOpen = false;
             foreach (BrowserTabItem Tab in Tabs)
+            {
+                if (e.HeightChanged)
+                    Tab.Content?.MaxHeight = TabsUI.ActualHeight;
                 Tab.Content?.UpdateDevToolsPosition();
+            }
         }
 
         public void UnloadTabs()
