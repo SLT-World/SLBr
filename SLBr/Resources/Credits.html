@@ -16,10 +16,10 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 font-size: 2em;
             }
             .product {
-                background-color: whitesmoke;
+                background-color: var(--secondary);
                 overflow: auto;
                 margin: 10px 0px;
-                border: 1px solid gainsboro;
+                border: 1px solid var(--tertiary);
                 border-radius: 5px;
                 padding: 7.5px;
             }
@@ -49,14 +49,14 @@ Use of this source code is governed by a GNU license that can be found in the LI
             .licence h3 {
                 margin-top: 0;
             }
-            .licence pre {
-                white-space: pre-wrap;
-                margin: 0;
-                padding: 7.5px;
-                border: 1px solid gainsboro;
-                border-radius: 5px;
-                background: white;
-            }
+                .licence pre {
+                    white-space: pre-wrap;
+                    margin: 0;
+                    padding: 7.5px;
+                    border: 1px solid var(--tertiary);
+                    border-radius: 5px;
+                    background: var(--primary);
+                }
             .dialog #print-link, .dialog .homepage {
                 display: none;
             }
@@ -75,14 +75,14 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 cursor: pointer;
             }
             .button_style {
-                background: whitesmoke;
+                background: var(--secondary);
                 height: 35px;
                 text-align: center;
                 display: inline-flex;
                 justify-content: center;
                 align-items: center;
                 width: auto;
-                border: 1px solid gainsboro;
+                border: 1px solid var(--tertiary);
                 border-radius: 5px;
                 color: black;
                 transition: 0.5s;
@@ -101,7 +101,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 margin: 0 0 0 auto;
             }
             .button_style:hover {
-                background: gainsboro;
+                background: var(--tertiary);
             }
         </style>
     </head>

@@ -1,24 +1,18 @@
-﻿[data-title]:hover:after {
-    opacity: 1;
-    transition: all 0.2s ease 0.6s;
-    visibility: visible;
-    font-size: 15px;
+﻿html {
+    --primary: white;
+    --secondary: whitesmoke;
+    --tertiary: gainsboro;
+    --font: black;
+    background: var(--primary);
 }
 
-[data-title]:after {
-    content: attr(data-title);
-    position: absolute;
-    padding: 2.5px 5px;
-    color: black;
-    border-radius: 5px;
-    background: white;
-    visibility: hidden;
-    border: 1px solid gainsboro;
-    white-space: nowrap;
-}
-
-html {
-    background: white;
+@media (prefers-color-scheme: dark) {
+    html {
+        --primary: #202225;
+        --secondary: #2F3136;
+        --tertiary: #36393F;
+        --font: white;
+    }
 }
 
 * {
@@ -26,6 +20,7 @@ html {
     padding: 0;
     box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, sans-serif;
+    color: var(--font);
 }
 
 body {
@@ -46,7 +41,7 @@ th {
     padding-bottom: 12px;
     text-align: left;
     background-color: #0092FF;
-    color: white;
+    color: var(--primary);
 }
 
 tr:nth-child(even) {
@@ -71,14 +66,14 @@ h4 {
     overflow-y: hidden;
 }
 
-.AboutHeader h1 {
-    margin: 0px;
-    color: white;
-}
-.AboutHeader p {
-    margin: 0px;
-    color: white;
-}
+    .AboutHeader h1 {
+        margin: 0px;
+        color: var(--primary);
+    }
+    .AboutHeader p {
+        margin: 0px;
+        color: var(--primary);
+    }
 
 .AboutContent {
     margin: 75px;
@@ -123,14 +118,15 @@ a:hover {
 .SearchInput {
     display: flex;
     align-items: center;
-    outline: 1px solid gainsboro;
-    height: 35px;
-    padding: 2.5px 10px;
+    outline: 0;
+    height: auto;
+    padding: 10px 15px;
     border-radius: 1000px;
     width: 75vw;
     margin: 0 auto;
     max-width: 560px;
-    background: white;
+    background: var(--secondary);
+    gap: 10px;
 }
 
 .SearchInput:focus-within {
@@ -141,8 +137,8 @@ a:hover {
     flex: 1;
     border: none;
     outline: none;
-    margin: 0 5px;
     background: transparent;
+    font-size: 16px;
 }
 
 .SearchInput .font-icon {
@@ -165,9 +161,9 @@ a:hover {
 
 .card {
     padding: 5px;
-    background: whitesmoke;
+    background: var(--secondary);
     border-radius: 5px;
-    border: 1px solid gainsboro;
+    border: 1px solid var(--tertiary);
 }
 
 header {
