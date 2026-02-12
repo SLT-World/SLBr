@@ -1202,7 +1202,7 @@ namespace SLBr
 
         bool CanExecuteJavascript { get; }
         void ExecuteScript(string Script);
-        Task<string> EvaluateScriptAsync(string Script);
+        Task<object?> EvaluateScriptAsync(string Script);
         Task<string> CallDevToolsAsync(string Method, object? Parameters = null);
         //Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType);
 
@@ -1544,12 +1544,14 @@ namespace SLBr
         }
 
         public bool CanExecuteJavascript => Browser.CanExecuteJavascriptInMainFrame;
-        public async Task<string> EvaluateScriptAsync(string Script)
+        public async Task<object?> EvaluateScriptAsync(string Script)
         {
             if (!CanExecuteJavascript)
                 return null;
-            var Result = await Browser.EvaluateScriptAsync(Script);
-            return Result.Success ? Result.Result?.ToString() : null;
+            JavascriptResponse Result = await Browser.EvaluateScriptAsync(Script);
+            /*if (!Result.Success)
+                throw new InvalidOperationException(Result.Message);*/
+            return Result.Result;
         }
 
         public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
@@ -2386,13 +2388,43 @@ namespace SLBr
 
         public void ExecuteScript(string Script) => Browser.ExecuteScriptAsync(Script);
         public bool CanExecuteJavascript => BrowserCore != null;
-        public async Task<string> EvaluateScriptAsync(string Script)
+
+        public async Task<object?> EvaluateScriptAsync(string Script)
         {
-            string Result = await BrowserCore.ExecuteScriptAsync(Script);
-            if (Result.StartsWith("\"") && Result.EndsWith("\""))
-                return JsonSerializer.Deserialize<string>(Result);
-            return Result;
+            string Json = await BrowserCore.CallDevToolsProtocolMethodAsync("Runtime.evaluate",
+                JsonSerializer.Serialize(new
+                {
+                    expression = Script,
+                    returnByValue = true,
+                    awaitPromise = true
+                }));
+
+            using JsonDocument Document = JsonDocument.Parse(Json);
+            var Root = Document.RootElement;
+
+            /*if (Root.TryGetProperty("exceptionDetails", out var Exception))
+            {
+                string Message = Exception.GetProperty("text").GetString();
+                if (Root.TryGetProperty("result", out var ResultElement) && ResultElement.TryGetProperty("description", out var Description))
+                    Message += $" ({Description.GetString()})";
+                throw new InvalidOperationException(Message);
+            }*/
+
+            if (Root.TryGetProperty("result", out var Result) && Result.TryGetProperty("value", out var Value))
+            {
+                return Value.ValueKind switch
+                {
+                    JsonValueKind.String => Value.GetString(),
+                    JsonValueKind.Number => Value.TryGetInt64(out var i) ? i : Value.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    JsonValueKind.Null => null,
+                    _ => Value.ToString()
+                };
+            }
+            return null;
         }
+
 
         public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
         {
@@ -2400,7 +2432,7 @@ namespace SLBr
             await BrowserCore.CapturePreviewAsync(Format.ToWebView2ScreenshotFormat(), Stream);
             return Stream.ToArray();
         }
-        public async Task<string> GetSourceAsync() => await EvaluateScriptAsync("document.documentElement.outerHTML");
+        public async Task<string> GetSourceAsync() => (await EvaluateScriptAsync("document.documentElement.outerHTML")).ToString();
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null)
         {
             try
@@ -2914,23 +2946,29 @@ namespace SLBr
         public void ExecuteScript(string Script) { try { Browser?.InvokeScript("execScript", [Script, "JavaScript"]); } catch { } }
 
         public bool CanExecuteJavascript => Browser.Document != null;
-        public Task<string?> EvaluateScriptAsync(string Script)
+        public Task<object?> EvaluateScriptAsync(string Script)
         {
-            var Task = new TaskCompletionSource<string?>();
-
+            var Task = new TaskCompletionSource<object?>();
             Browser?.Dispatcher.InvokeAsync(() =>
             {
                 try
                 {
-                    var Result = Browser?.InvokeScript("eval", [Script])?.ToString();
-                    Task.SetResult(Result);
+                    var WrappedScript = $"JSON.stringify((function(){{ return {Script}; }})())";
+                    var Result = Browser?.InvokeScript("eval", [WrappedScript])?.ToString();
+                    if (string.IsNullOrWhiteSpace(Result) || Result == "null")
+                    {
+                        Task.SetResult(null);
+                        return;
+                    }
+                    var Object = JsonSerializer.Deserialize<object>(Result);
+                    Task.SetResult(Object);
                 }
-                catch (Exception Error)
+                catch// (Exception ex)
                 {
-                    Task.SetException(Error);
+                    //Task.SetException(ex);
+                    Task.SetResult(null);
                 }
             });
-
             return Task.Task;
         }
 
@@ -2960,7 +2998,7 @@ namespace SLBr
             Encoder.Save(Stream);
             return Stream.ToArray();
         }
-        public async Task<string> GetSourceAsync() => await EvaluateScriptAsync("document.documentElement.outerHTML") ?? string.Empty;
+        public async Task<string> GetSourceAsync() => (await EvaluateScriptAsync("document.documentElement.outerHTML")).ToString() ?? string.Empty;
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null) => string.Empty;
 
         public FrameworkElement Control => Browser;

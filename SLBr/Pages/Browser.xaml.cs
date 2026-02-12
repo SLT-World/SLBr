@@ -1172,7 +1172,7 @@ namespace SLBr.Pages
                         try
                         {
                             string CustomThemeColor = string.Empty;
-                            string? Task = await WebView?.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content");
+                            string? Task = (await WebView?.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content")).ToString();
                             if (Task != null)
                                 CustomThemeColor = Task;
                             if (!string.IsNullOrEmpty(CustomThemeColor))
@@ -1383,6 +1383,19 @@ namespace SLBr.Pages
                         IsPageMenu = false;
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                         BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => Clipboard.SetText(e.SelectionText)) });
+                        BrowserMenu.Items.Add(new MenuItem
+                        {
+                            Icon = "\ue71b",
+                            Header = "Copy link to highlight",
+                            Command = new RelayCommand(async () =>
+                            {
+                                //TODO: Implement offline support.
+                                string FragmentText = (await WebView.EvaluateScriptAsync(Scripts.TextFragmentRangeScript)).ToString();
+                                if (string.IsNullOrWhiteSpace(FragmentText))
+                                    return;
+                                Clipboard.SetText($"{Address.Split('#')[0]}#:~:text={FragmentText}");
+                            })
+                        });
                         BrowserMenu.Items.Add(new Separator());
                         BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                     }
@@ -1753,7 +1766,7 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    string? Response = await WebView.EvaluateScriptAsync(Scripts.DetectPWA);
+                    string? Response = (await WebView.EvaluateScriptAsync(Scripts.DetectPWA)).ToString();
                     if (string.IsNullOrEmpty(Response))
                         return (false, string.Empty);
 
@@ -1779,9 +1792,9 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    var Response = await WebView?.EvaluateScriptAsync(Scripts.ArticleScript);
+                    var Response = (bool)await WebView?.EvaluateScriptAsync(Scripts.ArticleScript);
                     if (Response != null)
-                        return bool.Parse(Response);
+                        return Response;
                 }
                 catch { return false; }
             }
@@ -2228,7 +2241,7 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    var Response = await WebView?.EvaluateScriptAsync("window.getSelection().toString();");
+                    var Response = (await WebView?.EvaluateScriptAsync("window.getSelection().toString();")).ToString();
                     if (Response != null)
                         Text = Response.Trim('"');
                 }
@@ -2721,7 +2734,7 @@ namespace SLBr.Pages
                     Refresh();
                 return;
             }
-            string Texts = await WebView.EvaluateScriptAsync(Scripts.GetTranslationText);
+            string Texts = (await WebView.EvaluateScriptAsync(Scripts.GetTranslationText)).ToString();
             List<string> TranslatedTexts = null;
             if (TranslateButton.Visibility == Visibility.Visible)
                 TranslateButton.OpenPopup();

@@ -5584,6 +5584,20 @@ const canvasMemory = [...document.querySelectorAll('canvas')].reduce((sum, c) =>
 const total = performance.memory.totalJSHeapSize + domMemory + imageMemory + canvasMemory;
 return Math.round(total / (1024 * 1024) * 10) / 10;
 })();";
+
+        public const string TextFragmentRangeScript = @"(async() => {
+    const { generateFragment } = await import('https://unpkg.com/text-fragments-polyfill/dist/fragment-generation-utils.js');
+    const result = generateFragment(window.getSelection());
+    if (result.status === 0) {
+        const fragment = result.fragment;
+        const prefix = fragment.prefix ? `${encodeURIComponent(fragment.prefix).replaceAll('-','%2D')}-,` : '';
+        const suffix = fragment.suffix ? `,-${encodeURIComponent(fragment.suffix).replaceAll('-','%2D')}` : '';
+        const start = encodeURIComponent(fragment.textStart).replaceAll('-','%2D');
+        const end = fragment.textEnd ? `,${encodeURIComponent(fragment.textEnd).replaceAll('-','%2D')}` : '';
+        return `${prefix}${start}${end}${suffix}`;
+    }
+    return null;
+})();";
     }
 
     public class WebAppManifest
