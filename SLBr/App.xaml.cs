@@ -5577,13 +5577,13 @@ if (detectDarkAppearance()) return 0;
 return 1;
 }})();";
 
-        public const string EstimatedMemoryUsageScript = @"(function() {{
+        public const string EstimatedMemoryUsageScript = @"(function() {
 const domMemory = document.getElementsByTagName('*').length * 2048;
 const imageMemory = [...document.images].reduce((sum, img) => sum + (img.naturalWidth * img.naturalHeight * 4), 0);
 const canvasMemory = [...document.querySelectorAll('canvas')].reduce((sum, c) => sum + (c.width * c.height * 4), 0);
 const total = performance.memory.totalJSHeapSize + domMemory + imageMemory + canvasMemory;
 return Math.round(total / (1024 * 1024) * 10) / 10;
-}})();";
+})();";
     }
 
     public class WebAppManifest

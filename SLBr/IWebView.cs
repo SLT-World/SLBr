@@ -1374,13 +1374,24 @@ namespace SLBr
             IsLoading = e.IsLoading;
             NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
             IsSecure = _NavigationEntry != null ? _NavigationEntry.SslStatus.IsSecureConnection : Address.StartsWith("https:");
+            IsViewSource = _NavigationEntry?.DisplayUrl.StartsWith("view-source:") ?? false;
+            /*await Browser?.Dispatcher.BeginInvoke(async () =>
+            {
+                if (string.IsNullOrEmpty(ViewSource))
+                {
+                    if (await EvaluateScriptAsync(Scripts.DetectViewSourceScript) == "True")
+                        ViewSource = Browser?.Address;
+                }
+                if (Browser?.Address != ViewSource)
+                    ViewSource = "";
+            });*/
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(e.IsLoading, _NavigationEntry?.HttpStatusCode));
         }
 
         public WebEngineType Engine => WebEngineType.Chromium;
         public string Address
         {
-            get => Browser?.Address ?? InitialUrls.Last();
+            get => (IsViewSource ? "view-source:" : "") + Browser?.Address ?? InitialUrls.Last();
             set => Navigate(value);
         }
         public string Title => Browser.Title;
@@ -1418,6 +1429,7 @@ namespace SLBr
             set { Browser.ZoomLevel = value - 1; }
         }
 
+        bool IsViewSource;
         public void Navigate(string Url) => Browser?.Dispatcher.Invoke(() => Browser.Load(Url));
         public void Back() { if (CanGoBack) Browser.Back(); }
         public void Forward() { if (CanGoForward) Browser.Forward(); }
@@ -2222,7 +2234,7 @@ namespace SLBr
             }
         }
 
-        private void Browser_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+        private async void Browser_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
             if (InitializingHistory) return;
             IsLoading = false;
@@ -2237,14 +2249,46 @@ namespace SLBr
             if (BrowserCore.Source.StartsWith("https:"))
                 IsSecure = !EncounteredError;
             EncounteredError = false;
+            IsViewSource = await DetectViewSource();
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, e.HttpStatusCode));
+        }
+
+        public async Task<bool> DetectViewSource()
+        {
+            try
+            {
+                string Json = await CallDevToolsAsync("Page.getNavigationHistory");
+                if (string.IsNullOrWhiteSpace(Json))
+                    return false;
+                using JsonDocument _JsonDocument = JsonDocument.Parse(Json);
+                var Root = _JsonDocument.RootElement;
+                if (!Root.TryGetProperty("currentIndex", out var CurrentIndexElement))
+                    return false;
+                if (!Root.TryGetProperty("entries", out var Entries))
+                    return false;
+                int CurrentIndex = CurrentIndexElement.GetInt32();
+                if (CurrentIndex < 0 || CurrentIndex >= Entries.GetArrayLength())
+                    return false;
+                var CurrentEntry = Entries[CurrentIndex];
+                if (!CurrentEntry.TryGetProperty("userTypedURL", out var UserTyped))
+                    return false;
+                if (!(UserTyped.GetString() ?? "").StartsWith("view-source:", StringComparison.OrdinalIgnoreCase))
+                    return false;
+                if (CurrentEntry.TryGetProperty("title", out var Title))
+                {
+                    if (!string.IsNullOrEmpty(Title.GetString() ?? ""))
+                        return false;
+                }
+                return true;
+            }
+            catch { return false; }
         }
 
         public WebEngineType Engine => WebEngineType.ChromiumEdge;
         private string CurrentAddress;
         public string Address
         {
-            get => Browser.Source != null ? CurrentAddress : InitialUrls.Last();
+            get => (IsViewSource ? "view-source:" : "") + (Browser.Source != null ? CurrentAddress : InitialUrls.Last());
             set => Navigate(value);
         }
         public string Title => BrowserCore?.DocumentTitle ?? string.Empty;
@@ -2267,6 +2311,8 @@ namespace SLBr
             get => Browser.ZoomFactor;
             set { Browser.ZoomFactor = value; }
         }
+
+        bool IsViewSource;
 
         public void Navigate(string Url) { try { BrowserCore?.Navigate(Url); } catch { } }
         public void Back() { if (CanGoBack) Browser?.GoBack(); }

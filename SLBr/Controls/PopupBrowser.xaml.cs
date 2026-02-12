@@ -162,7 +162,7 @@ namespace SLBr.Controls
                 BrowserMenu.Items.Add(new Separator());
 
                 MenuItem AdvancedSubMenuModel = new MenuItem { Icon = "\uec7a", Header = "Advanced" };
-                AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab($"view-source:{e.FrameUrl}", true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
+                AdvancedSubMenuModel.Items.Add(new MenuItem { IsEnabled = Utils.IsHttpScheme(e.FrameUrl), Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab($"view-source:{e.FrameUrl}", true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
                 BrowserMenu.Items.Add(AdvancedSubMenuModel);
             }
             BrowserMenu.PlacementTarget = WebView?.Control;

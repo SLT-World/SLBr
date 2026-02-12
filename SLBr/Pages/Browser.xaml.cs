@@ -1575,7 +1575,7 @@ namespace SLBr.Pages
 
                 MenuItem AdvancedSubMenuModel = new() { Icon = "\uec7a", Header = "Advanced" };
                 AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\uec7a", Header = "Inspect", Command = new RelayCommand(_ => DevTools()) });
-                AdvancedSubMenuModel.Items.Add(new MenuItem { Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab($"view-source:{e.FrameUrl}", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
+                AdvancedSubMenuModel.Items.Add(new MenuItem { IsEnabled = Utils.IsHttpScheme(e.FrameUrl), Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab($"view-source:{e.FrameUrl}", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                 BrowserMenu.Items.Add(AdvancedSubMenuModel);
             }
             BrowserMenu.PlacementTarget = WebView?.Control;
@@ -1957,6 +1957,8 @@ namespace SLBr.Pages
                                 SetSiteInfo = "File";
                             else if (Address.StartsWith("slbr:"))
                                 SetSiteInfo = "SLBr";
+                            else if (Address.StartsWith("view-source:"))
+                                SetSiteInfo = "Source";
                             else if (Address.StartsWith("chrome-extension:"))
                                 SetSiteInfo = "Extension";
                             else
@@ -1970,8 +1972,6 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = App.Instance.LimeGreenColor;
                             SiteInformationText.Text = "Secure";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\xE72E";
-                            SiteInformationPopupIcon.Foreground = App.Instance.LimeGreenColor;
                             SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is secure";
                             break;
                         case "Insecure":
@@ -1979,8 +1979,6 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = App.Instance.RedColor;
                             SiteInformationText.Text = "Insecure";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\xE785";
-                            SiteInformationPopupIcon.Foreground = App.Instance.RedColor;
                             SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is insecure";
                             break;
                         case "File":
@@ -1988,8 +1986,6 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = App.Instance.NavajoWhiteColor;
                             SiteInformationText.Text = "File";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\xE8B7";
-                            SiteInformationPopupIcon.Foreground = App.Instance.NavajoWhiteColor;
                             SiteInformationPopupText.Text = "Local or shared file";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
@@ -1999,9 +1995,6 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = App.Instance.SLBrColor;
                             SiteInformationText.Text = "SLBr";
                             TranslateButton.Visibility = Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\u2603";
-                            SiteInformationPopupIcon.FontFamily = App.Instance.SLBrFont;
-                            SiteInformationPopupIcon.Foreground = App.Instance.SLBrColor;
                             SiteInformationPopupText.Text = "Secure SLBr page";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
@@ -2010,8 +2003,6 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = App.Instance.RedColor;
                             SiteInformationText.Text = "Danger";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\xE730";
-                            SiteInformationPopupIcon.Foreground = App.Instance.RedColor;
                             SiteInformationPopupText.Text = "Dangerous site";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
@@ -2020,9 +2011,15 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = App.Instance.CornflowerBlueColor;
                             SiteInformationText.Text = "Protocol";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\xE774";
-                            SiteInformationPopupIcon.Foreground = App.Instance.CornflowerBlueColor;
                             SiteInformationPopupText.Text = "Network protocol";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            break;
+                        case "Source":
+                            SiteInformationIcon.Text = "\xe943";
+                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                            SiteInformationText.Text = "Source";
+                            TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
+                            SiteInformationPopupText.Text = "Page source";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
                         case "Extension":
@@ -2030,8 +2027,6 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = "Extension";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\xEA86";
-                            SiteInformationPopupIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationPopupText.Text = "Extension";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
@@ -2040,11 +2035,12 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationText.Text = "Teapot";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupIcon.Text = "\xEC32";
-                            SiteInformationPopupIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             SiteInformationPopupText.Text = "I'm a teapot";
                             break;
                     }
+                    SiteInformationPopupIcon.Text = SiteInformationIcon.Text;
+                    SiteInformationPopupIcon.Foreground = SiteInformationIcon.Foreground;
+                    SiteInformationPopupIcon.FontFamily = SiteInformationIcon.FontFamily;
                     LoadingStoryboard?.Seek(TimeSpan.Zero);
                     LoadingStoryboard?.Stop();
                     if (App.Instance.AllowReaderModeButton && IsHTTP)
