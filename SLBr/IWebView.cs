@@ -493,6 +493,27 @@ namespace SLBr
         }
     }
 
+    public struct WebNavigationEntry
+    {
+        public int? ID { get; }
+        public bool IsCurrent { get; }
+        public string Url { get; }
+        public string Title { get; }
+        public WebNavigationEntry(bool _IsCurrent, string _Url, string _Title, int? _ID)
+        {
+            IsCurrent = _IsCurrent;
+            Url = _Url;
+            Title = _Title;
+            ID = _ID;
+        }
+        public WebNavigationEntry(bool _IsCurrent, string _Url)
+        {
+            IsCurrent = _IsCurrent;
+            Url = _Url;
+            Title = Utils.CleanUrl(_Url, true, true, true, false, true);
+        }
+    }
+
     public struct ResourceLoadedResult
     {
         public string Url { get; }
@@ -1205,6 +1226,7 @@ namespace SLBr
         Task<object?> EvaluateScriptAsync(string Script);
         Task<string> CallDevToolsAsync(string Method, object? Parameters = null);
         //Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType);
+        Task<List<WebNavigationEntry>> GetNavigationHistoryAsync();
 
         public FrameworkElement Control { get; }
     }
@@ -1213,11 +1235,11 @@ namespace SLBr
     {
         private ChromiumWebBrowser Browser;
         public WebViewBrowserSettings Settings;
-        private readonly List<string> InitialUrls;
+        private readonly List<WebNavigationEntry> InitialUrls;
 
-        public ChromiumWebView(List<string> Urls = null, WebViewBrowserSettings _Settings = null)
+        public ChromiumWebView(List<WebNavigationEntry> Urls = null, WebViewBrowserSettings _Settings = null)
         {
-            InitialUrls = Urls ?? ["about:blank"];
+            InitialUrls = Urls ?? [new(true, "about:blank")];
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
 
@@ -1334,21 +1356,61 @@ namespace SLBr
         {
             Browser?.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
 
-            for (int i = 0; i < InitialUrls.Count; i++)
+            /*TODO: Resolve quirks & issues of history persistence in regards to initializing with multiple entries.
+             * Missing history entries after initialization.
+             * Incomplete initialization, resulting in permanent loading without interaction.
+             * Incorrect web engine information.
+             */
+#if !DEBUG
+            try
             {
-                string Url = InitialUrls[i];
-                bool IsHistory = i < InitialUrls.Count - 1;
-                if (IsHistory)
-                    WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
-                await CallDevToolsAsync("Page.navigate", new
+#endif
+            if (Browser?.IsBrowserInitialized ?? false)
+            {
+                bool LastActive = InitialUrls.Last().IsCurrent == true;
+                int CurrentIndex = InitialUrls.IndexOf(InitialUrls.First(i => i.IsCurrent));
+                for (int i = 0; i < InitialUrls.Count; i++)
                 {
-                    url = Url,
-                    transitionType = "generated"
-                });
-                InitializingHistory = IsHistory;
-                if (IsHistory)
-                    await Task.Delay(TimeSpan.FromMilliseconds(5));
+                    string Url = InitialUrls[i].Url;
+                    bool IsHistory = !LastActive || i < InitialUrls.Count - 1;
+                    if (IsHistory)
+                        WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
+                    await CallDevToolsAsync("Page.navigate", new
+                    {
+                        url = Url,
+                        transitionType = "generated"
+                    });
+                    InitializingHistory = IsHistory;
+                    if (IsHistory)
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(100));
+                        if (i == 0)
+                            await Browser.WaitForInitialLoadAsync();
+                    }
+                }
+                if (!LastActive)
+                    await Task.Delay(TimeSpan.FromMilliseconds(100));
+                await Browser.WaitForInitialLoadAsync();
+                InitializingHistory = false;
+                if (!LastActive)
+                {
+                    List<WebNavigationEntry> History = await GetNavigationHistoryAsync();
+                    if (CurrentIndex < History.Count - 1)
+                    {
+                        WebNavigationEntry SelectedHistory = History[CurrentIndex];
+                        await CallDevToolsAsync("Page.navigateToHistoryEntry", new
+                        {
+                            entryId = SelectedHistory.ID
+                        });
+                        //await CallDevToolsAsync("Page.reload");
+                    }
+                }
             }
+#if !DEBUG
+            }
+            catch { }
+#endif
+
             /*if (Settings.Private)
             {
                 nint HWND = Browser.GetBrowserHost().GetWindowHandle();
@@ -1391,7 +1453,7 @@ namespace SLBr
         public WebEngineType Engine => WebEngineType.Chromium;
         public string Address
         {
-            get => (IsViewSource ? "view-source:" : "") + Browser?.Address ?? InitialUrls.Last();
+            get => (IsViewSource ? "view-source:" : "") + Browser?.Address ?? InitialUrls.Last().Url;
             set => Navigate(value);
         }
         public string Title => Browser.Title;
@@ -1581,9 +1643,39 @@ namespace SLBr
                 }
 
                 var Response = await Browser.GetDevToolsClient().ExecuteDevToolsMethodAsync(Method, Dict);
-                return JsonSerializer.Serialize(Response);
+                return Response.ResponseAsJsonString;
             }
-            catch (Exception _Exception) { return JsonSerializer.Serialize(new { error = _Exception.Message }); }
+            catch (Exception _Exception) { return JsonSerializer.Serialize(new { Error = _Exception.Message }); }
+        }
+        public async Task<List<WebNavigationEntry>> GetNavigationHistoryAsync()
+        {
+            List<WebNavigationEntry> History = [];
+            try
+            {
+                string Json = await CallDevToolsAsync("Page.getNavigationHistory");
+                if (!string.IsNullOrWhiteSpace(Json))
+                {
+                    using JsonDocument _JsonDocument = JsonDocument.Parse(Json);
+                    var Root = _JsonDocument.RootElement;
+                    if (Root.TryGetProperty("currentIndex", out var CurrentIndexElement) && Root.TryGetProperty("entries", out var Entries))
+                    {
+                        int CurrentIndex = CurrentIndexElement.GetInt32();
+                        for (int i = 0; i < Entries.GetArrayLength(); i++)
+                        {
+                            var CurrentEntry = Entries[i];
+                            //string Url = CurrentEntry.TryGetProperty("url", out var UrlElement) ? UrlElement.GetString() ?? string.Empty : string.Empty;
+                            string UserTypedUrl = CurrentEntry.TryGetProperty("userTypedURL", out var UserTypedElement) ? UserTypedElement.GetString() ?? string.Empty : string.Empty;
+                            string Title = CurrentEntry.TryGetProperty("title", out var TitleElement) ? TitleElement.GetString() ?? string.Empty : string.Empty;
+                            int? ID = CurrentEntry.TryGetProperty("id", out var IDElement) ? IDElement.GetInt32() : null;
+                            History.Add(new WebNavigationEntry(i == CurrentIndex, UserTypedUrl, Title, ID));
+                        }
+                    }
+                }
+            }
+            catch { }
+            if (!History.Any())
+                History.Add(new WebNavigationEntry(true, Address, Title, null));
+            return History;
         }
         /*public async Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType)
         {
@@ -1739,12 +1831,12 @@ namespace SLBr
     {
         private WebView2 Browser;
         private WebViewBrowserSettings Settings;
-        private readonly List<string> InitialUrls;
+        private readonly List<WebNavigationEntry> InitialUrls;
         CoreWebView2 BrowserCore;
 
-        public ChromiumEdgeWebView(List<string> Urls = null, WebViewBrowserSettings _Settings = null)
+        public ChromiumEdgeWebView(List<WebNavigationEntry> Urls = null, WebViewBrowserSettings _Settings = null)
         {
-            InitialUrls = Urls ?? ["about:blank"];
+            InitialUrls = Urls ?? [new(true, "about:blank")];
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
             InitializeAsync();
@@ -1851,10 +1943,16 @@ namespace SLBr
 
             BrowserCore.LaunchingExternalUriScheme += Browser_LaunchingExternalUriScheme;
 
+#if !DEBUG
+            try
+            {
+#endif
+            bool LastActive = InitialUrls.Last().IsCurrent == true;
+            int CurrentIndex = InitialUrls.IndexOf(InitialUrls.First(i => i.IsCurrent));
             for (int i = 0; i < InitialUrls.Count; i++)
             {
-                string Url = InitialUrls[i];
-                bool IsHistory = i < InitialUrls.Count - 1;
+                string Url = InitialUrls[i].Url;
+                bool IsHistory = !LastActive || i < InitialUrls.Count - 1;
                 if (IsHistory)
                     WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
                 await CallDevToolsAsync("Page.navigate", new
@@ -1864,8 +1962,27 @@ namespace SLBr
                 });
                 InitializingHistory = IsHistory;
                 if (IsHistory)
-                    await Task.Delay(TimeSpan.FromMilliseconds(5));
+                    await Task.Delay(TimeSpan.FromMilliseconds(100));
             }
+            if (!LastActive)
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+            InitializingHistory = false;
+            if (!LastActive)
+            {
+                List<WebNavigationEntry> History = await GetNavigationHistoryAsync();
+                if (CurrentIndex < History.Count - 1)
+                {
+                    WebNavigationEntry SelectedHistory = History[CurrentIndex];
+                    await CallDevToolsAsync("Page.navigateToHistoryEntry", new
+                    {
+                        entryId = SelectedHistory.ID
+                    });
+                }
+            }
+#if !DEBUG
+            }
+            catch { }
+#endif
         }
 
         private void Browser_FaviconChanged(object? sender, object e)
@@ -2290,7 +2407,7 @@ namespace SLBr
         private string CurrentAddress;
         public string Address
         {
-            get => (IsViewSource ? "view-source:" : "") + (Browser.Source != null ? CurrentAddress : InitialUrls.Last());
+            get => (IsViewSource ? "view-source:" : "") + (Browser.Source != null ? CurrentAddress : InitialUrls.Last().Url);
             set => Navigate(value);
         }
         public string Title => BrowserCore?.DocumentTitle ?? string.Empty;
@@ -2444,10 +2561,37 @@ namespace SLBr
                 }) : "{}";
                 return await BrowserCore?.CallDevToolsProtocolMethodAsync(Method, Json) ?? "";
             }
-            catch
+            catch (Exception _Exception) { return JsonSerializer.Serialize(new { Error = _Exception.Message }); }
+        }
+        public async Task<List<WebNavigationEntry>> GetNavigationHistoryAsync()
+        {
+            List<WebNavigationEntry> History = [];
+            try
             {
-                return "";
+                string Json = await CallDevToolsAsync("Page.getNavigationHistory");
+                if (!string.IsNullOrWhiteSpace(Json))
+                {
+                    using JsonDocument _JsonDocument = JsonDocument.Parse(Json);
+                    var Root = _JsonDocument.RootElement;
+                    if (Root.TryGetProperty("currentIndex", out var CurrentIndexElement) && Root.TryGetProperty("entries", out var Entries))
+                    {
+                        int CurrentIndex = CurrentIndexElement.GetInt32();
+                        for (int i = 0; i < Entries.GetArrayLength(); i++)
+                        {
+                            var CurrentEntry = Entries[i];
+                            //string Url = CurrentEntry.TryGetProperty("url", out var UrlElement) ? UrlElement.GetString() ?? string.Empty : string.Empty;
+                            string UserTypedUrl = CurrentEntry.TryGetProperty("userTypedURL", out var UserTypedElement) ? UserTypedElement.GetString() ?? string.Empty : string.Empty;
+                            string Title = CurrentEntry.TryGetProperty("title", out var TitleElement) ? TitleElement.GetString() ?? string.Empty : string.Empty;
+                            int? ID = CurrentEntry.TryGetProperty("id", out var IDElement) ? IDElement.GetInt32() : null;
+                            History.Add(new WebNavigationEntry(i == CurrentIndex, UserTypedUrl, Title, ID));
+                        }
+                    }
+                }
             }
+            catch { }
+            if (!History.Any())
+                History.Add(new WebNavigationEntry(true, Address, Title, null));
+            return History;
         }
 
         public FrameworkElement Control => Browser;
@@ -2536,11 +2680,11 @@ namespace SLBr
         SHDocVw.IWebBrowser2 AxBrowser;
         SHDocVw.WebBrowser BrowserCore;
         private WebViewBrowserSettings Settings;
-        private readonly List<string> InitialUrls;
+        private readonly List<WebNavigationEntry> InitialUrls;
 
-        public TridentWebView(List<string> Urls = null, WebViewBrowserSettings _Settings = null)
+        public TridentWebView(List<WebNavigationEntry> Urls = null, WebViewBrowserSettings _Settings = null)
         {
-            InitialUrls = Urls ?? ["about:blank"];
+            InitialUrls = Urls ?? [new(true, "about:blank")];
             //ExecuteScript(@"window.engine = { postMessage: function(message) { window.external.postMessage(message); } };");
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
@@ -2712,8 +2856,8 @@ namespace SLBr
             IsBrowserInitialized = true;
             IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
 
-            if (!string.IsNullOrWhiteSpace(InitialUrls.Last()))
-                Navigate(InitialUrls.Last());
+            //if (!string.IsNullOrWhiteSpace(InitialUrls.Last().Url))
+            Navigate(InitialUrls.Last().Url);
         }
 
         private void Navigating(object sender, NavigatingCancelEventArgs e)
@@ -2803,7 +2947,7 @@ namespace SLBr
         private string? OverrideAddress = null;
         public string Address
         {
-            get => string.IsNullOrEmpty(OverrideAddress) ? (Browser.Source?.AbsoluteUri ?? InitialUrls.Last()) : OverrideAddress;
+            get => string.IsNullOrEmpty(OverrideAddress) ? (Browser.Source?.AbsoluteUri ?? InitialUrls.Last().Url) : OverrideAddress;
             set => Navigate(value);
         }
         public string Title { get; private set; } = string.Empty;
@@ -3000,6 +3144,12 @@ namespace SLBr
         }
         public async Task<string> GetSourceAsync() => (await EvaluateScriptAsync("document.documentElement.outerHTML")).ToString() ?? string.Empty;
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null) => string.Empty;
+        public async Task<List<WebNavigationEntry>> GetNavigationHistoryAsync()
+        {
+            List<WebNavigationEntry> History = [];
+            History.Add(new WebNavigationEntry(true, Address, Title, null));
+            return History;
+        }
 
         public FrameworkElement Control => Browser;
 

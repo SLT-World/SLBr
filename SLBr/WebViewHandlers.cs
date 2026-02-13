@@ -48,7 +48,7 @@ namespace SLBr
 
         public static string WebView2Version { get; private set; } = "";
 
-        public static IWebView Create(WebEngineType EngineType, List<string> Urls, WebViewBrowserSettings _BrowserSettings)
+        public static IWebView Create(WebEngineType EngineType, List<WebNavigationEntry> Urls, WebViewBrowserSettings _BrowserSettings)
         {
             switch (EngineType)
             {

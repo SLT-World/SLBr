@@ -105,7 +105,7 @@ namespace SLBr.Pages
         public void InitializeBrowserComponent()
         {
             if (WebView == null)
-                CreateWebView(Address, (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"));
+                CreateWebView([new(true, Address)], (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"));
             else
                 BrowserLoadChanged(Address);
         }
@@ -311,59 +311,68 @@ namespace SLBr.Pages
                     }
                     break;
                 case Actions.SwitchWebEngine:
-                    switch (V1)
+                    App.Instance.Dispatcher.Invoke(async () =>
                     {
-                        case "0":
-                            if (WebView?.Engine == WebEngineType.Chromium)
-                            {
-                                InformationDialogWindow InfoWindow = new("Information", "Already using Chromium web engine", "This tab is already running with the Chromium web engine. No changes are necessary.");
-                                InfoWindow.ShowDialog();
+                        switch (V1)
+                        {
+                            case "0":
+                                if (WebView?.Engine == WebEngineType.Chromium)
+                                {
+                                    InformationDialogWindow InfoWindow = new("Information", "Already using Chromium web engine", "This tab is already running with the Chromium web engine. No changes are necessary.");
+                                    InfoWindow.ShowDialog();
+                                    break;
+                                }
+                                List<WebNavigationEntry> ChromiumHistory = await WebView?.GetNavigationHistoryAsync() ?? [new(true, Address)];
+                                //MessageBox.Show(JsonSerializer.Serialize(ChromiumHistory));
+                                DisposeBrowserCore();
+                                CreateWebView(ChromiumHistory, WebEngineType.Chromium);
                                 break;
-                            }
-                            DisposeBrowserCore();
-                            CreateWebView(Address, WebEngineType.Chromium);
-                            break;
-                        case "1":
-                            if (WebView?.Engine == WebEngineType.ChromiumEdge)
-                            {
-                                InformationDialogWindow InfoWindow = new("Information", "Already using Edge web engine", "This tab is already running with the Edge web engine. No changes are necessary.");
-                                InfoWindow.ShowDialog();
+                            case "1":
+                                if (WebView?.Engine == WebEngineType.ChromiumEdge)
+                                {
+                                    InformationDialogWindow InfoWindow = new("Information", "Already using Edge web engine", "This tab is already running with the Edge web engine. No changes are necessary.");
+                                    InfoWindow.ShowDialog();
+                                    break;
+                                }
+                                string? AvailableVersion = null;
+                                try
+                                {
+                                    AvailableVersion = CoreWebView2Environment.GetAvailableBrowserVersionString();
+                                }
+                                catch (WebView2RuntimeNotFoundException)
+                                {
+                                    InformationDialogWindow InfoWindow = new("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
+                                    InfoWindow.Topmost = true;
+                                    if (InfoWindow.ShowDialog() == true)
+                                        Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                                    break;
+                                }
+                                List<WebNavigationEntry> EdgeHistory = await WebView?.GetNavigationHistoryAsync() ?? [new(true, Address)];
+                                //MessageBox.Show(JsonSerializer.Serialize(EdgeHistory));
+                                DisposeBrowserCore();
+                                CreateWebView(EdgeHistory, WebEngineType.ChromiumEdge);
                                 break;
-                            }
-                            string? AvailableVersion = null;
-                            try
-                            {
-                                AvailableVersion = CoreWebView2Environment.GetAvailableBrowserVersionString();
-                            }
-                            catch (WebView2RuntimeNotFoundException)
-                            {
-                                InformationDialogWindow InfoWindow = new("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
-                                InfoWindow.Topmost = true;
-                                if (InfoWindow.ShowDialog() == true)
-                                    Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                            case "2":
+                                if (WebView?.Engine == WebEngineType.Trident)
+                                {
+                                    InformationDialogWindow InfoWindow = new("Information", "Already using Trident web engine", "This tab is already running with the Trident web engine. No changes are necessary.");
+                                    InfoWindow.ShowDialog();
+                                    break;
+                                }
+                                List<WebNavigationEntry> TridentHistory = await WebView?.GetNavigationHistoryAsync() ?? [new(true, Address)];
+                                DisposeBrowserCore();
+                                CreateWebView(TridentHistory, WebEngineType.Trident);
                                 break;
-                            }
-                            DisposeBrowserCore();
-                            CreateWebView(Address, WebEngineType.ChromiumEdge);
-                            break;
-                        case "2":
-                            if (WebView?.Engine == WebEngineType.Trident)
-                            {
-                                InformationDialogWindow InfoWindow = new("Information", "Already using Trident web engine", "This tab is already running with the Trident web engine. No changes are necessary.");
-                                InfoWindow.ShowDialog();
+                            case "-1":
+                                WebEngineType Engine = (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine");
+                                if (WebView?.Engine == Engine)
+                                    break;
+                                List<WebNavigationEntry> DefaultHistory = await WebView?.GetNavigationHistoryAsync() ?? [new(true, Address)];
+                                DisposeBrowserCore();
+                                CreateWebView(DefaultHistory, Engine);
                                 break;
-                            }
-                            DisposeBrowserCore();
-                            CreateWebView(Address, WebEngineType.Trident);
-                            break;
-                        case "-1":
-                            WebEngineType Engine = (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine");
-                            if (WebView?.Engine == Engine)
-                                break;
-                            DisposeBrowserCore();
-                            CreateWebView(Address, Engine);
-                            break;
-                    }
+                        }
+                    });
                     break;
                 case Actions.Translate:
                     Translate(V1 == "1");
@@ -375,11 +384,11 @@ namespace SLBr.Pages
         }
         public WriteableBitmap? QRBitmap = null;
 
-        void CreateWebView(string Url, WebEngineType Engine)
+        void CreateWebView(List<WebNavigationEntry> History, WebEngineType Engine)
         {
             if (WebView != null)
                 return;
-            Address = Url;
+            Address = History.FirstOrDefault(i => i.IsCurrent).Url;
             Tab.IsUnloaded = true;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
             switch (Engine)
@@ -402,8 +411,8 @@ namespace SLBr.Pages
             };
 
             //TODO: Improve tab session file with firefox sessionstore JSON format.
-            //["slbr://newtab", "https://google.com", Url]
-            WebView = WebViewManager.Create(Engine, [Url], WebViewSettings);
+            //WebView = WebViewManager.Create(WebEngineType.Chromium, [new(false, "slbr://newtab"), new(true, "https://google.com"), new(false, "https://apple.com")], WebViewSettings);
+            WebView = WebViewManager.Create(Engine, History, WebViewSettings);
 
             WebView?.Control.AllowDrop = true;
             WebView?.Control.IsManipulationEnabled = true;
@@ -2241,7 +2250,7 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    var Response = (await WebView?.EvaluateScriptAsync("window.getSelection().toString();")).ToString();
+                    var Response = (await WebView?.EvaluateScriptAsync("window.getSelection().toString();") ?? "").ToString();
                     if (Response != null)
                         Text = Response.Trim('"');
                 }
