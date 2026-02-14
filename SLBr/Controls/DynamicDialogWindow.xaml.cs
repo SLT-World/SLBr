@@ -1,10 +1,11 @@
-﻿using CefSharp.DevTools.CSS;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;

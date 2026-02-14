@@ -1,4 +1,7 @@
-﻿using System.Windows.Controls.Primitives;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
+using System.Windows.Controls.Primitives;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows;

@@ -1,4 +1,7 @@
-﻿using CefSharp;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
+using CefSharp;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
@@ -5303,16 +5306,13 @@ document.querySelectorAll('tbody > tr').forEach(row => {
         const [key, ...rest] = data.split('=');
         const value = rest.join('=');
         switch (key) {
-          case ""history"":
-            UpdateList(value);
-            break;
-          case ""downloads"":
-            UpdateList(value);
+          case ""cors"":
+            onCorsResult(decodeURIComponent(value));
             break;
         }
     },
     search: function(val) {
-        engine.postMessage({type:""Internal"",function:'Search',variable:val});
+        engine.postMessage({type:""__internal__"",function:'search',variable:val});
     }
 };";
         public const string NotificationPolyfill = @"(function () {
@@ -5327,7 +5327,7 @@ constructor(title, options = {}) {
         this.onerror = null;
         if(typeof engine !== 'undefined' && typeof engine.postMessage === 'function') {
             let packageSet=new Set();packageSet.add(title).add(options);
-            engine.postMessage({type:""Notification"",data:JSON.stringify([...packageSet])});
+            engine.postMessage({type:""__notification__"",data:JSON.stringify([...packageSet])});
         }
         setTimeout(() => {if(typeof this.onshow==='function')this.onshow();},0);
         if(Notification.autoClose){setTimeout(()=>this.close(),Notification.autoClose);}
@@ -5387,7 +5387,7 @@ try{window.addEventListener(""test"",null,Object.defineProperty({},""passive"",{
 SmoothScroll({animationTime:400,stepSize:100,accelerationDelta:50,accelerationMax:3,keyboardSupport:true,arrowScroll:50,pulseAlgorithm:true,pulseScale:4,pulseNormalize:1,touchpadSupport:false,fixedBackground:true,excluded:''});";
         public const string ExtensionScript = "var rect=document.body.getBoundingClientRect();engine.postMessage({width:rect.width+16,height:rect.height+40});";
         
-        public const string OpenSearchScript = @"(function(){let link=document.querySelector('link[rel=""search""][type=""application/opensearchdescription+xml""]');if (link){engine.postMessage({type:'OpenSearch',url:link.href,name:link.title||''});}})();";
+        public const string OpenSearchScript = @"(function(){let link=document.querySelector('link[rel=""search""][type=""application/opensearchdescription+xml""]');if (link){engine.postMessage({type:'__opensearch__',url:link.href,name:link.title||''});}})();";
 
         public const string ShiftContextMenuScript = @"document.addEventListener('contextmenu',function(e){if (e.shiftKey){e.stopPropagation();}},true);";
         public const string AllowInteractionScript = @"document.addEventListener(""DOMContentLoaded"",function(){[""contextmenu"",""selectstart"",""copy"",""cut"",""paste"",""mousedown""].forEach(t=>{document.body.addEventListener(t,function(t){t.stopPropagation()},!0)});let t=document.createElement(""style"");t.textContent=""*{user-select:text !important;-webkit-user-select:text !important;pointer-events:auto !important;}"",document.head.appendChild(t)});";

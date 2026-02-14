@@ -1,4 +1,7 @@
-﻿using CefSharp;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
+using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -1218,55 +1221,22 @@ namespace SLBr.Pages
                 return;
             switch (Value?.ToString())
             {
-                case "background":
-                    string Url = string.Empty;
-                    try
+                case "cors":
+                    string FetchUrl = Message["url"].ToString();
+                    string Data = string.Empty;
+                    if (!Utils.IsHttpScheme(FetchUrl) && File.Exists(FetchUrl))
+                        Data = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(FetchUrl))}";
+                    else
                     {
-                        switch (App.Instance.GlobalSave.GetInt("HomepageBackground"))
-                        {
-                            case 0:
-                                Url = App.Instance.GlobalSave.Get("CustomBackgroundImage");
-                                if (!Utils.IsHttpScheme(Url) && File.Exists(Url))
-                                    Url = $"Data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(Url))}";
-                                break;
-                            case 1:
-                                int BingBackground = App.Instance.GlobalSave.GetInt("BingBackground");
-                                if (BingBackground == 0)
-                                {
-                                    try
-                                    {
-                                        XmlDocument Doc = new();
-                                        Doc.LoadXml(new WebClient().DownloadString("http://www.bing.com/hpimagearchive.aspx?format=xml&idx=0&n=1&mbl=1&mkt=en-US"));
-                                        Url = "http://www.bing.com/" + Doc.SelectSingleNode("/images/image/url").InnerText;
-                                    }
-                                    catch { }
-                                }
-                                else
-                                    Url = "http://bingw.jasonzeng.dev/?index=random";
-                                break;
-                            case 2:
-                                Url = "http://picsum.photos/1920/1080?random";
-                                break;
-                            case 3:
-                                using (var Client = new HttpClient())
-                                {
-                                    string Json = await Client.GetStringAsync("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY");
-                                    using var Document = JsonDocument.Parse(Json);
-                                    var Root = Document.RootElement;
-                                    if (App.Instance.HighPerformanceMode && Root.TryGetProperty("hdurl", out var HDUrl))
-                                        Url = HDUrl.GetString() ?? string.Empty;
-                                    else if (Root.TryGetProperty("url", out var _Url))
-                                        Url = _Url.GetString() ?? string.Empty;
-                                }
-                                break;
-                        }
+                        //using (var Client = new HttpClient())
+                        //{
+                        //    Client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentGenerator.BuildChromeBrand());
+                            Data = await App.MiniHttpClient.GetStringAsync(FetchUrl);
+                        //}
                     }
-                    catch { }
-                    if (!string.IsNullOrEmpty(Url))
-                        WebView?.ExecuteScript($"document.documentElement.style.backgroundImage = \"url('{Url}')\";");
+                    WebView?.ExecuteScript($"window.internal.receive('cors={Uri.EscapeDataString(Data)}');");
                     break;
-
-                case "Search":
+                case "search":
                     Address = Utils.FilterUrlForBrowser(Message["variable"]?.ToString() ?? string.Empty, App.Instance.DefaultSearchProvider.SearchUrl);
                     break;
             }
@@ -1287,14 +1257,14 @@ namespace SLBr.Pages
 
             switch (Value.ToString())
             {
-                case "OpenSearch":
+                case "__opensearch__":
                     App.Instance.SaveOpenSearch(Message["name"]?.ToString()!, Message["url"]?.ToString()!);
                     break;
-                case "Internal":
+                case "__internal__":
                     if (Address.StartsWith("slbr:"))
                         HandleInternalMessage(Message);
                     break;
-                case "Notification":
+                case "__notification__":
                     try
                     {
                         var DataJson = Message["data"]?.ToString();

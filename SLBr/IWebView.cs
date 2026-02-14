@@ -1,4 +1,7 @@
-﻿using CefSharp;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
+using CefSharp;
 using CefSharp.DevTools;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
@@ -2453,17 +2456,17 @@ namespace SLBr
         {
             WebViewManager.WebView2FindOptions.IsCaseSensitive = MatchCase;
             WebViewManager.WebView2FindOptions.FindTerm = Text;
-            BrowserCore.Find.StartAsync(WebViewManager.WebView2FindOptions);
+            BrowserCore?.Find?.StartAsync(WebViewManager.WebView2FindOptions);
             if (FindNext)
             {
                 if (Forward)
-                    BrowserCore.Find.FindNext();
+                    BrowserCore?.Find?.FindNext();
                 else
-                    BrowserCore.Find.FindPrevious();
+                    BrowserCore?.Find?.FindPrevious();
             }
         }
-        public void StopFind() => BrowserCore.Find.Stop();
-        public void SaveAs() => BrowserCore.ShowSaveAsUIAsync();
+        public void StopFind() => BrowserCore?.Find?.Stop();
+        public void SaveAs() => BrowserCore?.ShowSaveAsUIAsync();
 
         public void Cut() => ExecuteScript("document.execCommand('cut');");
         public void Copy() => ExecuteScript("document.execCommand('copy');");

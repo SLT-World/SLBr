@@ -1,4 +1,7 @@
-﻿using CefSharp;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
+using CefSharp;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;

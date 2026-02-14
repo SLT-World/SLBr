@@ -1,4 +1,7 @@
-﻿using CefSharp;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
+using CefSharp;
 using CefSharp.Internals;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
@@ -137,7 +140,8 @@ namespace SLBr
                     SchemeName = Scheme.Key,
                     SchemeHandlerFactory = new ChromiumProtocolHandlerFactory(Scheme.Value),
                     IsStandard = true,
-                    IsSecure = true
+                    IsSecure = true,
+                    IsDisplayIsolated = true
                 });
             }
             Cef.Initialize(ChromiumSettings);

@@ -3,6 +3,8 @@
     --secondary: whitesmoke;
     --tertiary: gainsboro;
     --font: black;
+    --bold: 500;
+    --indicator: #3399FF;
     background: var(--primary);
 }
 
@@ -124,7 +126,7 @@ a:hover {
     border-radius: 1000px;
     width: 75vw;
     margin: 0 auto;
-    max-width: 560px;
+    max-width: 750px;
     background: var(--secondary);
     gap: 10px;
     transition: outline 0.25s ease;
@@ -192,3 +194,144 @@ header .font-icon {
     margin-left: 15px;
     overflow: visible;
 }
+
+.dialog {
+    width: 700px;
+    max-width: 100%;
+    height: 400px;
+    background: var(--primary);
+    outline: 1px solid var(--tertiary);
+    border-radius: 5px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: clip;
+    filter: drop-shadow(1.5px -0.5px 15px rgba(128, 128, 128, 0.5));
+    transition: width 0.25s ease, height 0.25s ease, opacity 0.25s ease;
+}
+
+.dialog:not(.active) {
+    width: 0;
+    height: 0;
+    filter: none;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.dialog > div:first-child {
+    height: 60px;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--tertiary);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.dialog > div:first-child > .icon_button {
+    font-size: 22px !important;
+    font-weight: var(--bold);
+    width: auto !important;
+}
+
+.dialog > div:first-child > h1 {
+    font-size: 25px;
+    font-weight: var(--bold);
+}
+
+button {
+    background: var(--primary);
+    border: 1px solid var(--tertiary);
+    border-radius: 5px;
+    height: 35px;
+    width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background 0.25s ease;
+}
+
+button:hover {
+    background: var(--secondary);
+}
+
+button.icon {
+    width: 35px;
+}
+
+button > .icon_button {
+    width: auto !important;
+}
+
+.dialog > div:last-child {
+    height: calc(100% - 60px);
+}
+
+.tab-control {
+    height: calc(100% - 60px);
+    display: flex;
+    --tabstrip-width: 250px;
+}
+
+    .tab-control > div:first-child {
+        width: var(--tabstrip-width);
+        height: 100%;
+        overflow: auto;
+        background: var(--secondary);
+        outline: 1px solid var(--tertiary);
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+.tab-control > div:first-child > button.tab {
+    width: 100%;
+    height: 35px;
+    overflow: clip;
+    background: var(--secondary);
+    border: none;
+    border-radius: 5px;
+    position: relative;
+    justify-content: start;
+    padding: 10px;
+    gap: 7.5px;
+}
+
+.tab-control > div:first-child > button.tab > .icon_button {
+    width: 20px !important;
+    color: var(--indicator);
+}
+
+.tab-control > div:first-child > button.tab.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    height: 20px;
+    width: 2.5px;
+    background-color: var(--indicator);
+    border-radius: 5px;
+}
+
+.tab-control > div:first-child > button.tab:hover:not(.active) {
+    background: var(--tertiary);
+}
+
+.tab-control > div:first-child > button.tab.active {
+    background: var(--primary);
+}
+
+    .tab-control > div:last-child {
+        width: calc(100% - var(--tabstrip-width));
+        height: 100%;
+        overflow: auto;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tab-control > div:last-child > .tabcontent:not(.active) {
+        height: 0;
+        overflow: clip;
+    }

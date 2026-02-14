@@ -2,117 +2,287 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
 
 <html style="background-repeat: no-repeat;background-size: cover;background-position: center;">
-<head>
-    <meta charset="utf-8"/>
-    <title>New Tab</title>
-    <link rel="stylesheet" type="text/css" href="./style.css"/>
-</head>
-<body>
-    <style>
-html {
-    background-repeat: no-repeat;
-    background-size: auto;
-}
-ul.nav {
-    padding-left: 0px;
-    background-color: transparent;
-    text-align: center;
-    margin-top: 5px;
-    width: auto;
-    list-style-position: inside;
-    font-size: 0;
-}
-        ul.nav > li {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            vertical-align: middle;
-            text-align: center;
-            background-color: color-mix(in srgb, var(--secondary), transparent);
-            backdrop-filter: blur(5px);
-            border-radius: 10px;
-            margin: 10px 10px 0 10px;
-            transition: background-color 0.25s ease;
-        }
-            ul.nav > li:hover {
-                background-color: color-mix(in srgb, var(--tertiary), transparent);
+    <head>
+        <meta charset="utf-8"/>
+        <title>New Tab</title>
+        <link rel="stylesheet" type="text/css" href="./style.css"/>
+    </head>
+    <body>
+        <style>
+            html {
+                background-repeat: no-repeat;
+                background-size: auto;
             }
-            ul.nav > li > a {
-                vertical-align: middle;
+
+                html.background-image::before {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    left: 0;
+                    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 0.5) 100%);
+                    pointer-events: none;
+                }
+
+                html.background-image .SearchInput {
+                    box-shadow: 0 2px 6px 0 #20212451;
+                }
+
+            div.nav {
+                padding-left: 0px;
+                background-color: transparent;
                 text-align: center;
-                height: 100%;
+                margin-top: 15px;
+                list-style-position: inside;
+                font-size: small;
+                width: 75vw;
+                max-width: 750px;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, 60px);
+                gap: 20px;
+                align-items: center;
+                justify-content: center;
             }
-    </style>
-    <div class="Center NewTabSearchContainer">
-        <div>
-            <div class="Center" style="padding-bottom: 25px;">
-                <img class="Center SLBrIcon" style="user-select: none;" src="./SLBr.ico" width="100" height="100" />
-            </div>
-            <div class="SearchInput">
-                <span class="font-icon"></span>
-                <input type="text" id="SearchField" autocomplete="off" placeholder="Search or enter address"/>
-            </div>
-            <div class="Center">
-                <ul class="nav">
-                    <li>
-                        <a title="YouTube" href="https://www.youtube.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://www.youtube.com/favicon.ico" alt="YouTube" width="60%" height="60%" />
+
+                div.nav > a {
+                    display: inline-flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 5px;
+                    width: 60px;
+                    height: 70px;
+                }
+
+                    div.nav > a > div {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 40px;
+                        height: 40px;
+                        background-color: color-mix(in srgb, var(--secondary), transparent);
+                        backdrop-filter: blur(5px);
+                        border-radius: 10px;
+                        transition: background-color 0.25s ease;
+                    }
+
+                    div.nav > a:hover > div {
+                        background-color: color-mix(in srgb, var(--tertiary), transparent);
+                    }
+
+                    div.nav > a > div > img {
+                        user-select: none;
+                        border-radius: 5px;
+                    }
+
+                    div.nav > a > p {
+                        color: color-mix(in srgb, transparent, var(--font) 80%);
+                        font-size: small;
+                        width: 100%;
+                        overflow: clip;
+                        text-overflow: ellipsis;
+                        text-wrap-mode: nowrap;
+                    }
+        </style>
+        <div class="Center NewTabSearchContainer">
+            <div>
+                <div class="Center" style="padding-bottom: 25px;">
+                    <img class="Center SLBrIcon" style="user-select: none;" src="./SLBr.ico" width="100" height="100" />
+                </div>
+                <div class="SearchInput">
+                    <span class="font-icon"></span>
+                    <input type="text" id="SearchField" autocomplete="off" placeholder="Search or enter address" />
+                </div>
+                <div class="Center">
+                    <div class="nav">
+                        <a href="https://www.youtube.com" class="Center">
+                            <div>
+                                <img src="https://www.youtube.com/favicon.ico" alt="YouTube" width="60%" height="60%" />
+                            </div>
+                            <p>YouTube</p>
                         </a>
-                    </li>
-                    <li>
-                        <a -title="Outlook" href="https://www.outlook.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://outlook.live.com/mail/favicon.ico" alt="Outlook" width="60%" height="60%" />
+                        <a href="https://www.outlook.com" class="Center">
+                            <div>
+                                <img src="https://outlook.live.com/mail/favicon.ico" alt="Outlook" width="60%" height="60%" />
+                            </div>
+                            <p>Outlook</p>
                         </a>
-                    </li>
-                    <li>
-                        <a title="Gmail" href="https://www.gmail.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" alt="Gmail" width="60%" height="60%" />
+                        <a href="https://www.gmail.com" class="Center">
+                            <div>
+                                <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" alt="Gmail" width="60%" height="60%" />
+                            </div>
+                            <p>Gmail</p>
                         </a>
-                    </li>
-                    <li>
-                        <a title="Stack Overflow" href="https://www.stackoverflow.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://cdn.sstatic.net/Sites/stackoverflow/Img/favicon.ico" alt="Stack Overflow" width="60%" height="60%" />
+                        <a href="https://www.stackoverflow.com" class="Center">
+                            <div>
+                                <img src="https://cdn.sstatic.net/Sites/stackoverflow/Img/favicon.ico" alt="Stack Overflow" width="60%" height="60%" />
+                            </div>
+                            <p>Stack Overflow</p>
                         </a>
-                    </li>
-                    <li>
-                        <a title="Facebook" href="https://www.facebook.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://www.facebook.com/favicon.ico" alt="Facebook" width="60%" height="60%" />
+                        <a href="https://www.facebook.com" class="Center">
+                            <div>
+                                <img src="https://www.facebook.com/favicon.ico" alt="Facebook" width="60%" height="60%" />
+                            </div>
+                            <p>Facebook</p>
                         </a>
-                    </li>
-                    <li>
-                        <a title="Twitter" href="https://www.twitter.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://abs.twimg.com/favicons/twitter.3.ico" alt="Twitter" width="60%" height="60%" />
+                        <a href="https://www.twitter.com" class="Center">
+                            <div>
+                                <img src="https://abs.twimg.com/favicons/twitter.3.ico" alt="Twitter" width="60%" height="60%" />
+                            </div>
+                            <p>Twitter</p>
                         </a>
-                    </li>
-                    <li>
-                        <a title="Reddit" href="https://www.reddit.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://www.redditstatic.com/shreddit/assets/favicon/64x64.png" alt="Reddit" width="60%" height="60%" />
+                        <a href="https://www.reddit.com" class="Center">
+                            <div>
+                                <img src="https://www.redditstatic.com/shreddit/assets/favicon/64x64.png" alt="Reddit" width="60%" height="60%" />
+                            </div>
+                            <p>Reddit</p>
                         </a>
-                    </li>
-                    <li>
-                        <a title="Amazon" href="https://www.amazon.com" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://www.amazon.com/favicon.ico" alt="Amazon" width="60%" height="60%" />
+                        <a href="https://www.amazon.com" class="Center">
+                            <div>
+                                <img src="https://www.amazon.com/favicon.ico" alt="Amazon" width="60%" height="60%" />
+                            </div>
+                            <p>Amazon</p>
                         </a>
-                    </li>
-                    <li>
-                        <a title="Wikipedia" href="https://www.wikipedia.org" class="Center">
-                            <img style="user-select: none; border-radius: 5px;" src="https://www.wikipedia.org/static/favicon/wikipedia.ico" alt="Wikipedia" width="60%" height="60%" />
+                        <a href="https://www.wikipedia.org" class="Center">
+                            <div>
+                                <img src="https://www.wikipedia.org/static/favicon/wikipedia.ico" alt="Wikipedia" width="60%" height="60%" />
+                            </div>
+                            <p>Wikipedia</p>
                         </a>
-                    </li>
-                </ul>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <script type="text/javascript">
-        engine.postMessage({ type: "Internal", function: 'background' });
-        document.getElementById('SearchField').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                search(document.getElementById("SearchField").value);
+        <button style="border:none;position: absolute;top: 25px;right: 25px;background: transparent;" class="icon" onclick="toggleDialog('customize')">
+            <span class="icon_button"></span>
+        </button>
+        <p id="background-description" style="position: absolute; bottom: 25px; left: 25px; color: color-mix(in srgb, transparent, white); "></p>
+        <div class="dialog active" id="dialog_customize">
+            <div>
+                <span class="icon_button"></span>
+                <h1>Customize</h1>
+                <button style="margin-left: auto;border:none;" class="icon" onclick="toggleDialog('customize')">
+                    <span class="icon_button"></span>
+                </button>
+            </div>
+            <div class="tab-control" style="--tabstrip-width: 150px;">
+                <div>
+                    <button class="tab active" id="tab_background" onclick="openTab(event)" style="--indicator: mediumslateblue;"><span class="icon_button"></span>Background</button>
+                    <button class="tab" id="tab_clock" onclick="openTab(event)" style="--indicator: gold;"><span class="icon_button"></span>Clock</button>
+                    <button class="tab" id="tab_widgets" onclick="openTab(event)" style="--indicator: crimson;"><span class="icon_button"></span>Widgets</button>
+                </div>
+                <div>
+                    <div id="tabcontent_background" class="tabcontent active">
+                    </div>
+
+                    <div id="tabcontent_clock" class="tabcontent">
+                    </div>
+
+                    <div id="tabcontent_widgets" class="tabcontent">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", setNewTabBackground);
+    document.getElementById('SearchField').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            search(document.getElementById("SearchField").value);
+        }
+    });
+    async function search(value) {
+        internal.search(value);
+    };
+    const backgroundDescription = document.getElementById('background-description');
+    function onCorsResult(value) {
+        try {
+            let mode = parseInt(localStorage.getItem("background") || "0");
+            if (mode === 1) {
+                let json = JSON.parse(value);
+                let url = json.images[0].url;
+                if (url) setBackground("http://www.bing.com/" + url);
+                let desc = `<span style="color:color-mix(in srgb, transparent, white 75%);">${json.images[0].title.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span> - ${json.images[0].copyright.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+                backgroundDescription.innerHTML = desc;
             }
-        });
-        async function search(value) {
-            internal.search(value);
-        };
-    </script>
-</body>
+            else if (mode === 3) {
+                let json = JSON.parse(value);
+                let url = navigator.connection.saveData ? json.url : json.hdurl;
+                if (url) setBackground(url);
+                let desc = `<span style="color:color-mix(in srgb, transparent, white 75%);">${json.title.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span> - ${json.copyright.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+                backgroundDescription.innerHTML = desc;
+                backgroundDescription.title = json.explanation;
+            }
+            else if (mode === 0 && value.startsWith("data:image")) setBackground(value);
+        } catch (e) {
+            console.error(`Background parse failed: ${e}`);
+            setBackground("");
+        }
+    }
+    async function setNewTabBackground() {
+        let mode = parseInt(localStorage.getItem("background") || "0");
+        switch (mode) {
+            case 0: {
+                let custom = localStorage.getItem("customBackground") || "";
+                if (!custom) {
+                    setBackground("");
+                    return;
+                }
+                if (custom.startsWith("http://") || custom.startsWith("https://") || custom.startsWith("data:")) setBackground(custom);
+                else engine.postMessage({ type: "__internal__", function: "cors", url: custom });
+                return;
+            }
+            case 1: {
+                let bingMode = parseInt(localStorage.getItem("bingBackground") || "0");
+                //WARNING: mkt query necessary for title.
+                if (bingMode === 0) engine.postMessage({ type: "__internal__", function: "cors", url: "https://www.bing.com/hpimagearchive.aspx?format=js&idx=0&n=1&mkt=en-US" });
+                else setBackground("http://bingw.jasonzeng.dev/?index=random");
+                return;
+            }
+            case 2: {
+                setBackground("http://picsum.photos/1920/1080?random");
+                return;
+            }
+            case 3: {
+                engine.postMessage({ type: "__internal__", function: "cors", url: "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY" });
+                return;
+            }
+        }
+    }
+    function setBackground(url) {
+        if (!url) {
+            document.documentElement.style.backgroundImage = "";
+            document.documentElement.classList.remove("background-image");
+            return;
+        }
+        document.documentElement.style.backgroundImage = `url('${url}')`;
+        document.documentElement.classList.add("background-image");
+    }
+
+
+    function openTab(event) {
+        var tabcontent = document.getElementsByClassName("tabcontent");
+        for (var i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].classList.remove("active");
+        }
+        var tabs = document.getElementsByClassName("tab");
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].classList.remove("active");
+        }
+        document.getElementById(`tabcontent_${event.currentTarget.id.split('_')[1]}`).classList.add("active");
+        event.currentTarget.classList.add("active");
+    }
+
+    function toggleDialog(name) {
+        var id = `dialog_${name}`;
+        var dialogs = document.getElementsByClassName("dialog");
+        for (var i = 0; i < dialogs.length; i++) {
+            if (dialogs[i].id == id)
+                dialogs[i].classList.toggle("active");
+            else if (dialogs[i].classList.contains("active"))
+                dialogs[i].classList.remove("active");
+        }
+    }
+        </script>
+    </body>
 </html>
