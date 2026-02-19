@@ -1258,85 +1258,130 @@ namespace SLBr
 
         public async Task<List<(string Word, List<string> Suggestions)>> SpellCheck(string Text)
         {
-            /*TODO: Investigate implementation of post request https://www.googleapis.com/spelling/v2/spelling/check?key=AIzaSyA2KlwBX3mkFo30om9LUFYQhpqLoa_BNhE
-             *JSON: {"text":"edgium","language":"en","originCountry":"USA"}
-             *Python testing proved ineffective, yielded 0 results
-             */
             var Results = new List<(string, List<string>)>();
-            switch (GlobalSave.GetInt("SpellcheckProvider"))
+            try
             {
-                case 0:
-                    TextBox SpellCheckTextBox = new TextBox();
-                    SpellCheckTextBox.SpellCheck.IsEnabled = true;
-                    SpellCheckTextBox.Language = XmlLanguage.GetLanguage(Locale.Tooltip);
-                    string[] Words = Text.Split([' ', ',', ';', '.']);
-                    foreach (string Word in Words)
-                    {
-                        SpellCheckTextBox.Text = Word;
-                        var spellErrors = SpellCheckTextBox.GetSpellingError(0);
-                        if (spellErrors != null)
-                            Results.Add((Word, new List<string>(spellErrors.Suggestions)));
-                    }
-                    break;
-                case 1:
-                    {
-                        HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.MICROSOFT_SPELLCHECK_ENDPOINT, new StringContent($"{{\"SessionId\": \"\",\"AppId\": \"Edge_Win32\",\"LanguageUxId\": \"{Locale.Tooltip}\",\"Content\": [{{\"TileId\": \"{Locale.Tooltip}\",\"RevisionId\": \"0\",\"TileElements\": [{{\"LanguageId\": \"{Locale.Tooltip}\",\"Text\": \"{Text}\",\"TextUnit\": 8}}]}}],\"Descriptors\":[{{\"Name\": \"FlightIds\",\"Value\": \"wac-wordeditorservicemultiplegrammarcritiquespersentence-treatment\"}},{{\"Name\": \"LicenseType\",\"Value\": \"NoLicense\"}}]}}", Encoding.UTF8, "application/json"));
-                        Response.EnsureSuccessStatusCode();
-                        string Json = await Response.Content.ReadAsStringAsync();
-
-                        using JsonDocument Document = JsonDocument.Parse(Json);
-                        if (Document.RootElement.TryGetProperty("Critiques", out JsonElement Critiques))
+                switch (GlobalSave.GetInt("SpellcheckProvider"))
+                {
+                    case 0:
+                        TextBox SpellCheckTextBox = new TextBox();
+                        SpellCheckTextBox.SpellCheck.IsEnabled = true;
+                        SpellCheckTextBox.Language = XmlLanguage.GetLanguage(Locale.Tooltip);
+                        string[] Words = Text.Split([' ', ',', ';', '.']);
+                        foreach (string Word in Words)
                         {
-                            foreach (JsonElement Critique in Critiques.EnumerateArray())
-                            {
-                                if (!Critique.TryGetProperty("Context", out JsonElement Context))
-                                    continue;
-
-                                List<string> Suggestions = [];
-                                if (Critique.TryGetProperty("Suggestions", out JsonElement Replacements))
-                                {
-                                    foreach (JsonElement Replacement in Replacements.EnumerateArray())
-                                        Suggestions.Add(Replacement.GetProperty("Text").GetString()!);
-                                }
-
-                                string ContextText = Context.GetString()!;
-                                int Offset = Critique.GetProperty("Start").GetInt32();
-                                int Length = Critique.GetProperty("Length").GetInt32();
-
-                                Results.Add((ContextText.Substring(Offset, Length), Suggestions));
-                            }
+                            SpellCheckTextBox.Text = Word;
+                            var spellErrors = SpellCheckTextBox.GetSpellingError(0);
+                            if (spellErrors != null)
+                                Results.Add((Word, new List<string>(spellErrors.Suggestions)));
                         }
                         break;
-                    }
-                case 2:
-                    {
-                        string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.LANGUAGETOOL_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
-
-                        using JsonDocument Document = JsonDocument.Parse(Json);
-                        if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches))
+                    case 1:
                         {
-                            foreach (JsonElement Match in Matches.EnumerateArray())
+                            HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.GOOGLE_SPELLCHECK_ENDPOINT, new StringContent($"{{\"text\":\"{Text}\",\"language\":\"{Locale.Tooltip}\",\"originCountry\":\"USA\"}}", Encoding.UTF8, "application/json"));
+                            Response.EnsureSuccessStatusCode();
+                            string Json = await Response.Content.ReadAsStringAsync();
+
+                            using JsonDocument Document = JsonDocument.Parse(Json);
+                            if (Document.RootElement.TryGetProperty("spellingCheckResponse", out JsonElement SpellcheckResponse) && SpellcheckResponse.TryGetProperty("misspellings", out JsonElement Misspellings))
                             {
-                                if (!Match.TryGetProperty("context", out JsonElement Context))
-                                    continue;
-
-                                List<string> Suggestions = [];
-                                if (Match.TryGetProperty("replacements", out JsonElement Replacements))
+                                foreach (JsonElement Misspelling in Misspellings.EnumerateArray())
                                 {
-                                    foreach (JsonElement Replacement in Replacements.EnumerateArray())
-                                        Suggestions.Add(Replacement.GetProperty("value").GetString()!);
+                                    int Offset = Misspelling.GetProperty("charStart").GetInt32();
+                                    int Length = Misspelling.GetProperty("charLength").GetInt32();
+                                    List<string> Suggestions = [];
+                                    if (Misspelling.TryGetProperty("suggestions", out JsonElement Replacements))
+                                    {
+                                        foreach (JsonElement Replacement in Replacements.EnumerateArray())
+                                            Suggestions.Add(Replacement.GetProperty("suggestion").GetString()!);
+                                    }
+                                    Results.Add((Text.Substring(Offset, Length), Suggestions));
                                 }
-
-                                string ContextText = Context.GetProperty("text").GetString()!;
-                                int Offset = Match.GetProperty("offset").GetInt32();
-                                int Length = Match.GetProperty("length").GetInt32();
-
-                                Results.Add((ContextText.Substring(Offset, Length), Suggestions));
                             }
+                            break;
                         }
-                        break;
-                    }
+                    case 2:
+                        {
+                            HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.MICROSOFT_SPELLCHECK_ENDPOINT, new StringContent($"{{\"SessionId\": \"\",\"AppId\": \"Edge_Win32\",\"LanguageUxId\": \"{Locale.Tooltip}\",\"Content\": [{{\"TileId\": \"{Locale.Tooltip}\",\"RevisionId\": \"0\",\"TileElements\": [{{\"LanguageId\": \"{Locale.Tooltip}\",\"Text\": \"{Text}\",\"TextUnit\": 8}}]}}],\"Descriptors\":[{{\"Name\": \"FlightIds\",\"Value\": \"wac-wordeditorservicemultiplegrammarcritiquespersentence-treatment\"}},{{\"Name\": \"LicenseType\",\"Value\": \"NoLicense\"}}]}}", Encoding.UTF8, "application/json"));
+                            Response.EnsureSuccessStatusCode();
+                            string Json = await Response.Content.ReadAsStringAsync();
+
+                            using JsonDocument Document = JsonDocument.Parse(Json);
+                            if (Document.RootElement.TryGetProperty("Critiques", out JsonElement Critiques))
+                            {
+                                foreach (JsonElement Critique in Critiques.EnumerateArray())
+                                {
+                                    if (!Critique.TryGetProperty("Context", out JsonElement Context))
+                                        continue;
+
+                                    List<string> Suggestions = [];
+                                    if (Critique.TryGetProperty("Suggestions", out JsonElement Replacements))
+                                    {
+                                        foreach (JsonElement Replacement in Replacements.EnumerateArray())
+                                            Suggestions.Add(Replacement.GetProperty("Text").GetString()!);
+                                    }
+
+                                    string ContextText = Context.GetString()!;
+                                    int Offset = Critique.GetProperty("Start").GetInt32();
+                                    int Length = Critique.GetProperty("Length").GetInt32();
+
+                                    Results.Add((ContextText.Substring(Offset, Length), Suggestions));
+                                }
+                            }
+                            break;
+                        }
+                    case 3:
+                        {
+                            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.LANGUAGETOOL_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
+
+                            using JsonDocument Document = JsonDocument.Parse(Json);
+                            if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches))
+                            {
+                                foreach (JsonElement Match in Matches.EnumerateArray())
+                                {
+                                    if (!Match.TryGetProperty("context", out JsonElement Context))
+                                        continue;
+
+                                    List<string> Suggestions = [];
+                                    if (Match.TryGetProperty("replacements", out JsonElement Replacements))
+                                    {
+                                        foreach (JsonElement Replacement in Replacements.EnumerateArray())
+                                            Suggestions.Add(Replacement.GetProperty("value").GetString()!);
+                                    }
+
+                                    string ContextText = Context.GetProperty("text").GetString()!;
+                                    int Offset = Match.GetProperty("offset").GetInt32();
+                                    int Length = Match.GetProperty("length").GetInt32();
+
+                                    Results.Add((ContextText.Substring(Offset, Length), Suggestions));
+                                }
+                            }
+                            break;
+                        }
+                    case 4:
+                        {
+                            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.YANDEX_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
+
+                            using JsonDocument Document = JsonDocument.Parse(Json);
+                            if (Document.RootElement.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (JsonElement Match in Document.RootElement.EnumerateArray())
+                                {
+                                    string Word = Match.GetProperty("word").GetString()!;
+                                    List<string> Suggestions = [];
+                                    if (Match.TryGetProperty("s", out JsonElement Replacements))
+                                    {
+                                        foreach (JsonElement Replacement in Replacements.EnumerateArray())
+                                            Suggestions.Add(Replacement.GetString()!);
+                                    }
+                                    Results.Add((Word, Suggestions));
+                                }
+                            }
+                            break;
+                        }
+                }
             }
+            catch { }
             return Results;
         }
 
