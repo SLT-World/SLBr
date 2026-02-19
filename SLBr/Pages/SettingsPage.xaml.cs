@@ -259,11 +259,6 @@ namespace SLBr.Pages
             SearchEngineComboBox.SelectedValue = App.Instance.DefaultSearchProvider;
 
             HomepageTextBox.Text = App.Instance.GlobalSave.Get("Homepage");
-            bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab");
-            HomepageBackgroundComboBox.IsEnabled = IsNewTab;
-            BingBackgroundComboBox.IsEnabled = IsNewTab;
-            BackgroundImageTextBox.IsEnabled = IsNewTab;
-            BackgroundQueryTextBox.IsEnabled = IsNewTab;
 
             DownloadPathText.Text = App.Instance.GlobalSave.Get("DownloadPath");
             ScreenshotPathText.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
@@ -353,7 +348,6 @@ namespace SLBr.Pages
             ReduceDiskCheckBox.IsEnabled = PerformanceComboBox.SelectedIndex == 0;
 
             RenderModeComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("RenderMode");
-            BingBackgroundComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("BingBackground");
             ImageSearchComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ImageSearch");
             TranslationProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TranslationProvider");
             SpellcheckProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("SpellcheckProvider");
@@ -376,8 +370,6 @@ namespace SLBr.Pages
             TabUnloadingTimeComboBox.SelectedValue = App.Instance.GlobalSave.Get("TabUnloadingTime");
             TabUnloadingTimeComboBox.SelectionChanged += TabUnloadingTimeComboBox_SelectionChanged;
 
-            HomepageBackgroundComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("HomepageBackground");
-
             int RuntimeStyle = App.Instance.GlobalSave.GetInt("ChromiumRuntimeStyle");
             RuntimeStyleComboBox.SelectedIndex = RuntimeStyle;
             if (RuntimeStyle != 0)
@@ -394,13 +386,6 @@ namespace SLBr.Pages
                 BandwidthTextBox.Text = (Bandwidth * 1000).ToString("0.##");
                 BandwidthUnitComboBox.SelectedIndex = 1;
             }
-
-
-            BackgroundImageTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundImage");
-            BackgroundQueryTextBox.Text = App.Instance.GlobalSave.Get("CustomBackgroundQuery");
-            BackgroundImageTextBox.Visibility = HomepageBackgroundComboBox.SelectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
-            BackgroundQueryTextBox.Visibility = Visibility.Collapsed;
-            BingBackgroundComboBox.Visibility = HomepageBackgroundComboBox.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
 
             ScreenshotFormatComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ScreenshotFormat");
 
@@ -556,19 +541,6 @@ namespace SLBr.Pages
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
         }
 
-
-        private void HomepageBackgroundComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (SettingsInitialized)
-            {
-                int Value = HomepageBackgroundComboBox.SelectedIndex;
-                App.Instance.GlobalSave.Set("HomepageBackground", Value);
-                BackgroundImageTextBox.Visibility = Value == 0 ? Visibility.Visible : Visibility.Collapsed;
-                BackgroundQueryTextBox.Visibility = Visibility.Collapsed;
-                BingBackgroundComboBox.Visibility = Value == 1 ? Visibility.Visible : Visibility.Collapsed;
-            }
-        }
-
         private void RuntimeStyleComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
@@ -588,11 +560,6 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetRenderMode(RenderModeComboBox.SelectedIndex);
-        }
-        private void BingBackgroundComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("BingBackground", BingBackgroundComboBox.SelectedIndex);
         }
         private void ImageSearchComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -678,36 +645,12 @@ namespace SLBr.Pages
             if (SettingsInitialized)
                 App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
-
-        private void BackgroundImageTextBox_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                if (Utils.IsUrl(BackgroundImageTextBox.Text))
-                    BackgroundImageTextBox.Text = Utils.FixUrl(BackgroundImageTextBox.Text);
-                App.Instance.GlobalSave.Set("CustomBackgroundImage", BackgroundImageTextBox.Text);
-            }
-        }
-        private void BackgroundQueryTextBox_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                if (Utils.IsUrl(BackgroundQueryTextBox.Text))
-                    BackgroundQueryTextBox.Text = Utils.FixUrl(BackgroundQueryTextBox.Text);
-                App.Instance.GlobalSave.Set("CustomBackgroundQuery", BackgroundQueryTextBox.Text);
-            }
-        }
         private void HomepageTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && HomepageTextBox.Text.Trim().Length > 0)
             {
                 HomepageTextBox.Text = Utils.FixUrl(HomepageTextBox.Text);
                 App.Instance.GlobalSave.Set("Homepage", HomepageTextBox.Text);
-                bool IsNewTab = HomepageTextBox.Text.StartsWith("slbr://newtab");
-                HomepageBackgroundComboBox.IsEnabled = IsNewTab;
-                BingBackgroundComboBox.IsEnabled = IsNewTab;
-                BackgroundImageTextBox.IsEnabled = IsNewTab;
-                BackgroundQueryTextBox.IsEnabled = IsNewTab;
             }
         }
         private void NeverSlowModeCheckBox_Click(object sender, RoutedEventArgs e)

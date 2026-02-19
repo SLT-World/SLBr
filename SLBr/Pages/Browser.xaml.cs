@@ -490,6 +490,12 @@ namespace SLBr.Pages
                         dataSaverEnabled = true
                     });
                 }
+                //TODO: WebView2 site certificate.
+                /*WebView.CallDevToolsAsync("Security.enable");
+                WebView.SubscribeDevToolsEvent("Security.visibleSecurityStateChanged", Json =>
+                {
+                    Debug.WriteLine($"Security: {Json}");
+                });*/
             }
         }
 
@@ -1219,27 +1225,25 @@ namespace SLBr.Pages
         {
             if (!Message.TryGetValue("function", out object? Value))
                 return;
-            switch (Value?.ToString())
+            try
             {
-                case "cors":
-                    string FetchUrl = Message["url"].ToString();
-                    string Data = string.Empty;
-                    if (!Utils.IsHttpScheme(FetchUrl) && File.Exists(FetchUrl))
-                        Data = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(FetchUrl))}";
-                    else
-                    {
-                        //using (var Client = new HttpClient())
-                        //{
-                        //    Client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentGenerator.BuildChromeBrand());
+                switch (Value?.ToString())
+                {
+                    case "cors":
+                        string FetchUrl = Message["url"].ToString();
+                        string Data = string.Empty;
+                        if (Utils.IsHttpScheme(FetchUrl))
                             Data = await App.MiniHttpClient.GetStringAsync(FetchUrl);
-                        //}
-                    }
-                    WebView?.ExecuteScript($"window.internal.receive('cors={Uri.EscapeDataString(Data)}');");
-                    break;
-                case "search":
-                    Address = Utils.FilterUrlForBrowser(Message["variable"]?.ToString() ?? string.Empty, App.Instance.DefaultSearchProvider.SearchUrl);
-                    break;
+                        else if (File.Exists(FetchUrl))
+                            Data = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(FetchUrl))}";
+                        WebView?.ExecuteScript($"window.internal.receive('cors={Uri.EscapeDataString(Data)}');");
+                        break;
+                    case "search":
+                        Address = Utils.FilterUrlForBrowser(Message["variable"]?.ToString() ?? string.Empty, App.Instance.DefaultSearchProvider.SearchUrl);
+                        break;
+                }
             }
+            catch { }
         }
 
         private void WebView_JavaScriptMessageReceived(object? sender, string e)

@@ -107,24 +107,7 @@
                             </GroupBox.Header>
                             <StackPanel>
                                 <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Url"/>
-                                <TextBox Margin="0,0,0,10" x:Name="HomepageTextBox" Width="Auto" KeyDown="HomepageTextBox_KeyUp"/>
-                                <TextBlock Margin="0,0,0,10" VerticalAlignment="Top" Text="Background"/>
-                                <DockPanel LastChildFill="True">
-                                    <ComboBox x:Name="HomepageBackgroundComboBox" VerticalAlignment="Top" DockPanel.Dock="Left" SelectedIndex="0" Width="100px" SelectionChanged="HomepageBackgroundComboBox_SelectionChanged">
-                                        <ComboBoxItem>Custom</ComboBoxItem>
-                                        <ComboBoxItem>Bing</ComboBoxItem>
-                                        <ComboBoxItem>Picsum</ComboBoxItem>
-                                        <ComboBoxItem>NASA</ComboBoxItem>
-                                    </ComboBox>
-                                    <Grid Margin="5,0,0,0">
-                                        <ComboBox x:Name="BingBackgroundComboBox" SelectedIndex="0" Width="Auto" HorizontalAlignment="Stretch" Visibility="Collapsed" SelectionChanged="BingBackgroundComboBox_SelectionChanged">
-                                            <ComboBoxItem>Image of the day</ComboBoxItem>
-                                            <ComboBoxItem>Random</ComboBoxItem>
-                                        </ComboBox>
-                                        <TextBox x:Name="BackgroundQueryTextBox" KeyUp="BackgroundQueryTextBox_KeyUp" Width="Auto" HorizontalAlignment="Stretch" ToolTip="Query"/>
-                                        <TextBox x:Name="BackgroundImageTextBox" KeyUp="BackgroundImageTextBox_KeyUp" Width="Auto" HorizontalAlignment="Stretch" ToolTip="Source" Visibility="Collapsed"/>
-                                    </Grid>
-                                </DockPanel>
+                                <TextBox Margin="0" x:Name="HomepageTextBox" Width="Auto" KeyDown="HomepageTextBox_KeyUp"/>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Margin="0,0,0,10">

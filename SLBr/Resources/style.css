@@ -268,23 +268,144 @@ button > .icon_button {
     height: calc(100% - 60px);
 }
 
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    background: var(--tertiary);
+}
+
+.groupbox {
+    background: var(--secondary);
+    outline: 1px solid var(--tertiary);
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.groupbox .field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.groupbox .field .input {
+    margin-left: auto;
+}
+
+.groupbox .field .input:not(.switch) {
+    max-width: 250px;
+    width: 50%;
+}
+
+.groupbox .field p {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-size: smaller;
+}
+
+input.input {
+    background: var(--primary);
+    outline: 1px solid var(--tertiary);
+    border-radius: 5px;
+    height: 35px;
+    border: none;
+    font-size: smaller;
+    padding: 5px 10px;
+    width: 100%;
+}
+
+select {
+    background: var(--primary);
+    outline: 1px solid var(--tertiary);
+    border-radius: 5px;
+    height: 35px;
+    border: none;
+    font-size: smaller;
+    padding: 5px 10px;
+    width: 100%;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 25px;
+    min-width: 50px;
+}
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--primary);
+    transition: .4s;
+    border-radius: 12.5px;
+    outline: 1px solid var(--tertiary);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4.5px;
+    bottom: 4.5px;
+    background-color: var(--tertiary);
+    transition: .4s;
+    border-radius: 12.5px;
+}
+
+input:checked + .slider {
+    background-color: var(--indicator);
+    outline: 1px solid var(--indicator);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--indicator);
+}
+
+input:checked + .slider:before {
+    transform: translateX(22.5px);
+}
+
+.switch input:disabled + .slider {
+    background-color: gray;
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
 .tab-control {
     height: calc(100% - 60px);
     display: flex;
     --tabstrip-width: 250px;
 }
 
-    .tab-control > div:first-child {
-        width: var(--tabstrip-width);
-        height: 100%;
-        overflow: auto;
-        background: var(--secondary);
-        outline: 1px solid var(--tertiary);
-        padding: 5px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
+.tab-control > div:first-child {
+    width: var(--tabstrip-width);
+    height: 100%;
+    overflow: auto;
+    background: var(--secondary);
+    outline: 1px solid var(--tertiary);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
 
 .tab-control > div:first-child > button.tab {
     width: 100%;
@@ -329,6 +450,12 @@ button > .icon_button {
         padding: 10px;
         display: flex;
         flex-direction: column;
+    }
+
+    .tab-control > div:last-child > .tabcontent {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     .tab-control > div:last-child > .tabcontent:not(.active) {

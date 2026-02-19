@@ -2637,15 +2637,6 @@ Inner Exception: ```{7} ```";
             if (!GlobalSave.Has("PDF"))
                 GlobalSave.Set("PDF", true);
 
-            if (!GlobalSave.Has("HomepageBackground"))
-                GlobalSave.Set("HomepageBackground", 0);
-            if (!GlobalSave.Has("BingBackground"))
-                GlobalSave.Set("BingBackground", 0);
-            if (!GlobalSave.Has("CustomBackgroundQuery"))
-                GlobalSave.Set("CustomBackgroundQuery", string.Empty);
-            if (!GlobalSave.Has("CustomBackgroundImage"))
-                GlobalSave.Set("CustomBackgroundImage", string.Empty);
-
             if (!GlobalSave.Has("ImageSearch"))
                 GlobalSave.Set("ImageSearch", 0);
             if (!GlobalSave.Has("TranslationProvider"))

@@ -154,6 +154,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 </div>
             </div>
         </div>
+        <h2 style="position: absolute; top: 25px; left: 25px; height: 35px; display: flex; align-items: center; font-weight: 500;" id="clock"></h2>
         <button style="border:none;position: absolute;top: 25px;right: 25px;background: transparent;" class="icon" onclick="toggleDialog('customize')">
             <span class="icon_button"></span>
         </button>
@@ -174,26 +175,117 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 </div>
                 <div>
                     <div id="tabcontent_background" class="tabcontent active">
+                        <div class="groupbox">
+                            <div class="field">
+                                <p>Background</p>
+                                <select class="input" data-setting="background">
+                                    <option value="0">Custom</option>
+                                    <option value="1">Bing</option>
+                                    <option value="2">Picsum</option>
+                                    <option value="3">NASA</option>
+                                </select>
+                            </div>
+                            <hr id="backgroundSeparator"/>
+                            <div class="field">
+                                <p>Bing</p>
+                                <select class="input" data-setting="bingBackground">
+                                    <option value="0">Image of the day</option>
+                                    <option value="1">Random</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <p>Custom Path</p>
+                                <input type="text" class="input" autocomplete="off" data-setting="customBackground" />
+                            </div>
+                        </div>
                     </div>
-
                     <div id="tabcontent_clock" class="tabcontent">
+                        <div class="groupbox">
+                            <div class="field">
+                                <p>Clock</p>
+                                <label class="switch input" data-setting="clock">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <hr />
+                            <div class="field">
+                                <p>Format</p>
+                                <select class="input" data-setting="clockFormat">
+                                    <option value="0">12-hour</option>
+                                    <option value="1">24-hour</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-
                     <div id="tabcontent_widgets" class="tabcontent">
+                        <div class="groupbox">
+                            <div class="field">
+                                <p>Weather</p>
+                                <label class="switch input" data-setting="weather">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", setNewTabBackground);
-    document.getElementById('SearchField').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            search(document.getElementById("SearchField").value);
-        }
-    });
-    async function search(value) {
-        internal.search(value);
+    const defaults = {
+        background: "0",
+        bingBackground: "0",
+        customBackground: "",
+        clock: "true",
+        clockFormat: "0",
+        weather: "false",
     };
+    for (const key in defaults) {
+        if (localStorage.getItem(key) === null) localStorage.setItem(key, defaults[key]);
+    }
+    let inputs = document.querySelectorAll("[data-setting]");
+    inputs.forEach(w => {
+        const key = w.dataset.setting;
+        const e = w.tagName === "LABEL" ? w.querySelector("input") : w;
+
+        if (!e) return;
+        let stored = localStorage.getItem(key);
+
+        if (stored !== null) {
+            if (e.tagName === "SELECT") e.value = stored;
+            else if (e.type === "checkbox") e.checked = stored === "true";
+            else e.value = stored;
+        }
+        const evt = e.type === "checkbox" || e.tagName === "SELECT" ? "change" : "input";
+        e.addEventListener(evt, () => {
+            let value;
+            if (e.type === "checkbox") value = e.checked;
+            else value = e.value;
+            localStorage.setItem(key, value);
+            setNewTabBackground();
+        });
+    });
+    const backgroundSeparator = document.getElementById("backgroundSeparator");
+    const searchField = document.getElementById("SearchField");
+    function updateBackgroundSettingsUI() {
+        const mode = parseInt(localStorage.getItem("background") || "0");
+        const bingGroup = document.querySelector('[data-setting="bingBackground"]').closest(".field");
+        const customPath = document.querySelector('[data-setting="customBackground"]').closest(".field");
+        bingGroup.style.display = mode === 1 ? "" : "none";
+        customPath.style.display = mode === 0 ? "" : "none";
+        backgroundSeparator.style.display = mode != 1 && mode != 0 ? "none" : "";
+    }
+    document.addEventListener("change", e => {
+        if (!e.target.closest("[data-setting]")) return;
+        updateBackgroundSettingsUI();
+        applyClockSetting();
+    });
+    updateBackgroundSettingsUI();
+    document.addEventListener("DOMContentLoaded", setNewTabBackground);
+    searchField.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') internal.search(searchField.value);
+    });
     const backgroundDescription = document.getElementById('background-description');
     function onCorsResult(value) {
         try {
@@ -220,6 +312,8 @@ Use of this source code is governed by a GNU license that can be found in the LI
         }
     }
     async function setNewTabBackground() {
+        backgroundDescription.innerHTML = "";
+        backgroundDescription.title = "";
         let mode = parseInt(localStorage.getItem("background") || "0");
         switch (mode) {
             case 0: {
@@ -259,7 +353,6 @@ Use of this source code is governed by a GNU license that can be found in the LI
         document.documentElement.classList.add("background-image");
     }
 
-
     function openTab(event) {
         var tabcontent = document.getElementsByClassName("tabcontent");
         for (var i = 0; i < tabcontent.length; i++) {
@@ -283,6 +376,39 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 dialogs[i].classList.remove("active");
         }
     }
+    const clock = document.getElementById("clock");
+    function updateClock() {
+        const now = new Date();
+        let hours = now.getHours();
+        if (parseInt(localStorage.getItem("clockFormat") || "0") == 0)
+            hours = hours % 12 || 12;
+        let minutes = now.getMinutes();
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        clock.textContent = hours + ':' + minutes;
+    }
+    let clockInterval;
+    function applyClockSetting() {
+        const enabled = localStorage.getItem("clock") === "true";
+        clock.style.display = enabled ? "" : "none";
+        if (enabled) {
+            updateClock();
+            if (!clockInterval)
+                clockInterval = setInterval(updateClock, 60000);
+        }
+        else if (clockInterval) {
+            clearInterval(clockInterval);
+            clockInterval = null;
+        }
+    }
+    applyClockSetting();
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            if (clockInterval) {
+                clearInterval(clockInterval);
+                clockInterval = null;
+            }
+        } else applyClockSetting();
+    });
         </script>
     </body>
 </html>

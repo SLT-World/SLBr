@@ -1228,6 +1228,7 @@ namespace SLBr
         void ExecuteScript(string Script);
         Task<object?> EvaluateScriptAsync(string Script);
         Task<string> CallDevToolsAsync(string Method, object? Parameters = null);
+        void SubscribeDevToolsEvent(string Event, Action<string> Handler);
         //Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType);
         Task<List<WebNavigationEntry>> GetNavigationHistoryAsync();
 
@@ -1408,6 +1409,8 @@ namespace SLBr
                         //await CallDevToolsAsync("Page.reload");
                     }
                 }
+                DevToolsClient Client = Browser.GetDevToolsClient();
+                Client.DevToolsEvent += (s, e) => DispatchDevToolsEvent(e.EventName, e.ParametersAsJsonString);
             }
 #if !DEBUG
             }
@@ -1515,6 +1518,7 @@ namespace SLBr
         public void SetFindResult(int ActiveMatch, int MatchCount) => FindResult.RaiseUIAsync(this, new FindResult(ActiveMatch, MatchCount));
         public void Find(string Text, bool Forward, bool MatchCase, bool FindNext) => Browser.Find(Text, Forward, MatchCase, FindNext);
         public void StopFind() => Browser.StopFinding(true);
+        //TODO: Non-functional on local webpages.
         public void SaveAs() => Browser.StartDownload(Address);
         /*{
             SaveFileDialog SaveDialog = new SaveFileDialog
@@ -1650,6 +1654,27 @@ namespace SLBr
             }
             catch (Exception _Exception) { return JsonSerializer.Serialize(new { Error = _Exception.Message }); }
         }
+
+        private readonly Dictionary<string, List<Action<string>>> DevToolsHandlers = [];
+        public void SubscribeDevToolsEvent(string Event, Action<string> Handler)
+        {
+            if (!DevToolsHandlers.TryGetValue(Event, out var Handlers))
+            {
+                Handlers = new List<Action<string>>();
+                DevToolsHandlers[Event] = Handlers;
+            }
+            Handlers.Add(Handler);
+        }
+
+        private void DispatchDevToolsEvent(string Event, string Json)
+        {
+            if (DevToolsHandlers.TryGetValue(Event, out var Handlers))
+            {
+                foreach (var Handler in Handlers)
+                    Handler(Json);
+            }
+        }
+
         public async Task<List<WebNavigationEntry>> GetNavigationHistoryAsync()
         {
             List<WebNavigationEntry> History = [];
@@ -2566,6 +2591,18 @@ namespace SLBr
             }
             catch (Exception _Exception) { return JsonSerializer.Serialize(new { Error = _Exception.Message }); }
         }
+
+
+        private readonly Dictionary<string, CoreWebView2DevToolsProtocolEventReceiver> DevToolsReceivers = [];
+        public void SubscribeDevToolsEvent(string Event, Action<string> Handler)
+        {
+            if (!DevToolsReceivers.TryGetValue(Event, out var Receiver))
+            {
+                Receiver = BrowserCore.GetDevToolsProtocolEventReceiver(Event);
+                DevToolsReceivers[Event] = Receiver;
+            }
+            Receiver.DevToolsProtocolEventReceived += (s, e) => Handler(e.ParameterObjectAsJson);
+        }
         public async Task<List<WebNavigationEntry>> GetNavigationHistoryAsync()
         {
             List<WebNavigationEntry> History = [];
@@ -3147,6 +3184,7 @@ namespace SLBr
         }
         public async Task<string> GetSourceAsync() => (await EvaluateScriptAsync("document.documentElement.outerHTML")).ToString() ?? string.Empty;
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null) => string.Empty;
+        public void SubscribeDevToolsEvent(string Event, Action<string> Handler) { }
         public async Task<List<WebNavigationEntry>> GetNavigationHistoryAsync()
         {
             List<WebNavigationEntry> History = [];
