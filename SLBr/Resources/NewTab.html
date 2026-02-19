@@ -9,81 +9,85 @@ Use of this source code is governed by a GNU license that can be found in the LI
     </head>
     <body>
         <style>
-            html {
-                background-repeat: no-repeat;
-                background-size: auto;
-            }
+html {
+    background-repeat: no-repeat;
+    background-size: auto;
+}
 
-                html.background-image::before {
-                    content: "";
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                    bottom: 0;
-                    left: 0;
-                    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 0.5) 100%);
-                    pointer-events: none;
-                }
+html.background-image::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 0.5) 100%);
+    pointer-events: none;
+}
 
-                html.background-image .SearchInput {
-                    box-shadow: 0 2px 6px 0 #20212451;
-                }
+html.background-image .SearchInput {
+    box-shadow: 0 2px 6px 0 #20212451;
+}
 
-            div.nav {
-                padding-left: 0px;
-                background-color: transparent;
-                text-align: center;
-                margin-top: 15px;
-                list-style-position: inside;
-                font-size: small;
-                width: 75vw;
-                max-width: 750px;
-                display: grid;
-                grid-template-columns: repeat(auto-fit, 60px);
-                gap: 20px;
-                align-items: center;
-                justify-content: center;
-            }
+html.background-image div.nav > a > p {
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.75);
+}
 
-                div.nav > a {
-                    display: inline-flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    gap: 5px;
-                    width: 60px;
-                    height: 70px;
-                }
+div.nav {
+    padding-left: 0px;
+    background-color: transparent;
+    text-align: center;
+    margin-top: 15px;
+    list-style-position: inside;
+    font-size: small;
+    width: 75vw;
+    max-width: 750px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 70px);
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
 
-                    div.nav > a > div {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        width: 40px;
-                        height: 40px;
-                        background-color: color-mix(in srgb, var(--secondary), transparent);
-                        backdrop-filter: blur(5px);
-                        border-radius: 10px;
-                        transition: background-color 0.25s ease;
-                    }
+div.nav > a {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 70px;
+    height: 70px;
+}
 
-                    div.nav > a:hover > div {
-                        background-color: color-mix(in srgb, var(--tertiary), transparent);
-                    }
+div.nav > a > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: color-mix(in srgb, var(--secondary), transparent);
+    backdrop-filter: blur(5px);
+    border-radius: 10px;
+    transition: background-color 0.25s ease;
+}
 
-                    div.nav > a > div > img {
-                        user-select: none;
-                        border-radius: 5px;
-                    }
+div.nav > a:hover > div {
+    background-color: color-mix(in srgb, var(--tertiary), transparent);
+}
 
-                    div.nav > a > p {
-                        color: color-mix(in srgb, transparent, var(--font) 80%);
-                        font-size: small;
-                        width: 100%;
-                        overflow: clip;
-                        text-overflow: ellipsis;
-                        text-wrap-mode: nowrap;
-                    }
+div.nav > a > div > img {
+    user-select: none;
+    border-radius: 5px;
+}
+
+div.nav > a > p {
+    color: color-mix(in srgb, transparent, var(--font) 80%);
+    font-size: small;
+    width: 100%;
+    overflow: clip;
+    text-overflow: ellipsis;
+    text-wrap-mode: nowrap;
+}
         </style>
         <div class="Center NewTabSearchContainer">
             <div>
@@ -183,6 +187,8 @@ Use of this source code is governed by a GNU license that can be found in the LI
                                     <option value="1">Bing</option>
                                     <option value="2">Picsum</option>
                                     <option value="3">NASA</option>
+                                    <option value="4">Wikipedia</option>
+                                    <option value="5">Wikimedia</option>
                                 </select>
                             </div>
                             <hr id="backgroundSeparator"/>
@@ -286,6 +292,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
     searchField.addEventListener('keypress', function (e) {
         if (e.key === 'Enter') internal.search(searchField.value);
     });
+    function removeHTML(str) { return str.replace(/<[^>]*>?/gm, ''); }
     const backgroundDescription = document.getElementById('background-description');
     function onCorsResult(value) {
         try {
@@ -294,16 +301,30 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 let json = JSON.parse(value);
                 let url = json.images[0].url;
                 if (url) setBackground("http://www.bing.com/" + url);
-                let desc = `<span style="color:color-mix(in srgb, transparent, white 75%);">${json.images[0].title.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span> - ${json.images[0].copyright.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+                let desc = `<span style="color:color-mix(in srgb, transparent, white 75%);">${removeHTML(json.images[0].title)}</span> - ${removeHTML(json.images[0]?.copyright || 'Bing')}`;
                 backgroundDescription.innerHTML = desc;
             }
             else if (mode === 3) {
                 let json = JSON.parse(value);
                 let url = navigator.connection.saveData ? json.url : json.hdurl;
                 if (url) setBackground(url);
-                let desc = `<span style="color:color-mix(in srgb, transparent, white 75%);">${json.title.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span> - ${json.copyright.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
+                let desc = `<span style="color:color-mix(in srgb, transparent, white 75%);">${removeHTML(json.title)}</span> - ${removeHTML(json.copyright || 'NASA')}`;
                 backgroundDescription.innerHTML = desc;
                 backgroundDescription.title = json.explanation;
+            }
+            else if (mode === 4 || mode === 5) {
+                let json = JSON.parse(value);
+                let pages = json.query?.pages;
+                for (const page of Object.values(pages)) {
+                    let imginfo = page?.imageinfo?.[0];
+                    if (imginfo) {
+                        let url = imginfo.url;
+                        if (url) setBackground(url);
+                        let desc = `<span style="color:color-mix(in srgb, transparent, white 75%);">${removeHTML(page?.title || 'Picture of the Day').replace(/^File:|(\.[a-z0-9]+)$/gi, "")}</span> - ${removeHTML((imginfo?.extmetadata?.Artist?.value || 'Wikimedia Commons'))}`;
+                        backgroundDescription.innerHTML = desc;
+                        break;
+                    }
+                }
             }
             else if (mode === 0 && value.startsWith("data:image")) setBackground(value);
         } catch (e) {
@@ -338,7 +359,18 @@ Use of this source code is governed by a GNU license that can be found in the LI
                 return;
             }
             case 3: {
-                engine.postMessage({ type: "__internal__", function: "cors", url: "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY" });
+                const response = await fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY");
+                onCorsResult(await response.text());
+                return;
+            }
+            case 4: {
+                const response = await fetch(`https://en.wikipedia.org/w/api.php?action=query&generator=images&titles=Template:POTD/${new Date().toISOString().slice(0, 10)}&prop=imageinfo&iiprop=extmetadata|url&format=json&origin=*`);
+                onCorsResult(await response.text());
+                return;
+            }
+            case 5: {
+                const response = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=images&titles=Template:Potd/${new Date().toISOString().slice(0, 10)}&prop=imageinfo&iiprop=extmetadata|url&format=json&origin=*`);
+                onCorsResult(await response.text());
                 return;
             }
         }
