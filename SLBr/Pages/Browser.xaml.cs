@@ -3068,6 +3068,32 @@ namespace SLBr.Pages
                     e.Handled = true;
                 }
             }
+            else if (e.Key == Key.Escape)
+            {
+                if (OmniBox.Text != OmniBox.Tag.ToString())
+                {
+                    if (OmniBox.Tag.ToString().StartsWith("slbr://newtab"))
+                    {
+                        OmniBoxPlaceholder.Visibility = Visibility.Visible;
+                        OmniBoxText = string.Empty;
+                        OmniBox.Text = string.Empty;
+                    }
+                    else
+                    {
+                        OmniBoxPlaceholder.Visibility = Visibility.Hidden;
+                        OmniBoxText = OmniBox.Tag.ToString();
+                        OmniBox.Text = OmniBox.Tag.ToString();
+                    }
+                }
+                if (OmniBox.Text.Trim().Length == 0)
+                    OmniBoxPlaceholder.Visibility = Visibility.Visible;
+                SmartSuggestionCancellation?.Cancel();
+                OmniBoxFastTimer?.Stop();
+                OmniBoxSmartTimer?.Stop();
+                OmniBox.IsDropDownOpen = false;
+                Keyboard.ClearFocus();
+                WebView?.Control?.Focus();
+            }
             else if (e.Key == Key.Back && OmniBox.Text.Length == 0)
             {
                 if (OmniBoxOverrideSearch != null)
