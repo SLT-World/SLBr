@@ -1,7 +1,4 @@
-﻿<!--Copyright © SLT Softwares. All rights reserved.
-Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
-
-<html style="background-repeat: no-repeat;background-size: cover;background-position: center;">
+﻿<html style="background-repeat: no-repeat;background-size: cover;background-position: center;">
     <head>
         <meta charset="utf-8"/>
         <title>New Tab</title>
@@ -163,7 +160,7 @@ div.nav > a > p {
             <span class="icon_button"></span>
         </button>
         <p id="background-description" style="position: absolute; bottom: 25px; left: 25px; color: color-mix(in srgb, transparent, white); "></p>
-        <div class="dialog active" id="dialog_customize">
+        <div class="dialog" id="dialog_customize">
             <div>
                 <span class="icon_button"></span>
                 <h1>Customize</h1>
@@ -175,7 +172,6 @@ div.nav > a > p {
                 <div>
                     <button class="tab active" id="tab_background" onclick="openTab(event)" style="--indicator: mediumslateblue;"><span class="icon_button"></span>Background</button>
                     <button class="tab" id="tab_clock" onclick="openTab(event)" style="--indicator: gold;"><span class="icon_button"></span>Clock</button>
-                    <button class="tab" id="tab_widgets" onclick="openTab(event)" style="--indicator: crimson;"><span class="icon_button"></span>Widgets</button>
                 </div>
                 <div>
                     <div id="tabcontent_background" class="tabcontent active">
@@ -224,17 +220,6 @@ div.nav > a > p {
                             </div>
                         </div>
                     </div>
-                    <div id="tabcontent_widgets" class="tabcontent">
-                        <div class="groupbox">
-                            <div class="field">
-                                <p>Weather</p>
-                                <label class="switch input" data-setting="weather">
-                                    <input type="checkbox">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -243,7 +228,7 @@ div.nav > a > p {
         background: "0",
         bingBackground: "0",
         customBackground: "",
-        clock: "true",
+        clock: "false",
         clockFormat: "0",
         weather: "false",
     };

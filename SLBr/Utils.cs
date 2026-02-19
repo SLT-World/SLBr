@@ -144,12 +144,19 @@ namespace SLBr
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
         public static string GetWindowTextRaw(IntPtr hWnd)
         {
             StringBuilder Builder = new(512);
             GetWindowText(hWnd, Builder, Builder.Capacity);
             return Builder.ToString();
         }
+
+        public const byte VK_LWIN = 0x5B;
+        public const byte VK_Z = 0x5A;
+        public const uint KEYEVENTF_KEYUP = 0x0002;
 
         /*[DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
@@ -419,9 +426,9 @@ namespace SLBr
             CEE = 49390,
         }*/
 
-        /*private static bool? PIsWindows11OrGreater;
+        private static bool? PIsWindows11OrGreater;
 
-        internal static bool IsWindows11OrGreater
+        public static bool IsWindows11OrGreater
         {
             get
             {
@@ -430,7 +437,7 @@ namespace SLBr
                 PIsWindows11OrGreater = Environment.OSVersion.Version >= new Version(10, 0, 22000);
                 return PIsWindows11OrGreater.Value;
             }
-        }*/
+        }
 
         public static string BuildCPUInfo()
         {

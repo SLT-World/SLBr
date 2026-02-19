@@ -5025,7 +5025,6 @@ Inner Exception: ```{7} ```";
 
   function isBlacklisted(node) {
     if (node.nodeType !== Node.ELEMENT_NODE) return false;
-    //if (!root.contains(node)) return false;
     return blacklistSelectors.some(sel => node.matches(sel));
   }
 
@@ -5470,8 +5469,6 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
     window.console={
         ...originalConsole,
         log:function(){},
-        /*warn:function(){},
-        error:function(){},*/
         table:function(){},
         clear:function(){}
     };

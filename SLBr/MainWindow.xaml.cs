@@ -119,6 +119,7 @@ namespace SLBr
             HwndSource.AddHook(new(WndProc));
             int trueValue = 0x01;
             DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
+            DllUtils.SetWindowLong(HwndSource.Handle, DllUtils.GWL_STYLE, DllUtils.GetWindowLong(HwndSource.Handle, DllUtils.GWL_STYLE) & ~DllUtils.WS_SYSMENU);
 
             App.Instance.AllWindows.Add(this);
             if (App.Instance.WindowsSaves.Count < App.Instance.AllWindows.Count)
@@ -535,8 +536,12 @@ namespace SLBr
         {
             if (App.Instance.TabAlignment == 0)
             {
+                CaptionIcon.Visibility = Visibility.Collapsed;
+                CaptionTitle.Visibility = Visibility.Collapsed;
                 VerticalTabs = false;
+                CaptionHeight.Height = new GridLength(45);
                 TabsUI.Style = FindResource(typeof(WinUITabControl)) as Style;
+                Grid.SetRow(TabsUI, 0);
                 Tabs.Remove(NewTabTab);
                 Tabs.Add(NewTabTab);
                 TabsUI.Padding = new Thickness(0);
@@ -553,8 +558,15 @@ namespace SLBr
             }
             else
             {
+                CaptionIcon.Visibility = Visibility.Visible;
+                CaptionTitle.Visibility = Visibility.Visible;
                 VerticalTabs = true;
+                if (WindowState == WindowState.Maximized)
+                    CaptionHeight.Height = new GridLength(SystemParameters.CaptionHeight);
+                else
+                    CaptionHeight.Height = new GridLength(30);
                 TabsUI.Style = Resources["VerticalTabControl"] as Style;
+                Grid.SetRow(TabsUI, 1);
                 TabsUI.ApplyTemplate();
                 Tabs.Remove(NewTabTab);
                 //Tabs.Insert(0, NewTabTab);
@@ -562,6 +574,11 @@ namespace SLBr
                 TabPreviewPopup.Placement = PlacementMode.Right;
                 TabPreviewPopup.VerticalOffset = -10;
                 TabPreviewPopup.HorizontalOffset = -7.5;
+            }
+            foreach (BrowserTabItem Tab in Tabs)
+            {
+                Tab.Content?.MaxHeight = TabsUI.ActualHeight;
+                Tab.Content?.UpdateDevToolsPosition();
             }
         }
         private void TabsUI_LayoutUpdated(object? sender, EventArgs e)
@@ -719,7 +736,11 @@ namespace SLBr
         {
             TabPreviewPopup.IsOpen = false;
             foreach (BrowserTabItem Tab in Tabs)
+            {
+                Tab.Content?.MaxHeight = TabsUI.ActualHeight;
                 Tab.Content?.UpdateDevToolsPosition();
+            }
+            WindowBackground.Background = (SolidColorBrush)FindResource("SecondaryBrush");
         }
 
         private void Window_Deactivated(object sender, EventArgs e)
@@ -727,15 +748,33 @@ namespace SLBr
             TabPreviewPopup.IsOpen = false;
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.UpdateDevToolsPosition();
+            WindowBackground.Background = (SolidColorBrush)FindResource("BorderBrush");
         }
 
         private void Window_StateChanged(object sender, EventArgs e)
         {
             TabPreviewPopup.IsOpen = false;
             if (WindowState != WindowState.Minimized)
+            {
+                if (WindowState == WindowState.Maximized)
+                {
+                    if (App.Instance.TabAlignment != 0)
+                        CaptionHeight.Height = new GridLength(SystemParameters.CaptionHeight);
+                    MaximizeRestoreButton.Content = "\xe923";
+                }
+                else
+                {
+                    if (App.Instance.TabAlignment != 0)
+                        CaptionHeight.Height = new GridLength(30);
+                    MaximizeRestoreButton.Content = "\xe922";
+                }
                 Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
+            }
             foreach (BrowserTabItem Tab in Tabs)
+            {
+                Tab.Content?.MaxHeight = TabsUI.ActualHeight;
                 Tab.Content?.UpdateDevToolsPosition();
+            }
         }
 
         private void Window_LocationChanged(object sender, EventArgs e)
@@ -886,8 +925,7 @@ namespace SLBr
                     if (bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup")))
                     {
                         FullscreenPopup.IsOpen = true;
-                        FullscreenPopupTimer = new();
-                        FullscreenPopupTimer.Interval = TimeSpan.FromSeconds(3);
+                        FullscreenPopupTimer = new() { Interval = TimeSpan.FromSeconds(3) };
                         FullscreenPopupTimer.Tick += FullscreenPopupTimer_Tick;
                         FullscreenPopupTimer.Start();
                     }
@@ -1182,6 +1220,66 @@ namespace SLBr
         {
             base.OnClosing(e);
             ExecuteCloseEvent();
+        }
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e) =>
+            SystemCommands.MinimizeWindow(this);
+
+        private void MaximizeRestoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+                SystemCommands.RestoreWindow(this);
+            else
+                SystemCommands.MaximizeWindow(this);
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e) =>
+            SystemCommands.CloseWindow(this);
+        
+        DispatcherTimer SnapLayoutDelayTimer;
+        bool HoveringMaximize;
+        bool SnapLayoutVisible;
+
+        private void MaximizeRestoreButton_MouseEnter(object sender, MouseEventArgs e)
+        {
+            if (!UserAgentGenerator.IsWindows11OrGreater)
+                return;
+            HoveringMaximize = true;
+            SnapLayoutDelayTimer ??= new() { Interval = TimeSpan.FromMilliseconds(650) };
+            SnapLayoutDelayTimer.Tick -= SnapLayoutDelayTimer_Tick;
+            SnapLayoutDelayTimer.Tick += SnapLayoutDelayTimer_Tick;
+            SnapLayoutDelayTimer.Start();
+        }
+
+        private void MaximizeRestoreButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            HoveringMaximize = false;
+            SnapLayoutDelayTimer?.Stop();
+        }
+
+        private void SnapLayoutDelayTimer_Tick(object? sender, EventArgs e)
+        {
+            SnapLayoutDelayTimer.Stop();
+            if (SnapLayoutVisible || !HoveringMaximize)
+                return;
+            SnapLayoutVisible = true;
+            DllUtils.keybd_event(DllUtils.VK_LWIN, 0, 0, 0);
+            DllUtils.keybd_event(DllUtils.VK_Z, 0, 0, 0);
+            DllUtils.keybd_event(DllUtils.VK_Z, 0, DllUtils.KEYEVENTF_KEYUP, 0);
+            DllUtils.keybd_event(DllUtils.VK_LWIN, 0, DllUtils.KEYEVENTF_KEYUP, 0);
+        }
+
+        private void Window_MouseEnter(object sender, MouseEventArgs e)
+        {
+            HoveringMaximize = false;
+            SnapLayoutDelayTimer?.Stop();
+            if (!SnapLayoutVisible)
+                return;
+            Point MousePosition = Mouse.GetPosition(MaximizeRestoreButton);
+            if (MousePosition.X >= -12 && MousePosition.X <= MaximizeRestoreButton.ActualWidth + 12 && MousePosition.Y >= -12 && MousePosition.Y <= MaximizeRestoreButton.ActualHeight + 12)
+                return;
+            SnapLayoutVisible = false;
+            DllUtils.SetForegroundWindow(new WindowInteropHelper(this).Handle);
         }
     }
 }

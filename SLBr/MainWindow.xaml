@@ -7,7 +7,7 @@
         xmlns:controls="clr-namespace:SLBr.Controls"
         xmlns:WinUI="clr-namespace:WinUI"
         mc:Ignorable="d"
-        Title="SLBr" Height="450" Width="800" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" WindowState="Maximized" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged" Activated="Window_Activated" Deactivated="Window_Deactivated">
+        Title="SLBr" MouseEnter="Window_MouseEnter" Height="450" Width="800" WindowStyle="SingleBorderWindow" ResizeMode="CanResize" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" WindowState="Maximized" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged" Activated="Window_Activated" Deactivated="Window_Deactivated">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -19,19 +19,128 @@
                     <TextBlock Text="{Binding Initial}" TextAlignment="Center" Foreground="{Binding Foreground}" FontWeight="ExtraBold" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
                 </Grid>
             </DataTemplate>
+
+            <Style x:Key="CaptionButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="46"/>
+                <Setter Property="Height" Value="45"/>
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+                <Setter Property="Foreground" Value="{DynamicResource FontBrush}" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border
+					x:Name="border"
+					Background="Transparent"
+					BorderThickness="0"
+					SnapsToDevicePixels="true">
+                                <ContentPresenter
+						x:Name="contentPresenter"
+						Margin="0"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						Focusable="False"
+						RecognizesAccessKey="True"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="true">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="CaptionCloseButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="46"/>
+                <Setter Property="Height" Value="45"/>
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+                <Setter Property="Foreground" Value="{DynamicResource FontBrush}" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border
+					x:Name="border"
+					Background="Transparent"
+					BorderThickness="0"
+					SnapsToDevicePixels="true">
+                                <ContentPresenter
+						x:Name="contentPresenter"
+						Margin="0"
+						HorizontalAlignment="Center"
+						VerticalAlignment="Center"
+						Focusable="False"
+						RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="border" Property="Background" Value="Red"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="true">
+                                    <Setter TargetName="border" Property="Background" Value="DarkRed"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo x:Name="TaskbarItem" ProgressState="Normal" ProgressValue="0" controls:TaskbarItemOverlay.Template="{StaticResource OverlayIcon}"/>
     </Window.TaskbarItemInfo>
-    <Grid Background="{StaticResource SecondaryBrush}">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="45" UseAeroCaptionButtons="False" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"/>
+    </WindowChrome.WindowChrome>
+    <Grid x:Name="WindowBackground" Background="{StaticResource SecondaryBrush}" WindowChrome.IsHitTestVisibleInChrome="False">
+        <Grid.Style>
+            <Style TargetType="{x:Type Grid}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                        <Setter Property="Margin" Value="8"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Normal">
+                        <Setter Property="Margin" Value="0"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Style>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="45" x:Name="CaptionHeight"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Image x:Name="CaptionIcon" Grid.Column="0" Width="17.5" Height="17.5" Margin="7.5,0,0,0" Source="Resources/SLBr.ico"/>
+        <TextBlock TextTrimming="CharacterEllipsis" x:Name="CaptionTitle" Grid.Column="1" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource FontBrush}" Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"/>
+        <Button Height="Auto" VerticalAlignment="Stretch" Click="MinimizeButton_Click" Grid.Column="2" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" Content="&#xe921;"/>
+        <Button Height="Auto" VerticalAlignment="Stretch" MouseEnter="MaximizeRestoreButton_MouseEnter" MouseLeave="MaximizeRestoreButton_MouseLeave" Click="MaximizeRestoreButton_Click" Name="MaximizeRestoreButton" Grid.Column="3" Style="{StaticResource CaptionButtonStyle}" Content="&#xe922;"/>
+        <Button Height="Auto" VerticalAlignment="Stretch" Click="CloseButton_Click" Grid.Column="4" Style="{StaticResource CaptionCloseButtonStyle}" ToolTip="Close" Content="&#xe8bb;"/>
         <!--<Grid.LayoutTransform>
             <ScaleTransform ScaleX="2.5" ScaleY="2.5"/>
         </Grid.LayoutTransform>-->
-        <WinUI:WinUITabControl x:Name="TabsUI" SelectionChanged="TabsUI_SelectionChanged" Padding="0" Visibility="Hidden" SelectedIndex="-1">
+        <WinUI:WinUITabControl Grid.RowSpan="2" WindowChrome.IsHitTestVisibleInChrome="True" Grid.ColumnSpan="10" x:Name="TabsUI" SelectionChanged="TabsUI_SelectionChanged" Padding="0" Visibility="Hidden" SelectedIndex="-1">
             <TabControl.ContentTemplate>
                 <DataTemplate>
-                    <UserControl Content="{Binding Content}" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    <UserControl WindowChrome.IsHitTestVisibleInChrome="False" Content="{Binding Content}" Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </DataTemplate>
             </TabControl.ContentTemplate>
         </WinUI:WinUITabControl>
