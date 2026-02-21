@@ -32,8 +32,10 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Button}">
-                            <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
-                                <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
+                            <Border Background="{StaticResource SecondaryBrush}" BorderThickness="0" SnapsToDevicePixels="true">
+                                <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
+                                    <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
+                                </Border>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="true">
@@ -60,8 +62,10 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Button}">
-                            <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
-                                <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
+                            <Border Background="{StaticResource SecondaryBrush}" BorderThickness="0" SnapsToDevicePixels="true">
+                                <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
+                                    <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
+                                </Border>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="true">
@@ -97,7 +101,6 @@
             </Style>
         </Grid.Style>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
@@ -107,12 +110,19 @@
             <RowDefinition Height="45" x:Name="CaptionHeight"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-        <Image x:Name="CaptionIcon" Grid.Column="0" Width="17.5" Height="17.5" Margin="7.5,0,0,0" Source="Resources/SLBr.ico"/>
-        <TextBlock TextTrimming="CharacterEllipsis" x:Name="CaptionTitle" Grid.Column="1" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource FontBrush}" Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"/>
-        <Button Height="Auto" VerticalAlignment="Stretch" Click="MinimizeButton_Click" Grid.Column="2" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" Content="&#xe921;"/>
-        <Button Height="Auto" VerticalAlignment="Stretch" MouseEnter="MaximizeRestoreButton_MouseEnter" MouseLeave="MaximizeRestoreButton_MouseLeave" Click="MaximizeRestoreButton_Click" Name="MaximizeRestoreButton" Grid.Column="3" Style="{StaticResource CaptionButtonStyle}" Content="&#xe922;"/>
-        <Button Height="Auto" VerticalAlignment="Stretch" Click="CloseButton_Click" Grid.Column="4" Style="{StaticResource CaptionCloseButtonStyle}" ToolTip="Close" Content="&#xe8bb;"/>
+        <Grid Grid.Column="0" Grid.ColumnSpan="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition MinWidth="7.5"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Image x:Name="CaptionIcon" Grid.Column="1" Width="17.5" Height="17.5" HorizontalAlignment="Right" Source="{Binding ElementName=TabsUI, Path=SelectedItem.Icon, TargetNullValue='Resources/SLBr.ico'}"/>
+            <TextBlock TextTrimming="CharacterEllipsis" x:Name="CaptionTitle" Grid.Column="2" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource FontBrush}" Text="{Binding ElementName=TabsUI, Path=SelectedItem.Header, TargetNullValue='SLBr'}"/>
+        </Grid>
+        <Button Height="Auto" VerticalAlignment="Stretch" Click="MinimizeButton_Click" Grid.Column="1" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" Content="&#xe921;"/>
+        <Button Height="Auto" VerticalAlignment="Stretch" MouseEnter="MaximizeRestoreButton_MouseEnter" MouseLeave="MaximizeRestoreButton_MouseLeave" Click="MaximizeRestoreButton_Click" Name="MaximizeRestoreButton" Grid.Column="2" Style="{StaticResource CaptionButtonStyle}" Content="&#xe922;"/>
+        <Button Height="Auto" VerticalAlignment="Stretch" Click="CloseButton_Click" Grid.Column="3" Style="{StaticResource CaptionCloseButtonStyle}" ToolTip="Close" Content="&#xe8bb;"/>
         <!--<Grid.LayoutTransform>
             <ScaleTransform ScaleX="2.5" ScaleY="2.5"/>
         </Grid.LayoutTransform>-->
