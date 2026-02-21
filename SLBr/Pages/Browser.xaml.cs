@@ -1054,6 +1054,7 @@ namespace SLBr.Pages
 
         private void WebView_NewTabRequested(object? sender, NewTabRequestEventArgs e)
         {
+            //TODO: Retain Referer request headers.
             if (e.Popup.HasValue)
             {
                 //TODO: Add popup permission check

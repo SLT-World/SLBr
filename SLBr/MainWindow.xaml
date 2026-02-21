@@ -25,71 +25,50 @@
                 <Setter Property="Height" Value="45"/>
                 <Setter Property="FontSize" Value="10"/>
                 <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
-                <Setter Property="Foreground" Value="{DynamicResource FontBrush}" />
-                <Setter Property="Padding" Value="0" />
-                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
-                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+                <Setter Property="IsTabStop" Value="False"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Button}">
-                            <Border
-					x:Name="border"
-					Background="Transparent"
-					BorderThickness="0"
-					SnapsToDevicePixels="true">
-                                <ContentPresenter
-						x:Name="contentPresenter"
-						Margin="0"
-						HorizontalAlignment="Center"
-						VerticalAlignment="Center"
-						Focusable="False"
-						RecognizesAccessKey="True"/>
+                            <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
+                                <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                    <Setter TargetName="Border" Property="Background">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="{DynamicResource GrayBrushColor}" Opacity="0.1"/>
+                                        </Setter.Value>
+                                    </Setter>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="true">
-                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                    <Setter TargetName="Border" Property="Background">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="{DynamicResource GrayBrushColor}" Opacity="0.2"/>
+                                        </Setter.Value>
+                                    </Setter>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
-            <Style x:Key="CaptionCloseButtonStyle" TargetType="Button">
-                <Setter Property="Width" Value="46"/>
-                <Setter Property="Height" Value="45"/>
-                <Setter Property="FontSize" Value="10"/>
-                <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
-                <Setter Property="Foreground" Value="{DynamicResource FontBrush}" />
-                <Setter Property="Padding" Value="0" />
-                <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
-                <Setter Property="IsTabStop" Value="False" />
+            <Style x:Key="CaptionCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}">
+                <Setter Property="Foreground" Value="White"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Button}">
-                            <Border
-					x:Name="border"
-					Background="Transparent"
-					BorderThickness="0"
-					SnapsToDevicePixels="true">
-                                <ContentPresenter
-						x:Name="contentPresenter"
-						Margin="0"
-						HorizontalAlignment="Center"
-						VerticalAlignment="Center"
-						Focusable="False"
-						RecognizesAccessKey="True" />
+                            <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
+                                <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter TargetName="border" Property="Background" Value="Red"/>
-                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter TargetName="Border" Property="Background" Value="Red"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="true">
-                                    <Setter TargetName="border" Property="Background" Value="DarkRed"/>
-                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter TargetName="Border" Property="Background" Value="DarkRed"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

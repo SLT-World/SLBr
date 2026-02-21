@@ -2177,7 +2177,7 @@ namespace SLBr
                 e.Response = WebViewManager.WebView2CancelResponse;
             else
             {
-                if (Utils.IsCustomScheme(e.Request.Uri))
+                if (Utils.IsCustomScheme(e.Request.Uri) && Utils.IsCustomScheme(Address))
                     _ = HandleWebResourceRequestedAsync(e, e.GetDeferral());
                 else
                 {
@@ -2896,7 +2896,6 @@ namespace SLBr
             IsBrowserInitialized = true;
             IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
 
-            //if (!string.IsNullOrWhiteSpace(InitialUrls.Last().Url))
             Navigate(InitialUrls.Last().Url);
         }
 
