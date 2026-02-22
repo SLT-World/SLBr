@@ -575,6 +575,7 @@ namespace SLBr
                 TabPreviewPopup.VerticalOffset = -10;
                 TabPreviewPopup.HorizontalOffset = -7.5;
             }
+            MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
             foreach (BrowserTabItem Tab in Tabs)
             {
                 Tab.Content?.MaxHeight = TabsUI.ActualHeight;
@@ -768,6 +769,7 @@ namespace SLBr
                         CaptionHeight.Height = new GridLength(30);
                     MaximizeRestoreButton.Content = "\xe922";
                 }
+                MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
                 Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
             }
             foreach (BrowserTabItem Tab in Tabs)
@@ -910,18 +912,16 @@ namespace SLBr
             BrowserView ??= GetTab().Content;
             if (BrowserView != null)
             {
+                Keyboard.Focus(BrowserView.WebView?.Control);
                 if (Fullscreen)
                 {
-                    if (BrowserView.WebView != null)
-                    {
-                        BrowserView.CoreContainer.Children.Remove(BrowserView.WebView.Control);
-                        FullscreenContainer.Children.Add(BrowserView.WebView.Control);
-                        FullscreenContainer.Visibility = Visibility.Visible;
-                        Keyboard.Focus(BrowserView.WebView.Control);
-                    }
+                    ResizeMode = ResizeMode.NoResize;
+                    TabsUI.Margin = new Thickness(0, -45, 0, 0);
+                    CaptionHeight.Height = new GridLength(0);
+                    BrowserView.ToolBar.Visibility = Visibility.Collapsed;
                     //WARNING: Removing these WindowState, Fullscreen will not be able to cover taskbar
                     WindowState = WindowState.Normal;
-                    WindowStyle = WindowStyle.None;
+                    WindowStyle = WindowStyle.ToolWindow;
                     WindowState = WindowState.Maximized;
                     if (bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup")))
                     {
@@ -933,16 +933,22 @@ namespace SLBr
                 }
                 else
                 {
-                    if (BrowserView.WebView != null)
+                    ResizeMode = ResizeMode.CanResize;
+                    TabsUI.Margin = new Thickness(0);
+                    if (App.Instance.TabAlignment == 0)
+                        CaptionHeight.Height = new GridLength(45);
+                    else
                     {
-                        FullscreenContainer.Visibility = Visibility.Collapsed;
-                        FullscreenContainer.Children.Remove(BrowserView.WebView.Control);
-                        BrowserView.CoreContainer.Children.Add(BrowserView.WebView.Control);
-                        Keyboard.Focus(BrowserView.WebView.Control);
+                        if (WindowState == WindowState.Maximized)
+                            CaptionHeight.Height = new GridLength(SystemParameters.CaptionHeight);
+                        else
+                            CaptionHeight.Height = new GridLength(30);
                     }
+                    BrowserView.ToolBar.Visibility = Visibility.Visible;
                     WindowStyle = WindowStyle.SingleBorderWindow;
                     FullscreenPopupTimer_Tick(null, null);
                 }
+                MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
             }
         }
         private void FullscreenPopupTimer_Tick(object? sender, EventArgs e)
@@ -1272,6 +1278,7 @@ namespace SLBr
 
         private void Window_MouseEnter(object sender, MouseEventArgs e)
         {
+            TabPreviewPopup.IsOpen = false;
             HoveringMaximize = false;
             SnapLayoutDelayTimer?.Stop();
             if (!SnapLayoutVisible)

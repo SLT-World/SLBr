@@ -85,7 +85,7 @@
         <TaskbarItemInfo x:Name="TaskbarItem" ProgressState="Normal" ProgressValue="0" controls:TaskbarItemOverlay.Template="{StaticResource OverlayIcon}"/>
     </Window.TaskbarItemInfo>
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="45" UseAeroCaptionButtons="False" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"/>
+        <WindowChrome x:Name="MainWindowChrome" CaptionHeight="45" UseAeroCaptionButtons="False" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"/>
     </WindowChrome.WindowChrome>
     <Grid x:Name="WindowBackground" Background="{StaticResource SecondaryBrush}" WindowChrome.IsHitTestVisibleInChrome="False">
         <Grid.Style>
@@ -133,7 +133,7 @@
                 </DataTemplate>
             </TabControl.ContentTemplate>
         </WinUI:WinUITabControl>
-        <Grid x:Name="FullscreenContainer" Visibility="Visible">
+        <Grid x:Name="FullscreenContainer" Grid.RowSpan="2" Grid.ColumnSpan="4" Visibility="Visible">
             <Popup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
                 <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Opacity="0.8">
                     <TextBlock FontSize="25" Text="To exit fullscreen, press F11 or Esc" Margin="7.5" Foreground="{StaticResource FontBrush}"/>
