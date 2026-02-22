@@ -89,6 +89,26 @@ namespace SLBr.Pages
             LocalInfoBars.CollectionChanged += LocalInfoBars_CollectionChanged;
             SyncInfobars();
             InitializeBrowserComponent();
+            //TranslateAttribution.Inlines.Clear();
+            switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
+            {
+                case 0:
+                    TranslateAttribution.Inlines.Add("Google Translate");
+                    TranslateAttribution.NavigateUri = new Uri("https://translate.google.com/");
+                    break;
+                case 1:
+                    TranslateAttribution.Inlines.Add("Microsoft Translate");
+                    TranslateAttribution.NavigateUri = new Uri("https://learn.microsoft.com/en-us/azure/ai-services/translator/");
+                    break;
+                case 2:
+                    TranslateAttribution.Inlines.Add("Yandex Translate");
+                    TranslateAttribution.NavigateUri = new Uri("https://yandex.cloud/en/services/translate");
+                    break;
+                case 3:
+                    TranslateAttribution.Inlines.Add("Lingvanex");
+                    TranslateAttribution.NavigateUri = new Uri("https://lingvanex.com/products/translationapi/");
+                    break;
+            }
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -1650,6 +1670,12 @@ namespace SLBr.Pages
                     }, DispatcherPriority.Render);
                 }
             }*/
+            OpenDownloadsButton.ClosePopup();
+            SiteInformationPopupButton.ClosePopup();
+            TranslateButton.ClosePopup();
+            ExtensionsButton.CloseMenu();
+            WebEngineButtonInternal.CloseMenu();
+            OptionsButton.CloseMenu();
         }
 
         public void ReFocus()

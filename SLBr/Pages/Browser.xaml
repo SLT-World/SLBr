@@ -191,7 +191,7 @@
                         </WinUI:PopupButton.PopupContent>
                     </WinUI:PopupButton>
                     <Grid DockPanel.Dock="Right" Margin="0,0,5,0" x:Name="WebEngineButton">
-                        <WinUI:DropDownButton BorderThickness="0" Tag="3" DockPanel.Dock="Right" Style="{StaticResource DropDownIconButton}" ToolTip="Switch Web Engine" Content="&#xec6c;">
+                        <WinUI:DropDownButton x:Name="WebEngineButtonInternal" BorderThickness="0" Tag="3" DockPanel.Dock="Right" Style="{StaticResource DropDownIconButton}" ToolTip="Switch Web Engine" Content="&#xec6c;">
                             <WinUI:DropDownButton.Menu>
                                 <ContextMenu Width="250">
                                     <MenuItem Icon="&#xe713;" Header="Default" Click="ButtonAction" Tag="58&lt;,&gt;-1"/>
@@ -218,7 +218,6 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-
                                     <DockPanel Grid.ColumnSpan="2" Margin="0,0,0,10" Height="Auto">
                                         <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xee6f;</TextBlock>
                                         <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Scan QR Code</Label>
@@ -272,50 +271,59 @@
                     <WinUI:PopupButton BorderThickness="0" Visibility="Collapsed" x:Name="TranslateButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" ToolTip="Translate" Content="&#xE8C1;">
                         <WinUI:PopupButton.PopupContent>
                             <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5">
-                                <Grid Margin="10">
+                                <Grid>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <DockPanel Grid.ColumnSpan="2" Margin="0,0,0,10" Height="Auto">
-                                        <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE8C1;</TextBlock>
-                                        <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Translate Page</Label>
-                                    </DockPanel>
-                                    <StackPanel Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
-                                        <TextBlock TextTrimming="CharacterEllipsis" Text="Translate to" Margin="0,0,0,5"/>
-                                        <ComboBox Width="Auto" x:Name="TranslateComboBox"/>
-                                    </StackPanel>
-                                    <Button Click="ButtonAction" Grid.Column="0" Margin="0,0,5,0" Width="Auto" Tag="59&lt;,&gt;0" Grid.Row="2">Translate</Button>
-                                    <Button Click="ButtonAction" Grid.Column="1" Margin="5,0,0,0" Width="Auto" Tag="59&lt;,&gt;1" Grid.Row="2">Show original</Button>
-
-                                    <Grid x:Name="TranslateLoadingPanel" Visibility="Collapsed" Grid.ColumnSpan="2" Grid.RowSpan="3" Background="{StaticResource PrimaryBrush}">
+                                    <Grid Margin="10">
                                         <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
-                                            <RowDefinition Height="10"/>
-                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock RenderTransformOrigin="0.5,0.5" Padding="0,0,0,0" FontSize="25px" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom">
-                                            <TextBlock.RenderTransform>
-                                                <RotateTransform/>
-                                            </TextBlock.RenderTransform>
-                                            <TextBlock.Resources>
-                                                <Storyboard x:Key="TranslateSpinStoryboard" RepeatBehavior="Forever">
-                                                    <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:2"/>
-                                                </Storyboard>
-                                            </TextBlock.Resources>
-                                            <TextBlock.Triggers>
-                                                <EventTrigger RoutedEvent="TextBlock.Loaded">
-                                                    <BeginStoryboard Storyboard="{StaticResource TranslateSpinStoryboard}" x:Name="TranslateTriggerSpinStoryboard"/>
-                                                </EventTrigger>
-                                            </TextBlock.Triggers>
-                                        </TextBlock>
-                                        <TextBlock Grid.Row="2" VerticalAlignment="Top" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Text="Translating" Margin="0,0,0,5"/>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <DockPanel Grid.ColumnSpan="2" Margin="0,0,0,10" Height="Auto">
+                                            <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE8C1;</TextBlock>
+                                            <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Translate Page</Label>
+                                        </DockPanel>
+                                        <StackPanel Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
+                                            <TextBlock TextTrimming="CharacterEllipsis" Text="Translate to" Margin="0,0,0,5"/>
+                                            <ComboBox Width="Auto" x:Name="TranslateComboBox"/>
+                                        </StackPanel>
+                                        <Button Click="ButtonAction" Grid.Column="0" Margin="0,0,5,0" Width="Auto" Tag="59&lt;,&gt;0" Grid.Row="2">Translate</Button>
+                                        <Button Click="ButtonAction" Grid.Column="1" Margin="5,0,0,0" Width="Auto" Tag="59&lt;,&gt;1" Grid.Row="2">Show original</Button>
+
+                                        <Grid x:Name="TranslateLoadingPanel" Visibility="Collapsed" Grid.ColumnSpan="2" Grid.RowSpan="3" Background="{StaticResource PrimaryBrush}">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="10"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock RenderTransformOrigin="0.5,0.5" Padding="0,0,0,0" FontSize="25px" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                                <TextBlock.RenderTransform>
+                                                    <RotateTransform/>
+                                                </TextBlock.RenderTransform>
+                                                <TextBlock.Resources>
+                                                    <Storyboard x:Key="TranslateSpinStoryboard" RepeatBehavior="Forever">
+                                                        <DoubleAnimation Storyboard.TargetProperty="(RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:2"/>
+                                                    </Storyboard>
+                                                </TextBlock.Resources>
+                                                <TextBlock.Triggers>
+                                                    <EventTrigger RoutedEvent="TextBlock.Loaded">
+                                                        <BeginStoryboard Storyboard="{StaticResource TranslateSpinStoryboard}" x:Name="TranslateTriggerSpinStoryboard"/>
+                                                    </EventTrigger>
+                                                </TextBlock.Triggers>
+                                            </TextBlock>
+                                            <TextBlock Grid.Row="2" VerticalAlignment="Top" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Text="Translating" Margin="0,0,0,5"/>
+                                        </Grid>
                                     </Grid>
+                                    <Border Background="{StaticResource SecondaryBrush}" Grid.Row="1" Padding="10" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
+                                        <TextBlock VerticalAlignment="Center" FontSize="10" Foreground="{StaticResource GrayBrush}">Powered by <Hyperlink x:Name="TranslateAttribution" NavigateUri="" RequestNavigate="Hyperlink_RequestNavigate"></Hyperlink></TextBlock>
+                                    </Border>
                                 </Grid>
                             </Border>
                         </WinUI:PopupButton.PopupContent>

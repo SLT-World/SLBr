@@ -569,10 +569,82 @@ namespace SLBr.Pages
         private void TranslationProviderComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
+            {
                 App.Instance.GlobalSave.Set("TranslationProvider", TranslationProviderComboBox.SelectedIndex);
+                switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
+                {
+                    case 0:
+                        foreach (MainWindow _Window in App.Instance.AllWindows)
+                        {
+                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                            {
+                                BrowserView.TranslateAttribution.Inlines.Clear();
+                                BrowserView.TranslateAttribution.Inlines.Add("Google Translate");
+                                BrowserView.TranslateAttribution.NavigateUri = new Uri("https://translate.google.com/");
+                            }
+                        }
+                        break;
+                    case 1:
+                        foreach (MainWindow _Window in App.Instance.AllWindows)
+                        {
+                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                            {
+                                BrowserView.TranslateAttribution.Inlines.Clear();
+                                BrowserView.TranslateAttribution.Inlines.Add("Microsoft Translate");
+                                BrowserView.TranslateAttribution.NavigateUri = new Uri("https://learn.microsoft.com/en-us/azure/ai-services/translator/");
+                            }
+                        }
+                        break;
+                    case 2:
+                        foreach (MainWindow _Window in App.Instance.AllWindows)
+                        {
+                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                            {
+                                BrowserView.TranslateAttribution.Inlines.Clear();
+                                BrowserView.TranslateAttribution.Inlines.Add("Yandex Translate");
+                                BrowserView.TranslateAttribution.NavigateUri = new Uri("https://yandex.cloud/en/services/translate");
+                            }
+                        }
+                        break;
+                    case 3:
+                        foreach (MainWindow _Window in App.Instance.AllWindows)
+                        {
+                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                            {
+                                BrowserView.TranslateAttribution.Inlines.Clear();
+                                BrowserView.TranslateAttribution.Inlines.Add("Lingvanex");
+                                BrowserView.TranslateAttribution.NavigateUri = new Uri("https://lingvanex.com/products/translationapi/");
+                            }
+                        }
+                        break;
+                }
+            }
         }
         private void SpellcheckProviderComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            switch (SpellcheckProviderComboBox.SelectedIndex)
+            {
+                case 1:
+                    SpellcheckAttribution.Inlines.Clear();
+                    SpellcheckAttribution.Inlines.Add("Google");
+                    SpellcheckAttribution.NavigateUri = new Uri("https://google.com/");
+                    break;
+                case 2:
+                    SpellcheckAttribution.Inlines.Clear();
+                    SpellcheckAttribution.Inlines.Add("Microsoft");
+                    SpellcheckAttribution.NavigateUri = new Uri("https://microsoft.com/");
+                    break;
+                case 3:
+                    SpellcheckAttribution.Inlines.Clear();
+                    SpellcheckAttribution.Inlines.Add("LanguageTool");
+                    SpellcheckAttribution.NavigateUri = new Uri("https://languagetool.org/");
+                    break;
+                case 4:
+                    SpellcheckAttribution.Inlines.Clear();
+                    SpellcheckAttribution.Inlines.Add("Yandex Speller");
+                    SpellcheckAttribution.NavigateUri = new Uri("https://yandex.ru/dev/speller/");
+                    break;
+            }
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("SpellcheckProvider", SpellcheckProviderComboBox.SelectedIndex);
         }
