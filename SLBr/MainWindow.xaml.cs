@@ -905,6 +905,7 @@ namespace SLBr
         private DispatcherTimer FullscreenPopupTimer;
         public void Fullscreen(bool Fullscreen, Browser BrowserView = null)
         {
+            //TODO: Fix.
             IsFullscreen = Fullscreen;
             BrowserView ??= GetTab().Content;
             if (BrowserView != null)

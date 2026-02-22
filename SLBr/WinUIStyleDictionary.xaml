@@ -42,9 +42,12 @@
     <Style TargetType="{x:Type Paragraph}">
         <Setter Property="Margin" Value="0"/>
     </Style>
-    
+
     <Style TargetType="Hyperlink">
+        <!--<Setter Property="ToolTip" Value="{Binding NavigateUri, RelativeSource={RelativeSource Self}}"/>-->
         <Setter Property="Foreground" Value="{DynamicResource IndicatorBrush}"/>
+        <EventSetter Event="MouseEnter" Handler="Hyperlink_MouseEnter"/>
+        <EventSetter Event="MouseLeave" Handler="Hyperlink_MouseLeave"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>

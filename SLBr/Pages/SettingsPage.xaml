@@ -63,7 +63,7 @@
                                 </DockPanel>
                                 <TextBlock Margin="0,0,0,10" FontSize="10" Foreground="{StaticResource GrayBrush}">
                                     GitHub Gist is utilized by SLBr to sync data. Generate a 
-                                    <Hyperlink ToolTip="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" NavigateUri="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" RequestNavigate="Hyperlink_RequestNavigate">GitHub Access Token</Hyperlink> to activate sync.
+                                    <Hyperlink NavigateUri="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" RequestNavigate="Hyperlink_RequestNavigate">GitHub Access Token</Hyperlink> to activate sync.
                                 </TextBlock>
                                 <Expander Margin="0,0,0,0" Background="{StaticResource PrimaryBrush}">
                                     <Expander.Header>
@@ -461,7 +461,7 @@
                                 <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                     Edge web views will rely on Microsoft Defender SmartScreen if not disabled.
                                     <LineBreak/>
-                                    Advisory provided by <Hyperlink ToolTip="https://developers.google.com/safe-browsing/v4/advisory" NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
+                                    Advisory provided by <Hyperlink NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
                                 </TextBlock>
                             </StackPanel>
                         </GroupBox>
@@ -1037,7 +1037,7 @@
                         <TextBlock Text="Copyright © 2022-2026 SLT Softwares. All rights reserved."/>
                         <TextBlock Margin="0,0,0,10">
                         Licensed under the
-                        <Hyperlink ToolTip="https://raw.githubusercontent.com/SLT-World/SLBr/refs/heads/main/LICENSE" NavigateUri="https://raw.githubusercontent.com/SLT-World/SLBr/refs/heads/main/LICENSE" RequestNavigate="Hyperlink_RequestNavigate">GNU General Public License v3.0</Hyperlink>.
+                        <Hyperlink NavigateUri="https://raw.githubusercontent.com/SLT-World/SLBr/refs/heads/main/LICENSE" RequestNavigate="Hyperlink_RequestNavigate">GNU General Public License v3.0</Hyperlink>.
                         </TextBlock>
 
                         <GroupBox Margin="0,0,0,10">
@@ -1068,26 +1068,18 @@
                         </GroupBox>
                         <TextBlock Margin="0,0,0,0">
                         Developed and maintained by
-                        <Hyperlink ToolTip="https://github.com/SLT-World/" NavigateUri="https://github.com/SLT-World/" RequestNavigate="Hyperlink_RequestNavigate">Schuyler Tan</Hyperlink>.
+                        <Hyperlink NavigateUri="https://github.com/SLT-World/" RequestNavigate="Hyperlink_RequestNavigate">Schuyler Tan</Hyperlink>.
                         </TextBlock>
                         <TextBlock Margin="0,0,0,0">
                         Made possible by
-                        <Hyperlink ToolTip="https://github.com/cefsharp/CefSharp" NavigateUri="https://github.com/cefsharp/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">
-                            CefSharp
-                        </Hyperlink>
+                        <Hyperlink NavigateUri="https://github.com/cefsharp/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">CefSharp</Hyperlink>
                         and other
-                        <Hyperlink ToolTip="slbr://credits" NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">
-                            open-source software
-                        </Hyperlink>.
+                        <Hyperlink NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">open-source software</Hyperlink>.
                         </TextBlock>
                         <TextBlock Margin="0,0,0,10">
                         If you find SLBr useful, consider starring the
-                        <Hyperlink ToolTip="https://github.com/SLT-World/SLBr" NavigateUri="https://github.com/SLT-World/SLBr" RequestNavigate="Hyperlink_RequestNavigate">
-                            SLBr GitHub repository
-                        </Hyperlink> and supporting
-                        <Hyperlink ToolTip="https://github.com/sponsors/amaitland" NavigateUri="https://github.com/sponsors/amaitland" RequestNavigate="Hyperlink_RequestNavigate">
-                            CefSharp
-                        </Hyperlink>.
+                        <Hyperlink NavigateUri="https://github.com/SLT-World/SLBr" RequestNavigate="Hyperlink_RequestNavigate">SLBr GitHub repository</Hyperlink> and supporting
+                        <Hyperlink NavigateUri="https://github.com/sponsors/amaitland" RequestNavigate="Hyperlink_RequestNavigate">CefSharp</Hyperlink>.
                         </TextBlock>
                         <GroupBox Margin="0,0,0,10">
                             <StackPanel>

@@ -29,8 +29,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Threading;
-using System.Xml;
 using Windows.UI.Notifications;
 using Windows.UI.ViewManagement.Core;
 
@@ -89,6 +89,12 @@ namespace SLBr.Pages
             LocalInfoBars.CollectionChanged += LocalInfoBars_CollectionChanged;
             SyncInfobars();
             InitializeBrowserComponent();
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            Tab.ParentWindow.NewTab(e.Uri.ToString(), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup);
+            e.Handled = true;
         }
 
         private void LocalInfoBars_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -508,14 +514,14 @@ namespace SLBr.Pages
                 SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
         }
 
-        private void WebView_StatusMessage(object? sender, string e)
+        public void WebView_StatusMessage(object? sender, string e)
         {
             if (string.IsNullOrEmpty(e))
-                StatusBarPopup.IsOpen = false;
+                StatusBubblePopup.IsOpen = false;
             else
             {
                 StatusMessage.Text = e;
-                StatusBarPopup.IsOpen = true;
+                StatusBubblePopup.IsOpen = true;
             }
         }
 

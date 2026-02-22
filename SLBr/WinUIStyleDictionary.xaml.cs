@@ -3,6 +3,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using WinUI;
@@ -312,6 +313,16 @@ namespace SLBr
                 if (FocusedWindow.TabsUI.Visibility == Visibility.Visible)
                     FocusedWindow.NewTab(App.Instance.GlobalSave.Get("Homepage"), true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
             }
+        }
+
+        private void Hyperlink_MouseEnter(object sender, MouseEventArgs e)
+        {
+            App.Instance.CurrentFocusedWindow().GetTab().Content?.WebView_StatusMessage(null, ((Hyperlink)sender).NavigateUri.AbsoluteUri);
+        }
+
+        private void Hyperlink_MouseLeave(object sender, MouseEventArgs e)
+        {
+            App.Instance.CurrentFocusedWindow().GetTab().Content?.WebView_StatusMessage(null, "");
         }
     }
 }
