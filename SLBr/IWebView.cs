@@ -1457,9 +1457,11 @@ namespace SLBr
         }
 
         public WebEngineType Engine => WebEngineType.Chromium;
+
+        private string CurrentAddress;
         public string Address
         {
-            get => (IsViewSource ? "view-source:" : "") + Browser?.Address ?? InitialUrls.Last().Url;
+            get => (IsViewSource ? "view-source:" : "") + (Browser?.Address != null ? CurrentAddress : InitialUrls.Last().Url);
             set => Navigate(value);
         }
         public string Title => Browser.Title;
@@ -1829,7 +1831,12 @@ namespace SLBr
         #endregion
 
         #region DisplayHandler
-        public void OnAddressChanged(IWebBrowser chromiumWebBrowser, AddressChangedEventArgs addressChangedArgs) { }
+        public async void OnAddressChanged(IWebBrowser chromiumWebBrowser, AddressChangedEventArgs addressChangedArgs)
+        {
+            CurrentAddress = addressChangedArgs.Address;
+            NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
+        }
         public bool OnAutoResize(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.Structs.Size newSize) => false;
         public bool OnConsoleMessage(IWebBrowser chromiumWebBrowser, ConsoleMessageEventArgs consoleMessageArgs) => false;
         public bool OnCursorChange(IWebBrowser chromiumWebBrowser, IBrowser browser, nint cursor, CefSharp.Enums.CursorType type, CefSharp.Structs.CursorInfo customCursorInfo) => false;
@@ -1971,6 +1978,9 @@ namespace SLBr
 
             BrowserCore.LaunchingExternalUriScheme += Browser_LaunchingExternalUriScheme;
 
+            BrowserCore.SourceChanged += Browser_SourceChanged;
+            //BrowserCore.HistoryChanged += Browser_HistoryChanged;
+
 #if !DEBUG
             try
             {
@@ -2011,6 +2021,19 @@ namespace SLBr
             }
             catch { }
 #endif
+        }
+
+        /*private void Browser_HistoryChanged(object? sender, object e)
+        {
+            CurrentAddress = Browser?.Source?.AbsoluteUri ?? "";
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
+        }*/
+
+        private void Browser_SourceChanged(object? sender, CoreWebView2SourceChangedEventArgs e)
+        {
+            CurrentAddress = Browser?.Source?.AbsoluteUri ?? "";
+            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
+            //Investigate e.IsNewDocument;
         }
 
         private void Browser_FaviconChanged(object? sender, object e)
@@ -2685,6 +2708,8 @@ namespace SLBr
                     Core.BasicAuthenticationRequested -= Browser_BasicAuthenticationRequested;
 
                     Core.LaunchingExternalUriScheme -= Browser_LaunchingExternalUriScheme;
+                    Core.SourceChanged -= Browser_SourceChanged;
+                    //Core.HistoryChanged -= Browser_HistoryChanged;
                 }
                 Browser.KeyDown -= (s, e) => HotKeyManager.HandleKeyDown(e);
 

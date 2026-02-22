@@ -301,7 +301,6 @@ namespace SLBr.Pages
             ModernURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ModernURL"));
             HomographProtectionCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographProtection"));
 
-            SkipAdsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SkipAds"));
             SmartDarkModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartDarkMode"));
 
             MobileViewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("MobileView"));
@@ -754,11 +753,6 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetHomographProtection(HomographProtectionCheckBox.IsChecked.ToBool());
-        }
-        private void SkipAdsCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.SetYouTube(SkipAdsCheckBox.IsChecked.ToBool());
         }
         private void SmartDarkModeCheckBox_Click(object sender, RoutedEventArgs e)
         {

@@ -553,7 +553,6 @@
                             </GroupBox.Header>
                             <StackPanel>
                                 <CheckBox Margin="0,0,0,10" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Content="Web notifications" Width="Auto"/>
-                                <CheckBox Margin="0,0,0,10" x:Name="SkipAdsCheckBox" Click="SkipAdsCheckBox_Click" Content="Skip YouTube ads" Width="Auto"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="WebAppsCheckBox" Click="WebAppsCheckBox_Click" Content="Check for Web Apps" Width="Auto"/>
                                 <DockPanel>
                                     <TextBlock VerticalAlignment="Center" Text="Reverse image search engine"/>

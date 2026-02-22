@@ -1180,8 +1180,6 @@ namespace SLBr.Pages
                     {
                         if (Utils.IsHttpScheme(Address))
                         {
-                            if (App.Instance.SkipAds && Address.Contains("youtube.com/watch?v="))
-                                WebView?.ExecuteScript(Scripts.YouTubeSkipAdScript);
                             if (Address.Contains("chromewebstore.google.com/detail"))
                                 WebView?.ExecuteScript(Scripts.WebStoreScript);
                             if (bool.Parse(App.Instance.GlobalSave.Get("WebNotifications")))
@@ -1192,7 +1190,6 @@ namespace SLBr.Pages
                                 if (App.Instance.SearchEngines.Any(i => i.Host == SiteHost))
                                     WebView?.ExecuteScript(Scripts.OpenSearchScript);
                             }
-
                             if (bool.Parse(App.Instance.GlobalSave.Get("WebApps")))
                             {
                                 var (Installable, ManifestUrl) = await IsInstallableAsync();
@@ -1828,28 +1825,23 @@ namespace SLBr.Pages
 
         async void BrowserLoadChanged(string Address, bool? IsLoading = null, int? StatusCode = null)
         {
-            if (OmniBox.Text != Address)
+            OmniBox.Tag = Address;
+            if (IsOmniBoxModifiable())
             {
-                OmniBox.Tag = Address;
-                if (IsOmniBoxModifiable())
+                if (Address.StartsWith("slbr://newtab"))
                 {
-                    if (Address.StartsWith("slbr://newtab"))
-                    {
-                        OmniBoxPlaceholder.Visibility = Visibility.Visible;
-                        OmniBoxText = string.Empty;
-                        OmniBox.Text = string.Empty;
-                    }
-                    else
-                    {
-                        OmniBoxPlaceholder.Visibility = Visibility.Hidden;
-                        OmniBoxText = Address;
-                        OmniBox.Text = Address;
-                    }
-
-                    OmniBoxIsDropdown = false;
-                    OmniBoxStatus.Visibility = Visibility.Collapsed;
-                    SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
+                    OmniBoxPlaceholder.Visibility = Visibility.Visible;
+                    OmniBoxText = string.Empty;
+                    OmniBox.Text = string.Empty;
                 }
+                else
+                {
+                    OmniBoxPlaceholder.Visibility = Visibility.Hidden;
+                    OmniBoxText = Address;
+                    OmniBox.Text = Address;
+                }
+                OmniBoxIsDropdown = false;
+                SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
             }
             if (FavouriteExists(Address) != -1)
             {
@@ -3290,6 +3282,7 @@ namespace SLBr.Pages
         //Protection against homograph attacks https://www.xudongz.com/blog/2017/idn-phishing/
         public void SetOverlayDisplay(bool TruncateURL = true, bool HighlightSuspicious = true)
         {
+            OmniBoxStatus.Visibility = Visibility.Collapsed;
             bool UseModernURL = App.Instance.ModernURL && App.Instance.TrimURL;
             OmniBoxOverlayText.Inlines.Clear();
             OmniBoxOverlayText.Visibility = Visibility.Visible;
