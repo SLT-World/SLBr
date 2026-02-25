@@ -1014,7 +1014,13 @@ namespace SLBr
                 }
                 MessageBox.Show($"{ReadTest} {Different.Count} LEFT: {string.Join("|", Different)}");
             }*/
-            /*MessageBox.Show(Utils.IsUrl("apple").ToString());//F
+            /*MessageBox.Show(Utils.IsUrl("2001:db8:0:0:0:0:2:1").ToString());
+            MessageBox.Show(Utils.IsUrl("http://[::1]:3000/").ToString());
+            MessageBox.Show(Utils.IsUrl("127.0.0.1:8080").ToString());
+            MessageBox.Show(Utils.IsUrl("2001:db8::1").ToString());
+            MessageBox.Show(Utils.IsUrl("[2001:db8::1]:3000").ToString());
+            MessageBox.Show(Utils.IsUrl("localhost:8000").ToString());
+            MessageBox.Show(Utils.IsUrl("apple").ToString());//F
             MessageBox.Show(Utils.IsDomain("ñ.com").ToString());//T
             MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
             MessageBox.Show(Utils.IsDomain("る.com").ToString());//T
@@ -1995,6 +2001,16 @@ Inner Exception: ```{7} ```";
         public bool TabPreview;
         public bool TabMemory;
 
+        public int BlockScreenCapture;
+
+        public void SetBlockScreenCapture(int _BlockScreenCapture)
+        {
+            GlobalSave.Set("BlockScreenCapture", _BlockScreenCapture);
+            BlockScreenCapture = _BlockScreenCapture;
+            foreach (MainWindow _Window in AllWindows)
+                _Window.SetWindowDisplayAffinity();
+        }
+
         public void SetTabMemory(bool Toggle)
         {
             GlobalSave.Set("TabMemory", Toggle.ToString());
@@ -2684,6 +2700,7 @@ Inner Exception: ```{7} ```";
         private void InitializeUISaves(string CommandLineUrl = "")
         {
             SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", true.ToString())));
+            SetBlockScreenCapture(int.Parse(GlobalSave.Get("BlockScreenCapture", "1")));
             SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
             SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", true.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));

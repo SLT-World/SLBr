@@ -323,14 +323,11 @@ namespace SLBr.Pages
             ShowUnloadedIconCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadedIcon"));
             ShowUnloadTimeLeftCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress"));
 
-            int TabAlignment = App.Instance.GlobalSave.GetInt("TabAlignment");
-            TabAlignmentComboBox.SelectedIndex = TabAlignment;
+            TabAlignmentComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TabAlignment");
 
-            bool NetworkLimit = bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit"));
-            NetworkLimitCheckBox.IsChecked = NetworkLimit;
+            NetworkLimitCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit"));
 
-            bool SearchSuggestions = bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions"));
-            SearchSuggestionsCheckBox.IsChecked = SearchSuggestions;
+            SearchSuggestionsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions"));
             SmartSuggestionsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions"));
             OpenSearchCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("OpenSearch"));
 
@@ -435,6 +432,7 @@ namespace SLBr.Pages
             WebEngineButtonToggleButton.IsChecked = App.Instance.AllowWebEngineButton;
 
             ExtensionButtonComboBox.SelectedIndex = App.Instance.ShowExtensionButton;
+            BlockScreenCaptureComboBox.SelectedIndex = App.Instance.BlockScreenCapture;
 
             FavouritesBarComboBox.SelectedIndex = App.Instance.ShowFavouritesBar;
 
@@ -715,6 +713,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
+        }
+        private void BlockScreenCaptureComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetBlockScreenCapture(BlockScreenCaptureComboBox.SelectedIndex);
         }
         private void HomepageTextBox_KeyUp(object sender, KeyEventArgs e)
         {

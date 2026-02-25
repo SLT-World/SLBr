@@ -471,7 +471,7 @@
                             </GroupBox.Header>
                             <StackPanel>
                                 <CheckBox x:Name="PrivateTabsCheckBox" Click="PrivateTabsCheckBox_Click" Margin="0,0,0,10" Content="Always use Private Tabs" Width="Auto"/>
-                                <DockPanel Height="35">
+                                <DockPanel Height="35" Margin="0,0,0,10">
                                     <!--<Border Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xea99;"/>
                                 </Border>-->
@@ -485,6 +485,14 @@
                                         <TextBlock Text="Clear browsing data"/>
                                         <TextBlock FontSize="10" Text="Clear history, cookies, cache, and more" Foreground="{StaticResource GrayBrush}"/>
                                     </StackPanel>
+                                </DockPanel>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Block screen capture"/>
+                                    <ComboBox x:Name="BlockScreenCaptureComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="BlockScreenCaptureComboBox_SelectionChanged">
+                                        <ComboBoxItem>Never</ComboBoxItem>
+                                        <ComboBoxItem>In Private</ComboBoxItem>
+                                        <ComboBoxItem>Always</ComboBoxItem>
+                                    </ComboBox>
                                 </DockPanel>
                             </StackPanel>
                         </GroupBox>

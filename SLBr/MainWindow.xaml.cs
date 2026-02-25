@@ -1138,15 +1138,26 @@ namespace SLBr
             return null;
         }
 
-        bool WasPrivate = false;
+        bool WindowExcludedFromCapture = false;
+
+        public void SetWindowDisplayAffinity()
+        {
+            BrowserTabItem CurrentTab = Tabs[TabsUI.SelectedIndex];
+            bool ExcludeFromCapture = App.Instance.BlockScreenCapture == 2 || (App.Instance.BlockScreenCapture == 1 && (CurrentTab?.Content?.Private ?? false));
+            if (WindowExcludedFromCapture != ExcludeFromCapture)
+            {
+                DllUtils.SetWindowDisplayAffinity(WindowInterop.EnsureHandle(), ExcludeFromCapture ? DllUtils.WindowDisplayAffinity.WDA_EXCLUDEFROMCAPTURE : DllUtils.WindowDisplayAffinity.WDA_NONE);
+                WindowExcludedFromCapture = ExcludeFromCapture;
+            }
+        }
 
         private void TabsUI_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
             {
-                if (Tabs[TabsUI.SelectedIndex].Type != BrowserTabType.Add)
+                BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
+                if (_CurrentTab.Type != BrowserTabType.Add)
                 {
-                    BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
                     foreach (BrowserTabItem _Tab in Tabs)
                     {
                         if (_Tab != _CurrentTab)
@@ -1156,12 +1167,8 @@ namespace SLBr
                     {
                         _CurrentTab.Content.ReFocus();
                         Keyboard.Focus(_CurrentTab.Content.WebView?.Control);
-                        if (WasPrivate != _CurrentTab.Content.Private)
-                        {
-                            DllUtils.SetWindowDisplayAffinity(WindowInterop.EnsureHandle(), _CurrentTab.Content.Private ? DllUtils.WindowDisplayAffinity.WDA_MONITOR : DllUtils.WindowDisplayAffinity.WDA_NONE);
-                            WasPrivate = _CurrentTab.Content.Private;
-                        }
                     }
+                    SetWindowDisplayAffinity();
                     Title = _CurrentTab.Header + " - SLBr";
                 }
             }

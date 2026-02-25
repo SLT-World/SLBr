@@ -38,8 +38,8 @@ namespace SLBr
         public enum WindowDisplayAffinity : uint
         {
             WDA_NONE = 0x00000000,
-            WDA_MONITOR = 0x00000001
-            //WDA_EXCLUDEFROMCAPTURE = 0x00000011
+            //WDA_MONITOR = 0x00000001
+            WDA_EXCLUDEFROMCAPTURE = 0x00000011
         }
 
         public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
