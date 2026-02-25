@@ -1014,7 +1014,9 @@ namespace SLBr
                 }
                 MessageBox.Show($"{ReadTest} {Different.Count} LEFT: {string.Join("|", Different)}");
             }*/
-            /*MessageBox.Show(Utils.FixUrl("steam:foo").ToString());
+            /*MessageBox.Show(Utils.IsUrl("foo bar https://example.com/").ToString());
+            MessageBox.Show(Utils.IsUrl("foo bar").ToString());
+            MessageBox.Show(Utils.FixUrl("steam:foo").ToString());
             MessageBox.Show(Utils.FixUrl("2001:db8:0:0:0:0:2:1").ToString());
             MessageBox.Show(Utils.FixUrl("http://[::1]:3000/").ToString());
             MessageBox.Show(Utils.FixUrl("127.0.0.1:8080").ToString());
@@ -1412,7 +1414,7 @@ namespace SLBr
 
         public static string GetSmartType(string Text)
         {
-            if (Regex.IsMatch(Text, @"^[\d\s\.\+\-\*/%\(\)]+$"))
+            if (Utils.MathRegex().IsMatch(Text))
                 return "Math";
             else if (Text.StartsWith("define ", StringComparison.OrdinalIgnoreCase))
                 return "Define";
@@ -1420,7 +1422,7 @@ namespace SLBr
                 return "Weather";
             else if (Text.StartsWith("translate ", StringComparison.OrdinalIgnoreCase))
                 return "Translate";
-            else if (Regex.IsMatch(Text, @"\b\d+(?:\.\d+)?\s+[a-zA-Z]{3}\s+(?:to|in)\s+[a-zA-Z]{3}\b"))
+            else if (Utils.SimpleCurrencyRegex().IsMatch(Text))
                 return "Currency";
             return "None";
         }
@@ -1451,7 +1453,7 @@ namespace SLBr
                     catch { }
                     break;
                 case "Translate":
-                    Match TranslateMatch = Regex.Match(Text, @"^translate\s+(?<Phrase>.+?)\s+to\s+(?<Lang>.+)", RegexOptions.IgnoreCase);
+                    Match TranslateMatch = Utils.TranslateRegex().Match(Text);
                     if (TranslateMatch.Success)
                     {
                         Suggestion.SubText = "- Unavailable";
@@ -1470,7 +1472,7 @@ namespace SLBr
                     }
                     break;
                 case "Currency":
-                    Match CurrencyMatch = Regex.Match(Text, @"(?<Amount>\d+(\.\d+)?)\s+(?<From>[A-Za-z]{3})\s+(?:to|in)\s+(?<To>[A-Za-z]{3})");
+                    Match CurrencyMatch = Utils.CurrencyRegex().Match(Text);
                     if (CurrencyMatch.Success)
                     {
                         Suggestion.SubText = "- Unavailable";
@@ -1491,7 +1493,6 @@ namespace SLBr
                         catch { }
                     }
                     break;
-
                 case "Weather":
                     Suggestion.Icon = "\xE9CA";
                     string Location = Regex.Replace(Text, @"^weather(\s+in)?\s+", string.Empty, RegexOptions.IgnoreCase).Trim();
@@ -2994,7 +2995,7 @@ Inner Exception: ```{7} ```";
             "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
             "google.com/ads", "play.google.com/log"*//*, "youtube.com/ptracking", "youtube.com/pagead/adview", "youtube.com/api/stats/ads", "youtube.com/pagead/interaction",*/
         ];
-        public static readonly Regex HasInLinkRegex = new(string.Join("|", HasInLink.Select(Regex.Escape)),RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+        public static readonly Regex HasInLinkRegex = new(string.Join("|", HasInLink.Select(Regex.Escape)), RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
         /*public static readonly Trie MinersFiles = new Trie {
          //https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
             "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",

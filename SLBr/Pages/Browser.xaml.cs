@@ -3690,13 +3690,24 @@ namespace SLBr.Pages
                 SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
                 SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
                 string FirstType = App.GetMiniSearchType(ProcessedText);
+                bool SmartSuggestions = bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions"));
                 if (FirstType == "W")
                 {
                     Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, LinkColor, "- Visit", null, OmniBoxOverrideSearch));
                     Suggestions.Add(App.GenerateSuggestion(ProcessedText, "S", Color, "- Search", $"search:{ProcessedText}", OmniBoxOverrideSearch));
                 }
                 else
+                {
                     Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, Color, "", null, OmniBoxOverrideSearch));
+                    if (SmartSuggestions)
+                    {
+                        foreach (Match _Match in Utils.UrlRegex().Matches(ProcessedText))
+                        {
+                            string Url = Utils.FixUrl(_Match.Value);
+                            Suggestions.Add(App.GenerateSuggestion(Url, "W", LinkColor, "- Visit", null, OmniBoxOverrideSearch));
+                        }
+                    }
+                }
                 try
                 {
                     SmartSuggestionCancellation?.Cancel();
@@ -3733,7 +3744,7 @@ namespace SLBr.Pages
                     else if (ProcessedText.Length <= 60)
                     {
                         OmniBoxFastTimer.Start();
-                        if (OmniBoxOverrideSearch == null && bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions")))
+                        if (OmniBoxOverrideSearch == null && SmartSuggestions)
                             OmniBoxSmartTimer.Start();
                     }
                 }

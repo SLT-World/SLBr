@@ -296,8 +296,25 @@ namespace SLBr
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             SetAppearance(App.Instance.CurrentTheme);
-
+            #region Benchmark
             //Benchmark.Clear();
+            /*string E = "1+1/54334235*(2131234)";
+            Benchmark.Run("Generated Regex", Iterations, () =>
+            {
+                _ = Utils.OGMathRegex().IsMatch(E);
+            });
+            Benchmark.Run("Generated Regex (Compiled)", Iterations, () => //Best
+            {
+                _ = Utils.MathRegex().IsMatch(E);
+            });
+            Benchmark.Run("Regex", Iterations, () =>
+            {*/
+            //    _ = Regex.IsMatch(E, @"^[\d\s\.\+\-\*/%\(\)]+$");
+            /*});
+            Benchmark.Run("Regex (Compiled)", Iterations, () =>
+            {*/
+            //    _ = Regex.IsMatch(E, @"^[\d\s\.\+\-\*/%\(\)]+$", RegexOptions.Compiled);
+            //});
             /*string E = "<h1>Hello</h1>";
             Benchmark.Run("Replace", Iterations, () =>
             {
@@ -431,6 +448,7 @@ namespace SLBr
                 _ = FastHashSetContains(TestUrls[3]);
             });*/
             //MessageBox.Show(Benchmark.Report());
+#endregion
         }
         public DispatcherTimer GCTimer;
 

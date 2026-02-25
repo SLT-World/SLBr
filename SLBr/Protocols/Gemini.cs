@@ -122,7 +122,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             Builder.Append("\n</div></body></html>");
 
             StringWriter Output = new StringWriter();
-            using (StringReader Reader = new StringReader(Regex.Replace(Builder.ToString(), @"[^\u0000-\u007F]+", string.Empty, RegexOptions.Compiled)))
+            using (StringReader Reader = new StringReader(Regex.Replace(Builder.ToString(), @"[^\u0000-\u007F]+", string.Empty, App.Instance.LiteMode ? RegexOptions.None : RegexOptions.Compiled)))
             {
                 string Line;
                 bool InList = false;

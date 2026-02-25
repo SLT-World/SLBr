@@ -554,6 +554,21 @@ namespace SLBr
 
     public static partial class Utils
     {
+        [GeneratedRegex(@"(?i)\b(?:https?://|file:///)(?:\[[^\]]+\]|[a-z0-9\-\.]+)(?::\d+)?(?:/[^\s]*)?")]
+        public static partial Regex UrlRegex();
+
+        [GeneratedRegex(@"\b\d+(?:\.\d+)?\s+[a-zA-Z]{3}\s+(?:to|in)\s+[a-zA-Z]{3}\b")]
+        public static partial Regex SimpleCurrencyRegex();
+
+        [GeneratedRegex(@"^[\d\s\.\+\-\*/%\(\)]+$")]
+        public static partial Regex MathRegex();
+
+        [GeneratedRegex(@"(?<Amount>\d+(\.\d+)?)\s+(?<From>[A-Za-z]{3})\s+(?:to|in)\s+(?<To>[A-Za-z]{3})")]
+        public static partial Regex CurrencyRegex();
+
+        [GeneratedRegex(@"^translate\s+(?<Phrase>.+?)\s+to\s+(?<Lang>.+)", RegexOptions.IgnoreCase)]
+        public static partial Regex TranslateRegex();
+
         public static Brush GetContrastBrush(Color BackgroundColor) =>
             (0.299 * BackgroundColor.R + 0.587 * BackgroundColor.G + 0.114 * BackgroundColor.B) / 255 > 0.6 ? Brushes.Black : Brushes.White;
         public static void OpenFileExplorer(string Url) =>
@@ -706,11 +721,14 @@ namespace SLBr
             Task.Run(() => RunSafeAsync(TaskFunction));
         }*/
 
+        [GeneratedRegex(@"\d+")]
+        public static partial Regex DigitsRegex();
+
         public static MColor ParseThemeColor(string ColorString)
         {
             if (ColorString.StartsWith("rgb"))
             {
-                var Numbers = Regex.Matches(ColorString, @"\d+").Cast<Match>().Select(m => byte.Parse(m.Value)).ToArray();
+                var Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => byte.Parse(m.Value)).ToArray();
                 return MColor.FromRgb(Numbers[0], Numbers[1], Numbers[2]);
             }
             else
@@ -1059,7 +1077,7 @@ namespace SLBr
                 return HostString.Equals("localhost") || IsDomain(HostString) || IsIPAddress(HostString);
             }
             else
-                return true;
+                return !Scheme.Contains(' ');
 
             //TODO: Validate path?
             /*if (HostEnd >= 0)
