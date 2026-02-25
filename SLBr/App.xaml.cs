@@ -1014,13 +1014,14 @@ namespace SLBr
                 }
                 MessageBox.Show($"{ReadTest} {Different.Count} LEFT: {string.Join("|", Different)}");
             }*/
-            /*MessageBox.Show(Utils.IsUrl("2001:db8:0:0:0:0:2:1").ToString());
-            MessageBox.Show(Utils.IsUrl("http://[::1]:3000/").ToString());
-            MessageBox.Show(Utils.IsUrl("127.0.0.1:8080").ToString());
-            MessageBox.Show(Utils.IsUrl("2001:db8::1").ToString());
-            MessageBox.Show(Utils.IsUrl("[2001:db8::1]:3000").ToString());
-            MessageBox.Show(Utils.IsUrl("localhost:8000").ToString());
-            MessageBox.Show(Utils.IsUrl("apple").ToString());//F
+            /*MessageBox.Show(Utils.FixUrl("steam:foo").ToString());
+            MessageBox.Show(Utils.FixUrl("2001:db8:0:0:0:0:2:1").ToString());
+            MessageBox.Show(Utils.FixUrl("http://[::1]:3000/").ToString());
+            MessageBox.Show(Utils.FixUrl("127.0.0.1:8080").ToString());
+            MessageBox.Show(Utils.FixUrl("2001:db8::1").ToString());
+            MessageBox.Show(Utils.FixUrl("[2001:db8::1]:3000").ToString());
+            MessageBox.Show(Utils.FixUrl("localhost:8000").ToString());
+            MessageBox.Show(Utils.FixUrl("apple").ToString());//F
             MessageBox.Show(Utils.IsDomain("ñ.com").ToString());//T
             MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
             MessageBox.Show(Utils.IsDomain("る.com").ToString());//T
@@ -1237,6 +1238,7 @@ namespace SLBr
                     break;
                 case "F":
                     Suggestion.Icon = "\xe838";//e8b7
+                    //Suggestion.Color = Instance.NavajoWhiteColor;
                     break;
                 case "T":
                     Suggestion.Icon = "\xec6c";

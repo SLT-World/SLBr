@@ -1071,11 +1071,17 @@ namespace SLBr.Pages
             InformationDialogWindow InfoWindow = new("Permission", $"Allow {Utils.Host(e.Url)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
             InfoWindow.Topmost = true;
 
-            bool? Result = InfoWindow.ShowDialog();
-            if (Result == true)
-                e.State = WebPermissionState.Allow;
-            else
-                e.State = WebPermissionState.Deny;
+            //Investigate: WebView2 System.Runtime.InteropServices.SEHException: 'External component has thrown an exception.'
+            try
+            {
+                bool? Result = InfoWindow.ShowDialog();
+                if (Result == true)
+                    e.State = WebPermissionState.Allow;
+                else
+                    e.State = WebPermissionState.Deny;
+            }
+            catch { e.State = WebPermissionState.Deny; }
+            finally { InfoWindow.Close(); }
         }
 
         private void WebView_NewTabRequested(object? sender, NewTabRequestEventArgs e)
@@ -3502,9 +3508,7 @@ namespace SLBr.Pages
                 }
             }
             else
-            {
                 OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL && Scheme == "slbr" ? Utils.CapitalizeAllFirstCharacters(Host.ToString()) : Host.ToString()) { Foreground = FontBrush });
-            }
 
             if (HostEnd >= 0)
             {

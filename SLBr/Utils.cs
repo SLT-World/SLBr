@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
@@ -133,7 +134,7 @@ namespace SLBr
 
         [DllImport("user32.dll", EntryPoint = "DestroyWindow", CharSet = CharSet.Unicode)]
         public static extern bool DestroyWindow(IntPtr hwnd);
-        
+
         [DllImport("gdi32.dll")]
         public static extern IntPtr CreateRectRgn(int nLeft, int nTop, int nRight, int nBottom);
 
@@ -519,8 +520,8 @@ namespace SLBr
 
         public static string BuildUserAgentFromOSAndProduct(string OSInfo, string Product) =>
             $"Mozilla/5.0 ({OSInfo}) AppleWebKit/537.36 (KHTML, like Gecko) {Product} Safari/537.36";
-            /* Derived from Safari's UA string.
-             * This is done to expose our product name in a manner that is maximally compatible with Safari, we hope!!*/
+        /* Derived from Safari's UA string.
+         * This is done to expose our product name in a manner that is maximally compatible with Safari, we hope!!*/
     }
 
     public static class ClassExtensions
@@ -940,7 +941,7 @@ namespace SLBr
             int Dot = Span.LastIndexOf(".");
             return Dot >= 0 ? Span[Dot..].ToString() : string.Empty;
         }
-        
+
         public static bool IsProgramUrl(string Url) =>
             Url.StartsWith("callto:") || Url.StartsWith("mailto:") || Url.StartsWith("news:") || Url.StartsWith("feed:");
         public static bool IsPossiblyAd(ResourceType _ResourceType) =>
@@ -949,7 +950,7 @@ namespace SLBr
              _ResourceType is ResourceRequestType.XMLHTTPRequest or ResourceRequestType.Media or ResourceRequestType.Script or ResourceRequestType.SubFrame or ResourceRequestType.Image;
         public static bool IsHttpScheme(string Url) =>
             Url.StartsWith("https:") || Url.StartsWith("http:");
-        
+
         public static bool IsDomain(string Url)
         {
             try
@@ -996,13 +997,20 @@ namespace SLBr
         }
         public static bool IsProtocolNotHttp(string Url) =>
             !IsHttpScheme(Url) && IsProtocol(Url);
-        public static bool IsProtocol(string Url)
+        public static bool IsProtocol(ReadOnlySpan<char> Url)
         {
             int Colon = Url.IndexOf(':');
             if (Colon < 1)
                 return false;
-            int Dot = Url.IndexOf('.');
-            return Dot < 0 || Colon < Dot;
+            if (!char.IsLetter(Url[0]))
+                return false;
+            for (int i = 1; i < Colon; i++)
+            {
+                char _Char = Url[i];
+                if (!char.IsLetterOrDigit(_Char) && _Char != '+' && _Char != '-' && _Char != '.')
+                    return false;
+            }
+            return Url.Length > Colon + 2;
         }
         //TODO: Validate domain TLDs from https://data.iana.org/TLD/tlds-alpha-by-domain.txt
         public static bool IsUrl(string Url)
@@ -1046,7 +1054,10 @@ namespace SLBr
             ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
 
             if (Protocol == -1 || Scheme is "http" or "https")
-                return IsDomain(Host.ToString());
+            {
+                string HostString = NormalizeIP(RemovePort(Host.ToString()));
+                return HostString.Equals("localhost") || IsDomain(HostString) || IsIPAddress(HostString);
+            }
             else
                 return true;
 
@@ -1056,13 +1067,27 @@ namespace SLBr
                 ReadOnlySpan<char> _Path = _Span[HostEnd..];
             }*/
         }
+        public static string RemovePort(string Host)
+        {
+            if (Host.StartsWith("["))
+            {
+                int End = Host.IndexOf(']');
+                if (End >= 0)
+                    return Host[..(End + 1)];
+            }
+            int Colon = Host.LastIndexOf(':');
+            if (Colon > 0 && Host.Count(c => c == ':') == 1)
+                return Host[..Colon];
+            return Host;
+        }
         public static bool IsCode(string Url) =>
             Url.StartsWith("javascript:") || Url.StartsWith("view-source:") || Url.StartsWith("localhost:") || Url.StartsWith("data:") || Url.StartsWith("blob:");
         public static bool IsCustomScheme(string Url) =>
             !IsHttpScheme(Url) && !IsCode(Url) && IsProtocol(Url);
         public static bool IsProprietaryCodec(string Extension) =>
             Extension is ".mp4" or ".m4a" or ".aac" or ".m4v" or ".mov" or ".mp3" or ".wma" or ".wmv";
-
+        public static bool IsIPAddress(string Host) =>
+            IPAddress.TryParse(Host, out _);
 
         public static string EscapeDataString(string Input)
         {
@@ -1307,7 +1332,77 @@ namespace SLBr
         {
             if (string.IsNullOrWhiteSpace(Url))
                 return Url;
-            return IsProtocol(Url) ? Url : "https://" + Url;
+            ReadOnlySpan<char> _Span = Url.AsSpan().Trim();
+            if (!IsProtocol(Url))
+                _Span = ("https://" + Url).AsSpan();
+            int Protocol = _Span.IndexOf("://");
+            if (Protocol < 0)
+                return _Span.ToString();
+            ReadOnlySpan<char> Scheme = _Span[..(Protocol + 3)];
+            ReadOnlySpan<char> Rest = _Span[(Protocol + 3)..];
+
+            ReadOnlySpan<char> Host;
+            ReadOnlySpan<char> _Path;
+
+            if (Rest.Length > 0 && Rest[0] == '[')
+            {
+                int EndBracket = Rest.IndexOf(']');
+                if (EndBracket < 0)
+                    return _Span.ToString();
+
+                Host = Rest[..(EndBracket + 1)];
+                _Path = Rest[(EndBracket + 1)..];
+            }
+            else
+            {
+                int HostEnd = Rest.IndexOfAny('/', '?', '#');
+                Host = HostEnd >= 0 ? Rest[..HostEnd] : Rest;
+                _Path = HostEnd >= 0 ? Rest[HostEnd..] : ReadOnlySpan<char>.Empty;
+            }
+
+            ReadOnlySpan<char> HostOnly = Host;
+            ReadOnlySpan<char> Port = ReadOnlySpan<char>.Empty;
+
+            if (HostOnly.Length > 0 && HostOnly[0] != '[')
+            {
+                int EndBracket = HostOnly.IndexOf(']');
+                if (EndBracket >= 0 && EndBracket + 1 < Host.Length && Host[EndBracket + 1] == ':')
+                {
+                    HostOnly = HostOnly[..(EndBracket + 1)];
+                    Port = Host[(EndBracket + 1)..];
+                }
+            }
+            else
+            {
+                int FirstColon = HostOnly.IndexOf(':');
+                int LastColon = HostOnly.LastIndexOf(':');
+                if (FirstColon == LastColon && FirstColon > 0)
+                {
+                    HostOnly = HostOnly[..FirstColon];
+                    Port = Host[FirstColon..];
+                }
+            }
+            string NormalizedHost = NormalizeIP(HostOnly.ToString());
+            if (NormalizedHost == HostOnly.ToString())
+                return _Span.ToString();
+            StringBuilder Builder = new(_Span.Length + 8);
+            Builder.Append(Scheme);
+            Builder.Append(NormalizedHost);
+            Builder.Append(Port);
+            Builder.Append(_Path);
+
+            return Builder.ToString();
+        }
+        public static string NormalizeIP(string Host)
+        {
+            string RawHost = Host;
+            if (RawHost.StartsWith("[") && RawHost.EndsWith("]"))
+                RawHost = RawHost[1..^1];
+            if (!IPAddress.TryParse(RawHost, out var IP))
+                return Host;
+            if (IP.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                return $"[{IP}]";
+            return IP.ToString();
         }
 
         private static readonly Dictionary<char, char> DeceptiveCharMap = new()
