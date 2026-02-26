@@ -251,6 +251,7 @@ namespace SLBr
 
         public const uint WM_CLOSE = 0x0010;
 
+        public const int WM_SETTINGCHANGE = 0x001A;
         public const int WM_COPYDATA = 0x004A;
         public const int HWND_BROADCAST = 0xffff;
     }
@@ -554,7 +555,7 @@ namespace SLBr
 
     public static partial class Utils
     {
-        [GeneratedRegex(@"(?i)\b(?:https?://|file:///)(?:\[[^\]]+\]|[a-z0-9\-\.]+)(?::\d+)?(?:/[^\s]*)?")]
+        [GeneratedRegex(@"(?i)\b(?:https?://|file:///)(?:\[[^\]]+\]|localhost|(?:\d{1,3}\.){3}\d{1,3}|[a-z0-9\-\.]+)(?::\d+)?(?:/[^\s]*)?")]
         public static partial Regex UrlRegex();
 
         [GeneratedRegex(@"\b\d+(?:\.\d+)?\s+[a-zA-Z]{3}\s+(?:to|in)\s+[a-zA-Z]{3}\b")]

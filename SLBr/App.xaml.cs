@@ -2691,11 +2691,11 @@ Inner Exception: ```{7} ```";
             try
             {
                 using (var Key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", true))
-                    Themes.Add(new Theme("Auto", (Key.GetValue("SystemUsesLightTheme") as int? == 1) ? Themes[0] : Themes[1]));
+                    Themes.Add(new Theme("System", (Key.GetValue("SystemUsesLightTheme") as int? == 1) ? Themes[0] : Themes[1]));
             }
             catch
             {
-                Themes.Add(new Theme("Auto", Themes[1]));
+                Themes.Add(new Theme("System", Themes[1]));
             }
             Theme CustomTheme = GenerateTheme(Utils.HexToColor(GlobalSave.Get("CustomTheme", Utils.ColorToHex(Colors.Red))), "Custom");
             Themes.Add(CustomTheme);
@@ -2718,7 +2718,7 @@ Inner Exception: ```{7} ```";
 
             Favourites.CollectionChanged += Favourites_CollectionChanged;
 
-            SetAppearance(GetTheme(GlobalSave.Get("Theme", "Auto")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
+            SetAppearance(GetTheme(GlobalSave.Get("Theme", "System")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
             bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
             if (bool.Parse(GlobalSave.Get("RestoreTabs", false.ToString())))
             {

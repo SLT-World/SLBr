@@ -1,6 +1,7 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Pages;
 using System.Collections.ObjectModel;
@@ -101,6 +102,40 @@ namespace SLBr
                                 App.Instance.NewWindow();
                         }
                         DllUtils.SetForegroundWindow(WindowInterop.Handle);
+                    }
+                    handled = true;
+                    break;
+                case DllUtils.WM_SETTINGCHANGE:
+                    if (wParam == IntPtr.Zero && Marshal.PtrToStringUni(lParam) == "ImmersiveColorSet")
+                    {
+                        try
+                        {
+                            using (var Key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", true))
+                            {
+                                Theme SystemTheme = App.Instance.Themes.FirstOrDefault(i => i.Name == "System");
+                                if (SystemTheme != null)
+                                {
+                                    bool IsLight = Key.GetValue("SystemUsesLightTheme") as int? == 1;
+                                    Theme TargetTheme = App.Instance.Themes.FirstOrDefault(i => i.Name == (IsLight ? "Light" : "Dark"));
+                                    if (TargetTheme != null)
+                                    {
+                                        SystemTheme.PrimaryColor = TargetTheme.PrimaryColor;
+                                        SystemTheme.SecondaryColor = TargetTheme.SecondaryColor;
+                                        SystemTheme.BorderColor = TargetTheme.BorderColor;
+                                        SystemTheme.GrayColor = TargetTheme.GrayColor;
+                                        SystemTheme.FontColor = TargetTheme.FontColor;
+                                        SystemTheme.IndicatorColor = TargetTheme.IndicatorColor;
+
+                                        SystemTheme.DarkTitleBar = TargetTheme.DarkTitleBar;
+                                        SystemTheme.DarkWebPage = TargetTheme.DarkWebPage;
+                                        Theme CurrentTheme = App.Instance.GetTheme();
+                                        if (CurrentTheme.Name == SystemTheme.Name)
+                                            App.Instance.SetAppearance(CurrentTheme, App.Instance.TabAlignment, App.Instance.VerticalTabWidth, App.Instance.AllowHomeButton, App.Instance.AllowTranslateButton, App.Instance.AllowReaderModeButton, App.Instance.ShowExtensionButton, App.Instance.ShowFavouritesBar, App.Instance.AllowQRButton, App.Instance.AllowWebEngineButton);
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
                     }
                     handled = true;
                     break;

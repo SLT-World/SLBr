@@ -23,6 +23,7 @@ namespace SLBr.Pages
 {
     public interface IPageOverlay : IDisposable
     {
+        void ApplyTheme(Theme _Theme);
     }
 
     /// <summary>

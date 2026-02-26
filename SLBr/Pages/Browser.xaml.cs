@@ -3577,6 +3577,8 @@ namespace SLBr.Pages
                 NewTabButton.Visibility = Visibility.Visible;
             }
 
+            (PageOverlayControl as IPageOverlay)?.ApplyTheme(_Theme);
+
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;
             Resources["BorderBrushColor"] = _Theme.BorderColor;

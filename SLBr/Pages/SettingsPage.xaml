@@ -207,7 +207,7 @@
                                         <TextBlock Text="" TextAlignment="Center" VerticalAlignment="Center" Width="90"/>
                                     </Border>
                                 </Border>-->
-                                    <Border Tag="Auto" CornerRadius="6" Width="100" Height="100">
+                                    <Border Tag="System" CornerRadius="6" Width="100" Height="100">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition/>
