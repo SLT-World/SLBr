@@ -29,7 +29,7 @@
                 </DockPanel>
                 <StackPanel Margin="0,0,0,10" Grid.Row="1">
                     <Grid Margin="0,0,0,10" Height="125">
-                        <Border Name="Mask" Background="White" CornerRadius="5"/>
+                        <Border Name="Mask" Background="{StaticResource PrimaryBrush}" CornerRadius="5"/>
                         <Grid>
                             <Grid.OpacityMask>
                                 <VisualBrush Visual="{Binding ElementName=Mask}"/>
@@ -77,8 +77,40 @@
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-                    <TextBlock x:Name="MessageText" Margin="0,0,0,10" VerticalAlignment="Center">Hex</TextBlock>
-                    <TextBox Name="UserInputTextBox" MinWidth="350" Width="Auto" KeyDown="UserInputTextBox_KeyDown"></TextBox>
+                    <Grid x:Name="HexInputContainer" Margin="0,0,0,10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center">HEX</TextBlock>
+                        <TextBox Grid.Row="2" Name="HexInputTextBox" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown" MinWidth="350" Width="Auto" TextChanged="HexInputTextBox_TextChanged"></TextBox>
+                    </Grid>
+                    <Grid x:Name="ThreeInputContainer" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Name="FirstInputHint" FontSize="10" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
+                        <TextBlock Name="SecondInputHint" FontSize="10" Grid.Column="2" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
+                        <TextBlock Name="ThirdInputHint" FontSize="10" Grid.Column="4" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
+                        <TextBox Grid.Row="2" Width="Auto" Name="FirstInputTextBox" TextChanged="ThreeInputTextBox_TextChanged" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
+                        <TextBox Grid.Row="2" Grid.Column="2" Width="Auto" Name="SecondInputTextBox" TextChanged="ThreeInputTextBox_TextChanged" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
+                        <TextBox Grid.Row="2" Grid.Column="4" Width="Auto" Name="ThirdInputTextBox" TextChanged="ThreeInputTextBox_TextChanged" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
+                    </Grid>
+                    <ComboBox x:Name="ColorFormatComboBox" MinWidth="350" Width="Auto" SelectedIndex="0" SelectionChanged="ColorFormatComboBox_SelectionChanged">
+                        <ComboBoxItem>HEX</ComboBoxItem>
+                        <ComboBoxItem>RGB</ComboBoxItem>
+                        <ComboBoxItem>HSL</ComboBoxItem>
+                    </ComboBox>
                 </StackPanel>
 
                 <WrapPanel Grid.Row="3" HorizontalAlignment="Right" VerticalAlignment="Bottom">

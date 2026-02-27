@@ -17,6 +17,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Security.Cryptography;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -736,6 +737,14 @@ namespace SLBr
                 return System.Drawing.ColorTranslator.FromHtml(ColorString).ToMediaColor();
         }
 
+        public static void ColorToHSL(MColor _Color, out double Hue, out double Saturation, out double Lightness)
+        {
+            DColor ColorProcess = DColor.FromArgb(_Color.A, _Color.R, _Color.G, _Color.B);
+            Hue = ColorProcess.GetHue();
+            Saturation = ColorProcess.GetSaturation();
+            Lightness = ColorProcess.GetBrightness();
+        }
+
         public static void ColorToHSV(MColor _Color, out double Hue, out double Saturation, out double Value)
         {
             double R = _Color.R / 255.0;
@@ -784,13 +793,47 @@ namespace SLBr
             };
         }
 
-        public static string ColorToHex(MColor _Color) =>
-            $"#{_Color.R:X2}{_Color.G:X2}{_Color.B:X2}";
+        public static MColor ColorFromHSL(double H, double S, double L)
+        {
+            double R = 0;
+            double G = 0;
+            double B = 0;
+            if (S == 0)
+                R = G = B = L;
+            else
+            {
+                double Q = L < 0.5 ? L * (1 + S) : L + S - L * S;
+                double P = 2 * L - Q;
+                R = HueToRgb(P, Q, H + 1.0 / 3.0);
+                G = HueToRgb(P, Q, H);
+                B = HueToRgb(P, Q, H - 1.0 / 3.0);
+            }
+
+            return MColor.FromArgb(255, (byte)(R * 255), (byte)(G * 255), (byte)(B * 255));
+        }
+
+        private static double HueToRgb(double P, double Q, double T)
+        {
+            if (T < 0) T += 1;
+            if (T > 1) T -= 1;
+            if (T < 1.0 / 6.0) return P + (Q - P) * 6 * T;
+            if (T < 1.0 / 2.0) return Q;
+            if (T < 2.0 / 3.0) return P + (Q - P) * (2.0 / 3.0 - T) * 6;
+            return P;
+        }
+
+        public static string ColorToHex(MColor _Color, bool WithHash = true)
+        {
+            string Hash = WithHash ? "#" : "";
+            return $"{Hash}{_Color.R:X2}{_Color.G:X2}{_Color.B:X2}";
+        }
 
         public static MColor HexToColor(string Hex)
         {
             try
             {
+                if (!Hex.StartsWith('#'))
+                    Hex = "#" + Hex;
                 return (MColor)ColorConverter.ConvertFromString(Hex);
             }
             catch

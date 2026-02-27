@@ -2,6 +2,7 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -17,12 +18,7 @@ namespace SLBr.Controls
         {
             InitializeComponent();
             SelectedHue = DefaultColor;
-            PreviewBox.Fill = new SolidColorBrush(DefaultColor);
-            UserInputTextBox.Text = Utils.ColorToHex(DefaultColor);
-            Utils.ColorToHSV(DefaultColor, out double h, out double s, out double v);
-
-            SelectedHue = Utils.ColorFromHSV(h, 1, 1);
-            HueBrush.Color = SelectedHue;
+            ApplyColor(DefaultColor);
             ApplyTheme(App.Instance.CurrentTheme);
             BeginAnimation(OpacityProperty, new DoubleAnimation
             {
@@ -55,8 +51,8 @@ namespace SLBr.Controls
 
         private void Window_ContentRendered(object sender, EventArgs e)
         {
-            UserInputTextBox.SelectAll();
-            UserInputTextBox.Focus();
+            HexInputTextBox.SelectAll();
+            HexInputTextBox.Focus();
         }
 
         private Color SelectedHue;
@@ -74,8 +70,7 @@ namespace SLBr.Controls
             double Value = 1 - (Position.Y / SVSquare.ActualHeight);
 
             Color _Color = Utils.ColorFromHSV(Utils.GetHue(SelectedHue), Saturation, Value);
-            PreviewBox.Fill = new SolidColorBrush(_Color);
-            UserInputTextBox.Text = Utils.ColorToHex(_Color);
+            ApplyColor(_Color);
         }
 
         public SolidColorBrush UserInput
@@ -83,22 +78,110 @@ namespace SLBr.Controls
             get { return (SolidColorBrush)PreviewBox.Fill; }
         }
 
-        private void UserInputTextBox_KeyDown(object sender, KeyEventArgs e)
+        private void HexInputTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            ApplyHexInput();
+            if (DisableTextChangedEvents)
+                return;
+            if (HexInputTextBox.Text.Length == 6)
+                ApplyColor(Utils.HexToColor(HexInputTextBox.Text));
         }
 
-        private void ApplyHexInput()
+        private void ApplyColor(Color _Color)
         {
-            string Hex = UserInputTextBox.Text.Trim();
-            Color _Color = Utils.HexToColor(Hex);
             if (_Color == Colors.Transparent)
                 _Color = Colors.Black;
             PreviewBox.Fill = new SolidColorBrush(_Color);
-            Utils.ColorToHSV(_Color, out double h, out double s, out double v);
-
-            SelectedHue = Utils.ColorFromHSV(h, 1, 1);
+            UpdateInputs();
+            Utils.ColorToHSV(_Color, out double H, out _, out _);
+            SelectedHue = Utils.ColorFromHSV(H, 1, 1);
             HueBrush.Color = SelectedHue;
+        }
+
+        bool DisableTextChangedEvents;
+        private void ThreeInputTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (DisableTextChangedEvents)
+                return;
+            try
+            {
+                switch (ColorFormatComboBox.SelectedIndex)
+                {
+                    case 1:
+                        byte R = byte.Parse(FirstInputTextBox.Text);
+                        byte G = byte.Parse(SecondInputTextBox.Text);
+                        byte B = byte.Parse(ThirdInputTextBox.Text);
+
+                        ApplyColor(Color.FromRgb(R, G, B));
+                        break;
+                    case 2:
+                        double H = double.Parse(FirstInputTextBox.Text);
+                        double S = double.Parse(SecondInputTextBox.Text) / 100.0;
+                        double L = double.Parse(ThirdInputTextBox.Text) / 100.0;
+
+                        ApplyColor(Utils.ColorFromHSL(H, S, L));
+                        break;
+                }
+            }
+            catch
+            {
+                //ApplyColor(Colors.Black);
+            }
+        }
+
+        private void ColorFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateInputs();
+        }
+
+        private void UpdateInputs()
+        {
+            var Color = ((SolidColorBrush)PreviewBox.Fill).Color;
+            DisableTextChangedEvents = true;
+            switch (ColorFormatComboBox.SelectedIndex)
+            {
+                case 0:
+                    HexInputContainer.Visibility = Visibility.Visible;
+                    ThreeInputContainer.Visibility = Visibility.Collapsed;
+
+                    HexInputTextBox.Text = Utils.ColorToHex(Color, false);
+                    break;
+                case 1:
+                    FirstInputHint.Text = "R";
+                    SecondInputHint.Text = "G";
+                    ThirdInputHint.Text = "B";
+                    HexInputContainer.Visibility = Visibility.Collapsed;
+                    ThreeInputContainer.Visibility = Visibility.Visible;
+
+                    FirstInputTextBox.Text = Color.R.ToString();
+                    SecondInputTextBox.Text = Color.G.ToString();
+                    ThirdInputTextBox.Text = Color.B.ToString();
+                    break;
+                case 2:
+                    FirstInputHint.Text = "H";
+                    SecondInputHint.Text = "S";
+                    ThirdInputHint.Text = "L";
+                    HexInputContainer.Visibility = Visibility.Collapsed;
+                    ThreeInputContainer.Visibility = Visibility.Visible;
+
+                    Utils.ColorToHSL(Color, out double H, out double S, out double L);
+
+                    FirstInputTextBox.Text = ((int)H).ToString();
+                    SecondInputTextBox.Text = ((int)(S * 100)).ToString();
+                    ThirdInputTextBox.Text = ((int)(L * 100)).ToString();
+                    break;
+            }
+            DisableTextChangedEvents = false;
+        }
+
+        private void ThreeInputTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !e.Text.All(char.IsDigit);
+        }
+
+        private void ThreeInputTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Space)
+                e.Handled = true;
         }
     }
 }

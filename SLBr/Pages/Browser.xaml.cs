@@ -3686,6 +3686,9 @@ namespace SLBr.Pages
                 return;
             OmniBoxStatus.Visibility = Visibility.Collapsed;
             Suggestions.Clear();
+            SmartSuggestionCancellation?.Cancel();
+            OmniBoxFastTimer?.Stop();
+            OmniBoxSmartTimer?.Stop();
             string ProcessedText = CurrentText.Trim();
             if (!string.IsNullOrEmpty(ProcessedText))
             {
@@ -3817,9 +3820,6 @@ namespace SLBr.Pages
             }
             else
             {
-                SmartSuggestionCancellation?.Cancel();
-                OmniBoxFastTimer?.Stop();
-                OmniBoxSmartTimer?.Stop();
                 if (OmniBoxOverrideSearch != null && OmniBoxOverrideSearch.Host == "__Program__")
                 {
                     SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
@@ -3862,9 +3862,9 @@ namespace SLBr.Pages
                 return;
             if (OmniBoxSelectionByMouse)
             {
-                if (Suggestion.ProviderOverride == OmniBoxOverrideSearch)
+                if (Suggestion.ProviderOverride == OmniBoxOverrideSearch || Suggestion.ProviderOverride != null && !string.IsNullOrEmpty(Suggestion.Hidden))
                 {
-                    if (OmniBoxOverrideSearch != null && OmniBoxOverrideSearch.Host == "__Program__" && OmniBoxOverrideSearch.Name == "Tabs")
+                    if (Suggestion.ProviderOverride != null && Suggestion.ProviderOverride.Host == "__Program__" && Suggestion.ProviderOverride.Name == "Tabs")
                     {
                         App.Instance.SwitchTab(int.Parse(Suggestion.Hidden));
                     }
@@ -3910,6 +3910,55 @@ namespace SLBr.Pages
                 string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
                 if (!string.IsNullOrEmpty(SuggestionsUrl))
                 {
+                    var ExistingSuggestions = Suggestions.Select(i => i.Text);
+                    string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
+                    using (JsonDocument Document = JsonDocument.Parse(ResponseText))
+                    {
+                        foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())//.Take(10)
+                        {
+                            string SuggestionStr = Suggestion.GetString();
+                            if (!ExistingSuggestions.Contains(SuggestionStr))
+                            {
+                                string SuggestionType = App.GetMiniSearchType(SuggestionStr);
+                                Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color, "", null, OmniBoxOverrideSearch));
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        /*private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
+        {
+            OmniBoxFastTimer?.Stop();
+            if (!OmniBox.IsDropDownOpen)
+                return;
+            string CurrentText = OmniBox.Text.Trim();
+            SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
+            SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
+            List<(int, OmniSuggestion)> ScoredSuggestions = [];
+            SearchProvider TabsSearchProvider = App.Instance.AllSystemSearchEngines.First(i => i.Name == "Tabs");
+            SearchProvider HistorySearchProvider = App.Instance.AllSystemSearchEngines.First(i => i.Name == "History");
+            SearchProvider FavouritesSearchProvider = App.Instance.AllSystemSearchEngines.First(i => i.Name == "Favourites");
+            try
+            {
+                foreach (MainWindow _Window in App.Instance.AllWindows)
+                {
+                    BrowserTabItem Tab = _Window.Tabs.First(i => i.Type == BrowserTabType.Navigation && i.Content != null && (i.Header.ToLowerInvariant().Contains(CurrentText) || (i.Content?.Address.ToLowerInvariant().Contains(CurrentText) ?? false)));
+                    if (Tab != null)
+                        ScoredSuggestions.Add((0, App.GenerateSuggestion(Tab.Header, "T", LinkColor, $"- {Tab.Content?.Address}", Tab.Content?.Address, TabsSearchProvider, Tab.ID.ToString())));
+                }
+                List<ActionStorage> HistoryCollection = App.Instance.History.Where(i => (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
+                foreach (ActionStorage Entry in HistoryCollection.Take(1))
+                    ScoredSuggestions.Add((0, App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, HistorySearchProvider)));
+                            
+                List<Favourite> FavouritesCollection = App.Instance.Favourites.Where(i => i.Type == "url" && ((i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Url?.ToLowerInvariant().Contains(CurrentText) ?? false))).ToList();
+                foreach (Favourite Entry in FavouritesCollection.Take(2))
+                    ScoredSuggestions.Add((0, App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, FavouritesSearchProvider)));
+                string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
+                if (!string.IsNullOrEmpty(SuggestionsUrl))
+                {
                     string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
                     using (JsonDocument Document = JsonDocument.Parse(ResponseText))
                     {
@@ -3917,13 +3966,29 @@ namespace SLBr.Pages
                         {
                             string SuggestionStr = Suggestion.GetString();
                             string SuggestionType = App.GetMiniSearchType(SuggestionStr);
-                            Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color, "", null, OmniBoxOverrideSearch));
+                            ScoredSuggestions.Add((0, App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color, "", null, OmniBoxOverrideSearch)));
                         }
                     }
                 }
             }
             catch { }
-        }
+            for (int i = 0; i < ScoredSuggestions.Count; i++)
+            {
+                //TODO: Calculate score based on title & subtext.
+                var Suggestion = ScoredSuggestions[i];
+                int InitialScore = CalculateSuggestionScore(CurrentText, Suggestion.Item2.Text);
+                Suggestion.Item1 += InitialScore;
+                if (InitialScore == 0 && !string.IsNullOrEmpty(Suggestion.Item2.SubText))
+                    Suggestion.Item1 += CalculateSuggestionScore(CurrentText, Suggestion.Item2.SubText) / 2;
+            }
+            var FinalResults = ScoredSuggestions.OrderByDescending(r => r.Item1).Take(10);
+            var ExistingSuggestions = Suggestions.Select(i => i.Text);
+            foreach (var Result in FinalResults)
+            {
+                if (!ExistingSuggestions.Contains(Result.Item2.Text))
+                    Suggestions.Add(Result.Item2);
+            }
+        }*/
 
         private async void OmniBoxSmartTimer_Tick(object? sender, EventArgs e)
         {
@@ -4111,8 +4176,7 @@ namespace SLBr.Pages
                     ];
                     if (Favourite.Type == "url")
                         Inputs.Add(new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url });
-                    DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite", Inputs, "\ue70f");
-                    _DynamicDialogWindow.Topmost = true;
+                    DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite", Inputs, "\ue70f") { Topmost = true };
                     if (_DynamicDialogWindow.ShowDialog() == true)
                     {
                         Favourite.Name = _DynamicDialogWindow.InputFields[0].Value;
