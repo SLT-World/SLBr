@@ -15,22 +15,30 @@ namespace SLBr.Controls
     public partial class PopupBrowser : Window
     {
         public IWebView WebView;
+        private string InitialAddress;
 
         public PopupBrowser(string _Address, int _Width, int _Height)
         {
             InitializeComponent();
+            InitialAddress = _Address;
             if (_Width != -1)
                 Width = _Width;
             if (_Height != -1)
                 Height = _Height;
             ApplyTheme(App.Instance.CurrentTheme);
+            int trueValue = 0x01;
+            DllUtils.DwmSetWindowAttribute(HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle()).Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
+            CreateWebView();
+        }
 
+        async void CreateWebView()
+        {
             WebViewBrowserSettings Settings = new WebViewBrowserSettings()
             {
                 JavaScriptMessage = false
             };
 
-            WebView = WebViewManager.Create((WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"), [new(true, _Address)], Settings);
+            WebView = await WebViewManager.Create((WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"), [new(true, InitialAddress)], Settings);
             WebView.StatusMessage += WebView_StatusMessage;
             WebView.LoadingStateChanged += WebView_LoadingStateChanged;
             WebView.TitleChanged += WebView_TitleChanged;
@@ -51,8 +59,6 @@ namespace SLBr.Controls
 
             WebContent.Visibility = Visibility.Collapsed;
             WebContent.Children.Add(WebView.Control);
-            int trueValue = 0x01;
-            DllUtils.DwmSetWindowAttribute(HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle()).Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
         }
 
         private void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)

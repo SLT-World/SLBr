@@ -51,23 +51,38 @@ namespace SLBr
 
         public static string WebView2Version { get; private set; } = "";
 
-        public static IWebView Create(WebEngineType EngineType, List<WebNavigationEntry> Urls, WebViewBrowserSettings _BrowserSettings)
+        public static async Task<IWebView> Create(WebEngineType EngineType, List<WebNavigationEntry> Urls, WebViewBrowserSettings _BrowserSettings)
         {
             switch (EngineType)
             {
                 case WebEngineType.Chromium:
-                    return new ChromiumWebView(Urls, _BrowserSettings);
+                    {
+                        ChromiumWebView CView = new ChromiumWebView(Urls, _BrowserSettings);
+                        await CView.InitializeAsync();
+                        return CView;
+                    }
                 case WebEngineType.ChromiumEdge:
                     if (!IsWebView2Initialized)
                     {
                         try { WebView2Version = CoreWebView2Environment.GetAvailableBrowserVersionString(); }
-                        catch (WebView2RuntimeNotFoundException) { return new ChromiumWebView(Urls, _BrowserSettings); }
+                        catch (WebView2RuntimeNotFoundException)
+                        {
+                            ChromiumWebView CBView = new ChromiumWebView(Urls, _BrowserSettings);
+                            await CBView.InitializeAsync();
+                            return CBView;
+                        }
                     }
-                    return new ChromiumEdgeWebView(Urls, _BrowserSettings);
+                    ChromiumEdgeWebView EView = new ChromiumEdgeWebView(Urls, _BrowserSettings);
+                    await EView.InitializeAsync();
+                    return EView;
                 case WebEngineType.Trident:
                     return new TridentWebView(Urls, _BrowserSettings);
                 default:
-                    return new ChromiumWebView(Urls, _BrowserSettings);
+                    {
+                        ChromiumWebView CView = new ChromiumWebView(Urls, _BrowserSettings);
+                        await CView.InitializeAsync();
+                        return CView;
+                    }
             }
         }
         /*public static string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
@@ -90,10 +105,25 @@ namespace SLBr
             return _String;
         }*/
 
-        public static void InitializeCEF()
+        private static Task<bool>? CEFInitializeTask;
+        private static readonly object CEFInitializeLock = new();
+
+        public static Task<bool> InitializeCEF()
+        {
+            lock (CEFInitializeLock)
+            {
+                if (CEFInitializeTask != null)
+                    return CEFInitializeTask;
+
+                CEFInitializeTask = InitializeCEFInternal();
+                return CEFInitializeTask;
+            }
+        }
+
+        private static async Task<bool> InitializeCEFInternal()
         {
             if (IsCefInitialized)
-                return;
+                return true;
             if (string.IsNullOrEmpty(SECRETS.GOOGLE_API_KEY))
             {
                 InfoBar GoogleAPIKeyInfoBar = null;
@@ -110,8 +140,10 @@ namespace SLBr
                 };
                 App.Instance.InfoBars.Add(GoogleAPIKeyInfoBar);
             }
-            CefSettings ChromiumSettings = new CefSettings();
-            ChromiumSettings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
+            CefSettings ChromiumSettings = new CefSettings
+            {
+                BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName
+            };
 
             if (Settings.UserDataPath != null)
             {
@@ -144,7 +176,11 @@ namespace SLBr
                     IsDisplayIsolated = true
                 });
             }
-            Cef.Initialize(ChromiumSettings);
+            //await Task.Delay(20000);
+            bool Success = await Cef.InitializeAsync(ChromiumSettings, false);
+
+            if (!Success)
+                return false;
 
             Cef.UIThreadTaskFactory.StartNew(delegate
             {
@@ -209,12 +245,28 @@ namespace SLBr
             GlobalFindHandler = new ChromiumFindHandler();
             GlobalDialogHandler = new ChromiumDialogHandler();
             IsCefInitialized = true;
+            return true;
         }
 
-        public static async void InitializeWebView2()
+        private static Task<bool>? WebView2InitializeTask;
+        private static readonly object WebView2InitializeLock = new();
+
+        public static Task<bool> InitializeWebView2()
+        {
+            lock (WebView2InitializeLock)
+            {
+                if (WebView2InitializeTask != null)
+                    return WebView2InitializeTask;
+
+                WebView2InitializeTask = InitializeWebView2Internal();
+                return WebView2InitializeTask;
+            }
+        }
+
+        private static async Task<bool> InitializeWebView2Internal()
         {
             if (IsWebView2Initialized)
-                return;
+                return true;
             //https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags
             //msWebView2TreatAppSuspendAsDeviceSuspend
             List<CoreWebView2CustomSchemeRegistration> CustomSchemeRegistrations = new List<CoreWebView2CustomSchemeRegistration>();
@@ -226,7 +278,7 @@ namespace SLBr
             catch (WebView2RuntimeNotFoundException)
             {
                 //MessageBox.Show("WebView2 Runtime is not installed. Please install it or disable WebView2.");
-                return;
+                return false;
             }
 
             EnvironmentOptions.AreBrowserExtensionsEnabled = true;
@@ -260,6 +312,7 @@ namespace SLBr
             WebView2FindOptions.ShouldMatchWord = false;
             WebView2FindOptions.SuppressDefaultFindDialog = true;
             IsWebView2Initialized = true;
+            return true;
         }
         public static void DeleteWebView2HighDPIRegistry()
         {

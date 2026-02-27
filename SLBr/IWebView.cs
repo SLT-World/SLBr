@@ -1246,9 +1246,12 @@ namespace SLBr
             InitialUrls = Urls ?? [new(true, "about:blank")];
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
+        }
 
+        public async Task InitializeAsync()
+        {
             if (!WebViewManager.IsCefInitialized)
-                WebViewManager.InitializeCEF();
+                await WebViewManager.InitializeCEF();
             Browser = new ChromiumWebBrowser();
             WebViewManager.ChromiumWebViews[Browser] = this;
 
@@ -1833,6 +1836,8 @@ namespace SLBr
         #region DisplayHandler
         public async void OnAddressChanged(IWebBrowser chromiumWebBrowser, AddressChangedEventArgs addressChangedArgs)
         {
+            if (addressChangedArgs.Address.StartsWith("devtools://"))
+                return;
             CurrentAddress = addressChangedArgs.Address;
             NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
@@ -1874,13 +1879,12 @@ namespace SLBr
             InitialUrls = Urls ?? [new(true, "about:blank")];
             Settings = _Settings ?? new WebViewBrowserSettings();
             WebViewManager.WebViews.Add(this);
-            InitializeAsync();
         }
 
-        private async void InitializeAsync()
+        public async Task InitializeAsync()
         {
             if (!WebViewManager.IsWebView2Initialized)
-                WebViewManager.InitializeWebView2();
+                await WebViewManager.InitializeWebView2();
             Browser = new WebView2();
             Browser.CoreWebView2InitializationCompleted += Browser_CoreWebView2InitializationCompleted;
 
@@ -2076,7 +2080,7 @@ namespace SLBr
                 BrowserCore.CloseDefaultDownloadDialog();
         }
 
-        private void ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e)
+        private async void ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e)
         {
             string Url = Address;
             Panel? Parent = null;
@@ -2087,7 +2091,7 @@ namespace SLBr
             }
             Browser.Dispose();
             Browser = null;
-            InitializeAsync();
+            await InitializeAsync();
             Parent?.Children.Add(Browser);
         }
 

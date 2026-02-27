@@ -413,13 +413,17 @@ namespace SLBr.Pages
         }
         public WriteableBitmap? QRBitmap = null;
 
-        void CreateWebView(List<WebNavigationEntry> History, WebEngineType Engine)
+        bool InitializingWebView;
+
+        async void CreateWebView(List<WebNavigationEntry> History, WebEngineType Engine)
         {
-            if (WebView != null)
+            if (WebView != null || InitializingWebView)
                 return;
+            InitializingWebView = true;
             Address = History.FirstOrDefault(i => i.IsCurrent).Url;
             Tab.IsUnloaded = true;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
+            BrowserLoadChanged(Address, true, null);
             switch (Engine)
             {
                 case WebEngineType.Chromium:
@@ -439,9 +443,21 @@ namespace SLBr.Pages
                 AudioListener = !App.Instance.LiteMode
             };
 
+            if (EngineInitializationInfoBar == null)
+            {
+                EngineInitializationInfoBar = new()
+                {
+                    Icon = "\xec6c",
+                    Title = "Initializing Web Engine",
+                    IsClosable = false,
+                    Description = [new() { Text = "Configuring the underlying browser engine components." }]
+                };
+                LocalInfoBars.Add(EngineInitializationInfoBar);
+            }
             //TODO: Improve tab session file with firefox sessionstore JSON format.
             //WebView = WebViewManager.Create(WebEngineType.Chromium, [new(false, "slbr://newtab"), new(true, "https://google.com"), new(false, "https://apple.com")], WebViewSettings);
-            WebView = WebViewManager.Create(Engine, History, WebViewSettings);
+            WebView = await WebViewManager.Create(Engine, History, WebViewSettings);
+            CloseInfoBar(EngineInitializationInfoBar);
 
             WebView?.Control.AllowDrop = true;
             WebView?.Control.IsManipulationEnabled = true;
@@ -478,6 +494,7 @@ namespace SLBr.Pages
             /*Tab.ParentWindow.WindowState = WindowState.Normal;//VIDEO
             Tab.ParentWindow.WindowStyle = WindowStyle.None;//VIDEO
             Tab.ParentWindow.WindowState = WindowState.Maximized;//VIDEO*/
+            InitializingWebView = false;
         }
 
         private async void WebView_IsBrowserInitializedChanged(object? sender, EventArgs e)
@@ -2244,13 +2261,10 @@ namespace SLBr.Pages
             }
         }
 
-        public static void ActivatePopup(Popup popup)
-        {
-            DllUtils.SetForegroundWindow(((HwndSource)PresentationSource.FromVisual(popup.Child)).Handle);
-        }
-
         public async void Find(string Text, bool Forward = true, bool FindNext = false)
         {
+            if (WebView == null)
+                return;
             if (string.IsNullOrEmpty(Text))
             {
                 try
@@ -2264,7 +2278,7 @@ namespace SLBr.Pages
             Text = Text.ReplaceLineEndings("");
             FindPopup.IsOpen = true;
             FindTextBox.Text = Text;
-            ActivatePopup(FindPopup);
+            DllUtils.SetForegroundWindow(((HwndSource)PresentationSource.FromVisual(FindPopup.Child)).Handle);
             Keyboard.Focus(FindTextBox);
             FindPopup.Focus();
             PreviousFindButton.IsEnabled = Text.Length > 0;
@@ -2304,7 +2318,7 @@ namespace SLBr.Pages
 
         private void FindTextBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
-            ActivatePopup(FindPopup);
+            DllUtils.SetForegroundWindow(((HwndSource)PresentationSource.FromVisual(FindPopup.Child)).Handle);
             Keyboard.Focus(FindTextBox);
             FindPopup.Focus();
         }
@@ -2466,7 +2480,9 @@ namespace SLBr.Pages
                     ToggleSideBar(ForceClose);
                     return;
                 }
-                if (WebView.Engine == WebEngineType.Trident)
+                if (WebView == null)
+                    return;
+                if (WebView?.Engine == WebEngineType.Trident)
                 {
                     if (UnavailableInspectorInfoBar == null)
                     {
@@ -2851,7 +2867,7 @@ namespace SLBr.Pages
                                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
                                     if (UnavailableTranslationInfoBar == null)
                                     {
-                                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate website." }] };
+                                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
                                         LocalInfoBars.Add(UnavailableTranslationInfoBar);
                                     }
                                 });
@@ -2869,7 +2885,7 @@ namespace SLBr.Pages
                             TranslateLoadingPanel.Visibility = Visibility.Collapsed;
                             if (UnavailableTranslationInfoBar == null)
                             {
-                                UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate website." }] };
+                                UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
                                 LocalInfoBars.Add(UnavailableTranslationInfoBar);
                             }
                         });
@@ -2972,7 +2988,7 @@ namespace SLBr.Pages
                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
                     if (UnavailableTranslationInfoBar == null)
                     {
-                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate website." }] };
+                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
                         LocalInfoBars.Add(UnavailableTranslationInfoBar);
                     }
                 });
@@ -4209,6 +4225,8 @@ namespace SLBr.Pages
                 UnavailableTranslationInfoBar = null;
             else if (Bar == HomographInfoBar)
                 HomographInfoBar = null;
+            else if (Bar == EngineInitializationInfoBar)
+                EngineInitializationInfoBar = null;
         }
 
         InfoBar? UnavailableTranslationInfoBar;
@@ -4216,6 +4234,7 @@ namespace SLBr.Pages
         InfoBar? ProprietaryCodecsInfoBar;
         InfoBar? WaybackInfoBar;
         InfoBar? HomographInfoBar;
+        InfoBar? EngineInitializationInfoBar;
 
         private void InfoBarRun_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
