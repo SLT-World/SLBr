@@ -43,7 +43,7 @@
                                 <Border.Background>
                                     <SolidColorBrush x:Name="HueBrush" Color="Red"/>
                                 </Border.Background>
-                                <Grid x:Name="SVSquare" MouseDown="SVClick">
+                                <Grid x:Name="SVSquare" Focusable="True" MouseDown="SVClick">
                                     <Rectangle>
                                         <Rectangle.Fill>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
@@ -64,7 +64,7 @@
                             </Border>
                         </Grid>
                     </Grid>
-                    <Rectangle x:Name="HueBar" Cursor="Cross" MouseDown="HueClick" Margin="0,0,0,10" Height="25" RadiusX="5" RadiusY="5">
+                    <Rectangle x:Name="HueBar" Focusable="True" Cursor="Cross" MouseDown="HueClick" Margin="0,0,0,10" Height="25" RadiusX="5" RadiusY="5">
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                 <GradientStop Color="Red" Offset="0.0"/>
@@ -84,7 +84,7 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
                         <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center">HEX</TextBlock>
-                        <TextBox Grid.Row="2" Name="HexInputTextBox" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown" MinWidth="350" Width="Auto" TextChanged="HexInputTextBox_TextChanged"></TextBox>
+                        <TextBox MaxLength="6" Grid.Row="2" Name="HexInputTextBox" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown" MinWidth="350" Width="Auto" TextChanged="HexInputTextBox_TextChanged"></TextBox>
                     </Grid>
                     <Grid x:Name="ThreeInputContainer" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
@@ -102,9 +102,9 @@
                         <TextBlock Name="FirstInputHint" FontSize="10" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
                         <TextBlock Name="SecondInputHint" FontSize="10" Grid.Column="2" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
                         <TextBlock Name="ThirdInputHint" FontSize="10" Grid.Column="4" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
-                        <TextBox Grid.Row="2" Width="Auto" Name="FirstInputTextBox" TextChanged="ThreeInputTextBox_TextChanged" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
-                        <TextBox Grid.Row="2" Grid.Column="2" Width="Auto" Name="SecondInputTextBox" TextChanged="ThreeInputTextBox_TextChanged" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
-                        <TextBox Grid.Row="2" Grid.Column="4" Width="Auto" Name="ThirdInputTextBox" TextChanged="ThreeInputTextBox_TextChanged" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
+                        <TextBox MaxLength="3" Grid.Row="2" Width="Auto" Name="FirstInputTextBox" GotFocus="ThreeInputTextBox_GotFocus" LostFocus="ThreeInputTextBox_LostFocus" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
+                        <TextBox MaxLength="3" Grid.Row="2" Grid.Column="2" Width="Auto" Name="SecondInputTextBox" GotFocus="ThreeInputTextBox_GotFocus" LostFocus="ThreeInputTextBox_LostFocus" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
+                        <TextBox MaxLength="3" Grid.Row="2" Grid.Column="4" Width="Auto" Name="ThirdInputTextBox" GotFocus="ThreeInputTextBox_GotFocus" LostFocus="ThreeInputTextBox_LostFocus" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
                     </Grid>
                     <ComboBox x:Name="ColorFormatComboBox" MinWidth="350" Width="Auto" SelectedIndex="0" SelectionChanged="ColorFormatComboBox_SelectionChanged">
                         <ComboBoxItem>HEX</ComboBoxItem>

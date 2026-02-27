@@ -58,6 +58,8 @@ namespace SLBr.Controls
         private Color SelectedHue;
         private void HueClick(object sender, MouseButtonEventArgs e)
         {
+            HueBar.Focus();
+            Keyboard.ClearFocus();
             double Percent = e.GetPosition(HueBar).X / HueBar.ActualWidth;
             SelectedHue = Utils.ColorFromHSV(Percent * 360, 1, 1);
             HueBrush.Color = SelectedHue;
@@ -65,6 +67,8 @@ namespace SLBr.Controls
 
         private void SVClick(object sender, MouseButtonEventArgs e)
         {
+            SVSquare.Focus();
+            Keyboard.ClearFocus();
             Point Position = e.GetPosition(SVSquare);
             double Saturation = Position.X / SVSquare.ActualWidth;
             double Value = 1 - (Position.Y / SVSquare.ActualHeight);
@@ -91,42 +95,14 @@ namespace SLBr.Controls
             if (_Color == Colors.Transparent)
                 _Color = Colors.Black;
             PreviewBox.Fill = new SolidColorBrush(_Color);
-            UpdateInputs();
+            if (!IsUserTypingRGBHSL)
+                UpdateInputs();
             Utils.ColorToHSV(_Color, out double H, out _, out _);
             SelectedHue = Utils.ColorFromHSV(H, 1, 1);
             HueBrush.Color = SelectedHue;
         }
 
         bool DisableTextChangedEvents;
-        private void ThreeInputTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (DisableTextChangedEvents)
-                return;
-            try
-            {
-                switch (ColorFormatComboBox.SelectedIndex)
-                {
-                    case 1:
-                        byte R = byte.Parse(FirstInputTextBox.Text);
-                        byte G = byte.Parse(SecondInputTextBox.Text);
-                        byte B = byte.Parse(ThirdInputTextBox.Text);
-
-                        ApplyColor(Color.FromRgb(R, G, B));
-                        break;
-                    case 2:
-                        double H = double.Parse(FirstInputTextBox.Text);
-                        double S = double.Parse(SecondInputTextBox.Text) / 100.0;
-                        double L = double.Parse(ThirdInputTextBox.Text) / 100.0;
-
-                        ApplyColor(Utils.ColorFromHSL(H, S, L));
-                        break;
-                }
-            }
-            catch
-            {
-                //ApplyColor(Colors.Black);
-            }
-        }
 
         private void ColorFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -182,6 +158,44 @@ namespace SLBr.Controls
         {
             if (e.Key == Key.Space)
                 e.Handled = true;
+        }
+
+        bool IsUserTypingRGBHSL;
+
+        private void ThreeInputTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            IsUserTypingRGBHSL = true;
+        }
+
+        private void ThreeInputTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            IsUserTypingRGBHSL = false;
+            if (DisableTextChangedEvents)
+                return;
+            if (FirstInputTextBox.Text.Length == 0 || SecondInputTextBox.Text.Length == 0 || ThirdInputTextBox.Text.Length == 0)
+                return;
+            try
+            {
+                switch (ColorFormatComboBox.SelectedIndex)
+                {
+                    case 1:
+                        byte R = (byte)Math.Clamp(int.Parse(FirstInputTextBox.Text), 0, 255);
+                        byte G = (byte)Math.Clamp(int.Parse(SecondInputTextBox.Text), 0, 255);
+                        byte B = (byte)Math.Clamp(int.Parse(ThirdInputTextBox.Text), 0, 255);
+
+                        ApplyColor(Color.FromRgb(R, G, B));
+                        break;
+                    case 2:
+                        double H = Math.Clamp(double.Parse(FirstInputTextBox.Text), 0, 360);
+                        double S = Math.Clamp(double.Parse(SecondInputTextBox.Text), 0, 100) / 100.0;
+                        double L = Math.Clamp(double.Parse(ThirdInputTextBox.Text), 0, 100) / 100.0;
+
+                        ApplyColor(Utils.ColorFromHSL(H, S, L));
+                        break;
+                }
+            }
+            catch { }
+            UpdateInputs();
         }
     }
 }
