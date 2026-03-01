@@ -374,7 +374,7 @@ namespace SLBr
         public Action? Cancel { get; set; }
     }
 
-    public delegate Task<ProtocolResponse> ProtocolHandler(string Url, string Extra = "");
+    public delegate Task<ProtocolResponse> ProtocolHandler(string Url, string Extra = "", CancellationToken? Token = null);
 
     public class ProtocolResponse
     {
@@ -2187,6 +2187,9 @@ namespace SLBr
             ContextMenuRequested?.RaiseUIAsync(this, args);
         }
 
+        private CancellationTokenSource? NavigationCancellationTokenSource;
+        private long NavigationID = 0;
+
         private void Browser_WebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
         {
             ProtocolResponse OverrideResponse = WebViewManager.OverrideHandler(e.Request.Uri);
@@ -2226,11 +2229,21 @@ namespace SLBr
 
         private async Task HandleWebResourceRequestedAsync(CoreWebView2WebResourceRequestedEventArgs e, CoreWebView2Deferral Deferral)
         {
+            long NavigationIDSnapshot = NavigationID;
+            CancellationToken Token = NavigationCancellationTokenSource?.Token ?? CancellationToken.None;
             try
             {
                 if (WebViewManager.Settings.Schemes.TryGetValue(Utils.GetScheme(e.Request.Uri), out var Handler))
                 {
-                    ProtocolResponse Response = await Handler(e.Request.Uri, Settings.Private.ToInt().ToString());
+                    ProtocolResponse Response;
+
+                    try
+                    {
+                        Response = await Handler(e.Request.Uri, Settings.Private.ToInt().ToString(), Token);
+                    }
+                    catch (OperationCanceledException) { return; }
+                    if (NavigationIDSnapshot != NavigationID || Token.IsCancellationRequested)
+                        return;
                     e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(Response.Data), Response.StatusCode, "OK", $"Content-Type: {Response.MimeType}");
                     if (Response.ErrorCode != WebErrorCode.None)
                         NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(Response.ErrorCode, "", e.Request.Uri));
@@ -2328,6 +2341,12 @@ namespace SLBr
                 Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(e.Uri, string.Empty, WebViewManager.Settings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
                 return;
             }
+            NavigationCancellationTokenSource?.Cancel();
+            NavigationCancellationTokenSource?.Dispose();
+
+            NavigationCancellationTokenSource = new CancellationTokenSource();
+            Interlocked.Increment(ref NavigationID);
+            IsViewSource = false;
             IsLoading = true;
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
         }

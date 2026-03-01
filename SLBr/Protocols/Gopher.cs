@@ -10,13 +10,9 @@ namespace SLBr.Protocols
     {
         public static string NewFormat(GeminiGopherIResponse Response)
         {
-            if (Response.Mime != "text/html")
-                return Encoding.UTF8.GetString(Response.Bytes.ToArray());
-            else
-            {
-                var Items = Parse(Encoding.UTF8.GetString(Response.Bytes.ToArray()));
-                //TODO: Investigate gopher search functionality.
-                var Builder = new StringBuilder(@"<!DOCTYPE html>
+            var Items = Parse(Encoding.UTF8.GetString(Response.Bytes.ToArray()));
+            //TODO: Investigate gopher search functionality.
+            var Builder = new StringBuilder(@"<!DOCTYPE html>
 <html>
 <head>
 <meta charset=""utf-8""/>
@@ -32,28 +28,27 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
 </head>
 <body>
 <div class=""menu"">");
-                foreach (var Item in Items)
+            foreach (var Item in Items)
+            {
+                Builder.Append("<div>");
+                string Url = $"gopher://{Item.Host}:{Item.Port}/{Item.Selector.TrimStart('/')}";
+                Builder.Append(Item.Type switch
                 {
-                    Builder.Append("<div>");
-                    string Url = $"gopher://{Item.Host}:{Item.Port}/{Item.Selector.TrimStart('/')}";
-                    Builder.Append(Item.Type switch
-                    {
-                        '0' => $"📄 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
-                        '1' => $"📁 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
-                        '7' => $@"🔍 <a href=""#"" onclick=""gopherSearch('{WebUtility.HtmlEncode(Item.Host)}','{Item.Port}','{WebUtility.HtmlEncode(Item.Selector)}')"">{WebUtility.HtmlEncode(Item.Label)}</a>",
-                        '9' => $"📦 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
-                        'g' => $"🖼️ <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
-                        'I' => $"🖼️ <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
-                        'h' => $"🌐 <a href=\"{Item.Selector}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
-                        'i' => $"   <span>{WebUtility.HtmlEncode(Item.Label)}</span>",
-                        _ => $"❓ {WebUtility.HtmlEncode(Item.Label)}"
-                    });
-                    Builder.Append("</div>\n");
-                }
-
-                Builder.Append("\n</div></body></html>");
-                return Builder.ToString();
+                    '0' => $"📄 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                    '1' => $"📁 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                    '7' => $@"🔍 <a href=""#"" onclick=""gopherSearch('{WebUtility.HtmlEncode(Item.Host)}','{Item.Port}','{WebUtility.HtmlEncode(Item.Selector)}')"">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                    '9' => $"📦 <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                    'g' => $"🖼️ <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                    'I' => $"🖼️ <a href=\"{Url}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                    'h' => $"🌐 <a href=\"{Item.Selector}\">{WebUtility.HtmlEncode(Item.Label)}</a>",
+                    'i' => $"   <span>{WebUtility.HtmlEncode(Item.Label)}</span>",
+                    _ => $"❓ {WebUtility.HtmlEncode(Item.Label)}"
+                });
+                Builder.Append("</div>\n");
             }
+
+            Builder.Append("\n</div></body></html>");
+            return Builder.ToString();
         }
         static IEnumerable<(char Type, string Label, string Selector, string Host, int Port)> Parse(string Text)
         {
@@ -98,19 +93,21 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
             };
         }
 
-        static async Task ReadMessage(GopherResponse Response, Stream _Stream, int MaxSize, int AbandonAfterSeconds)
+        static async Task ReadMessage(GopherResponse Response, Stream _Stream, int MaxSize, int AbandonAfterSeconds, CancellationToken Token)
         {
+            Token.ThrowIfCancellationRequested();
             DateTime AbandonTime = DateTime.Now.AddSeconds(AbandonAfterSeconds);
 
             byte[] Buffer = new byte[2048];
-            int Bytes = await _Stream.ReadAsync(Buffer);
+            int Bytes = await _Stream.ReadAsync(Buffer, Token);
             var MaxSizeBytes = MaxSize * 1024;
 
             Response.Bytes = Buffer.Take(Bytes).ToList();
 
             while (Bytes != 0)
             {
-                Bytes = await _Stream.ReadAsync(Buffer);
+                Token.ThrowIfCancellationRequested();
+                Bytes = await _Stream.ReadAsync(Buffer, Token);
                 Response.Bytes.AddRange(Buffer.Take(Bytes));
 
                 if (Response.Bytes.Count > MaxSizeBytes)
@@ -136,7 +133,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
 
         private static string GetMime(Uri URI)
         {
-            var Response = "text/html";
+            var Response = "application/gopher-menu";
             var ExtensionFull = Path.GetExtension(URI.AbsolutePath);
             string Extension = (ExtensionFull.Length > 0) ? ExtensionFull.Substring(1) : string.Empty;
             if (ExtensionFull.Length > 0)
@@ -172,7 +169,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
         }
 
 
-        public static async Task<GeminiGopherIResponse> Fetch(Uri HostURL, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5)
+        public static async Task<GeminiGopherIResponse> Fetch(Uri HostURL, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5, CancellationToken CancellationToken = default)
         {
             int Port = HostURL.Port;
             if (Port == -1)
@@ -181,7 +178,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
             TcpClient _Client = new TcpClient();
             try
             {
-                await _Client.ConnectAsync(HostURL.Host, Port);
+                await _Client.ConnectAsync(HostURL.Host, Port, CancellationToken);
             }
             catch (SocketException ex)
             {
@@ -195,10 +192,10 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
                 TrimmedUrl = TrimmedUrl.Substring(1);
 
             byte[] Message = Encoding.UTF8.GetBytes(Uri.UnescapeDataString(TrimmedUrl) + "\r\n");
-            await Stream.WriteAsync(Message, 0, Message.Count());
-            await Stream.FlushAsync();
+            await Stream.WriteAsync(Message, 0, Message.Count(), CancellationToken);
+            await Stream.FlushAsync(CancellationToken);
             GopherResponse Response = new GopherResponse() { _Uri = HostURL, Mime = GetMime(HostURL), SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None } };
-            await ReadMessage(Response, Stream, AbandonReadSizeKb, AbandonReadTimes);
+            await ReadMessage(Response, Stream, AbandonReadSizeKb, AbandonReadTimes, CancellationToken);
             _Client.Close();
 
             return Response;

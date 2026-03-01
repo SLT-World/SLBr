@@ -2,18 +2,22 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using CefSharp;
+using CefSharp.DevTools.Network;
 using CefSharp.Internals;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Protocols;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Policy;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -177,6 +181,7 @@ namespace SLBr
                 });
             }
             //await Task.Delay(20000);
+            //TODO: Ineffective, application freezes.
             bool Success = await Cef.InitializeAsync(ChromiumSettings, false);
 
             if (!Success)
@@ -379,25 +384,38 @@ namespace SLBr
             }
         }
 
-        public static async Task<ProtocolResponse> GopherHandler(string Url, string Extra = "")
+        public static async Task<ProtocolResponse> GopherHandler(string Url, string Extra = "", CancellationToken? Token = null)
         {
-            GeminiGopherIResponse Response;
             try
             {
-                Response = await Gopher.Fetch(new Uri(Url));
+                GeminiGopherIResponse Response = await Gopher.Fetch(new Uri(Url), CancellationToken: Token ?? CancellationToken.None);
+                if (Response.Mime.Contains("application/gopher-menu"))
+                    return ProtocolResponse.FromString(TextGopher.NewFormat(Response), "text/html", Response.StatusCode, Response.ErrorCode);
+                else
+                    return ProtocolResponse.FromBytes(Response.Bytes.ToArray(), Response.Mime, Response.StatusCode, Response.ErrorCode);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception _Exception)
             {
                 return ProtocolResponse.FromString($"<h1>Gopher Error</h1><pre>{_Exception.Message}</pre>", "text/html", 0, WebErrorCode.Failed);
             }
-            return ProtocolResponse.FromString(TextGopher.NewFormat(Response), Response.Mime.Contains("application/gopher-menu") ? "text/html" : Response.Mime, Response.StatusCode, Response.ErrorCode);
         }
-        public static async Task<ProtocolResponse> GeminiHandler(string Url, string Extra = "")
+        public static async Task<ProtocolResponse> GeminiHandler(string Url, string Extra = "", CancellationToken? Token = null)
         {
-            GeminiGopherIResponse Response;
             try
             {
-                Response = await Gemini.Fetch(new Uri(Url));
+                GeminiGopherIResponse Response = await Gemini.Fetch(new Uri(Url), CancellationToken: Token ?? CancellationToken.None);
+                if (Response.Mime.Contains("text/gemini"))
+                    return ProtocolResponse.FromString(TextGemini.NewFormat(Response), "text/html", Response.StatusCode, Response.ErrorCode);
+                else
+                    return ProtocolResponse.FromBytes(Response.Bytes.ToArray(), Response.Mime, Response.StatusCode, Response.ErrorCode);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception _Exception)
             {
@@ -410,9 +428,8 @@ namespace SLBr
                 MessageBox.Show(Response.SSLStatus.X509Certificate.NotBefore.Date.ToShortDateString());
                 MessageBox.Show(Response.SSLStatus.X509Certificate.NotAfter.Date.ToShortDateString());
             }*/
-            return ProtocolResponse.FromString(TextGemini.NewFormat(Response), Response.Mime.Contains("text/gemini") ? "text/html" : Response.Mime, Response.StatusCode, Response.ErrorCode);
         }
-        public static async Task<ProtocolResponse> SLBrHandler(string Url, string Extra = "")
+        public static async Task<ProtocolResponse> SLBrHandler(string Url, string Extra = "", CancellationToken? Token = null)
         {
             try
             {
@@ -1083,6 +1100,7 @@ namespace SLBr
         private readonly ProtocolHandler Handler;
         private readonly string Url;
         private readonly string Extra;
+        private CancellationTokenSource TokenSource;
 
         public ChromiumResourceHandler(ProtocolHandler _Handler, string _Url, string _Extra, ChromiumWebView? _WebView = null)
         {
@@ -1094,11 +1112,15 @@ namespace SLBr
 
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
-            Task.Run(async () =>
+            TokenSource = new CancellationTokenSource();
+            _ = Task.Run(async () =>
             {
-                using (callback)
+                try
                 {
-                    var Response = await Handler(Url, Extra);
+                    var Response = await Handler(Url, Extra, TokenSource.Token);
+
+                    if (TokenSource.IsCancellationRequested || callback.IsDisposed)
+                        return;
 
                     Stream = new MemoryStream(Response.Data);
                     MimeType = Response.MimeType;
@@ -1110,9 +1132,26 @@ namespace SLBr
                     if (Response.ErrorCode != WebErrorCode.None)
                         WebView?.RaiseNavigationError(new NavigationErrorEventArgs(Response.ErrorCode, "", Url));
                 }
+                catch (OperationCanceledException) { }
+                catch (Exception Exception)
+                {
+                    Stream = GetMemoryStream($"<h1>Protocol error</h1><pre>{WebUtility.HtmlEncode(Exception.Message)}</pre>", Encoding.UTF8, true);
+                    MimeType = "text/html";
+                    StatusCode = 500;
+                    StatusText = "Error";
+                    if (!callback.IsDisposed)
+                        callback.Continue();
+                }
             });
 
             return CefReturnValue.ContinueAsync;
+        }
+
+        public override void Dispose()
+        {
+            TokenSource?.Cancel();
+            TokenSource?.Dispose();
+            base.Dispose();
         }
     }
     public class ChromiumFindHandler : IFindHandler

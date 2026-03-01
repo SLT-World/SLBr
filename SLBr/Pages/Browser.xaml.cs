@@ -1137,6 +1137,8 @@ namespace SLBr.Pages
 
         private async void SetDarkMode(bool IsDarkModeEnabled)
         {
+            if (WebView == null)
+                return;
             if (App.Instance.SmartDarkMode)
             {
                 App.Instance.Dispatcher.BeginInvoke(async () =>
@@ -1381,8 +1383,10 @@ namespace SLBr.Pages
         {
             string ProtocolName = Utils.GetProtocolName(Utils.GetScheme(e.Url));
             string Host = Utils.FastHost(e.Origin);
-            InformationDialogWindow InfoWindow = new("Warning", $"Open {ProtocolName}", $"{(Host.Length == 0 ? "A website" : Host)} is requesting to open this application.", string.Empty, "Open", "Cancel");
-            InfoWindow.Topmost = true;
+            InformationDialogWindow InfoWindow = new("Warning", $"Open {ProtocolName}", $"{(Host.Length == 0 ? "A website" : Host)} is requesting to open this application.", string.Empty, "Open", "Cancel")
+            {
+                Topmost = true
+            };
             e.Launch = InfoWindow.ShowDialog() == true;
         }
 
@@ -1627,10 +1631,12 @@ namespace SLBr.Pages
 
         private void WebView_AuthenticationRequested(object? sender, WebAuthenticationRequestedEventArgs e)
         {
-            App.Current.Dispatcher.Invoke(() =>
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                CredentialsDialogWindow _CredentialsDialogWindow = new($"Sign in to {Utils.FastHost(e.Url)}", "\uec19");
-                _CredentialsDialogWindow.Topmost = true;
+                CredentialsDialogWindow _CredentialsDialogWindow = new($"Sign in to {Utils.FastHost(e.Url)}", "\uec19")
+                {
+                    Topmost = true
+                };
                 if (_CredentialsDialogWindow.ShowDialog().ToBool())
                 {
                     e.Username = _CredentialsDialogWindow.Username;
@@ -1651,8 +1657,6 @@ namespace SLBr.Pages
         {
             OmniBoxFastTimer?.Stop();
             OmniBoxSmartTimer?.Stop();
-            //SLBr seems to freeze when switching from a loaded tab with devtools to an unloaded tab
-            //DevTools(true);
             if (App.Instance.LiteMode)
             {
                 if (WebView != null && WebView.Engine == WebEngineType.ChromiumEdge && WebView.IsBrowserInitialized)
@@ -1721,7 +1725,7 @@ namespace SLBr.Pages
                 }
                 else
                 {
-                    WebView?.Control?.Visibility = Visibility.Visible;//VIDEO
+                    WebView?.Control?.Visibility = Visibility.Visible;
                     if (PageOverlay != null)
                     {
                         CoreContainer.Children.Remove(PageOverlayControl);
@@ -1828,9 +1832,9 @@ namespace SLBr.Pages
             {
                 try
                 {
-                    var Response = (bool)await WebView?.EvaluateScriptAsync(Scripts.ArticleScript);
+                    bool? Response = (bool?)await WebView?.EvaluateScriptAsync(Scripts.ArticleScript);
                     if (Response != null)
-                        return Response;
+                        return Response.Value;
                 }
                 catch { return false; }
             }
@@ -1893,13 +1897,15 @@ namespace SLBr.Pages
                 if (PageOverlay == null)
                 {
                     PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType, this)!;
+                    //TODO: Apply individual tab theme.
+                    //PageOverlay.ApplyTheme();
                     CoreContainer.Children.Add(PageOverlayControl);
                 }
                 PageOverlayControl?.Visibility = Visibility.Visible;
             }
             else
             {
-                WebView?.Control?.Visibility = Visibility.Visible;//VIDEO
+                WebView?.Control?.Visibility = Visibility.Visible;
                 if (PageOverlay != null)
                 {
                     CoreContainer.Children.Remove(PageOverlayControl);
@@ -2253,12 +2259,7 @@ namespace SLBr.Pages
         public void Share(string? Url = null)
         {
             if (Uri.TryCreate(Url ?? Address, UriKind.Absolute, out Uri? _Uri))
-            {
-                if (Url != null)
-                    Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), "Shared link", _Uri);
-                else
-                    Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), Title.Length != 0 ? Title : "Shared link", _Uri);
-            }
+                Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
         }
 
         public async void Find(string Text, bool Forward = true, bool FindNext = false)
@@ -2764,243 +2765,252 @@ namespace SLBr.Pages
                     Refresh();
                 return;
             }
-            string Texts = (await WebView.EvaluateScriptAsync(Scripts.GetTranslationText)).ToString();
-            List<string> TranslatedTexts = null;
-            if (TranslateButton.Visibility == Visibility.Visible)
-                TranslateButton.OpenPopup();
-            await Dispatcher.BeginInvoke(() => TranslateLoadingPanel.Visibility = Visibility.Visible);
-            List<string> AllTexts = JsonSerializer.Deserialize<List<string>>(Texts);
-            string TargetLanguage = App.Instance.AllLocales.First(i => i.Value == TranslateComboBox.SelectedValue).Key;
-            switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
+            if (WebView == null)
+                return;
+            try
             {
-                case 0:
-                    IEnumerable<List<string>> GBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
+                string Texts = (await WebView.EvaluateScriptAsync(Scripts.GetTranslationText)).ToString();
+                List<string> TranslatedTexts = null;
+                if (TranslateButton.Visibility == Visibility.Visible)
+                    TranslateButton.OpenPopup();
+                await Dispatcher.BeginInvoke(() => TranslateLoadingPanel.Visibility = Visibility.Visible);
+                List<string> AllTexts = JsonSerializer.Deserialize<List<string>>(Texts);
+                string TargetLanguage = App.Instance.AllLocales.First(i => i.Value == TranslateComboBox.SelectedValue).Key;
+                switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
+                {
+                    case 0:
+                        IEnumerable<List<string>> GBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
 
-                    TranslatedTexts = [];
-                    List<Task<List<string>>> GBatchTasks = [];
+                        TranslatedTexts = [];
+                        List<Task<List<string>>> GBatchTasks = [];
 
-                    foreach (List<string> Batch in GBatches)
-                    {
-                        GBatchTasks.Add(Task.Run(async () =>
+                        foreach (List<string> Batch in GBatches)
                         {
-                            using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.GOOGLE_TRANSLATE_ENDPOINT))
+                            GBatchTasks.Add(Task.Run(async () =>
                             {
-                                TranslateRequest.Headers.Add("Origin", "https://www.google.com");
-                                TranslateRequest.Headers.Add("Accept", "*/*");
-                                TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
-                                TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new object[] { new object[] { Batch, "auto", TargetLanguage }, "te_lib" }), Encoding.UTF8, "application/json+protobuf");
-                                var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
-                                if (!Response.IsSuccessStatusCode)
-                                    return new List<string>();
-                                string Data = await Response.Content.ReadAsStringAsync();
-                                List<object> Json = JsonSerializer.Deserialize<List<object>>(Data);
-                                if (Json == null || Json.Count == 0)
-                                    return new List<string>();
-                                if (Json[0] is not JsonElement Element || Element.ValueKind != JsonValueKind.Array)
-                                    return new List<string>();
-                                return Element.EnumerateArray().Select(e => HttpUtility.HtmlDecode(e.GetString())).ToList()!;
-                            }
-                        }));
-                    }
-
-                    var GResults = await Task.WhenAll(GBatchTasks);
-                    foreach (List<string> BatchResult in GResults)
-                        TranslatedTexts.AddRange(BatchResult);
-                    break;
-                case 1:
-                    IEnumerable<List<string>> MBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
-
-                    TranslatedTexts = [];
-                    List<Task<List<string>>> MBatchTasks = [];
-
-                    foreach (List<string> Batch in MBatches)
-                    {
-                        MBatchTasks.Add(Task.Run(async () =>
-                        {
-                            using (HttpRequestMessage TranslateRequest = new(HttpMethod.Post, string.Format(SECRETS.MICROSOFT_TRANSLATE_ENDPOINT, TargetLanguage)))
-                            {
-                                TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
-                                TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(Batch), Encoding.UTF8, "application/json");
-                                var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
-                                if (!Response.IsSuccessStatusCode)
-                                    return new List<string>();
-                                string Data = await Response.Content.ReadAsStringAsync();
-                                List<string> Result = [];
-                                try
+                                using (HttpRequestMessage TranslateRequest = new HttpRequestMessage(HttpMethod.Post, SECRETS.GOOGLE_TRANSLATE_ENDPOINT))
                                 {
-                                    using JsonDocument Document = JsonDocument.Parse(Data);
-                                    foreach (JsonElement Item in Document.RootElement.EnumerateArray())
+                                    TranslateRequest.Headers.Add("Origin", "https://www.google.com");
+                                    TranslateRequest.Headers.Add("Accept", "*/*");
+                                    TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                                    TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new object[] { new object[] { Batch, "auto", TargetLanguage }, "te_lib" }), Encoding.UTF8, "application/json+protobuf");
+                                    var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                    if (!Response.IsSuccessStatusCode)
+                                        return [];
+                                    string Data = await Response.Content.ReadAsStringAsync();
+                                    List<object> Json = JsonSerializer.Deserialize<List<object>>(Data);
+                                    if (Json == null || Json.Count == 0)
+                                        return [];
+                                    if (Json[0] is not JsonElement Element || Element.ValueKind != JsonValueKind.Array)
+                                        return [];
+                                    return Element.EnumerateArray().Select(e => HttpUtility.HtmlDecode(e.GetString())).ToList()!;
+                                }
+                            }));
+                        }
+
+                        var GResults = await Task.WhenAll(GBatchTasks);
+                        foreach (List<string> BatchResult in GResults)
+                            TranslatedTexts.AddRange(BatchResult);
+                        break;
+                    case 1:
+                        IEnumerable<List<string>> MBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
+
+                        TranslatedTexts = [];
+                        List<Task<List<string>>> MBatchTasks = [];
+
+                        foreach (List<string> Batch in MBatches)
+                        {
+                            MBatchTasks.Add(Task.Run(async () =>
+                            {
+                                using (HttpRequestMessage TranslateRequest = new(HttpMethod.Post, string.Format(SECRETS.MICROSOFT_TRANSLATE_ENDPOINT, TargetLanguage)))
+                                {
+                                    TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                                    TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(Batch), Encoding.UTF8, "application/json");
+                                    var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                    if (!Response.IsSuccessStatusCode)
+                                        return [];
+                                    string Data = await Response.Content.ReadAsStringAsync();
+                                    List<string> Result = [];
+                                    try
                                     {
-                                        if (Item.TryGetProperty("translations", out JsonElement TranslationsElement))
+                                        using JsonDocument Document = JsonDocument.Parse(Data);
+                                        foreach (JsonElement Item in Document.RootElement.EnumerateArray())
                                         {
-                                            foreach (JsonElement TranslationElement in TranslationsElement.EnumerateArray())
+                                            if (Item.TryGetProperty("translations", out JsonElement TranslationsElement))
                                             {
-                                                if (TranslationElement.TryGetProperty("text", out JsonElement TextElement))
-                                                    Result.Add(TextElement.GetString() ?? "");
+                                                foreach (JsonElement TranslationElement in TranslationsElement.EnumerateArray())
+                                                {
+                                                    if (TranslationElement.TryGetProperty("text", out JsonElement TextElement))
+                                                        Result.Add(TextElement.GetString() ?? "");
+                                                }
                                             }
                                         }
+                                        return Result;
                                     }
+                                    catch
+                                    {
+                                        return [];
+                                    }
+                                }
+                            }));
+                        }
+
+                        var MResults = await Task.WhenAll(MBatchTasks);
+                        foreach (List<string> BatchResult in MResults)
+                            TranslatedTexts.AddRange(BatchResult);
+                        break;
+                    case 2:
+                        string SourceLanguage = "";
+                        try
+                        {
+                            using (HttpRequestMessage LanguageDetectRequest = new(HttpMethod.Get, string.Format(SECRETS.YANDEX_LANGUAGE_DETECTION_ENDPOINT, $"{Utils.GenerateSID()}-0-0", HttpUtility.UrlEncode(AllTexts.First()))))
+                            {
+                                var Response = await App.MiniHttpClient.SendAsync(LanguageDetectRequest);
+                                if (!Response.IsSuccessStatusCode)
+                                {
+                                    Dispatcher.BeginInvoke(() =>
+                                    {
+                                        TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                        if (UnavailableTranslationInfoBar == null)
+                                        {
+                                            UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
+                                            LocalInfoBars.Add(UnavailableTranslationInfoBar);
+                                        }
+                                    });
+                                    return;
+                                }
+                                string Data = await Response.Content.ReadAsStringAsync();
+                                using var Document = JsonDocument.Parse(Data);
+                                if (Document.RootElement.TryGetProperty("lang", out JsonElement LanguageElement))
+                                    SourceLanguage = LanguageElement.GetString() ?? "en";
+                            }
+                        }
+                        catch
+                        {
+                            Dispatcher.BeginInvoke(() =>
+                            {
+                                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                                if (UnavailableTranslationInfoBar == null)
+                                {
+                                    UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
+                                    LocalInfoBars.Add(UnavailableTranslationInfoBar);
+                                }
+                            });
+                            return;
+                        }
+                        IEnumerable<List<string>> Batches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 16).Select(g => g.Select(x => x.t).ToList());
+
+                        TargetLanguage = TargetLanguage.Split('-').First();
+                        string YandexUserAgent = UserAgentGenerator.BuildUserAgentFromProduct("YaBrowser/25.2.0.0");
+                        TranslatedTexts = [];
+                        List<Task<List<string>>> BatchTasks = [];
+
+                        foreach (List<string> Batch in Batches)
+                        {
+                            BatchTasks.Add(Task.Run(async () =>
+                            {
+                                List<string> EncodedTexts = Batch.Select(t => "text=" + HttpUtility.UrlEncode(t)).ToList();
+                                string TextParameters = string.Join("&", EncodedTexts);
+                                using (HttpRequestMessage TranslateRequest = new(HttpMethod.Get, string.Format(SECRETS.YANDEX_ENDPOINT, $"{Utils.GenerateSID()}-0-0", $"{SourceLanguage}-{TargetLanguage}", TextParameters)))
+                                {
+                                    TranslateRequest.Headers.Add("User-Agent", YandexUserAgent);
+                                    try
+                                    {
+                                        var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                        Response.EnsureSuccessStatusCode();
+
+                                        string Data = await Response.Content.ReadAsStringAsync();
+                                        if (JsonDocument.Parse(Data).RootElement.TryGetProperty("text", out JsonElement TranslatedTexts))
+                                            return TranslatedTexts.EnumerateArray().Select(x => x.GetString() ?? "").ToList();
+                                    }
+                                    catch
+                                    {
+                                        return [];
+                                    }
+                                }
+                                return [];
+                            }));
+                        }
+
+                        var Results = await Task.WhenAll(BatchTasks);
+                        foreach (List<string> BatchResult in Results)
+                            TranslatedTexts.AddRange(BatchResult);
+                        break;
+                    case 3:
+                        TargetLanguage = TargetLanguage switch
+                        {
+                            "zh" => "zh-Hans",
+                            "zh-CN" => "zh-Hans",
+                            "zh-TW" => "zh-Hant",
+                            "zh-HK" => "zh-Hant",
+                            _ => TargetLanguage
+                        };
+
+                        IEnumerable<List<string>> LBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
+
+                        TranslatedTexts = [];
+                        List<Task<List<string>>> LBatchTasks = [];
+
+                        foreach (List<string> Batch in LBatches)
+                        {
+                            LBatchTasks.Add(Task.Run(async () =>
+                            {
+                                using (HttpRequestMessage TranslateRequest = new(HttpMethod.Post, SECRETS.LINGVANEX_ENDPOINT))
+                                {
+                                    TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
+                                    TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new
+                                    {
+                                        target = TargetLanguage,
+                                        q = Batch
+                                    }), Encoding.UTF8, "application/json");
+                                    var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
+                                    if (!Response.IsSuccessStatusCode)
+                                        return [];
+                                    string Data = await Response.Content.ReadAsStringAsync();
+                                    List<string> Result = [];
+
+                                    try
+                                    {
+                                        using var Document = JsonDocument.Parse(Data);
+                                        if (Document.RootElement.TryGetProperty("translatedText", out JsonElement TranslatedText))
+                                        {
+                                            foreach (var Item in TranslatedText.EnumerateArray())
+                                                Result.Add(Item.GetString() ?? "");
+                                        }
+                                    }
+                                    catch { }
                                     return Result;
                                 }
-                                catch
-                                {
-                                    return new List<string>();
-                                }
-                            }
-                        }));
-                    }
-
-                    var MResults = await Task.WhenAll(MBatchTasks);
-                    foreach (List<string> BatchResult in MResults)
-                        TranslatedTexts.AddRange(BatchResult);
-                    break;
-                case 2:
-                    string SourceLanguage = "";
-                    try
-                    {
-                        using (HttpRequestMessage LanguageDetectRequest = new(HttpMethod.Get, string.Format(SECRETS.YANDEX_LANGUAGE_DETECTION_ENDPOINT, $"{Utils.GenerateSID()}-0-0", HttpUtility.UrlEncode(AllTexts.First()))))
-                        {
-                            var Response = await App.MiniHttpClient.SendAsync(LanguageDetectRequest);
-                            if (!Response.IsSuccessStatusCode)
-                            {
-                                Dispatcher.BeginInvoke(() => {
-                                    TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                                    if (UnavailableTranslationInfoBar == null)
-                                    {
-                                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
-                                        LocalInfoBars.Add(UnavailableTranslationInfoBar);
-                                    }
-                                });
-                                return;
-                            }
-                            string Data = await Response.Content.ReadAsStringAsync();
-                            using var Document = JsonDocument.Parse(Data);
-                            if (Document.RootElement.TryGetProperty("lang", out JsonElement LanguageElement))
-                                SourceLanguage = LanguageElement.GetString() ?? "en";
+                            }));
                         }
-                    }
-                    catch
-                    {
-                        Dispatcher.BeginInvoke(() => {
-                            TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                            if (UnavailableTranslationInfoBar == null)
-                            {
-                                UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
-                                LocalInfoBars.Add(UnavailableTranslationInfoBar);
-                            }
-                        });
-                        return;
-                    }
-                    IEnumerable<List<string>> Batches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 16).Select(g => g.Select(x => x.t).ToList());
 
-                    TargetLanguage = TargetLanguage.Split('-').First();
-                    string YandexUserAgent = UserAgentGenerator.BuildUserAgentFromProduct("YaBrowser/25.2.0.0");
-                    TranslatedTexts = [];
-                    List<Task<List<string>>> BatchTasks = [];
-
-                    foreach (List<string> Batch in Batches)
+                        var LResults = await Task.WhenAll(LBatchTasks);
+                        foreach (List<string> BatchResult in LResults)
+                            TranslatedTexts.AddRange(BatchResult);
+                        break;
+                }
+                if (TranslatedTexts == null || TranslatedTexts.Count == 0)
+                {
+                    Dispatcher.BeginInvoke(() =>
                     {
-                        BatchTasks.Add(Task.Run(async () =>
+                        TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                        if (UnavailableTranslationInfoBar == null)
                         {
-                            List<string> EncodedTexts = Batch.Select(t => "text=" + HttpUtility.UrlEncode(t)).ToList();
-                            string TextParameters = string.Join("&", EncodedTexts);
-                            using (HttpRequestMessage TranslateRequest = new(HttpMethod.Get, string.Format(SECRETS.YANDEX_ENDPOINT, $"{Utils.GenerateSID()}-0-0", $"{SourceLanguage}-{TargetLanguage}", TextParameters)))
-                            {
-                                TranslateRequest.Headers.Add("User-Agent", YandexUserAgent);
-                                try
-                                {
-                                    var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
-                                    Response.EnsureSuccessStatusCode();
-
-                                    string Data = await Response.Content.ReadAsStringAsync();
-                                    if (JsonDocument.Parse(Data).RootElement.TryGetProperty("text", out JsonElement TranslatedTexts))
-                                        return TranslatedTexts.EnumerateArray().Select(x => x.GetString() ?? "").ToList();
-                                }
-                                catch
-                                {
-                                    return new List<string>();
-                                }
-                            }
-                            return new List<string>();
-                        }));
-                    }
-
-                    var Results = await Task.WhenAll(BatchTasks);
-                    foreach (List<string> BatchResult in Results)
-                        TranslatedTexts.AddRange(BatchResult);
-                    break;
-                case 3:
-                    TargetLanguage = TargetLanguage switch
-                    {
-                        "zh" => "zh-Hans",
-                        "zh-CN" => "zh-Hans",
-                        "zh-TW" => "zh-Hant",
-                        "zh-HK" => "zh-Hant",
-                        _ => TargetLanguage
-                    };
-
-                    IEnumerable<List<string>> LBatches = AllTexts.Select((t, i) => new { t, i }).GroupBy(x => x.i / 50).Select(g => g.Select(x => x.t).ToList());
-
-                    TranslatedTexts = [];
-                    List<Task<List<string>>> LBatchTasks = [];
-
-                    foreach (List<string> Batch in LBatches)
-                    {
-                        LBatchTasks.Add(Task.Run(async () =>
-                        {
-                            using (HttpRequestMessage TranslateRequest = new(HttpMethod.Post, SECRETS.LINGVANEX_ENDPOINT))
-                            {
-                                TranslateRequest.Headers.Add("User-Agent", App.Instance.UserAgent);
-                                TranslateRequest.Content = new StringContent(JsonSerializer.Serialize(new
-                                {
-                                    target = TargetLanguage,
-                                    q = Batch
-                                }), Encoding.UTF8, "application/json");
-                                var Response = await App.MiniHttpClient.SendAsync(TranslateRequest);
-                                if (!Response.IsSuccessStatusCode)
-                                    return new List<string>();
-                                string Data = await Response.Content.ReadAsStringAsync();
-                                List<string> Result = [];
-
-                                try
-                                {
-                                    using var Document = JsonDocument.Parse(Data);
-                                    if (Document.RootElement.TryGetProperty("translatedText", out JsonElement TranslatedText))
-                                    {
-                                        foreach (var item in TranslatedText.EnumerateArray())
-                                            Result.Add(item.GetString() ?? "");
-                                    }
-                                }
-                                catch { }
-                                return Result;
-                            }
-                        }));
-                    }
-
-                    var LResults = await Task.WhenAll(LBatchTasks);
-                    foreach (List<string> BatchResult in LResults)
-                        TranslatedTexts.AddRange(BatchResult);
-                    break;
-            }
-            if (TranslatedTexts == null || TranslatedTexts.Count == 0)
-            {
-                Dispatcher.BeginInvoke(() => {
+                            UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
+                            LocalInfoBars.Add(UnavailableTranslationInfoBar);
+                        }
+                    });
+                    return;
+                }
+                WebView.ExecuteScript(string.Format(Scripts.SetTranslationText, JsonSerializer.Serialize(TranslatedTexts)));
+                Translated = true;
+                Dispatcher.BeginInvoke(() =>
+                {
                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                    if (UnavailableTranslationInfoBar == null)
-                    {
-                        UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
-                        LocalInfoBars.Add(UnavailableTranslationInfoBar);
-                    }
+                    TranslateButton.ClosePopup();
                 });
-                return;
             }
-            WebView.ExecuteScript(string.Format(Scripts.SetTranslationText, JsonSerializer.Serialize(TranslatedTexts)));
-            Translated = true;
-            Dispatcher.BeginInvoke(() => {
-                TranslateLoadingPanel.Visibility = Visibility.Collapsed;
-                TranslateButton.ClosePopup();
-            });
-            
+            catch { }
         }
 
         private void OmniBoxContainer_MouseEnter(object sender, MouseEventArgs e)
@@ -3322,17 +3332,24 @@ namespace SLBr.Pages
 
             ReadOnlySpan<char> _Span = Url.AsSpan();
 
+            bool ProtocolStripped = false;
             switch (Scheme)
             {
                 case "https":
                     if (TruncateURL)
+                    {
                         _Span = _Span[8..];
+                        ProtocolStripped = true;
+                    }
                     else
                         OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.GreenColor });
                     break;
                 case "http":
                     if (TruncateURL)
+                    {
                         _Span = _Span[7..];
+                        ProtocolStripped = true;
+                    }
                     else
                         OmniBoxOverlayText.Inlines.Add(new Run(Scheme) { Foreground = App.Instance.RedColor });
                     break;
@@ -3358,11 +3375,15 @@ namespace SLBr.Pages
                     return;
             }
 
-            int Protocol = _Span.IndexOf("://");
-            if (Protocol >= 0)
+            if (!ProtocolStripped)
             {
-                OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL ? " / " : "://") { Foreground = GrayBrush });
-                _Span = _Span[(Protocol + 3)..];
+                int Protocol = _Span.IndexOf("://");
+                if (Protocol >= 0)
+                {
+                    OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL ? " / " : "://") { Foreground = GrayBrush });
+                    _Span = _Span[(Protocol + 3)..];
+                    ProtocolStripped = true;
+                }
             }
 
             //www.com, m.com

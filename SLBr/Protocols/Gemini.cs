@@ -265,8 +265,9 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             };
         }
 
-        static async Task ReadMessage(GeminiResponse Response, SslStream _Stream, int MaxSize, int AbandonAfterSeconds)
+        static async Task ReadMessage(GeminiResponse Response, SslStream _Stream, int MaxSize, int AbandonAfterSeconds, CancellationToken Token)
         {
+            Token.ThrowIfCancellationRequested();
             await Response.SetResponseHeader(_Stream);
             if (Response.CodeMajor == '4' || Response.CodeMajor == '5')
                 return;
@@ -277,8 +278,9 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             var MaxSizeBytes = MaxSize * 1024;
             while (Bytes != 0)
             {
+                Token.ThrowIfCancellationRequested();
                 Response.Bytes.AddRange(Buffer.Take(Bytes));
-                Bytes = await _Stream.ReadAsync(Buffer);
+                Bytes = await _Stream.ReadAsync(Buffer, Token);
 
                 if (Response.Bytes.Count > MaxSizeBytes)
                 {
@@ -302,7 +304,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 //throw new Exception("Abort due to resource exceeding time limit (" + AbandonAfterSeconds + " seconds)");
             }
         }
-        public static async Task<GeminiGopherIResponse> Fetch(Uri HostURL, X509Certificate2 ClientCertificate = null, string Proxy = "", bool Insecure = false, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5)
+        public static async Task<GeminiGopherIResponse> Fetch(Uri HostURL, X509Certificate2 ClientCertificate = null, string Proxy = "", bool Insecure = false, int AbandonReadSizeKb = 2048, int AbandonReadTimes = 5, CancellationToken CancellationToken = default)
         {
             int RefetchCount = 0;
         Refetch:
@@ -324,7 +326,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             TcpClient _Client = new TcpClient();
             try
             {
-                await _Client.ConnectAsync(ServerHost, Port);
+                await _Client.ConnectAsync(ServerHost, Port, CancellationToken);
             }
             catch (SocketException ex)
             {
@@ -372,9 +374,9 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             {
                 SSLStream.ReadTimeout = AbandonReadTimes * 1000;
 
-                await SSLStream.WriteAsync(Message, 0, Message.Count());
-                await SSLStream.FlushAsync();
-                await ReadMessage(Response, SSLStream, AbandonReadSizeKb, AbandonReadTimes);
+                await SSLStream.WriteAsync(Message, 0, Message.Count(), CancellationToken);
+                await SSLStream.FlushAsync(CancellationToken);
+                await ReadMessage(Response, SSLStream, AbandonReadSizeKb, AbandonReadTimes, CancellationToken);
             }
             catch
             {
@@ -384,10 +386,10 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             }
             finally
             {
-                SSLStream.Close();
-                _Client.Close();
-                SSLStream.Dispose();
-                _Client.Dispose();
+                try { SSLStream.Close(); } catch { }
+                try { _Client.Close(); } catch { }
+                try { SSLStream.Dispose(); } catch { }
+                try { _Client.Dispose(); } catch { }
             }
 
             switch (Response.CodeMajor)

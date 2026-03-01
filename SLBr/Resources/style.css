@@ -208,12 +208,10 @@ header .font-icon {
     transform: translate(-50%, -50%);
     overflow: clip;
     filter: drop-shadow(1.5px -0.5px 15px rgba(128, 128, 128, 0.5));
-    transition: width 0.25s ease, height 0.25s ease, opacity 0.25s ease;
+    transition: width 0.25s ease, height 0.25s ease, opacity 0.25s ease, filter 0.25s ease;
 }
 
 .dialog:not(.active) {
-    width: 0;
-    height: 0;
     filter: none;
     opacity: 0;
     pointer-events: none;
