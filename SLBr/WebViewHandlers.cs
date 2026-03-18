@@ -2,14 +2,12 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using CefSharp;
-using CefSharp.DevTools.Network;
 using CefSharp.Internals;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Protocols;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
@@ -17,7 +15,6 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
-using System.Security.Policy;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -230,6 +227,9 @@ namespace SLBr
                 GlobalRequestContext.SetPreference("https_first_balanced_mode_enabled", true, out _);
                 GlobalRequestContext.SetPreference("net.network_prediction_options", Settings.Performance == PerformancePreset.High ? 0 : 2, out _);
                 GlobalRequestContext.SetPreference("safebrowsing.enabled", false, out _);
+
+                //GlobalRequestContext.SetPreference("profile.password_manager_enabled", false, out _);
+                //GlobalRequestContext.SetPreference("credentials_enable_service", false, out _);
 
                 GlobalRequestContext.SetPreference("browser.enable_spellchecking", Settings.SpellCheck, out _);
                 //GlobalRequestContext.SetPreference("spellcheck.use_spelling_service", false, out _);
@@ -832,7 +832,7 @@ namespace SLBr
 
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
-            ResourceRequestEventArgs Args = new ResourceRequestEventArgs(request.Url, browser.FocusedFrame == null ? string.Empty : browser.FocusedFrame.Url, request.Method, request.ResourceType.ToResourceRequestType(), new Dictionary<string, string>());
+            ResourceRequestEventArgs Args = new ResourceRequestEventArgs(request.Url, browser.FocusedFrame == null ? string.Empty : browser.FocusedFrame.Url, request.Method, request.ResourceType.ToResourceRequestType(), request.Headers.AllKeys.ToDictionary(i => i, i => request.Headers[i], StringComparer.OrdinalIgnoreCase));
             WebView.RaiseResourceRequest(Args);
             if (Args.Cancel)
                 return CefReturnValue.Cancel;
@@ -1173,10 +1173,12 @@ namespace SLBr
             {
                 Application.Current?.Dispatcher.Invoke(() =>
                 {
-                    ImageTray Picker = new ImageTray();
-                    Picker.FileFilters = acceptFilters;
-                    Picker.FileExtensions = acceptExtensions;
-                    Picker.FileDescriptions = acceptDescriptions;
+                    ImageTray Picker = new ImageTray
+                    {
+                        FileFilters = acceptFilters,
+                        FileExtensions = acceptExtensions,
+                        FileDescriptions = acceptDescriptions
+                    };
                     if (Picker.ShowDialog() == true && !string.IsNullOrEmpty(Picker.SelectedFilePath))
                         callback.Continue(new List<string> { Picker.SelectedFilePath });
                     else

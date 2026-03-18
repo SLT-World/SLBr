@@ -549,16 +549,17 @@ namespace SLBr
         public string FocusedUrl { get; }
         public string Method { get; }
         public ResourceRequestType ResourceRequestType { get; }
-        public IDictionary<string, string> ModifiedHeaders { get; set; }
+        public Dictionary<string, string> Headers { get; }
+        public Dictionary<string, string> ModifiedHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         public bool Cancel { get; set; }
 
-        public ResourceRequestEventArgs(string _Url, string _FocusedUrl, string _Method, ResourceRequestType _RequestType, IDictionary<string, string> _Headers)
+        public ResourceRequestEventArgs(string _Url, string _FocusedUrl, string _Method, ResourceRequestType _RequestType, Dictionary<string, string> _Headers)
         {
             Url = _Url;
             FocusedUrl = _FocusedUrl;
             Method = _Method;
-            ModifiedHeaders = _Headers;
+            Headers = _Headers;
             ResourceRequestType = _RequestType;
         }
     }
@@ -2040,16 +2041,31 @@ namespace SLBr
             //Investigate e.IsNewDocument;
         }
 
-        private void Browser_FaviconChanged(object? sender, object e)
+        private async void Browser_FaviconChanged(object? sender, object e)
         {
             if (InitializingHistory) return;
-            FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
+            //BrowserCore.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png)
+            //FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
+            try
+            {
+                if (BrowserCore.FaviconUri.EndsWith(".svg"))
+                {
+                    string Icon = (await EvaluateScriptAsync(Scripts.GetFaviconScript)).ToString() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(Icon))
+                        FaviconChanged?.RaiseUIAsync(this, Icon);
+                    else
+                        LocateAlternativeIcon = true;
+                }
+                else
+                    FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
+            }
+            catch { LocateAlternativeIcon = true; }
         }
 
         private void Browser_DocumentTitleChanged(object? sender, object e)
         {
             if (InitializingHistory) return;
-            TitleChanged?.RaiseUIAsync(this, BrowserCore.DocumentTitle);
+            TitleChanged?.RaiseUIAsync(this, Title);
         }
 
         private void Browser_FrameNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
@@ -2076,13 +2092,17 @@ namespace SLBr
 
         private void Core_IsDefaultDownloadDialogOpenChanged(object? sender, object e)
         {
-            if (BrowserCore.IsDefaultDownloadDialogOpen)
-                BrowserCore.CloseDefaultDownloadDialog();
+            try
+            {
+                if (BrowserCore.IsDefaultDownloadDialogOpen)
+                    BrowserCore.CloseDefaultDownloadDialog();
+            }
+            catch { }
         }
 
         private async void ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e)
         {
-            string Url = Address;
+            //string Url = Address;
             Panel? Parent = null;
             if (Browser.Parent is Panel _Parent)
             {
@@ -2201,7 +2221,11 @@ namespace SLBr
             }
             if (!RequestContexts.ContainsKey(e.Request.Uri))
                 RequestContexts[e.Request.Uri] = e.ResourceContext;
-            ResourceRequestEventArgs Args = new ResourceRequestEventArgs(e.Request.Uri, Address, e.Request.Method, e.ResourceContext.ToResourceRequestType(), new Dictionary<string, string>());//e.Request.Headers.ToDictionary()
+
+            var Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var Header in e.Request.Headers)
+                Headers[Header.Key] = Header.Value;
+            ResourceRequestEventArgs Args = new ResourceRequestEventArgs(e.Request.Uri, Address, e.Request.Method, e.ResourceContext.ToResourceRequestType(), Headers);
             ResourceRequested?.Invoke(this, Args);
             if (Args.Cancel)
                 e.Response = WebViewManager.WebView2CancelResponse;
@@ -2427,6 +2451,7 @@ namespace SLBr
             }
         }
 
+        bool LocateAlternativeIcon = false;
         private async void Browser_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
             if (InitializingHistory) return;
@@ -2439,11 +2464,26 @@ namespace SLBr
                 NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(e.WebErrorStatus.ToWebErrorCode(), e.WebErrorStatus.ToString(), Address));
             }
 
-            if (BrowserCore.Source.StartsWith("https:"))
-                IsSecure = !EncounteredError;
+            try
+            {
+                if (BrowserCore.Source.StartsWith("https:"))
+                    IsSecure = !EncounteredError;
+            }
+            catch { }
             EncounteredError = false;
             IsViewSource = await DetectViewSource();
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, e.HttpStatusCode));
+            if (LocateAlternativeIcon)
+            {
+                LocateAlternativeIcon = false;
+                try
+                {
+                    string Icon = (await EvaluateScriptAsync(Scripts.GetFaviconScript)).ToString() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(Icon))
+                        FaviconChanged?.RaiseUIAsync(this, Icon);
+                }
+                catch { }
+            }
         }
 
         public async Task<bool> DetectViewSource()
@@ -2484,7 +2524,16 @@ namespace SLBr
             get => (IsViewSource ? "view-source:" : "") + (Browser.Source != null ? CurrentAddress : InitialUrls.Last().Url);
             set => Navigate(value);
         }
-        public string Title => BrowserCore?.DocumentTitle ?? string.Empty;
+        public string Title
+        {
+            get
+            {
+                if (BrowserCore == null)
+                    return string.Empty;
+                try { return BrowserCore.DocumentTitle; }
+                catch { return string.Empty; }
+            }
+        }
 
         public bool CanGoBack => Browser.CanGoBack;
         public bool CanGoForward => Browser.CanGoForward;
@@ -2493,16 +2542,37 @@ namespace SLBr
         public bool IsBrowserInitialized => BrowserCore != null;
 
         public bool IsSecure { get; private set; }
-        public bool AudioPlaying => BrowserCore?.IsDocumentPlayingAudio ?? false;
+        public bool AudioPlaying
+        {
+            get
+            {
+                if (BrowserCore == null)
+                    return false;
+                try { return BrowserCore.IsDocumentPlayingAudio; }
+                catch { return false; }
+            }
+        }
         public bool IsMuted
         {
-            get => BrowserCore?.IsMuted ?? false;
-            set { BrowserCore?.IsMuted = value; }
+            get
+            {
+                if (BrowserCore == null)
+                    return false;
+                try { return BrowserCore.IsMuted; }
+                catch { return false; }
+            }
+            set
+            {
+                if (BrowserCore == null)
+                    return;
+                try { BrowserCore.IsMuted = value; }
+                catch { }
+            }
         }
         public double ZoomFactor
         {
             get => Browser.ZoomFactor;
-            set { Browser.ZoomFactor = value; }
+            set => Browser.ZoomFactor = value;
         }
 
         bool IsViewSource;
@@ -2516,28 +2586,57 @@ namespace SLBr
             /*Browser.CoreWebView2.Profile.ClearBrowsingDataAsync(
     CoreWebView2BrowsingDataKinds.Cookies | CoreWebView2BrowsingDataKinds.CacheStorage
 );*/
-            if (ClearCache)
-                BrowserCore?.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.DiskCache);
+            try
+            {
+                if (ClearCache)
+                    BrowserCore?.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.DiskCache);
+            }
+            catch { }
             Browser?.Reload();
         }
         public void Stop() => Browser.Stop();
-        public void Print() => BrowserCore?.ShowPrintUI();
+        public void Print()
+        {
+            try
+            {
+                BrowserCore?.ShowPrintUI();
+            }
+            catch { }
+        }
 
         public void Find(string Text, bool Forward, bool MatchCase, bool FindNext)
         {
-            WebViewManager.WebView2FindOptions.IsCaseSensitive = MatchCase;
-            WebViewManager.WebView2FindOptions.FindTerm = Text;
-            BrowserCore?.Find?.StartAsync(WebViewManager.WebView2FindOptions);
-            if (FindNext)
+            try
             {
-                if (Forward)
-                    BrowserCore?.Find?.FindNext();
-                else
-                    BrowserCore?.Find?.FindPrevious();
+                WebViewManager.WebView2FindOptions.IsCaseSensitive = MatchCase;
+                WebViewManager.WebView2FindOptions.FindTerm = Text;
+                BrowserCore?.Find?.StartAsync(WebViewManager.WebView2FindOptions);
+                if (FindNext)
+                {
+                    if (Forward)
+                        BrowserCore?.Find?.FindNext();
+                    else
+                        BrowserCore?.Find?.FindPrevious();
+                }
             }
+            catch { }
         }
-        public void StopFind() => BrowserCore?.Find?.Stop();
-        public void SaveAs() => BrowserCore?.ShowSaveAsUIAsync();
+        public void StopFind()
+        {
+            try
+            {
+                BrowserCore?.Find?.Stop();
+            }
+            catch { }
+        }
+        public void SaveAs()
+        {
+            try
+            {
+                BrowserCore?.ShowSaveAsUIAsync();
+            }
+            catch { }
+        }
 
         public void Cut() => ExecuteScript("document.execCommand('cut');");
         public void Copy() => ExecuteScript("document.execCommand('copy');");
@@ -2582,46 +2681,59 @@ namespace SLBr
 
         public async Task<object?> EvaluateScriptAsync(string Script)
         {
-            string Json = await BrowserCore.CallDevToolsProtocolMethodAsync("Runtime.evaluate",
-                JsonSerializer.Serialize(new
-                {
-                    expression = Script,
-                    returnByValue = true,
-                    awaitPromise = true
-                }));
-
-            using JsonDocument Document = JsonDocument.Parse(Json);
-            var Root = Document.RootElement;
-
-            /*if (Root.TryGetProperty("exceptionDetails", out var Exception))
+#if !DEBUG
+            try
             {
-                string Message = Exception.GetProperty("text").GetString();
-                if (Root.TryGetProperty("result", out var ResultElement) && ResultElement.TryGetProperty("description", out var Description))
-                    Message += $" ({Description.GetString()})";
-                throw new InvalidOperationException(Message);
-            }*/
+#endif
+                string Json = await BrowserCore.CallDevToolsProtocolMethodAsync("Runtime.evaluate",
+                    JsonSerializer.Serialize(new
+                    {
+                        expression = Script,
+                        returnByValue = true,
+                        awaitPromise = true
+                    }));
 
-            if (Root.TryGetProperty("result", out var Result) && Result.TryGetProperty("value", out var Value))
-            {
-                return Value.ValueKind switch
+                using JsonDocument Document = JsonDocument.Parse(Json);
+                var Root = Document.RootElement;
+
+                /*if (Root.TryGetProperty("exceptionDetails", out var Exception))
                 {
-                    JsonValueKind.String => Value.GetString(),
-                    JsonValueKind.Number => Value.TryGetInt64(out var i) ? i : Value.GetDouble(),
-                    JsonValueKind.True => true,
-                    JsonValueKind.False => false,
-                    JsonValueKind.Null => null,
-                    _ => Value.ToString()
-                };
+                    string Message = Exception.GetProperty("text").GetString();
+                    if (Root.TryGetProperty("result", out var ResultElement) && ResultElement.TryGetProperty("description", out var Description))
+                        Message += $" ({Description.GetString()})";
+                    throw new InvalidOperationException(Message);
+                }*/
+
+                if (Root.TryGetProperty("result", out var Result) && Result.TryGetProperty("value", out var Value))
+                {
+                    return Value.ValueKind switch
+                    {
+                        JsonValueKind.String => Value.GetString(),
+                        JsonValueKind.Number => Value.TryGetInt64(out var i) ? i : Value.GetDouble(),
+                        JsonValueKind.True => true,
+                        JsonValueKind.False => false,
+                        JsonValueKind.Null => null,
+                        _ => Value.ToString()
+                    };
+                }
+#if !DEBUG
             }
+            catch { }
+#endif
             return null;
         }
 
 
         public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
         {
-            using var Stream = new MemoryStream();
-            await BrowserCore.CapturePreviewAsync(Format.ToWebView2ScreenshotFormat(), Stream);
-            return Stream.ToArray();
+            try
+            {
+                using var Stream = new MemoryStream();
+                await BrowserCore.CapturePreviewAsync(Format.ToWebView2ScreenshotFormat(), Stream);
+                return Stream.ToArray();
+            }
+            catch { }
+            return Array.Empty<byte>();
         }
         public async Task<string> GetSourceAsync() => (await EvaluateScriptAsync("document.documentElement.outerHTML")).ToString();
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null)
@@ -2642,12 +2754,16 @@ namespace SLBr
         private readonly Dictionary<string, CoreWebView2DevToolsProtocolEventReceiver> DevToolsReceivers = [];
         public void SubscribeDevToolsEvent(string Event, Action<string> Handler)
         {
-            if (!DevToolsReceivers.TryGetValue(Event, out var Receiver))
+            try
             {
-                Receiver = BrowserCore.GetDevToolsProtocolEventReceiver(Event);
-                DevToolsReceivers[Event] = Receiver;
+                if (!DevToolsReceivers.TryGetValue(Event, out var Receiver))
+                {
+                    Receiver = BrowserCore.GetDevToolsProtocolEventReceiver(Event);
+                    DevToolsReceivers[Event] = Receiver;
+                }
+                Receiver.DevToolsProtocolEventReceived += (s, e) => Handler(e.ParameterObjectAsJson);
             }
-            Receiver.DevToolsProtocolEventReceived += (s, e) => Handler(e.ParameterObjectAsJson);
+            catch { }
         }
         public async Task<List<WebNavigationEntry>> GetNavigationHistoryAsync()
         {
@@ -2698,7 +2814,7 @@ namespace SLBr
                 CoreWebView2 Core = BrowserCore;
 
                 Browser.CoreWebView2InitializationCompleted -= (s, e) => Browser?.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
-                if (Core != null)
+                if (Core != null && Browser.CoreWebView2 == Core)
                 {
                     Core.IsDefaultDownloadDialogOpenChanged -= Core_IsDefaultDownloadDialogOpenChanged;
 

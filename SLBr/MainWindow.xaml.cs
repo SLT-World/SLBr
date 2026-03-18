@@ -68,6 +68,11 @@ namespace SLBr
             InitializeWindow();
         }
 
+        private void Window_SourceInitialized(object sender, EventArgs e)
+        {
+            WindowState = WindowState.Maximized;
+        }
+
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
@@ -1250,20 +1255,51 @@ namespace SLBr
                 TabPreviewPopup.IsOpen = false;
             else
             {
-                TabPreviewHeader.Text = Tab.Header;
+                TabPreviewHeader.Text = Tab.Header.ReplaceLineEndings("").Trim().Cut(50, true);
                 TabPreviewState.Text = Tab.IsUnloaded ? "Unloaded" : "Loaded";
+                //TabPreviewImage.Source = null;
                 try
                 {
                     if (Tab?.Content != null)
                     {
-                        TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab?.Content?.Address);
+                        TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab?.Content?.Address).ReplaceLineEndings("").Trim().Cut(50, true);
                         if (App.Instance.TabMemory && !Tab.IsUnloaded && Tab?.Content?.WebView != null && Tab?.Content?.WebView?.Engine != WebEngineType.Trident)
                             TabPreviewState.Text = $"Memory usage: {await Tab?.Content?.WebView?.EvaluateScriptAsync(Scripts.EstimatedMemoryUsageScript)} MB";
+                        //Rich Tab Tooltips OGP proof of concept.
+                        //TODO
+                        /*if (!Tab.IsUnloaded && Tab?.Content?.WebView != null && Tab?.Content?.WebView?.Engine != WebEngineType.Trident)
+                        {
+                            string? Response = (await Tab?.Content?.WebView.EvaluateScriptAsync(Scripts.FetchOpenGraphProtocolScript)).ToString();
+                            if (!string.IsNullOrEmpty(Response))
+                            {
+                                using var Document = JsonDocument.Parse(Response);
+                                if (Document.RootElement.TryGetProperty("title", out JsonElement TitleElement) && TitleElement.ValueKind != JsonValueKind.Null)
+                                {
+                                    string Header = TitleElement.GetString();
+                                    if (!string.IsNullOrEmpty(Header))
+                                        TabPreviewHeader.Text = TitleElement.GetString().ReplaceLineEndings("").Trim().Cut(50, true);
+                                }
+                                if (Document.RootElement.TryGetProperty("description", out JsonElement DescriptionElement) && DescriptionElement.ValueKind != JsonValueKind.Null)
+                                    TabPreviewHost.Text = DescriptionElement.GetString().ReplaceLineEndings("").Trim().Cut(50, true);
+                                if (Document.RootElement.TryGetProperty("image", out JsonElement ImageElement) && ImageElement.ValueKind != JsonValueKind.Null)
+                                {
+                                    BitmapImage _BitmapImage = new();
+                                    _BitmapImage.BeginInit();
+                                    _BitmapImage.DecodePixelWidth = 275;
+                                    _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                                    _BitmapImage.UriSource = new Uri(Utils.ResolveUrl(Tab?.Content?.Address, ImageElement.GetString()), UriKind.Absolute);
+                                    _BitmapImage.EndInit();
+                                    TabPreviewImage.Source = _BitmapImage;
+                                }
+                                else
+                                    TabPreviewImage.Source = null;
+                            }
+                        }*/
                     }
                 }
                 catch
                 {
-                    TabPreviewHost.Text = Tab.Header;
+                    TabPreviewHost.Text = Tab.Header.ReplaceLineEndings("").Trim().Cut(50, true);
                 }
                 if (Tab.IsUnloaded)
                 {
@@ -1272,7 +1308,7 @@ namespace SLBr
                 }
                 else
                 {
-                    //TODO: Replace with audio indicator
+                    //TODO: Replace with audio indicator.
                     TabPreviewStateIcon.Text = "\xf42f";
                     TabPreviewStateIcon.Foreground = (SolidColorBrush)FindResource("GrayBrush");
                 }

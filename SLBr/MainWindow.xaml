@@ -7,7 +7,7 @@
         xmlns:controls="clr-namespace:SLBr.Controls"
         xmlns:WinUI="clr-namespace:WinUI"
         mc:Ignorable="d"
-        Title="SLBr" MouseEnter="Window_MouseEnter" Height="450" Width="800" WindowStyle="SingleBorderWindow" ResizeMode="CanResize" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" WindowState="Maximized" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged" Activated="Window_Activated" Deactivated="Window_Deactivated">
+        Title="SLBr" MouseEnter="Window_MouseEnter" Height="450" Width="800" WindowStyle="SingleBorderWindow" ResizeMode="CanResize" SourceInitialized="Window_SourceInitialized" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged" Activated="Window_Activated" Deactivated="Window_Deactivated">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -32,7 +32,7 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Button}">
-                            <Border Background="{StaticResource SecondaryBrush}" BorderThickness="0" SnapsToDevicePixels="true">
+                            <Border Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
                                 <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
                                     <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
                                 </Border>
@@ -62,7 +62,7 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Button}">
-                            <Border Background="{StaticResource SecondaryBrush}" BorderThickness="0" SnapsToDevicePixels="true">
+                            <Border Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
                                 <Border x:Name="Border" Background="Transparent" BorderThickness="0" SnapsToDevicePixels="true">
                                     <ContentPresenter x:Name="contentPresenter" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False" RecognizesAccessKey="True"/>
                                 </Border>
@@ -153,7 +153,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TextBlock x:Name="TabPreviewHeader" Margin="10,0" FontWeight="Bold" Foreground="{StaticResource FontBrush}"/>
+                        <TextBlock x:Name="TabPreviewHeader" Margin="10,0" FontWeight="Bold" TextWrapping="WrapWithOverflow" Foreground="{StaticResource FontBrush}"/>
                         <TextBlock x:Name="TabPreviewHost" Grid.Row="1" Margin="10,0,10,10" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
                         <Image RenderOptions.BitmapScalingMode="LowQuality" MaxHeight="150" Grid.Row="2" x:Name="TabPreviewImage" Stretch="Uniform"/>
                         <Border Grid.Row="3" Background="{StaticResource SecondaryBrush}" CornerRadius="0,0,5,5">

@@ -1523,7 +1523,12 @@ namespace SLBr
 
         public bool Background = false;
 
-        public static HttpClient MiniHttpClient = new();
+        public static HttpClient MiniHttpClient = new(new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All });
+        /*public static HttpClient MimicHttpClient = new(new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+        });*/
         public static Random MiniRandom = new();
         public static QREncoder MiniQREncoder = new();
 
@@ -1612,7 +1617,7 @@ namespace SLBr
             }
 
             MiniHttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgentGenerator.BuildChromeBrand());
-            MiniHttpClient.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xml,*/*");
+            MiniHttpClient.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             DispatcherUnhandledException += App_DispatcherUnhandledException;
@@ -1655,6 +1660,26 @@ namespace SLBr
             SLBrFont = new FontFamily(new Uri("pack://application:,,,/SLBr;component/"), "./Fonts/#SLBr Icons");
 
             await InitializeSaves();
+
+            //MimicHttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
+
+            //MimicHttpClient.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+            /*MimicHttpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
+            MimicHttpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
+
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Ch-Ua", UserAgentBrandsString.Replace("\r", "").Replace("\n", "").Trim());
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Ch-Ua-Arch", UserAgentGenerator.GetCPUArchitecture());
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Ch-Ua-Mobile", "?0");
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Ch-Ua-Model", "\"\"");
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Ch-Ua-Platform", "\"Windows\"");
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Ch-Ua-Platform-Version", "\"19.0.0\"");
+
+
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "document");
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Fetch-Site", "none");
+            MimicHttpClient.DefaultRequestHeaders.Add("Sec-Fetch-User", "?1");
+            MimicHttpClient.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "?1");*/
 
             InitializeBrowser();
             InitializeUISaves(CommandLineUrl);
@@ -4468,16 +4493,24 @@ Inner Exception: ```{7} ```";
         {
             if (string.IsNullOrEmpty(Url))
                 return null;
-            using (WebClient _WebClient = new())
+            //TODO: Investigate solution to stackoverflow icon 403.
+            try
             {
-                try
-                {
-                    _WebClient.Headers.Add("User-Agent", UserAgentGenerator.BuildChromeBrand());
-                    _WebClient.Headers.Add("Accept", "image/*;");
-                    return await _WebClient.DownloadDataTaskAsync(Url);
-                }
-                catch { return null; }
+                using HttpRequestMessage Request = new(HttpMethod.Get, Url);
+                Request.Headers.Referrer = new Uri(Utils.FastHost(Url, false, true));
+                using var Response = await MiniHttpClient.SendAsync(Request);
+                Response.EnsureSuccessStatusCode();
+                return await Response.Content.ReadAsByteArrayAsync();
             }
+#if DEBUG
+            catch (Exception Ex)
+            {
+                Debug.WriteLine($"Favicon download failed: {Ex.Message}");
+            }
+#else
+            catch { }
+#endif
+            return null;
         }
 
         public bool MobileView;
@@ -4984,7 +5017,21 @@ Inner Exception: ```{7} ```";
     }
 })();";
         
-        public const string GetFaviconScript = @"(function() { var links = document.getElementsByTagName('link'); for (var i = 0; i < links.length; i++) { var rel = links[i].getAttribute('rel'); if (rel && rel.toLowerCase().indexOf('icon') !== -1) { return links[i].href; } } return ''; })();";
+        public const string GetFaviconScript = @"(function() { var links = document.getElementsByTagName('link');
+    for (var i = 0; i < links.length; i++) {
+        var rel = links[i].getAttribute('rel');
+        if (rel && rel.toLowerCase().indexOf('icon') !== -1)
+        {
+            var href = links[i].getAttribute('href') || '';
+            var type = links[i].getAttribute('type') || '';
+            var isSvg = (href.toLowerCase().indexOf('.svg') !== -1) || (type.toLowerCase().indexOf('svg') !== -1);
+            if (!isSvg) {
+                return links[i].href;
+            }
+        }
+    }
+    return '';
+})();";
 
         public const string ReaderModeScript = @"(function() {
   const allowedTags = new Set([
@@ -5357,6 +5404,9 @@ document.querySelectorAll('tbody > tr').forEach(row => {
           case ""cors"":
             onCorsResult(decodeURIComponent(value));
             break;
+          case ""file_picker"":
+            onFilePickerResult(decodeURIComponent(value));
+            break;
         }
     },
     search: function(val) {
@@ -5616,6 +5666,24 @@ return Math.round(total / (1024 * 1024) * 10) / 10;
     }
     return null;
 })();";
+
+        /*public const string FetchOpenGraphProtocolScript = @"(async () => {
+  const getMeta = (selectors) => {
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el && el.getAttribute('content')) return el.getAttribute('content');
+    }
+    return null;
+  };
+  const data = {
+    title: getMeta(['meta[property=""og:title""]', 'meta[name=""twitter:title""]']) || document.title,
+    description: getMeta(['meta[property=""og:description""]', 'meta[name=""twitter:description""]', 'meta[name=""description""]']),
+    image: getMeta(['meta[property=""og:image""]', 'meta[name=""twitter:image""]']),
+    theme: getMeta(['meta[name=""theme-color""]', 'meta[name=""msapplication-TileColor""]']),
+    type: getMeta(['meta[property=""og:type""]']) || 'website'
+  };
+  return JSON.stringify(data);
+})();";*/
     }
 
     public class WebAppManifest

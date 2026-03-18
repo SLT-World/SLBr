@@ -5,6 +5,7 @@ using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
 using System.Collections.Concurrent;
@@ -13,7 +14,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -767,6 +767,15 @@ namespace SLBr.Pages
                 }
             }
 
+            //Proof of concept.
+            //https://github.com/users/SLT-World/projects/2/views/2?pane=issue&itemId=159222997
+            //TODO: Inject styling, refer to SLChat markdown implementation.
+            //if (e.Url.Contains("developers.cloudflare.com/fundamentals/reference/markdown-for-agents"))
+            //{
+            //    var AcceptHeaders = e.Headers.TryGetValue("Accept", out var Value) ? Value : "*/*";
+            //    e.ModifiedHeaders.Add("Accept", $"text/markdown,{AcceptHeaders}");
+            //}
+
             if (App.Instance.LiteMode)
                 e.ModifiedHeaders.Add("Save-Data", "on");
             if (UserAgentBranding)
@@ -1239,34 +1248,39 @@ namespace SLBr.Pages
                         try
                         {
                             string CustomThemeColor = string.Empty;
-                            string? Task = (await WebView?.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content")).ToString();
+                            string? Task = ((await WebView?.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content ?? document.querySelector('meta[name=\"msapplication-TileColor\"]')?.content")) ?? string.Empty).ToString();
                             if (Task != null)
                                 CustomThemeColor = Task;
-                            if (!string.IsNullOrEmpty(CustomThemeColor))
-                            {
-                                IsCustomTheme = true;
-                                Color PrimaryColor = Utils.ParseThemeColor(CustomThemeColor);
-
-                                Theme SiteTheme = App.Instance.GenerateTheme(PrimaryColor);
-                                SetAppearance(SiteTheme);
-                                TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
-                                _TabItem.Foreground = new SolidColorBrush(SiteTheme.FontColor);
-                                _TabItem.Background = new SolidColorBrush(SiteTheme.PrimaryColor);
-                                _TabItem.BorderBrush = new SolidColorBrush(SiteTheme.BorderColor);
-                            }
-                            else if (IsCustomTheme)
-                            {
-                                IsCustomTheme = false;
-                                SetAppearance(App.Instance.CurrentTheme);
-                                TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
-                                _TabItem.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.FontColor);
-                                _TabItem.Background = new SolidColorBrush(App.Instance.CurrentTheme.PrimaryColor);
-                                _TabItem.BorderBrush = new SolidColorBrush(App.Instance.CurrentTheme.BorderColor);
-                            }
+                            SetCustomTheme(CustomThemeColor);
                         }
                         catch { }
                     }
                 }
+            }
+        }
+
+        private void SetCustomTheme(string Color)
+        {
+            if (!string.IsNullOrEmpty(Color))
+            {
+                IsCustomTheme = true;
+                Color PrimaryColor = Utils.ParseThemeColor(Color);
+
+                Theme SiteTheme = App.Instance.GenerateTheme(PrimaryColor);
+                SetAppearance(SiteTheme);
+                TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
+                _TabItem.Foreground = new SolidColorBrush(SiteTheme.FontColor);
+                _TabItem.Background = new SolidColorBrush(SiteTheme.PrimaryColor);
+                _TabItem.BorderBrush = new SolidColorBrush(SiteTheme.BorderColor);
+            }
+            else if (IsCustomTheme)
+            {
+                IsCustomTheme = false;
+                SetAppearance(App.Instance.CurrentTheme);
+                TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
+                _TabItem.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.FontColor);
+                _TabItem.Background = new SolidColorBrush(App.Instance.CurrentTheme.PrimaryColor);
+                _TabItem.BorderBrush = new SolidColorBrush(App.Instance.CurrentTheme.BorderColor);
             }
         }
 
@@ -1286,6 +1300,18 @@ namespace SLBr.Pages
                         else if (File.Exists(FetchUrl))
                             Data = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(FetchUrl))}";
                         WebView?.ExecuteScript($"window.internal.receive('cors={Uri.EscapeDataString(Data)}');");
+                        break;
+                    case "file_picker":
+                        string Accept = Message["accept"].ToString();
+                        OpenFileDialog OpenFileDialog = new()
+                        {
+                            Filter = (Accept == "media" ? "Image files (*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff)|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff|Video files (*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm)|*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm|" : "") + "All files (*.*)|*.*",
+                            Title = "Open",
+                            //InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+                        };
+
+                        if (OpenFileDialog.ShowDialog() == true)
+                            WebView?.ExecuteScript($"window.internal.receive('file_picker={Uri.EscapeDataString(OpenFileDialog.FileName)}');");
                         break;
                     case "search":
                         Address = Utils.FilterUrlForBrowser(Message["variable"]?.ToString() ?? string.Empty, App.Instance.DefaultSearchProvider.SearchUrl);
@@ -2139,25 +2165,23 @@ namespace SLBr.Pages
                             Description = [new() { Text = "Do you want to check if a snapshot is available on the Wayback Machine?" }],
                             Actions = [
                                 new() { Text = "Check", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(async () => {
-                                WaybackInfoBar.Actions[0].IsEnabled = false;
-                                try
-                                {
-                                    using (HttpClient Client = new())
+                                    WaybackInfoBar.Actions[0].IsEnabled = false;
+                                    WaybackInfoBar.Actions[0].Text = "Checking";
+                                    WaybackInfoBar.Actions[0].Background = App.Instance.OrangeColor;
+                                    try
                                     {
-                                        Client.DefaultRequestHeaders.Add("User-Agent", App.Instance.UserAgent);
-                                        string Json = await Client.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={WebUtility.UrlEncode(Address)}");
+                                        string Json = await App.MiniHttpClient.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={Address}");
                                         CloseInfoBar(WaybackInfoBar);
                                         using JsonDocument Document = JsonDocument.Parse(Json);
                                         if (Document.RootElement.TryGetProperty("archived_snapshots", out JsonElement Snapshots) && Snapshots.TryGetProperty("closest", out JsonElement Closest) && Closest.TryGetProperty("available", out JsonElement Available) && Available.GetBoolean() && Closest.TryGetProperty("url", out var Url))
                                             Navigate(Url.GetString());
                                     }
-                                }
-                                catch { CloseInfoBar(WaybackInfoBar); }
-                            }) },
-                            new() { Text = "Do not ask again", Command = new RelayCommand(async () => {
-                                CloseInfoBar(WaybackInfoBar);
-                                App.Instance.GlobalSave.Set("WaybackInfoBar", false);
-                            }) }
+                                    catch { CloseInfoBar(WaybackInfoBar); }
+                                }) },
+                                new() { Text = "Do not ask again", Command = new RelayCommand(async () => {
+                                    CloseInfoBar(WaybackInfoBar);
+                                    App.Instance.GlobalSave.Set("WaybackInfoBar", false);
+                                }) }
                             ]
                         };
                         LocalInfoBars.Add(WaybackInfoBar);
@@ -3658,6 +3682,7 @@ namespace SLBr.Pages
 
         public void DisposeBrowserCore()
         {
+            SetCustomTheme(string.Empty);
             SmartSuggestionCancellation?.Cancel();
             OmniBoxFastTimer?.Stop();
             OmniBoxSmartTimer?.Stop();
@@ -3880,7 +3905,6 @@ namespace SLBr.Pages
 
             OmniBox.IsDropDownOpen = Suggestions.Count > 0;
             OmniBoxIsDropdown = true;
-
             OmniBox.Focus();
             if (OmniBox.IsDropDownOpen)
             {
@@ -4068,6 +4092,7 @@ namespace SLBr.Pages
 
         private void Browser_Loaded(object sender, RoutedEventArgs e)
         {
+            //TODO: Replace unbearably problematic ComboBox-based omni box with custom solution to avoid the implementation of a gazillion workarounds.
             Loaded -= Browser_Loaded;
             MaxHeight = Tab.ParentWindow.TabsUI.ActualHeight;
             OmniTextBox = OmniBox.Template.FindName("PART_EditableTextBox", OmniBox) as TextBox;
@@ -4092,6 +4117,10 @@ namespace SLBr.Pages
                 if (!OmniBoxIsDropdown)
                     OmniTextBox.SelectAll();
             };
+            /*OmniTextBox.LostKeyboardFocus += (sender, args) =>
+            {
+                OmniBox.Text = OmniBoxText;
+            };*/
             OmniBoxPopup = OmniBox.Template.FindName("Popup", OmniBox) as Popup;
             OmniBoxPopupDropDown = OmniBox.Template.FindName("DropDown", OmniBox) as Grid;
             OmniBoxPopupDropDown.PreviewMouseLeftButtonDown += (_, __) =>

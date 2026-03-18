@@ -158,9 +158,9 @@ a:hover {
     font-size: 17.5px !important;
     font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets" !important;
 }
-    .icon_button * {
-        font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets";
-    }
+.icon_button * {
+    font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets";
+}
 
 .card {
     padding: 5px;
@@ -237,7 +237,7 @@ header .font-icon {
     font-weight: var(--bold);
 }
 
-button {
+button, .button {
     background: var(--primary);
     border: 1px solid var(--tertiary);
     border-radius: 5px;
@@ -250,15 +250,15 @@ button {
     transition: background 0.25s ease;
 }
 
-button:hover {
+button:hover, .button:hover {
     background: var(--secondary);
 }
 
-button.icon {
+button.icon, .button.icon {
     width: 35px;
 }
 
-button > .icon_button {
+button > .icon_button, .button > .icon_button {
     width: auto !important;
 }
 
@@ -289,11 +289,11 @@ hr {
     gap: 10px;
 }
 
-.groupbox .field .input {
+.groupbox .field > .input {
     margin-left: auto;
 }
 
-.groupbox .field .input:not(.switch) {
+.groupbox .field > .input:not(.switch) {
     max-width: 250px;
     width: 50%;
 }

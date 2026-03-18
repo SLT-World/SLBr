@@ -17,7 +17,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Security.Cryptography;
-using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -723,18 +722,48 @@ namespace SLBr
             Task.Run(() => RunSafeAsync(TaskFunction));
         }*/
 
-        [GeneratedRegex(@"\d+")]
+        [GeneratedRegex(@"\d+\.?\d*")]
         public static partial Regex DigitsRegex();
 
         public static MColor ParseThemeColor(string ColorString)
         {
             if (ColorString.StartsWith("rgb"))
             {
-                var Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => byte.Parse(m.Value)).ToArray();
-                return MColor.FromRgb(Numbers[0], Numbers[1], Numbers[2]);
+                string[] Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => m.Value).ToArray();
+                byte R = byte.Parse(Numbers[0]);
+                byte G = byte.Parse(Numbers[1]);
+                byte B = byte.Parse(Numbers[2]);
+                /*if (Numbers.Length == 4)
+                {
+                    byte A = (byte)Math.Round(float.Parse(Numbers[3], CultureInfo.InvariantCulture) * 255);
+                    return MColor.FromArgb(A, R, G, B);
+                }*/
+                return MColor.FromRgb(R, G, B);
             }
-            else
+            else if (ColorString.StartsWith("hsl"))
+            {
+                string[] Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => m.Value).ToArray();
+
+                float H = byte.Parse(Numbers[0]);
+                float S = byte.Parse(Numbers[1]) / 100f;
+                float L = byte.Parse(Numbers[2]) / 100f;
+                /*if (Numbers.Length == 4)
+                {
+                    byte A = (byte)Math.Round(float.Parse(Numbers[3], CultureInfo.InvariantCulture));
+                    return ColorFromHSLA(H, S, L, A);
+                }*/
+
+                //float A = Numbers.Length == 4 ? byte.Parse(Numbers[3]) : 1.0f;
+                return ColorFromHSL(H, S, L);//, A
+            }
+            try
+            {
+                return (MColor)ColorConverter.ConvertFromString(ColorString);
+            }
+            catch
+            {
                 return System.Drawing.ColorTranslator.FromHtml(ColorString).ToMediaColor();
+            }
         }
 
         public static void ColorToHSL(MColor _Color, out double Hue, out double Saturation, out double Lightness)
@@ -1290,15 +1319,19 @@ namespace SLBr
                 return FixUrl(Span[7..].ToString());
             return Url;
         }
-        public static string FastHost(string Url, bool RemoveTrivialSubdomain = true)
+        public static string FastHost(string Url, bool RemoveTrivialSubdomain = true, bool KeepProtocol = false)
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
             ReadOnlySpan<char> Span = Url.AsSpan();
 
             int Protocol = Span.IndexOf("://");
+            ReadOnlySpan<char> ProtocolSpan = ReadOnlySpan<char>.Empty;
             if (Protocol >= 0)
+            {
+                ProtocolSpan = Span[..(Protocol + 3)];
                 Span = Span[(Protocol + 3)..];
+            }
 
             if (RemoveTrivialSubdomain)
             {
@@ -1312,6 +1345,8 @@ namespace SLBr
             if (Separator >= 0)
                 Span = Span[..Separator];
 
+            if (KeepProtocol && !ProtocolSpan.IsEmpty)
+                return string.Concat(ProtocolSpan, Span);
             return Span.ToString();
         }
         public static string Host(string Url, bool RemoveTrivialSubdomain = true)
