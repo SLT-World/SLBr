@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "SLBr.SafeBrowsing";
+
+message SearchHashesResponse {
+  repeated FullHash full_hashes = 1;
+  int64 cache_duration = 2;
+}
+
+message FullHash {
+  bytes full_hash = 1;
+  repeated FullHashDetail full_hash_details = 2;
+}
+
+message FullHashDetail {
+  ThreatType threat_type = 1;
+}
+
+enum ThreatType {
+  THREAT_TYPE_UNSPECIFIED = 0;
+  MALWARE = 1;
+  SOCIAL_ENGINEERING = 2;
+  UNWANTED_SOFTWARE = 3;
+  POTENTIALLY_HARMFUL_APPLICATION = 4;
+}

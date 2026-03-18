@@ -1,7 +1,9 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using SLBr.SafeBrowsing;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Xml.Linq;
@@ -26,39 +28,85 @@ namespace SLBr.Handlers
             Unwanted_Software,
         }
 
-        const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=";
+        const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v5/hashes:search?key=";
         const string YandexEndpoint = "https://sba.yandex.net/v4/threatMatches:find?key=";
         const string PhishTankEndpoint = "https://checkurl.phishtank.com/checkurl/";
 
-        public ThreatType SBGetThreatType(string Data)
+        public ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
         {
-            ThreatType _Type = ThreatType.Unknown;
+            //MessageBox.Show($"Full hashes returned: {Response.FullHashes.Count}");
+            //MessageBox.Show($"Local Hash: {BitConverter.ToString(LocalHash)}");
+            foreach (FullHash _FullHash in Response.FullHashes)
+            {
+                //byte[] ServerHash = _FullHash.FullHash_.ToByteArray();
+                //MessageBox.Show($"Server Hash: {BitConverter.ToString(ServerHash)}");
+                if (!_FullHash.FullHash_.Span.SequenceEqual(LocalHash))
+                    continue;
+                var Detail = _FullHash.FullHashDetails.FirstOrDefault();
+                if (Detail == null)
+                    continue;
+                return Detail.ThreatType switch
+                {
+                    SafeBrowsing.ThreatType.Malware => ThreatType.Malware,
+                    SafeBrowsing.ThreatType.SocialEngineering => ThreatType.Social_Engineering,
+                    SafeBrowsing.ThreatType.UnwantedSoftware => ThreatType.Unwanted_Software,
+                    _ => ThreatType.Unknown
+                };
+            }
+            //MessageBox.Show("No match found.");
+            return ThreatType.Unknown;
+        }
+        public SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
+        {
+            using (HttpClient Client = new())
+            {
+                try
+                {
+                    
+                    var Response = Client.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash.AsSpan(0, 4).ToArray()))}").Result;
+                    //MessageBox.Show($"Status: {Response.StatusCode}");
+                    if (Response.IsSuccessStatusCode)
+                    {
+                        byte[] Bytes = Response.Content.ReadAsByteArrayAsync().Result;
+                        //MessageBox.Show($"Response Size: {Bytes.Length} bytes");
+                        if (Bytes.Length > 0)
+                            return SearchHashesResponse.Parser.ParseFrom(Bytes);
+                    }
+                }
+                catch { }
+                return new SearchHashesResponse();
+            }
+        }
+
+
+        public ThreatType SBv4GetThreatType(string Data)
+        {
             if (Data.Length > 2)
             {
                 try
                 {
-                    if (JsonNode.Parse(Data)["matches"] is JsonArray Matches)
+                    if (JsonNode.Parse(Data)?["matches"] is JsonArray Matches)
                     {
                         string FirstThreatType = Matches[0]["threatType"].ToString();
                         if (FirstThreatType == "MALWARE")
-                            _Type = ThreatType.Malware;
+                            return ThreatType.Malware;
                         else if (FirstThreatType == "UNWANTED_SOFTWARE")
-                            _Type = ThreatType.Unwanted_Software;
+                            return ThreatType.Unwanted_Software;
                         else if (FirstThreatType == "SOCIAL_ENGINEERING")
-                            _Type = ThreatType.Social_Engineering;
+                            return ThreatType.Social_Engineering;
                         /*else if (FirstThreatType == "POTENTIALLY_HARMFUL_APPLICATION")
-                            _Type = ThreatType.Potentially_Harmful_Application;*/
+                            return ThreatType.Potentially_Harmful_Application;*/
                         else if (Matches.Count > 1)
                         {
                             string SecondThreatType = Matches[1]["threatType"].ToString();
                             if (SecondThreatType == "MALWARE")
-                                _Type = ThreatType.Malware;
+                                return ThreatType.Malware;
                             else if (SecondThreatType == "UNWANTED_SOFTWARE")
-                                _Type = ThreatType.Unwanted_Software;
+                                return ThreatType.Unwanted_Software;
                             else if (SecondThreatType == "SOCIAL_ENGINEERING")
-                                _Type = ThreatType.Social_Engineering;
+                                return ThreatType.Social_Engineering;
                             /*else if (SecondThreatType == "POTENTIALLY_HARMFUL_APPLICATION")
-                                _Type = ThreatType.Potentially_Harmful_Application;*/
+                                return ThreatType.Potentially_Harmful_Application;*/
                         }
                     }
                 }
@@ -67,11 +115,11 @@ namespace SLBr.Handlers
                     //MessageBox.Show($"Error parsing data: {ex.Message}", "Error");
                 }
             }
-            return _Type;
+            return ThreatType.Unknown;
         }
-        public string SBResponse(string Url, string Endpoint)
+        public string SBv4Response(string Url, string Endpoint)
         {
-            using (HttpClient Client = new HttpClient())
+            using (HttpClient Client = new())
             {
                 //""THREAT_TYPE_UNSPECIFIED"",""POTENTIALLY_HARMFUL_APPLICATION""
                 string Payload = $@"{{
@@ -140,9 +188,10 @@ namespace SLBr.Handlers
             switch (Service)
             {
                 case SecurityService.Google:
-                    return SBGetThreatType(SBResponse(Url, GoogleEndpoint + SECRETS.GOOGLE_API_KEY));
+                    byte[] LocalHash = SHA256.HashData(Encoding.UTF8.GetBytes(Utils.CleanUrl(Url, true, false, true, false, true)));
+                    return SBv5GetThreatType(SBv5Response(LocalHash, GoogleEndpoint + SECRETS.GOOGLE_API_KEY), LocalHash);
                 case SecurityService.Yandex:
-                    return SBGetThreatType(SBResponse(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
+                    return SBv4GetThreatType(SBv4Response(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
                 case SecurityService.PhishTank:
                     return PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
             }

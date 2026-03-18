@@ -43,13 +43,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Legacy Handlers\**" />
-    <EmbeddedResource Remove="Legacy Handlers\**" />
-    <None Remove="Legacy Handlers\**" />
-    <Page Remove="Legacy Handlers\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="Benchmark.cs" />
     <Compile Remove="Controls\ReportWindow.xaml.cs" />
     <Compile Remove="WebViewDemo.xaml.cs" />
@@ -65,7 +58,10 @@
 
   <ItemGroup>
     <Page Remove="Controls\ReportWindow.xaml" />
-    <Page Remove="WebViewDemo.xaml" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <Protobuf Include="Handlers\SearchHashes.proto" />
   </ItemGroup>
 
   <ItemGroup>
@@ -94,7 +90,12 @@
 
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="145.0.260" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3848-prerelease" />
+    <PackageReference Include="Google.Protobuf" Version="3.34.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.80.0-pre1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3908-prerelease" />
   </ItemGroup>
 
   <ItemGroup>
