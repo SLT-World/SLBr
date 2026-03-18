@@ -59,10 +59,6 @@
   <ItemGroup>
     <Page Remove="Controls\ReportWindow.xaml" />
   </ItemGroup>
-	
-  <ItemGroup>
-    <Protobuf Include="Handlers\SearchHashes.proto" />
-  </ItemGroup>
 
   <ItemGroup>
     <COMReference Include="SHDocVw">
@@ -91,10 +87,6 @@
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="145.0.260" />
     <PackageReference Include="Google.Protobuf" Version="3.34.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.80.0-pre1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3908-prerelease" />
   </ItemGroup>
 

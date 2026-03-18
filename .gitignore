@@ -1,7 +1,11 @@
+## Generated
+
 **/bin
 **/Builds
 **/obj
 SECRETS.cs
+
+SLBr/Handlers/SearchHashes.cs
 
 .vs/
 MigrationBackup/

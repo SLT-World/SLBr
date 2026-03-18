@@ -1920,20 +1920,16 @@ namespace SLBr
             CloseSLBr();
         }
 
-        public static async Task DiscordWebhookSendInfo(string Content)
+        /*public static async Task ReportInfo(string Content)
         {
-            var Payload = new
-            {
-                content = Content,
-                username = "SLBr Diagnostics"
-            };
-
-            await MiniHttpClient.PostAsync(SECRETS.DISCORD_WEBHOOK, new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json"));
-        }
+            //Implement ntfy.sh service.
+        }*/
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
         {
+#if DEBUG
             ReportError(e.Exception.Flatten());
+#endif
 #if !DEBUG
             Save();
             e.SetObserved();
@@ -1942,8 +1938,9 @@ namespace SLBr
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Exception _Exception = e.ExceptionObject as Exception;
-            ReportError(_Exception);
+#if DEBUG
+            ReportError(e.ExceptionObject as Exception);
+#endif
 #if !DEBUG
             Save();
 #endif
@@ -1951,13 +1948,16 @@ namespace SLBr
 
         private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
+#if DEBUG
             ReportError(e.Exception);
+#endif
 #if !DEBUG
             Save();
             e.Handled = true;
 #endif
         }
 
+#if DEBUG
         private void ReportError(Exception Error)
         {
             string Report = string.Format(ReportExceptionText,
@@ -1969,12 +1969,10 @@ namespace SLBr
                 Error.TargetSite,
                 Error.StackTrace,
                 FormatInnerException(Error));
-            if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
-                DiscordWebhookSendInfo(Report);
-#if DEBUG
+            //if (bool.Parse(GlobalSave.Get("SendDiagnostics")))
+            //    ReportInfo(Report);
             MessageBox.Show(Report);
             Dispatcher.BeginInvoke(() => Clipboard.SetText(Report));
-#endif
         }
 
         private static string FormatInnerException(Exception Error)
@@ -1991,6 +1989,7 @@ namespace SLBr
 
             return Builder.Length == 0 ? "None" : Builder.ToString();
         }
+#endif
 
         public static readonly Dictionary<string, Type> CustomPageOverlays = new Dictionary<string, Type>
         {
@@ -2000,17 +1999,19 @@ namespace SLBr
             { "downloads", typeof(DownloadsPage) },
         };
 
-        const string ReportExceptionText = @"**Automatic Report**
-> - Version: `{0}`
-> - CEF: `{1}`
-> - WebView2: `{2}`
-> - Message: ```{3}```
-> - Source: `{4} `
-> - Target Site: `{5} `
+#if DEBUG
+        const string ReportExceptionText = @"Automatic Report
+- Version: {0}
+- CEF: {1}
+- WebView2: {2}
+- Message: {3}
+- Source: {4}
+- Target Site: {5}
 
-Stack Trace: ```{6} ```
+Stack Trace: {6}
 
-Inner Exception: ```{7} ```";
+Inner Exception: {7}";
+#endif
         public int TrackersBlocked;
         public int AdsBlocked;
 
@@ -2642,8 +2643,8 @@ Inner Exception: ```{7} ```";
             if (!GlobalSave.Has("ScreenshotPath"))
                 GlobalSave.Set("ScreenshotPath", Path.Combine(Utils.GetFolderPath(Utils.FolderGuids.Pictures), "Screenshots", "SLBr"));
 
-            if (!GlobalSave.Has("SendDiagnostics"))
-                GlobalSave.Set("SendDiagnostics", false);
+            //if (!GlobalSave.Has("SendDiagnostics"))
+            //    GlobalSave.Set("SendDiagnostics", false);
             if (!GlobalSave.Has("WebNotifications"))
                 GlobalSave.Set("WebNotifications", true);
             if (!GlobalSave.Has("WebApps"))

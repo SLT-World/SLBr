@@ -34,15 +34,11 @@ namespace SLBr.Handlers
 
         public ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
         {
-            //MessageBox.Show($"Full hashes returned: {Response.FullHashes.Count}");
-            //MessageBox.Show($"Local Hash: {BitConverter.ToString(LocalHash)}");
             foreach (FullHash _FullHash in Response.FullHashes)
             {
-                //byte[] ServerHash = _FullHash.FullHash_.ToByteArray();
-                //MessageBox.Show($"Server Hash: {BitConverter.ToString(ServerHash)}");
                 if (!_FullHash.FullHash_.Span.SequenceEqual(LocalHash))
                     continue;
-                var Detail = _FullHash.FullHashDetails.FirstOrDefault();
+                FullHashDetail? Detail = _FullHash.FullHashDetails.FirstOrDefault();
                 if (Detail == null)
                     continue;
                 return Detail.ThreatType switch
@@ -53,7 +49,6 @@ namespace SLBr.Handlers
                     _ => ThreatType.Unknown
                 };
             }
-            //MessageBox.Show("No match found.");
             return ThreatType.Unknown;
         }
         public SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
@@ -64,11 +59,9 @@ namespace SLBr.Handlers
                 {
                     
                     var Response = Client.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash.AsSpan(0, 4).ToArray()))}").Result;
-                    //MessageBox.Show($"Status: {Response.StatusCode}");
                     if (Response.IsSuccessStatusCode)
                     {
                         byte[] Bytes = Response.Content.ReadAsByteArrayAsync().Result;
-                        //MessageBox.Show($"Response Size: {Bytes.Length} bytes");
                         if (Bytes.Length > 0)
                             return SearchHashesResponse.Parser.ParseFrom(Bytes);
                     }
@@ -85,35 +78,25 @@ namespace SLBr.Handlers
             {
                 try
                 {
-                    if (JsonNode.Parse(Data)?["matches"] is JsonArray Matches)
+                    if (JsonNode.Parse(Data)?["matches"] is JsonArray Matches && Matches.Count > 0)
                     {
-                        string FirstThreatType = Matches[0]["threatType"].ToString();
-                        if (FirstThreatType == "MALWARE")
-                            return ThreatType.Malware;
-                        else if (FirstThreatType == "UNWANTED_SOFTWARE")
-                            return ThreatType.Unwanted_Software;
-                        else if (FirstThreatType == "SOCIAL_ENGINEERING")
-                            return ThreatType.Social_Engineering;
-                        /*else if (FirstThreatType == "POTENTIALLY_HARMFUL_APPLICATION")
-                            return ThreatType.Potentially_Harmful_Application;*/
-                        else if (Matches.Count > 1)
+                        foreach (JsonNode? Match in Matches)
                         {
-                            string SecondThreatType = Matches[1]["threatType"].ToString();
-                            if (SecondThreatType == "MALWARE")
-                                return ThreatType.Malware;
-                            else if (SecondThreatType == "UNWANTED_SOFTWARE")
-                                return ThreatType.Unwanted_Software;
-                            else if (SecondThreatType == "SOCIAL_ENGINEERING")
-                                return ThreatType.Social_Engineering;
-                            /*else if (SecondThreatType == "POTENTIALLY_HARMFUL_APPLICATION")
-                                return ThreatType.Potentially_Harmful_Application;*/
+                            if (Match == null)
+                                continue;
+                            string? Threat = Match["threatType"]?.ToString();
+                            if (Threat == null)
+                                continue;
+                            return Threat switch
+                            {
+                                "MALWARE" => ThreatType.Malware,
+                                "SOCIAL_ENGINEERING" => ThreatType.Social_Engineering,
+                                "UNWANTED_SOFTWARE" => ThreatType.Unwanted_Software
+                            };
                         }
                     }
                 }
-                catch// (Exception ex)
-                {
-                    //MessageBox.Show($"Error parsing data: {ex.Message}", "Error");
-                }
+                catch { }
             }
             return ThreatType.Unknown;
         }

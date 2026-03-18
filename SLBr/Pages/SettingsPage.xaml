@@ -517,7 +517,7 @@
                                 </DockPanel>
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Margin="0,0,0,10">
+                        <!--<GroupBox Margin="0,0,0,10">
                             <GroupBox.Header>
                                 Data Collection
                             </GroupBox.Header>
@@ -529,7 +529,7 @@
                                     <Run>Reports only include the version and the error.</Run>
                                 </TextBlock>
                             </StackPanel>
-                        </GroupBox>
+                        </GroupBox>-->
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

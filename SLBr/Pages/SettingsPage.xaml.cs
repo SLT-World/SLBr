@@ -316,7 +316,7 @@ namespace SLBr.Pages
             RemoveFilterCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RemoveFilter"));
             RemoveOverlayCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RemoveOverlay"));
 
-            SendDiagnosticsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SendDiagnostics"));
+            //SendDiagnosticsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SendDiagnostics"));
             WebNotificationsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WebNotifications"));
             WebAppsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WebApps"));
 
@@ -940,11 +940,11 @@ namespace SLBr.Pages
             }
         }
 
-        private void SendDiagnosticsCheckBox_Click(object sender, RoutedEventArgs e)
+        /*private void SendDiagnosticsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("SendDiagnostics", SendDiagnosticsCheckBox.IsChecked.ToBool().ToString());
-        }
+        }*/
         private void WebNotificationsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)

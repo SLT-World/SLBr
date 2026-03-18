@@ -76,16 +76,15 @@ Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 > ```
 > namespace SLBr
 > {
->     class SECRETS
+>     static class SECRETS
 >     {
->         public static string GOOGLE_API_KEY = "";
->         public static string GOOGLE_DEFAULT_CLIENT_ID = "";
->         public static string GOOGLE_DEFAULT_CLIENT_SECRET = "";
->         public static string DISCORD_WEBHOOK = "";
->         public static string YANDEX_API_KEY = "";
->         public static string PHISHTANK_API_KEY = "";
->         public static string WEATHER_API_KEY = "";
->         public static string AMP_API_KEY = "";
+>         public const string GOOGLE_API_KEY = "";
+>         public const string GOOGLE_DEFAULT_CLIENT_ID = "";
+>         public const string GOOGLE_DEFAULT_CLIENT_SECRET = "";
+>         public const string YANDEX_API_KEY = "";
+>         public const string PHISHTANK_API_KEY = "";
+>         public const string WEATHER_API_KEY = "";
+>         public const string AMP_API_KEY = "";
 >         public const string GOOGLE_TRANSLATE_ENDPOINT = "";
 >         public const string MICROSOFT_TRANSLATE_ENDPOINT = "";
 >         public const string LINGVANEX_ENDPOINT = "";
@@ -93,6 +92,8 @@ Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 >         public const string YANDEX_ENDPOINT = "";
 >         public const string LANGUAGETOOL_SPELLCHECK_ENDPOINT = "";
 >         public const string MICROSOFT_SPELLCHECK_ENDPOINT = "";
+>         public const string YANDEX_SPELLCHECK_ENDPOINT = "";
+>         public const string GOOGLE_SPELLCHECK_ENDPOINT = "";
 >     }
 > }
 > ```
