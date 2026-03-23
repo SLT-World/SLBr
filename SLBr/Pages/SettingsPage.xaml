@@ -28,7 +28,7 @@
                 <TextBlock Grid.Column="1" FontWeight="DemiBold" FontSize="25">Settings</TextBlock>
             </Grid>
         </Border>
-        <WinUI:WinUITabControl x:Name="SettingsTabControl" Grid.Row="1" Style="{StaticResource WinUITabControl}">
+        <WinUI:WinUITabControl x:Name="SettingsTabControl" Grid.Row="1" Style="{StaticResource WinUITabControl}" SelectionChanged="SettingsTabControl_SelectionChanged">
             <TabItem x:Name="UserTab" Header="User" Tag="&#xe77b;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <StackPanel Margin="25" MaxWidth="500">

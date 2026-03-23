@@ -13,9 +13,13 @@ namespace SLBr.Pages
     /// </summary>
     public partial class DownloadsPage : UserControl, IPageOverlay
     {
-        public DownloadsPage(Browser _BrowserView)
+        public DownloadsPage()
         {
             InitializeComponent();
+        }
+
+        public void Initialize(Browser _BrowserView)
+        {
             BrowserView = _BrowserView;
         }
 

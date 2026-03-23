@@ -23,6 +23,7 @@ namespace SLBr.Pages
 {
     public interface IPageOverlay : IDisposable
     {
+        void Initialize(Browser _BrowserView);
         void ApplyTheme(Theme _Theme);
     }
 
@@ -47,7 +48,7 @@ namespace SLBr.Pages
             }
         }
 
-        public SettingsPage(Browser _BrowserView)
+        public SettingsPage()
         {
             InitializeComponent();
             if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
@@ -66,7 +67,70 @@ namespace SLBr.Pages
                 TabSeparator2.Visibility = Visibility.Collapsed;
                 SettingsTabControl.SelectedItem = AboutTab;
             }
+        }
+
+        public void Initialize(Browser _BrowserView)
+        {
             BrowserView = _BrowserView;
+            if (BrowserView != null)
+            {
+                string[] UrlParts = BrowserView.Address.Split("#");
+                if (UrlParts.Length == 2)
+                {
+                    switch (UrlParts[1])
+                    {
+                        case "user":
+                            if (UserTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = UserTab;
+                            break;
+                        case "browser":
+                            if (BrowserTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = BrowserTab;
+                            break;
+                        case "appearance":
+                            if (AppearanceTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = AppearanceTab;
+                            break;
+                        case "privacy%20&%20security":
+                            if (PrivacyTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = PrivacyTab;
+                            break;
+                        case "search%20&%20services":
+                            if (ServicesTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = ServicesTab;
+                            break;
+                        case "performance":
+                            if (PerformanceTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = PerformanceTab;
+                            break;
+                        case "languages":
+                            if (LanguagesTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = LanguagesTab;
+                            break;
+                        case "downloads":
+                            if (DownloadsTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = DownloadsTab;
+                            break;
+                        case "exxtension":
+                            if (ExtensionsTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = ExtensionsTab;
+                            break;
+                        case "system":
+                            if (SystemTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = SystemTab;
+                            break;
+                        case "about":
+                            SettingsTabControl.SelectedItem = AboutTab;
+                            break;
+                        default:
+                            if (UserTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = UserTab;
+                            else
+                                SettingsTabControl.SelectedItem = AboutTab;
+                            break;
+                    }
+                }
+            }
         }
 
         public void Dispose()
@@ -1423,6 +1487,16 @@ namespace SLBr.Pages
                 }
             }
             catch { }
+        }
+
+        private void SettingsTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (BrowserView != null && BrowserView.WebView != null && BrowserView.WebView.IsBrowserInitialized)
+            {
+                TabItem SelectedTabItem = (TabItem)SettingsTabControl.SelectedItem;
+                if (SelectedTabItem != null)
+                    BrowserView.WebView.ExecuteScript($"history.pushState(null, \"\", \"#{SelectedTabItem.Header.ToString().ToLowerInvariant()}\");");
+            }
         }
     }
 }

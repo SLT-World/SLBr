@@ -13,9 +13,13 @@ namespace SLBr.Pages
     /// </summary>
     public partial class FavouritesPage : UserControl, IPageOverlay
     {
-        public FavouritesPage(Browser _BrowserView)
+        public FavouritesPage()
         {
             InitializeComponent();
+        }
+
+        public void Initialize(Browser _BrowserView)
+        {
             BrowserView = _BrowserView;
         }
 

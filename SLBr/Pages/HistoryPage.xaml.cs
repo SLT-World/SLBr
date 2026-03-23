@@ -12,9 +12,13 @@ namespace SLBr.Pages
     /// </summary>
     public partial class HistoryPage : UserControl, IPageOverlay
     {
-        public HistoryPage(Browser _BrowserView)
+        public HistoryPage()
         {
             InitializeComponent();
+        }
+
+        public void Initialize(Browser _BrowserView)
+        {
             BrowserView = _BrowserView;
         }
 

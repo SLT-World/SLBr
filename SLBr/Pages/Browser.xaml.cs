@@ -1746,7 +1746,8 @@ namespace SLBr.Pages
                     }
                     if (PageOverlay == null)
                     {
-                        PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType, this)!;
+                        PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType)!;
+                        PageOverlay.Initialize(this);
                         CoreContainer.Children.Add(PageOverlayControl);
                     }
                     PageOverlayControl?.Visibility = Visibility.Visible;
@@ -1924,7 +1925,8 @@ namespace SLBr.Pages
                 }
                 if (PageOverlay == null)
                 {
-                    PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType, this)!;
+                    PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType)!;
+                    PageOverlay.Initialize(this);
                     //TODO: Apply individual tab theme.
                     //PageOverlay.ApplyTheme();
                     CoreContainer.Children.Add(PageOverlayControl);
@@ -2197,7 +2199,7 @@ namespace SLBr.Pages
         {
             get
             {
-                if (WebView != null)
+                if (WebView != null && WebView.IsBrowserInitialized)
                     PAddress = WebView?.Address;
                 return PAddress;
             }
