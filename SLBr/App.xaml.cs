@@ -1281,9 +1281,9 @@ namespace SLBr
                         foreach (string Word in Words)
                         {
                             SpellCheckTextBox.Text = Word;
-                            var spellErrors = SpellCheckTextBox.GetSpellingError(0);
-                            if (spellErrors != null)
-                                Results.Add((Word, new List<string>(spellErrors.Suggestions)));
+                            SpellingError SpellError = SpellCheckTextBox.GetSpellingError(0);
+                            if (SpellError != null && SpellError.Suggestions.Any())
+                                Results.Add((Word, new List<string>(SpellError.Suggestions)));
                         }
                         break;
                     case 1:
@@ -1305,7 +1305,8 @@ namespace SLBr
                                         foreach (JsonElement Replacement in Replacements.EnumerateArray())
                                             Suggestions.Add(Replacement.GetProperty("suggestion").GetString()!);
                                     }
-                                    Results.Add((Text.Substring(Offset, Length), Suggestions));
+                                    if (Suggestions.Any())
+                                        Results.Add((Text.Substring(Offset, Length), Suggestions));
                                 }
                             }
                             break;
@@ -1335,7 +1336,8 @@ namespace SLBr
                                     int Offset = Critique.GetProperty("Start").GetInt32();
                                     int Length = Critique.GetProperty("Length").GetInt32();
 
-                                    Results.Add((ContextText.Substring(Offset, Length), Suggestions));
+                                    if (Suggestions.Any())
+                                        Results.Add((ContextText.Substring(Offset, Length), Suggestions));
                                 }
                             }
                             break;
@@ -1363,7 +1365,8 @@ namespace SLBr
                                     int Offset = Match.GetProperty("offset").GetInt32();
                                     int Length = Match.GetProperty("length").GetInt32();
 
-                                    Results.Add((ContextText.Substring(Offset, Length), Suggestions));
+                                    if (Suggestions.Any())
+                                        Results.Add((ContextText.Substring(Offset, Length), Suggestions));
                                 }
                             }
                             break;
@@ -1384,7 +1387,8 @@ namespace SLBr
                                         foreach (JsonElement Replacement in Replacements.EnumerateArray())
                                             Suggestions.Add(Replacement.GetString()!);
                                     }
-                                    Results.Add((Word, Suggestions));
+                                    if (Suggestions.Any())
+                                        Results.Add((Word, Suggestions));
                                 }
                             }
                             break;

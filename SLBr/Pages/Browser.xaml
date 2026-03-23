@@ -577,7 +577,7 @@
             </Grid>
         </Border>
 
-        <Grid x:Name="WebContainer" Grid.Row="1">
+        <Grid x:Name="WebContainer" Grid.Row="1" Margin="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="SideBarColumnLeft" Width="Auto" MaxWidth="1750px"/>
                 <ColumnDefinition/>

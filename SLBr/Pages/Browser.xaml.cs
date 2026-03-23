@@ -1432,6 +1432,8 @@ namespace SLBr.Pages
                         bool HasLinkText = !string.IsNullOrEmpty(e.LinkText?.Trim());
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open link in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
+                        if (e.LinkUrl.StartsWith("mailto:"))
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue715", Header = "Copy email address", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl[7..])) });
                         if (HasLinkText)
                             BrowserMenu.Items.Add(new MenuItem { /*IsEnabled = HasLinkText, */Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkText)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share link", Command = new RelayCommand(_ => Share(e.LinkUrl)) });
@@ -2283,7 +2285,7 @@ namespace SLBr.Pages
         public void Share(string? Url = null)
         {
             if (Uri.TryCreate(Url ?? Address, UriKind.Absolute, out Uri? _Uri))
-                Utils.Share(Tab.ParentWindow.WindowInterop.EnsureHandle(), Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
+                Utils.Share(Tab.ParentWindow.Handle, Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
         }
 
         public async void Find(string Text, bool Forward = true, bool FindNext = false)
@@ -2521,7 +2523,7 @@ namespace SLBr.Pages
             if (IsUtilityContainerOpen)
             {
                 DevToolsToolBar.Visibility = Visibility.Visible;
-                DevToolsHost = new HwndHoster();
+                DevToolsHost = new();
                 SideBarCoreContainer.Children.Add(DevToolsHost);
                 Grid.SetColumn(DevToolsHost, 1);
                 Grid.SetRow(DevToolsHost, 1);
@@ -2543,39 +2545,43 @@ namespace SLBr.Pages
                         {
                             Dispatcher.BeginInvoke(async () =>
                             {
-                                ((WebView2)EdgeWebView.Control).CoreWebView2.OpenDevToolsWindow();
-                                await Task.Delay(600);
-                                string DevToolsName = $"DevTools - {Utils.CleanUrl(Address, false, false, false, false, true)}";
-                                DllUtils.EnumWindows((hWnd, lParam) =>
+                                CoreWebView2? Core = ((WebView2)EdgeWebView.Control).CoreWebView2;
+                                if (Core != null)
                                 {
-                                    DllUtils.GetWindowThreadProcessId(hWnd, out uint pid);
-                                    Process _Process = Process.GetProcessById((int)pid);
-                                    if (_Process.ProcessName.Contains("msedgewebview2", StringComparison.OrdinalIgnoreCase))
+                                    Core.OpenDevToolsWindow();
+                                    await Task.Delay(600);
+                                    string DevToolsName = $"DevTools - {Utils.CleanUrl(Address, false, false, false, false, true)}";
+                                    DllUtils.EnumWindows((hWnd, lParam) =>
                                     {
-                                        if (DllUtils.IsWindowVisible(hWnd) && !App.Instance.WebView2DevTools.Contains(hWnd) && DevToolsName.StartsWith(DllUtils.GetWindowTextRaw(hWnd)))
+                                        DllUtils.GetWindowThreadProcessId(hWnd, out uint pid);
+                                        Process _Process = Process.GetProcessById((int)pid);
+                                        if (_Process.ProcessName.Contains("msedgewebview2", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            WebView2DevToolsHWND = hWnd;
-                                            return false;
+                                            if (DllUtils.IsWindowVisible(hWnd) && !App.Instance.WebView2DevTools.Contains(hWnd) && DevToolsName.StartsWith(DllUtils.GetWindowTextRaw(hWnd)))
+                                            {
+                                                WebView2DevToolsHWND = hWnd;
+                                                return false;
+                                            }
                                         }
+                                        return true;
+                                    }, IntPtr.Zero);
+                                    if (WebView2DevToolsHWND != IntPtr.Zero)
+                                    {
+                                        App.Instance.WebView2DevTools.Add(WebView2DevToolsHWND);
+
+                                        int DevToolsWindowStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE);
+                                        DevToolsWindowStyle &= ~(DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_SYSMENU | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX);
+                                        DevToolsWindowStyle |= DllUtils.WS_POPUP;
+                                        DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE, DevToolsWindowStyle);
+
+                                        int DevToolsWindowExStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE);
+                                        DevToolsWindowExStyle &= ~DllUtils.WS_EX_APPWINDOW;
+                                        DevToolsWindowExStyle |= DllUtils.WS_EX_TOOLWINDOW;
+                                        DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE, DevToolsWindowExStyle);
+
+                                        UpdateDevToolsPosition();
+                                        DevToolsHost.SizeChanged += (s, e) => UpdateDevToolsPosition();
                                     }
-                                    return true;
-                                }, IntPtr.Zero);
-                                if (WebView2DevToolsHWND != IntPtr.Zero)
-                                {
-                                    App.Instance.WebView2DevTools.Add(WebView2DevToolsHWND);
-
-                                    int DevToolsWindowStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE);
-                                    DevToolsWindowStyle &= ~(DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_SYSMENU | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX);
-                                    DevToolsWindowStyle |= DllUtils.WS_POPUP;
-                                    DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE, DevToolsWindowStyle);
-
-                                    int DevToolsWindowExStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE);
-                                    DevToolsWindowExStyle &= ~DllUtils.WS_EX_APPWINDOW;
-                                    DevToolsWindowExStyle |= DllUtils.WS_EX_TOOLWINDOW;
-                                    DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE, DevToolsWindowExStyle);
-                                    
-                                    UpdateDevToolsPosition();
-                                    DevToolsHost.SizeChanged += (s, e) => UpdateDevToolsPosition();
                                 }
                             });
                         }
@@ -2590,7 +2596,7 @@ namespace SLBr.Pages
             if (WebView2DevToolsHWND == IntPtr.Zero) return;
             /*if (!Tab.ParentWindow.IsActive)
                 Debug.WriteLine($"{DllUtils.GetForegroundWindow()} {WebView2DevToolsHWND} {DevToolsHost.Handle} {Tab.ParentWindow.WindowInterop.EnsureHandle()}");*/
-            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.GetTab() != Tab || (!Tab.ParentWindow.IsActive && DllUtils.GetForegroundWindow() is nint Foreground && (Foreground != WebView2DevToolsHWND && Foreground != Tab.ParentWindow.WindowInterop.EnsureHandle())))
+            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.GetTab() != Tab || (!Tab.ParentWindow.IsActive && DllUtils.GetForegroundWindow() is nint Foreground && (Foreground != WebView2DevToolsHWND && Foreground != Tab.ParentWindow.Handle)))
             {
                 DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 0, 0, 0), true);
                 DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_HIDE);
@@ -2799,6 +2805,19 @@ namespace SLBr.Pages
                     TranslateButton.OpenPopup();
                 await Dispatcher.BeginInvoke(() => TranslateLoadingPanel.Visibility = Visibility.Visible);
                 List<string> AllTexts = JsonSerializer.Deserialize<List<string>>(Texts);
+                if (AllTexts.Count == 0)
+                {
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        TranslateLoadingPanel.Visibility = Visibility.Collapsed;
+                        if (UnavailableTranslationInfoBar == null)
+                        {
+                            UnavailableTranslationInfoBar = new() { Title = "Translation Unavailable", Description = [new() { Text = "Unable to translate webpage." }] };
+                            LocalInfoBars.Add(UnavailableTranslationInfoBar);
+                        }
+                    });
+                    return;
+                }
                 string TargetLanguage = App.Instance.AllLocales.First(i => i.Value == TranslateComboBox.SelectedValue).Key;
                 switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
                 {
@@ -4145,8 +4164,8 @@ namespace SLBr.Pages
             ExtensionWindow = new Window();
             ChromiumWebBrowser ExtensionBrowser = new(_Extension.Popup);
             ExtensionBrowser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
-            HwndSource _HwndSource = HwndSource.FromHwnd(new WindowInteropHelper(ExtensionWindow).EnsureHandle());
-            _HwndSource.AddHook(WndProc);
+            nint ExtensionHandle = new WindowInteropHelper(ExtensionWindow).EnsureHandle();
+            HwndSource.FromHwnd(ExtensionHandle).AddHook(WndProc);
             ExtensionBrowser.LoadingStateChanged += (s, args) =>
             {
                 if (!args.IsLoading)
@@ -4154,8 +4173,8 @@ namespace SLBr.Pages
             };
             int trueValue = 0x01;
             int falseValue = 0x00;
-            DllUtils.DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref App.Instance.CurrentTheme.DarkTitleBar ? ref trueValue : ref falseValue, Marshal.SizeOf(typeof(int)));
-            DllUtils.DwmSetWindowAttribute(_HwndSource.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
+            DllUtils.DwmSetWindowAttribute(ExtensionHandle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref App.Instance.CurrentTheme.DarkTitleBar ? ref trueValue : ref falseValue, Marshal.SizeOf(typeof(int)));
+            DllUtils.DwmSetWindowAttribute(ExtensionHandle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             ExtensionBrowser.JavascriptMessageReceived += ExtensionBrowser_JavascriptMessageReceived;
             ExtensionBrowser.SnapsToDevicePixels = true;
             //ExtensionBrowser.MenuHandler = App.Instance._LimitedContextMenuHandler;

@@ -106,7 +106,7 @@ namespace SLBr
                             else
                                 App.Instance.NewWindow();
                         }
-                        DllUtils.SetForegroundWindow(WindowInterop.Handle);
+                        DllUtils.SetForegroundWindow(Handle);
                     }
                     handled = true;
                     break;
@@ -148,18 +148,16 @@ namespace SLBr
             return IntPtr.Zero;
         }
 
-        public WindowInteropHelper WindowInterop;
         BrowserTabItem NewTabTab = null;
-
+        public nint Handle;
         private void InitializeWindow()
         {
             ID = Utils.GenerateRandomId();
-            WindowInterop = new WindowInteropHelper(this);
-            HwndSource HwndSource = HwndSource.FromHwnd(WindowInterop.EnsureHandle());
-            HwndSource.AddHook(new(WndProc));
+            Handle = new WindowInteropHelper(this).EnsureHandle();
+            HwndSource.FromHwnd(Handle).AddHook(new(WndProc));
             int trueValue = 0x01;
-            DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
-            DllUtils.SetWindowLong(HwndSource.Handle, DllUtils.GWL_STYLE, DllUtils.GetWindowLong(HwndSource.Handle, DllUtils.GWL_STYLE) & ~DllUtils.WS_SYSMENU);
+            DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
+            DllUtils.SetWindowLong(Handle, DllUtils.GWL_STYLE, DllUtils.GetWindowLong(Handle, DllUtils.GWL_STYLE) & ~DllUtils.WS_SYSMENU);
 
             App.Instance.AllWindows.Add(this);
             if (App.Instance.WindowsSaves.Count < App.Instance.AllWindows.Count)
@@ -581,13 +579,12 @@ namespace SLBr
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.SetAppearance(_Theme);
 
-            HwndSource HwndSource = HwndSource.FromHwnd(WindowInterop.EnsureHandle());
             int trueValue = 0x01;
             int falseValue = 0x00;
             if (App.Instance.CurrentTheme.DarkTitleBar)
-                DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
             else
-                DllUtils.DwmSetWindowAttribute(HwndSource.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
         }
 
         public void SetTabAlignment()
@@ -1204,7 +1201,7 @@ namespace SLBr
             bool ExcludeFromCapture = App.Instance.BlockScreenCapture == 2 || (App.Instance.BlockScreenCapture == 1 && (CurrentTab?.Content?.Private ?? false));
             if (WindowExcludedFromCapture != ExcludeFromCapture)
             {
-                DllUtils.SetWindowDisplayAffinity(WindowInterop.EnsureHandle(), ExcludeFromCapture ? DllUtils.WindowDisplayAffinity.WDA_EXCLUDEFROMCAPTURE : DllUtils.WindowDisplayAffinity.WDA_NONE);
+                DllUtils.SetWindowDisplayAffinity(Handle, ExcludeFromCapture ? DllUtils.WindowDisplayAffinity.WDA_EXCLUDEFROMCAPTURE : DllUtils.WindowDisplayAffinity.WDA_NONE);
                 WindowExcludedFromCapture = ExcludeFromCapture;
             }
         }
@@ -1383,7 +1380,7 @@ namespace SLBr
             if (MousePosition.X >= -12 && MousePosition.X <= MaximizeRestoreButton.ActualWidth + 12 && MousePosition.Y >= -12 && MousePosition.Y <= MaximizeRestoreButton.ActualHeight + 12)
                 return;
             SnapLayoutVisible = false;
-            DllUtils.SetForegroundWindow(new WindowInteropHelper(this).Handle);
+            DllUtils.SetForegroundWindow(Handle);
         }
     }
 }

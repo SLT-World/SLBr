@@ -85,9 +85,11 @@ namespace SLBr.Pages
                 {
                     if (App.Instance.Languages.Count == 1)
                     {
-                        var infoWindow = new InformationDialogWindow("Error", $"Settings", "The selected languages could not be removed.", "\uece4");
-                        infoWindow.Topmost = true;
-                        infoWindow.ShowDialog();
+                        InformationDialogWindow InfoWindow = new("Error", $"Settings", "The selected languages could not be removed.", "\uece4")
+                        {
+                            Topmost = true
+                        };
+                        InfoWindow.ShowDialog();
                         return;
                     }
                     ActionStorage _Language = App.Instance.Languages.Where(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString()).First();

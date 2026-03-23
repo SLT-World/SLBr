@@ -16,7 +16,7 @@ namespace SLBr.Controls
     {
         public IWebView WebView;
         private string InitialAddress;
-
+        nint Handle;
         public PopupBrowser(string _Address, int _Width, int _Height)
         {
             InitializeComponent();
@@ -27,7 +27,8 @@ namespace SLBr.Controls
                 Height = _Height;
             ApplyTheme(App.Instance.CurrentTheme);
             int trueValue = 0x01;
-            DllUtils.DwmSetWindowAttribute(HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle()).Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
+            Handle = new WindowInteropHelper(this).EnsureHandle();
+            DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             CreateWebView();
         }
 
@@ -61,6 +62,12 @@ namespace SLBr.Controls
             WebContent.Children.Add(WebView.Control);
         }
 
+        public void Share(string? Url = null)
+        {
+            if (Uri.TryCreate(Url, UriKind.Absolute, out Uri? _Uri))
+                Utils.Share(Handle, Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
+        }
+
         private void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
             bool IsPageMenu = true;
@@ -74,8 +81,16 @@ namespace SLBr.Controls
                     if (i == WebContextMenuType.Link)
                     {
                         IsPageMenu = false;
+                        bool HasLinkText = !string.IsNullOrEmpty(e.LinkText?.Trim());
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab(e.LinkUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
+                        if (e.LinkUrl.StartsWith("mailto:"))
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue715", Header = "Copy email address", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl[7..])) });
+                        if (HasLinkText)
+                            BrowserMenu.Items.Add(new MenuItem { /*IsEnabled = HasLinkText, */Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkText)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share link", Command = new RelayCommand(_ => Share(e.LinkUrl)) });
+                        if (HasLinkText)
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.LinkText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.LinkText.ReplaceLineEndings("").Trim())), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
                     }
                     else if (i == WebContextMenuType.Selection && !e.IsEditable)
                     {
@@ -220,13 +235,12 @@ namespace SLBr.Controls
 
         public void ApplyTheme(Theme _Theme)
         {
-            HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
             int trueValue = 0x01;
             int falseValue = 0x00;
             if (_Theme.DarkTitleBar)
-                DllUtils.DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
             else
-                DllUtils.DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
 
             Resources["PrimaryBrushColor"] = _Theme.PrimaryColor;
             Resources["SecondaryBrushColor"] = _Theme.SecondaryColor;

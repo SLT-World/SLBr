@@ -31,6 +31,7 @@ namespace SLBr.Controls
         public ChromiumWebBrowser Browser;
         WebAppManifest Manifest;
         bool DarkMode;
+        nint Handle;
         public WebAppWindow(WebAppManifest _Manifest)
         {
             Manifest = _Manifest;
@@ -74,7 +75,8 @@ namespace SLBr.Controls
             WebContent.Visibility = Visibility.Collapsed;
             WebContent.Children.Add(Browser);
             int trueValue = 0x01;
-            DllUtils.DwmSetWindowAttribute(HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle()).Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
+            Handle = new WindowInteropHelper(this).EnsureHandle();
+            DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
         }
 
         private void Browser_IsBrowserInitializedChanged(object? sender, EventArgs e)
@@ -98,13 +100,12 @@ namespace SLBr.Controls
 
         public void ApplyTheme(bool Dark)
         {
-            HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
             int trueValue = 0x01;
             int falseValue = 0x00;
             if (Dark)
-                DllUtils.DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
             else
-                DllUtils.DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
         }
 
         private void Browser_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)

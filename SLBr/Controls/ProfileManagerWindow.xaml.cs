@@ -32,13 +32,13 @@ namespace SLBr.Controls
             Resources["GrayBrushColor"] = _Theme.GrayColor;
             Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
-            HwndSource source = HwndSource.FromHwnd(new WindowInteropHelper(this).EnsureHandle());
+            nint Handle = new WindowInteropHelper(this).EnsureHandle();
             int trueValue = 0x01;
             int falseValue = 0x00;
             if (_Theme.DarkTitleBar)
-                DllUtils.DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
             else
-                DllUtils.DwmSetWindowAttribute(source.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
+                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
         }
 
         private void StartupProfilesCheckBox_Click(object sender, RoutedEventArgs e)

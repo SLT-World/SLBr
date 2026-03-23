@@ -36,10 +36,10 @@ See the full feature list, [here](https://slt-world.github.io/slbr/)
 ## Installation
 To install SLBr, follow these steps:
 1. Download the [latest release](https://github.com/SLT-World/SLBr/releases/latest).
-2. Ensure the following requirements are installed:
-    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe) (Should be bundled in the computer already)
+2. Ensure the following requirements are met:
+    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe) (Typically pre-installed on Windows.)
     - [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) - (Launching SLBr without .NET 9.0 will automatically prompt a redirect to a direct download.)
-    - Windows 10 & above
+    - Windows 10 & above.
 ## Thanks
 
 - **Chromium Embedded Framework (CEF)**: Thanks to Marshall A. Greenblatt.
@@ -51,7 +51,7 @@ SLBr is licensed under the [GNU General Public License v3.0](https://github.com/
 
 ## Contribution
 Feature suggestions and contributions would be much appreciated. Your input helps improve SLBr.
-Or you can also contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
+Alternatively, you can also contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
 
 ## Screenshots & Videos
 
@@ -73,7 +73,7 @@ Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 > The `SECRETS.cs` file is removed as private API keys are stored inside. To fix it, either:
 > - Remove the code that is causing the error, which will remove the ability to use Google Safe Browsing & sign in to Google.
 > - Generate a new C# class called "SECRETS":
-> ```
+> ```cs
 > namespace SLBr
 > {
 >     static class SECRETS

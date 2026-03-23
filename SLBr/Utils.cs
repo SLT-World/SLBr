@@ -613,15 +613,15 @@ namespace SLBr
 
         public static void RaiseUIAsync(this EventHandler Handler, object? Sender)
         {
-            Application.Current?.Dispatcher.BeginInvoke(() => Handler?.Invoke(Sender, null));
+            Application.Current?.Dispatcher.BeginInvoke(async () => Handler?.Invoke(Sender, null));
         }
         public static void RaiseUIAsync<T>(this EventHandler<T> Handler, object? Sender, T Args)
         {
-            Application.Current?.Dispatcher.BeginInvoke(() => Handler?.Invoke(Sender, Args));
+            Application.Current?.Dispatcher.BeginInvoke(async () => Handler?.Invoke(Sender, Args));
         }
         public static void RaiseUIAsync<T>(this Action<T> Handler, T Args)
         {
-            Application.Current?.Dispatcher.BeginInvoke(() => Handler?.Invoke(Args));
+            Application.Current?.Dispatcher.BeginInvoke(async () => Handler?.Invoke(Args));
         }
 
         public static string SanitizeFileName(string Name)
