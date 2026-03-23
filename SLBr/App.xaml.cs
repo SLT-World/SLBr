@@ -2170,8 +2170,27 @@ Inner Exception: {7}";
 
         public void SwitchUserPopup()
         {
-            ProfileManagerWindow ProfileManager = new();
-            ProfileManager.Show();
+            new ProfileManagerWindow().Show();
+        }
+
+        public void CopyToClipboard(object Object, int Type)
+        {
+            if (Object is string Text)
+                Clipboard.SetText(Text);
+            else if (Object is BitmapSource Source)
+                Clipboard.SetImage(Source);
+            switch (Type)
+            {
+                case 0:
+                    CurrentFocusedWindow().OpenToast("Link copied", "\xe71b");
+                    break;
+                case 1:
+                    CurrentFocusedWindow().OpenToast("Image copied", "\xe8c8");
+                    break;
+                default:
+                    CurrentFocusedWindow().OpenToast("Text copied", "\xe8c8");
+                    break;
+            }
         }
 
         public void SaveOpenSearch(string Name, string Url)
@@ -2601,6 +2620,8 @@ Inner Exception: {7}";
 
             SetMobileView(bool.Parse(GlobalSave.Get("MobileView", false.ToString())));
 
+            if (!GlobalSave.Has("Toast"))
+                GlobalSave.Set("Toast", true);
             if (!GlobalSave.Has("WarnCodec"))
                 GlobalSave.Set("WarnCodec", true);
             if (!GlobalSave.Has("WaybackInfoBar"))

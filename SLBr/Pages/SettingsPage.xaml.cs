@@ -353,6 +353,7 @@ namespace SLBr.Pages
             TabUnloadingCheckBox.IsChecked = TabUnloadingCheck;
 
             AdaptiveThemeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme"));
+            ToastCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Toast"));
             WarnCodecCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WarnCodec"));
             WaybackInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar"));
             HomographInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographInfoBar"));
@@ -843,6 +844,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("AdaptiveTheme", AdaptiveThemeCheckBox.IsChecked.ToBool().ToString());
+        }
+        private void ToastCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("Toast", ToastCheckBox.IsChecked.ToBool().ToString());
         }
         private void WarnCodecCheckBox_Click(object sender, RoutedEventArgs e)
         {

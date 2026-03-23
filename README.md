@@ -42,9 +42,9 @@ To install SLBr, follow these steps:
     - Windows 10 & above.
 ## Thanks
 
-- **Chromium Embedded Framework (CEF)**: Thanks to Marshall A. Greenblatt.
-- **CefSharp Team**: Thanks to Amaitland and the CefSharp team.
-- **IPFS Implementation** (Not present in the latest rework): Thanks to Ranger Mauve for assisting with the implementation of IPFS in SLBr.
+- **Chromium Embedded Framework (CEF)**: Thanks to [Marshall Greenblatt](https://github.com/magreenblatt).
+- **CefSharp Team**: Thanks to [Amaitland](https://github.com/amaitland) and the CefSharp team.
+- **IPFS** (Not present in the latest rework): Thanks to [Mauve](https://github.com/rangermauve) for assisting with the implementation of IPFS in SLBr.
 
 ## License
 SLBr is licensed under the [GNU General Public License v3.0](https://github.com/SLT-World/SLBr/blob/main/LICENSE).

@@ -45,7 +45,7 @@ namespace SLBr.Pages
         private void Copy(object sender, RoutedEventArgs e)
         {
             Button _Button = sender as Button;
-            Clipboard.SetText((_Button.Tag as XmlNode).InnerText);
+            App.Instance.CopyToClipboard((_Button.Tag as XmlNode).InnerText, 0);
         }
 
         private void SearchTextBox_KeyUp(object sender, KeyEventArgs e)

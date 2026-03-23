@@ -594,7 +594,7 @@ namespace SLBr
                             if (Bitmap.CanFreeze)
                                 Bitmap.Freeze();
 
-                            Clipboard.SetImage(Bitmap);
+                            App.Instance.CopyToClipboard(Bitmap, 1);
                         }
                     }
                 }

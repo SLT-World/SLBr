@@ -83,11 +83,11 @@ namespace SLBr.Controls
                         IsPageMenu = false;
                         bool HasLinkText = !string.IsNullOrEmpty(e.LinkText?.Trim());
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open in new tab", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab(e.LinkUrl, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.LinkUrl, 0)) });
                         if (e.LinkUrl.StartsWith("mailto:"))
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue715", Header = "Copy email address", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl[7..])) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue715", Header = "Copy email address", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.LinkUrl[7..], 2)) });
                         if (HasLinkText)
-                            BrowserMenu.Items.Add(new MenuItem { /*IsEnabled = HasLinkText, */Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkText)) });
+                            BrowserMenu.Items.Add(new MenuItem { /*IsEnabled = HasLinkText, */Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.LinkText, 2)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share link", Command = new RelayCommand(_ => Share(e.LinkUrl)) });
                         if (HasLinkText)
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.LinkText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.LinkText.ReplaceLineEndings("").Trim())), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
@@ -96,7 +96,7 @@ namespace SLBr.Controls
                     {
                         IsPageMenu = false;
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText)), true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
-                        BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => Clipboard.SetText(e.SelectionText)) });
+                        BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SelectionText, 2)) });
                         BrowserMenu.Items.Add(new Separator());
                         BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                     }
@@ -111,10 +111,10 @@ namespace SLBr.Controls
                                 Header = "Copy image",
                                 Command = new RelayCommand(_ => {
                                     try { Utils.DownloadAndCopyImage(e.SourceUrl); }
-                                    catch { Clipboard.SetText(e.SourceUrl); }
+                                    catch { App.Instance.CopyToClipboard(e.SourceUrl, 1); }
                                 })
                             });
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy image link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy image link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SourceUrl, 0)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save image as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem
                             {
@@ -144,7 +144,7 @@ namespace SLBr.Controls
                         }
                         else if (e.MediaType == WebContextMenuMediaType.Video)
                         {
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy video link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy video link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SourceUrl, 0)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save video as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uee49", Header = "Picture in picture", Command = new RelayCommand(_ => WebView?.ExecuteScript("(async()=>{let playingVideo=Array.from(document.querySelectorAll('video')).find(v=>!v.paused&&!v.ended&&v.readyState>2);if (!playingVideo){playingVideo=document.querySelector('video');}if (playingVideo&&document.pictureInPictureEnabled){await playingVideo.requestPictureInPicture();}})();")) });
                         }

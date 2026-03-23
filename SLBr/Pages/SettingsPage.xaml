@@ -136,6 +136,7 @@
                                 <CheckBox IsEnabled="{Binding ElementName=PunycodeURLCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="HomographInfoBarCheckBox" Width="Auto" Click="HomographInfoBarCheckBox_Click" Content="Show homograph warning on suspicious pages"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="WaybackInfoBarCheckBox" Width="Auto" Click="WaybackInfoBarCheckBox_Click" Content="Show Wayback Machine bar on 404 pages"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="WarnCodecCheckBox" Width="Auto" Click="WarnCodecCheckBox_Click" Content="Warn when unsupported proprietary codecs are requested"/>
+                                <CheckBox Margin="0,0,0,10" x:Name="ToastCheckBox" Width="Auto" Click="ToastCheckBox_Click" Content="Enable toasts to present confirmation of user actions"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="FullscreenPopupCheckBox" Width="Auto" Click="FullscreenPopupCheckBox_Click" Content="Show fullscreen warning"/>
                                 <CheckBox x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
                                 <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not available when Lite Performance Mode is enabled</TextBlock>
@@ -612,10 +613,10 @@
                                     </ComboBox>
                                 </DockPanel>
                                 <CheckBox x:Name="ReduceDiskCheckBox" Click="ReduceDiskCheckBox_Click" Margin="0,0,0,10" Content="Reduce disk activity" Width="Auto"/>
-                                <CheckBox x:Name="StartupBoostCheckBox" Click="StartupBoostCheckBox_Click" Margin="0,0,0,10" Content="Startup Boost" Width="Auto"/>
+                                <CheckBox x:Name="StartupBoostCheckBox" Click="StartupBoostCheckBox_Click" Margin="0,0,0,10" Content="Startup boost" Width="Auto"/>
                                 <CheckBox x:Name="AMPCheckBox" Click="AMPCheckBox_Click" Margin="0,0,0,10" Content="Prefer AMP pages" Width="Auto"/>
                                 <CheckBox x:Name="ForceLazyCheckBox" Click="ForceLazyCheckBox_Click" Margin="0,0,0,10" Content="Force lazy loading" Width="Auto"/>
-                                <CheckBox x:Name="MobileViewCheckBox" Click="MobileViewCheckBox_Click" Content="View as Mobile Site" Width="Auto"/>
+                                <CheckBox x:Name="MobileViewCheckBox" Click="MobileViewCheckBox_Click" Content="View as mobile site" Width="Auto"/>
                                 <!--<CheckBox x:Name="ReduceMotionCheckBox" Click="ReduceMotionCheckBox_Click" Width="Auto" Content="Reduce Motion"/>-->
                             </StackPanel>
                         </GroupBox>

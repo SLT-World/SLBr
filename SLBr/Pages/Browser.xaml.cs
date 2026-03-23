@@ -320,7 +320,7 @@ namespace SLBr.Pages
                     else if (V1 == "1")
                     {
                         if (QRBitmap != null)
-                            Clipboard.SetImage(QRBitmap);
+                            App.Instance.CopyToClipboard(QRBitmap, 1);
                     }
                     else
                     {
@@ -355,6 +355,7 @@ namespace SLBr.Pages
                                 //MessageBox.Show(JsonSerializer.Serialize(ChromiumHistory));
                                 DisposeBrowserCore();
                                 CreateWebView(ChromiumHistory, WebEngineType.Chromium);
+                                Tab.ParentWindow.OpenToast("Web engine switched", "\xec6c");
                                 break;
                             case "1":
                                 if (WebView?.Engine == WebEngineType.ChromiumEdge)
@@ -380,6 +381,7 @@ namespace SLBr.Pages
                                 //MessageBox.Show(JsonSerializer.Serialize(EdgeHistory));
                                 DisposeBrowserCore();
                                 CreateWebView(EdgeHistory, WebEngineType.ChromiumEdge);
+                                Tab.ParentWindow.OpenToast("Web engine switched", "\xec6c");
                                 break;
                             case "2":
                                 if (WebView?.Engine == WebEngineType.Trident)
@@ -391,6 +393,7 @@ namespace SLBr.Pages
                                 List<WebNavigationEntry> TridentHistory = await WebView?.GetNavigationHistoryAsync() ?? [new(true, Address)];
                                 DisposeBrowserCore();
                                 CreateWebView(TridentHistory, WebEngineType.Trident);
+                                Tab.ParentWindow.OpenToast("Web engine switched", "\xec6c");
                                 break;
                             case "-1":
                                 WebEngineType Engine = (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine");
@@ -399,6 +402,7 @@ namespace SLBr.Pages
                                 List<WebNavigationEntry> DefaultHistory = await WebView?.GetNavigationHistoryAsync() ?? [new(true, Address)];
                                 DisposeBrowserCore();
                                 CreateWebView(DefaultHistory, Engine);
+                                Tab.ParentWindow.OpenToast("Web engine switched", "\xec6c");
                                 break;
                         }
                     });
@@ -1431,11 +1435,11 @@ namespace SLBr.Pages
                         IsPageMenu = false;
                         bool HasLinkText = !string.IsNullOrEmpty(e.LinkText?.Trim());
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open link in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.LinkUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
-                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl)) });
+                        BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.LinkUrl, 0)) });
                         if (e.LinkUrl.StartsWith("mailto:"))
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue715", Header = "Copy email address", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkUrl[7..])) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue715", Header = "Copy email address", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.LinkUrl[7..], 2)) });
                         if (HasLinkText)
-                            BrowserMenu.Items.Add(new MenuItem { /*IsEnabled = HasLinkText, */Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => Clipboard.SetText(e.LinkText)) });
+                            BrowserMenu.Items.Add(new MenuItem { /*IsEnabled = HasLinkText, */Icon = "\ue8c8", Header = "Copy link text", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.LinkText, 2)) });
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share link", Command = new RelayCommand(_ => Share(e.LinkUrl)) });
                         if (HasLinkText)
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.LinkText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.LinkText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
@@ -1444,7 +1448,7 @@ namespace SLBr.Pages
                     {
                         IsPageMenu = false;
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
-                        BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => Clipboard.SetText(e.SelectionText)) });
+                        BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SelectionText, 2)) });
                         BrowserMenu.Items.Add(new MenuItem
                         {
                             Icon = "\ue71b",
@@ -1455,7 +1459,7 @@ namespace SLBr.Pages
                                 string FragmentText = (await WebView.EvaluateScriptAsync(Scripts.TextFragmentRangeScript)).ToString();
                                 if (string.IsNullOrWhiteSpace(FragmentText))
                                     return;
-                                Clipboard.SetText($"{Address.Split('#')[0]}#:~:text={FragmentText}");
+                                App.Instance.CopyToClipboard($"{Address.Split('#')[0]}#:~:text={FragmentText}", 0);
                             })
                         });
                         BrowserMenu.Items.Add(new Separator());
@@ -1475,10 +1479,10 @@ namespace SLBr.Pages
                                 Command = new RelayCommand(_ =>
                                 {
                                     try { Utils.DownloadAndCopyImage(e.SourceUrl); }
-                                    catch { Clipboard.SetText(e.SourceUrl); }
+                                    catch { App.Instance.CopyToClipboard(e.SourceUrl, 1); }
                                 })
                             });
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy image link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy image link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SourceUrl, 0)) });
                             BrowserMenu.Items.Add(new MenuItem
                             {
                                 Icon = "\uF6Fa",
@@ -1510,7 +1514,7 @@ namespace SLBr.Pages
                             IsPageMenu = false;
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open video in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save video as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy video link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy video link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SourceUrl, 0)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uee49", Header = "Picture in picture", Command = new RelayCommand(_ => WebView?.ExecuteScript("(async()=>{let playingVideo=Array.from(document.querySelectorAll('video')).find(v=>!v.paused&&!v.ended&&v.readyState>2);if (!playingVideo){playingVideo=document.querySelector('video');}if (playingVideo&&document.pictureInPictureEnabled){await playingVideo.requestPictureInPicture();}})();")) });
                         }
                         else if (e.MediaType == WebContextMenuMediaType.Audio)
@@ -1518,7 +1522,7 @@ namespace SLBr.Pages
                             IsPageMenu = false;
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\uE8A7", Header = "Open audio in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(e.SourceUrl, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save audio as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
-                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy audio link", Command = new RelayCommand(_ => Clipboard.SetText(e.SourceUrl)) });
+                            BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy audio link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SourceUrl, 0)) });
                         }
                         //TODO: Canvas handling
                         /*else if (e.MediaType == WebContextMenuMediaType.Canvas)

@@ -108,8 +108,6 @@ namespace SLBr.Controls
             if (IncludeAllFiles)
                 FilterParts.Add("All Files (*.*)|*.*");
 
-
-            Clipboard.SetText(string.Join("|", FilterParts));
             OpenFileDialog Dialog = new OpenFileDialog
             {
                 Filter = string.Join("|", FilterParts),

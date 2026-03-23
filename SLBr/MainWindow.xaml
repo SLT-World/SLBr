@@ -140,6 +140,26 @@
                 </Border>
             </Popup>
         </Grid>
+        <Grid Background="Transparent" Grid.ColumnSpan="4" IsHitTestVisible="False" Grid.Row="1" VerticalAlignment="Top">
+            <Popup x:Name="ToastPopup" SnapsToDevicePixels="True" IsOpen="False" VerticalOffset="110" Placement="Center" IsHitTestVisible="True" MouseDown="ToastPopup_MouseDown" Focusable="False" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                <Border CornerRadius="5">
+                    <Border.Effect>
+                        <DropShadowEffect Direction="-75" ShadowDepth="1" Opacity="0.5" BlurRadius="15" Color="Gray"/>
+                    </Border.Effect>
+                    <Border Background="{StaticResource BorderBrush}" CornerRadius="5" Padding="10" Margin="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="5"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock VerticalAlignment="Center" x:Name="ToastIcon" FontSize="18" FontFamily="{StaticResource IconFontFamily}"/>
+                            <TextBlock VerticalAlignment="Center" Grid.Column="2" x:Name="ToastHeader" Foreground="{StaticResource FontBrush}"/>
+                        </Grid>
+                    </Border>
+                </Border>
+            </Popup>
+        </Grid>
         <Popup x:Name="TabPreviewPopup" SnapsToDevicePixels="True" Placement="Bottom" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade" VerticalOffset="-7.5" HorizontalOffset="-10">
             <Border CornerRadius="5">
                 <Border.Effect>

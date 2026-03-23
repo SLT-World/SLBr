@@ -1382,5 +1382,19 @@ namespace SLBr
             SnapLayoutVisible = false;
             DllUtils.SetForegroundWindow(Handle);
         }
+
+        private void ToastPopup_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            ToastPopup.IsOpen = false;
+        }
+
+        public void OpenToast(string Text, string Icon)
+        {
+            if (!bool.Parse(App.Instance.GlobalSave.Get("Toast")))
+                return;
+            ToastPopup.IsOpen = true;
+            ToastHeader.Text = Text;
+            ToastIcon.Text = Icon;
+        }
     }
 }
