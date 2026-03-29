@@ -1416,28 +1416,27 @@ namespace SLBr
             return "S";
         }
 
-        public static string GetSmartType(string Text)
+        public static int GetSmartType(string Text)
         {
             if (Utils.MathRegex().IsMatch(Text))
-                return "Math";
+                return 1;
             else if (Text.StartsWith("define ", StringComparison.OrdinalIgnoreCase))
-                return "Define";
+                return 2;
             else if (Text.StartsWith("weather ", StringComparison.OrdinalIgnoreCase))
-                return "Weather";
+                return 3;
             else if (Text.StartsWith("translate ", StringComparison.OrdinalIgnoreCase))
-                return "Translate";
+                return 4;
             else if (Utils.SimpleCurrencyRegex().IsMatch(Text))
-                return "Currency";
-            return "None";
+                return 5;
+            return -1;
         }
 
-        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, string Type, SolidColorBrush Color)
+        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, int Type, SolidColorBrush Color)
         {
             OmniSuggestion Suggestion = new() { Text = Text, Display = Text, Color = Color, Icon = "\xE721" };
-
             switch (Type)
             {
-                case "Math":
+                case 1:
                     try
                     {
                         Suggestion.SubText = $"= {new DataTable().Compute(Text, null)?.ToString()}";
@@ -1445,7 +1444,7 @@ namespace SLBr
                     }
                     catch { }
                     break;
-                case "Define":
+                case 2:
                     try
                     {
                         string Json = await MiniHttpClient.GetStringAsync($"https://api.dictionaryapi.dev/api/v2/entries/en/{Text.Substring(7).Trim()}");
@@ -1456,48 +1455,7 @@ namespace SLBr
                     }
                     catch { }
                     break;
-                case "Translate":
-                    Match TranslateMatch = Utils.TranslateRegex().Match(Text);
-                    if (TranslateMatch.Success)
-                    {
-                        Suggestion.SubText = "- Unavailable";
-                        Suggestion.Icon = "\xE8C1";
-                        string LanguageInput = TranslateMatch.Groups["Lang"].Value.Trim().ToLowerInvariant();
-                        string LanguageCode = (LanguageInput.Length == 2) ? LanguageInput : AllLocales.FirstOrDefault(x => x.Value.Contains(LanguageInput, StringComparison.OrdinalIgnoreCase)).Key;
-                        if (!string.IsNullOrEmpty(LanguageCode))
-                        {
-                            try
-                            {
-                                string Response = await MiniHttpClient.GetStringAsync($"https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl={LanguageCode}&q={Uri.EscapeDataString(TranslateMatch.Groups["Phrase"].Value.Trim())}");
-                                Suggestion.SubText = $"- {JsonDocument.Parse(Response).RootElement[0][0][0].GetString()}";
-                            }
-                            catch { }
-                        }
-                    }
-                    break;
-                case "Currency":
-                    Match CurrencyMatch = Utils.CurrencyRegex().Match(Text);
-                    if (CurrencyMatch.Success)
-                    {
-                        Suggestion.SubText = "- Unavailable";
-                        Suggestion.Icon = "\xe8ee";
-                        string Amount = CurrencyMatch.Groups["Amount"].Value;
-                        string From = CurrencyMatch.Groups["From"].Value.ToUpper();
-                        string To = CurrencyMatch.Groups["To"].Value.ToUpper();
-                        try
-                        {
-                            string Response = await MiniHttpClient.GetStringAsync($"https://api.frankfurter.app/latest?amount={Amount}&from={From}&to={To}");
-
-                            using JsonDocument _JsonDocument = JsonDocument.Parse(Response);
-                            JsonElement Root = _JsonDocument.RootElement;
-
-                            if (Root.TryGetProperty("rates", out JsonElement Rates) && Rates.TryGetProperty(To, out JsonElement Output))
-                                Suggestion.SubText = $"- {Amount} {From} ≈ {Output.GetDouble():0.00} {To}";
-                        }
-                        catch { }
-                    }
-                    break;
-                case "Weather":
+                case 3:
                     Suggestion.Icon = "\xE9CA";
                     string Location = Regex.Replace(Text, @"^weather(\s+in)?\s+", string.Empty, RegexOptions.IgnoreCase).Trim();
                     try
@@ -1520,6 +1478,47 @@ namespace SLBr
                     }
                     catch (OperationCanceledException) { }
                     catch { Suggestion.SubText = "- Unavailable"; }
+                    break;
+                case 4:
+                    Match TranslateMatch = Utils.TranslateRegex().Match(Text);
+                    if (TranslateMatch.Success)
+                    {
+                        Suggestion.SubText = "- Unavailable";
+                        Suggestion.Icon = "\xE8C1";
+                        string LanguageInput = TranslateMatch.Groups["Lang"].Value.Trim().ToLowerInvariant();
+                        string LanguageCode = (LanguageInput.Length == 2) ? LanguageInput : AllLocales.FirstOrDefault(x => x.Value.Contains(LanguageInput, StringComparison.OrdinalIgnoreCase)).Key;
+                        if (!string.IsNullOrEmpty(LanguageCode))
+                        {
+                            try
+                            {
+                                string Response = await MiniHttpClient.GetStringAsync($"https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl={LanguageCode}&q={Uri.EscapeDataString(TranslateMatch.Groups["Phrase"].Value.Trim())}");
+                                Suggestion.SubText = $"- {JsonDocument.Parse(Response).RootElement[0][0][0].GetString()}";
+                            }
+                            catch { }
+                        }
+                    }
+                    break;
+                case 5:
+                    Match CurrencyMatch = Utils.CurrencyRegex().Match(Text);
+                    if (CurrencyMatch.Success)
+                    {
+                        Suggestion.SubText = "- Unavailable";
+                        Suggestion.Icon = "\xe8ee";
+                        string Amount = CurrencyMatch.Groups["Amount"].Value;
+                        string From = CurrencyMatch.Groups["From"].Value.ToUpper();
+                        string To = CurrencyMatch.Groups["To"].Value.ToUpper();
+                        try
+                        {
+                            string Response = await MiniHttpClient.GetStringAsync($"https://api.frankfurter.app/latest?amount={Amount}&from={From}&to={To}");
+
+                            using JsonDocument _JsonDocument = JsonDocument.Parse(Response);
+                            JsonElement Root = _JsonDocument.RootElement;
+
+                            if (Root.TryGetProperty("rates", out JsonElement Rates) && Rates.TryGetProperty(To, out JsonElement Output))
+                                Suggestion.SubText = $"- {Amount} {From} ≈ {Output.GetDouble():0.00} {To}";
+                        }
+                        catch { }
+                    }
                     break;
             }
             return Suggestion;

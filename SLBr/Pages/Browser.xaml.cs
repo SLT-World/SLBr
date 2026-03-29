@@ -4082,8 +4082,8 @@ namespace SLBr.Pages
             if (!OmniBox.IsDropDownOpen)
                 return;
             string Text = OmniBox.Text.Trim();
-            string Type = App.GetSmartType(Text);
-            if (Type == "None")
+            int Type = App.GetSmartType(Text);
+            if (Type == -1)
                 return;
             SmartSuggestionCancellation?.Cancel();
             SmartSuggestionCancellation = new CancellationTokenSource();
