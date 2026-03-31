@@ -962,7 +962,6 @@ namespace SLBr
         private DispatcherTimer FullscreenPopupTimer;
         public void Fullscreen(bool Fullscreen, Browser BrowserView = null)
         {
-            //TODO: Fix.
             IsFullscreen = Fullscreen;
             BrowserView ??= GetTab().Content;
             if (BrowserView != null)
@@ -974,7 +973,7 @@ namespace SLBr
                     TabsUI.Margin = new Thickness(0, -45, 0, 0);
                     CaptionHeight.Height = new GridLength(0);
                     BrowserView.ToolBar.Visibility = Visibility.Collapsed;
-                    //WARNING: Removing these WindowState, Fullscreen will not be able to cover taskbar
+                    //WARNING: The removal of the following WindowState will result in the taskbar being visible.
                     WindowState = WindowState.Normal;
                     WindowStyle = WindowStyle.ToolWindow;
                     WindowState = WindowState.Maximized;

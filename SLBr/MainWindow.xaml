@@ -117,7 +117,16 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Image x:Name="CaptionIcon" Grid.Column="1" Width="17.5" Height="17.5" HorizontalAlignment="Right" Source="{Binding ElementName=TabsUI, Path=SelectedItem.Icon, TargetNullValue='Resources/SLBr.ico'}"/>
+            <Grid x:Name="CaptionIcon" Grid.Column="1" Width="17.5" Height="17.5" HorizontalAlignment="Right">
+                <Image RenderOptions.BitmapScalingMode="Fant" Stretch="Uniform" Source="{Binding ElementName=TabsUI, Path=SelectedItem.Icon, TargetNullValue='Resources/SLBr.ico'}"/>
+                <Grid.OpacityMask>
+                    <VisualBrush>
+                        <VisualBrush.Visual>
+                            <Border Height="{Binding ElementName=CaptionIcon, Path=ActualHeight}" Width="{Binding ElementName=CaptionIcon, Path=ActualWidth}" Background="White" CornerRadius="2.5"/>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.OpacityMask>
+            </Grid>
             <TextBlock TextTrimming="CharacterEllipsis" x:Name="CaptionTitle" Grid.Column="2" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource FontBrush}" Text="{Binding ElementName=TabsUI, Path=SelectedItem.Header, TargetNullValue='SLBr'}"/>
         </Grid>
         <Button Height="Auto" VerticalAlignment="Stretch" Click="MinimizeButton_Click" Grid.Column="1" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" Content="&#xe921;"/>
@@ -134,7 +143,7 @@
             </TabControl.ContentTemplate>
         </WinUI:WinUITabControl>
         <Grid x:Name="FullscreenContainer" Grid.RowSpan="2" Grid.ColumnSpan="4" Visibility="Visible">
-            <Popup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
+            <Popup  SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" StaysOpen="False" PopupAnimation="Fade">
                 <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Opacity="0.8">
                     <TextBlock FontSize="25" Text="To exit fullscreen, press F11 or Esc" Margin="7.5" Foreground="{StaticResource FontBrush}"/>
                 </Border>

@@ -35,7 +35,7 @@ namespace SLBr
                 return SelfHost.Main(args);
             else if (args.Length > 0 && args[0].StartsWith("--app="))
             {
-                //TODO: Switchable web views for Web Apps
+                //TODO: Switchable web views for Web Apps.
                 CefSettings Settings = new CefSettings();
                 Settings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
 

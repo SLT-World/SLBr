@@ -22,6 +22,8 @@ namespace SLBr.Pages
         {
             BrowserView = _BrowserView;
         }
+        
+        public void OnNavigated() { }
 
         public void Dispose()
         {

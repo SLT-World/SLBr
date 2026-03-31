@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
@@ -24,6 +25,7 @@ namespace SLBr.Pages
     public interface IPageOverlay : IDisposable
     {
         void Initialize(Browser _BrowserView);
+        void OnNavigated();
         void ApplyTheme(Theme _Theme);
     }
 
@@ -72,6 +74,10 @@ namespace SLBr.Pages
         public void Initialize(Browser _BrowserView)
         {
             BrowserView = _BrowserView;
+        }
+
+        public void OnNavigated()
+        {
             if (BrowserView != null)
             {
                 string[] UrlParts = BrowserView.Address.Split("#");
@@ -91,11 +97,11 @@ namespace SLBr.Pages
                             if (AppearanceTab.Visibility == Visibility.Visible)
                                 SettingsTabControl.SelectedItem = AppearanceTab;
                             break;
-                        case "privacy%20&%20security":
+                        case "privacy%20%26%20security":
                             if (PrivacyTab.Visibility == Visibility.Visible)
                                 SettingsTabControl.SelectedItem = PrivacyTab;
                             break;
-                        case "search%20&%20services":
+                        case "search%20%26%20services":
                             if (ServicesTab.Visibility == Visibility.Visible)
                                 SettingsTabControl.SelectedItem = ServicesTab;
                             break;
@@ -111,7 +117,7 @@ namespace SLBr.Pages
                             if (DownloadsTab.Visibility == Visibility.Visible)
                                 SettingsTabControl.SelectedItem = DownloadsTab;
                             break;
-                        case "exxtension":
+                        case "extension":
                             if (ExtensionsTab.Visibility == Visibility.Visible)
                                 SettingsTabControl.SelectedItem = ExtensionsTab;
                             break;
@@ -1501,7 +1507,13 @@ namespace SLBr.Pages
             {
                 TabItem SelectedTabItem = (TabItem)SettingsTabControl.SelectedItem;
                 if (SelectedTabItem != null)
-                    BrowserView.WebView.ExecuteScript($"history.pushState(null, \"\", \"#{SelectedTabItem.Header.ToString().ToLowerInvariant()}\");");
+                {
+                    string Name = SelectedTabItem.Header.ToString().ToLowerInvariant();
+                    Debug.WriteLine($"slbr://settings/#{Uri.EscapeDataString(Name)}");
+                    Debug.WriteLine(BrowserView.Address);
+                    if (BrowserView.Address != $"slbr://settings/#{Uri.EscapeDataString(Name)}")
+                        BrowserView.WebView.ExecuteScript($"history.pushState(null, \"\", \"#{Uri.EscapeDataString(Name)}\");");
+                }
             }
         }
     }

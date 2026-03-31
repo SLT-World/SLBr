@@ -1524,7 +1524,7 @@ namespace SLBr.Pages
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save audio as", Command = new RelayCommand(_ => WebView?.Download(e.SourceUrl)) });
                             BrowserMenu.Items.Add(new MenuItem { Icon = "\ue71b", Header = "Copy audio link", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SourceUrl, 0)) });
                         }
-                        //TODO: Canvas handling
+                        //TODO: Implement canvas handling.
                         /*else if (e.MediaType == WebContextMenuMediaType.Canvas)
                         {
                             IsPageMenu = false;
@@ -1544,7 +1544,8 @@ namespace SLBr.Pages
             }
             if (e.IsEditable)
             {
-                //Doesn't work at all
+                //TODO: Utilize engine spell checker.
+                //Dysfunctional spell check.
                 /*if (e.SpellCheck && e.DictionarySuggestions.Count != 0)
                 {
                     foreach (string Suggestion in e.DictionarySuggestions)
@@ -1936,6 +1937,8 @@ namespace SLBr.Pages
                     CoreContainer.Children.Add(PageOverlayControl);
                 }
                 PageOverlayControl?.Visibility = Visibility.Visible;
+                //WARNING: Intentional, allows navigation.
+                PageOverlay.OnNavigated();
             }
             else
             {
@@ -2132,11 +2135,10 @@ namespace SLBr.Pages
                     else
                         ReaderModeButton.Visibility = Visibility.Collapsed;
                     SiteInformationPopupButton.IsEnabled = true;
-                    //TODO: Investigate movement to Unfocus for optimization
+                    //TODO: Investigate relocation to Unfocus for optimization.
                     if (App.Instance.TabPreview && WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null && Tab == Tab.ParentWindow.GetTab() && WebView?.Control?.Visibility != Visibility.Collapsed)
                     {
                         BitmapImage _BitmapImage = new();
-
                         var Width = (int)CoreContainerSizeEmulator.ActualWidth;
                         var Height = (int)CoreContainerSizeEmulator.ActualHeight;
                         using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = Height, Width = Width })))
@@ -3484,7 +3486,7 @@ namespace SLBr.Pages
                         HostBuffer.Append('.');
                 }
                 Host = HostBuffer.ToString().AsSpan();
-                /*TODO: Replace with deception warning page*
+                /*TODO: Replace with deception warning page.
                  * Flag suspicious punycode URLs in WebRiskHandler?
                  * Obstructive to user experience.
                  * Consider opposite, replace warning page with infobox?
@@ -4163,7 +4165,7 @@ namespace SLBr.Pages
         Window ExtensionWindow;
         private void LoadExtensionPopup(object sender, RoutedEventArgs e)
         {
-            //TODO: Use PopupBrowser instead
+            //TODO: Utilize PopupBrowser.
             Extension _Extension = App.Instance.Extensions.FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             if (_Extension == null)
                 return;
