@@ -919,8 +919,10 @@ namespace SLBr
         }
         public void CreateGroup()
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Create Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = "" }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Colors.White) } }, "\xF5ED");
-            _DynamicDialogWindow.Topmost = true;
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Create Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = "" }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Colors.White) } }, "\xF5ED")
+            {
+                Topmost = true
+            };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
@@ -944,8 +946,10 @@ namespace SLBr
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             TabGroup Group = _Tab.TabGroup;
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Group.Header }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Group.Background.Color) } }, "\xe70f");
-            _DynamicDialogWindow.Topmost = true;
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Group.Header }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Group.Background.Color) } }, "\xe70f")
+            {
+                Topmost = true
+            };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();

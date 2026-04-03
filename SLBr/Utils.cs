@@ -579,23 +579,20 @@ namespace SLBr
         {
             try
             {
-                using (HttpClient _HttpClient = new())
+                byte[] ImageData = await App.MiniHttpClient.GetByteArrayAsync(ImageUrl);
+                if (ImageData != null)
                 {
-                    byte[] ImageData = await _HttpClient.GetByteArrayAsync(ImageUrl);
-                    if (ImageData != null)
+                    using (MemoryStream stream = new(ImageData))
                     {
-                        using (MemoryStream stream = new(ImageData))
-                        {
-                            BitmapImage Bitmap = new();
-                            Bitmap.BeginInit();
-                            Bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            Bitmap.StreamSource = stream;
-                            Bitmap.EndInit();
-                            if (Bitmap.CanFreeze)
-                                Bitmap.Freeze();
+                        BitmapImage Bitmap = new();
+                        Bitmap.BeginInit();
+                        Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        Bitmap.StreamSource = stream;
+                        Bitmap.EndInit();
+                        if (Bitmap.CanFreeze)
+                            Bitmap.Freeze();
 
-                            App.Instance.CopyToClipboard(Bitmap, 1);
-                        }
+                        App.Instance.CopyToClipboard(Bitmap, 1);
                     }
                 }
             }
@@ -679,22 +676,19 @@ namespace SLBr
 
         public static string? GetAMPUrl(string Url)
         {
-            using (HttpClient Client = new())
+            string Payload = $"{{\"urls\":\"{Url}\"}}";
+            try
             {
-                string Payload = $"{{\"urls\":\"{Url}\"}}";
-                try
-                {
-                    Client.DefaultRequestHeaders.Add("X-Goog-Api-Key", SECRETS.AMP_API_KEY);
-                    var Response = Client.PostAsync(App.AMPEndpoint, new StringContent(Payload, Encoding.Default, "application/json")).Result;
-                    if (!Response.IsSuccessStatusCode) return null;
-                    var Json = Response.Content.ReadFromJsonAsync<JsonElement>().Result;
-                    if (!Json.TryGetProperty("ampUrls", out var AMPUrls) || AMPUrls.GetArrayLength() == 0)
-                        return null;
-                    return AMPUrls[0].GetProperty("ampUrl").GetString();
-                }
-                catch { }
-                return null;
+                App.MiniHttpClient.DefaultRequestHeaders.Add("X-Goog-Api-Key", SECRETS.AMP_API_KEY);
+                var Response = App.MiniHttpClient.PostAsync(App.AMPEndpoint, new StringContent(Payload, Encoding.Default, "application/json")).Result;
+                if (!Response.IsSuccessStatusCode) return null;
+                var Json = Response.Content.ReadFromJsonAsync<JsonElement>().Result;
+                if (!Json.TryGetProperty("ampUrls", out var AMPUrls) || AMPUrls.GetArrayLength() == 0)
+                    return null;
+                return AMPUrls[0].GetProperty("ampUrl").GetString();
             }
+            catch { }
+            return null;
 
             //using HttpClient Client = new HttpClient();
             /*Client.DefaultRequestHeaders.Add("X-Goog-Api-Key", SECRETS.AMPs[App.MiniRandom.Next(SECRETS.AMPs.Count)]);

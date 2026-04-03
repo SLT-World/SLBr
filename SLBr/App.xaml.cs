@@ -1460,21 +1460,17 @@ namespace SLBr
                     string Location = Regex.Replace(Text, @"^weather(\s+in)?\s+", string.Empty, RegexOptions.IgnoreCase).Trim();
                     try
                     {
-                        string WeatherEndpoint = $"https://api.openweathermap.org/data/2.5/weather?lang=en&q={Location}&appid={SECRETS.WEATHER_API_KEY}&units=metric";
-                        using (HttpClient Client = new())
+                        HttpResponseMessage Response = MiniHttpClient.GetAsync($"https://api.openweathermap.org/data/2.5/weather?lang=en&q={Location}&appid={SECRETS.WEATHER_API_KEY}&units=metric").Result;
+                        if (Response.IsSuccessStatusCode)
                         {
-                            HttpResponseMessage Response = Client.GetAsync(WeatherEndpoint).Result;
-                            if (Response.IsSuccessStatusCode)
-                            {
-                                JsonElement Data = JsonDocument.Parse(Response.Content.ReadAsStringAsync().Result).RootElement;
-                                double Temperature = Data.GetProperty("main").GetProperty("temp").GetDouble();
-                                string Description = Utils.CapitalizeAllFirstCharacters(Data.GetProperty("weather")[0].GetProperty("description").GetString());
+                            JsonElement Data = JsonDocument.Parse(Response.Content.ReadAsStringAsync().Result).RootElement;
+                            double Temperature = Data.GetProperty("main").GetProperty("temp").GetDouble();
+                            string Description = Utils.CapitalizeAllFirstCharacters(Data.GetProperty("weather")[0].GetProperty("description").GetString());
 
-                                Suggestion.SubText = $"{Temperature} °C | {Description}";
-                            }
-                            else
-                                Suggestion.SubText = $"- No data";
+                            Suggestion.SubText = $"{Temperature} °C | {Description}";
                         }
+                        else
+                            Suggestion.SubText = $"- No data";
                     }
                     catch (OperationCanceledException) { }
                     catch { Suggestion.SubText = "- Unavailable"; }
@@ -1526,7 +1522,16 @@ namespace SLBr
 
         public bool Background = false;
 
-        public static HttpClient MiniHttpClient = new(new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All });
+        public static HttpClient MiniHttpClient = new(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.All,
+            EnableMultipleHttp2Connections = true,
+            EnableMultipleHttp3Connections = true,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15)
+        })
+        {
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+        };
         /*public static HttpClient MimicHttpClient = new(new SocketsHttpHandler
         {
             PooledConnectionLifetime = TimeSpan.FromMinutes(2),
@@ -2081,6 +2086,9 @@ Inner Exception: {7}";
         {
             GlobalSave.Set("WebRiskService", Service);
             WebRiskService = (WebRiskHandler.SecurityService)Service;
+            var ToRemove = WebViewManager.OverrideRequests.Where(i => !string.IsNullOrEmpty(i.Value.Error)).Select(i => i.Key);
+            foreach (var Key in ToRemove)
+                WebViewManager.UnregisterOverrideRequest(Key);
         }
         public void SetTrimURL(bool Toggle)
         {
@@ -4202,8 +4210,10 @@ Inner Exception: {7}";
                     }
                 }
             }
-            InformationDialogWindow InfoWindow = new("Information", $"Settings", "All browsing data has been cleared.", "\ue713");
-            InfoWindow.Topmost = true;
+            InformationDialogWindow InfoWindow = new("Information", $"Settings", "All browsing data has been cleared.", "\ue713")
+            {
+                Topmost = true
+            };
             InfoWindow.ShowDialog();
         }
 

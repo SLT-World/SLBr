@@ -433,14 +433,12 @@ namespace SLBr
         {
             try
             {
-                string ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
                 Uri _Uri = new Uri(Url);
                 string Host = _Uri.Host.ToLower();
-                string Page = _Uri.AbsolutePath.TrimStart('/');
-
                 string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris", "favourites"];
                 if (SLBrURLs.Contains(Host))
                 {
+                    string Page = _Uri.AbsolutePath.TrimStart('/');
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;
                     if (string.IsNullOrWhiteSpace(Page) && Host == "newtab")
                     {
@@ -449,7 +447,7 @@ namespace SLBr
                         if (Extra == "1")
                             FileName = "private.html";
                     }
-                    string FilePath = Path.Combine(ResourcesPath, FileName);
+                    string FilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", FileName);
                     if (!File.Exists(FilePath))
                         return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
                     string MimeType = Utils.GetFileExtension(FilePath) switch
@@ -472,7 +470,7 @@ namespace SLBr
             }
             catch (Exception ex)
             {
-                return ProtocolResponse.FromString($"<h1>Error</h1><pre>{System.Net.WebUtility.HtmlEncode(ex.Message)}</pre>", "text/html", 0, WebErrorCode.Failed);
+                return ProtocolResponse.FromString($"<h1>Error</h1><pre>{WebUtility.HtmlEncode(ex.Message)}</pre>", "text/html", 0, WebErrorCode.Failed);
             }
         }
         public static ProtocolResponse OverrideHandler(string Url, string Extra = "")
@@ -494,17 +492,15 @@ namespace SLBr
         {
             if (Uri.TryCreate(Url, UriKind.Absolute, out Uri URI))
             {
-                RequestOverrideItem Entry = new RequestOverrideItem(Data, MimeType, Uses, Error);
+                RequestOverrideItem Entry = new(Data, MimeType, Uses, Error);
                 OverrideRequests.AddOrUpdate(URI.AbsoluteUri, Entry, (k, v) => Entry);
                 return true;
             }
             return false;
         }
 
-        public static bool UnregisterOverrideRequest(string Url)
-        {
-            return OverrideRequests.TryRemove(Url, out _);
-        }
+        public static bool UnregisterOverrideRequest(string Url) =>
+            OverrideRequests.TryRemove(Url, out _);
         public static ConcurrentDictionary<string, RequestOverrideItem> OverrideRequests = new ConcurrentDictionary<string, RequestOverrideItem>(StringComparer.OrdinalIgnoreCase);
     }
 
@@ -565,7 +561,7 @@ namespace SLBr
         //https://www.chromium.org/developers/how-tos/run-chromium-with-flags/
         public string BuildFlags(bool IncludeJavaScript = false)
         {
-            StringBuilder _StringBuilder = new StringBuilder();
+            StringBuilder _StringBuilder = new();
             foreach (var Flag in Flags)
             {
                 if (string.IsNullOrWhiteSpace(Flag.Value))
@@ -619,21 +615,25 @@ namespace SLBr
         public void Updated(WebDownloadItem Item) => DownloadUpdated?.RaiseUIAsync(Item);
         public void Completed(WebDownloadItem Item) => DownloadCompleted?.RaiseUIAsync(Item);
 
+        private static HttpClient? DownloadHttpClient;
+
         public async Task StartDownloadAsync(string Url, string TargetPath, bool ShowDialog, string DialogFilter = "")
         {
             if (ShowDialog)
             {
-                SaveFileDialog SaveDialog = new SaveFileDialog();
-                SaveDialog.Filter = string.IsNullOrEmpty(DialogFilter) ? "All Files (*.*)|*.*" : DialogFilter;
-                //https://learn.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/dd459587(v=vs.95) Guide on proper file dialog wild cards
-                SaveDialog.InitialDirectory = WebViewManager.Settings.DownloadFolderPath;
-                SaveDialog.FileName = Path.GetFileName(Url);
+                SaveFileDialog SaveDialog = new SaveFileDialog
+                {
+                    Filter = string.IsNullOrEmpty(DialogFilter) ? "All Files (*.*)|*.*" : DialogFilter,
+                    //https://learn.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/dd459587(v=vs.95) Guide on proper file dialog wild cards
+                    InitialDirectory = WebViewManager.Settings.DownloadFolderPath,
+                    FileName = Path.GetFileName(Url)
+                };
                 if (SaveDialog.ShowDialog() == true)
                     TargetPath = SaveDialog.FileName;
                 else
                     return;
             }
-            var Item = new WebDownloadItem
+            WebDownloadItem Item = new()
             {
                 ID = Guid.NewGuid().ToString(),
                 Url = Url,
@@ -646,13 +646,23 @@ namespace SLBr
 
             try
             {
-                using var Client = new HttpClient();
-                using var Response = await Client.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
+                DownloadHttpClient ??= new(new SocketsHttpHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.All,
+                    EnableMultipleHttp2Connections = true,
+                    EnableMultipleHttp3Connections = true,
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(15),
+                    ConnectTimeout = TimeSpan.FromSeconds(30)
+                })
+                {
+                    DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+                };
+                using var Response = await DownloadHttpClient.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
 
                 Response.EnsureSuccessStatusCode();
                 Item.TotalBytes = Response.Content.Headers.ContentLength ?? -1;
 
-                await using FileStream _FileStream = new FileStream(TargetPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                await using FileStream _FileStream = new(TargetPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 await using var Stream = await Response.Content.ReadAsStreamAsync();
 
                 var Buffer = new byte[8192];

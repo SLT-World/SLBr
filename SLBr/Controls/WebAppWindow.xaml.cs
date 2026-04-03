@@ -129,8 +129,10 @@ namespace SLBr.Controls
             {
                 using (callback)
                 {
-                    CredentialsDialogWindow _CredentialsDialogWindow = new CredentialsDialogWindow($"Sign in to {host}", "\uec19");
-                    _CredentialsDialogWindow.Topmost = true;
+                    CredentialsDialogWindow _CredentialsDialogWindow = new CredentialsDialogWindow($"Sign in to {host}", "\uec19")
+                    {
+                        Topmost = true
+                    };
                     if (_CredentialsDialogWindow.ShowDialog().ToBool())
                         callback.Continue(_CredentialsDialogWindow.Username, _CredentialsDialogWindow.Password);
                     else

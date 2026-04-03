@@ -3038,11 +3038,11 @@ namespace SLBr
         {
             try
             {
-                FieldInfo fiComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
-                if (fiComWebBrowser == null) return;
-                object objComWebBrowser = fiComWebBrowser.GetValue(Browser);
-                if (objComWebBrowser == null) return;
-                objComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, [true]);
+                FieldInfo FIComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (FIComWebBrowser == null) return;
+                object ComWebBrowser = FIComWebBrowser.GetValue(Browser);
+                if (ComWebBrowser == null) return;
+                ComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, ComWebBrowser, [true]);
             }
             catch { }
             //if (Settings.AudioListener)
@@ -3052,11 +3052,6 @@ namespace SLBr
         private async void Loaded(object sender, RoutedEventArgs e)
         {
             Browser.Loaded -= Loaded;
-            /*FieldInfo fiComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (fiComWebBrowser == null) return;
-            object objComWebBrowser = fiComWebBrowser.GetValue(Browser);
-            if (objComWebBrowser == null) return;
-            objComWebBrowser.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, [true]);*/
             IsBrowserInitialized = true;
             IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
 

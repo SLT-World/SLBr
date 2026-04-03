@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO.Compression;
+using System.Net;
 using System.Runtime.InteropServices;
 
 namespace Updater
@@ -71,12 +72,18 @@ namespace Updater
 
                 if (File.Exists(TemporaryZip))
                     File.Delete(TemporaryZip);
-                using (HttpClient Client = new(new HttpClientHandler
+                using (HttpClient Client = new(new SocketsHttpHandler
                 {
-                    AutomaticDecompression = System.Net.DecompressionMethods.All,
+                    AutomaticDecompression = DecompressionMethods.All,
+                    EnableMultipleHttp2Connections = true,
+                    EnableMultipleHttp3Connections = true,
                     AllowAutoRedirect = true,
-                    MaxConnectionsPerServer = 256
-                }))
+                    MaxConnectionsPerServer = 256,
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(15)
+                })
+                {
+                    DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+                })
                 {
                     Client.Timeout = TimeSpan.FromMinutes(15);
                     Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36");

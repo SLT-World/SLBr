@@ -212,8 +212,10 @@ namespace SLBr.Controls
                 return;
             if (Item.ToolTip?.ToString() == "Custom")
             {
-                ColorPickerWindow Picker = new(Utils.HexToColor(Field.Value));
-                Picker.Topmost = true;
+                ColorPickerWindow Picker = new(Utils.HexToColor(Field.Value))
+                {
+                    Topmost = true
+                };
                 Color Value = Picker.ShowDialog() == true ? Picker.UserInput.Color : Utils.HexToColor(Field.Value);
                 Field.Value = Utils.ColorToHex(Value);
                 Item.Background = new SolidColorBrush(Value);

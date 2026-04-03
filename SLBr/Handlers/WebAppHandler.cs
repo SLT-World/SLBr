@@ -74,25 +74,22 @@ namespace SLBr.Handlers
             {
                 try
                 {
-                    using (HttpClient Client = new HttpClient())
+                    using MemoryStream Stream = new MemoryStream(await App.MiniHttpClient.GetByteArrayAsync(Best.Source));
+                    var Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                    var Frame = Decoder.Frames[0];
+                    if (Frame.CanFreeze)
+                        Frame.Freeze();
+                    try
                     {
-                        using MemoryStream Stream = new MemoryStream(await Client.GetByteArrayAsync(Best.Source));
-                        var Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                        var Frame = Decoder.Frames[0];
-                        if (Frame.CanFreeze)
-                            Frame.Freeze();
-                        try
+                        using (FileStream ImageStream = new FileStream(ImagePath, FileMode.Create))
                         {
-                            using (FileStream ImageStream = new FileStream(ImagePath, FileMode.Create))
-                            {
-                                BitmapEncoder Encoder = new PngBitmapEncoder();
-                                Encoder.Frames.Add(Frame);
-                                Encoder.Save(ImageStream);
-                                SaveAsIcon(Frame, ImagePath);
-                            }
+                            BitmapEncoder Encoder = new PngBitmapEncoder();
+                            Encoder.Frames.Add(Frame);
+                            Encoder.Save(ImageStream);
+                            SaveAsIcon(Frame, ImagePath);
                         }
-                        catch { }
                     }
+                    catch { }
                 }
                 catch { }
             }
@@ -113,21 +110,18 @@ namespace SLBr.Handlers
         public static async Task<WebAppManifest?> FetchManifestAsync(string PageUrl, string ManifestUrl)
         {
             string ResolvedUrl = Utils.ResolveUrl(PageUrl, ManifestUrl);
-            using (HttpClient Client = new HttpClient())
+            string Json = await App.MiniHttpClient.GetStringAsync(ResolvedUrl);
+            WebAppManifest? Manifest = JsonSerializer.Deserialize<WebAppManifest>(Json, new JsonSerializerOptions
             {
-                string Json = await Client.GetStringAsync(ResolvedUrl);
-                WebAppManifest? Manifest = JsonSerializer.Deserialize<WebAppManifest>(Json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-                if (Manifest != null)
-                {
-                    Manifest.StartUrl = Utils.ResolveUrl(PageUrl, string.IsNullOrWhiteSpace(Manifest.StartUrl) ? "/" : Manifest.StartUrl);
-                    foreach (ManifestIcon _ManifestIcon in Manifest.Icons ?? new())
-                        _ManifestIcon.Source = Utils.ResolveUrl(ResolvedUrl, string.IsNullOrWhiteSpace(_ManifestIcon.Source) ? "/" : _ManifestIcon.Source);
-                }
-                return Manifest;
+                PropertyNameCaseInsensitive = true
+            });
+            if (Manifest != null)
+            {
+                Manifest.StartUrl = Utils.ResolveUrl(PageUrl, string.IsNullOrWhiteSpace(Manifest.StartUrl) ? "/" : Manifest.StartUrl);
+                foreach (ManifestIcon _ManifestIcon in Manifest.Icons ?? new())
+                    _ManifestIcon.Source = Utils.ResolveUrl(ResolvedUrl, string.IsNullOrWhiteSpace(_ManifestIcon.Source) ? "/" : _ManifestIcon.Source);
             }
+            return Manifest;
         }
 
         public static WebAppManifest? LoadManifest(string Json)

@@ -51,8 +51,10 @@ namespace SLBr.Pages
                         new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
                 },
                 "\ue946"
-            );
-            _DynamicDialogWindow.Topmost = true;
+            )
+            {
+                Topmost = true
+            };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
@@ -98,8 +100,10 @@ namespace SLBr.Pages
                 ];
                 if (Favourite.Type == "url")
                     Inputs.Add(new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url });
-                DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite", Inputs, "\ue70f");
-                _DynamicDialogWindow.Topmost = true;
+                DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite", Inputs, "\ue70f")
+                {
+                    Topmost = true
+                };
                 if (_DynamicDialogWindow.ShowDialog() == true)
                 {
                     Favourite.Name = _DynamicDialogWindow.InputFields[0].Value;

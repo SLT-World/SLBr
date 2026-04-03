@@ -81,12 +81,14 @@ namespace SLBr.Controls
 
         private void NewProfile(object sender, MouseButtonEventArgs e)
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Profile", new List<InputField> { new InputField { Name = "Username", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B");
-            _DynamicDialogWindow.Topmost = true;
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Profile", new List<InputField> { new InputField { Name = "Username", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B")
+            {
+                Topmost = true
+            };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
-                Profile NewProfile = App.Instance.Profiles.FirstOrDefault(i => i.Name == Input);
+                Profile? NewProfile = App.Instance.Profiles.FirstOrDefault(i => i.Name == Input);
                 if (NewProfile == null)
                 {
                     bool HasDefault = App.Instance.Profiles.Any(i => i.Default);
@@ -118,8 +120,10 @@ namespace SLBr.Controls
         {
             if (sender is Button _Button && _Button.DataContext is Profile _Profile)
             {
-                InformationDialogWindow InfoWindow = new("Warning", "Delete Profile", "This will permanently delete all profile data. Do you want to continue?", "\ue74d", "Yes", "No");
-                InfoWindow.Topmost = true;
+                InformationDialogWindow InfoWindow = new("Warning", "Delete Profile", "This will permanently delete all profile data. Do you want to continue?", "\ue74d", "Yes", "No")
+                {
+                    Topmost = true
+                };
                 if (InfoWindow.ShowDialog() == true)
                 {
                     StartupManager.DisableStartup(_Profile.Name);

@@ -733,8 +733,10 @@ namespace SLBr.Pages
                     catch (WebView2RuntimeNotFoundException)
                     {
                         WebEngineComboBox.SelectedIndex = 0;
-                        InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
-                        InfoWindow.Topmost = true;
+                        InformationDialogWindow InfoWindow = new InformationDialogWindow("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel")
+                        {
+                            Topmost = true
+                        };
                         if (InfoWindow.ShowDialog() == true)
                             BrowserView.Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, BrowserView.Tab.ParentWindow.TabsUI.SelectedIndex + 1);
                     }
@@ -1121,8 +1123,10 @@ namespace SLBr.Pages
                     return;
                 if (Text == "Custom")
                 {
-                    ColorPickerWindow _ColorPickerWindow = new ColorPickerWindow(Utils.HexToColor(App.Instance.GlobalSave.Get("CustomTheme")));
-                    _ColorPickerWindow.Topmost = true;
+                    ColorPickerWindow _ColorPickerWindow = new ColorPickerWindow(Utils.HexToColor(App.Instance.GlobalSave.Get("CustomTheme")))
+                    {
+                        Topmost = true
+                    };
                     if (_ColorPickerWindow.ShowDialog() == true)
                     {
                         App.Instance.GlobalSave.Set("CustomTheme", Utils.ColorToHex(_ColorPickerWindow.UserInput.Color));
@@ -1171,8 +1175,10 @@ namespace SLBr.Pages
 
         private void ClearAllDataButton_Click(object sender, RoutedEventArgs e)
         {
-            InformationDialogWindow InfoWindow = new("Warning", "Clear Browsing Data", "This will permanently delete all browsing data. Do you want to continue?", "\uea99", "Yes", "No");
-            InfoWindow.Topmost = true;
+            InformationDialogWindow InfoWindow = new("Warning", "Clear Browsing Data", "This will permanently delete all browsing data. Do you want to continue?", "\uea99", "Yes", "No")
+            {
+                Topmost = true
+            };
 
             if (InfoWindow.ShowDialog() == true)
                 App.Instance.ClearAllData();
@@ -1390,8 +1396,10 @@ namespace SLBr.Pages
 
         private void AddSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
-            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa");
-            _DynamicDialogWindow.Topmost = true;
+            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa")
+            {
+                Topmost = true
+            };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 SearchProvider _SearchProvider = new SearchProvider
@@ -1415,8 +1423,10 @@ namespace SLBr.Pages
         private void EditSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
             SearchProvider _SearchProvider = SearchEngineComboBox.SelectedValue as SearchProvider;
-            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f");
-            _DynamicDialogWindow.Topmost = true;
+            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f")
+            {
+                Topmost = true
+            };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
                 _SearchProvider.Name = _DynamicDialogWindow.InputFields[0].Value.Trim();
@@ -1455,8 +1465,10 @@ namespace SLBr.Pages
         {
             try
             {
-                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Change GitHub Access Token", new List<InputField> { new InputField { Name = "Token", Type = DialogInputType.Text, IsRequired = false, Value = App.Instance.GlobalSave.Get("SyncGitHub") } }, "\xee7e");
-                _DynamicDialogWindow.Topmost = true;
+                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Change GitHub Access Token", new List<InputField> { new InputField { Name = "Token", Type = DialogInputType.Text, IsRequired = false, Value = App.Instance.GlobalSave.Get("SyncGitHub") } }, "\xee7e")
+                {
+                    Topmost = true
+                };
                 if (_DynamicDialogWindow.ShowDialog() == true)
                 {
                     string Token = _DynamicDialogWindow.InputFields[0].Value.Trim();
@@ -1487,8 +1499,10 @@ namespace SLBr.Pages
                                 {
                                     App.Instance.GlobalSave.Set("SyncGist", Gist.GetProperty("id").GetString());
 
-                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Settings", "Choose Sync Direction", "An existing sync was found for this GitHub account.\n\nDo you want to override existing data with the cloud data on application reboot?", "\ue753", "Yes", "No");
-                                    InfoWindow.Topmost = true;
+                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Settings", "Choose Sync Direction", "An existing sync was found for this GitHub account.\n\nDo you want to override existing data with the cloud data on application reboot?", "\ue753", "Yes", "No")
+                                    {
+                                        Topmost = true
+                                    };
                                     if (InfoWindow.ShowDialog() == true)
                                         App.Instance.PreventSync = true;
                                     break;

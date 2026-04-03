@@ -303,8 +303,10 @@ namespace SLBr.Pages
                         }
                         if (CurrentWebAppManifest != null)
                         {
-                            InformationDialogWindow InfoWindow = new("Information", $"Install {CurrentWebAppManifest.ShortName ?? CurrentWebAppManifest.Name}", "This site can be installed as an application.", "\ueb3b", "Install", "Cancel");
-                            InfoWindow.Topmost = true;
+                            InformationDialogWindow InfoWindow = new("Information", $"Install {CurrentWebAppManifest.ShortName ?? CurrentWebAppManifest.Name}", "This site can be installed as an application.", "\ueb3b", "Install", "Cancel")
+                            {
+                                Topmost = true
+                            };
                             if (InfoWindow.ShowDialog() == true)
                                 await WebAppHandler.Install(CurrentWebAppManifest);
                         }
@@ -371,8 +373,10 @@ namespace SLBr.Pages
                                 }
                                 catch (WebView2RuntimeNotFoundException)
                                 {
-                                    InformationDialogWindow InfoWindow = new("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel");
-                                    InfoWindow.Topmost = true;
+                                    InformationDialogWindow InfoWindow = new("Error", "WebView2 Runtime Unavailable", "Microsoft Edge WebView2 Runtime is not installed on your device.", "\ue7f9", "Download", "Cancel")
+                                    {
+                                        Topmost = true
+                                    };
                                     if (InfoWindow.ShowDialog() == true)
                                         Tab.ParentWindow.NewTab("https://developer.microsoft.com/en-us/microsoft-edge/webview2/consumer/", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
                                     break;
@@ -573,17 +577,21 @@ namespace SLBr.Pages
             {
                 if (e.DialogType == ScriptDialogType.Alert)
                 {
-                    InformationDialogWindow InfoWindow = new("Alert", $"{Utils.Host(e.Url)}", e.Text);
+                    InformationDialogWindow InfoWindow = new("Alert", $"{Utils.Host(e.Url)}", e.Text)
+                    {
+                        Topmost = true
+                    };
                     OpenedWindow = InfoWindow;
-                    InfoWindow.Topmost = true;
                     e.Handled = true;
                     e.Result = InfoWindow.ShowDialog() == true;
                 }
                 else if (e.DialogType == ScriptDialogType.Confirm)
                 {
-                    InformationDialogWindow InfoWindow = new("Confirmation", $"{Utils.Host(e.Url)}", e.Text, string.Empty, "OK", "Cancel");
+                    InformationDialogWindow InfoWindow = new("Confirmation", $"{Utils.Host(e.Url)}", e.Text, string.Empty, "OK", "Cancel")
+                    {
+                        Topmost = true
+                    };
                     OpenedWindow = InfoWindow;
-                    InfoWindow.Topmost = true;
                     e.Handled = true;
                     e.Result = InfoWindow.ShowDialog() == true;
                 }
@@ -595,9 +603,11 @@ namespace SLBr.Pages
                         new InputField { Name = e.Text, IsRequired = false, Type = DialogInputType.Text, Value = e.DefaultPrompt }
                         },
                         "\ue946"
-                    );
+                    )
+                    {
+                        Topmost = true
+                    };
                     OpenedWindow = _DynamicDialogWindow;
-                    _DynamicDialogWindow.Topmost = true;
                     e.Handled = true;
                     if (_DynamicDialogWindow.ShowDialog() == true)
                     {
@@ -609,9 +619,11 @@ namespace SLBr.Pages
                 }
                 else if (e.DialogType == ScriptDialogType.BeforeUnload)
                 {
-                    InformationDialogWindow InfoWindow = new("Warning", e.IsReload ? "Reload site?" : "Leave site?", "You may lose unsaved changes. Do you want to continue?", string.Empty, e.IsReload ? "Reload" : "Leave", "Cancel");
+                    InformationDialogWindow InfoWindow = new("Warning", e.IsReload ? "Reload site?" : "Leave site?", "You may lose unsaved changes. Do you want to continue?", string.Empty, e.IsReload ? "Reload" : "Leave", "Cancel")
+                    {
+                        Topmost = true
+                    };
                     OpenedWindow = InfoWindow;
-                    InfoWindow.Topmost = true;
                     e.Handled = true;
                     e.Result = InfoWindow.ShowDialog() == true;
                 }
@@ -834,7 +846,8 @@ namespace SLBr.Pages
                     {
                         if (!Private && App.Instance.WebRiskService != WebRiskHandler.SecurityService.None && Utils.GetFileExtension(e.Url) != ".pdf")
                         {
-                            WebRiskHandler.ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
+                            //TODO: Async.
+                            WebRiskHandler.ThreatType _ThreatType = WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
                             if (_ThreatType is WebRiskHandler.ThreatType.Malware or WebRiskHandler.ThreatType.Unwanted_Software)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.MalwareError, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                             else if (_ThreatType == WebRiskHandler.ThreatType.Social_Engineering)
@@ -940,7 +953,7 @@ namespace SLBr.Pages
                                 break;
                         }
                         if (Block)
-                            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, WebErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1, string.Empty);
+                            WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, WebErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1);
                     }
                 }
 
@@ -1098,8 +1111,10 @@ namespace SLBr.Pages
             if (string.IsNullOrEmpty(Permissions))
                 Permissions = e.Kind.ToString();
 
-            InformationDialogWindow InfoWindow = new("Permission", $"Allow {Utils.Host(e.Url)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons);
-            InfoWindow.Topmost = true;
+            InformationDialogWindow InfoWindow = new("Permission", $"Allow {Utils.Host(e.Url)} to", Permissions, "\uE8D7", "Allow", "Block", PermissionIcons)
+            {
+                Topmost = true
+            };
 
             //Investigate: WebView2 System.Runtime.InteropServices.SEHException: 'External component has thrown an exception.'
             try
@@ -2689,8 +2704,10 @@ namespace SLBr.Pages
                         new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Address },
                     },
                     "\ueb51"
-                );
-                _DynamicDialogWindow.Topmost = true;
+                )
+                {
+                    Topmost = true
+                };
                 if (_DynamicDialogWindow.ShowDialog() == true)
                 {
                     string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
