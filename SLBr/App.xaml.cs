@@ -2513,11 +2513,12 @@ Inner Exception: {7}";
             }
 
             if (!GlobalSave.Has("StartupBoost"))
-            {
+                GlobalSave.Set("StartupBoost", false);
+            /*{
                 if (CurrentProfile.Default)
                     StartupManager.EnableStartup(CurrentProfile.Name);
                 GlobalSave.Set("StartupBoost", CurrentProfile.Default.ToString());
-            }
+            }*/
 
             if (!(CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest"))
             {
@@ -2544,7 +2545,6 @@ Inner Exception: {7}";
             {
                 for (int i = 0; i < SearchCount; i++)
                 {
-                    SearchProvider _SearchProvider = new();
                     var Values = SearchSave.Get($"{i}").Split("<#>");
                     if (Values.Length != 3)
                     {
@@ -2563,12 +2563,15 @@ Inner Exception: {7}";
                     }
                     else
                     {
-                        _SearchProvider.Name = Values[0];
-                        _SearchProvider.Host = Utils.FastHost(Values[1]);
-                        _SearchProvider.SearchUrl = Values[1];
-                        _SearchProvider.SuggestUrl = Values[2];
+                        SearchProvider _SearchProvider = new()
+                        {
+                            Name = Values[0],
+                            Host = Utils.FastHost(Values[1]),
+                            SearchUrl = Values[1],
+                            SuggestUrl = Values[2]
+                        };
+                        SearchEngines.Add(_SearchProvider);
                     }
-                    SearchEngines.Add(_SearchProvider);
                 }
             }
             else
@@ -2652,9 +2655,9 @@ Inner Exception: {7}";
             AdsBlocked = StatisticsSave.GetInt("BlockedAds", 0);
 
             if (!GlobalSave.Has("TabUnloading"))
-                GlobalSave.Set("TabUnloading", true.ToString());
+                GlobalSave.Set("TabUnloading", true);
             if (!GlobalSave.Has("ShowUnloadProgress"))
-                GlobalSave.Set("ShowUnloadProgress", false.ToString());
+                GlobalSave.Set("ShowUnloadProgress", false);
             if (!GlobalSave.Has("DimUnloadedIcon"))
                 GlobalSave.Set("DimUnloadedIcon", true);
             if (!GlobalSave.Has("ShowUnloadedIcon"))
@@ -2734,7 +2737,8 @@ Inner Exception: {7}";
                 GlobalSave.Set("ForceLazy", false);
             if (!GlobalSave.Has("FullscreenPopup"))
                 GlobalSave.Set("FullscreenPopup", true);
-            GlobalSave.GetInt("FaviconService", 0);
+            if (!GlobalSave.Has("FaviconService"))
+                GlobalSave.Set("FaviconService", 0);
 
             SetWebRiskService(GlobalSave.GetInt("WebRiskService", 1));
 
@@ -2770,7 +2774,7 @@ Inner Exception: {7}";
 
             SetAppearance(GetTheme(GlobalSave.Get("Theme", "System")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
             bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
-            if (bool.Parse(GlobalSave.Get("RestoreTabs", false.ToString())))
+            if (bool.Parse(GlobalSave.Get("RestoreTabs", true.ToString())))
             {
                 foreach (Saving TabsSave in WindowsSaves)
                 {
