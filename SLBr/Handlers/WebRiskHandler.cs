@@ -44,6 +44,7 @@ namespace SLBr.Handlers
                 return Detail.ThreatType switch
                 {
                     SafeBrowsing.ThreatType.Malware => ThreatType.Malware,
+                    SafeBrowsing.ThreatType.PotentiallyHarmfulApplication => ThreatType.Malware,
                     SafeBrowsing.ThreatType.SocialEngineering => ThreatType.Social_Engineering,
                     SafeBrowsing.ThreatType.UnwantedSoftware => ThreatType.Unwanted_Software,
                     _ => ThreatType.Unknown
