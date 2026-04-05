@@ -20,16 +20,18 @@ namespace SLBr.Pages
 
         public void Initialize(Browser _BrowserView)
         {
-            BrowserView = _BrowserView;
+            //BrowserView = _BrowserView;
         }
         
         public void OnNavigated() { }
 
         public void Dispose()
         {
+            DownloadsList.ItemsSource = null;
+            GC.SuppressFinalize(this);
         }
 
-        Browser BrowserView;
+        //Browser BrowserView;
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {

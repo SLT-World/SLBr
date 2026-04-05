@@ -142,7 +142,7 @@ namespace SLBr.Pages
         public void Dispose()
         {
             PrivateAddableLanguages.Clear();
-            AddableLanguages.Clear();
+            GC.SuppressFinalize(this);
         }
 
         Browser BrowserView;

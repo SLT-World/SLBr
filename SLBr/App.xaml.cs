@@ -1851,39 +1851,40 @@ namespace SLBr
                 _Window.Activate();
             }
             Background = false;
-            if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("CheckUpdate")))
-                CheckUpdate();
             if (Environment.IsPrivilegedProcess)
                 InfoBars.Add(new() { Icon = "\ue7ba", IconForeground = OrangeColor, Title = "Elevated Privileges Detected", Description = [new() { Text = "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights." }] });
+            if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("CheckUpdate")))
+                CheckUpdate();
         }
 
-        public void CheckUpdate()
+        public async void CheckUpdate()
         {
-            using (WebClient _WebClient = new())
+            try
             {
-                try
+                using HttpRequestMessage Request = new(HttpMethod.Get, "https://api.github.com/repos/slt-world/slbr/releases/latest");
+                Request.Headers.UserAgent.ParseAdd(UserAgentGenerator.BuildChromeBrand());
+                Request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+                using var Response = await MiniHttpClient.SendAsync(Request);
+                Response.EnsureSuccessStatusCode();
+                string Data = await Response.Content.ReadAsStringAsync();
+                string NewVersion = JsonDocument.Parse(Data).RootElement.GetProperty("tag_name").ToString();
+                if (!NewVersion.StartsWith(ReleaseVersion))
                 {
-                    _WebClient.Headers.Add("User-Agent", UserAgentGenerator.BuildChromeBrand());
-                    _WebClient.Headers.Add("Accept", "*/*");
-                    string NewVersion = JsonDocument.Parse(_WebClient.DownloadString("https://api.github.com/repos/slt-world/slbr/releases/latest")).RootElement.GetProperty("tag_name").ToString();
-                    if (!NewVersion.StartsWith(ReleaseVersion))
+                    UpdateAvailable = NewVersion;
+                    foreach (MainWindow _Window in AllWindows)
                     {
-                        UpdateAvailable = NewVersion;
-                        foreach (MainWindow _Window in AllWindows)
+                        foreach (Browser _Browser in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
                         {
-                            foreach (Browser _Browser in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
-                            {
-                                _Browser.NewUpdateMenu.Visibility = Visibility.Visible;
-                                _Browser.NewUpdateMenuSeparator.Visibility = Visibility.Visible;
-                            }
+                            _Browser.NewUpdateMenu.Visibility = Visibility.Visible;
+                            _Browser.NewUpdateMenuSeparator.Visibility = Visibility.Visible;
                         }
-                        ShowUpdateInfoBar();
                     }
-                    else
-                        UpdateAvailable = ReleaseVersion;
+                    ShowUpdateInfoBar();
                 }
-                catch { }
+                else
+                    UpdateAvailable = ReleaseVersion;
             }
+            catch { }
         }
 
         public void ShowUpdateInfoBar()

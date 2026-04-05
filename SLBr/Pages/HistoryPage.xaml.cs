@@ -26,6 +26,8 @@ namespace SLBr.Pages
 
         public void Dispose()
         {
+            HistoryList.ItemsSource = null;
+            GC.SuppressFinalize(this);
         }
 
         Browser BrowserView;

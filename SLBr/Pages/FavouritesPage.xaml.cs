@@ -27,6 +27,8 @@ namespace SLBr.Pages
 
         public void Dispose()
         {
+            FavouritesList.ItemsSource = null;
+            GC.SuppressFinalize(this);
         }
 
         Browser BrowserView;
@@ -56,10 +58,7 @@ namespace SLBr.Pages
                 Topmost = true
             };
             if (_DynamicDialogWindow.ShowDialog() == true)
-            {
-                string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                App.Instance.Favourites.Add(new Favourite() { Type = "url", Url = URL, Name = _DynamicDialogWindow.InputFields[0].Value });
-            }
+                App.Instance.Favourites.Add(new Favourite() { Type = "url", Url = _DynamicDialogWindow.InputFields[1].Value.Trim(), Name = _DynamicDialogWindow.InputFields[0].Value });
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)

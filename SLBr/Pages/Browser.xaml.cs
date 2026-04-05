@@ -3813,10 +3813,7 @@ namespace SLBr.Pages
                     if (SmartSuggestions)
                     {
                         foreach (Match _Match in Utils.UrlRegex().Matches(ProcessedText))
-                        {
-                            string Url = Utils.FixUrl(_Match.Value);
-                            Suggestions.Add(App.GenerateSuggestion(Url, "W", LinkColor, "- Visit", null, OmniBoxOverrideSearch));
-                        }
+                            Suggestions.Add(App.GenerateSuggestion(Utils.FixUrl(_Match.Value), "W", LinkColor, "- Visit", null, OmniBoxOverrideSearch));
                     }
                 }
                 try
@@ -3862,7 +3859,7 @@ namespace SLBr.Pages
                 catch { }
                 if (OmniBoxOverrideSearch == null)
                 {
-                    if (OmniBox.Text.StartsWith("@"))
+                    if (OmniBox.Text.StartsWith('@'))
                     {
                         foreach (SearchProvider Search in App.Instance.AllSystemSearchEngines)
                         {
@@ -3970,9 +3967,7 @@ namespace SLBr.Pages
                 if (Suggestion.ProviderOverride == OmniBoxOverrideSearch || Suggestion.ProviderOverride != null && !string.IsNullOrEmpty(Suggestion.Hidden))
                 {
                     if (Suggestion.ProviderOverride != null && Suggestion.ProviderOverride.Host == "__Program__" && Suggestion.ProviderOverride.Name == "Tabs")
-                    {
                         App.Instance.SwitchTab(int.Parse(Suggestion.Hidden));
-                    }
                     else if (Suggestion.Text.Trim().Length > 0)
                     {
                         OmniBoxText = Suggestion.Text;
@@ -4008,8 +4003,6 @@ namespace SLBr.Pages
             if (!OmniBox.IsDropDownOpen)
                 return;
             string CurrentText = OmniBox.Text.Trim();
-            SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
-            SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
             try
             {
                 string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
@@ -4019,6 +4012,8 @@ namespace SLBr.Pages
                     string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
                     using (JsonDocument Document = JsonDocument.Parse(ResponseText))
                     {
+                        SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
+                        SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
                         foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())//.Take(10)
                         {
                             string SuggestionStr = Suggestion.GetString();
@@ -4183,7 +4178,7 @@ namespace SLBr.Pages
         private void LoadExtensionPopup(object sender, RoutedEventArgs e)
         {
             //TODO: Utilize PopupBrowser.
-            Extension _Extension = App.Instance.Extensions.FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
+            Extension? _Extension = App.Instance.Extensions.FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             if (_Extension == null)
                 return;
             ExtensionWindow = new Window();

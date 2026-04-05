@@ -31,7 +31,6 @@ namespace SLBr
     {
         JPEG,
         PNG,
-        //WebP //WebView2 does not support WebP, and no one wants WebP anyways
     }
 
     public enum WebDownloadState
@@ -474,7 +473,7 @@ namespace SLBr
         NavigationPreLoadSubFrame = 20
     }
 
-    public struct FindResult
+    public readonly struct FindResult
     {
         public int ActiveMatch { get; } = 0;
         public int MatchCount { get; } = 0;
@@ -485,7 +484,7 @@ namespace SLBr
         }
     }
 
-    public struct LoadingStateResult
+    public readonly struct LoadingStateResult
     {
         public bool IsLoading { get; }
         public int? HttpStatusCode { get; }
@@ -496,7 +495,7 @@ namespace SLBr
         }
     }
 
-    public struct WebNavigationEntry
+    public readonly struct WebNavigationEntry
     {
         public int? ID { get; }
         public bool IsCurrent { get; }
@@ -517,7 +516,7 @@ namespace SLBr
         }
     }
 
-    public struct ResourceLoadedResult
+    public readonly struct ResourceLoadedResult
     {
         public string Url { get; }
         public bool Success { get; }
@@ -532,7 +531,7 @@ namespace SLBr
         }
     }
 
-    public struct ResourceRespondedResult
+    public readonly struct ResourceRespondedResult
     {
         public string Url { get; }
         public ResourceRequestType ResourceRequestType { get; }
