@@ -846,7 +846,7 @@ namespace SLBr.Pages
                     {
                         if (!Private && App.Instance.WebRiskService != WebRiskHandler.SecurityService.None && Utils.GetFileExtension(e.Url) != ".pdf")
                         {
-                            //TODO: Async.
+                            //TODO: Async & CancellationToken.
                             WebRiskHandler.ThreatType _ThreatType = WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
                             if (_ThreatType is WebRiskHandler.ThreatType.Malware or WebRiskHandler.ThreatType.Unwanted_Software)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.MalwareError, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());

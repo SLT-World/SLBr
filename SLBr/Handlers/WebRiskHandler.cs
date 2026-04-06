@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json.Nodes;
+using System.Text.Json;
 using System.Xml.Linq;
 
 namespace SLBr.Handlers
@@ -47,7 +47,6 @@ namespace SLBr.Handlers
                 switch (Detail.ThreatType)
                 {
                     case SafeBrowsing.ThreatType.Malware:
-                        return ThreatType.Malware;
                     case SafeBrowsing.ThreatType.PotentiallyHarmfulApplication:
                         return ThreatType.Malware;
                     case SafeBrowsing.ThreatType.SocialEngineering:
@@ -120,27 +119,25 @@ namespace SLBr.Handlers
             {
                 try
                 {
-                    if (JsonNode.Parse(Data)?["matches"] is JsonArray Matches && Matches.Count > 0)
+                    using JsonDocument Document = JsonDocument.Parse(Data);
+                    if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches) && Matches.ValueKind == JsonValueKind.Array)
                     {
-                        foreach (JsonNode? Match in Matches)
+                        foreach (JsonElement Match in Matches.EnumerateArray())
                         {
-                            if (Match == null)
-                                continue;
-                            string? Threat = Match["threatType"]?.ToString();
-                            if (Threat == null)
-                                continue;
-                            switch (Threat)
+                            if (Match.TryGetProperty("threatType", out JsonElement ThreatElement))
                             {
-                                case "MALWARE":
-                                    return ThreatType.Malware;
-                                case "POTENTIALLY_HARMFUL_APPLICATION":
-                                    return ThreatType.Malware;
-                                case "SOCIAL_ENGINEERING":
-                                    return ThreatType.Social_Engineering;
-                                case "UNWANTED_SOFTWARE":
-                                    return ThreatType.Unwanted_Software;
+                                string? Threat = ThreatElement.GetString();
+                                switch (Threat)
+                                {
+                                    case "MALWARE":
+                                    case "POTENTIALLY_HARMFUL_APPLICATION":
+                                        return ThreatType.Malware;
+                                    case "SOCIAL_ENGINEERING":
+                                        return ThreatType.Social_Engineering;
+                                    case "UNWANTED_SOFTWARE":
+                                        return ThreatType.Unwanted_Software;
+                                }
                             }
-                            continue;
                         }
                     }
                 }
@@ -192,6 +189,7 @@ namespace SLBr.Handlers
                 Timeout = TimeSpan.FromSeconds(10),
                 DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
             };
+            //TODO: Investigate Yandex clientId & clientVersion.
             string Payload = $@"{{
     ""client"":{{""clientId"":""{SECRETS.GOOGLE_DEFAULT_CLIENT_ID}"",""clientVersion"":""1.0.0""}},
     ""threatInfo"":{{
@@ -325,6 +323,10 @@ namespace SLBr.Handlers
                     byte[] LocalHash = SHA256.HashData(Encoding.UTF8.GetBytes(Utils.CleanUrl(Url, true, false, true, false, true)));
                     return SBv5GetThreatType(SBv5Response(LocalHash, GoogleEndpoint + SECRETS.GOOGLE_API_KEY), LocalHash);
                 case SecurityService.Yandex:
+                    //TODO: Implement Yandex Hash-based check.
+                    //https://yandex.com/dev/safebrowsing/doc/en/concepts/url-hash
+                    //https://yandex.com/dev/safebrowsing/doc/en/concepts/update-fullhashes-find
+                    //https://yandex.com/dev/safebrowsing/doc/en/
                     return SBv4GetThreatType(SBv4Response(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
                 case SecurityService.PhishTank:
                     return PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
