@@ -68,6 +68,8 @@ New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
 Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
 
 ## Others
+> [!NOTE]
+> All references to "Gemini" within this repository pertain exclusively to the [Gemini Protocol](https://geminiprotocol.net/), not the Google Gemini AI platform.
 
 > [!IMPORTANT]
 > The `SECRETS.cs` file is removed as private API keys are stored inside. To fix it, either:
