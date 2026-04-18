@@ -60,9 +60,10 @@ Website: [SLBr](https://slt-world.github.io/slbr/)
 New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
 
 ![Browser](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/SLBr%20Browser.png)
+![Grouped Vertical Tabs](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Grouped%20Vertical%20Tabs.png)
 ![Performance Settings](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Performance.png)
 ![News Feed](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/News%20Feed.png)
-![Grouped Vertical Tabs](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Grouped%20Vertical%20Tabs.png)
+![Moai](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Moai.png)
 
 
 Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
