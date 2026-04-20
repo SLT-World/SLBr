@@ -2171,10 +2171,89 @@ Inner Exception: {7}";
         public void UpdateTabUnloadingTimer(int Time = -1)
         {
             if (Time != -1)
+            {
                 GlobalSave.Set("TabUnloadingTime", Time);
-            foreach (MainWindow _Window in AllWindows)
-                _Window.UpdateUnloadTimer();
+                GCTimerDuration = Time;
+            }
+            GCTimer?.Stop();
+            if (!bool.Parse(GlobalSave.Get("TabUnloading")))
+            {
+                ResetGCProgress();
+                return;
+            }
+            GCTimer ??= new DispatcherTimer();
+            if (bool.Parse(GlobalSave.Get("ShowUnloadProgress")))
+            {
+                GCTimer.Interval = TimeSpan.FromMilliseconds(250);
+                GCTimer.Tick -= GCCollect_EfficientTick;
+                GCTimer.Tick += GCCollect_Tick;
+            }
+            else
+            {
+                ResetGCProgress();
+                ScheduleNextEfficientTick();
+                GCTimer.Tick -= GCCollect_Tick;
+                GCTimer.Tick += GCCollect_EfficientTick;
+            }
+            GCTimer.Start();
         }
+
+        public void ResetGCProgress()
+        {
+            foreach (MainWindow _Window in AllWindows)
+            {
+                foreach (BrowserTabItem _Tab in _Window.Tabs)
+                    _Tab.ProgressBarVisibility = Visibility.Collapsed;
+            }
+        }
+
+        public void ScheduleNextEfficientTick()
+        {
+            DateTime? Next = AllWindows.SelectMany(i => i.Tabs).Where(i => !i.IsUnloaded && i.Content != null).Select(i => i.Content.NextUnloadTime).OrderBy(i => i).FirstOrDefault();
+            if (Next == null)
+            {
+                GCTimer.Interval = TimeSpan.FromMinutes(1);
+                return;
+            }
+            TimeSpan Delay = Next.Value - DateTime.Now;
+            GCTimer.Interval = Delay > TimeSpan.Zero ? Delay : TimeSpan.Zero;
+        }
+
+        private void GCCollect_Tick(object? sender, EventArgs e)
+        {
+            DateTime Now = DateTime.Now;
+            foreach (MainWindow _Window in AllWindows)
+            {
+                if (_Window.WindowState == WindowState.Minimized)
+                    continue;
+                foreach (BrowserTabItem Tab in _Window.Tabs)
+                {
+                    if (Tab.IsUnloaded || Tab.Content == null)
+                    {
+                        Tab.ProgressBarVisibility = Visibility.Collapsed;
+                        continue;
+                    }
+
+                    double Progress = Math.Min((Now - Tab.Content.LastActive).TotalSeconds / (GCTimerDuration * 60.0), 1.0);
+
+                    Tab.Progress = Progress;
+                    Tab.ProgressBarVisibility = Visibility.Visible;
+
+                    if (Progress >= 1)
+                        _Window.UnloadTab(Tab.Content);
+                }
+            }
+        }
+        private void GCCollect_EfficientTick(object? sender, EventArgs e)
+        {
+            foreach (MainWindow _Window in AllWindows)
+                _Window.UnloadTabs();
+            ScheduleNextEfficientTick();
+        }
+
+        public DispatcherTimer GCTimer;
+
+        public int GCTimerDuration;
 
         public void SwitchUserPopup()
         {
@@ -4362,6 +4441,7 @@ Inner Exception: {7}";
 
         public async void CloseSLBr(bool ExecuteCloseEvents = true)
         {
+            GCTimer?.Stop();
             new Thread(() => {
                 Thread.Sleep(1000);
                 try { Process.GetCurrentProcess().Kill(); }

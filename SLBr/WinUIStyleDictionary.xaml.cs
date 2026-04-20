@@ -14,8 +14,8 @@ namespace SLBr
     {
         private void TabIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
         {
-            BrowserTabItem CurrentTab = (BrowserTabItem)((Image)e.Source).DataContext;
-            if (CurrentTab != null)
+            Image? Image = sender as Image;
+            if (Image?.DataContext is BrowserTabItem CurrentTab)
                 CurrentTab.Icon = App.Instance.TabIcon;
         }
 

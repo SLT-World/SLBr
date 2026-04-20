@@ -1752,6 +1752,9 @@ namespace SLBr.Pages
 
         public void ReFocus()
         {
+            LastActive = DateTime.Now;
+            if (!bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
+                App.Instance.ScheduleNextEfficientTick();
             if (Tab.IsUnloaded)
             {
                 InitializeBrowserComponent();
@@ -1870,9 +1873,11 @@ namespace SLBr.Pages
             return (false, string.Empty);
         }
 
+        public DateTime LastActive = DateTime.Now;
+        public DateTime NextUnloadTime => LastActive.AddMinutes(App.Instance.GCTimerDuration);
         public bool CanUnload()
         {
-            return (Muted || !AudioPlaying) && WebView != null && WebView.IsBrowserInitialized;
+            return !Tab.IsUnloaded && DateTime.Now >= NextUnloadTime && (Muted || !AudioPlaying) && WebView != null && WebView.IsBrowserInitialized;
         }
 
         public async Task<bool> IsArticle()

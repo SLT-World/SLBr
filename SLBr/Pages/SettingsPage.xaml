@@ -625,7 +625,6 @@
                                 <CheckBox x:Name="TabUnloadingCheckBox" Click="TabUnloadingCheckBox_Click" Content="Unload Tabs" Width="Auto"/>
                             </GroupBox.Header>
                             <StackPanel>
-                                <ProgressBar x:Name="UnloadProgressBar" Width="Auto" Margin="0,0,0,10" Foreground="#3AE872"/>
                                 <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                 Unloading tabs frees memory and system resources from inactive tabs.
                                 <LineBreak/>

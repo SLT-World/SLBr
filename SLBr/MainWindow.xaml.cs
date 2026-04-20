@@ -165,7 +165,6 @@ namespace SLBr
             InitializeComponent();
             if (App.Instance.CurrentProfile.Type == ProfileType.User && !App.Instance.CurrentProfile.Default)
                 TaskbarItemOverlay.SetProfile(TaskbarItem, App.Instance.CurrentProfile);
-            UpdateUnloadTimer();
             NewTabTab = new(null)
             {
                 Type = BrowserTabType.Add
@@ -488,80 +487,6 @@ namespace SLBr
             //MessageBox.Show(Benchmark.Report());
 #endregion
         }
-        public DispatcherTimer GCTimer;
-
-        private DateTime GCTimerStartTime;
-        private int GCTimerDuration;
-
-        public void UpdateUnloadTimer()
-        {
-            if (bool.Parse(App.Instance.GlobalSave.Get("TabUnloading")))
-            {
-                GCTimer?.Stop();
-                GCTimerDuration = App.Instance.GlobalSave.GetInt("TabUnloadingTime");
-                GCTimer = new DispatcherTimer();
-
-                if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
-                {
-                    foreach (BrowserTabItem _Tab in Tabs)
-                        _Tab.ProgressBarVisibility = _Tab.IsUnloaded ? Visibility.Collapsed : Visibility.Visible;
-                    GCTimer.Tick += GCCollect_Tick;
-                    GCTimer.Interval = TimeSpan.FromMilliseconds(100);
-                    GCTimerStartTime = DateTime.Now;
-                }
-                else
-                {
-                    foreach (BrowserTabItem _Tab in Tabs)
-                    {
-                        _Tab.ProgressBarVisibility = Visibility.Collapsed;
-                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is SettingsPage SettingsPage)
-                            SettingsPage.UnloadProgressBar.Value = 0;
-                    }
-                    GCTimer.Tick += GCCollect_EfficientTick;
-                    GCTimer.Interval = new TimeSpan(0, GCTimerDuration, 0);
-                }
-                GCTimer.Start();
-            }
-            else
-            {
-                GCTimer?.Stop();
-                foreach (BrowserTabItem _Tab in Tabs)
-                {
-                    _Tab.ProgressBarVisibility = Visibility.Collapsed;
-                    if (!_Tab.IsUnloaded && _Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is SettingsPage SettingsPage)
-                        SettingsPage.UnloadProgressBar.Value = 0;
-                }
-            }
-        }
-
-        private void GCCollect_Tick(object sender, EventArgs e)
-        {
-            double Progress = (DateTime.Now - GCTimerStartTime).TotalSeconds / (GCTimerDuration * 60);
-            if (Progress >= 1)
-            {
-                GCTimerStartTime = DateTime.Now;
-                UnloadTabs();
-            }
-            if (WindowState != WindowState.Minimized)
-            {
-                double VisualProgress = Math.Min(Progress, 1) * 100;
-                foreach (BrowserTabItem _Tab in Tabs)
-                {
-                    if (_Tab.IsUnloaded)
-                        _Tab.ProgressBarVisibility = Visibility.Collapsed;
-                    else
-                    {
-                        _Tab.Progress = VisualProgress;
-                        if (_Tab.Content != null && _Tab.Content.PageOverlay != null && _Tab.Content.PageOverlay is SettingsPage SettingsPage)
-                            SettingsPage.UnloadProgressBar.Value = VisualProgress;
-                    }
-                }
-            }
-        }
-        private void GCCollect_EfficientTick(object sender, EventArgs e)
-        {
-            UnloadTabs();
-        }
 
         bool VerticalTabs = false;
 
@@ -881,7 +806,7 @@ namespace SLBr
             if (_Tab?.Content != null)
                 UnloadTab(_Tab.Content, true);
         }
-        private void UnloadTab(Browser BrowserView, bool Bypass = false)
+        public void UnloadTab(Browser BrowserView, bool Bypass = false)
         {
             if (Bypass || BrowserView.CanUnload())
                 BrowserView.Unload();
@@ -1240,7 +1165,6 @@ namespace SLBr
         {
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.ToggleSideBar(true);
-            GCTimer?.Stop();
             if (App.Instance.AllWindows.Count == 1)
                 App.Instance.CloseSLBr(false);
             else if (App.Instance.WindowsSaves.Count == App.Instance.AllWindows.Count)
