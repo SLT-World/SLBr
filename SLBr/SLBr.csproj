@@ -87,7 +87,7 @@
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="146.0.100" />
     <PackageReference Include="Google.Protobuf" Version="3.34.1" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3908-prerelease" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3965-prerelease" />
   </ItemGroup>
 
   <ItemGroup>

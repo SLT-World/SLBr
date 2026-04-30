@@ -37,14 +37,14 @@ See the full feature list, [here](https://slt-world.github.io/slbr/)
 To install SLBr, follow these steps:
 1. Download the [latest release](https://github.com/SLT-World/SLBr/releases/latest).
 2. Ensure the following requirements are met:
-    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe) (Typically pre-installed on Windows.)
-    - [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) - (Launching SLBr without .NET 9.0 will automatically prompt a redirect to a direct download.)
+    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe): Typically pre-installed on modern Windows environments.
+    - [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0): An automated prompt to the .NET download page will be shown if .NET 9.0 is not detected upon launch.
     - Windows 10 & above.
 ## Thanks
 
 - **Chromium Embedded Framework (CEF)**: Thanks to [Marshall Greenblatt](https://github.com/magreenblatt).
-- **CefSharp Team**: Thanks to [Amaitland](https://github.com/amaitland) and the CefSharp team.
-- **IPFS** (Not present in the latest rework): Thanks to [Mauve](https://github.com/rangermauve) for assisting with the implementation of IPFS in SLBr.
+- **CefSharp**: Thanks to [Alex Maitland](https://github.com/amaitland).
+- **IPFS** (Not included in the latest release.): Thanks to [Mauve](https://github.com/rangermauve) for assisting with the implementation of IPFS in SLBr.
 
 ## License
 SLBr is licensed under the [GNU General Public License v3.0](https://github.com/SLT-World/SLBr/blob/main/LICENSE).
@@ -53,11 +53,10 @@ SLBr is licensed under the [GNU General Public License v3.0](https://github.com/
 Feature suggestions and contributions would be much appreciated. Your input helps improve SLBr.
 Alternatively, you can also contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
 
-## Screenshots & Videos
+## Media
 
-Website: [SLBr](https://slt-world.github.io/slbr/)
-
-New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
+[Website](https://slt-world.github.io/slbr/)
+[YouTube Video](https://www.youtube.com/watch?v=jqx1v6sxK34)
 
 ![Browser](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/SLBr%20Browser.png)
 ![Grouped Vertical Tabs](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Grouped%20Vertical%20Tabs.png)
@@ -65,17 +64,16 @@ New Video: [YouTube](https://www.youtube.com/watch?v=jqx1v6sxK34)
 ![News Feed](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/News%20Feed.png)
 ![Moai](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Moai.png)
 
-
-Old Video: [Old SLBr in action](https://youtu.be/PtmDRjgwmHI)
+[Old YouTube](https://youtu.be/PtmDRjgwmHI)
 
 ## Others
 > [!NOTE]
 > All references to "Gemini" within this repository pertain exclusively to the [Gemini Protocol](https://geminiprotocol.net/), not the Google Gemini AI platform.
 
 > [!IMPORTANT]
-> The `SECRETS.cs` file is removed as private API keys are stored inside. To fix it, either:
-> - Remove the code that is causing the error, which will remove the ability to use Google Safe Browsing & sign in to Google.
-> - Generate a new C# class called "SECRETS":
+> `SECRETS.cs` is not present in the repository as private endpoints and keys are stored within. To resolve this issue, either:
+> - Remove or comment out code paths that depend on the missing endpoints and keys to eliminate runtime errors, this will render the associated features inactive.
+> - Re-implement `SECRETS.cs`:
 > ```cs
 > namespace SLBr
 > {

@@ -145,8 +145,8 @@ namespace SLBr
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
-        [DllImport("user32.dll")]
-        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+        /*[DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);*/
 
         public static string GetWindowTextRaw(IntPtr hWnd)
         {
@@ -155,9 +155,16 @@ namespace SLBr
             return Builder.ToString();
         }
 
-        public const byte VK_LWIN = 0x5B;
-        public const byte VK_Z = 0x5A;
-        public const uint KEYEVENTF_KEYUP = 0x0002;
+        public const int WM_NCHITTEST = 0x0084;
+        public const int WM_NCLBUTTONDOWN = 0x00A1;
+        public const int WM_NCLBUTTONUP = 0x00A2;
+        //public const int WM_NCLBUTTONDBLCLK = 0x00A3;
+        //public const int WM_GETMINMAXINFO = 0x0024;
+        public const int HTMAXBUTTON = 9;
+
+        //public const byte VK_LWIN = 0x5B;
+        //public const byte VK_Z = 0x5A;
+        //public const uint KEYEVENTF_KEYUP = 0x0002;
 
         /*[DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
@@ -555,6 +562,26 @@ namespace SLBr
 
     public static partial class Utils
     {
+        public static bool? _IsSnapLayoutEnabled;
+        public static bool IsSnapLayoutEnabled
+        {
+            get
+            {
+                if (_IsSnapLayoutEnabled.HasValue)
+                    return _IsSnapLayoutEnabled.Value;
+                if (!UserAgentGenerator.IsWindows11OrGreater)
+                    _IsSnapLayoutEnabled = false;
+                else
+                {
+                    using RegistryKey? Key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced");
+                    object? RegistryValueObject = Key?.GetValue("EnableSnapAssistFlyout");
+                    if (RegistryValueObject == null) _IsSnapLayoutEnabled = true;
+                    else _IsSnapLayoutEnabled = (int)RegistryValueObject > 0;
+                }
+                return _IsSnapLayoutEnabled.Value;
+            }
+        }
+
         [GeneratedRegex(@"(?i)\b(?:https?://|file:///)(?:\[[^\]]+\]|localhost|(?:\d{1,3}\.){3}\d{1,3}|[a-z0-9\-\.]+)(?::\d+)?(?:/[^\s]*)?")]
         public static partial Regex UrlRegex();
 

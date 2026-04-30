@@ -310,10 +310,9 @@ namespace SLBr.Pages
             SyncFavouritesToggleButton.IsChecked = SyncedData.Contains("Favourites");
             //SyncTabsToggleButton.IsChecked = SyncedData.Contains("Tabs");
             SyncSettingsToggleButton.IsChecked = SyncedData.Contains("Settings");
-
-            List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
             if (AddableLanguages.Count == 0)
             {
+                List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
                 foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
                 {
                     if (!ISOs.Contains(Locale.Key))
@@ -338,12 +337,9 @@ namespace SLBr.Pages
 
             PrivateTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs"));
             RestoreTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("RestoreTabs"));
-
             TabPreviewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabPreview"));
             TabMemoryCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabMemory"));
-
-            bool DownloadFavicons = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
-            DownloadFaviconsCheckBox.IsChecked = DownloadFavicons;
+            DownloadFaviconsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Favicons"));
             FaviconServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("FaviconService");
 
             CheckUpdateCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("CheckUpdate"));
@@ -353,10 +349,7 @@ namespace SLBr.Pages
             SpellCheckCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SpellCheck"));
             DownloadPromptCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt"));
             ExternalFontsCheckBox.IsChecked = App.Instance.ExternalFonts;
-
-
-            bool TabUnloadingCheck = bool.Parse(App.Instance.GlobalSave.Get("TabUnloading"));
-            TabUnloadingCheckBox.IsChecked = TabUnloadingCheck;
+            TabUnloadingCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabUnloading"));
 
             AdaptiveThemeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme"));
             ToastCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Toast"));
@@ -775,10 +768,7 @@ namespace SLBr.Pages
         private void TabAlignmentComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                int TabAlignment = TabAlignmentComboBox.SelectedIndex;
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignment, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
-            }
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.ToBool(), TranslateButtonToggleButton.IsChecked.ToBool(), ReaderButtonToggleButton.IsChecked.ToBool(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.ToBool(), WebEngineButtonToggleButton.IsChecked.ToBool());
         }
         private void ExtensionButtonComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -886,10 +876,7 @@ namespace SLBr.Pages
         private void DownloadFaviconsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                bool DownloadFavicons = DownloadFaviconsCheckBox.IsChecked.ToBool();
-                App.Instance.GlobalSave.Set("Favicons", DownloadFavicons);
-            }
+                App.Instance.GlobalSave.Set("Favicons", DownloadFaviconsCheckBox.IsChecked.ToBool());
         }
         private void CheckUpdateCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -923,11 +910,10 @@ namespace SLBr.Pages
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
-
-                        string Error;
-                        GlobalRequestContext.SetPreference("browser.enable_spellchecking", Enabled, out Error);
-                        GlobalRequestContext.SetPreference("spellcheck.dictionaries", App.Instance.Languages.Select(i => i.Tooltip), out Error);
-                        GlobalRequestContext.SetPreference("intl.accept_languages", App.Instance.Languages.Select(i => i.Tooltip), out Error);
+                        string _;
+                        GlobalRequestContext.SetPreference("browser.enable_spellchecking", Enabled, out _);
+                        GlobalRequestContext.SetPreference("spellcheck.dictionaries", App.Instance.Languages.Select(i => i.Tooltip), out _);
+                        GlobalRequestContext.SetPreference("intl.accept_languages", App.Instance.Languages.Select(i => i.Tooltip), out _);
                     });
                 }
             }
@@ -1013,9 +999,7 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                bool Checked = TabUnloadingCheckBox.IsChecked.ToBool();
-                App.Instance.GlobalSave.Set("TabUnloading", Checked.ToString());
-
+                App.Instance.GlobalSave.Set("TabUnloading", TabUnloadingCheckBox.IsChecked.ToBool().ToString());
                 App.Instance.UpdateTabUnloadingTimer();
             }
         }
@@ -1116,8 +1100,7 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                Border SelectedItem = (Border)ThemeSelection.SelectedItem;
-                string Text = (string)SelectedItem.Tag;
+                string Text = (string)((Border)ThemeSelection.SelectedItem).Tag;
                 Theme _Theme = App.Instance.GetTheme(Text);
                 if (_Theme == null)
                     return;
@@ -1142,7 +1125,7 @@ namespace SLBr.Pages
         
         private void ChangeDownloadPathButton_Click(object sender, RoutedEventArgs e)
         {
-            var FolderDialog = new OpenFolderDialog
+            OpenFolderDialog FolderDialog = new OpenFolderDialog
             {
                 Title = "Select Folder",
                 InitialDirectory = DownloadPathText.Text
@@ -1156,7 +1139,7 @@ namespace SLBr.Pages
         
         private void ChangeScreenshotPathButton_Click(object sender, RoutedEventArgs e)
         {
-            var FolderDialog = new OpenFolderDialog
+            OpenFolderDialog FolderDialog = new OpenFolderDialog
             {
                 Title = "Select Folder",
                 InitialDirectory = ScreenshotPathText.Text
@@ -1179,7 +1162,6 @@ namespace SLBr.Pages
             {
                 Topmost = true
             };
-
             if (InfoWindow.ShowDialog() == true)
                 App.Instance.ClearAllData();
         }
@@ -1189,8 +1171,7 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 var Target = (ToggleButton)sender;
-                var Values = Target.Tag.ToString().Split("<,>", StringSplitOptions.None);
-                if (Values[0] == "PDF")
+                if (Target.Tag.ToString().Split("<,>", StringSplitOptions.None)[0] == "PDF")
                 {
                     WebViewManager.RuntimeSettings.PDFViewer = Target.IsChecked.ToBool();
                     App.Instance.GlobalSave.Set("PDF", WebViewManager.RuntimeSettings.PDFViewer);
@@ -1214,7 +1195,6 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 string Value = StandardFontComboBox.SelectedItem.ToString();
-
                 if (WebViewManager.IsCefInitialized)
                 {
                     Cef.UIThreadTaskFactory.StartNew(delegate
@@ -1344,7 +1324,6 @@ namespace SLBr.Pages
             {
                 bool Checked = NetworkLimitCheckBox.IsChecked.ToBool();
                 App.Instance.GlobalSave.Set("NetworkLimit", Checked.ToString());
-
                 float Bandwidth = Checked ? float.Parse(App.Instance.GlobalSave.Get("Bandwidth")) : 0;
                 foreach (MainWindow _Window in App.Instance.AllWindows)
                 {
@@ -1366,7 +1345,6 @@ namespace SLBr.Pages
             {
                 float Bandwidth = ParseBandwidthInput();
                 App.Instance.GlobalSave.Set("Bandwidth", Bandwidth);
-
                 if (!NetworkLimitCheckBox.IsChecked.ToBool())
                     Bandwidth = 0;
                 foreach (MainWindow _Window in App.Instance.AllWindows)
@@ -1383,7 +1361,6 @@ namespace SLBr.Pages
             {
                 float Bandwidth = ParseBandwidthInput();
                 App.Instance.GlobalSave.Set("Bandwidth", Bandwidth);
-
                 if (!NetworkLimitCheckBox.IsChecked.ToBool())
                     Bandwidth = 0;
                 foreach (MainWindow _Window in App.Instance.AllWindows)
@@ -1498,11 +1475,7 @@ namespace SLBr.Pages
                                 if (Gist.GetProperty("description").GetString() == "SLBr Sync")
                                 {
                                     App.Instance.GlobalSave.Set("SyncGist", Gist.GetProperty("id").GetString());
-
-                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Settings", "Choose Sync Direction", "An existing sync was found for this GitHub account.\n\nDo you want to override existing data with the cloud data on application reboot?", "\ue753", "Yes", "No")
-                                    {
-                                        Topmost = true
-                                    };
+                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Settings", "Choose Sync Direction", "An existing sync was found for this GitHub account.\n\nDo you want to override existing data with the cloud data on application reboot?", "\ue753", "Yes", "No") { Topmost = true };
                                     if (InfoWindow.ShowDialog() == true)
                                         App.Instance.PreventSync = true;
                                     break;
@@ -1522,11 +1495,9 @@ namespace SLBr.Pages
                 TabItem SelectedTabItem = (TabItem)SettingsTabControl.SelectedItem;
                 if (SelectedTabItem != null)
                 {
-                    string Name = SelectedTabItem.Header.ToString().ToLowerInvariant();
-                    Debug.WriteLine($"slbr://settings/#{Uri.EscapeDataString(Name)}");
-                    Debug.WriteLine(BrowserView.Address);
-                    if (BrowserView.Address != $"slbr://settings/#{Uri.EscapeDataString(Name)}")
-                        BrowserView.WebView.ExecuteScript($"history.pushState(null, \"\", \"#{Uri.EscapeDataString(Name)}\");");
+                    string Name = Uri.EscapeDataString(SelectedTabItem.Header.ToString().ToLowerInvariant());
+                    if (BrowserView.Address != $"slbr://settings/#{Name}")
+                        BrowserView.WebView.ExecuteScript($"history.pushState(null, \"\", \"#{Name}\");");
                 }
             }
         }

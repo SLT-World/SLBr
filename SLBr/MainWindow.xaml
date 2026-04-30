@@ -7,7 +7,7 @@
         xmlns:controls="clr-namespace:SLBr.Controls"
         xmlns:WinUI="clr-namespace:WinUI"
         mc:Ignorable="d"
-        Title="SLBr" MouseEnter="Window_MouseEnter" Height="450" Width="800" WindowStyle="SingleBorderWindow" ResizeMode="CanResize" SourceInitialized="Window_SourceInitialized" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged" Activated="Window_Activated" Deactivated="Window_Deactivated">
+        Title="SLBr" Height="450" Width="800" WindowStyle="SingleBorderWindow" ResizeMode="CanResize" SourceInitialized="Window_SourceInitialized" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" StateChanged="Window_StateChanged" SizeChanged="Window_SizeChanged" LocationChanged="Window_LocationChanged" Activated="Window_Activated" Deactivated="Window_Deactivated">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -42,6 +42,20 @@
                                     <Setter TargetName="Border" Property="Background">
                                         <Setter.Value>
                                             <SolidColorBrush Color="{DynamicResource GrayBrushColor}" Opacity="0.1"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="Tag" Value="ForceMouseOver">
+                                    <Setter TargetName="Border" Property="Background">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="{DynamicResource GrayBrushColor}" Opacity="0.1"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="Tag" Value="ForcePressed">
+                                    <Setter TargetName="Border" Property="Background">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="{DynamicResource GrayBrushColor}" Opacity="0.2"/>
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>
@@ -85,7 +99,7 @@
         <TaskbarItemInfo x:Name="TaskbarItem" ProgressState="Normal" ProgressValue="0" controls:TaskbarItemOverlay.Template="{StaticResource OverlayIcon}"/>
     </Window.TaskbarItemInfo>
     <WindowChrome.WindowChrome>
-        <WindowChrome x:Name="MainWindowChrome" CaptionHeight="45" UseAeroCaptionButtons="False" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"/>
+        <WindowChrome x:Name="MainWindowChrome" CaptionHeight="45" UseAeroCaptionButtons="False" ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}" CornerRadius="{x:Static SystemParameters.WindowCornerRadius}"/>
     </WindowChrome.WindowChrome>
     <Grid x:Name="WindowBackground" Background="{StaticResource SecondaryBrush}" WindowChrome.IsHitTestVisibleInChrome="False">
         <Grid.Style>
@@ -130,7 +144,7 @@
             <TextBlock TextTrimming="CharacterEllipsis" x:Name="CaptionTitle" Grid.Column="2" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource FontBrush}" Text="{Binding ElementName=TabsUI, Path=SelectedItem.Header, TargetNullValue='SLBr'}"/>
         </Grid>
         <Button Height="Auto" VerticalAlignment="Stretch" Click="MinimizeButton_Click" Grid.Column="1" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" Content="&#xe921;"/>
-        <Button Height="Auto" VerticalAlignment="Stretch" MouseEnter="MaximizeRestoreButton_MouseEnter" MouseLeave="MaximizeRestoreButton_MouseLeave" Click="MaximizeRestoreButton_Click" Name="MaximizeRestoreButton" Grid.Column="2" Style="{StaticResource CaptionButtonStyle}" Content="&#xe922;"/>
+        <Button WindowChrome.IsHitTestVisibleInChrome="False" Height="Auto" VerticalAlignment="Stretch" Click="MaximizeRestoreButton_Click" Name="MaximizeRestoreButton" Grid.Column="2" Style="{StaticResource CaptionButtonStyle}" Content="&#xe922;"/>
         <Button Height="Auto" VerticalAlignment="Stretch" Click="CloseButton_Click" Grid.Column="3" Style="{StaticResource CaptionCloseButtonStyle}" ToolTip="Close" Content="&#xe8bb;"/>
         <!--<Grid.LayoutTransform>
             <ScaleTransform ScaleX="2.5" ScaleY="2.5"/>
@@ -143,7 +157,7 @@
             </TabControl.ContentTemplate>
         </WinUI:WinUITabControl>
         <Grid x:Name="FullscreenContainer" Grid.RowSpan="2" Grid.ColumnSpan="4" Visibility="Visible">
-            <Popup  SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" StaysOpen="False" PopupAnimation="Fade">
+            <Popup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" StaysOpen="False" PopupAnimation="Fade">
                 <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Opacity="0.8">
                     <TextBlock FontSize="25" Text="To exit fullscreen, press F11 or Esc" Margin="7.5" Foreground="{StaticResource FontBrush}"/>
                 </Border>

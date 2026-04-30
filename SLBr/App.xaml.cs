@@ -5143,16 +5143,12 @@ Inner Exception: {7}";
         if (rel && rel.toLowerCase().indexOf('icon') !== -1)
         {
             var href = links[i].getAttribute('href') || '';
-            var type = links[i].getAttribute('type') || '';
-            var isSvg = (href.toLowerCase().indexOf('.svg') !== -1) || (type.toLowerCase().indexOf('svg') !== -1);
-            if (!isSvg) {
-                return links[i].href;
-            }
+            var isSvg = (href.toLowerCase().indexOf('.svg') !== -1) || ((links[i].getAttribute('type') || '').toLowerCase().indexOf('svg') !== -1);
+            if (!isSvg) return href;
         }
     }
     return '';
 })();";
-
         public const string ReaderModeScript = @"(function() {
   const allowedTags = new Set([
     ""a"", ""p"", ""blockquote"", ""code"", ""span"",
@@ -5161,7 +5157,6 @@ Inner Exception: {7}";
     ""ul"", ""ol"", ""li"",
     ""em"", ""strong"", ""b"", ""i"", ""u"", ""br""
   ]);
-
   const allowedAttrs = {
     ""a"": [""href""],
     ""img"": [""src"", ""alt""],
@@ -5175,39 +5170,29 @@ Inner Exception: {7}";
     ""em"": [], ""strong"": [], ""b"": [], ""i"": [], ""u"": [], ""br"": [],
     ""h1"": [], ""h2"": [], ""h3"": [], ""h4"": [], ""h5"": [], ""h6"": []
   };
-
   const blacklistSelectors = [
     ""nav"", ""footer"", ""header"", ""aside"",
     ""script"", ""style"",
-
     ""[class='ad' i]"", ""[class^='ad-' i]"", ""[class$='-ad' i]"",
     ""[id='ad' i]"", ""[id^='ad-' i]"", ""[id$='-ad' i]"",
-
     ""[class*='social' i]"", ""[id*='social' i]"",
     ""[class*='promo' i]"", ""[id*='promo' i]"",
     ""[class*='related' i]"", ""[id*='related' i]"",
     ""[class*='comments' i]"", ""[id*='comments' i]"",
     ""[class*='share' i]"", ""[id*='share' i]""
   ];
-
     blacklistSelectors.forEach(selector => {
         document.body.querySelectorAll(selector).forEach(el => el.remove());
     });
-
     const socialWords = [""share"", ""save"", ""facebook"", ""twitter"", ""linkedin"", ""whatsapp""];
-
     document.body.querySelectorAll(""a, button"").forEach(el => {
         const text = el.textContent.trim().toLowerCase();
-        if (socialWords.some(word => text.includes(word))) {
-            el.remove();
-        }
+        if (socialWords.some(word => text.includes(word))) el.remove();
     });
-
   function isBlacklisted(node) {
     if (node.nodeType !== Node.ELEMENT_NODE) return false;
     return blacklistSelectors.some(sel => node.matches(sel));
   }
-
   function cleanNode(node) {
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent.replace(/\s+/g, "" "").trim();
@@ -5215,30 +5200,21 @@ Inner Exception: {7}";
       if (/window\.[A-Za-z0-9_]+\s*=/.test(text)) return document.createDocumentFragment();
       return document.createTextNode(text);
     }
-
     if (node.nodeType === Node.ELEMENT_NODE) {
       if (isBlacklisted(node)) return document.createDocumentFragment();
-
       const tag = node.tagName.toLowerCase();
       if (!allowedTags.has(tag)) {
         const fragment = document.createDocumentFragment();
-        for (const child of node.childNodes) {
-          fragment.appendChild(cleanNode(child));
-        }
+        for (const child of node.childNodes) fragment.appendChild(cleanNode(child));
         return fragment;
       }
-
       const el = document.createElement(tag);
       if (allowedAttrs[tag]) {
         for (const attr of allowedAttrs[tag]) {
-          if (node.hasAttribute(attr)) {
-            el.setAttribute(attr, node.getAttribute(attr));
-          }
+          if (node.hasAttribute(attr)) el.setAttribute(attr, node.getAttribute(attr));
         }
       }
-      for (const child of node.childNodes) {
-        el.appendChild(cleanNode(child));
-      }
+      for (const child of node.childNodes) el.appendChild(cleanNode(child));
       return el;
     }
 
@@ -5248,7 +5224,6 @@ Inner Exception: {7}";
   function getTextLength(el) {
     return el.innerText ? el.innerText.replace(/\s+/g, "" "").length : 0;
   }
-
   function findMainContent() {
     const candidates = Array.from(document.querySelectorAll(""article, main, [role='main']""));
     if (candidates.length === 0) {
@@ -5259,15 +5234,11 @@ Inner Exception: {7}";
     if (candidates.length === 0) return document.body;
     return candidates.reduce((a, b) => getTextLength(a) > getTextLength(b) ? a : b);
   }
-
   const root = findMainContent();
   const cleaned = cleanNode(root.cloneNode(true));
-
   const container = document.createElement(""div"");
   container.appendChild(cleaned);
-
   let contentHtml = container.innerHTML.replace(/\s*\n\s*/g, ""\n"").replace(/\n{2,}/g, ""\n\n"");
-
   document.head.innerHTML = `
     <meta charset=""utf-8"">
     <title>${document.title.trim()}</title>
@@ -5322,7 +5293,6 @@ Inner Exception: {7}";
       a { color: #0645ad; text-decoration: none; }
       a:hover { text-decoration: underline; }
     </style>`;
-
   document.body.innerHTML=contentHtml.trim();
 })();";
 
@@ -5335,12 +5305,10 @@ Inner Exception: {7}";
         public const string CefAudioScript = @"(function () {
   if (window.__cef_audio__) return;
   window.__cef_audio__ = true;
-
   let lastState = null;
   let checkScheduled = false;
-  let observer = null;
+  let __slbr_audio_observer__ = null;
   let checksWithoutMedia = 0;
-
   function checkElements() {
     let playing = false;
     let foundMedia = false;
@@ -5356,9 +5324,7 @@ Inner Exception: {7}";
       }
     }
     if (!playing && window.__cef_audio_ctxs) {
-      if (window.__cef_audio_ctxs.length > 0) {
-        foundMedia = true;
-      }
+      if (window.__cef_audio_ctxs.length > 0) foundMedia = true;
       for (let i = 0; i < window.__cef_audio_ctxs.length; i++) {
         if (window.__cef_audio_ctxs[i].state === 'running') {
           playing = true;
@@ -5372,16 +5338,14 @@ Inner Exception: {7}";
     }
     if (!foundMedia) {
       checksWithoutMedia++;
-      if (checksWithoutMedia > 20 && observer) {
-        observer.disconnect();
-        observer = null;
+      if (checksWithoutMedia > 20 && __slbr_audio_observer__) {
+        __slbr_audio_observer__.disconnect();
+        __slbr_audio_observer__ = null;
         console.log(""Cef audio monitor: MutationObserver auto-disabled (no media found)."");
       }
-    } else {
-      checksWithoutMedia = 0;
     }
+    else checksWithoutMedia = 0;
   }
-
   function scheduleCheck() {
     if (!checkScheduled) {
       checkScheduled = true;
@@ -5413,8 +5377,8 @@ Inner Exception: {7}";
     document.addEventListener(ev, scheduleCheck, true);
   });
   if (document.body) {
-    observer = new MutationObserver(scheduleCheck);
-    observer.observe(document.body, { childList: true, subtree: true });
+    __slbr_audio_observer__ = new MutationObserver(scheduleCheck);
+    __slbr_audio_observer__.observe(document.body, { childList: true, subtree: true });
   }
   checkElements();
 })();";
@@ -5448,8 +5412,8 @@ Inner Exception: {7}";
 })();";*/
 
         public const string FileScript = @"(function () {
-  if (window.__slbr_file__) return;
-  window.__slbr_file__ = true;
+if (window.__slbr_file__) return;
+window.__slbr_file__ = true;
 document.documentElement.setAttribute('style',""display:table;margin:auto;"")
 document.body.setAttribute('style',""margin:35px auto;font-family:system-ui;"")
 var HeaderElement=document.getElementById('header');
@@ -5534,39 +5498,37 @@ document.querySelectorAll('tbody > tr').forEach(row => {
     }
 };";
         public const string NotificationPolyfill = @"(function () {
-  if (window.__slbr_notification__) return;
-  window.__slbr_notification__ = true;
+if (window.__slbr_notification__) return;
+window.__slbr_notification__ = true;
 class Notification {
 constructor(title, options = {}) {
-    if(Notification.permission!=='granted'){throw new Error(""Notification permission not granted."");}
-        this.onclick = null;
-        this.onshow = null;
-        this.onclose = null;
-        this.onerror = null;
-        if(typeof engine !== 'undefined' && typeof engine.postMessage === 'function') {
-            let packageSet=new Set();packageSet.add(title).add(options);
-            engine.postMessage({type:""__notification__"",data:JSON.stringify([...packageSet])});
-        }
-        setTimeout(() => {if(typeof this.onshow==='function')this.onshow();},0);
-        if(Notification.autoClose){setTimeout(()=>this.close(),Notification.autoClose);}
+    if(Notification.permission!=='granted') throw new Error(""Notification permission not granted."");
+    this.onclick = null;
+    this.onshow = null;
+    this.onclose = null;
+    this.onerror = null;
+    if(typeof engine !== 'undefined' && typeof engine.postMessage === 'function') {
+        let packageSet=new Set();packageSet.add(title).add(options);
+        engine.postMessage({type:""__notification__"",data:JSON.stringify([...packageSet])});
     }
-    close(){if(typeof this.onclose==='function')this.onclose();}
-    static requestPermission(callback){if(callback)callback('granted');return Promise.resolve('granted');}
-    static get permission(){return 'granted';}
+    setTimeout(() => {if(typeof this.onshow==='function')this.onshow();},0);
+    if(Notification.autoClose) setTimeout(()=>this.close(),Notification.autoClose);
+}
+close(){if(typeof this.onclose==='function')this.onclose();}
+static requestPermission(callback){if(callback)callback('granted');return Promise.resolve('granted');}
+static get permission(){return 'granted';}
 }
 Notification.autoClose = 7000;
 window.Notification = Notification;
 })();";
         public const string WebStoreScript = @"(function () {
-  if (window.__slbr_web_store__) return;
-  window.__slbr_web_store__ = true;
-
+if (window.__slbr_web_store__) return;
+window.__slbr_web_store__ = true;
 function scanButton(){
 const buttonQueries = ['button span[jsname]:not(:empty)']
 for (const button of document.querySelectorAll(buttonQueries.join(','))){
     const text=button.textContent||''
-    if (text==='Add to Chrome'||text==='Remove from Chrome')
-      button.textContent=text.replace('Chrome','SLBr')
+    if (text==='Add to Chrome'||text==='Remove from Chrome') button.textContent=text.replace('Chrome','SLBr')
   }
 }
 scanButton();
@@ -5619,7 +5581,6 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
     const originalAddEventListener=window.addEventListener;
     window.addEventListener=function(type,listener,options){if (type==='resize'){return;}return originalAddEventListener.apply(this,arguments);};
     window.onresize=()=>{};
-
     const originalConsole=window.console;
     window.console={
         ...originalConsole,
@@ -5627,7 +5588,6 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
         table:function(){},
         clear:function(){}
     };
-
     const originalRegExpToString=RegExp.prototype.toString;
     RegExp.prototype.toString=function(){try{return originalRegExpToString.call(this);}catch{return '';}};
     const originalDefineProperty=Object.defineProperty;
@@ -5637,53 +5597,35 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
     };
 })();
 ";
-        public const string ForceLazyLoad = @"
-    function applyLazyLoading(el) {
-        if (el.tagName !== 'IMG' && el.tagName !== 'IFRAME') return;
-
-        const originalSrc = el.getAttribute('src');
-        if (!originalSrc || el.dataset.lazyfixed) return;
-        el.dataset.lazyfixed = '1';
-        el.setAttribute('loading', 'lazy');
-
-        el.src = '';
-        requestAnimationFrame(() => {
-            el.setAttribute('src', originalSrc);
-        });
-    }
-
-    function initObserver() {
-        document.querySelectorAll('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
-
-        const SLBrlazyobserver = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                if (mutation.type === 'childList') {
-                    for (const node of mutation.addedNodes) {
-                        if (node.nodeType !== 1) continue;
-                        if (node.tagName === 'IMG' || node.tagName === 'IFRAME') {
-                            applyLazyLoading(node);
-                        } else {
-                            node.querySelectorAll?.('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
-                        }
-                    }
+        public const string ForceLazyLoad = @"function applyLazyLoading(el) {
+    if (el.tagName !== 'IMG' && el.tagName !== 'IFRAME') return;
+    const originalSrc = el.getAttribute('src');
+    if (!originalSrc || el.dataset.lazyfixed) return;
+    el.dataset.lazyfixed = '1';
+    el.setAttribute('loading', 'lazy');
+    el.src = '';
+    requestAnimationFrame(() => {
+        el.setAttribute('src', originalSrc);
+    });
+}
+function initObserver() {
+    document.querySelectorAll('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
+    const __slbr_lazy_observer__ = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType !== 1) continue;
+                    if (node.tagName === 'IMG' || node.tagName === 'IFRAME') applyLazyLoading(node);
+                    else node.querySelectorAll?.('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
                 }
             }
-        });
-
-        const target = document.documentElement || document.body;
-        if (target) {
-            SLBrlazyobserver.observe(target, {
-                childList: true,
-                subtree: true
-            });
         }
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initObserver);
-    } else {
-        initObserver();
-    }";
+    });
+    const target = document.documentElement || document.body;
+    if (target) __slbr_lazy_observer__.observe(target, { childList: true, subtree: true });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initObserver);
+else initObserver();";
 
         public const string DetectPWA = "(async()=>{const link=document.querySelector('link[rel=\"manifest\"]');const manifest=link?link.href:null;let service_worker=false;try{service_worker=!!(navigator.serviceWorker&&(await navigator.serviceWorker.ready));}catch{}return{manifest,service_worker};})();";
 
@@ -5708,45 +5650,42 @@ while (node = walker.nextNode()) {
 return JSON.stringify(texts);
 })();";
 
-        public const string SetTranslationText = @"(function() {{
+        public const string SetTranslationText = @"(function() {
 const translations = {0};
-const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {{
-        acceptNode: function(node) {{
+const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: function(node) {
             let parent = node.parentNode;
-            while (parent) {{
+            while (parent) {
                 const tag = parent.tagName ? parent.tagName.toLowerCase() : '';
                 if (['script','style','meta','link','noscript'].includes(tag)) return NodeFilter.FILTER_REJECT;
                 parent = parent.parentNode;
-            }}
+            }
             const trimmed = node.textContent.trim();
-            if (!trimmed || trimmed.length <= 1 || trimmed.startsWith('<') || trimmed.includes('{{') || trimmed.includes('}}') || /^[\\s<>{{}}\\/]+$/.test(trimmed))
-                return NodeFilter.FILTER_REJECT;
+            if (!trimmed || trimmed.length <= 1 || trimmed.startsWith('<') || trimmed.includes('{{') || trimmed.includes('}}') || /^[\\s<>{{}}\\/]+$/.test(trimmed)) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
-        }}
-    }}, false
+        }
+    }, false
 );
 let node, i = 0;
-while (node = walker.nextNode()) {{
-    if (i < translations.length) {{
+while (node = walker.nextNode()) {
+    if (i < translations.length) {
         const beforeMatch = node.textContent.match(/^\s*/);
         const afterMatch = node.textContent.match(/\s*$/);
         const before = beforeMatch ? beforeMatch[0] : """";
         const after = afterMatch ? afterMatch[0] : """";
         node.textContent = before + translations[i] + after;
         i++;
-    }}
-}}
-}})();";
+    }
+}
+})();";
 
-        public const string CheckNativeDarkModeScript = @"(function() {{
-function detectDarkAppearance() {
+        public const string CheckNativeDarkModeScript = @"(function() {
 const brightness = (rgbStr) => {
     const m = rgbStr.match(/\d+/g);
     if (!m) return 255;
     const [r,g,b] = m.map(Number);
     return 0.299*r + 0.587*g + 0.114*b;
 };
-
 const colors = new Set();
 const elements = [document.documentElement, document.body, ...document.querySelectorAll('*')].slice(0, 100);
 for (const el of elements) {
@@ -5755,15 +5694,10 @@ for (const el of elements) {
     colors.add(bg);
     }
 }
-
 const brights = [...colors].map(brightness);
 const avg = brights.length ? brights.reduce((a,b)=>a+b,0)/brights.length : 255;
-return avg < 110;
-}
-
-if (detectDarkAppearance()) return 0;
-return 1;
-}})();";
+return avg < 110 ? 0 : 1;
+})();";
 
         public const string EstimatedMemoryUsageScript = @"(function() {
 const domMemory = document.getElementsByTagName('*').length * 2048;

@@ -65,7 +65,18 @@ namespace SLBr
 
         public MainWindow()
         {
+            InitializeComponent();
             InitializeWindow();
+        }
+
+        //WARNING: DO NOT TOUCH OR REMOVE OnSourceInitialized.
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            HwndSource Source = (HwndSource)PresentationSource.FromVisual(this);
+            Source.AddHook(WndProc);
+            Handle = Source.Handle;
+            SetWindowDisplayAffinity();
         }
 
         private void Window_SourceInitialized(object sender, EventArgs e)
@@ -79,16 +90,44 @@ namespace SLBr
             HotKeyManager.HandleKeyDown(e);
         }
 
-        /*protected override void OnPreviewKeyDown(KeyEventArgs e)
-        {
-            base.OnPreviewKeyDown(e);
-            HotKeyManager.HandleKeyDown(e);
-        }*/
-
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             switch (msg)
             {
+                case DllUtils.WM_NCHITTEST:
+                    if (!IsFullscreen && Utils.IsSnapLayoutEnabled)
+                    {
+                        Point _Point = PointFromScreen(new Point((short)(lParam.ToInt32() & 0xFFFF), (short)((lParam.ToInt32() >> 16) & 0xFFFF)));
+                        if (MaximizeRestoreButton.TransformToAncestor(this).TransformBounds(new Rect(MaximizeRestoreButton.RenderSize)).Contains(_Point))
+                        {
+                            MaximizeRestoreButton.Tag = "ForceMouseOver";
+                            handled = true;
+                            return new IntPtr(DllUtils.HTMAXBUTTON);
+                        }
+                        else
+                            MaximizeRestoreButton.Tag = null;
+                    }
+                    break;
+                case DllUtils.WM_NCLBUTTONDOWN:
+                    if (!IsFullscreen)
+                    {
+                        if (wParam.ToInt32() == DllUtils.HTMAXBUTTON)
+                        {
+                            handled = true;
+                            MaximizeRestoreButton.Tag = "ForcePressed";
+                        }
+                    }
+                    break;
+                case DllUtils.WM_NCLBUTTONUP:
+                    if (!IsFullscreen)
+                    {
+                        if (wParam.ToInt32() == DllUtils.HTMAXBUTTON)
+                        {
+                            MaximizeRestoreButton.Tag = null;
+                            MaximizeRestoreButton_Click(null, null);
+                        }
+                    }
+                    break;
                 case DllUtils.WM_COPYDATA:
                     COPYDATASTRUCT _dataStruct = Marshal.PtrToStructure<COPYDATASTRUCT>(lParam);
                     string Data = Marshal.PtrToStringUni(_dataStruct.lpData, _dataStruct.cbData / 2);
@@ -106,7 +145,8 @@ namespace SLBr
                             else
                                 App.Instance.NewWindow();
                         }
-                        DllUtils.SetForegroundWindow(Handle);
+                        if (Handle != null)
+                            DllUtils.SetForegroundWindow(Handle.Value);
                     }
                     handled = true;
                     break;
@@ -149,20 +189,13 @@ namespace SLBr
         }
 
         BrowserTabItem NewTabTab = null;
-        public nint Handle;
+        public nint? Handle;
         private void InitializeWindow()
         {
             ID = Utils.GenerateRandomId();
-            Handle = new WindowInteropHelper(this).EnsureHandle();
-            HwndSource.FromHwnd(Handle).AddHook(new(WndProc));
-            int trueValue = 0x01;
-            DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
-            DllUtils.SetWindowLong(Handle, DllUtils.GWL_STYLE, DllUtils.GetWindowLong(Handle, DllUtils.GWL_STYLE) & ~DllUtils.WS_SYSMENU);
-
             App.Instance.AllWindows.Add(this);
             if (App.Instance.WindowsSaves.Count < App.Instance.AllWindows.Count)
                 App.Instance.WindowsSaves.Add(new($"Window_{App.Instance.WindowsSaves.Count}.bin", App.Instance.UserApplicationWindowsPath));
-            InitializeComponent();
             if (App.Instance.CurrentProfile.Type == ProfileType.User && !App.Instance.CurrentProfile.Default)
                 TaskbarItemOverlay.SetProfile(TaskbarItem, App.Instance.CurrentProfile);
             NewTabTab = new(null)
@@ -485,7 +518,7 @@ namespace SLBr
                 _ = FastHashSetContains(TestUrls[3]);
             });*/
             //MessageBox.Show(Benchmark.Report());
-#endregion
+            #endregion
         }
 
         bool VerticalTabs = false;
@@ -503,13 +536,6 @@ namespace SLBr
 
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.SetAppearance(_Theme);
-
-            int trueValue = 0x01;
-            int falseValue = 0x00;
-            if (App.Instance.CurrentTheme.DarkTitleBar)
-                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
-            else
-                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
         }
 
         public void SetTabAlignment()
@@ -716,6 +742,7 @@ namespace SLBr
         private void Window_Activated(object sender, EventArgs e)
         {
             TabPreviewPopup.IsOpen = false;
+            MaximizeRestoreButton.Tag = null;
             foreach (BrowserTabItem Tab in Tabs)
             {
                 Tab.Content?.MaxHeight = TabsUI.ActualHeight;
@@ -727,6 +754,7 @@ namespace SLBr
         private void Window_Deactivated(object sender, EventArgs e)
         {
             TabPreviewPopup.IsOpen = false;
+            MaximizeRestoreButton.Tag = null;
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.UpdateDevToolsPosition();
             WindowBackground.Background = (SolidColorBrush)FindResource("BorderBrush");
@@ -735,6 +763,7 @@ namespace SLBr
         private void Window_StateChanged(object sender, EventArgs e)
         {
             TabPreviewPopup.IsOpen = false;
+            MaximizeRestoreButton.Tag = null;
             if (WindowState != WindowState.Minimized)
             {
                 if (WindowState == WindowState.Maximized)
@@ -750,7 +779,8 @@ namespace SLBr
                     MaximizeRestoreButton.Content = "\xe922";
                 }
                 MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
-                Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
+                if (Tabs.Count != 0)
+                    Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
             }
             foreach (BrowserTabItem Tab in Tabs)
             {
@@ -762,6 +792,7 @@ namespace SLBr
         private void Window_LocationChanged(object sender, EventArgs e)
         {
             TabPreviewPopup.IsOpen = false;
+            MaximizeRestoreButton.Tag = null;
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.UpdateDevToolsPosition();
         }
@@ -769,6 +800,7 @@ namespace SLBr
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             TabPreviewPopup.IsOpen = false;
+            MaximizeRestoreButton.Tag = null;
             foreach (BrowserTabItem Tab in Tabs)
             {
                 if (e.HeightChanged)
@@ -859,7 +891,6 @@ namespace SLBr
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             List<BrowserTabItem> ProcessTabs = Tabs.Where(i => i.TabGroup == _Tab.TabGroup).ToList();
-            //BrowserTabItem TabGroupButton = ProcessTabs.FirstOrDefault(i => i.Type == BrowserTabType.Group);
             Tabs.Remove(_Tab);
             foreach (BrowserTabItem _FTab in ProcessTabs)
             {
@@ -891,6 +922,7 @@ namespace SLBr
         private DispatcherTimer FullscreenPopupTimer;
         public void Fullscreen(bool Fullscreen, Browser BrowserView = null)
         {
+            MaximizeRestoreButton.Tag = null;
             IsFullscreen = Fullscreen;
             BrowserView ??= GetTab().Content;
             if (BrowserView != null)
@@ -941,10 +973,10 @@ namespace SLBr
             FullscreenPopupTimer = null;
         }
 
-        public void DevTools(string Id = "")//, int XCoord = 0, int YCoord = 0)
+        public void DevTools(string Id = "")
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
-            _Tab.Content?.DevTools();//(false, XCoord, YCoord);
+            _Tab.Content?.DevTools();
         }
         public TabGroup NewTabGroup(string Header, Color Background, int Index = -1, bool IsCollapsed = false)
         {
@@ -1125,11 +1157,13 @@ namespace SLBr
 
         public void SetWindowDisplayAffinity()
         {
+            if (Handle == null || Tabs.Count == 0)
+                return;
             BrowserTabItem CurrentTab = Tabs[TabsUI.SelectedIndex];
             bool ExcludeFromCapture = App.Instance.BlockScreenCapture == 2 || (App.Instance.BlockScreenCapture == 1 && (CurrentTab?.Content?.Private ?? false));
             if (WindowExcludedFromCapture != ExcludeFromCapture)
             {
-                DllUtils.SetWindowDisplayAffinity(Handle, ExcludeFromCapture ? DllUtils.WindowDisplayAffinity.WDA_EXCLUDEFROMCAPTURE : DllUtils.WindowDisplayAffinity.WDA_NONE);
+                DllUtils.SetWindowDisplayAffinity(Handle.Value, ExcludeFromCapture ? DllUtils.WindowDisplayAffinity.WDA_EXCLUDEFROMCAPTURE : DllUtils.WindowDisplayAffinity.WDA_NONE);
                 WindowExcludedFromCapture = ExcludeFromCapture;
             }
         }
@@ -1175,6 +1209,7 @@ namespace SLBr
 
         public async void ShowPreview(BrowserTabItem? Tab, FrameworkElement Anchor = null)
         {
+            MaximizeRestoreButton.Tag = null;
             if (Tab == null)
                 TabPreviewPopup.IsOpen = false;
             else
@@ -1262,53 +1297,6 @@ namespace SLBr
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) =>
             SystemCommands.CloseWindow(this);
-        
-        DispatcherTimer SnapLayoutDelayTimer;
-        bool HoveringMaximize;
-        bool SnapLayoutVisible;
-
-        private void MaximizeRestoreButton_MouseEnter(object sender, MouseEventArgs e)
-        {
-            if (!UserAgentGenerator.IsWindows11OrGreater)
-                return;
-            HoveringMaximize = true;
-            SnapLayoutDelayTimer ??= new() { Interval = TimeSpan.FromMilliseconds(650) };
-            SnapLayoutDelayTimer.Tick -= SnapLayoutDelayTimer_Tick;
-            SnapLayoutDelayTimer.Tick += SnapLayoutDelayTimer_Tick;
-            SnapLayoutDelayTimer.Start();
-        }
-
-        private void MaximizeRestoreButton_MouseLeave(object sender, MouseEventArgs e)
-        {
-            HoveringMaximize = false;
-            SnapLayoutDelayTimer?.Stop();
-        }
-
-        private void SnapLayoutDelayTimer_Tick(object? sender, EventArgs e)
-        {
-            SnapLayoutDelayTimer.Stop();
-            if (SnapLayoutVisible || !HoveringMaximize)
-                return;
-            SnapLayoutVisible = true;
-            DllUtils.keybd_event(DllUtils.VK_LWIN, 0, 0, 0);
-            DllUtils.keybd_event(DllUtils.VK_Z, 0, 0, 0);
-            DllUtils.keybd_event(DllUtils.VK_Z, 0, DllUtils.KEYEVENTF_KEYUP, 0);
-            DllUtils.keybd_event(DllUtils.VK_LWIN, 0, DllUtils.KEYEVENTF_KEYUP, 0);
-        }
-
-        private void Window_MouseEnter(object sender, MouseEventArgs e)
-        {
-            TabPreviewPopup.IsOpen = false;
-            HoveringMaximize = false;
-            SnapLayoutDelayTimer?.Stop();
-            if (!SnapLayoutVisible)
-                return;
-            Point MousePosition = Mouse.GetPosition(MaximizeRestoreButton);
-            if (MousePosition.X >= -12 && MousePosition.X <= MaximizeRestoreButton.ActualWidth + 12 && MousePosition.Y >= -12 && MousePosition.Y <= MaximizeRestoreButton.ActualHeight + 12)
-                return;
-            SnapLayoutVisible = false;
-            DllUtils.SetForegroundWindow(Handle);
-        }
 
         private void ToastPopup_MouseDown(object sender, MouseButtonEventArgs e)
         {

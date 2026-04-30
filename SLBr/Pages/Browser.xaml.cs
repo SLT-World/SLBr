@@ -2312,8 +2312,8 @@ namespace SLBr.Pages
 
         public void Share(string? Url = null)
         {
-            if (Uri.TryCreate(Url ?? Address, UriKind.Absolute, out Uri? _Uri))
-                Utils.Share(Tab.ParentWindow.Handle, Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
+            if (Uri.TryCreate(Url ?? Address, UriKind.Absolute, out Uri? _Uri) && Tab.ParentWindow.Handle != null)
+                Utils.Share(Tab.ParentWindow.Handle.Value, Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
         }
 
         public async void Find(string Text, bool Forward = true, bool FindNext = false)
