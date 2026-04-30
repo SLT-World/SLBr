@@ -402,7 +402,6 @@ namespace SLBr.Pages
 
             BrowserHardwareAccelerationCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("BrowserHardwareAcceleration"));
             JITCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("JIT"));
-            ExperimentalFeaturesCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ExperimentalFeatures"));
             StartupBoostCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("StartupBoost"));
             PDFViewerToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PDF"));
 
@@ -1047,11 +1046,6 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("JIT", JITCheckBox.IsChecked.ToBool().ToString());
-        }
-        private void ExperimentalFeaturesCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("ExperimentalFeatures", ExperimentalFeaturesCheckBox.IsChecked.ToBool().ToString());
         }
         private void StartupBoostCheckBox_Click(object sender, RoutedEventArgs e)
         {

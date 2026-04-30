@@ -116,16 +116,7 @@
                             </GroupBox.Header>
                             <StackPanel>
                                 <CheckBox IsEnabled="{Binding ElementName=PrivateTabsCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
-                                <CheckBox Margin="0,0,0,10" x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
-                                <DockPanel Margin="0,0,0,0">
-                                    <TextBlock VerticalAlignment="Center" Text="Startup Favicon Service"/>
-                                    <ComboBox x:Name="FaviconServiceComboBox" IsEnabled="{Binding ElementName=DownloadFaviconsCheckBox, Path=IsChecked, TargetNullValue=False}" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FaviconServiceComboBox_SelectionChanged">
-                                        <ComboBoxItem>Google</ComboBoxItem>
-                                        <ComboBoxItem>Yandex</ComboBoxItem>
-                                        <ComboBoxItem>DuckDuckGo</ComboBoxItem>
-                                        <ComboBoxItem>AllesEDV</ComboBoxItem>
-                                    </ComboBox>
-                                </DockPanel>
+                                <CheckBox Margin="0,0,0,0" x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Margin="0,0,0,10">
@@ -308,7 +299,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Reader Mode"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Reader mode"/>
                                     <ToggleButton x:Name="ReaderButtonToggleButton" Click="ReaderButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
@@ -316,7 +307,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Create QR Code"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Create QR code"/>
                                     <ToggleButton x:Name="QRButtonToggleButton" Click="QRButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,10">
@@ -324,7 +315,7 @@
                                     <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                    <TextBlock VerticalAlignment="Center" Text="Switch Web Engine"/>
+                                    <TextBlock VerticalAlignment="Center" Text="Switch web engine"/>
                                     <ToggleButton x:Name="WebEngineButtonToggleButton" Click="WebEngineButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                 </DockPanel>
                                 <DockPanel>
@@ -563,13 +554,22 @@
                             <StackPanel>
                                 <CheckBox Margin="0,0,0,10" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Content="Web notifications" Width="Auto"/>
                                 <CheckBox Margin="0,0,0,10" x:Name="WebAppsCheckBox" Click="WebAppsCheckBox_Click" Content="Check for Web Apps" Width="Auto"/>
-                                <DockPanel>
+                                <DockPanel Margin="0,0,0,10">
                                     <TextBlock VerticalAlignment="Center" Text="Reverse image search engine"/>
                                     <ComboBox x:Name="ImageSearchComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ImageSearchComboBox_SelectionChanged">
                                         <ComboBoxItem>Google</ComboBoxItem>
                                         <ComboBoxItem>Bing</ComboBoxItem>
                                         <ComboBoxItem>Yandex</ComboBoxItem>
                                         <ComboBoxItem>TinEye</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
+                                <DockPanel>
+                                    <TextBlock VerticalAlignment="Center" Text="Startup favicon service"/>
+                                    <ComboBox x:Name="FaviconServiceComboBox" IsEnabled="{Binding ElementName=DownloadFaviconsCheckBox, Path=IsChecked, TargetNullValue=False}" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="FaviconServiceComboBox_SelectionChanged">
+                                        <ComboBoxItem>Google</ComboBoxItem>
+                                        <ComboBoxItem>Yandex</ComboBoxItem>
+                                        <ComboBoxItem>DuckDuckGo</ComboBoxItem>
+                                        <ComboBoxItem>AllesEDV</ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
                             </StackPanel>
@@ -1008,7 +1008,6 @@
                                 </DockPanel>
                                 <CheckBox x:Name="BrowserHardwareAccelerationCheckBox" Click="BrowserHardwareAccelerationCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Use graphics acceleration when available"/>
                                 <CheckBox x:Name="JITCheckBox" Click="JITCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable V8 JIT optimizer"/>
-                                <CheckBox x:Name="ExperimentalFeaturesCheckBox" Click="ExperimentalFeaturesCheckBox_Click" Width="Auto" Margin="0,0,0,10" Content="Enable experimental web features"/>
                                 <GroupBox BorderThickness="0" Background="DarkOrange">
                                     <StackPanel>
                                         <DockPanel>

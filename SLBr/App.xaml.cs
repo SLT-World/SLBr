@@ -2777,8 +2777,6 @@ Inner Exception: {7}";
 
             if (!GlobalSave.Has("BrowserHardwareAcceleration"))
                 GlobalSave.Set("BrowserHardwareAcceleration", (RenderCapability.Tier >> 16) != 0);
-            if (!GlobalSave.Has("ExperimentalFeatures"))
-                GlobalSave.Set("ExperimentalFeatures", false);
             if (!GlobalSave.Has("ReduceDisk"))
                 GlobalSave.Set("ReduceDisk", false);
             if (!GlobalSave.Has("Performance"))
@@ -3732,31 +3730,6 @@ Inner Exception: {7}";
                 Settings.AddFlag("enable-webassembly-lazy-compilation");
                 Settings.AddFlag("enable-webassembly-memory64");
             }
-
-            if (bool.Parse(GlobalSave.Get("ExperimentalFeatures")))
-            {
-                //Settings.AddFlag("webtransport-developer-mode");
-                Settings.AddFlag("enable-experimental-cookie-features");
-
-                Settings.AddFlag("enable-experimental-webassembly-features");
-                Settings.AddFlag("enable-experimental-webassembly-jspi");
-
-                Settings.AddFlag("enable-experimental-web-platform-features");
-
-                Settings.AddFlag("enable-javascript-harmony");
-                Settings.AddFlag("enable-javascript-experimental-shared-memory");
-
-                Settings.AddFlag("enable-future-v8-vm-features");
-                //Settings.AddFlag("enable-hardware-secure-decryption-experiment");
-                //Settings.AddFlag("text-box-trim");
-
-                //Settings.AddFlag("enable-devtools-experiments");
-
-                Settings.AddFlag("enable-webgl-developer-extensions");
-                //Settings.AddFlag("enable-webgl-draft-extensions");
-                //Settings.AddFlag("enable-webgpu-developer-features");
-                Settings.AddFlag("enable-experimental-extension-apis");
-            }
         }
 
         private void SetBackgroundFlags(WebViewSettings Settings)
@@ -4221,11 +4194,7 @@ Inner Exception: {7}";
                 JsFlags += " --efficiency-mode --battery-saver-mode --memory-saver-mode";
             }
             if (!LiteMode)
-            {
                 JsFlags += " --enable-experimental-regexp-engine-on-excessive-backtracks --expose-wasm --wasm-lazy-compilation --asm-wasm-lazy-compilation --wasm-lazy-validation --experimental-wasm-gc --wasm-async-compilation --wasm-opt --experimental-wasm-branch-hinting --experimental-wasm-instruction-tracing";
-                if (bool.Parse(GlobalSave.Get("ExperimentalFeatures")))
-                    JsFlags += " --experimental-wasm-jspi --experimental-wasm-memory64 --experimental-wasm-type-reflection";
-            }
             if (!bool.Parse(GlobalSave.Get("JIT")))
                 JsFlags += " --jitless";
             Settings.JavaScriptFlags = JsFlags;

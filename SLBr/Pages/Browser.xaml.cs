@@ -1322,9 +1322,25 @@ namespace SLBr.Pages
                         break;
                     case "file_picker":
                         string Accept = Message["accept"].ToString();
+                        string Filter;
+                        switch (Accept)
+                        {
+                            case "image":
+                                Filter = "Image files (*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff)|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff";
+                                break;
+                            /*case "video":
+                                Filter = "Video files (*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm)|*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm";
+                                break;
+                            case "media":
+                                Filter = "Image files (*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff)|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff|Video files (*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm)|*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm";
+                                break;*/
+                            default:
+                                Filter = "All files (*.*)|*.*";
+                                break;
+                        }
                         OpenFileDialog OpenFileDialog = new()
                         {
-                            Filter = (Accept == "media" ? "Image files (*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff)|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp;*.tiff|Video files (*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm)|*.mp4;*.mkv;*.avi;*.mov;*.wmv;*.flv;*.webm|" : "") + "All files (*.*)|*.*",
+                            Filter = Filter,
                             Title = "Open",
                             //InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
                         };

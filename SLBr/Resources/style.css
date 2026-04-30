@@ -362,7 +362,7 @@ select {
     height: 18px;
     width: 18px;
     left: 4.5px;
-    bottom: 4.5px;
+    bottom: 3.025px;
     background-color: var(--tertiary);
     transition: .4s;
     border-radius: 12.5px;
