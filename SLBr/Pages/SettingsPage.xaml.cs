@@ -117,7 +117,7 @@ namespace SLBr.Pages
                             if (DownloadsTab.Visibility == Visibility.Visible)
                                 SettingsTabControl.SelectedItem = DownloadsTab;
                             break;
-                        case "extension":
+                        case "extensions":
                             if (ExtensionsTab.Visibility == Visibility.Visible)
                                 SettingsTabControl.SelectedItem = ExtensionsTab;
                             break;
