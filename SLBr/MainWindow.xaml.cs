@@ -881,11 +881,7 @@ namespace SLBr
                 Topmost = true
             };
             if (_DynamicDialogWindow.ShowDialog() == true)
-            {
-                string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
-                string Color = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                NewTabGroup(Input, Utils.HexToColor(Color));
-            }
+                NewTabGroup(_DynamicDialogWindow.InputFields[0].Value.Trim(), Utils.HexToColor(_DynamicDialogWindow.InputFields[1].Value.Trim()));
         }
         public void Ungroup(string Id = "")
         {
@@ -893,9 +889,7 @@ namespace SLBr
             List<BrowserTabItem> ProcessTabs = Tabs.Where(i => i.TabGroup == _Tab.TabGroup).ToList();
             Tabs.Remove(_Tab);
             foreach (BrowserTabItem _FTab in ProcessTabs)
-            {
                 _FTab.TabGroup = null;
-            }
             TabGroups.Remove(_Tab.TabGroup);
         }
         public void ModifyGroup(string Id = "")
@@ -908,10 +902,8 @@ namespace SLBr
             };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
-                string Input = _DynamicDialogWindow.InputFields[0].Value.Trim();
-                Group.Header = Input;
-                string Color = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                Group.Background = new SolidColorBrush(Utils.HexToColor(Color));
+                Group.Header = _DynamicDialogWindow.InputFields[0].Value.Trim();
+                Group.Background = new SolidColorBrush(Utils.HexToColor(_DynamicDialogWindow.InputFields[1].Value.Trim()));
             }
         }
         public void Navigate(string Url)
@@ -953,12 +945,7 @@ namespace SLBr
                     if (App.Instance.TabAlignment == 0)
                         CaptionHeight.Height = new GridLength(45);
                     else
-                    {
-                        if (WindowState == WindowState.Maximized)
-                            CaptionHeight.Height = new GridLength(SystemParameters.CaptionHeight);
-                        else
-                            CaptionHeight.Height = new GridLength(30);
-                    }
+                        CaptionHeight.Height = new GridLength(WindowState == WindowState.Maximized ? SystemParameters.CaptionHeight : 30);
                     BrowserView.ToolBar.Visibility = Visibility.Visible;
                     WindowStyle = WindowStyle.SingleBorderWindow;
                     FullscreenPopupTimer_Tick(null, null);
@@ -1298,10 +1285,8 @@ namespace SLBr
         private void CloseButton_Click(object sender, RoutedEventArgs e) =>
             SystemCommands.CloseWindow(this);
 
-        private void ToastPopup_MouseDown(object sender, MouseButtonEventArgs e)
-        {
+        private void ToastPopup_MouseDown(object sender, MouseButtonEventArgs e) =>
             ToastPopup.IsOpen = false;
-        }
 
         public void OpenToast(string Text, string Icon)
         {

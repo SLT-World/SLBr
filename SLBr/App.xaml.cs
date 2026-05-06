@@ -1857,7 +1857,7 @@ namespace SLBr
                 CheckUpdate();
         }
 
-        public async void CheckUpdate()
+        public async Task CheckUpdate()
         {
             try
             {
@@ -3515,8 +3515,7 @@ Inner Exception: {7}";
 
             _WebRiskHandler = new WebRiskHandler();
 
-            WebEngineType DefaultEngine = (WebEngineType)GlobalSave.GetInt("WebEngine");
-            switch (DefaultEngine)
+            switch ((WebEngineType)GlobalSave.GetInt("WebEngine"))
             {
                 case WebEngineType.Chromium:
                     WebViewManager.InitializeCEF();
@@ -3558,14 +3557,12 @@ Inner Exception: {7}";
                 }
         #endif*/
 
-        public static string GenerateCannotConnect(string Url, WebErrorCode ErrorCode, string ErrorText)
-        {
-            return CannotConnectError.Replace("{Site}", Utils.Host(Url)).Replace("{Error}", ErrorText).Replace("{Description}", $"Error Code: {ErrorCode.ToString()}");
-        }
+        public static string GenerateCannotConnect(string Url, WebErrorCode ErrorCode, string ErrorText) =>
+            string.Format(CannotConnectError, Utils.FastHost(Url), ErrorCode, ErrorText);
 
-        public const string CannotConnectError = @"<html><head><title>Unable to connect to {Site}</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}button{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}#content{width:90%;max-width: 700px;margin: 140px auto 0 auto;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {Site}</h2><h5 id=""description"">{Description}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{Error}</h5></div></body></html>";
-        public const string ProcessCrashedError = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}button{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}#content{width:90%;max-width: 700px;margin: 140px auto 0 auto;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
-        public const string WebRiskError = @"<html><head><title>Dangerous site ahead</title><style>html{{background:#A4000F;color:white;}}body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width: 700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>{0}</h5><div style=""position:relative;""><button style=""left:0;border:1px solid white;background:transparent;color:white;"" onclick=""engine.postMessage({{type:'__web_risk_ignore__'}})"">Proceed anyway</button><button style=""right:0;background:white;"" onclick=""history.back()"">Go back</button></div></div></body></html>";
+        public const string CannotConnectError = @"<html><head><title>Unable to connect to {0}</title><style>body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width:700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {0}</h2><h5 id=""description"">{1}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{2}</h5></div></body></html>";
+        public const string ProcessCrashedError = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}button{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}#content{width:90%;max-width:700px;margin: 140px auto 0 auto;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
+        public const string WebRiskError = @"<html><head><title>Dangerous site ahead</title><style>html{{background:#A4000F;color:white;}}body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width:700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>{0}</h5><div style=""position:relative;""><button style=""left:0;border:1px solid white;background:transparent;color:white;"" onclick=""engine.postMessage({{type:'__web_risk_ignore__'}})"">Proceed anyway</button><button style=""right:0;background:white;"" onclick=""history.back()"">Go back</button></div></div></body></html>";
         public const string HistoryPlaceholder = @"<html><head><script>window.addEventListener(""pageshow"",function(e){e.persisted&&location.reload()});</script></head></html>";
 
         private void SetBrowserFlags(WebViewSettings Settings)

@@ -240,9 +240,9 @@ namespace SLBr.Pages
             App.Instance.ShowUpdateInfoBar();
         }
 
-        public void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
+        public async void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
         {
-            App.Instance.CheckUpdate();
+            await App.Instance.CheckUpdate();
             if (!string.IsNullOrEmpty(App.Instance.UpdateAvailable))
             {
                 CheckUpdateButton.Visibility = Visibility.Collapsed;
@@ -300,10 +300,7 @@ namespace SLBr.Pages
             SyncCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Sync"));
             if (SyncCheckBox.IsChecked.ToBool() && !App.Instance.Synchronized)
             {
-                if (string.IsNullOrEmpty(App.Instance.GlobalSave.Get("SyncGitHub")))
-                    SyncWarningText.Text = "No access token found.";
-                else
-                    SyncWarningText.Text = "Data is not synchorized.";
+                SyncWarningText.Text = string.IsNullOrEmpty(App.Instance.GlobalSave.Get("SyncGitHub")) ? "No access token found." : "Data is not synchorized.";
                 SyncWarning.Visibility = Visibility.Visible;
             }
             string[] SyncedData = App.Instance.GlobalSave.Get("SyncData").Split(',');
@@ -1099,7 +1096,7 @@ namespace SLBr.Pages
                     return;
                 if (Text == "Custom")
                 {
-                    ColorPickerWindow _ColorPickerWindow = new ColorPickerWindow(Utils.HexToColor(App.Instance.GlobalSave.Get("CustomTheme")))
+                    ColorPickerWindow _ColorPickerWindow = new(Utils.HexToColor(App.Instance.GlobalSave.Get("CustomTheme")))
                     {
                         Topmost = true
                     };
@@ -1118,7 +1115,7 @@ namespace SLBr.Pages
         
         private void ChangeDownloadPathButton_Click(object sender, RoutedEventArgs e)
         {
-            OpenFolderDialog FolderDialog = new OpenFolderDialog
+            OpenFolderDialog FolderDialog = new()
             {
                 Title = "Select Folder",
                 InitialDirectory = DownloadPathText.Text
@@ -1132,7 +1129,7 @@ namespace SLBr.Pages
         
         private void ChangeScreenshotPathButton_Click(object sender, RoutedEventArgs e)
         {
-            OpenFolderDialog FolderDialog = new OpenFolderDialog
+            OpenFolderDialog FolderDialog = new()
             {
                 Title = "Select Folder",
                 InitialDirectory = ScreenshotPathText.Text
@@ -1163,7 +1160,7 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                var Target = (ToggleButton)sender;
+                ToggleButton Target = (ToggleButton)sender;
                 if (Target.Tag.ToString().Split("<,>", StringSplitOptions.None)[0] == "PDF")
                 {
                     WebViewManager.RuntimeSettings.PDFViewer = Target.IsChecked.ToBool();
@@ -1187,9 +1184,9 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                string Value = StandardFontComboBox.SelectedItem.ToString();
                 if (WebViewManager.IsCefInitialized)
                 {
+                    string Value = StandardFontComboBox.SelectedItem.ToString();
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
@@ -1203,9 +1200,9 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                string Value = SerifFontComboBox.SelectedItem.ToString();
                 if (WebViewManager.IsCefInitialized)
                 {
+                    string Value = SerifFontComboBox.SelectedItem.ToString();
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
@@ -1219,9 +1216,9 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                string Value = SansSerifFontComboBox.SelectedItem.ToString();
                 if (WebViewManager.IsCefInitialized)
                 {
+                    string Value = SansSerifFontComboBox.SelectedItem.ToString();
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
@@ -1235,9 +1232,9 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                string Value = FixedFontComboBox.SelectedItem.ToString();
                 if (WebViewManager.IsCefInitialized)
                 {
+                    string Value = FixedFontComboBox.SelectedItem.ToString();
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
@@ -1251,9 +1248,9 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                string Value = MathFontComboBox.SelectedItem.ToString();
                 if (WebViewManager.IsCefInitialized)
                 {
+                    string Value = MathFontComboBox.SelectedItem.ToString();
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
@@ -1267,9 +1264,9 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                int Value = (int)FontSizeSlider.Value;
                 if (WebViewManager.IsCefInitialized)
                 {
+                    int Value = (int)FontSizeSlider.Value;
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
@@ -1283,9 +1280,9 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                int Value = (int)MinimumFontSizeSlider.Value;
                 if (WebViewManager.IsCefInitialized)
                 {
+                    int Value = (int)MinimumFontSizeSlider.Value;
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
@@ -1366,7 +1363,7 @@ namespace SLBr.Pages
 
         private void AddSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
-            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa")
+            DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa")
             {
                 Topmost = true
             };
@@ -1393,7 +1390,7 @@ namespace SLBr.Pages
         private void EditSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
             SearchProvider _SearchProvider = SearchEngineComboBox.SelectedValue as SearchProvider;
-            DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f")
+            DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f")
             {
                 Topmost = true
             };
@@ -1435,7 +1432,7 @@ namespace SLBr.Pages
         {
             try
             {
-                DynamicDialogWindow _DynamicDialogWindow = new DynamicDialogWindow("Settings", "Change GitHub Access Token", new List<InputField> { new InputField { Name = "Token", Type = DialogInputType.Text, IsRequired = false, Value = App.Instance.GlobalSave.Get("SyncGitHub") } }, "\xee7e")
+                DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Change GitHub Access Token", new List<InputField> { new InputField { Name = "Token", Type = DialogInputType.Text, IsRequired = false, Value = App.Instance.GlobalSave.Get("SyncGitHub") } }, "\xee7e")
                 {
                     Topmost = true
                 };
@@ -1462,13 +1459,13 @@ namespace SLBr.Pages
                         if (GistResponse.IsSuccessStatusCode)
                         {
                             string JSON = await GistResponse.Content.ReadAsStringAsync();
-                            using var _JsonDocument = JsonDocument.Parse(JSON);
-                            foreach (var Gist in _JsonDocument.RootElement.EnumerateArray())
+                            using JsonDocument _JsonDocument = JsonDocument.Parse(JSON);
+                            foreach (JsonElement Gist in _JsonDocument.RootElement.EnumerateArray())
                             {
                                 if (Gist.GetProperty("description").GetString() == "SLBr Sync")
                                 {
                                     App.Instance.GlobalSave.Set("SyncGist", Gist.GetProperty("id").GetString());
-                                    InformationDialogWindow InfoWindow = new InformationDialogWindow("Settings", "Choose Sync Direction", "An existing sync was found for this GitHub account.\n\nDo you want to override existing data with the cloud data on application reboot?", "\ue753", "Yes", "No") { Topmost = true };
+                                    InformationDialogWindow InfoWindow = new("Settings", "Choose Sync Direction", "An existing sync was found for this GitHub account.\n\nDo you want to override existing data with the cloud data on application reboot?", "\ue753", "Yes", "No") { Topmost = true };
                                     if (InfoWindow.ShowDialog() == true)
                                         App.Instance.PreventSync = true;
                                     break;

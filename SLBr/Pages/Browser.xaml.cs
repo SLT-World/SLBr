@@ -857,103 +857,37 @@ namespace SLBr.Pages
                     }
                     else if (e.Url.StartsWith("chrome:"))
                     {
-                        bool Block = false;
                         //https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/shared/model/url/chrome_url_constants.cc
-                        switch (e.Url.Substring(9))
-                        {
-                            case string s when s.StartsWith("settings"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("history"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("downloads"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("flags"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("new-tab-page"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("bookmarks"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("apps"):
-                                Block = true;
-                                break;
-
-                            case string s when s.StartsWith("dino"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("management"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("new-tab-page-third-party"):
-                                Block = true;
-                                break;
-
-                            case string s when s.StartsWith("favicon"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("sandbox"):
-                                Block = true;
-                                break;
-
-                            case string s when s.StartsWith("bookmarks-side-panel.top-chrome"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("customize-chrome-side-panel.top-chrome"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("read-later.top-chrome"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("tab-search.top-chrome"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("tab-strip.top-chrome"):
-                                Block = true;
-                                break;
-
-                            case string s when s.StartsWith("support-tool"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("privacy-sandbox-dialog"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("chrome-signin"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("browser-switch"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("profile-picker"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("intro"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("sync-confirmation"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("app-settings"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("managed-user-profile-notice"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("reset-password"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("connection-help"):
-                                Block = true;
-                                break;
-                            case string s when s.StartsWith("connection-monitoring-detected"):
-                                Block = true;
-                                break;
-                        }
-                        if (Block)
+                        ReadOnlySpan<char> Sub = e.Url.AsSpan().Slice(9);
+                        if (Sub.StartsWith("settings", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("history", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("downloads", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("flags", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("new-tab-page", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("bookmarks", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("apps", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("dino", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("management", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("new-tab-page-third-party", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("favicon", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("sandbox", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("bookmarks-side-panel.top-chrome", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("customize-chrome-side-panel.top-chrome", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("read-later.top-chrome", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("tab-search.top-chrome", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("tab-strip.top-chrome", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("support-tool", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("privacy-sandbox-dialog", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("chrome-signin", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("browser-switch", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("profile-picker", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("sync-confirmation", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("app-settings", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("managed-user-profile-notice", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("reset-password", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("connection-help", StringComparison.OrdinalIgnoreCase) ||
+                            Sub.StartsWith("connection-monitoring-detected", StringComparison.OrdinalIgnoreCase)
+                            )
                             WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.GenerateCannotConnect(e.Url, WebErrorCode.InvalidUrl, "ERR_INVALID_URL"), Encoding.UTF8), "text/html", -1);
                     }
                 }

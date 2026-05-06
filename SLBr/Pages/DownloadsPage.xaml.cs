@@ -76,9 +76,7 @@ namespace SLBr.Pages
         private void OpenSingleButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button _Button && _Button.DataContext is DownloadEntry DownloadsEntry)
-            {
                 Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{App.Instance.Downloads.GetValueOrDefault(DownloadsEntry.ID).FullPath}\"") { UseShellExecute = true });
-            }
         }
 
         private void DeleteSingleButton_Click(object sender, RoutedEventArgs e)

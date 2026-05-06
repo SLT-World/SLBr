@@ -38,7 +38,6 @@ namespace SLBr.Handlers
 
         public static ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
         {
-            //TODO: Investigate Chrome billing warning.
             foreach (FullHash _FullHash in Response.FullHashes)
             {
                 if (!_FullHash.FullHash_.Span.SequenceEqual(LocalHash))
@@ -101,8 +100,7 @@ namespace SLBr.Handlers
                         {
                             if (Match.TryGetProperty("threatType", out JsonElement ThreatElement))
                             {
-                                string? Threat = ThreatElement.GetString();
-                                switch (Threat)
+                                switch (ThreatElement.GetString())
                                 {
                                     case "MALWARE":
                                     case "POTENTIALLY_HARMFUL_APPLICATION":
