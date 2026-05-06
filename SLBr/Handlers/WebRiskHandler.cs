@@ -34,6 +34,8 @@ namespace SLBr.Handlers
         const string PhishTankEndpoint = "https://checkurl.phishtank.com/checkurl/";
         private static HttpClient? HttpClientInstance;
 
+        public FastHashSet<ulong> SafeHashes = [];
+
         public static ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
         {
             //TODO: Investigate Chrome billing warning.
@@ -58,33 +60,6 @@ namespace SLBr.Handlers
             }
             return ThreatType.Unknown;
         }
-        /*public static async Task<SearchHashesResponse> SBv5Response(byte[] LocalHash, string Endpoint)
-        {
-            HttpClientInstance ??= new(new SocketsHttpHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All,
-                EnableMultipleHttp2Connections = true,
-                EnableMultipleHttp3Connections = true,
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
-            try
-            {
-                    
-                var Response = await HttpClientInstance.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash, 0, 4))}");
-                if (Response.IsSuccessStatusCode)
-                {
-                    byte[] Bytes = await Response.Content.ReadAsByteArrayAsync();
-                    if (Bytes.Length > 0)
-                        return SearchHashesResponse.Parser.ParseFrom(Bytes);
-                }
-            }
-            catch { }
-            return new SearchHashesResponse();
-        }*/
         public static SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
         {
             HttpClientInstance ??= new(new SocketsHttpHandler
@@ -145,37 +120,6 @@ namespace SLBr.Handlers
             }
             return ThreatType.Unknown;
         }
-        /*public static async Task<string> SBv4Response(string Url, string Endpoint)
-        {
-            HttpClientInstance ??= new(new SocketsHttpHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All,
-                EnableMultipleHttp2Connections = true,
-                EnableMultipleHttp3Connections = true,
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
-            //""THREAT_TYPE_UNSPECIFIED""
-            string Payload = $@"{{
-    ""client"":{{""clientId"":""{SECRETS.GOOGLE_DEFAULT_CLIENT_ID}"",""clientVersion"":""1.0.0""}},
-    ""threatInfo"":{{
-        ""threatTypes"":[""MALWARE"",""POTENTIALLY_HARMFUL_APPLICATION"",""SOCIAL_ENGINEERING"",""UNWANTED_SOFTWARE""],
-        ""platformTypes"":[""CHROME""],
-        ""threatEntryTypes"":[""URL""],
-        ""threatEntries"":[{{""url"":""{Utils.CleanUrl(Url, false, false, true, false, false)}""}}]
-    }}
-}}";
-            try
-            {
-                var Response = await HttpClientInstance.PostAsync(Endpoint, new StringContent(Payload, Encoding.UTF8, "application/json"));
-                return await Response.Content.ReadAsStringAsync();
-            }
-            catch { }
-            return "{}";
-        }*/
         public static string SBv4Response(string Url, string Endpoint)
         {
             HttpClientInstance ??= new(new SocketsHttpHandler
@@ -208,50 +152,6 @@ namespace SLBr.Handlers
             return "{}";
         }
 
-        /*public static async Task<ThreatType> PTCheck(string Url, string APIKey)
-        {
-            HttpClientInstance ??= new(new SocketsHttpHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All,
-                EnableMultipleHttp2Connections = true,
-                EnableMultipleHttp3Connections = true,
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
-            FormUrlEncodedContent Data = new FormUrlEncodedContent(
-            [
-                new KeyValuePair<string, string>("url", Url),
-                new KeyValuePair<string, string>("format", "xml"),
-                new KeyValuePair<string, string>("app_key", APIKey)
-            ]);
-            try
-            {
-                HttpRequestMessage Request = new(HttpMethod.Post, PhishTankEndpoint) { Content = Data };
-                Request.Headers.UserAgent.ParseAdd("phishtank/slbr");
-                var Response = await HttpClientInstance.SendAsync(Request);
-                var ResponseText = await Response.Content.ReadAsStringAsync();
-
-                var Result = XDocument.Parse(ResponseText).Root?.Element("results")?.Element("url0");
-                if (Result != null)
-                {
-                    bool InDatabase = Result.Element("in_database")?.Value == "true";
-                    bool Verified = Result.Element("verified")?.Value == "true";
-                    if (InDatabase && Verified)
-                        return Result.Element("valid")?.Value == "true" ? ThreatType.Social_Engineering : ThreatType.Unknown;
-                    else
-                        return ThreatType.Unknown;
-                }
-                else
-                    return ThreatType.Unknown;
-            }
-            catch
-            {
-                return ThreatType.Unknown;
-            }
-        }*/
         public static ThreatType PTCheck(string Url, string APIKey)
         {
             HttpClientInstance ??= new(new SocketsHttpHandler
@@ -300,38 +200,33 @@ namespace SLBr.Handlers
             }
         }
 
-        /*public static async Task<ThreatType> IsSafe(string Url, SecurityService Service = SecurityService.Google)
-        {
-            switch (Service)
-            {
-                case SecurityService.Google:
-                    byte[] LocalHash = SHA256.HashData(Encoding.UTF8.GetBytes(Utils.CleanUrl(Url, true, false, true, false, true)));
-                    return SBv5GetThreatType(await SBv5Response(LocalHash, GoogleEndpoint + SECRETS.GOOGLE_API_KEY), LocalHash);
-                case SecurityService.Yandex:
-                    return SBv4GetThreatType(await SBv4Response(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
-                case SecurityService.PhishTank:
-                    return await PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
-            }
-            return ThreatType.Unknown;
-        }*/
 
-        public static ThreatType IsSafe(string Url, SecurityService Service = SecurityService.Google)
+        public ThreatType IsSafe(string Url, SecurityService Service = SecurityService.Google)
         {
+            byte[] LocalHash = SHA256.HashData(Encoding.UTF8.GetBytes(Utils.CleanUrl(Url, true, false, true, false, true)));
+            ulong HashKey = BitConverter.ToUInt64(LocalHash, 0);
+            if (SafeHashes.Contains(HashKey))
+                return ThreatType.Unknown;
+            ThreatType Result = ThreatType.Unknown;
             switch (Service)
             {
                 case SecurityService.Google:
-                    byte[] LocalHash = SHA256.HashData(Encoding.UTF8.GetBytes(Utils.CleanUrl(Url, true, false, true, false, true)));
-                    return SBv5GetThreatType(SBv5Response(LocalHash, GoogleEndpoint + SECRETS.GOOGLE_API_KEY), LocalHash);
+                    Result = SBv5GetThreatType(SBv5Response(LocalHash, GoogleEndpoint + SECRETS.GOOGLE_API_KEY), LocalHash);
+                    break;
                 case SecurityService.Yandex:
                     //TODO: Implement Yandex Hash-based check.
                     //https://yandex.com/dev/safebrowsing/doc/en/concepts/url-hash
                     //https://yandex.com/dev/safebrowsing/doc/en/concepts/update-fullhashes-find
                     //https://yandex.com/dev/safebrowsing/doc/en/
-                    return SBv4GetThreatType(SBv4Response(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
+                    Result = SBv4GetThreatType(SBv4Response(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
+                    break;
                 case SecurityService.PhishTank:
-                    return PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
+                    Result = PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
+                    break;
             }
-            return ThreatType.Unknown;
+            if (Result == ThreatType.Unknown)
+                SafeHashes.Add(HashKey);
+            return Result;
         }
     }
 }

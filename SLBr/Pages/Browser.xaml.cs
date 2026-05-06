@@ -16,6 +16,7 @@ using System.Dynamic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -847,11 +848,11 @@ namespace SLBr.Pages
                         if (!Private && App.Instance.WebRiskService != WebRiskHandler.SecurityService.None && Utils.GetFileExtension(e.Url) != ".pdf")
                         {
                             //TODO: Async & CancellationToken.
-                            WebRiskHandler.ThreatType _ThreatType = WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
+                            WebRiskHandler.ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
                             if (_ThreatType is WebRiskHandler.ThreatType.Malware or WebRiskHandler.ThreatType.Unwanted_Software)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.MalwareError, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskError, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                             else if (_ThreatType == WebRiskHandler.ThreatType.Social_Engineering)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.DeceptionError, Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskError, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                         }
                     }
                     else if (e.Url.StartsWith("chrome:"))
@@ -1378,6 +1379,14 @@ namespace SLBr.Pages
                     if (Address.StartsWith("slbr:"))
                         HandleInternalMessage(Message);
                     break;
+                case "__web_risk_ignore__":
+                    if (WebViewManager.OverrideRequests.ContainsKey(Address))
+                    {
+                        WebViewManager.OverrideRequests.Remove(Address, out _);
+                        App.Instance._WebRiskHandler.SafeHashes.Add(BitConverter.ToUInt64(SHA256.HashData(Encoding.UTF8.GetBytes(Utils.CleanUrl(Address, true, false, true, false, true))), 0));
+                        Refresh();
+                    }
+                    break;
                 case "__notification__":
                     try
                     {
@@ -1489,7 +1498,10 @@ namespace SLBr.Pages
                                 //TODO: Implement offline support.
                                 string FragmentText = (await WebView.EvaluateScriptAsync(Scripts.TextFragmentRangeScript)).ToString();
                                 if (string.IsNullOrWhiteSpace(FragmentText))
+                                {
+                                    App.Instance.CopyToClipboard(Address, 0);
                                     return;
+                                }
                                 App.Instance.CopyToClipboard($"{Address.Split('#')[0]}#:~:text={FragmentText}", 0);
                             })
                         });

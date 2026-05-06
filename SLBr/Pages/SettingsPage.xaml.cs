@@ -909,7 +909,6 @@ namespace SLBr.Pages
                     Cef.UIThreadTaskFactory.StartNew(delegate
                     {
                         var GlobalRequestContext = Cef.GetGlobalRequestContext();
-                        string _;
                         GlobalRequestContext.SetPreference("browser.enable_spellchecking", Enabled, out _);
                         GlobalRequestContext.SetPreference("spellcheck.dictionaries", App.Instance.Languages.Select(i => i.Tooltip), out _);
                         GlobalRequestContext.SetPreference("intl.accept_languages", App.Instance.Languages.Select(i => i.Tooltip), out _);
