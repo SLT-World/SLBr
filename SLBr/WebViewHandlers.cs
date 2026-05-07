@@ -159,8 +159,13 @@ namespace SLBr
             }
 
             ChromiumSettings.CefCommandLineArgs.Remove("disable-back-forward-cache");
+            //MessageBox.Show(string.Join(",", ChromiumSettings.CefCommandLineArgs.Keys));
             foreach (var Flag in Settings.Flags)
+            {
+                if (Flag.Key == "disable-features" && Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
+                    continue;
                 ChromiumSettings.AddNoErrorFlag(Flag.Key, Flag.Value);
+            }
 
             CefSharpSettings.RuntimeStyle = Settings.CefRuntimeStyle;
             foreach (var Scheme in Settings.Schemes)

@@ -4139,14 +4139,14 @@ Inner Exception: {7}";
 
             try
             {
-                if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.AddFlag("disable-features", DisableFeatures);
+                Settings.AddFlag("disable-features", DisableFeatures);
                 Settings.AddFlag("enable-features", EnableFeatures);
                 Settings.AddFlag("enable-blink-features", EnableBlinkFeatures);
                 Settings.AddFlag("disable-blink-features", DisableBlinkFeatures);
             }
             catch
             {
-                if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.Flags["disable-features"] += "," + DisableFeatures;
+                Settings.Flags["disable-features"] += "," + DisableFeatures;
                 Settings.Flags["enable-features"] += "," + EnableFeatures;
                 Settings.Flags["enable-blink-features"] += "," + EnableBlinkFeatures;
                 Settings.Flags["disable-blink-features"] += "," + DisableBlinkFeatures;
@@ -4171,7 +4171,7 @@ Inner Exception: {7}";
             {
                 Settings.Flags["blink-settings"] += ",lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
                 Settings.Flags["enable-features"] += ",LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
-                if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.Flags["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
+                Settings.Flags["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
 
                 Settings.Flags["enable-blink-features"] += ",SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
                 Settings.Flags["disable-blink-features"] += ",Prerender2";
@@ -4180,7 +4180,7 @@ Inner Exception: {7}";
                 {
                     //https://github.com/cypress-io/cypress/issues/22622
                     //https://issues.chromium.org/issues/40220332
-                    if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.Flags["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
+                    Settings.Flags["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
                     Settings.Flags["enable-features"] += ",LiteVideo,AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
                     Settings.Flags["enable-blink-features"] += ",PrefersReducedData,ForceReduceMotion";
                     Settings.Flags["blink-settings"] += ",imageAnimationPolicy=1,prefersReducedTransparency=true,prefersReducedMotion=true,lazyLoadingFrameMarginPxUnknown=0,lazyLoadingFrameMarginPxOffline=0,lazyLoadingFrameMarginPxSlow2G=0,lazyLoadingFrameMarginPx2G=0,lazyLoadingFrameMarginPx3G=0,lazyLoadingFrameMarginPx4G=0,lazyLoadingImageMarginPxUnknown=0,lazyLoadingImageMarginPxOffline=0,lazyLoadingImageMarginPxSlow2G=0,lazyLoadingImageMarginPx2G=0,lazyLoadingImageMarginPx3G=0,lazyLoadingImageMarginPx4G=0";

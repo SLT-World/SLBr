@@ -551,7 +551,15 @@ namespace SLBr
 
         public static void AddNoErrorFlag(this CefSettings Settings, string Key, string Value)
         {
-            try { Settings.CefCommandLineArgs.Add(Key, Value); } catch { }
+            try { Settings.CefCommandLineArgs.Add(Key, Value); }
+            catch {
+                try
+                {
+                    string Comma = Value[0] == ',' ? "" : ",";
+                    Settings.CefCommandLineArgs[Key] += $"{Comma}{Value}";
+                }
+                catch { }
+            }
         }
 
         public static void AddNoErrorFlag(this CefSettings Settings, string Value)
