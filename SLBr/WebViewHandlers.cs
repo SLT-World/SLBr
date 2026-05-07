@@ -141,9 +141,15 @@ namespace SLBr
                 };
                 App.Instance.InfoBars.Add(GoogleAPIKeyInfoBar);
             }
-            CefSettings ChromiumSettings = new CefSettings
+            CefSettings ChromiumSettings = new()
             {
-                BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName
+                BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName,
+                PersistSessionCookies = false,
+                LogFile = Settings.LogFile,
+                LogSeverity = LogSeverity.Error,
+                Locale = Settings.Language,
+                AcceptLanguageList = string.Join(",", Settings.Languages),
+                JavascriptFlags = Settings.JavaScriptFlags
             };
 
             if (Settings.UserDataPath != null)
@@ -151,21 +157,12 @@ namespace SLBr
                 ChromiumSettings.CachePath = Path.GetFullPath(Path.Combine(Settings.UserDataPath, "Cache"));
                 ChromiumSettings.RootCachePath = Settings.UserDataPath;
             }
-            ChromiumSettings.PersistSessionCookies = false;
-
-            ChromiumSettings.LogFile = Settings.LogFile;
-            ChromiumSettings.LogSeverity = LogSeverity.Error;
-
-            ChromiumSettings.Locale = Settings.Language;
-            ChromiumSettings.AcceptLanguageList = string.Join(",", Settings.Languages);
-            ChromiumSettings.JavascriptFlags = Settings.JavaScriptFlags;
 
             ChromiumSettings.CefCommandLineArgs.Remove("disable-back-forward-cache");
             foreach (var Flag in Settings.Flags)
                 ChromiumSettings.AddNoErrorFlag(Flag.Key, Flag.Value);
 
-            //CefSharpSettings.RuntimeStyle = Settings.CefRuntimeStyle;
-            CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Alloy;
+            CefSharpSettings.RuntimeStyle = Settings.CefRuntimeStyle;
             foreach (var Scheme in Settings.Schemes)
             {
                 ChromiumSettings.RegisterScheme(new CefCustomScheme
@@ -186,7 +183,6 @@ namespace SLBr
 
             Cef.UIThreadTaskFactory.StartNew(delegate
             {
-                string _;
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
                 GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !RuntimeSettings.PDFViewer, out _);
                 GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !RuntimeSettings.PDFViewer, out _);

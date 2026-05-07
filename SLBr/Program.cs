@@ -36,16 +36,17 @@ namespace SLBr
             else if (args.Length > 0 && args[0].StartsWith("--app="))
             {
                 //TODO: Switchable web views for Web Apps.
-                CefSettings Settings = new CefSettings();
-                Settings.BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName;
-
                 string UserApplicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", "Default");
 
                 string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
-                Settings.LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log"));
-                Settings.LogSeverity = LogSeverity.Error;
-                Settings.CachePath = Path.GetFullPath(Path.Combine(UserDataPath, "Cache"));
-                Settings.RootCachePath = UserDataPath;
+                CefSettings Settings = new()
+                {
+                    BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName,
+                    LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log")),
+                    LogSeverity = LogSeverity.Error,
+                    CachePath = Path.GetFullPath(Path.Combine(UserDataPath, "Cache")),
+                    RootCachePath = UserDataPath
+                };
 
                 Settings.AddNoErrorFlag("enable-tls13-early-data");
 
@@ -55,7 +56,7 @@ namespace SLBr
                 Settings.AddNoErrorFlag("enable-spdy4");
                 Settings.AddNoErrorFlag("enable-ipv6");
 
-                Settings.AddNoErrorFlag("no-proxy-server");
+                //Settings.AddNoErrorFlag("no-proxy-server");
                 Settings.AddNoErrorFlag("no-pings");
 
                 Settings.AddNoErrorFlag("disable-background-networking");

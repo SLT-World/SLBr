@@ -3602,7 +3602,7 @@ Inner Exception: {7}";
             Settings.AddFlag("google-apis-url", DummyUrl);
             Settings.AddFlag("google-base-url", DummyUrl);
             Settings.AddFlag("lso-url", DummyUrl);
-            Settings.AddFlag("model-quality-service-url", DummyUrl);
+            if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.AddFlag("model-quality-service-url", DummyUrl);//WARNING: Causes Chrome runtime style crash.
             Settings.AddFlag("oauth-account-manager-url", DummyUrl);
             Settings.AddFlag("secure-connect-api-url", DummyUrl);
 
@@ -3979,7 +3979,7 @@ Inner Exception: {7}";
             Settings.AddFlag("enable-spdy4");
             Settings.AddFlag("enable-ipv6");
 
-            Settings.AddFlag("no-proxy-server");
+            //Settings.AddFlag("no-proxy-server");
             //Settings.AddFlag("winhttp-proxy-resolver");
             Settings.AddFlag("no-pings");
 
@@ -4108,6 +4108,11 @@ Inner Exception: {7}";
              * https://www.chromium.org/developers/design-documents/network-stack/disk-cache/very-simple-backend/
              */
 
+            /*TODO:
+             * Investigate Chrome runtime style crash, caused by the addition of "--disable-features".
+             * No issues perceived in Alloy runtime style.
+             */
+
             //https://source.chromium.org/chromium/chromium/src/+/main:components/network_session_configurator/browser/network_session_configurator.cc
             Settings.AddFlag("force-fieldtrials", "SimpleCacheTrial/ExperimentYes/");
             
@@ -4134,14 +4139,14 @@ Inner Exception: {7}";
 
             try
             {
-                Settings.AddFlag("disable-features", DisableFeatures);
+                if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.AddFlag("disable-features", DisableFeatures);
                 Settings.AddFlag("enable-features", EnableFeatures);
                 Settings.AddFlag("enable-blink-features", EnableBlinkFeatures);
                 Settings.AddFlag("disable-blink-features", DisableBlinkFeatures);
             }
             catch
             {
-                Settings.Flags["disable-features"] += "," + DisableFeatures;
+                if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.Flags["disable-features"] += "," + DisableFeatures;
                 Settings.Flags["enable-features"] += "," + EnableFeatures;
                 Settings.Flags["enable-blink-features"] += "," + EnableBlinkFeatures;
                 Settings.Flags["disable-blink-features"] += "," + DisableBlinkFeatures;
@@ -4166,7 +4171,7 @@ Inner Exception: {7}";
             {
                 Settings.Flags["blink-settings"] += ",lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
                 Settings.Flags["enable-features"] += ",LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
-                Settings.Flags["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
+                if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.Flags["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
 
                 Settings.Flags["enable-blink-features"] += ",SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
                 Settings.Flags["disable-blink-features"] += ",Prerender2";
@@ -4175,16 +4180,14 @@ Inner Exception: {7}";
                 {
                     //https://github.com/cypress-io/cypress/issues/22622
                     //https://issues.chromium.org/issues/40220332
-                    Settings.Flags["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
+                    if (Settings.CefRuntimeStyle == CefRuntimeStyle.Alloy) Settings.Flags["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
                     Settings.Flags["enable-features"] += ",LiteVideo,AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
-                    Settings.Flags["enable-blink-features"] += ",PrefersReducedData,ForceReduceMotion";//
+                    Settings.Flags["enable-blink-features"] += ",PrefersReducedData,ForceReduceMotion";
                     Settings.Flags["blink-settings"] += ",imageAnimationPolicy=1,prefersReducedTransparency=true,prefersReducedMotion=true,lazyLoadingFrameMarginPxUnknown=0,lazyLoadingFrameMarginPxOffline=0,lazyLoadingFrameMarginPxSlow2G=0,lazyLoadingFrameMarginPx2G=0,lazyLoadingFrameMarginPx3G=0,lazyLoadingFrameMarginPx4G=0,lazyLoadingImageMarginPxUnknown=0,lazyLoadingImageMarginPxOffline=0,lazyLoadingImageMarginPxSlow2G=0,lazyLoadingImageMarginPx2G=0,lazyLoadingImageMarginPx3G=0,lazyLoadingImageMarginPx4G=0";
                     JsFlags += " --max-lazy --lite-mode --noexpose-wasm --optimize-for-size";
                 }
                 else
-                {
                     Settings.Flags["blink-settings"] += ",lazyLoadingFrameMarginPxUnknown=250,lazyLoadingFrameMarginPxOffline=500,lazyLoadingFrameMarginPxSlow2G=500,lazyLoadingFrameMarginPx2G=400,lazyLoadingFrameMarginPx3G=300,lazyLoadingFrameMarginPx4G=200,lazyLoadingImageMarginPxUnknown=250,lazyLoadingImageMarginPxOffline=500,lazyLoadingImageMarginPxSlow2G=500,lazyLoadingImageMarginPx2G=400,lazyLoadingImageMarginPx3G=300,lazyLoadingImageMarginPx4G=200";
-                }
                 //https://chromium.googlesource.com/v8/v8/+/master/src/flags/flag-definitions.h
                 JsFlags += " --efficiency-mode --battery-saver-mode --memory-saver-mode";
             }
