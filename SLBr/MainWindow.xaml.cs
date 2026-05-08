@@ -1155,18 +1155,16 @@ namespace SLBr
             }
         }
 
+        BrowserTabItem? PreviousTab;
         private void TabsUI_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             try
             {
                 BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
+                if (PreviousTab != null && PreviousTab != _CurrentTab)
+                    PreviousTab.Content?.UnFocus();
                 if (_CurrentTab.Type != BrowserTabType.Add)
                 {
-                    foreach (BrowserTabItem _Tab in Tabs)
-                    {
-                        if (_Tab != _CurrentTab)
-                            _Tab.Content?.UnFocus();
-                    }
                     if (_CurrentTab.Content != null)
                     {
                         _CurrentTab.Content.ReFocus();
@@ -1175,6 +1173,7 @@ namespace SLBr
                     SetWindowDisplayAffinity();
                     Title = _CurrentTab.Header + " - SLBr";
                 }
+                PreviousTab = _CurrentTab;
             }
             catch
             {

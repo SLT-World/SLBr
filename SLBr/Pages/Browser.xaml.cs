@@ -1385,9 +1385,8 @@ namespace SLBr.Pages
 
         private void WebView_ExternalProtocolRequested(object? sender, ExternalProtocolEventArgs e)
         {
-            string ProtocolName = Utils.GetProtocolName(Utils.GetScheme(e.Url));
             string Host = Utils.FastHost(e.Origin);
-            InformationDialogWindow InfoWindow = new("Warning", $"Open {ProtocolName}", $"{(Host.Length == 0 ? "A website" : Host)} is requesting to open this application.", string.Empty, "Open", "Cancel")
+            InformationDialogWindow InfoWindow = new("Warning", $"Open {Utils.GetProtocolName(Utils.GetScheme(e.Url))}", $"{(Host.Length == 0 ? "A website" : Host)} is requesting to open this application.", string.Empty, "Open", "Cancel")
             {
                 Topmost = true
             };
@@ -1397,7 +1396,7 @@ namespace SLBr.Pages
         private async void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
             bool IsPageMenu = true;
-            ContextMenu BrowserMenu = new ContextMenu();
+            ContextMenu BrowserMenu = new();
             foreach (WebContextMenuType i in Enum.GetValues<WebContextMenuType>())
             {
                 if (e.MenuType.HasFlag(i))
@@ -1679,6 +1678,9 @@ namespace SLBr.Pages
             }
             if (WebView2DevToolsHWND != IntPtr.Zero)
                 UpdateDevToolsPosition();
+            LastActive = DateTime.Now;
+            if (!bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
+                App.Instance.ScheduleNextEfficientTick();
             /*else
             {
                 if (WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null)// && Tab == Tab.ParentWindow.GetTab())

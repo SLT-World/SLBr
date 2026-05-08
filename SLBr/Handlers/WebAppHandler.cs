@@ -35,16 +35,16 @@ namespace SLBr.Handlers
         //TODO: Figure out a way to generate an ico that can be used as an icon for shortcuts. Tried and failed without utilizing external libraries.
         public static void SaveAsIcon(BitmapSource Image, string FilePath, int Size = 256)
         {
-            TransformedBitmap Scaled = new TransformedBitmap(Image, new System.Windows.Media.ScaleTransform((double)Size / Image.PixelWidth, (double)Size / Image.PixelHeight));
-            PngBitmapEncoder Encoder = new PngBitmapEncoder();
+            TransformedBitmap Scaled = new(Image, new System.Windows.Media.ScaleTransform((double)Size / Image.PixelWidth, (double)Size / Image.PixelHeight));
+            PngBitmapEncoder Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(Scaled));
 
-            using (var Stream = new MemoryStream())
-            using (var _FileStream = new FileStream(FilePath, FileMode.Create, FileAccess.Write))
+            using (MemoryStream Stream = new())
+            using (FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write))
             {
                 Encoder.Save(Stream);
                 byte[] Bytes = Stream.ToArray();
-                using (var Writer = new BinaryWriter(_FileStream))
+                using (BinaryWriter Writer = new(_FileStream))
                 {
                     Writer.Write((short)0);
                     Writer.Write((short)1);

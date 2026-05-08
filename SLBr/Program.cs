@@ -162,7 +162,7 @@ namespace SLBr
                 string ManifestPath = Path.Combine(AppsFolder, $"{ID}.json");
 
                 WebAppManifest? Manifest = WebAppHandler.LoadManifest(File.ReadAllText(ManifestPath));
-                WebAppWindow Window = new WebAppWindow(Manifest);
+                WebAppWindow Window = new(Manifest);
                 CleanApp.Run(Window);
 
                 Cef.Shutdown();
