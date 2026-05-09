@@ -3436,7 +3436,7 @@ Inner Exception: {7}";
             Settings.RegisterProtocol("gopher", WebViewManager.GopherHandler);
             Settings.RegisterProtocol("slbr", WebViewManager.SLBrHandler);
 
-            Settings.CefRuntimeStyle = GlobalSave.GetInt("ChromiumRuntimeStyle", 1) == 1 ? CefRuntimeStyle.Alloy : CefRuntimeStyle.Chrome;
+            Settings.CefRuntimeStyle = GlobalSave.GetInt("ChromiumRuntimeStyle", 0) == 1 ? CefRuntimeStyle.Alloy : CefRuntimeStyle.Chrome;
             switch (GlobalSave.GetInt("TridentVersion", 4))
             {
                 case 0: Settings.TridentVersion = TridentEmulationVersion.IE7; break;
@@ -3933,7 +3933,7 @@ Inner Exception: {7}";
 
         private void SetGraphicsFlags(WebViewSettings Settings)
         {
-            Settings.AddFlag("in-process-gpu");
+            //Settings.AddFlag("in-process-gpu");
             if (bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration")))
             {
                 Settings.AddFlag("enable-gpu");

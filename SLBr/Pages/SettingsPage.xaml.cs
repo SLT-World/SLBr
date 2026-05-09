@@ -222,10 +222,9 @@ namespace SLBr.Pages
                     {
                         IRequestContext GlobalRequestContext = Cef.GetGlobalRequestContext();
 
-                        string Error;
                         IEnumerable<string> LocaleStrings = App.Instance.Languages.Select(i => i.Tooltip);
-                        GlobalRequestContext.SetPreference("spellcheck.dictionaries", LocaleStrings, out Error);
-                        GlobalRequestContext.SetPreference("intl.accept_languages", LocaleStrings, out Error);
+                        GlobalRequestContext.SetPreference("spellcheck.dictionaries", LocaleStrings, out _);
+                        GlobalRequestContext.SetPreference("intl.accept_languages", LocaleStrings, out _);
                     });
                 }
             }

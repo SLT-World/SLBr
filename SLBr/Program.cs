@@ -148,6 +148,7 @@ namespace SLBr
                 string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
                 string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI,DocumentPictureInPictureAPI";
 
+                //TODO: Maintain default CEF flags (DisableFeatureByDefault): https://github.com/chromiumembedded/cef/blob/master/libcef/common/chrome/chrome_main_delegate_cef.cc
                 Settings.AddNoErrorFlag("disable-features", "EnableHangWatcher,GlicActorUi,AutofillActorMode,LensOverlay," + DisableFeatures);
                 Settings.AddNoErrorFlag("enable-features", EnableFeatures);
                 Settings.AddNoErrorFlag("enable-blink-features", EnableBlinkFeatures);
