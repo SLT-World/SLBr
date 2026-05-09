@@ -159,13 +159,10 @@ namespace SLBr
             }
 
             ChromiumSettings.CefCommandLineArgs.Remove("disable-back-forward-cache");
-            //MessageBox.Show(string.Join(",", ChromiumSettings.CefCommandLineArgs.Keys));
+            //TODO: Maintain default CEF flags (DisableFeatureByDefault): https://github.com/chromiumembedded/cef/blob/master/libcef/common/chrome/chrome_main_delegate_cef.cc
+            ChromiumSettings.AddNoErrorFlag("disable-features", "EnableHangWatcher,GlicActorUi,AutofillActorMode,LensOverlay");
             foreach (var Flag in Settings.Flags)
-            {
-                if (Flag.Key == "disable-features" && Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
-                    continue;
                 ChromiumSettings.AddNoErrorFlag(Flag.Key, Flag.Value);
-            }
 
             CefSharpSettings.RuntimeStyle = Settings.CefRuntimeStyle;
             foreach (var Scheme in Settings.Schemes)
