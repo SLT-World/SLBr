@@ -7,12 +7,12 @@ namespace SLBr
 {
     public class Trie : Trie<string>, IEnumerable<string>
     {
-        public void Add(string s) =>
-            Add(s, s);
-        public void Add(IEnumerable<string> strings)
+        public void Add(string Value) =>
+            Add(Value, Value);
+        public void Add(IEnumerable<string> Values)
         {
-            foreach (string s in strings)
-                Add(s);
+            foreach (string Value in Values)
+                Add(Value);
         }
         public IEnumerator<string> GetEnumerator() => Enumerable.Empty<string>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -24,9 +24,9 @@ namespace SLBr
 
     public class Trie<T, TValue>
     {
-        public static Trie FromList(IEnumerable<string> patterns)
+        public static Trie FromList(IEnumerable<string> Patterns)
         {
-            Trie _Trie = new Trie { patterns };
+            Trie _Trie = new() { Patterns };
             _Trie.Build();
             return _Trie;
         }
@@ -135,7 +135,7 @@ namespace SLBr
     public class DomainList : IEnumerable<string>
     {
         private readonly TrieNode Root = new();
-        public readonly HashSet<string> AllDomains = new();
+        public readonly HashSet<string> AllDomains = [];
 
         public void Add(string Domain)
         {

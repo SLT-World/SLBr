@@ -211,8 +211,8 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
 
         public async Task SetResponseHeader(Stream _Stream)
         {
-            byte[] StatusText = { (byte)'4', (byte)'1' };
-            if (await _Stream.ReadAsync(StatusText, 0, 2) != 2)
+            byte[] StatusText = [(byte)'4', (byte)'1'];
+            if (await _Stream.ReadAsync(StatusText.AsMemory(0, 2)) != 2)
             {
                 StatusCode = 0;
                 ErrorCode = WebErrorCode.ContentDecodingFailed;
@@ -277,7 +277,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             DateTime AbandonTime = DateTime.Now.AddSeconds(AbandonAfterSeconds);
 
             byte[] Buffer = new byte[2048];
-            int Bytes = await _Stream.ReadAsync(Buffer);
+            int Bytes = await _Stream.ReadAsync(Buffer, Token);
             var MaxSizeBytes = MaxSize * 1024;
             while (Bytes != 0)
             {
@@ -326,7 +326,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 ServerHost = ProxyValues[0];
                 Port = int.Parse(ProxyValues[1]);
             }
-            TcpClient _Client = new TcpClient();
+            TcpClient _Client = new();
             try
             {
                 await _Client.ConnectAsync(ServerHost, Port, CancellationToken);
@@ -336,9 +336,9 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                 return ErrorResponse(HostURL, '5', '1', $"Network error: {ex.Message}", ex.SocketErrorCode.ToWebErrorCode());
             }
 
-            WebSSLStatus SSLStatus = new WebSSLStatus();
+            WebSSLStatus SSLStatus = new();
 
-            RemoteCertificateValidationCallback _Callback = (Sender, Certificate, Chain, Errors) =>
+            bool _Callback(object Sender, X509Certificate? Certificate, X509Chain? Chain, SslPolicyErrors Errors)
             {
                 if (Certificate is X509Certificate2 Certificate2)
                     SSLStatus.X509Certificate = new X509Certificate2(Certificate2);
@@ -354,10 +354,10 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
                     return false;
 
                 return Errors == SslPolicyErrors.RemoteCertificateChainErrors;
-            };
-            SslStream SSLStream = new SslStream(_Client.GetStream(), false, _Callback, null);
+            }
+            SslStream SSLStream = new(_Client.GetStream(), false, _Callback, null);
 
-            var Certificates = new X509CertificateCollection();
+            X509CertificateCollection Certificates = new();
             if (ClientCertificate != null)
                 Certificates.Add(ClientCertificate);
 
@@ -371,7 +371,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             }
 
 
-            GeminiResponse Response = new GeminiResponse() { _Uri = HostURL, SSLStatus = SSLStatus };
+            GeminiResponse Response = new() { _Uri = HostURL, SSLStatus = SSLStatus };
             byte[] Message = Encoding.UTF8.GetBytes(HostURL.AbsoluteUri + "\r\n");
             try
             {

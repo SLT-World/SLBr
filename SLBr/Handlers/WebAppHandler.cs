@@ -2,7 +2,6 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using System.IO;
-using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -74,14 +73,14 @@ namespace SLBr.Handlers
             {
                 try
                 {
-                    using MemoryStream Stream = new MemoryStream(await App.MiniHttpClient.GetByteArrayAsync(Best.Source));
+                    using MemoryStream Stream = new(await App.MiniHttpClient.GetByteArrayAsync(Best.Source));
                     var Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
                     var Frame = Decoder.Frames[0];
                     if (Frame.CanFreeze)
                         Frame.Freeze();
                     try
                     {
-                        using (FileStream ImageStream = new FileStream(ImagePath, FileMode.Create))
+                        using (FileStream ImageStream = new(ImagePath, FileMode.Create))
                         {
                             BitmapEncoder Encoder = new PngBitmapEncoder();
                             Encoder.Frames.Add(Frame);

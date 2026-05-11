@@ -614,22 +614,15 @@ namespace SLBr
         {
             try
             {
-                byte[] ImageData = await App.MiniHttpClient.GetByteArrayAsync(ImageUrl);
-                if (ImageData != null)
-                {
-                    using (MemoryStream stream = new(ImageData))
-                    {
-                        BitmapImage Bitmap = new();
-                        Bitmap.BeginInit();
-                        Bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        Bitmap.StreamSource = stream;
-                        Bitmap.EndInit();
-                        if (Bitmap.CanFreeze)
-                            Bitmap.Freeze();
-
-                        App.Instance.CopyToClipboard(Bitmap, 1);
-                    }
-                }
+                using Stream _Stream = await App.MiniHttpClient.GetStreamAsync(ImageUrl);
+                BitmapImage Bitmap = new();
+                Bitmap.BeginInit();
+                Bitmap.StreamSource = _Stream;
+                Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                Bitmap.EndInit();
+                if (Bitmap.CanFreeze)
+                    Bitmap.Freeze();
+                App.Instance.CopyToClipboard(Bitmap, 1);
             }
             catch { }
         }

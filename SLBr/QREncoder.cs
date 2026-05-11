@@ -395,7 +395,7 @@ namespace SLBr
                 // input string length
                 byte[] DataSeg = DataSegArray[SegIndex];
                 if (DataSeg == null)
-                    DataSegArray[SegIndex] = Array.Empty<byte>();
+                    DataSegArray[SegIndex] = [];
                 else
                     Bytes += DataSeg.Length;
             }
@@ -1624,8 +1624,8 @@ namespace SLBr
         //    Representation. Note that Kanji characters in QR Code can have values 8140HEX -9FFCHEX and E040HEX -
         //    EBBFHEX , which can be compacted into 13 bits.)
 
-        internal static readonly byte[] EncodingTable =
-            {
+        internal static ReadOnlySpan<byte> EncodingTable =>
+            [
              45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
              45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
              36, 45, 45, 45, 37, 38, 45, 45, 45, 45, 39, 40, 45, 41, 42, 43,
@@ -1642,7 +1642,7 @@ namespace SLBr
              45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
              45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
              45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-            };
+            ];
 
         // Error correction block information
         // A-Number of blocks in group 1
@@ -1951,8 +1951,8 @@ namespace SLBr
             null, Generator68
             };
 
-        internal static readonly byte[] ExpToInt = //	ExpToInt =
-				{
+        internal static ReadOnlySpan<byte> ExpToInt =>
+                [
                    1,   2,   4,   8,  16,  32,  64, 128,  29,  58, 116, 232, 205, 135,  19,  38,
                   76, 152,  45,  90, 180, 117, 234, 201, 143,   3,   6,  12,  24,  48,  96, 192,
                  157,  39,  78, 156,  37,  74, 148,  53, 106, 212, 181, 119, 238, 193, 159,  35,
@@ -1986,10 +1986,10 @@ namespace SLBr
                   81, 162,  89, 178, 121, 242, 249, 239, 195, 155,  43,  86, 172,  69, 138,   9,
                   18,  36,  72, 144,  61, 122, 244, 245, 247, 243, 251, 235, 203, 139,  11,  22,
                   44,  88, 176, 125, 250, 233, 207, 131,  27,  54, 108, 216, 173,  71, 142,   1
-                };
+                ];
 
-        internal static readonly byte[] IntToExp = //	IntToExp =
-				{
+        internal static ReadOnlySpan<byte> IntToExp => //	IntToExp =
+                [
                    0,   0,   1,  25,   2,  50,  26, 198,   3, 223,  51, 238,  27, 104, 199,  75,
                    4, 100, 224,  14,  52, 141, 239, 129,  28, 193, 105, 248, 200,   8,  76, 113,
                    5, 138, 101,  47, 225,  36,  15,  33,  53, 147, 142, 218, 240,  18, 130,  69,
@@ -2006,15 +2006,15 @@ namespace SLBr
                  108, 161,  59,  82,  41, 157,  85, 170, 251,  96, 134, 177, 187, 204,  62,  90,
                  203,  89,  95, 176, 156, 169, 160,  81,  11, 245,  22, 235, 122, 117,  44, 215,
                   79, 174, 213, 233, 230, 231, 173, 232, 116, 214, 244, 234, 168,  80,  88, 175
-                };
+                ];
 
         internal static readonly int[] FormatInfoArray =
-                {
+                [
                 0x5412, 0x5125, 0x5E7C, 0x5B4B, 0x45F9, 0x40CE, 0x4F97, 0x4AA0,		// M = 00
 				0x77C4, 0x72F3, 0x7DAA, 0x789D, 0x662F, 0x6318, 0x6C41, 0x6976,		// L = 01
 				0x1689, 0x13BE, 0x1CE7, 0x19D0,  0x762,  0x255,  0xD0C,  0x83B,		// H - 10
 				0x355F, 0x3068, 0x3F31, 0x3A06, 0x24B4, 0x2183, 0x2EDA, 0x2BED,		// Q = 11
-				};
+				];
 
         internal static readonly int[,] FormatInfoOne = new int[,]
                 {

@@ -325,18 +325,11 @@ namespace SLBr
         None = 0
     }
 
-    public class NavigationErrorEventArgs : EventArgs
+    public class NavigationErrorEventArgs(WebErrorCode _ErrorCode, string _RawError, string _Url) : EventArgs
     {
-        public NavigationErrorEventArgs(WebErrorCode _ErrorCode, string _RawError, string _Url)
-        {
-            ErrorCode = _ErrorCode;
-            RawError = _RawError;
-            Url = _Url;
-        }
-
-        public string Url { get; }
-        public string RawError { get; }
-        public WebErrorCode ErrorCode { get; }
+        public string Url { get; } = _Url;
+        public string RawError { get; } = _RawError;
+        public WebErrorCode ErrorCode { get; } = _ErrorCode;
     }
 
     public class WebContextMenuEventArgs : EventArgs
@@ -405,17 +398,11 @@ namespace SLBr
         }
     }
 
-    public class BeforeNavigationEventArgs : EventArgs
+    public class BeforeNavigationEventArgs(string _Url, bool _IsMainFrame) : EventArgs
     {
-        public string Url { get; }
-        public bool IsMainFrame { get; }
+        public string Url { get; } = _Url;
+        public bool IsMainFrame { get; } = _IsMainFrame;
         public bool Cancel { get; set; }
-
-        public BeforeNavigationEventArgs(string _Url, bool _IsMainFrame)
-        {
-            Url = _Url;
-            IsMainFrame = _IsMainFrame;
-        }
     }
 
     public enum ScriptDialogType
@@ -425,26 +412,17 @@ namespace SLBr
         Prompt = 2,
         BeforeUnload = 3
     }
-    public class ScriptDialogEventArgs : EventArgs
+    public class ScriptDialogEventArgs(ScriptDialogType _DialogType, string _Url, string _Text, string _DefaultPrompt, bool _IsReload = false) : EventArgs
     {
-        public ScriptDialogType DialogType { get; }
-        public string Url { get; }
-        public string Text { get; }
-        public string DefaultPrompt { get; }
+        public ScriptDialogType DialogType { get; } = _DialogType;
+        public string Url { get; } = _Url;
+        public string Text { get; } = _Text;
+        public string DefaultPrompt { get; } = _DefaultPrompt;
 
         public bool Handled { get; set; }
-        public bool IsReload { get; }
+        public bool IsReload { get; } = _IsReload;
         public bool Result { get; set; }
         public string PromptResult { get; set; }
-
-        public ScriptDialogEventArgs(ScriptDialogType _DialogType, string _Url, string _Text, string _DefaultPrompt, bool _IsReload = false)
-        {
-            DialogType = _DialogType;
-            Url = _Url;
-            Text = _Text;
-            DefaultPrompt = _DefaultPrompt;
-            IsReload = _IsReload;
-        }
     }
 
     public enum ResourceRequestType
@@ -473,26 +451,16 @@ namespace SLBr
         NavigationPreLoadSubFrame = 20
     }
 
-    public readonly struct FindResult
+    public readonly struct FindResult(int _ActiveMatch, int _MatchCount)
     {
-        public int ActiveMatch { get; } = 0;
-        public int MatchCount { get; } = 0;
-        public FindResult(int _ActiveMatch, int _MatchCount)
-        {
-            ActiveMatch = _ActiveMatch;
-            MatchCount = _MatchCount;
-        }
+        public int ActiveMatch { get; } = _ActiveMatch;
+        public int MatchCount { get; } = _MatchCount;
     }
 
-    public readonly struct LoadingStateResult
+    public readonly struct LoadingStateResult(bool _IsLoading, int? _HttpStatusCode)
     {
-        public bool IsLoading { get; }
-        public int? HttpStatusCode { get; }
-        public LoadingStateResult(bool _IsLoading, int? _HttpStatusCode)
-        {
-            IsLoading = _IsLoading;
-            HttpStatusCode = _HttpStatusCode;
-        }
+        public bool IsLoading { get; } = _IsLoading;
+        public int? HttpStatusCode { get; } = _HttpStatusCode;
     }
 
     public readonly struct WebNavigationEntry
@@ -516,79 +484,47 @@ namespace SLBr
         }
     }
 
-    public readonly struct ResourceLoadedResult
+    public readonly struct ResourceLoadedResult(string _Url, bool _Success, long _ReceivedContentLength, ResourceRequestType _RequestType)
     {
-        public string Url { get; }
-        public bool Success { get; }
-        public long ReceivedContentLength { get; }
-        public ResourceRequestType ResourceRequestType { get; }
-        public ResourceLoadedResult(string _Url, bool _Success, long _ReceivedContentLength, ResourceRequestType _RequestType)
-        {
-            Url = _Url;
-            Success = _Success;
-            ReceivedContentLength = _ReceivedContentLength;
-            ResourceRequestType = _RequestType;
-        }
+        public string Url { get; } = _Url;
+        public bool Success { get; } = _Success;
+        public long ReceivedContentLength { get; } = _ReceivedContentLength;
+        public ResourceRequestType ResourceRequestType { get; } = _RequestType;
     }
 
-    public readonly struct ResourceRespondedResult
+    public readonly struct ResourceRespondedResult(string _Url, ResourceRequestType _RequestType)
     {
-        public string Url { get; }
-        public ResourceRequestType ResourceRequestType { get; }
-        public ResourceRespondedResult(string _Url, ResourceRequestType _RequestType)
-        {
-            Url = _Url;
-            ResourceRequestType = _RequestType;
-        }
+        public string Url { get; } = _Url;
+        public ResourceRequestType ResourceRequestType { get; } = _RequestType;
     }
 
-    public class ResourceRequestEventArgs : EventArgs
+    public class ResourceRequestEventArgs(string _Url, string _FocusedUrl, string _Method, ResourceRequestType _RequestType, Dictionary<string, string> _Headers) : EventArgs
     {
-        public string Url { get; }
-        public string FocusedUrl { get; }
-        public string Method { get; }
-        public ResourceRequestType ResourceRequestType { get; }
-        public Dictionary<string, string> Headers { get; }
+        public string Url { get; } = _Url;
+        public string FocusedUrl { get; } = _FocusedUrl;
+        public string Method { get; } = _Method;
+        public ResourceRequestType ResourceRequestType { get; } = _RequestType;
+        public Dictionary<string, string> Headers { get; } = _Headers;
         public Dictionary<string, string> ModifiedHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         public bool Cancel { get; set; }
-
-        public ResourceRequestEventArgs(string _Url, string _FocusedUrl, string _Method, ResourceRequestType _RequestType, Dictionary<string, string> _Headers)
-        {
-            Url = _Url;
-            FocusedUrl = _FocusedUrl;
-            Method = _Method;
-            Headers = _Headers;
-            ResourceRequestType = _RequestType;
-        }
     }
 
-    public class WebAuthenticationRequestedEventArgs : EventArgs
+    public class WebAuthenticationRequestedEventArgs(string _Url) : EventArgs
     {
-        public string Url { get; }
+        public string Url { get; } = _Url;
 
         public string? Username { get; set; }
         public string? Password { get; set; }
 
         public bool Cancel { get; set; }
-
-        public WebAuthenticationRequestedEventArgs(string _Url)
-        {
-            Url = _Url;
-        }
     }
 
-    public class ExternalProtocolEventArgs : EventArgs
+    public class ExternalProtocolEventArgs(string _Url, string _Origin) : EventArgs
     {
-        public string Url { get; }
-        public string Origin { get; }
+        public string Url { get; } = _Url;
+        public string Origin { get; } = _Origin;
         public bool Launch { get; set; }
-
-        public ExternalProtocolEventArgs(string _Url, string _Origin)
-        {
-            Url = _Url;
-            Origin = _Origin;
-        }
     }
 
     [Flags] public enum WebPermissionKind
@@ -1095,32 +1031,19 @@ namespace SLBr
         }
     }
 
-    public class PermissionRequestedEventArgs : EventArgs
+    public class PermissionRequestedEventArgs(string _Url, WebPermissionKind _Kind) : EventArgs
     {
-        public string Url { get; }
-        public WebPermissionKind Kind { get; }
+        public string Url { get; } = _Url;
+        public WebPermissionKind Kind { get; } = _Kind;
         public WebPermissionState State { get; set; } = WebPermissionState.Default;
-
-        public PermissionRequestedEventArgs(string _Url, WebPermissionKind _Kind)
-        {
-            Url = _Url;
-            Kind = _Kind;
-        }
     }
 
-    public class NewTabRequestEventArgs : EventArgs
+    public class NewTabRequestEventArgs(string _Url, bool _Background, Rect? _Popup) : EventArgs
     {
-        public string Url { get; }
-        public bool Background { get; }
-        public Rect? Popup { get; }
+        public string Url { get; } = _Url;
+        public bool Background { get; } = _Background;
+        public Rect? Popup { get; } = _Popup;
         public IWebView? WebView { get; set; }
-
-        public NewTabRequestEventArgs(string _Url, bool _Background, Rect? _Popup)
-        {
-            Url = _Url;
-            Background = _Background;
-            Popup = _Popup;
-        }
     }
 
     public struct WebUserAgentBrand
@@ -2732,7 +2655,7 @@ namespace SLBr
                 return Stream.ToArray();
             }
             catch { }
-            return Array.Empty<byte>();
+            return [];
         }
         public async Task<string> GetSourceAsync() => (await EvaluateScriptAsync("document.documentElement.outerHTML")).ToString();
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null)
@@ -3316,7 +3239,7 @@ namespace SLBr
         public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
         {
             var HWND = Browser.Handle;
-            if (HWND == IntPtr.Zero) return Array.Empty<byte>();
+            if (HWND == IntPtr.Zero) return [];
 
             var Width = (int)(Viewport?.Width ?? Browser.ActualWidth);
             var Height = (int)(Viewport?.Height ?? Browser.ActualHeight);

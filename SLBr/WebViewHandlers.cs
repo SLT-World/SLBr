@@ -502,20 +502,12 @@ namespace SLBr
         public static ConcurrentDictionary<string, RequestOverrideItem> OverrideRequests = new ConcurrentDictionary<string, RequestOverrideItem>(StringComparer.OrdinalIgnoreCase);
     }
 
-    public class RequestOverrideItem
+    public class RequestOverrideItem(byte[] _Data, string _MimeType, int _Uses = 1, string _Error = "")
     {
-        public byte[] Data;
-        public string MimeType;
-        public string Error;
-        public int Uses;
-
-        public RequestOverrideItem(byte[] _Data, string _MimeType, int _Uses = 1, string _Error = "")
-        {
-            Data = _Data;
-            MimeType = _MimeType;
-            Uses = _Uses;
-            Error = _Error;
-        }
+        public byte[] Data = _Data;
+        public string MimeType = _MimeType;
+        public string Error = _Error;
+        public int Uses = _Uses;
     }
 
     public enum TridentEmulationVersion: uint
@@ -542,7 +534,7 @@ namespace SLBr
         }*/
         
         public string Language;
-        public string[] Languages = Array.Empty<string>();
+        public string[] Languages = [];
 
         public string? UserDataPath = null;
         public string LogFile;

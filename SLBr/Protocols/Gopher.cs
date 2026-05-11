@@ -178,7 +178,7 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
             if (Port == -1)
                 Port = 70;
 
-            TcpClient _Client = new TcpClient();
+            TcpClient _Client = new();
             try
             {
                 await _Client.ConnectAsync(HostURL.Host, Port, CancellationToken);
@@ -195,9 +195,9 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
                 TrimmedUrl = TrimmedUrl.Substring(1);
 
             byte[] Message = Encoding.UTF8.GetBytes(Uri.UnescapeDataString(TrimmedUrl) + "\r\n");
-            await Stream.WriteAsync(Message, 0, Message.Count(), CancellationToken);
+            await Stream.WriteAsync(Message.AsMemory(0, Message.Length), CancellationToken);
             await Stream.FlushAsync(CancellationToken);
-            GopherResponse Response = new GopherResponse() { _Uri = HostURL, Mime = GetMime(HostURL), SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None } };
+            GopherResponse Response = new() { _Uri = HostURL, Mime = GetMime(HostURL), SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None } };
             await ReadMessage(Response, Stream, AbandonReadSizeKb, AbandonReadTimes, CancellationToken);
             _Client.Close();
 

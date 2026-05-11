@@ -414,9 +414,7 @@ namespace SLBr
             {
                 PName = value;
                 Initial = value[0].ToString().ToUpper();
-
-                using var _MD5 = MD5.Create();
-                byte[] Hash = _MD5.ComputeHash(Encoding.UTF8.GetBytes(value));
+                ReadOnlySpan<byte> Hash = MD5.HashData(Encoding.UTF8.GetBytes(value));
 
                 byte R = (byte)(Hash[0] % 128 + 64);
                 byte G = (byte)(Hash[1] % 128 + 64);
@@ -3933,7 +3931,7 @@ Inner Exception: {7}";
 
         private void SetGraphicsFlags(WebViewSettings Settings)
         {
-            //Settings.AddFlag("in-process-gpu");
+            //Settings.AddFlag("in-process-gpu");//WARNING: Causes blank HTML dropdowns.
             if (bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration")))
             {
                 Settings.AddFlag("enable-gpu");
@@ -4694,8 +4692,8 @@ Inner Exception: {7}";
             CurrentTheme = _Theme;
             GlobalSave.Set("Theme", CurrentTheme.Name);
 
-            int IconSize = 40;
-            int DPI = 95;
+            const int IconSize = 40;
+            const int DPI = 95;
             TextBlock _TextBlock = new()
             {
                 FontFamily = IconFont,

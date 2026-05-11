@@ -66,9 +66,7 @@ namespace SLBr.Controls
                 return Brushes.Gray;
 
             float Brightness = Parameter == null ? 1 : float.Parse((string)Parameter);
-
-            using var _MD5 = MD5.Create();
-            byte[] Hash = _MD5.ComputeHash(Encoding.UTF8.GetBytes(Value.ToString()));
+            ReadOnlySpan<byte> Hash = MD5.HashData(Encoding.UTF8.GetBytes(Value.ToString()));
 
             byte R = (byte)((Hash[0] % 128 + 64) * Brightness);
             byte G = (byte)((Hash[1] % 128 + 64) * Brightness);
