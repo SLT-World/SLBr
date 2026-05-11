@@ -31,150 +31,150 @@ namespace SLBr
             */
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
-            if (args.Length > 0 && args[0].StartsWith("--type="))
-                return SelfHost.Main(args);
-            else if (args.Length > 0 && args[0].StartsWith("--app="))
+            if (args.Length > 0)
             {
-                //TODO: Switchable web views for Web Apps.
-                string UserApplicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", "Default");
-
-                string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
-                CefSettings Settings = new()
+                if (args[0].StartsWith("--type="))
+                    return SelfHost.Main(args);
+                else if (args[0].StartsWith("--app="))
                 {
-                    BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName,
-                    LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log")),
-                    LogSeverity = LogSeverity.Error,
-                    CachePath = Path.GetFullPath(Path.Combine(UserDataPath, "Cache")),
-                    RootCachePath = UserDataPath
-                };
+                    string AppsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SLBr", "Apps");
+                    string ID = args[0].Substring(6).Trim('"');
+                    string ManifestPath = Path.Combine(AppsFolder, $"{ID}.json");
+                    WebAppManifest? Manifest = WebAppHandler.LoadManifest(File.ReadAllText(ManifestPath));
+                    if (Manifest == null)
+                        return Environment.ExitCode;
 
-                Settings.AddNoErrorFlag("enable-tls13-early-data");
+                    //TODO: Switchable web views for Web Apps.
+                    string UserApplicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", "Default");
 
-                Settings.AddNoErrorFlag("reduce-accept-language");
+                    string UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
+                    CefSettings Settings = new()
+                    {
+                        BrowserSubprocessPath = Process.GetCurrentProcess().MainModule.FileName,
+                        LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log")),
+                        LogSeverity = LogSeverity.Error,
+                        CachePath = Path.GetFullPath(Path.Combine(UserDataPath, "Cache")),
+                        RootCachePath = UserDataPath
+                    };
 
-                Settings.AddNoErrorFlag("enable-quic");
-                Settings.AddNoErrorFlag("enable-spdy4");
-                Settings.AddNoErrorFlag("enable-ipv6");
+                    Settings.AddNoErrorFlag("enable-tls13-early-data");
 
-                //Settings.AddNoErrorFlag("no-proxy-server");
-                Settings.AddNoErrorFlag("no-pings");
+                    Settings.AddNoErrorFlag("reduce-accept-language");
 
-                Settings.AddNoErrorFlag("disable-background-networking");
-                Settings.AddNoErrorFlag("disable-component-extensions-with-background-pages");
+                    Settings.AddNoErrorFlag("enable-quic");
+                    Settings.AddNoErrorFlag("enable-spdy4");
+                    Settings.AddNoErrorFlag("enable-ipv6");
 
-                Settings.AddNoErrorFlag("disable-translate");
-                Settings.AddNoErrorFlag("disable-variations-seed-fetch");
+                    //Settings.AddNoErrorFlag("no-proxy-server");
+                    Settings.AddNoErrorFlag("no-pings");
 
-                Settings.AddNoErrorFlag("no-default-browser-check");
-                Settings.AddNoErrorFlag("no-first-run");
-                Settings.AddNoErrorFlag("disable-domain-reliability");
+                    Settings.AddNoErrorFlag("disable-background-networking");
+                    Settings.AddNoErrorFlag("disable-component-extensions-with-background-pages");
+
+                    Settings.AddNoErrorFlag("disable-translate");
+                    Settings.AddNoErrorFlag("disable-variations-seed-fetch");
+
+                    Settings.AddNoErrorFlag("no-default-browser-check");
+                    Settings.AddNoErrorFlag("no-first-run");
+                    Settings.AddNoErrorFlag("disable-domain-reliability");
 
 
-                Settings.AddNoErrorFlag("disable-chrome-tracing-computation");
-                Settings.AddNoErrorFlag("disable-default-apps");
+                    Settings.AddNoErrorFlag("disable-chrome-tracing-computation");
+                    Settings.AddNoErrorFlag("disable-default-apps");
 
-                Settings.AddNoErrorFlag("disable-modal-animations");
+                    Settings.AddNoErrorFlag("disable-modal-animations");
 
-                Settings.AddNoErrorFlag("no-network-profile-warning");
+                    Settings.AddNoErrorFlag("no-network-profile-warning");
 
-                Settings.AddNoErrorFlag("disable-login-animations");
-                Settings.AddNoErrorFlag("disable-stack-profiler");
-                Settings.AddNoErrorFlag("disable-system-font-check");
-                Settings.AddNoErrorFlag("disable-breakpad");
-                Settings.AddNoErrorFlag("disable-crash-reporter");
-                Settings.AddNoErrorFlag("disable-crashpad-forwarding");
+                    Settings.AddNoErrorFlag("disable-login-animations");
+                    Settings.AddNoErrorFlag("disable-stack-profiler");
+                    Settings.AddNoErrorFlag("disable-system-font-check");
+                    Settings.AddNoErrorFlag("disable-breakpad");
+                    Settings.AddNoErrorFlag("disable-crash-reporter");
+                    Settings.AddNoErrorFlag("disable-crashpad-forwarding");
 
-                Settings.AddNoErrorFlag("disable-top-sites");
-                Settings.AddNoErrorFlag("no-service-autorun");
-                Settings.AddNoErrorFlag("disable-auto-reload");
-                Settings.AddNoErrorFlag("disable-dinosaur-easter-egg");
+                    Settings.AddNoErrorFlag("disable-top-sites");
+                    Settings.AddNoErrorFlag("no-service-autorun");
+                    Settings.AddNoErrorFlag("disable-auto-reload");
+                    Settings.AddNoErrorFlag("disable-dinosaur-easter-egg");
 
-                Settings.AddNoErrorFlag("wm-window-animations-disabled");
-                Settings.AddNoErrorFlag("animation-duration-scale", "0");
-                Settings.AddNoErrorFlag("disable-histogram-customizer");
+                    Settings.AddNoErrorFlag("wm-window-animations-disabled");
+                    Settings.AddNoErrorFlag("animation-duration-scale", "0");
+                    Settings.AddNoErrorFlag("disable-histogram-customizer");
 
-                Settings.AddNoErrorFlag("suppress-message-center-popups");
-                Settings.AddNoErrorFlag("disable-prompt-on-repost");
-                Settings.AddNoErrorFlag("propagate-iph-for-testing");
-                Settings.AddNoErrorFlag("disable-search-engine-choice-screen");
-                Settings.AddNoErrorFlag("ash-no-nudges");
-                Settings.AddNoErrorFlag("noerrdialogs");
-                Settings.AddNoErrorFlag("disable-notifications");
+                    Settings.AddNoErrorFlag("suppress-message-center-popups");
+                    Settings.AddNoErrorFlag("disable-prompt-on-repost");
+                    Settings.AddNoErrorFlag("propagate-iph-for-testing");
+                    Settings.AddNoErrorFlag("disable-search-engine-choice-screen");
+                    Settings.AddNoErrorFlag("ash-no-nudges");
+                    Settings.AddNoErrorFlag("noerrdialogs");
+                    Settings.AddNoErrorFlag("disable-notifications");
 
-                Settings.AddNoErrorFlag("connectivity-check-url", "https://cp.cloudflare.com/generate_204");
-                Settings.AddNoErrorFlag("sync-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("gaia-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("gcm-checkin-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("gcm-mcs-endpoint", "dummy.invalid");
-                Settings.AddNoErrorFlag("gcm-registration-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("google-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("google-apis-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("google-base-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("lso-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("model-quality-service-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("oauth-account-manager-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("secure-connect-api-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("variations-server-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("variations-insecure-server-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("device-management-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("realtime-reporting-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("encrypted-reporting-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("file-storage-server-upload-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("google-doodle-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("third-party-doodle-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("search-provider-logo-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("translate-script-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("autofill-server-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("override-metrics-upload-url", "dummy.invalid");
-                Settings.AddNoErrorFlag("crash-server-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("connectivity-check-url", "https://cp.cloudflare.com/generate_204");
+                    Settings.AddNoErrorFlag("sync-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("gaia-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("gcm-checkin-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("gcm-mcs-endpoint", "dummy.invalid");
+                    Settings.AddNoErrorFlag("gcm-registration-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("google-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("google-apis-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("google-base-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("lso-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("model-quality-service-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("oauth-account-manager-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("secure-connect-api-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("variations-server-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("variations-insecure-server-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("device-management-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("realtime-reporting-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("encrypted-reporting-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("file-storage-server-upload-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("google-doodle-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("third-party-doodle-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("search-provider-logo-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("translate-script-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("autofill-server-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("override-metrics-upload-url", "dummy.invalid");
+                    Settings.AddNoErrorFlag("crash-server-url", "dummy.invalid");
 
-                Settings.AddNoErrorFlag("dark-mode-settings", "ImagePolicy=1");
-                Settings.AddNoErrorFlag("process-per-site");
-                Settings.AddNoErrorFlag("password-store", "basic");
-                Settings.AddNoErrorFlag("animated-image-resume");
-                Settings.AddNoErrorFlag("disable-image-animation-resync");
-                Settings.AddNoErrorFlag("disable-checker-imaging");
-                Settings.AddNoErrorFlag("enable-speech-input");
-                Settings.AddNoErrorFlag("enable-usermedia-screen-capturing");
-                Settings.AddNoErrorFlag("auto-select-desktop-capture-source", "Entire screen");
-                Settings.AddNoErrorFlag("disable-fetching-hints-at-navigation-start");
-                Settings.AddNoErrorFlag("disable-model-download-verification");
-                Settings.AddNoErrorFlag("disable-component-update");
-                Settings.AddNoErrorFlag("component-updater", "disable-background-downloads,disable-delta-updates");
-                Settings.AddNoErrorFlag("enable-parallel-downloading");
+                    Settings.AddNoErrorFlag("dark-mode-settings", "ImagePolicy=1");
+                    Settings.AddNoErrorFlag("process-per-site");
+                    Settings.AddNoErrorFlag("password-store", "basic");
+                    Settings.AddNoErrorFlag("animated-image-resume");
+                    Settings.AddNoErrorFlag("disable-image-animation-resync");
+                    Settings.AddNoErrorFlag("disable-checker-imaging");
+                    Settings.AddNoErrorFlag("enable-speech-input");
+                    Settings.AddNoErrorFlag("enable-usermedia-screen-capturing");
+                    Settings.AddNoErrorFlag("auto-select-desktop-capture-source", "Entire screen");
+                    Settings.AddNoErrorFlag("disable-fetching-hints-at-navigation-start");
+                    Settings.AddNoErrorFlag("disable-model-download-verification");
+                    Settings.AddNoErrorFlag("disable-component-update");
+                    Settings.AddNoErrorFlag("component-updater", "disable-background-downloads,disable-delta-updates");
+                    Settings.AddNoErrorFlag("enable-parallel-downloading");
 
-                string EnableFeatures = "JXLImageFormat,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
-                string DisableFeatures = "KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
-                string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
-                string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI,DocumentPictureInPictureAPI";
+                    string EnableFeatures = "JXLImageFormat,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
+                    string DisableFeatures = "KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
+                    string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
+                    string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI,DocumentPictureInPictureAPI";
 
-                //TODO: Maintain default CEF flags (DisableFeatureByDefault): https://github.com/chromiumembedded/cef/blob/master/libcef/common/chrome/chrome_main_delegate_cef.cc
-                Settings.AddNoErrorFlag("disable-features", "EnableHangWatcher,GlicActorUi,AutofillActorMode,LensOverlay," + DisableFeatures);
-                Settings.AddNoErrorFlag("enable-features", EnableFeatures);
-                Settings.AddNoErrorFlag("enable-blink-features", EnableBlinkFeatures);
-                Settings.AddNoErrorFlag("disable-blink-features", DisableBlinkFeatures);
+                    //TODO: Maintain default CEF flags (DisableFeatureByDefault): https://github.com/chromiumembedded/cef/blob/master/libcef/common/chrome/chrome_main_delegate_cef.cc
+                    Settings.AddNoErrorFlag("disable-features", "EnableHangWatcher,GlicActorUi,AutofillActorMode,LensOverlay," + DisableFeatures);
+                    Settings.AddNoErrorFlag("enable-features", EnableFeatures);
+                    Settings.AddNoErrorFlag("enable-blink-features", EnableBlinkFeatures);
+                    Settings.AddNoErrorFlag("disable-blink-features", DisableBlinkFeatures);
 
-                CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Alloy;
-                Cef.Initialize(Settings);
-
-                Application CleanApp = new Application();
-                string AppsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SLBr", "Apps");
-                string ID = args[0].Substring("--app=".Length).Trim('"');
-                string ManifestPath = Path.Combine(AppsFolder, $"{ID}.json");
-
-                WebAppManifest? Manifest = WebAppHandler.LoadManifest(File.ReadAllText(ManifestPath));
-                WebAppWindow Window = new(Manifest);
-                CleanApp.Run(Window);
-
-                Cef.Shutdown();
-                return Environment.ExitCode;
+                    CefSharpSettings.RuntimeStyle = CefRuntimeStyle.Alloy;
+                    Cef.Initialize(Settings);
+                    new Application().Run(new WebAppWindow(Manifest));
+                    Cef.Shutdown();
+                }
             }
             else
             {
                 App.Main();
                 Cef.Shutdown();
-                return Environment.ExitCode;
             }
+            return Environment.ExitCode;
         }
     }
 }

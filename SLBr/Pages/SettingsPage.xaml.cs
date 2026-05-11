@@ -137,6 +137,17 @@ namespace SLBr.Pages
                     }
                 }
             }
+            UserTab.IsEnabled = true;
+            BrowserTab.IsEnabled = true;
+            AppearanceTab.IsEnabled = true;
+            PrivacyTab.IsEnabled = true;
+            ServicesTab.IsEnabled = true;
+            PerformanceTab.IsEnabled = true;
+            LanguagesTab.IsEnabled = true;
+            DownloadsTab.IsEnabled = true;
+            ExtensionsTab.IsEnabled = true;
+            SystemTab.IsEnabled = true;
+            AboutTab.IsEnabled = true;
         }
 
         public void Dispose()
@@ -1481,8 +1492,7 @@ namespace SLBr.Pages
         {
             if (BrowserView != null && BrowserView.WebView != null && BrowserView.WebView.IsBrowserInitialized)
             {
-                TabItem SelectedTabItem = (TabItem)SettingsTabControl.SelectedItem;
-                if (SelectedTabItem != null)
+                if (SettingsTabControl.SelectedItem is TabItem SelectedTabItem && SelectedTabItem.IsEnabled)
                 {
                     string Name = Uri.EscapeDataString(SelectedTabItem.Header.ToString().ToLowerInvariant());
                     if (BrowserView.Address != $"slbr://settings/#{Name}")

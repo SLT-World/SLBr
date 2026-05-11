@@ -324,7 +324,7 @@ namespace SLBr
             }
         }
         private string _Header;
-        public BitmapImage Icon
+        public BitmapSource Icon
         {
             get { return _Icon; }
             set
@@ -333,7 +333,7 @@ namespace SLBr
                 RaisePropertyChanged();
             }
         }
-        private BitmapImage _Icon;
+        private BitmapSource _Icon;
         public TabGroup? TabGroup
         {
             get { return _TabGroup; }
@@ -4425,17 +4425,17 @@ Inner Exception: {7}";
             Shutdown();
         }
 
-        public BitmapImage TabIcon;
-        public BitmapImage PrivateIcon;
-        public BitmapImage AudioIcon;
-        public BitmapImage PDFTabIcon;
-        public BitmapImage SettingsTabIcon;
-        public BitmapImage HistoryTabIcon;
-        public BitmapImage FavouritesTabIcon;
-        public BitmapImage DownloadsTabIcon;
-        public BitmapImage UnloadedIcon;
+        public BitmapSource TabIcon;
+        public BitmapSource PrivateIcon;
+        public BitmapSource AudioIcon;
+        public BitmapSource PDFTabIcon;
+        public BitmapSource SettingsTabIcon;
+        public BitmapSource HistoryTabIcon;
+        public BitmapSource FavouritesTabIcon;
+        public BitmapSource DownloadsTabIcon;
+        public BitmapSource UnloadedIcon;
 
-        public BitmapImage GetIcon(string Url, bool IsPrivate = false)
+        public BitmapSource GetIcon(string Url, bool IsPrivate = false)
         {
             if (Utils.GetFileExtension(Url) != ".pdf")
             {
@@ -4513,7 +4513,7 @@ Inner Exception: {7}";
             }
         }
 
-        public async Task<BitmapImage> SetIcon(string IconUrl, string Url = "", bool IsPrivate = false)
+        public async Task<BitmapSource> SetIcon(string IconUrl, string Url = "", bool IsPrivate = false)
         {
             if (Utils.GetFileExtension(Url) != ".pdf")
             {
@@ -4523,33 +4523,33 @@ Inner Exception: {7}";
                         return CachedImage ?? TabIcon;
                     try
                     {
-                        if (DownloadingFavicons.TryGetValue(IconUrl, out Task<BitmapImage?> PendingTask))
+                        if (DownloadingFavicons.TryGetValue(IconUrl, out Task<BitmapImage?>? PendingTask))
                             return await PendingTask ?? TabIcon;
-                        Task<BitmapImage?> IconTask = Task.Run(async () =>
+                        async Task<BitmapImage?> DownloadIconTask()
                         {
-                            byte[]? ImageData = await DownloadFaviconAsync(IconUrl);
-                            if (ImageData != null)
+                            try
                             {
+                                using HttpRequestMessage Request = new(HttpMethod.Get, IconUrl);
+                                Request.Headers.Referrer = new Uri(Utils.FastHost(IconUrl, false, true));
+                                using var Response = await MiniHttpClient.SendAsync(Request);
+                                if (!Response.IsSuccessStatusCode) return null;
+                                using Stream _Stream = await Response.Content.ReadAsStreamAsync();
                                 BitmapImage Bitmap = new();
-                                using (MemoryStream Stream = new(ImageData))
-                                {
-                                    Bitmap.BeginInit();
-                                    Bitmap.StreamSource = Stream;
-                                    Bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                    Bitmap.EndInit();
-                                    if (Bitmap.CanFreeze)
-                                        Bitmap.Freeze();
-                                }
+                                Bitmap.BeginInit();
+                                Bitmap.StreamSource = _Stream;
+                                Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                Bitmap.EndInit();
+                                if (Bitmap.CanFreeze)
+                                    Bitmap.Freeze();
                                 CacheFavicon(IconUrl, Bitmap);
                                 return Bitmap;
                             }
-                            else
-                                return null;
-                        });
+                            catch { return null; }
+                            finally { DownloadingFavicons.Remove(IconUrl); }
+                        }
+                        Task<BitmapImage?> IconTask = DownloadIconTask();
                         DownloadingFavicons[IconUrl] = IconTask;
-                        BitmapImage? Result = await IconTask;
-                        DownloadingFavicons.Remove(IconUrl);
-                        return Result ?? TabIcon;
+                        return await IconTask ?? TabIcon;
                     }
                     catch { }
                 }
@@ -4573,29 +4573,6 @@ Inner Exception: {7}";
             }
             else
                 return PDFTabIcon;
-        }
-        private async Task<byte[]?> DownloadFaviconAsync(string Url)
-        {
-            if (string.IsNullOrEmpty(Url))
-                return null;
-            //TODO: Investigate solution to stackoverflow icon 403.
-            try
-            {
-                using HttpRequestMessage Request = new(HttpMethod.Get, Url);
-                Request.Headers.Referrer = new Uri(Utils.FastHost(Url, false, true));
-                using var Response = await MiniHttpClient.SendAsync(Request);
-                Response.EnsureSuccessStatusCode();
-                return await Response.Content.ReadAsByteArrayAsync();
-            }
-#if DEBUG
-            catch (Exception Ex)
-            {
-                Debug.WriteLine($"Favicon download failed: {Ex.Message}");
-            }
-#else
-            catch { }
-#endif
-            return null;
         }
 
         public bool MobileView;
@@ -4693,226 +4670,40 @@ Inner Exception: {7}";
             GlobalSave.Set("Theme", CurrentTheme.Name);
 
             const int IconSize = 40;
-            const int DPI = 95;
-            TextBlock _TextBlock = new()
-            {
-                FontFamily = IconFont,
-                Text = "\uEC6C",
-                Width = IconSize,
-                Height = IconSize,
-                FontSize = IconSize,
-                TextAlignment = TextAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Foreground = new SolidColorBrush(CurrentTheme.DarkWebPage ? Colors.White : Colors.Black),
-                Margin = new(1, 2, 0, 0)
-            };
-            RenderTargetBitmap RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            PngBitmapEncoder Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
+            const int DPI = 96;
+            Typeface IconTypeface = new(IconFont, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+            Point Origin = new(1, 0);
 
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                TabIcon = _BitmapImage;
+            RenderTargetBitmap RenderFontIcon(string Text, Brush Foreground, Point Origin)
+            {
+                DrawingVisual Visual = new();
+                using (DrawingContext Context = Visual.RenderOpen())
+                {
+                    FormattedText FormattedText = new(Text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, IconTypeface, IconSize, Foreground, VisualTreeHelper.GetDpi(Visual).PixelsPerDip)
+                    {
+                        TextAlignment = TextAlignment.Center,
+                        MaxTextWidth = IconSize
+                    };
+                    Context.DrawText(FormattedText, Origin);
+                }
+                RenderTargetBitmap Bitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
+                Bitmap.Render(Visual);
+                if (Bitmap.CanFreeze)
+                    Bitmap.Freeze();
+                return Bitmap;
             }
 
-            _TextBlock.Text = "\uEA90";
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
+            Brush IconBrush = CurrentTheme.DarkWebPage ? Brushes.White : Brushes.Black;
 
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                PDFTabIcon = _BitmapImage;
-            }
-
-            _TextBlock.Text = "\uE727";
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
-
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                PrivateIcon = _BitmapImage;
-            }
-
-            _TextBlock.Text = "\ue767";
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
-
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                AudioIcon = _BitmapImage;
-            }
-
-            _TextBlock.Text = "\uE713";
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
-
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                SettingsTabIcon = _BitmapImage;
-            }
-
-            _TextBlock.Text = "\ue81c";
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
-
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                HistoryTabIcon = _BitmapImage;
-            }
-
-            _TextBlock.Text = "\ueb51";
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
-
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                FavouritesTabIcon = _BitmapImage;
-            }
-
-            _TextBlock.Text = "\ue896";
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
-
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                DownloadsTabIcon = _BitmapImage;
-            }
-
-            _TextBlock.Text = "\uEC0A";
-            _TextBlock.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3AE872"));
-            RenderBitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
-            _TextBlock.Measure(new Size(IconSize, IconSize));
-            _TextBlock.Arrange(new Rect(new Size(IconSize, IconSize)));
-            RenderBitmap.Render(_TextBlock);
-            Encoder = new();
-            Encoder.Frames.Add(BitmapFrame.Create(RenderBitmap));
-            using (MemoryStream Stream = new())
-            {
-                Encoder.Save(Stream);
-                Stream.Seek(0, SeekOrigin.Begin);
-
-                BitmapImage _BitmapImage = new();
-                _BitmapImage.BeginInit();
-                _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                _BitmapImage.StreamSource = Stream;
-                _BitmapImage.EndInit();
-                if (_BitmapImage.CanFreeze)
-                    _BitmapImage.Freeze();
-
-                UnloadedIcon = _BitmapImage;
-            }
+            TabIcon = RenderFontIcon("\uEC6C", IconBrush, Origin);
+            PDFTabIcon = RenderFontIcon("\uEA90", IconBrush, Origin);
+            PrivateIcon = RenderFontIcon("\uE727", IconBrush, Origin);
+            AudioIcon = RenderFontIcon("\ue767", IconBrush, Origin);
+            SettingsTabIcon = RenderFontIcon("\uE713", IconBrush, Origin);
+            HistoryTabIcon = RenderFontIcon("\ue81c", IconBrush, Origin);
+            FavouritesTabIcon = RenderFontIcon("\ueb51", IconBrush, Origin);
+            DownloadsTabIcon = RenderFontIcon("\ue896", IconBrush, new Point(2, 0));
+            UnloadedIcon = RenderFontIcon("\uEC0A", new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3AE872")), Origin);
 
             foreach (MainWindow _Window in AllWindows)
                 _Window.SetAppearance(_Theme);

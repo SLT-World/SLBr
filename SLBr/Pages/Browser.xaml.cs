@@ -914,12 +914,12 @@ namespace SLBr.Pages
             }
         }
 
-        BitmapImage? WebIcon;
+        BitmapSource? WebIcon;
 
-        void SetIcon(BitmapImage Image, bool Force = false)
+        void SetIcon(BitmapSource Image, bool Force = false)
         {
             WebIcon = Image;
-            Tab.Icon = Force ? Image : ((Muted || !AudioPlaying) ? Image : App.Instance.AudioIcon);
+            Tab.Icon = Force || Muted || !AudioPlaying ? Image : App.Instance.AudioIcon;
         }
 
         private void WebView_PermissionRequested(object? sender, PermissionRequestedEventArgs e)
@@ -1681,31 +1681,6 @@ namespace SLBr.Pages
             LastActive = DateTime.Now;
             if (!bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 App.Instance.ScheduleNextEfficientTick();
-            /*else
-            {
-                if (WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null)// && Tab == Tab.ParentWindow.GetTab())
-                {
-                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
-                    await Dispatcher.InvokeAsync(async () =>
-                    {
-                        BitmapImage _BitmapImage = new();
-
-                        var Width = (int)CoreContainerSizeEmulator.ActualWidth;
-                        var Height = (int)CoreContainerSizeEmulator.ActualHeight;
-                        using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = Height, Width = Width })))
-                        {
-                            _BitmapImage.BeginInit();
-                            _BitmapImage.DecodePixelWidth = 275;
-                            _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                            _BitmapImage.StreamSource = Stream;
-                            _BitmapImage.EndInit();
-                            _BitmapImage.Freeze();
-                        }
-                        Tab.Preview = _BitmapImage;
-                        SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
-                    }, DispatcherPriority.Render);
-                }
-            }*/
             OpenDownloadsButton.ClosePopup();
             SiteInformationPopupButton.ClosePopup();
             TranslateButton.ClosePopup();
@@ -1912,17 +1887,21 @@ namespace SLBr.Pages
                     PageOverlay?.Dispose();
                     PageOverlay = null;
                 }
-                if (PageOverlay == null)
+                if (WebView != null && WebView.IsBrowserInitialized)
                 {
-                    PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType)!;
-                    PageOverlay.Initialize(this);
-                    //TODO: Apply individual tab theme.
-                    //PageOverlay.ApplyTheme();
-                    CoreContainer.Children.Add(PageOverlayControl);
+                    if (PageOverlay == null)
+                    {
+                        PageOverlay = (IPageOverlay)Activator.CreateInstance(OverlayType)!;
+                        PageOverlay.Initialize(this);
+                        //TODO: Apply individual tab theme.
+                        //PageOverlay.ApplyTheme();
+                        CoreContainer.Children.Add(PageOverlayControl);
+                    }
+                    PageOverlayControl?.Visibility = Visibility.Visible;
+                    //TODO: Resolve jittering issue on settings tab navigation.
+                    PageOverlay?.OnNavigated();
+                    //WARNING: Intentional, allows navigation.
                 }
-                PageOverlayControl?.Visibility = Visibility.Visible;
-                //WARNING: Intentional, allows navigation.
-                PageOverlay.OnNavigated();
             }
             else
             {
@@ -2123,16 +2102,15 @@ namespace SLBr.Pages
                     if (App.Instance.TabPreview && WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null && Tab == Tab.ParentWindow.GetTab() && WebView?.Control?.Visibility != Visibility.Collapsed)
                     {
                         BitmapImage _BitmapImage = new();
-                        var Width = (int)CoreContainerSizeEmulator.ActualWidth;
-                        var Height = (int)CoreContainerSizeEmulator.ActualHeight;
-                        using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = Height, Width = Width })))
+                        using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = (int)CoreContainerSizeEmulator.ActualHeight, Width = (int)CoreContainerSizeEmulator.ActualWidth })))
                         {
                             _BitmapImage.BeginInit();
                             _BitmapImage.DecodePixelWidth = 275;
                             _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                             _BitmapImage.StreamSource = Stream;
                             _BitmapImage.EndInit();
-                            _BitmapImage.Freeze();
+                            if (_BitmapImage.CanFreeze)
+                                _BitmapImage.Freeze();
                         }
                         Tab.Preview = _BitmapImage;
                         SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);

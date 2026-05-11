@@ -916,17 +916,15 @@ namespace SLBr
             int Base64Start = Base64.IndexOf("base64,");
             if (Base64.StartsWith("data:image/") && Base64Start != -1)
                 Base64 = Base64.Substring(Base64Start + 7);
-            using (MemoryStream _Stream = new(Convert.FromBase64String(Base64)))
-            {
-                BitmapImage _Bitmap = new();
-                _Bitmap.BeginInit();
-                _Bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                _Bitmap.StreamSource = _Stream;
-                _Bitmap.EndInit();
-                if (_Bitmap.CanFreeze)
-                    _Bitmap.Freeze();
-                return _Bitmap;
-            }
+            using MemoryStream _Stream = new(Convert.FromBase64String(Base64));
+            BitmapImage _Bitmap = new();
+            _Bitmap.BeginInit();
+            _Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            _Bitmap.StreamSource = _Stream;
+            _Bitmap.EndInit();
+            if (_Bitmap.CanFreeze)
+                _Bitmap.Freeze();
+            return _Bitmap;
         }
 
         public static Process GetAlreadyRunningInstance(Process CurrentProcess)

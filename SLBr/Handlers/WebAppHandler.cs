@@ -74,19 +74,17 @@ namespace SLBr.Handlers
                 try
                 {
                     using MemoryStream Stream = new(await App.MiniHttpClient.GetByteArrayAsync(Best.Source));
-                    var Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                    var Frame = Decoder.Frames[0];
+                    BitmapDecoder Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                    BitmapFrame Frame = Decoder.Frames[0];
                     if (Frame.CanFreeze)
                         Frame.Freeze();
                     try
                     {
-                        using (FileStream ImageStream = new(ImagePath, FileMode.Create))
-                        {
-                            BitmapEncoder Encoder = new PngBitmapEncoder();
-                            Encoder.Frames.Add(Frame);
-                            Encoder.Save(ImageStream);
-                            SaveAsIcon(Frame, ImagePath);
-                        }
+                        using FileStream ImageStream = new(ImagePath, FileMode.Create);
+                        PngBitmapEncoder Encoder = new();
+                        Encoder.Frames.Add(Frame);
+                        Encoder.Save(ImageStream);
+                        SaveAsIcon(Frame, ImagePath);
                     }
                     catch { }
                 }
