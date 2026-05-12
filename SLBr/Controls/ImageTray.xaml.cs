@@ -93,13 +93,13 @@ namespace SLBr.Controls
                     FilterParts.Add($"{DescriptionArray[i]} ({ExtensionPattern})|{ExtensionPattern}");
                 }
             }
-            else if (FileExtensions?.Any() == true)
+            else if (FileExtensions?.Count != 0)
             {
                 IEnumerable<string> Extensions = FileExtensions.Select(e => "*." + e.TrimStart('.'));
                 string ExtensionPattern = string.Join(";", Extensions);
                 FilterParts.Add($"Files ({ExtensionPattern})|{ExtensionPattern}");
             }
-            else if (FileFilters?.Any() == true)
+            else if (FileFilters?.Count != 0)
             {
                 foreach (string _File in FileFilters)
                     FilterParts.Add($"{_File}|{_File}");
@@ -108,7 +108,7 @@ namespace SLBr.Controls
             if (IncludeAllFiles)
                 FilterParts.Add("All Files (*.*)|*.*");
 
-            OpenFileDialog Dialog = new OpenFileDialog
+            OpenFileDialog Dialog = new()
             {
                 Filter = string.Join("|", FilterParts),
                 Multiselect = false

@@ -88,8 +88,8 @@ namespace SLBr
         {
             private readonly TNode _Word;
             private readonly Node<TNode, TNodeValue> _Parent;
-            private readonly Dictionary<TNode, Node<TNode, TNodeValue>> _Children = new Dictionary<TNode, Node<TNode, TNodeValue>>();
-            private readonly List<TNodeValue> _Values = new List<TNodeValue>();
+            private readonly Dictionary<TNode, Node<TNode, TNodeValue>> _Children = [];
+            private readonly List<TNodeValue> _Values = [];
 
             public Node() { }
 

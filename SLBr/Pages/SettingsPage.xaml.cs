@@ -39,7 +39,7 @@ namespace SLBr.Pages
         private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
             PropertyChanged(this, new PropertyChangedEventArgs(Name));
 
-        private ObservableCollection<ActionStorage> PrivateAddableLanguages = new ObservableCollection<ActionStorage>();
+        private ObservableCollection<ActionStorage> PrivateAddableLanguages = [];
         public ObservableCollection<ActionStorage> AddableLanguages
         {
             get { return PrivateAddableLanguages; }
@@ -185,10 +185,10 @@ namespace SLBr.Pages
                      * Doing this can speed up collection renders significantly.*/
 
                     PrivateAddableLanguages.Add(_Language);
-                    var sortedList = PrivateAddableLanguages.OrderBy(x => x.Tooltip).ToList();
+                    List<ActionStorage> SortedList = PrivateAddableLanguages.OrderBy(x => x.Tooltip).ToList();
                     PrivateAddableLanguages.Clear();
-                    foreach (var item in sortedList)
-                        PrivateAddableLanguages.Add(item);
+                    foreach (ActionStorage Item in SortedList)
+                        PrivateAddableLanguages.Add(Item);
                     RaisePropertyChanged();
                 }
             }
@@ -252,7 +252,8 @@ namespace SLBr.Pages
 
         public async void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
         {
-            await App.Instance.CheckUpdate();
+            if (sender != null)
+                await App.Instance.CheckUpdate();
             if (!string.IsNullOrEmpty(App.Instance.UpdateAvailable))
             {
                 CheckUpdateButton.Visibility = Visibility.Collapsed;
@@ -281,31 +282,7 @@ namespace SLBr.Pages
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             SettingsInitialized = false;
-
-            if (!string.IsNullOrEmpty(App.Instance.UpdateAvailable))
-            {
-                CheckUpdateButton.Visibility = Visibility.Collapsed;
-                UpdateStatusDescription.Text = $"Version {App.Instance.UpdateAvailable}";
-                if (App.Instance.UpdateAvailable == App.Instance.ReleaseVersion)
-                {
-                    UpdateStatusColor.Foreground = App.Instance.GreenColor;
-                    UpdateStatusText.Text = "SLBr is up to date";
-                }
-                else
-                {
-                    UpdateStatusColor.Foreground = App.Instance.OrangeColor;
-                    UpdateStatusText.Text = "An update for SLBr is available";
-                    UpdateStatusButton.Visibility = Visibility.Visible;
-                }
-            }
-            else
-            {
-                UpdateStatusColor.Foreground = (SolidColorBrush)FindResource("IndicatorBrush");
-                UpdateStatusText.Text = "SLBr update check was skipped";
-                CheckUpdateButton.Visibility = Visibility.Visible;
-                UpdateStatusDescription.Text = $"Version {App.Instance.ReleaseVersion}";
-            }
-
+            CheckUpdateButton_Click(null, null);
             SyncWarning.Visibility = Visibility.Collapsed;
             SyncCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Sync"));
             if (SyncCheckBox.IsChecked.ToBool() && !App.Instance.Synchronized)
@@ -319,13 +296,13 @@ namespace SLBr.Pages
             SyncSettingsToggleButton.IsChecked = SyncedData.Contains("Settings");
             if (AddableLanguages.Count == 0)
             {
-                List<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip).ToList();
+                IEnumerable<string> ISOs = App.Instance.Languages.Select(i => i.Tooltip);
                 foreach (KeyValuePair<string, string> Locale in App.Instance.AllLocales)
                 {
                     if (!ISOs.Contains(Locale.Key))
                         AddableLanguages.Add(new ActionStorage(Locale.Value, App.GetLocaleIcon(Locale.Key), Locale.Key));
                 }
-                AddableLanguages = new ObservableCollection<ActionStorage>(AddableLanguages.OrderBy(x => x.Tooltip));
+                AddableLanguages = [with(AddableLanguages.OrderBy(x => x.Tooltip))];
             }
 
             LanguageSelection.SelectionChanged -= LanguageSelection_SelectionChanged;
@@ -380,8 +357,7 @@ namespace SLBr.Pages
             MobileViewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("MobileView"));
             ForceLazyCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ForceLazy"));
 
-            bool AntiTamperChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiTamper"));
-            AntiTamperCheckBox.IsChecked = AntiTamperChecked;
+            AntiTamperCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiTamper"));
             AntiFullscreenCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiFullscreen"));
             AntiInspectDetectCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiInspectDetect"));
             BypassSiteMenuCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("BypassSiteMenu"));
@@ -492,6 +468,9 @@ namespace SLBr.Pages
                     break;
                 case TridentEmulationVersion.IE11:
                     TridentVersion.Text = $"Trident (Internet Explorer): 11";
+                    break;
+                case TridentEmulationVersion.Edge:
+                    TridentVersion.Text = $"Trident (Internet Explorer): Edge";
                     break;
             }
 

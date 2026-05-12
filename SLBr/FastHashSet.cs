@@ -2289,7 +2289,7 @@ namespace SLBr
 			}
 
 			double totalAvgNodeVisitsIfVisitingAllChains = 0;
-			List<ChainLevelAndCount> lst = new List<ChainLevelAndCount>(itemsInChainToCountDict.Count);
+			List<ChainLevelAndCount> lst = [with(itemsInChainToCountDict.Count)];
 			foreach (KeyValuePair<int, int> keyVal in itemsInChainToCountDict)
 			{
 				lst.Add(new ChainLevelAndCount(keyVal.Key, keyVal.Value));
@@ -3892,7 +3892,7 @@ namespace SLBr
 
 		public static void OutputSortedEnumerableItems<T2>(IEnumerable<T2> e, string enumerableName)
 		{
-			List<T2> lst = new List<T2>(e);
+			List<T2> lst = [with(e)];
 			lst.Sort();
 			System.Diagnostics.Debug.WriteLine("---start items (sorted): " + enumerableName + "---");
 			int count = 0;

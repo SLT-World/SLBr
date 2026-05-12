@@ -38,13 +38,13 @@ namespace SLBr
         public static ChromiumFindHandler GlobalFindHandler { get; set; }
         public static ChromiumDialogHandler GlobalDialogHandler { get; set; }
 
-        public static List<IWebView> WebViews = new List<IWebView>();
-        public static Dictionary<IWebBrowser, ChromiumWebView> ChromiumWebViews = new Dictionary<IWebBrowser, ChromiumWebView>();
+        public static List<IWebView> WebViews = [];
+        public static Dictionary<IWebBrowser, ChromiumWebView> ChromiumWebViews = [];
 
         public static WebViewSettings Settings { get; set; }
-        public static WebViewRuntimeSettings RuntimeSettings { get; } = new WebViewRuntimeSettings();
+        public static WebViewRuntimeSettings RuntimeSettings { get; } = new();
 
-        public static WebDownloadManager DownloadManager { get; } = new WebDownloadManager();
+        public static WebDownloadManager DownloadManager { get; } = new();
 
         public static bool IsWebView2Initialized { get; private set; } = false;
         public static bool IsCefInitialized { get; private set; } = false;
@@ -58,7 +58,7 @@ namespace SLBr
             {
                 case WebEngineType.Chromium:
                     {
-                        ChromiumWebView CView = new ChromiumWebView(Urls, _BrowserSettings);
+                        ChromiumWebView CView = new(Urls, _BrowserSettings);
                         await CView.InitializeAsync();
                         return CView;
                     }
@@ -68,7 +68,7 @@ namespace SLBr
                         try { WebView2Version = CoreWebView2Environment.GetAvailableBrowserVersionString(); }
                         catch (WebView2RuntimeNotFoundException)
                         {
-                            ChromiumWebView CBView = new ChromiumWebView(Urls, _BrowserSettings);
+                            ChromiumWebView CBView = new(Urls, _BrowserSettings);
                             await CBView.InitializeAsync();
                             return CBView;
                         }
@@ -80,7 +80,7 @@ namespace SLBr
                     return new TridentWebView(Urls, _BrowserSettings);
                 default:
                     {
-                        ChromiumWebView CView = new ChromiumWebView(Urls, _BrowserSettings);
+                        ChromiumWebView CView = new(Urls, _BrowserSettings);
                         await CView.InitializeAsync();
                         return CView;
                     }
@@ -107,7 +107,7 @@ namespace SLBr
         }*/
 
         private static Task<bool>? CEFInitializeTask;
-        private static readonly object CEFInitializeLock = new();
+        private static readonly Lock CEFInitializeLock = new();
 
         public static Task<bool> InitializeCEF()
         {
@@ -252,7 +252,7 @@ namespace SLBr
         }
 
         private static Task<bool>? WebView2InitializeTask;
-        private static readonly object WebView2InitializeLock = new();
+        private static readonly Lock WebView2InitializeLock = new();
 
         public static Task<bool> InitializeWebView2()
         {
@@ -272,10 +272,10 @@ namespace SLBr
                 return true;
             //https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags
             //msWebView2TreatAppSuspendAsDeviceSuspend
-            List<CoreWebView2CustomSchemeRegistration> CustomSchemeRegistrations = new List<CoreWebView2CustomSchemeRegistration>();
+            List<CoreWebView2CustomSchemeRegistration> CustomSchemeRegistrations = [];
             foreach (var Scheme in Settings.Schemes.Where(i => i.Key != "*"))
-                CustomSchemeRegistrations.Add(new CoreWebView2CustomSchemeRegistration(Scheme.Key) { HasAuthorityComponent = true, TreatAsSecure = true });
-            CoreWebView2EnvironmentOptions EnvironmentOptions = new CoreWebView2EnvironmentOptions(Settings.BuildFlags(true), Settings.Language, null, false, CustomSchemeRegistrations);
+                CustomSchemeRegistrations.Add(new(Scheme.Key) { HasAuthorityComponent = true, TreatAsSecure = true });
+            CoreWebView2EnvironmentOptions EnvironmentOptions = new(Settings.BuildFlags(true), Settings.Language, null, false, CustomSchemeRegistrations);
 
             try { WebView2Version = CoreWebView2Environment.GetAvailableBrowserVersionString(null, EnvironmentOptions); }
             catch (WebView2RuntimeNotFoundException)
@@ -344,7 +344,6 @@ namespace SLBr
         {
             if (IsTridentInitialized)
                 return;
-            //https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/general-info/ee330720(v=vs.85)
             SetIEFeatureControlKey("FEATURE_BROWSER_EMULATION", (uint)Settings.TridentVersion);
             SetIEFeatureControlKey("FEATURE_GPU_RENDERING", (uint)(Settings.GPUAcceleration ? 1 : 0));
             SetIEFeatureControlKey("FEATURE_ALLOW_HIGHFREQ_TIMERS", (uint)(Settings.Performance != PerformancePreset.Low ? 1 : 0));
@@ -488,7 +487,7 @@ namespace SLBr
 
         public static bool RegisterOverrideRequest(string Url, byte[] Data, string MimeType = ResourceHandler.DefaultMimeType/*, bool limitedUse = false*/, int Uses = 1, string Error = "")
         {
-            if (Uri.TryCreate(Url, UriKind.Absolute, out Uri URI))
+            if (Uri.TryCreate(Url, UriKind.Absolute, out Uri? URI))
             {
                 RequestOverrideItem Entry = new(Data, MimeType, Uses, Error);
                 OverrideRequests.AddOrUpdate(URI.AbsoluteUri, Entry, (k, v) => Entry);
@@ -499,7 +498,7 @@ namespace SLBr
 
         public static bool UnregisterOverrideRequest(string Url) =>
             OverrideRequests.TryRemove(Url, out _);
-        public static ConcurrentDictionary<string, RequestOverrideItem> OverrideRequests = new ConcurrentDictionary<string, RequestOverrideItem>(StringComparer.OrdinalIgnoreCase);
+        public static ConcurrentDictionary<string, RequestOverrideItem> OverrideRequests = new(StringComparer.OrdinalIgnoreCase);
     }
 
     public class RequestOverrideItem(byte[] _Data, string _MimeType, int _Uses = 1, string _Error = "")
@@ -510,6 +509,7 @@ namespace SLBr
         public int Uses = _Uses;
     }
 
+    //https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/general-info/ee330720(v=vs.85)
     public enum TridentEmulationVersion: uint
     {
         IE7 = 7000,
@@ -517,7 +517,7 @@ namespace SLBr
         IE9 = 9999,
         IE10 = 10001,
         IE11 = 11001,
-        //Edge = 12001
+        Edge = 12001
     }
     public enum PerformancePreset
     {
@@ -528,11 +528,6 @@ namespace SLBr
 
     public class WebViewSettings
     {
-        /*public WebViewSettings()
-        {
-            WebViewManager.Settings = this;
-        }*/
-        
         public string Language;
         public string[] Languages = [];
 
@@ -547,7 +542,7 @@ namespace SLBr
         public bool SpellCheck = true;
 
         public string JavaScriptFlags = string.Empty;
-        public Dictionary<string, string> Flags = new();
+        public Dictionary<string, string> Flags = [];
         //https://www.chromium.org/developers/how-tos/run-chromium-with-flags/
         public string BuildFlags(bool IncludeJavaScript = false)
         {
@@ -563,7 +558,7 @@ namespace SLBr
                 _StringBuilder.Append($"--js-flags=\"{JavaScriptFlags.Replace("\"", "\\\"")}\"");
             return _StringBuilder.ToString().Trim();
         }
-        public readonly Dictionary<string, ProtocolHandler> Schemes = new();
+        public readonly Dictionary<string, ProtocolHandler> Schemes = [];
         public void RegisterProtocol(string Scheme, ProtocolHandler Handler) => Schemes[Scheme] = Handler;
 
         public void AddFlag(string Key, string Value) => Flags.Add(Key, Value);
@@ -1173,14 +1168,14 @@ namespace SLBr
             {
                 Application.Current?.Dispatcher.Invoke(() =>
                 {
-                    ImageTray Picker = new ImageTray
+                    ImageTray Picker = new()
                     {
                         FileFilters = acceptFilters,
                         FileExtensions = acceptExtensions,
                         FileDescriptions = acceptDescriptions
                     };
                     if (Picker.ShowDialog() == true && !string.IsNullOrEmpty(Picker.SelectedFilePath))
-                        callback.Continue(new List<string> { Picker.SelectedFilePath });
+                        callback.Continue([Picker.SelectedFilePath]);
                     else
                         callback.Cancel();
                 });

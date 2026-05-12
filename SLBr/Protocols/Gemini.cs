@@ -204,7 +204,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
         public int StatusCode { get; set; } = 200;
         public WebErrorCode ErrorCode { get; set; } = WebErrorCode.None;
         public Uri _Uri { get; set; }
-        public List<byte> Bytes { get; set; } = new List<byte>();
+        public List<byte> Bytes { get; set; } = [];
         public string Mime { get; set; } = "text/gemini";
         public string _Encoding { get; set; } = "UTF-8";
         public WebSSLStatus SSLStatus { get; set; }

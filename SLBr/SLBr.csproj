@@ -43,7 +43,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Benchmark.cs" />
     <Compile Remove="Controls\ReportWindow.xaml.cs" />
     <Compile Remove="WebViewDemo.xaml.cs" />
   </ItemGroup>
@@ -79,7 +78,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Benchmark.cs" />
     <None Include="Controls\ReportWindow.xaml" />
     <None Include="Controls\ReportWindow.xaml.cs" />
   </ItemGroup>
@@ -95,6 +93,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Benchmark.cs">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Compile>
     <Compile Update="Pages\DownloadsPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

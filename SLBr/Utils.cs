@@ -1198,7 +1198,7 @@ namespace SLBr
         public static bool IsProprietaryCodec(string Extension) =>
             Extension is ".mp4" or ".m4a" or ".aac" or ".m4v" or ".mov" or ".mp3" or ".wma" or ".wmv";
         public static bool IsIPAddress(string Host) =>
-            IPAddress.TryParse(Host, out _);
+            IPAddress.TryParse(Host, out _) && (Host.Contains('.') || Host.Contains(':'));
 
         public static string EscapeDataString(string Input)
         {
@@ -1513,9 +1513,9 @@ namespace SLBr
         public static string NormalizeIP(string Host)
         {
             string RawHost = Host;
-            if (RawHost.StartsWith("[") && RawHost.EndsWith("]"))
+            if (RawHost.StartsWith('[') && RawHost.EndsWith(']'))
                 RawHost = RawHost[1..^1];
-            if (!IPAddress.TryParse(RawHost, out var IP))
+            if (!IPAddress.TryParse(RawHost, out var IP) || !Host.Contains('.') || !Host.Contains(':'))
                 return Host;
             if (IP.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
                 return $"[{IP}]";

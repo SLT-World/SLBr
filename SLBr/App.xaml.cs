@@ -1012,6 +1012,10 @@ namespace SLBr
                 }
                 MessageBox.Show($"{ReadTest} {Different.Count} LEFT: {string.Join("|", Different)}");
             }*/
+            //MessageBox.Show(Utils.IsIPAddress("101").ToString());
+            //MessageBox.Show(Utils.IsUrl("101").ToString());
+            //MessageBox.Show(Utils.FixUrl("101").ToString());
+            //MessageBox.Show(Utils.IsDomain("101").ToString());
             /*MessageBox.Show(Utils.IsUrl("foo bar https://example.com/").ToString());
             MessageBox.Show(Utils.IsUrl("foo bar").ToString());
             MessageBox.Show(Utils.FixUrl("steam:foo").ToString());
@@ -1266,13 +1270,13 @@ namespace SLBr
 
         public async Task<List<(string Word, List<string> Suggestions)>> SpellCheck(string Text)
         {
-            var Results = new List<(string, List<string>)>();
+            List<(string, List<string>)> Results = [];
             try
             {
                 switch (GlobalSave.GetInt("SpellcheckProvider"))
                 {
                     case 0:
-                        TextBox SpellCheckTextBox = new TextBox();
+                        TextBox SpellCheckTextBox = new();
                         SpellCheckTextBox.SpellCheck.IsEnabled = true;
                         SpellCheckTextBox.Language = XmlLanguage.GetLanguage(Locale.Tooltip);
                         string[] Words = Text.Split([' ', ',', ';', '.']);
@@ -1303,7 +1307,7 @@ namespace SLBr
                                         foreach (JsonElement Replacement in Replacements.EnumerateArray())
                                             Suggestions.Add(Replacement.GetProperty("suggestion").GetString()!);
                                     }
-                                    if (Suggestions.Any())
+                                    if (Suggestions.Count != 0)
                                         Results.Add((Text.Substring(Offset, Length), Suggestions));
                                 }
                             }
@@ -1334,7 +1338,7 @@ namespace SLBr
                                     int Offset = Critique.GetProperty("Start").GetInt32();
                                     int Length = Critique.GetProperty("Length").GetInt32();
 
-                                    if (Suggestions.Any())
+                                    if (Suggestions.Count != 0)
                                         Results.Add((ContextText.Substring(Offset, Length), Suggestions));
                                 }
                             }
@@ -1363,7 +1367,7 @@ namespace SLBr
                                     int Offset = Match.GetProperty("offset").GetInt32();
                                     int Length = Match.GetProperty("length").GetInt32();
 
-                                    if (Suggestions.Any())
+                                    if (Suggestions.Count != 0)
                                         Results.Add((ContextText.Substring(Offset, Length), Suggestions));
                                 }
                             }
@@ -1385,7 +1389,7 @@ namespace SLBr
                                         foreach (JsonElement Replacement in Replacements.EnumerateArray())
                                             Suggestions.Add(Replacement.GetString()!);
                                     }
-                                    if (Suggestions.Any())
+                                    if (Suggestions.Count != 0)
                                         Results.Add((Word, Suggestions));
                                 }
                             }
@@ -1857,6 +1861,8 @@ namespace SLBr
 
         public async Task CheckUpdate()
         {
+            if (!string.IsNullOrEmpty(UpdateAvailable))
+                return;
             try
             {
                 using HttpRequestMessage Request = new(HttpMethod.Get, "https://api.github.com/repos/slt-world/slbr/releases/latest");
@@ -3442,6 +3448,7 @@ Inner Exception: {7}";
                 case 2: Settings.TridentVersion = TridentEmulationVersion.IE9; break;
                 case 3: Settings.TridentVersion = TridentEmulationVersion.IE10; break;
                 case 4: Settings.TridentVersion = TridentEmulationVersion.IE11; break;
+                case 5: Settings.TridentVersion = TridentEmulationVersion.Edge; break;
             }
             if (!(CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest"))
                 Settings.UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));

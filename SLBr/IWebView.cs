@@ -1588,7 +1588,7 @@ namespace SLBr
         {
             if (!DevToolsHandlers.TryGetValue(Event, out var Handlers))
             {
-                Handlers = new List<Action<string>>();
+                Handlers = [];
                 DevToolsHandlers[Event] = Handlers;
             }
             Handlers.Add(Handler);
@@ -1629,7 +1629,7 @@ namespace SLBr
                 }
             }
             catch { }
-            if (!History.Any())
+            if (History.Count == 0)
                 History.Add(new WebNavigationEntry(true, Address, Title, null));
             return History;
         }
@@ -2117,7 +2117,7 @@ namespace SLBr
                 LinkText = LinkText,
                 SelectionText = SelectionText,
                 IsEditable = Target?.IsEditable ?? false,
-                DictionarySuggestions = new List<string>(),
+                DictionarySuggestions = [],
                 MisspelledWord = string.Empty,
                 SourceUrl = SourceUrl,
                 FrameUrl = FrameUrl,
@@ -2713,7 +2713,7 @@ namespace SLBr
                 }
             }
             catch { }
-            if (!History.Any())
+            if (History.Count == 0)
                 History.Add(new WebNavigationEntry(true, Address, Title, null));
             return History;
         }

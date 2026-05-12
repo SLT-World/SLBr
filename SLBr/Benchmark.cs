@@ -18,7 +18,7 @@ namespace SLBr
                 $"{Name.PadRight(30)} | Time: {Time, 5} ms | Memory: {Memory, 8} bytes";
         }
 
-        private static readonly List<Result> Results = new();
+        private static readonly List<Result> Results = [];
 
         public static void Clear() => Results.Clear();
 
