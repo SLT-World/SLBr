@@ -430,7 +430,7 @@ namespace SLBr
         {
             try
             {
-                Uri _Uri = new Uri(Url);
+                Uri _Uri = new(Url);
                 string Host = _Uri.Host.ToLower();
                 string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris", "favourites"];
                 if (SLBrURLs.Contains(Host))
@@ -447,21 +447,7 @@ namespace SLBr
                     string FilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", FileName);
                     if (!File.Exists(FilePath))
                         return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
-                    string MimeType = Utils.GetFileExtension(FilePath) switch
-                    {
-                        ".html" => "text/html",
-                        ".htm" => "text/html",
-                        ".js" => "application/javascript",
-                        ".css" => "text/css",
-                        ".png" => "image/png",
-                        ".jpg" => "image/jpeg",
-                        ".jpeg" => "image/jpeg",
-                        ".gif" => "image/gif",
-                        ".svg" => "image/svg+xml",
-                        ".ico" => "image/x-icon",
-                        _ => "application/octet-stream"
-                    };
-                    return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), MimeType, 200);
+                    return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), Cef.GetMimeType(Utils.GetFileExtension(FilePath)), 200);
                 }
                 return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
             }

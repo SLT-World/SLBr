@@ -1012,6 +1012,8 @@ namespace SLBr
                 }
                 MessageBox.Show($"{ReadTest} {Different.Count} LEFT: {string.Join("|", Different)}");
             }*/
+            //MessageBox.Show(Cef.GetMimeType(".html"));
+            //MessageBox.Show(Cef.GetMimeType("html"));
             //MessageBox.Show(Utils.IsIPAddress("101").ToString());
             //MessageBox.Show(Utils.IsUrl("101").ToString());
             //MessageBox.Show(Utils.FixUrl("101").ToString());
@@ -1717,7 +1719,7 @@ namespace SLBr
 
                                 RegistryKey IconRegistry = Key.CreateSubKey("DefaultIcon", true);
                                 IconRegistry.SetValue(null, $"{ExecutablePath},0");
-                                ApplicationRegistry.Close();
+                                IconRegistry.Close();
 
                                 RegistryKey CommandRegistry = Key.CreateSubKey("shell\\open\\command", true);
                                 CommandRegistry.SetValue(null, $"\"{ExecutablePath}\" \"%1\"");
@@ -1732,6 +1734,7 @@ namespace SLBr
                                 CapabilitiesRegistry.SetValue("ApplicationDescription", "Browse the web with a fast, lightweight web browser.");
                                 CapabilitiesRegistry.SetValue("ApplicationIcon", $"{ExecutablePath},0");
                                 CapabilitiesRegistry.SetValue("ApplicationName", $"SLBr");
+
                                 RegistryKey StartMenuRegistry = CapabilitiesRegistry.CreateSubKey("Startmenu", true);
                                 StartMenuRegistry.SetValue("StartMenuInternet", "SLBr");
                                 StartMenuRegistry.Close();

@@ -1675,8 +1675,6 @@ namespace SLBr.Pages
                     });
                 }
             }
-            if (WebView2DevToolsHWND != IntPtr.Zero)
-                UpdateDevToolsPosition();
             LastActive = DateTime.Now;
             if (!bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 App.Instance.ScheduleNextEfficientTick();
@@ -1731,8 +1729,8 @@ namespace SLBr.Pages
                 {
                     //Warning: WebView2 somehow forgets the auto dark mode after a while
                     SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
-                    if (WebView2DevToolsHWND != IntPtr.Zero)
-                        UpdateDevToolsPosition();
+                    //if (WebView2DevToolsHWND != IntPtr.Zero)
+                    //    UpdateDevToolsPosition();
                     if (App.Instance.LiteMode && WebView != null && WebView.IsBrowserInitialized)
                     {
                         WebView?.CallDevToolsAsync("Page.setWebLifecycleState", new
@@ -2539,17 +2537,23 @@ namespace SLBr.Pages
                                         App.Instance.WebView2DevTools.Add(WebView2DevToolsHWND);
 
                                         int DevToolsWindowStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE);
-                                        DevToolsWindowStyle &= ~(DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_SYSMENU | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX);
-                                        DevToolsWindowStyle |= DllUtils.WS_POPUP;
+                                        DevToolsWindowStyle &= ~(DllUtils.WS_OVERLAPPEDWINDOW | DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX | DllUtils.WS_SYSMENU);
+                                        DevToolsWindowStyle |= DllUtils.WS_CHILD | DllUtils.WS_VISIBLE;
                                         DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE, DevToolsWindowStyle);
 
                                         int DevToolsWindowExStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE);
+                                        DevToolsWindowExStyle &= ~(DllUtils.WS_EX_DLGMODALFRAME | DllUtils.WS_EX_CLIENTEDGE | DllUtils.WS_EX_STATICEDGE);
                                         DevToolsWindowExStyle &= ~DllUtils.WS_EX_APPWINDOW;
-                                        DevToolsWindowExStyle |= DllUtils.WS_EX_TOOLWINDOW;
                                         DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE, DevToolsWindowExStyle);
 
+                                        DllUtils.SetParent(WebView2DevToolsHWND, DevToolsHost.Handle);
+
+                                        DllUtils.SetWindowPos(WebView2DevToolsHWND, IntPtr.Zero, 0, 0, 0, 0, DllUtils.SWP_NOMOVE | DllUtils.SWP_NOSIZE | DllUtils.SWP_NOZORDER | DllUtils.SWP_FRAMECHANGED);
+                                        
                                         UpdateDevToolsPosition();
                                         DevToolsHost.SizeChanged += (s, e) => UpdateDevToolsPosition();
+                                        if (PresentationSource.FromVisual(DevToolsHost) is HwndSource HostSource)
+                                            HostSource.AddHook(DevToolsWndProc);
                                     }
                                 }
                             });
@@ -2559,22 +2563,40 @@ namespace SLBr.Pages
             }
             SideBar.Visibility = IsUtilityContainerOpen ? Visibility.Visible : Visibility.Collapsed;
         }
+        private IntPtr DevToolsWndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            //TODO: Remove stopgap solution.
+            switch (msg)
+            {
+                /*case DllUtils.WM_CHAR:
+                    Debug.WriteLine($"Text: {(char)wParam}");
+                    DllUtils.PostMessage(WebView2DevToolsHWND, (uint)DllUtils.WM_CHAR, wParam, lParam);
+                    handled = true;
+                    break;*/
+                case DllUtils.WM_KEYDOWN:
+                case DllUtils.WM_KEYUP:
+                    DllUtils.POINT ScreenPoint;
+                    if (DllUtils.GetCursorPos(out ScreenPoint))
+                    {
+                        DllUtils.POINT ClientPoint = ScreenPoint;
+                        DllUtils.ScreenToClient(DevToolsHost.Handle, ref ClientPoint);
+                        if (ClientPoint.X >= 0 && ClientPoint.X <= DevToolsHost.ActualWidth && ClientPoint.Y >= 0 && ClientPoint.Y <= DevToolsHost.ActualHeight)
+                        {
+                            Keyboard.ClearFocus();
+                            FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null);
+                            DllUtils.PostMessage(WebView2DevToolsHWND, (uint)msg, wParam, lParam);
+                            handled = true;
+                        }
+                    }
+                    break;
+            }
+            return IntPtr.Zero;
+        }
 
         public void UpdateDevToolsPosition()
         {
             if (WebView2DevToolsHWND == IntPtr.Zero) return;
-            /*if (!Tab.ParentWindow.IsActive)
-                Debug.WriteLine($"{DllUtils.GetForegroundWindow()} {WebView2DevToolsHWND} {DevToolsHost.Handle} {Tab.ParentWindow.WindowInterop.EnsureHandle()}");*/
-            if (Tab.ParentWindow.WindowState == WindowState.Minimized || Tab.ParentWindow.GetTab() != Tab || (!Tab.ParentWindow.IsActive && DllUtils.GetForegroundWindow() is nint Foreground && (Foreground != WebView2DevToolsHWND && Foreground != Tab.ParentWindow.Handle)))
-            {
-                DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 0, 0, 0), true);
-                DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_HIDE);
-                return;
-            }
-            DllUtils.ShowWindow(WebView2DevToolsHWND, DllUtils.SW_SHOWNA);
-            Point TopLeft = DevToolsHost.PointToScreen(new Point(0, 0));
-            DllUtils.SetWindowPos(WebView2DevToolsHWND, new IntPtr(-1), (int)TopLeft.X - 7, (int)TopLeft.Y - 30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOACTIVATE | DllUtils.SWP_SHOWWINDOW | DllUtils.SWP_FRAMECHANGED);
-            DllUtils.SetWindowRgn(WebView2DevToolsHWND, DllUtils.CreateRectRgn(0, 30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37), true);
+            DllUtils.SetWindowPos(WebView2DevToolsHWND, IntPtr.Zero, -7, -30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOZORDER | DllUtils.SWP_FRAMECHANGED | DllUtils.SWP_SHOWWINDOW);
         }
 
         bool PIsReaderMode = false;

@@ -86,8 +86,8 @@ namespace SLBr
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetForegroundWindow();
+        /*[DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();*/
 
         [DllImport("user32.dll")]
         public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
@@ -110,8 +110,8 @@ namespace SLBr
         [DllImport("user32.dll", SetLastError = true)]
         public static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+        /*[DllImport("user32.dll", SetLastError = true)]
+        public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);*/
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -119,15 +119,15 @@ namespace SLBr
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetDesktopWindow();
+        /*[DllImport("user32.dll")]
+        public static extern IntPtr GetDesktopWindow();*/
 
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-        [DllImport("user32.dll")]
+        /*[DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);*/
 
         [DllImport("user32.dll", EntryPoint = "CreateWindowEx", CharSet = CharSet.Unicode)]
         public static extern IntPtr CreateWindowEx(int dwExStyle, string lpszClassName, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr hwndParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam);
@@ -135,15 +135,23 @@ namespace SLBr
         [DllImport("user32.dll", EntryPoint = "DestroyWindow", CharSet = CharSet.Unicode)]
         public static extern bool DestroyWindow(IntPtr hwnd);
 
-        [DllImport("gdi32.dll")]
-        public static extern IntPtr CreateRectRgn(int nLeft, int nTop, int nRight, int nBottom);
+        /*[DllImport("gdi32.dll")]
+        public static extern IntPtr CreateRectRgn(int nLeft, int nTop, int nRight, int nBottom);*/
 
-        [DllImport("user32.dll")]
-        public static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
+        /*[DllImport("user32.dll")]
+        public static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);*/
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        public const int WM_KEYDOWN = 0x0100;
+        public const int WM_KEYUP = 0x0101;
+
+        //public const int WM_LBUTTONDOWN = 0x0201;
+        //public const int WM_RBUTTONDOWN = 0x0204;
+        public const int WM_CHAR = 0x0102;
+        //public const int WM_DEADCHAR = 0x0103;
 
         /*[DllImport("user32.dll")]
         public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);*/
@@ -155,12 +163,17 @@ namespace SLBr
             return Builder.ToString();
         }
 
+        /*[DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetFocus(IntPtr hWnd);*/
+
         public const int WM_NCHITTEST = 0x0084;
         public const int WM_NCLBUTTONDOWN = 0x00A1;
         public const int WM_NCLBUTTONUP = 0x00A2;
         //public const int WM_NCLBUTTONDBLCLK = 0x00A3;
         //public const int WM_GETMINMAXINFO = 0x0024;
         public const int HTMAXBUTTON = 9;
+
+        //public const int WM_SYSKEYDOWN = 0x0104;
 
         //public const byte VK_LWIN = 0x5B;
         //public const byte VK_Z = 0x5A;
@@ -177,8 +190,8 @@ namespace SLBr
         public const uint GW_CHILD = 5;
         public const uint GW_ENABLEDPOPUP = 6;*/
 
-        public const int SW_SHOWNA = 8;
-        public const int SW_HIDE = 0;
+        //public const int SW_SHOWNA = 8;
+        //public const int SW_HIDE = 0;
         //public const int SW_SHOWNORMAL = 1;
         //public const int SW_SHOWMINIMIZED = 2;
         //public const int SW_SHOWMAXIMIZED = 3;
@@ -199,23 +212,37 @@ namespace SLBr
 
         //public const int WS_EX_LAYERED = 0x80000;
         //public const int WS_EX_NOACTIVATE = 0x08000000;
-        //public const int WS_EX_DLGMODALFRAME = 0x00000001;
-        //public const int WS_EX_CLIENTEDGE = 0x00000200;
-        //public const int WS_EX_STATICEDGE = 0x00020000;
+        public const int WS_EX_DLGMODALFRAME = 0x00000001;
+        public const int WS_EX_CLIENTEDGE = 0x00000200;
+        public const int WS_EX_STATICEDGE = 0x00020000;
 
         public const uint SWP_NOZORDER = 0x0004;
         public const uint SWP_FRAMECHANGED = 0x0020;
         public const uint SWP_SHOWWINDOW = 0x0040;
         public const uint SWP_NOACTIVATE = 0x0010;
         public const int SWP_NOMOVE = 0x0002;
+        public const int SWP_NOSIZE = 0x0001;
 
         public const int HOST_ID = 0x00000002;
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        public static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
 
         public const int WM_SIZE = 0x0005;
         public const int WM_SETFOCUS = 0x0007;
+        //public const int WM_KILLFOCUS = 0x0008;
         public const int WM_MOUSEACTIVATE = 0x0021;
-        //public const int WS_OVERLAPPED = 0x00000000;
-        public const int WS_POPUP = unchecked((int)0x80000000);
+        public const int WS_OVERLAPPED = 0x00000000;
+        //public const int WS_POPUP = unchecked((int)0x80000000);
         public const int WS_VISIBLE = 0x10000000;
         //public const int WS_DISABLED = 0x08000000;
         //public const int WS_CLIPSIBLINGS = 0x04000000;
@@ -229,7 +256,7 @@ namespace SLBr
         public const int WS_MINIMIZEBOX = 0x00020000;
         public const int WS_MAXIMIZEBOX = 0x00010000;
 
-        //public const int WS_OVERLAPPEDWINDOW = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+        public const int WS_OVERLAPPEDWINDOW = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
         //public const int WS_POPUPWINDOW = WS_POPUP | WS_BORDER | WS_SYSMENU;
 
@@ -238,7 +265,7 @@ namespace SLBr
         public const int WS_EX_ACCEPTFILES = 0x00000010;
         public const int WS_EX_TRANSPARENT = 0x00000020;
         public const int WS_EX_MDICHILD = 0x00000040;*/
-        public const int WS_EX_TOOLWINDOW = 0x00000080;
+        //public const int WS_EX_TOOLWINDOW = 0x00000080;
         /*public const int WS_EX_WINDOWEDGE = 0x00000100;
         public const int WS_EX_CONTEXTHELP = 0x00000400;
         public const int WS_EX_RIGHT = 0x00001000;
@@ -489,16 +516,14 @@ namespace SLBr
             //if (!OperatingSystem.IsWindows()) return "0.0.0";
             try
             {
-                using var BaseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-                using var SubKey = BaseKey.OpenSubKey(@"SOFTWARE\Microsoft\WindowsRuntime\WellKnownContracts");
-
+                using RegistryKey? Key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+                using RegistryKey? SubKey = Key.OpenSubKey(@"SOFTWARE\Microsoft\WindowsRuntime\WellKnownContracts");
                 if (SubKey != null)
                 {
-                    object Value = SubKey.GetValue("Windows.Foundation.UniversalApiContract");
-                    if (Value is int contractValue)
+                    if (SubKey.GetValue("Windows.Foundation.UniversalApiContract") is int ContractValue)
                     {
-                        int Major = (contractValue >> 16) & 0xFFFF;
-                        int Minor = contractValue & 0xFFFF;
+                        int Major = (ContractValue >> 16) & 0xFFFF;
+                        int Minor = ContractValue & 0xFFFF;
                         return $"{Major}.{Minor}.0";
                     }
                 }

@@ -1,6 +1,7 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using CefSharp;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -136,39 +137,10 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
 
         private static string GetMime(Uri URI)
         {
-            var Response = "application/gopher-menu";
+            //var Response = "application/gopher-menu";
             var ExtensionFull = Path.GetExtension(URI.AbsolutePath);
             string Extension = (ExtensionFull.Length > 0) ? ExtensionFull.Substring(1) : string.Empty;
-            if (ExtensionFull.Length > 0)
-            {
-                switch (Extension)
-                {
-                    case "txt":
-                        Response = "text/plain";
-                        break;
-                    case "jpg":
-                        Response = "image/jpeg";
-                        break;
-                    case "gif":
-                    case "png":
-                    case "bmp":
-                    case "jpeg":
-                        Response = "image/" + Extension;
-                        break;
-                    case "mp3":
-                        Response = "audio/mpeg";
-                        break;
-                    case "wav":
-                    case "ogg":
-                    case "flac":
-                        Response = "audio/" + Extension;
-                        break;
-                    default:
-                        Response = $"application/{Extension}";
-                        break;
-                }
-            }
-            return Response;
+            return Cef.GetMimeType(Extension);
         }
 
 

@@ -130,15 +130,14 @@ namespace SLBr
                     break;
                 case DllUtils.WM_COPYDATA:
                     COPYDATASTRUCT _dataStruct = Marshal.PtrToStructure<COPYDATASTRUCT>(lParam);
-                    string Data = Marshal.PtrToStringUni(_dataStruct.lpData, _dataStruct.cbData / 2);
-                    List<string> Datas = Data.Split("<|>").ToList();
-                    if (Datas[0] == "NewWindow")
+                    string[] Data = Marshal.PtrToStringUni(_dataStruct.lpData, _dataStruct.cbData / 2).Split("<|>");
+                    if (Data[0] == "NewWindow")
                         App.Instance.NewWindow();
                     else
                     {
-                        if (Datas[0] == "Url")
-                            NewTab(Datas[1], true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
-                        else if (Datas[0] == "Start" && App.Instance.CurrentProfile.Name == Datas[1])
+                        if (Data[0] == "Url")
+                            NewTab(Data[1], true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
+                        else if (Data[0] == "Start" && App.Instance.CurrentProfile.Name == Data[1])
                         {
                             if (App.Instance.Background)
                                 App.Instance.ContinueBackgroundInitialization();
@@ -744,10 +743,7 @@ namespace SLBr
             TabPreviewPopup.IsOpen = false;
             MaximizeRestoreButton.Tag = null;
             foreach (BrowserTabItem Tab in Tabs)
-            {
                 Tab.Content?.MaxHeight = TabsUI.ActualHeight;
-                Tab.Content?.UpdateDevToolsPosition();
-            }
             WindowBackground.Background = (SolidColorBrush)FindResource("SecondaryBrush");
         }
 
@@ -755,8 +751,6 @@ namespace SLBr
         {
             TabPreviewPopup.IsOpen = false;
             MaximizeRestoreButton.Tag = null;
-            foreach (BrowserTabItem Tab in Tabs)
-                Tab.Content?.UpdateDevToolsPosition();
             WindowBackground.Background = (SolidColorBrush)FindResource("BorderBrush");
         }
 
@@ -783,18 +777,13 @@ namespace SLBr
                     Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
             }
             foreach (BrowserTabItem Tab in Tabs)
-            {
                 Tab.Content?.MaxHeight = TabsUI.ActualHeight;
-                Tab.Content?.UpdateDevToolsPosition();
-            }
         }
 
         private void Window_LocationChanged(object sender, EventArgs e)
         {
             TabPreviewPopup.IsOpen = false;
             MaximizeRestoreButton.Tag = null;
-            foreach (BrowserTabItem Tab in Tabs)
-                Tab.Content?.UpdateDevToolsPosition();
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -805,7 +794,6 @@ namespace SLBr
             {
                 if (e.HeightChanged)
                     Tab.Content?.MaxHeight = TabsUI.ActualHeight;
-                Tab.Content?.UpdateDevToolsPosition();
             }
         }
 
