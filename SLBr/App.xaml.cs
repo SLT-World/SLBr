@@ -1148,7 +1148,8 @@ namespace SLBr
                                 string[] Manifests = Directory.GetFiles(ExtensionDirectory, "manifest.json", SearchOption.TopDirectoryOnly);
                                 foreach (string ManifestFile in Manifests)
                                 {
-                                    JsonElement Manifest = JsonDocument.Parse(File.ReadAllText(ManifestFile)).RootElement;
+                                    using JsonDocument Document = JsonDocument.Parse(File.ReadAllText(ManifestFile));
+                                    JsonElement Manifest = Document.RootElement;
 
                                     Extension _Extension = new() { ID = Path.GetFileName(ExtensionParentDirectory), Version = Manifest.GetProperty("version").ToString()/*, ManifestVersion = Manifest.GetProperty("manifest_version").ToString()*/ };
 
@@ -1196,7 +1197,8 @@ namespace SLBr
                                         string[] MessagesFiles = Directory.GetFiles(Path.Combine(ExtensionDirectory, "_locales", _Locale), "messages.json", SearchOption.TopDirectoryOnly);
                                         foreach (string MessagesFile in MessagesFiles)
                                         {
-                                            JsonElement Messages = JsonDocument.Parse(File.ReadAllText(MessagesFile)).RootElement;
+                                            using JsonDocument MDocument = JsonDocument.Parse(File.ReadAllText(MessagesFile));
+                                            JsonElement Messages = MDocument.RootElement;
                                             string[] Vars = Var.Split("<|>");
                                             if (Vars[0] == "Description")
                                             {
@@ -1449,9 +1451,9 @@ namespace SLBr
                 case 2:
                     try
                     {
-                        string Json = await MiniHttpClient.GetStringAsync($"https://api.dictionaryapi.dev/api/v2/entries/en/{Text.Substring(7).Trim()}");
-                        JsonDocument _JsonDocument = JsonDocument.Parse(Json);
-                        string Result = _JsonDocument.RootElement[0].GetProperty("meanings")[0].GetProperty("definitions")[0].GetProperty("definition").GetString();
+                        string Response = await MiniHttpClient.GetStringAsync($"https://api.dictionaryapi.dev/api/v2/entries/en/{Text.Substring(7).Trim()}");
+                        using JsonDocument Document = JsonDocument.Parse(Response);
+                        string Result = Document.RootElement[0].GetProperty("meanings")[0].GetProperty("definitions")[0].GetProperty("definition").GetString();
                         Suggestion.SubText = $"- {Result}";
                         Suggestion.Icon = "\xE82D";
                     }
@@ -1465,9 +1467,9 @@ namespace SLBr
                         HttpResponseMessage Response = MiniHttpClient.GetAsync($"https://api.openweathermap.org/data/2.5/weather?lang=en&q={Location}&appid={SECRETS.WEATHER_API_KEY}&units=metric").Result;
                         if (Response.IsSuccessStatusCode)
                         {
-                            JsonElement Data = JsonDocument.Parse(Response.Content.ReadAsStringAsync().Result).RootElement;
-                            double Temperature = Data.GetProperty("main").GetProperty("temp").GetDouble();
-                            string Description = Utils.CapitalizeAllFirstCharacters(Data.GetProperty("weather")[0].GetProperty("description").GetString());
+                            using JsonDocument Document = JsonDocument.Parse(Response.Content.ReadAsStringAsync().Result);
+                            double Temperature = Document.RootElement.GetProperty("main").GetProperty("temp").GetDouble();
+                            string Description = Utils.CapitalizeAllFirstCharacters(Document.RootElement.GetProperty("weather")[0].GetProperty("description").GetString());
 
                             Suggestion.SubText = $"{Temperature} °C | {Description}";
                         }
@@ -1490,7 +1492,8 @@ namespace SLBr
                             try
                             {
                                 string Response = await MiniHttpClient.GetStringAsync($"https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl={LanguageCode}&q={Uri.EscapeDataString(TranslateMatch.Groups["Phrase"].Value.Trim())}");
-                                Suggestion.SubText = $"- {JsonDocument.Parse(Response).RootElement[0][0][0].GetString()}";
+                                using JsonDocument Document = JsonDocument.Parse(Response);
+                                Suggestion.SubText = $"- {Document.RootElement[0][0][0].GetString()}";
                             }
                             catch { }
                         }
@@ -1508,11 +1511,8 @@ namespace SLBr
                         try
                         {
                             string Response = await MiniHttpClient.GetStringAsync($"https://api.frankfurter.app/latest?amount={Amount}&from={From}&to={To}");
-
-                            using JsonDocument _JsonDocument = JsonDocument.Parse(Response);
-                            JsonElement Root = _JsonDocument.RootElement;
-
-                            if (Root.TryGetProperty("rates", out JsonElement Rates) && Rates.TryGetProperty(To, out JsonElement Output))
+                            using JsonDocument Document = JsonDocument.Parse(Response);
+                            if (Document.RootElement.TryGetProperty("rates", out JsonElement Rates) && Rates.TryGetProperty(To, out JsonElement Output))
                                 Suggestion.SubText = $"- {Amount} {From} ≈ {Output.GetDouble():0.00} {To}";
                         }
                         catch { }
@@ -1871,7 +1871,8 @@ namespace SLBr
                 using var Response = await MiniHttpClient.SendAsync(Request);
                 Response.EnsureSuccessStatusCode();
                 string Data = await Response.Content.ReadAsStringAsync();
-                string NewVersion = JsonDocument.Parse(Data).RootElement.GetProperty("tag_name").ToString();
+                using JsonDocument Document = JsonDocument.Parse(Data);
+                string NewVersion = Document.RootElement.GetProperty("tag_name").ToString();
                 if (!NewVersion.StartsWith(ReleaseVersion))
                 {
                     UpdateAvailable = NewVersion;
@@ -2500,8 +2501,8 @@ Inner Exception: {7}";
                                 if (GistResponse.IsSuccessStatusCode)
                                 {
                                     string JSON = await GistResponse.Content.ReadAsStringAsync();
-                                    using var _JsonDocument = JsonDocument.Parse(JSON);
-                                    foreach (var Gist in _JsonDocument.RootElement.EnumerateArray())
+                                    using JsonDocument Document = JsonDocument.Parse(JSON);
+                                    foreach (var Gist in Document.RootElement.EnumerateArray())
                                     {
                                         if (Gist.GetProperty("description").GetString() == "SLBr Sync")
                                         {
@@ -2521,8 +2522,8 @@ Inner Exception: {7}";
                                     string[] SyncedData = GlobalSave.Get("SyncData").Split(',');
 
                                     string JSON = await GistResponse.Content.ReadAsStringAsync();
-                                    using var _JsonDocument = JsonDocument.Parse(JSON);
-                                    string SyncFileContent = _JsonDocument.RootElement.GetProperty("files").GetProperty("slbr-sync.json").GetProperty("content").GetString()!;
+                                    using JsonDocument Document = JsonDocument.Parse(JSON);
+                                    string SyncFileContent = Document.RootElement.GetProperty("files").GetProperty("slbr-sync.json").GetProperty("content").GetString()!;
                                     Dictionary<string, string> SyncedFiles = JsonSerializer.Deserialize<Dictionary<string, string>>(SyncFileContent)!;
                                     if (SyncedData.Contains("Settings"))
                                     {
@@ -4387,8 +4388,8 @@ Inner Exception: {7}";
                             var GistResponse = await Client.PostAsync("https://api.github.com/gists", new StringContent(JsonSerializer.Serialize(Payload), Encoding.UTF8, "application/json"));
                             string JSON = await GistResponse.Content.ReadAsStringAsync();
 
-                            using var _JsonDocument = JsonDocument.Parse(JSON);
-                            SyncGistID = _JsonDocument.RootElement.GetProperty("id").GetString()!;
+                            using JsonDocument Document = JsonDocument.Parse(JSON);
+                            SyncGistID = Document.RootElement.GetProperty("id").GetString()!;
                             GlobalSave.Set("SyncGist", SyncGistID);
                             GlobalSave.Save();
                         }
@@ -4588,7 +4589,7 @@ Inner Exception: {7}";
         {
             UserAgent = Toggle ? UserAgentGenerator.BuildMobileUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}") : UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}");
             MobileView = Toggle;
-            UserAgentData = new WebUserAgentMetaData
+            UserAgentData = new()
             {
                 Brands =
                 [

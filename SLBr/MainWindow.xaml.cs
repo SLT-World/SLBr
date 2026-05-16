@@ -876,7 +876,7 @@ namespace SLBr
         }
         public void CreateGroup()
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Create Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = "" }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Colors.White) } }, "\xF5ED")
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Create Group", [new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = "" }, new() { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Colors.White) }], "\xF5ED")
             {
                 Topmost = true
             };
@@ -896,7 +896,7 @@ namespace SLBr
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             TabGroup Group = _Tab.TabGroup;
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Group", new List<InputField> { new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Group.Header }, new InputField { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Group.Background.Color) } }, "\xe70f")
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Group", [new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Group.Header }, new() { Name = "Color", IsRequired = true, Type = DialogInputType.Color, Value = Utils.ColorToHex(Group.Background.Color) }], "\xe70f")
             {
                 Topmost = true
             };

@@ -599,10 +599,9 @@ namespace SLBr.Pages
                 else if (e.DialogType == ScriptDialogType.Prompt)
                 {
                     DynamicDialogWindow _DynamicDialogWindow = new("Prompt", Utils.Host(e.Url),
-                    new List<InputField>
-                        {
-                        new InputField { Name = e.Text, IsRequired = false, Type = DialogInputType.Text, Value = e.DefaultPrompt }
-                        },
+                    [
+                        new() { Name = e.Text, IsRequired = false, Type = DialogInputType.Text, Value = e.DefaultPrompt }
+                        ],
                         "\ue946"
                     )
                     {
@@ -1801,7 +1800,7 @@ namespace SLBr.Pages
                     if (string.IsNullOrEmpty(Response))
                         return (false, string.Empty);
 
-                    using var Document = JsonDocument.Parse(Response);
+                    using JsonDocument Document = JsonDocument.Parse(Response);
                     string Manifest = Document.RootElement.GetProperty("manifest").GetString();
                     bool ServiceWorker = Document.RootElement.GetProperty("service_worker").GetBoolean();
 
@@ -2645,11 +2644,10 @@ namespace SLBr.Pages
             else if (!IsLoading)
             {
                 DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Favourite",
-                    new List<InputField>
-                    {
-                        new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Title },
-                        new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Address },
-                    },
+                    [
+                        new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Title },
+                        new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Address },
+                    ],
                     "\ueb51"
                 )
                 {
@@ -2845,9 +2843,9 @@ namespace SLBr.Pages
                                     if (!Response.IsSuccessStatusCode)
                                         return [];
                                     string Data = await Response.Content.ReadAsStringAsync();
-                                    List<string> Result = [];
                                     try
                                     {
+                                        List<string> Result = [];
                                         using JsonDocument Document = JsonDocument.Parse(Data);
                                         foreach (JsonElement Item in Document.RootElement.EnumerateArray())
                                         {
@@ -2895,7 +2893,7 @@ namespace SLBr.Pages
                                     return;
                                 }
                                 string Data = await Response.Content.ReadAsStringAsync();
-                                using var Document = JsonDocument.Parse(Data);
+                                using JsonDocument Document = JsonDocument.Parse(Data);
                                 if (Document.RootElement.TryGetProperty("lang", out JsonElement LanguageElement))
                                     SourceLanguage = LanguageElement.GetString() ?? "en";
                             }
@@ -2935,7 +2933,8 @@ namespace SLBr.Pages
                                         Response.EnsureSuccessStatusCode();
 
                                         string Data = await Response.Content.ReadAsStringAsync();
-                                        if (JsonDocument.Parse(Data).RootElement.TryGetProperty("text", out JsonElement TranslatedTexts))
+                                        using JsonDocument Document = JsonDocument.Parse(Data);
+                                        if (Document.RootElement.TryGetProperty("text", out JsonElement TranslatedTexts))
                                             return TranslatedTexts.EnumerateArray().Select(x => x.GetString() ?? "").ToList();
                                     }
                                     catch
@@ -2986,7 +2985,7 @@ namespace SLBr.Pages
 
                                     try
                                     {
-                                        using var Document = JsonDocument.Parse(Data);
+                                        using JsonDocument Document = JsonDocument.Parse(Data);
                                         if (Document.RootElement.TryGetProperty("translatedText", out JsonElement TranslatedText))
                                         {
                                             foreach (var Item in TranslatedText.EnumerateArray())
@@ -3219,6 +3218,7 @@ namespace SLBr.Pages
         public void SetTemporarySiteInformation()
         {
             SiteInformationIcon.FontFamily = App.Instance.IconFont;
+            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
             if (OmniBoxOverrideSearch == null)
             {
                 if (OmniBox.Text.StartsWith("search:"))
@@ -3257,7 +3257,6 @@ namespace SLBr.Pages
                     SiteInformationText.Text = "Search";
                     SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text}";
                 }
-                SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
             }
             else
             {
@@ -3267,27 +3266,20 @@ namespace SLBr.Pages
                     {
                         case "Tabs":
                             SiteInformationIcon.Text = "\xec6c";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             break;
                         case "History":
                             SiteInformationIcon.Text = "\xe81c";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             break;
                         case "Favourites":
                             SiteInformationIcon.Text = "\xeb51";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             break;
                         default:
                             SiteInformationIcon.Text = "\xED37";
-                            SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
                             break;
                     }
                 }
                 else
-                {
                     SiteInformationIcon.Text = "\xED37";
-                    SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                }
                 SiteInformationText.Text = OmniBoxOverrideSearch.Name;
                 SiteInformationPopupButton.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBox.Text.Trim()}";
             }
@@ -3471,8 +3463,8 @@ namespace SLBr.Pages
                             Title = "Suspicious Address",
                             Description = [
                                 new() { Text = "Did you mean to go to " },
-                            new() { Text = PerceivedHost, Foreground = App.Instance.CornflowerBlueColor, Command = new RelayCommand(() => Navigate(Utils.FixUrl(PerceivedHost))) },
-                            new() { Text = "?" }
+                                new() { Text = PerceivedHost, Foreground = App.Instance.CornflowerBlueColor, Command = new RelayCommand(() => Navigate(Utils.FixUrl(PerceivedHost))) },
+                                new() { Text = "?" }
                             ],
                             Actions = [
                                 new() { Text = "Do not ask again", Command = new RelayCommand(async () => { CloseInfoBar(HomographInfoBar); App.Instance.GlobalSave.Set("HomographInfoBar", false); }) }
@@ -3567,10 +3559,7 @@ namespace SLBr.Pages
                 if (UseModernURL && !string.IsNullOrEmpty(WebView.Title))
                     OmniBoxOverlayText.Inlines.Add(new Run(" / " + WebView.Title) { Foreground = GrayBrush });
                 else
-                {
-                    ReadOnlySpan<char> _Path = _Span[HostEnd..];
-                    OmniBoxOverlayText.Inlines.Add(new Run(Utils.UnescapeDataString(_Path.ToString())) { Foreground = GrayBrush });
-                }
+                    OmniBoxOverlayText.Inlines.Add(new Run(Utils.UnescapeDataString(_Span[HostEnd..].ToString())) { Foreground = GrayBrush });
             }
         }
 
@@ -3777,7 +3766,7 @@ namespace SLBr.Pages
                                 List<BrowserTabItem> TabCollection = [];
                                 foreach (MainWindow _Window in App.Instance.AllWindows)
                                 {
-                                    TabCollection.AddRange(_Window.Tabs.Where(i => i.Type == BrowserTabType.Navigation && i.Content != null && (i.Header.ToLowerInvariant().Contains(CurrentText) || (i.Content?.Address.ToLowerInvariant().Contains(CurrentText) ?? false))).ToList());
+                                    TabCollection.AddRange(_Window.Tabs.Where(i => i.Type == BrowserTabType.Navigation && i.Content != null && (i.Header.ToLowerInvariant().Contains(CurrentText) || (i.Content?.Address.ToLowerInvariant().Contains(CurrentText) ?? false))));
                                     if (TabCollection.Count >= 10)
                                         break;
                                 }
@@ -3785,13 +3774,11 @@ namespace SLBr.Pages
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Header, "T", LinkColor, $"- {Entry.Content?.Address}", Entry.Content?.Address, OmniBoxOverrideSearch, Entry.ID.ToString()));
                                 break;
                             case "History":
-                                List<ActionStorage> HistoryCollection = App.Instance.History.Where(i => (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(CurrentText) ?? false)).ToList();
-                                foreach (ActionStorage Entry in HistoryCollection.Take(10))
+                                foreach (ActionStorage Entry in App.Instance.History.Where(i => (i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(CurrentText) ?? false)).Take(10))
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
                                 break;
                             case "Favourites":
-                                List<Favourite> FavouritesCollection = App.Instance.Favourites.Where(i => i.Type == "url" && ((i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Url?.ToLowerInvariant().Contains(CurrentText) ?? false))).ToList();
-                                foreach (Favourite Entry in FavouritesCollection.Take(10))
+                                foreach (Favourite Entry in App.Instance.Favourites.Where(i => i.Type == "url" && ((i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Url?.ToLowerInvariant().Contains(CurrentText) ?? false))).Take(10))
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, OmniBoxOverrideSearch));
                                 break;
                         }
@@ -3878,13 +3865,11 @@ namespace SLBr.Pages
                         case "Tabs":
                             break;
                         case "History":
-                            List<ActionStorage> HistoryCollection = App.Instance.History.ToList();
-                            foreach (ActionStorage Entry in HistoryCollection.Take(10))
+                            foreach (ActionStorage Entry in App.Instance.History.Take(10))
                                 Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
                             break;
                         case "Favourites":
-                            List<Favourite> FavouritesCollection = App.Instance.Favourites.Where(i => i.Type == "url").ToList();
-                            foreach (Favourite Entry in FavouritesCollection.Take(10))
+                            foreach (Favourite Entry in App.Instance.Favourites.Where(i => i.Type == "url").Take(10))
                                 Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, OmniBoxOverrideSearch));
                             break;
                     }
@@ -3957,18 +3942,16 @@ namespace SLBr.Pages
                 {
                     var ExistingSuggestions = Suggestions.Select(i => i.Text);
                     string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
-                    using (JsonDocument Document = JsonDocument.Parse(ResponseText))
+                    using JsonDocument Document = JsonDocument.Parse(ResponseText);
+                    SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
+                    SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
+                    foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())//.Take(10)
                     {
-                        SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
-                        SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
-                        foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())//.Take(10)
+                        string SuggestionStr = Suggestion.GetString();
+                        if (!ExistingSuggestions.Contains(SuggestionStr))
                         {
-                            string SuggestionStr = Suggestion.GetString();
-                            if (!ExistingSuggestions.Contains(SuggestionStr))
-                            {
-                                string SuggestionType = App.GetMiniSearchType(SuggestionStr);
-                                Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color, "", null, OmniBoxOverrideSearch));
-                            }
+                            string SuggestionType = App.GetMiniSearchType(SuggestionStr);
+                            Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color, "", null, OmniBoxOverrideSearch));
                         }
                     }
                 }
@@ -4180,9 +4163,9 @@ namespace SLBr.Pages
         {
             Dispatcher.BeginInvoke(() =>
             {
-                dynamic data = e.Message;
-                ExtensionWindow.Height = data.height;
-                ExtensionWindow.Width = data.width;
+                dynamic Data = e.Message;
+                ExtensionWindow.Height = Data.height;
+                ExtensionWindow.Width = Data.width;
             });
         }
 
@@ -4224,10 +4207,10 @@ namespace SLBr.Pages
                 if (Action == "Edit")
                 {
                     List<InputField> Inputs = [
-                        new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
+                        new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
                     ];
                     if (Favourite.Type == "url")
-                        Inputs.Add(new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url });
+                        Inputs.Add(new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url });
                     DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite", Inputs, "\ue70f") { Topmost = true };
                     if (_DynamicDialogWindow.ShowDialog() == true)
                     {

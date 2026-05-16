@@ -59,7 +59,7 @@ namespace SLBr
                 if (CurrentTab.Type == BrowserTabType.Navigation)
                     CurrentTab.Content?.Address = Url;
                 else
-                    FocusedWindow.NewTab(Url, false, FocusedWindow.Tabs.IndexOf(CurrentTab) + 1, CurrentTab.Content != null ? CurrentTab.Content.Private : false, CurrentTab.TabGroup);
+                    FocusedWindow.NewTab(Url, false, FocusedWindow.Tabs.IndexOf(CurrentTab) + 1, CurrentTab.Content != null && CurrentTab.Content.Private, CurrentTab.TabGroup);
                 e.Handled = true;
             }
             else if (CurrentTab.Type == BrowserTabType.Group && e.Data.GetData(typeof(TabItem)) != null)

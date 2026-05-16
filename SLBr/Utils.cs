@@ -305,7 +305,7 @@ namespace SLBr
         DWMWA_MICA_EFFECT = 1029
     }
 
-    public static class UserAgentGenerator //https://source.chromium.org/chromium/chromium/src/+/main:content/common/user_agent.cc
+    public static class UserAgentGenerator //https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc
     {
         //public static string FrozenUserAgentTemplate = "Mozilla/5.0 ({0}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{1}.0.0.0 Safari/537.36";
 
@@ -484,10 +484,27 @@ namespace SLBr
             }
         }
 
-        public static string GetPlatformVersion()//https://textslashplain.com/2021/09/21/determining-os-platform-version/
+        public static string GetPlatformVersion()
         {
-            string[] Parts = Environment.OSVersion.Version.ToString().Split('.');
-            return Parts[0] + "." + Parts[1] + "." + Parts[2];
+            //if (!OperatingSystem.IsWindows()) return "0.0.0";
+            try
+            {
+                using var BaseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+                using var SubKey = BaseKey.OpenSubKey(@"SOFTWARE\Microsoft\WindowsRuntime\WellKnownContracts");
+
+                if (SubKey != null)
+                {
+                    object Value = SubKey.GetValue("Windows.Foundation.UniversalApiContract");
+                    if (Value is int contractValue)
+                    {
+                        int Major = (contractValue >> 16) & 0xFFFF;
+                        int Minor = contractValue & 0xFFFF;
+                        return $"{Major}.{Minor}.0";
+                    }
+                }
+            }
+            catch { }
+            return "0.0.0";
         }
 
         public static string GetOSVersion()

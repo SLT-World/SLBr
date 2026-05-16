@@ -1574,7 +1574,8 @@ namespace SLBr
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     });
-                    Dict = ConvertJsonElement(JsonDocument.Parse(JSON).RootElement) as IDictionary<string, object>;
+                    using JsonDocument Document = JsonDocument.Parse(JSON);
+                    Dict = ConvertJsonElement(Document.RootElement) as IDictionary<string, object>;
                 }
 
                 var Response = await Browser.GetDevToolsClient().ExecuteDevToolsMethodAsync(Method, Dict);
@@ -1611,9 +1612,8 @@ namespace SLBr
                 string Json = await CallDevToolsAsync("Page.getNavigationHistory");
                 if (!string.IsNullOrWhiteSpace(Json))
                 {
-                    using JsonDocument _JsonDocument = JsonDocument.Parse(Json);
-                    var Root = _JsonDocument.RootElement;
-                    if (Root.TryGetProperty("currentIndex", out var CurrentIndexElement) && Root.TryGetProperty("entries", out var Entries))
+                    using JsonDocument Document = JsonDocument.Parse(Json);
+                    if (Document.RootElement.TryGetProperty("currentIndex", out var CurrentIndexElement) && Document.RootElement.TryGetProperty("entries", out var Entries))
                     {
                         int CurrentIndex = CurrentIndexElement.GetInt32();
                         for (int i = 0; i < Entries.GetArrayLength(); i++)
@@ -2415,11 +2415,10 @@ namespace SLBr
                 string Json = await CallDevToolsAsync("Page.getNavigationHistory");
                 if (string.IsNullOrWhiteSpace(Json))
                     return false;
-                using JsonDocument _JsonDocument = JsonDocument.Parse(Json);
-                var Root = _JsonDocument.RootElement;
-                if (!Root.TryGetProperty("currentIndex", out var CurrentIndexElement))
+                using JsonDocument Document = JsonDocument.Parse(Json);
+                if (!Document.RootElement.TryGetProperty("currentIndex", out var CurrentIndexElement))
                     return false;
-                if (!Root.TryGetProperty("entries", out var Entries))
+                if (!Document.RootElement.TryGetProperty("entries", out var Entries))
                     return false;
                 int CurrentIndex = CurrentIndexElement.GetInt32();
                 if (CurrentIndex < 0 || CurrentIndex >= Entries.GetArrayLength())
@@ -2616,17 +2615,15 @@ namespace SLBr
                     }));
 
                 using JsonDocument Document = JsonDocument.Parse(Json);
-                var Root = Document.RootElement;
-
-                /*if (Root.TryGetProperty("exceptionDetails", out var Exception))
+                /*if (Document.RootElement.TryGetProperty("exceptionDetails", out var Exception))
                 {
                     string Message = Exception.GetProperty("text").GetString();
-                    if (Root.TryGetProperty("result", out var ResultElement) && ResultElement.TryGetProperty("description", out var Description))
+                    if (Document.RootElement.TryGetProperty("result", out var ResultElement) && ResultElement.TryGetProperty("description", out var Description))
                         Message += $" ({Description.GetString()})";
                     throw new InvalidOperationException(Message);
                 }*/
 
-                if (Root.TryGetProperty("result", out var Result) && Result.TryGetProperty("value", out var Value))
+                if (Document.RootElement.TryGetProperty("result", out var Result) && Result.TryGetProperty("value", out var Value))
                 {
                     return Value.ValueKind switch
                     {
@@ -2695,9 +2692,8 @@ namespace SLBr
                 string Json = await CallDevToolsAsync("Page.getNavigationHistory");
                 if (!string.IsNullOrWhiteSpace(Json))
                 {
-                    using JsonDocument _JsonDocument = JsonDocument.Parse(Json);
-                    var Root = _JsonDocument.RootElement;
-                    if (Root.TryGetProperty("currentIndex", out var CurrentIndexElement) && Root.TryGetProperty("entries", out var Entries))
+                    using JsonDocument Document = JsonDocument.Parse(Json);
+                    if (Document.RootElement.TryGetProperty("currentIndex", out var CurrentIndexElement) && Document.RootElement.TryGetProperty("entries", out var Entries))
                     {
                         int CurrentIndex = CurrentIndexElement.GetInt32();
                         for (int i = 0; i < Entries.GetArrayLength(); i++)

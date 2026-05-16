@@ -888,8 +888,7 @@ namespace SLBr
                     return;
                 }
 
-
-                var Args = new PermissionRequestedEventArgs(requestingOrigin, requestedPermissions.ToWebPermission());
+                PermissionRequestedEventArgs Args = new(requestingOrigin, requestedPermissions.ToWebPermission());
                 WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaisePermissionRequested(Args);
                 if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
                 {
@@ -951,7 +950,7 @@ namespace SLBr
                     callback.Dispose();
                     return;
                 }
-                var Args = new PermissionRequestedEventArgs(requestingOrigin, _ProperPermissionRequestType.ToWebPermission());
+                PermissionRequestedEventArgs Args = new(requestingOrigin, _ProperPermissionRequestType.ToWebPermission());
                 WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaisePermissionRequested(Args);
                 if (chromiumWebBrowser.IsDisposed || !browser.IsValid)
                 {
@@ -976,7 +975,7 @@ namespace SLBr
 
         public bool OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IBeforeDownloadCallback callback)
         {
-            WebDownloadItem Item = new WebDownloadItem
+            WebDownloadItem Item = new()
             {
                 ID = downloadItem.Id.ToString(),
                 Url = downloadItem.Url,
@@ -1146,6 +1145,7 @@ namespace SLBr
         {
             TokenSource?.Cancel();
             TokenSource?.Dispose();
+            GC.SuppressFinalize(this);
             base.Dispose();
         }
     }

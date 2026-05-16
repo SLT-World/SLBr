@@ -47,11 +47,10 @@ namespace SLBr.Pages
         private void NewFavouriteButton_Click(object sender, RoutedEventArgs e)
         {
             DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Favourite",
-                new List<InputField>
-                {
-                        new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text },
-                        new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
-                },
+                [
+                    new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text },
+                    new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
+                ],
                 "\ue946"
             )
             {
@@ -95,10 +94,10 @@ namespace SLBr.Pages
             if (((FrameworkElement)sender).DataContext is Favourite Favourite)
             {
                 List<InputField> Inputs = [
-                    new InputField { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
+                    new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Name },
                 ];
                 if (Favourite.Type == "url")
-                    Inputs.Add(new InputField { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url });
+                    Inputs.Add(new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Favourite.Url });
                 DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Favourite", Inputs, "\ue70f")
                 {
                     Topmost = true

@@ -1352,13 +1352,13 @@ namespace SLBr.Pages
 
         private void AddSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Add search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false } }, "\xf6fa")
+            DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Add search engine", [new() { Name = "Name", Type = DialogInputType.Text, IsRequired = true }, new() { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true }, new() { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false }], "\xf6fa")
             {
                 Topmost = true
             };
             if (_DynamicDialogWindow.ShowDialog() == true)
             {
-                SearchProvider _SearchProvider = new SearchProvider
+                SearchProvider _SearchProvider = new()
                 {
                     Name = _DynamicDialogWindow.InputFields[0].Value.Trim(),
                     Host = Utils.FastHost(_DynamicDialogWindow.InputFields[1].Value),
@@ -1379,7 +1379,7 @@ namespace SLBr.Pages
         private void EditSearchEngineButton_Click(object sender, RoutedEventArgs e)
         {
             SearchProvider _SearchProvider = SearchEngineComboBox.SelectedValue as SearchProvider;
-            DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Edit search engine", new List<InputField> { new InputField { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new InputField { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new InputField { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl } }, "\xe70f")
+            DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Edit search engine", [new() { Name = "Name", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.Name }, new() { Name = "Search URL with {0} as query", Type = DialogInputType.Text, IsRequired = true, Value = _SearchProvider.SearchUrl }, new() { Name = "Suggestion URL with {0} as query", Type = DialogInputType.Text, IsRequired = false, Value = _SearchProvider.SuggestUrl }], "\xe70f")
             {
                 Topmost = true
             };
@@ -1421,7 +1421,7 @@ namespace SLBr.Pages
         {
             try
             {
-                DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Change GitHub Access Token", new List<InputField> { new InputField { Name = "Token", Type = DialogInputType.Text, IsRequired = false, Value = App.Instance.GlobalSave.Get("SyncGitHub") } }, "\xee7e")
+                DynamicDialogWindow _DynamicDialogWindow = new("Settings", "Change GitHub Access Token", [new() { Name = "Token", Type = DialogInputType.Text, IsRequired = false, Value = App.Instance.GlobalSave.Get("SyncGitHub") }], "\xee7e")
                 {
                     Topmost = true
                 };
@@ -1448,8 +1448,8 @@ namespace SLBr.Pages
                         if (GistResponse.IsSuccessStatusCode)
                         {
                             string JSON = await GistResponse.Content.ReadAsStringAsync();
-                            using JsonDocument _JsonDocument = JsonDocument.Parse(JSON);
-                            foreach (JsonElement Gist in _JsonDocument.RootElement.EnumerateArray())
+                            using JsonDocument Document = JsonDocument.Parse(JSON);
+                            foreach (JsonElement Gist in Document.RootElement.EnumerateArray())
                             {
                                 if (Gist.GetProperty("description").GetString() == "SLBr Sync")
                                 {

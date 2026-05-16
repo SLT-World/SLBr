@@ -81,7 +81,7 @@ namespace SLBr.Controls
 
         private void NewProfile(object sender, MouseButtonEventArgs e)
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Profile", new List<InputField> { new InputField { Name = "Username", IsRequired = true, Type = DialogInputType.Text, Value = "" } }, "\xE77B")
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Profile", [new() { Name = "Username", IsRequired = true, Type = DialogInputType.Text, Value = "" }], "\xE77B")
             {
                 Topmost = true
             };
