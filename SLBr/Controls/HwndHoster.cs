@@ -106,8 +106,8 @@ namespace SLBr.Controls
 
         public FrameworkElement CleanupElement
         {
-            get { return (FrameworkElement)GetValue(CleanupElementProperty); }
-            set { SetValue(CleanupElementProperty, value); }
+            get => (FrameworkElement)GetValue(CleanupElementProperty);
+            set => SetValue(CleanupElementProperty, value);
         }
 
         public static readonly DependencyProperty CleanupElementProperty =

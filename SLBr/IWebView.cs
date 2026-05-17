@@ -3078,7 +3078,7 @@ namespace SLBr
         public bool AudioPlaying { get; private set; }
         public bool IsMuted
         {
-            get { return false; }
+            get => false;
             set { }
         }
 

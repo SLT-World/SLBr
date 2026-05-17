@@ -54,13 +54,7 @@ namespace SLBr.Controls
 			UsernameTextBox.Focus();
 		}
 
-		public string Username
-		{
-			get { return UsernameTextBox.Text; }
-		}
-		public string Password
-		{
-			get { return PasswordTextBox.Password; }
-		}
-	}
+        public string Username => UsernameTextBox.Text;
+        public string Password => PasswordTextBox.Password;
+    }
 }

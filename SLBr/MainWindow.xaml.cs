@@ -33,7 +33,7 @@ namespace SLBr
         private ObservableCollection<BrowserTabItem> _Tabs = [];
         public ObservableCollection<BrowserTabItem> Tabs
         {
-            get { return _Tabs; }
+            get => _Tabs;
             set
             {
                 _Tabs = value;
@@ -44,7 +44,7 @@ namespace SLBr
         private ObservableCollection<TabGroup> _TabGroup = [];
         public ObservableCollection<TabGroup> TabGroups
         {
-            get { return _TabGroup; }
+            get => _TabGroup;
             set
             {
                 _TabGroup = value;
@@ -54,7 +54,7 @@ namespace SLBr
 
         public bool DimUnloadedIcon
         {
-            get { return _DimUnloadedIcon; }
+            get => _DimUnloadedIcon;
             set
             {
                 _DimUnloadedIcon = value;

@@ -19,34 +19,30 @@ namespace WinUI
         {
             DataContextChanged += (s, e) =>
             {
-                if (PopupContent != null)
-                    PopupContent.DataContext = DataContext;
+                PopupContent?.DataContext = DataContext;
             };
         }
 
         public FrameworkElement PopupContent
         {
-            get { return (FrameworkElement)GetValue(PopupContentProperty); }
-            set { SetValue(PopupContentProperty, value); }
+            get => (FrameworkElement)GetValue(PopupContentProperty);
+            set => SetValue(PopupContentProperty, value);
         }
 
-        public static readonly DependencyProperty PopupContentProperty =
-            DependencyProperty.Register("PopupContent", typeof(FrameworkElement), typeof(PopupButton),
-                new PropertyMetadata(null, OnPopupContentChanged));
+        public static readonly DependencyProperty PopupContentProperty = DependencyProperty.Register("PopupContent", typeof(FrameworkElement), typeof(PopupButton), new PropertyMetadata(null, OnPopupContentChanged));
 
         private static void OnPopupContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             PopupButton _Button = (PopupButton)d;
-            if (_Button._Popup != null)
-                _Button._Popup.Child = e.NewValue as UIElement;
-            if (e.NewValue is FrameworkElement element && _Button.DataContext != null)
-                element.DataContext = _Button.DataContext;
+            _Button._Popup?.Child = e.NewValue as UIElement;
+            if (e.NewValue is FrameworkElement Element && _Button.DataContext != null)
+                Element.DataContext = _Button.DataContext;
         }
 
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            _Popup = new Popup
+            _Popup = new()
             {
                 PlacementTarget = this,
                 Placement = PlacementMode.Bottom,

@@ -17,6 +17,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -240,7 +241,7 @@ namespace SLBr
         public MainWindow ParentWindow { get; set; }
         public bool IsCollapsed
         {
-            get { return _IsCollapsed; }
+            get => _IsCollapsed;
             set
             {
                 _IsCollapsed = value;
@@ -250,7 +251,7 @@ namespace SLBr
         private bool _IsCollapsed;
         public string Header
         {
-            get { return _Header; }
+            get => _Header;
             set
             {
                 if (ParentWindow.TabGroups.Any(i => i.Header == value))
@@ -262,7 +263,7 @@ namespace SLBr
         private string _Header;
         public SolidColorBrush Background
         {
-            get { return _Background; }
+            get => _Background;
             set
             {
                 _Background = value;
@@ -274,7 +275,7 @@ namespace SLBr
 
         public SolidColorBrush Foreground
         {
-            get { return _Foreground; }
+            get => _Foreground;
             set
             {
                 _Foreground = value;
@@ -306,7 +307,7 @@ namespace SLBr
         public ImageSource Preview { get; set; }
         public bool IsUnloaded
         {
-            get { return _IsUnloaded; }
+            get => _IsUnloaded;
             set
             {
                 _IsUnloaded = value;
@@ -316,7 +317,7 @@ namespace SLBr
         private bool _IsUnloaded;
         public string Header
         {
-            get { return _Header; }
+            get => _Header;
             set
             {
                 _Header = value;
@@ -326,7 +327,7 @@ namespace SLBr
         private string _Header;
         public BitmapSource Icon
         {
-            get { return _Icon; }
+            get => _Icon;
             set
             {
                 _Icon = value;
@@ -336,7 +337,7 @@ namespace SLBr
         private BitmapSource _Icon;
         public TabGroup? TabGroup
         {
-            get { return _TabGroup; }
+            get => _TabGroup;
             set
             {
                 _TabGroup = value;
@@ -348,7 +349,7 @@ namespace SLBr
         public MainWindow ParentWindow { get; set; }
         public int ID
         {
-            get { return _ID; }
+            get => _ID;
             set
             {
                 FavouriteCommandHeader = "Add to favourites";
@@ -360,7 +361,7 @@ namespace SLBr
 
         public double Progress
         {
-            get { return _Progress; }
+            get => _Progress;
             set
             {
                 _Progress = value;
@@ -371,7 +372,7 @@ namespace SLBr
 
         public Visibility ProgressBarVisibility
         {
-            get { return _ProgressBarVisibility; }
+            get => _ProgressBarVisibility;
             set
             {
                 _ProgressBarVisibility = value;
@@ -381,7 +382,7 @@ namespace SLBr
         private Visibility _ProgressBarVisibility;
         public string FavouriteCommandHeader
         {
-            get { return _FavouriteCommandHeader; }
+            get => _FavouriteCommandHeader;
             set
             {
                 _FavouriteCommandHeader = value;
@@ -409,7 +410,7 @@ namespace SLBr
         private string PName;
         public string Name
         {
-            get { return PName; }
+            get => PName;
             set
             {
                 PName = value;
@@ -429,7 +430,7 @@ namespace SLBr
         private string PInitial;
         public string Initial
         {
-            get { return PInitial; }
+            get => PInitial;
             set
             {
                 PInitial = value;
@@ -440,7 +441,7 @@ namespace SLBr
         private SolidColorBrush PBrush;
         public SolidColorBrush Brush
         {
-            get { return PBrush; }
+            get => PBrush;
             set
             {
                 PBrush = value;
@@ -451,7 +452,7 @@ namespace SLBr
         private SolidColorBrush PForeground;
         public SolidColorBrush Foreground
         {
-            get { return PForeground; }
+            get => PForeground;
             set
             {
                 PForeground = value;
@@ -473,7 +474,7 @@ namespace SLBr
         private bool PDefault = false;
         public bool Default
         {
-            get { return PDefault; }
+            get => PDefault;
             set
             {
                 PDefault = value;
@@ -499,7 +500,7 @@ namespace SLBr
         private string PID;
         public string ID
         {
-            get { return PID; }
+            get => PID;
             set
             {
                 PID = value;
@@ -510,7 +511,7 @@ namespace SLBr
         private string PName;
         public string Name
         {
-            get { return PName; }
+            get => PName;
             set
             {
                 PName = value;
@@ -521,7 +522,7 @@ namespace SLBr
         private string PPopup;
         public string Popup
         {
-            get { return PPopup; }
+            get => PPopup;
             set
             {
                 PPopup = value;
@@ -532,7 +533,7 @@ namespace SLBr
         private string PVersion;
         public string Version
         {
-            get { return PVersion; }
+            get => PVersion;
             set
             {
                 PVersion = value;
@@ -565,7 +566,7 @@ namespace SLBr
         private string PDescription;
         public string Description
         {
-            get { return PDescription; }
+            get => PDescription;
             set
             {
                 PDescription = value;
@@ -596,7 +597,7 @@ namespace SLBr
 
         public string Name
         {
-            get { return _Name; }
+            get => _Name;
             set
             {
                 _Name = value;
@@ -632,7 +633,7 @@ namespace SLBr
         private string PID;
         public string ID
         {
-            get { return PID; }
+            get => PID;
             set
             {
                 PID = value;
@@ -643,7 +644,7 @@ namespace SLBr
         private string PFileName;
         public string FileName
         {
-            get { return PFileName; }
+            get => PFileName;
             set
             {
                 PFileName = value;
@@ -654,7 +655,7 @@ namespace SLBr
         private string PIcon;
         public string Icon
         {
-            get { return PIcon; }
+            get => PIcon;
             set
             {
                 PIcon = value;
@@ -665,7 +666,7 @@ namespace SLBr
         private int PPercentComplete;
         public int PercentComplete
         {
-            get { return PPercentComplete; }
+            get => PPercentComplete;
             set
             {
                 PPercentComplete = value;
@@ -676,7 +677,7 @@ namespace SLBr
         private string PFormattedProgress;
         public string FormattedProgress
         {
-            get { return PFormattedProgress; }
+            get => PFormattedProgress;
             set
             {
                 PFormattedProgress = value;
@@ -687,7 +688,7 @@ namespace SLBr
         private Visibility POpen;
         public Visibility Open
         {
-            get { return POpen; }
+            get => POpen;
             set
             {
                 POpen = value;
@@ -698,7 +699,7 @@ namespace SLBr
         private Visibility PStop;
         public Visibility Stop
         {
-            get { return PStop; }
+            get => PStop;
             set
             {
                 PStop = value;
@@ -709,7 +710,7 @@ namespace SLBr
         private Visibility PProgress;
         public Visibility Progress
         {
-            get { return PProgress; }
+            get => PProgress;
             set
             {
                 PProgress = value;
@@ -720,7 +721,7 @@ namespace SLBr
         private bool PIsIndeterminate;
         public bool IsIndeterminate
         {
-            get { return PIsIndeterminate; }
+            get => PIsIndeterminate;
             set
             {
                 PIsIndeterminate = value;
@@ -802,7 +803,7 @@ namespace SLBr
         private List<Extension> PrivateExtensions = [];
         public List<Extension> Extensions
         {
-            get { return PrivateExtensions; }
+            get => PrivateExtensions;
             set
             {
                 PrivateExtensions = value;
@@ -1530,11 +1531,51 @@ namespace SLBr
         {
             AutomaticDecompression = DecompressionMethods.All,
             EnableMultipleHttp2Connections = true,
-            EnableMultipleHttp3Connections = true,
-            PooledConnectionLifetime = TimeSpan.FromMinutes(15)
+            //EnableMultipleHttp3Connections = true,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15),
+            ConnectCallback = async (Context, CancellationToken) =>
+            {
+                IPAddress[] IPAddresses = await Dns.GetHostAddressesAsync(Context.DnsEndPoint.Host, CancellationToken).ConfigureAwait(false);
+                IPAddress[] IPv4Addresses = IPAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetwork).ToArray();
+                IPAddress[] TargetAddresses;
+                AddressFamily TargetFamily;
+                if (IPv4Addresses.Length > 0)
+                {
+                    TargetAddresses = IPv4Addresses;
+                    TargetFamily = AddressFamily.InterNetwork;
+                }
+                else 
+                {
+                    IPAddress[] IPv6Addresses = IPAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetworkV6).ToArray();
+                    if (IPv6Addresses.Length > 0)
+                    {
+                        TargetAddresses = IPv6Addresses;
+                        TargetFamily = AddressFamily.InterNetworkV6;
+                    }
+                    else
+                    {
+                        TargetAddresses = IPAddresses;
+                        TargetFamily = AddressFamily.Unspecified;
+                    }
+                }
+                Socket _Socket = new(TargetFamily, SocketType.Stream, ProtocolType.Tcp)
+                {
+                    NoDelay = true
+                };
+                try
+                {
+                    await _Socket.ConnectAsync(TargetAddresses, Context.DnsEndPoint.Port, CancellationToken).ConfigureAwait(false);
+                    return new NetworkStream(_Socket, true);
+                }
+                catch
+                {
+                    _Socket.Dispose();
+                    throw;
+                }
+            }
         })
         {
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+            //DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
         };
         /*public static HttpClient MimicHttpClient = new(new SocketsHttpHandler
         {
@@ -4827,7 +4868,7 @@ Inner Exception: {7}";
 
         public string Name
         {
-            get { return DName; }
+            get => DName;
             set
             {
                 DName = value;
@@ -4836,7 +4877,7 @@ Inner Exception: {7}";
         }
         public string Arguments
         {
-            get { return DArguments; }
+            get => DArguments;
             set
             {
                 DArguments = value;
@@ -4845,7 +4886,7 @@ Inner Exception: {7}";
         }
         public string Tooltip
         {
-            get { return DTooltip; }
+            get => DTooltip;
             set
             {
                 DTooltip = value;
@@ -5417,34 +5458,34 @@ while (node = walker.nextNode()) {
 return JSON.stringify(texts);
 })();";
 
-        public const string SetTranslationText = @"(function() {
+        public const string SetTranslationText = @"(function() {{
 const translations = {0};
-const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-        acceptNode: function(node) {
+const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {{
+        acceptNode: function(node) {{
             let parent = node.parentNode;
-            while (parent) {
+            while (parent) {{
                 const tag = parent.tagName ? parent.tagName.toLowerCase() : '';
                 if (['script','style','meta','link','noscript'].includes(tag)) return NodeFilter.FILTER_REJECT;
                 parent = parent.parentNode;
-            }
+            }}
             const trimmed = node.textContent.trim();
             if (!trimmed || trimmed.length <= 1 || trimmed.startsWith('<') || trimmed.includes('{{') || trimmed.includes('}}') || /^[\\s<>{{}}\\/]+$/.test(trimmed)) return NodeFilter.FILTER_REJECT;
             return NodeFilter.FILTER_ACCEPT;
-        }
-    }, false
+        }}
+    }}, false
 );
 let node, i = 0;
-while (node = walker.nextNode()) {
-    if (i < translations.length) {
+while (node = walker.nextNode()) {{
+    if (i < translations.length) {{
         const beforeMatch = node.textContent.match(/^\s*/);
         const afterMatch = node.textContent.match(/\s*$/);
         const before = beforeMatch ? beforeMatch[0] : """";
         const after = afterMatch ? afterMatch[0] : """";
         node.textContent = before + translations[i] + after;
         i++;
-    }
-}
-})();";
+    }}
+}}
+}})();";
 
         public const string CheckNativeDarkModeScript = @"(function() {
 const brightness = (rgbStr) => {

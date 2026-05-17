@@ -98,14 +98,8 @@ namespace SLBr
                 _Word = word;
                 _Parent = parent;
             }
-            public TNode Word
-            {
-                get { return _Word; }
-            }
-            public Node<TNode, TNodeValue> Parent
-            {
-                get { return _Parent; }
-            }
+            public TNode Word => _Word;
+            public Node<TNode, TNodeValue> Parent => _Parent;
             public Node<TNode, TNodeValue> Fail
             {
                 get;
@@ -113,13 +107,10 @@ namespace SLBr
             }
             public Node<TNode, TNodeValue> this[TNode c]
             {
-                get { return _Children.ContainsKey(c) ? _Children[c] : null; }
-                set { _Children[c] = value; }
+                get => _Children.ContainsKey(c) ? _Children[c] : null;
+                set => _Children[c] = value;
             }
-            public List<TNodeValue> Values
-            {
-                get { return _Values; }
-            }
+            public List<TNodeValue> Values => _Values;
 
             public IEnumerator<Node<TNode, TNodeValue>> GetEnumerator() =>
                 _Children.Values.GetEnumerator();

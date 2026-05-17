@@ -77,7 +77,7 @@ namespace WinUI
             if (Item != null)
                 CreateChildContentPresenter(Item);
             foreach (ContentPresenter Child in ItemsHolderPanel.Children)
-                Child.Visibility = ((Child.Tag as TabItem).IsSelected) ? Visibility.Visible : Visibility.Collapsed;
+                Child.Visibility = (Child.Tag as TabItem).IsSelected ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private ContentPresenter CreateChildContentPresenter(object Item)
@@ -87,14 +87,15 @@ namespace WinUI
             ContentPresenter _ContentPresenter = FindChildContentPresenter(Item);
             if (_ContentPresenter != null)
                 return _ContentPresenter;
-
-            _ContentPresenter = new ContentPresenter();
-            _ContentPresenter.Content = (Item is TabItem) ? (Item as TabItem).Content : Item;
-            _ContentPresenter.ContentTemplate = SelectedContentTemplate;
-            _ContentPresenter.ContentTemplateSelector = SelectedContentTemplateSelector;
-            _ContentPresenter.ContentStringFormat = SelectedContentStringFormat;
-            _ContentPresenter.Visibility = Visibility.Collapsed;
-            _ContentPresenter.Tag = (Item is TabItem) ? Item : (ItemContainerGenerator.ContainerFromItem(Item));
+            _ContentPresenter = new()
+            {
+                Content = (Item is TabItem _Tab) ? _Tab.Content : Item,
+                ContentTemplate = SelectedContentTemplate,
+                ContentTemplateSelector = SelectedContentTemplateSelector,
+                ContentStringFormat = SelectedContentStringFormat,
+                Visibility = Visibility.Collapsed,
+                Tag = (Item is TabItem) ? Item : ItemContainerGenerator.ContainerFromItem(Item)
+            };
             ItemsHolderPanel.Children.Add(_ContentPresenter);
             return _ContentPresenter;
         }
@@ -103,9 +104,9 @@ namespace WinUI
         {
             if (ItemsHolderPanel == null)
                 return null;
-            if (Data is TabItem)
+            if (Data is TabItem _Tab)
             {
-                Data = (Data as TabItem).Content;
+                Data = _Tab.Content;
                 foreach (ContentPresenter _ContentPresenter in ItemsHolderPanel.Children)
                 {
                     if (_ContentPresenter.Content == Data)
@@ -115,13 +116,6 @@ namespace WinUI
             return null;
         }
 
-        protected TabItem GetSelectedTabItem()
-        {
-            TabItem _SelectedItem = SelectedItem as TabItem;
-            /*TabItem Item = _SelectedItem as TabItem;
-            if (Item == null)
-                Item = ItemContainerGenerator.ContainerFromIndex(SelectedIndex) as TabItem;*/
-            return _SelectedItem;
-        }
+        protected TabItem GetSelectedTabItem() => SelectedItem as TabItem;
     }
 }

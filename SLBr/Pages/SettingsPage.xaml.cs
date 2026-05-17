@@ -42,7 +42,7 @@ namespace SLBr.Pages
         private ObservableCollection<ActionStorage> PrivateAddableLanguages = [];
         public ObservableCollection<ActionStorage> AddableLanguages
         {
-            get { return PrivateAddableLanguages; }
+            get => PrivateAddableLanguages;
             set
             {
                 PrivateAddableLanguages = value;
@@ -620,12 +620,12 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 App.Instance.GlobalSave.Set("TranslationProvider", TranslationProviderComboBox.SelectedIndex);
-                switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
+                switch (TranslationProviderComboBox.SelectedIndex)
                 {
                     case 0:
                         foreach (MainWindow _Window in App.Instance.AllWindows)
                         {
-                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
                             {
                                 BrowserView.TranslateAttribution.Inlines.Clear();
                                 BrowserView.TranslateAttribution.Inlines.Add("Google Translate");
@@ -636,7 +636,7 @@ namespace SLBr.Pages
                     case 1:
                         foreach (MainWindow _Window in App.Instance.AllWindows)
                         {
-                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
                             {
                                 BrowserView.TranslateAttribution.Inlines.Clear();
                                 BrowserView.TranslateAttribution.Inlines.Add("Microsoft Translate");
@@ -647,7 +647,7 @@ namespace SLBr.Pages
                     case 2:
                         foreach (MainWindow _Window in App.Instance.AllWindows)
                         {
-                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
                             {
                                 BrowserView.TranslateAttribution.Inlines.Clear();
                                 BrowserView.TranslateAttribution.Inlines.Add("Yandex Translate");

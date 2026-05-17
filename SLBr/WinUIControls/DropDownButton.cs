@@ -12,51 +12,49 @@ namespace WinUI
     {
         public DropDownButton()
         {
-            Binding binding = new Binding("Menu.IsOpen");
-            binding.Source = this;
-            SetBinding(IsCheckedProperty, binding);
+            Binding _Binding = new("Menu.IsOpen")
+            {
+                Source = this
+            };
+            SetBinding(IsCheckedProperty, _Binding);
             DataContextChanged += (sender, args) =>
             {
-                if (Menu != null)
-                    Menu.DataContext = DataContext;
+                Menu?.DataContext = DataContext;
             };
         }
 
         public ContextMenu Menu
         {
-            get { return (ContextMenu)GetValue(MenuProperty); }
-            set { SetValue(MenuProperty, value); }
+            get => (ContextMenu)GetValue(MenuProperty);
+            set => SetValue(MenuProperty, value);
         }
-        public static readonly DependencyProperty MenuProperty = DependencyProperty.Register("Menu",
-            typeof(ContextMenu), typeof(DropDownButton), new UIPropertyMetadata(null, OnMenuChanged));
+        public static readonly DependencyProperty MenuProperty = DependencyProperty.Register("Menu", typeof(ContextMenu), typeof(DropDownButton), new UIPropertyMetadata(null, OnMenuChanged));
 
         public double MaxDropDownHeight
         {
-            get { return (double)GetValue(MaxDropDownHeightProperty); }
-            set { SetValue(MaxDropDownHeightProperty, value); }
+            get => (double)GetValue(MaxDropDownHeightProperty);
+            set => SetValue(MaxDropDownHeightProperty, value);
         }
 
-        public static readonly DependencyProperty MaxDropDownHeightProperty =
-            DependencyProperty.Register("MaxDropDownHeight", typeof(double), typeof(DropDownButton), new PropertyMetadata(double.PositiveInfinity, OnMaxDropDownHeightChanged));
+        public static readonly DependencyProperty MaxDropDownHeightProperty = DependencyProperty.Register("MaxDropDownHeight", typeof(double), typeof(DropDownButton), new PropertyMetadata(double.PositiveInfinity, OnMaxDropDownHeightChanged));
 
         private static void OnMenuChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var dropDownButton = (DropDownButton)d;
-            var contextMenu = (ContextMenu)e.NewValue;
-            if (dropDownButton.DataContext != null)
-                contextMenu.DataContext = dropDownButton.DataContext;
-            if (contextMenu != null && contextMenu.Style == null)
+            DropDownButton _DropDownButton = (DropDownButton)d;
+            ContextMenu _ContextMenu = (ContextMenu)e.NewValue;
+            if (_DropDownButton.DataContext != null)
+                _ContextMenu.DataContext = _DropDownButton.DataContext;
+            if (_ContextMenu != null && _ContextMenu.Style == null)
             {
-                contextMenu.Style = (Style)Application.Current.Resources["ScrollableContextMenu"];
-                contextMenu.MaxHeight = dropDownButton.MaxDropDownHeight;
+                _ContextMenu.Style = (Style)Application.Current.Resources["ScrollableContextMenu"];
+                _ContextMenu.MaxHeight = _DropDownButton.MaxDropDownHeight;
             }
         }
 
         private static void OnMaxDropDownHeightChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var dropDownButton = (DropDownButton)d;
-            if (dropDownButton.Menu != null)
-                dropDownButton.Menu.MaxHeight = (double)e.NewValue;
+            DropDownButton _DropDownButton = (DropDownButton)d;
+            _DropDownButton.Menu?.MaxHeight = (double)e.NewValue;
         }
 
         protected override void OnClick()
@@ -81,8 +79,7 @@ namespace WinUI
 
         public void CloseMenu()
         {
-            if (Menu != null)
-                Menu.IsOpen = false;
+            Menu?.IsOpen = false;
         }
     }
 }

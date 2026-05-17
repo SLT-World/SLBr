@@ -559,7 +559,7 @@ namespace SLBr
         private bool _PDFViewer = true;
         public bool PDFViewer
         {
-            get { return _PDFViewer; }
+            get => _PDFViewer;
             set
             {
                 _PDFViewer = value;
@@ -1179,10 +1179,7 @@ namespace SLBr
             WebView = _Handler;
         }
 
-        bool IResourceRequestHandlerFactory.HasHandlers
-        {
-            get { return WebViewManager.OverrideRequests.Count > 0; }
-        }
+        bool IResourceRequestHandlerFactory.HasHandlers => !WebViewManager.OverrideRequests.IsEmpty;
 
         IResourceRequestHandler IResourceRequestHandlerFactory.GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
         {

@@ -77,10 +77,7 @@ namespace SLBr.Controls
             ApplyColor(_Color);
         }
 
-        public SolidColorBrush UserInput
-        {
-            get { return (SolidColorBrush)PreviewBox.Fill; }
-        }
+        public SolidColorBrush UserInput => (SolidColorBrush)PreviewBox.Fill;
 
         private void HexInputTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {

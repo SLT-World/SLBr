@@ -1236,7 +1236,6 @@ namespace SLBr.Pages
                 _TabItem.BorderBrush = new SolidColorBrush(App.Instance.CurrentTheme.BorderColor);
             }
         }
-
         private async void HandleInternalMessage(Dictionary<string, object> Message)
         {
             if (!Message.TryGetValue("function", out object? Value))
@@ -2183,32 +2182,11 @@ namespace SLBr.Pages
                     PTitle = WebView?.Title != null && WebView?.Title.Trim().Length > 0 ? WebView?.Title : Utils.CleanUrl(Address);
                 return PTitle;
             }
-            set
-            {
-                PTitle = value;
-            }
+            set => PTitle = value;
         }
-        public bool CanGoBack
-        {
-            get
-            {
-                return WebView?.CanGoBack ?? false;
-            }
-        }
-        public bool CanGoForward
-        {
-            get
-            {
-                return WebView?.CanGoForward ?? false;
-            }
-        }
-        public bool IsLoading
-        {
-            get
-            {
-                return WebView?.IsLoading ?? false;
-            }
-        }
+        public bool CanGoBack => WebView?.CanGoBack ?? false;
+        public bool CanGoForward => WebView?.CanGoForward ?? false;
+        public bool IsLoading => WebView?.IsLoading ?? false;
 
         public void Unload()
         {
@@ -2602,14 +2580,17 @@ namespace SLBr.Pages
         bool PIsReaderMode = false;
         bool IsReaderMode
         {
-            get { return PIsReaderMode; }
+            get => PIsReaderMode;
             set
             {
+                if (PIsReaderMode != value)
+                {
+                    if (value)
+                        Dispatcher.BeginInvoke(() => ReaderModeButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
+                    else
+                        Dispatcher.BeginInvoke(() => ReaderModeButton.ClearValue(ForegroundProperty));
+                }
                 PIsReaderMode = value;
-                if (value)
-                    Dispatcher.BeginInvoke(() => ReaderModeButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
-                else
-                    Dispatcher.BeginInvoke(() => ReaderModeButton.ClearValue(ForegroundProperty));
             }
         }
         public async void ToggleReaderMode()
@@ -2767,14 +2748,17 @@ namespace SLBr.Pages
         bool PrivateTranslate = false;
         bool Translated
         {
-            get {  return PrivateTranslate; }
+            get => PrivateTranslate;
             set
             {
+                if (PrivateTranslate != value)
+                {
+                    if (value)
+                        Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
+                    else
+                        Dispatcher.BeginInvoke(() => TranslateButton.ClearValue(ForegroundProperty));
+                }
                 PrivateTranslate = value;
-                if (value)
-                    Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
-                else
-                    Dispatcher.BeginInvoke(() => TranslateButton.ClearValue(ForegroundProperty));
             }
         }
 
@@ -3038,13 +3022,13 @@ namespace SLBr.Pages
                     });
                     return;
                 }
-                WebView.ExecuteScript(string.Format(Scripts.SetTranslationText, JsonSerializer.Serialize(TranslatedTexts)));
                 Translated = true;
                 Dispatcher.BeginInvoke(() =>
                 {
                     TranslateLoadingPanel.Visibility = Visibility.Collapsed;
                     TranslateButton.ClosePopup();
                 });
+                WebView.ExecuteScript(string.Format(Scripts.SetTranslationText, JsonSerializer.Serialize(TranslatedTexts)));
             }
             catch { }
         }
