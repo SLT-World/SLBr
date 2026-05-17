@@ -1531,51 +1531,11 @@ namespace SLBr
         {
             AutomaticDecompression = DecompressionMethods.All,
             EnableMultipleHttp2Connections = true,
-            //EnableMultipleHttp3Connections = true,
+            EnableMultipleHttp3Connections = true,
             PooledConnectionLifetime = TimeSpan.FromMinutes(15),
-            ConnectCallback = async (Context, CancellationToken) =>
-            {
-                IPAddress[] IPAddresses = await Dns.GetHostAddressesAsync(Context.DnsEndPoint.Host, CancellationToken).ConfigureAwait(false);
-                IPAddress[] IPv4Addresses = IPAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetwork).ToArray();
-                IPAddress[] TargetAddresses;
-                AddressFamily TargetFamily;
-                if (IPv4Addresses.Length > 0)
-                {
-                    TargetAddresses = IPv4Addresses;
-                    TargetFamily = AddressFamily.InterNetwork;
-                }
-                else 
-                {
-                    IPAddress[] IPv6Addresses = IPAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetworkV6).ToArray();
-                    if (IPv6Addresses.Length > 0)
-                    {
-                        TargetAddresses = IPv6Addresses;
-                        TargetFamily = AddressFamily.InterNetworkV6;
-                    }
-                    else
-                    {
-                        TargetAddresses = IPAddresses;
-                        TargetFamily = AddressFamily.Unspecified;
-                    }
-                }
-                Socket _Socket = new(TargetFamily, SocketType.Stream, ProtocolType.Tcp)
-                {
-                    NoDelay = true
-                };
-                try
-                {
-                    await _Socket.ConnectAsync(TargetAddresses, Context.DnsEndPoint.Port, CancellationToken).ConfigureAwait(false);
-                    return new NetworkStream(_Socket, true);
-                }
-                catch
-                {
-                    _Socket.Dispose();
-                    throw;
-                }
-            }
         })
         {
-            //DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
         };
         /*public static HttpClient MimicHttpClient = new(new SocketsHttpHandler
         {
