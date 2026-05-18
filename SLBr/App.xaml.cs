@@ -1940,7 +1940,7 @@ namespace SLBr
 
         /*public static async Task ReportInfo(string Content)
         {
-            //Implement ntfy.sh service.
+            //TODO
         }*/
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
@@ -1995,7 +1995,7 @@ namespace SLBr
 
         private static string FormatInnerException(Exception Error)
         {
-            var Builder = new StringBuilder();
+            StringBuilder Builder = new();
             int Depth = 0;
 
             while (Error.InnerException != null)
@@ -3514,7 +3514,7 @@ Inner Exception: {7}";
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(15), (int)Key.J, true, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(16), (int)Key.F, false, false, true));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(16), (int)Key.E, false, false, true));
-            HotKeyManager.HotKeys.Add(new HotKey(() => SwitchUserPopup(), (int)Key.M, true, true, false));
+            HotKeyManager.HotKeys.Add(new HotKey(SwitchUserPopup, (int)Key.M, true, true, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(17), (int)Key.U, true, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(18), (int)Key.Home, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(19), (int)Key.End, false, false, false));

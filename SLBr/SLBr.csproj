@@ -43,16 +43,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Benchmark.cs" />
     <Compile Remove="Controls\ReportWindow.xaml.cs" />
-    <Compile Remove="WebViewDemo.xaml.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="App.xaml.cs~RF3366dde.TMP" />
-    <None Remove="Fonts\SLBr Icons.ttf" />
-    <None Remove="Resources\SLBr.png" />
-    <None Remove="WinUIControls\5bmhprik.cf5~" />
-    <None Remove="WinUIStyleDictionary.xaml~RF21739d47.TMP" />
   </ItemGroup>
 
   <ItemGroup>
@@ -78,6 +70,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Benchmark.cs">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
     <None Include="Controls\ReportWindow.xaml" />
     <None Include="Controls\ReportWindow.xaml.cs" />
   </ItemGroup>
@@ -85,7 +80,7 @@
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="147.0.100" />
     <PackageReference Include="Google.Protobuf" Version="3.34.1" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3965-prerelease" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3967.48" />
   </ItemGroup>
 
   <ItemGroup>
@@ -93,9 +88,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Benchmark.cs">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Compile>
     <Compile Update="Pages\DownloadsPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
