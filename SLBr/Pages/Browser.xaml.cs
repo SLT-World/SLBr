@@ -727,7 +727,7 @@ namespace SLBr.Pages
             if (App.Instance.AdBlock == 1)
             {
                 bool ContinueAdBlock = true;
-                if (string.IsNullOrEmpty(e.FocusedUrl))
+                if (!string.IsNullOrEmpty(e.FocusedUrl))
                 {
                     string Host = Utils.FastHost(e.FocusedUrl);
                     if (App.Instance.AdBlockAllowList.Has(Host))
@@ -2516,7 +2516,9 @@ namespace SLBr.Pages
 
                                         int DevToolsWindowStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE);
                                         DevToolsWindowStyle &= ~(DllUtils.WS_OVERLAPPEDWINDOW | DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX | DllUtils.WS_SYSMENU);
-                                        DevToolsWindowStyle |= DllUtils.WS_CHILD | DllUtils.WS_VISIBLE;
+                                        //NOTE: Discovery courtesy of SLT's UltralightWPF project.
+                                        //WARNING: Do not include WS_CHILD.
+                                        DevToolsWindowStyle |= DllUtils.WS_VISIBLE;
                                         DllUtils.SetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE, DevToolsWindowStyle);
 
                                         int DevToolsWindowExStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_EXSTYLE);
@@ -2530,8 +2532,6 @@ namespace SLBr.Pages
                                         
                                         UpdateDevToolsPosition();
                                         DevToolsHost.SizeChanged += (s, e) => UpdateDevToolsPosition();
-                                        if (PresentationSource.FromVisual(DevToolsHost) is HwndSource HostSource)
-                                            HostSource.AddHook(DevToolsWndProc);
                                     }
                                 }
                             });
@@ -2540,35 +2540,6 @@ namespace SLBr.Pages
                 };
             }
             SideBar.Visibility = IsUtilityContainerOpen ? Visibility.Visible : Visibility.Collapsed;
-        }
-        private IntPtr DevToolsWndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            //TODO: Remove stopgap solution.
-            switch (msg)
-            {
-                /*case DllUtils.WM_CHAR:
-                    Debug.WriteLine($"Text: {(char)wParam}");
-                    DllUtils.PostMessage(WebView2DevToolsHWND, (uint)DllUtils.WM_CHAR, wParam, lParam);
-                    handled = true;
-                    break;*/
-                case DllUtils.WM_KEYDOWN:
-                case DllUtils.WM_KEYUP:
-                    DllUtils.POINT ScreenPoint;
-                    if (DllUtils.GetCursorPos(out ScreenPoint))
-                    {
-                        DllUtils.POINT ClientPoint = ScreenPoint;
-                        DllUtils.ScreenToClient(DevToolsHost.Handle, ref ClientPoint);
-                        if (ClientPoint.X >= 0 && ClientPoint.X <= DevToolsHost.ActualWidth && ClientPoint.Y >= 0 && ClientPoint.Y <= DevToolsHost.ActualHeight)
-                        {
-                            Keyboard.ClearFocus();
-                            FocusManager.SetFocusedElement(FocusManager.GetFocusScope(this), null);
-                            DllUtils.PostMessage(WebView2DevToolsHWND, (uint)msg, wParam, lParam);
-                            handled = true;
-                        }
-                    }
-                    break;
-            }
-            return IntPtr.Zero;
         }
 
         public void UpdateDevToolsPosition()

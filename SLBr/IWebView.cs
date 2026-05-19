@@ -1848,6 +1848,7 @@ namespace SLBr
             BrowserCore.Settings.AreDefaultScriptDialogsEnabled = false;
             //Core.Settings.HiddenPdfToolbarItems = CoreWebView2PdfToolbarItems.Bookmarks;
             BrowserCore.Settings.IsWebMessageEnabled = Settings.JavaScriptMessage;
+            //WARNING: WebView2 prerelease NuGet package required.
             if (WebViewManager.Settings.Performance == PerformancePreset.High)
             {
                 BrowserCore.Settings.PreferredForegroundTimerWakeInterval = TimeSpan.FromMilliseconds(4);

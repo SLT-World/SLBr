@@ -126,7 +126,7 @@ namespace SLBr
     public class DomainList : IEnumerable<string>
     {
         private readonly TrieNode Root = new();
-        public readonly HashSet<string> AllDomains = [];
+        public readonly FastHashSet<string> AllDomains = [];
 
         public void Add(string Domain)
         {
@@ -206,7 +206,7 @@ namespace SLBr
 
         class TrieNode
         {
-            public Dictionary<string, TrieNode> Children = new();
+            public Dictionary<string, TrieNode> Children = [];
             public bool IsEnd = false;
             public bool Wildcard = false;
         }
