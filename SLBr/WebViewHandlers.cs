@@ -592,7 +592,7 @@ namespace SLBr
         {
             if (ShowDialog)
             {
-                SaveFileDialog SaveDialog = new SaveFileDialog
+                SaveFileDialog SaveDialog = new()
                 {
                     Filter = string.IsNullOrEmpty(DialogFilter) ? "All Files (*.*)|*.*" : DialogFilter,
                     //https://learn.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/dd459587(v=vs.95) Guide on proper file dialog wild cards

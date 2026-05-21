@@ -844,13 +844,13 @@ namespace SLBr.Pages
                 {
                     if (Utils.IsHttpScheme(e.Url))
                     {
-                        if (!Private && App.Instance.WebRiskService != WebRiskHandler.SecurityService.None && Utils.GetFileExtension(e.Url) != ".pdf")
+                        if (!Private && App.Instance.WebRiskService != WebSecurityService.None && Utils.GetFileExtension(e.Url) != ".pdf")
                         {
                             //TODO: Async & CancellationToken.
-                            WebRiskHandler.ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
-                            if (_ThreatType is WebRiskHandler.ThreatType.Malware or WebRiskHandler.ThreatType.Unwanted_Software)
+                            ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
+                            if (_ThreatType is ThreatType.Malware or ThreatType.Unwanted_Software)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskError, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
-                            else if (_ThreatType == WebRiskHandler.ThreatType.Social_Engineering)
+                            else if (_ThreatType == ThreatType.Social_Engineering)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskError, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                         }
                     }
@@ -2515,7 +2515,7 @@ namespace SLBr.Pages
                                         App.Instance.WebView2DevTools.Add(WebView2DevToolsHWND);
 
                                         int DevToolsWindowStyle = DllUtils.GetWindowLong(WebView2DevToolsHWND, DllUtils.GWL_STYLE);
-                                        DevToolsWindowStyle &= ~(DllUtils.WS_OVERLAPPEDWINDOW | DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX | DllUtils.WS_SYSMENU);
+                                        DevToolsWindowStyle &= ~(DllUtils.WS_POPUP | DllUtils.WS_OVERLAPPED | DllUtils.WS_CAPTION | DllUtils.WS_THICKFRAME | DllUtils.WS_MINIMIZEBOX | DllUtils.WS_MAXIMIZEBOX | DllUtils.WS_SYSMENU);
                                         //NOTE: Discovery courtesy of SLT's UltralightWPF project.
                                         //WARNING: Do not include WS_CHILD.
                                         DevToolsWindowStyle |= DllUtils.WS_VISIBLE;
@@ -2545,7 +2545,9 @@ namespace SLBr.Pages
         public void UpdateDevToolsPosition()
         {
             if (WebView2DevToolsHWND == IntPtr.Zero) return;
-            DllUtils.SetWindowPos(WebView2DevToolsHWND, IntPtr.Zero, -7, -30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOZORDER | DllUtils.SWP_FRAMECHANGED | DllUtils.SWP_SHOWWINDOW);
+            //TODO: Resolve resize issue.
+            //The absence of WS_CHILD breaks the window resizing loop.
+            DllUtils.SetWindowPos(WebView2DevToolsHWND, IntPtr.Zero, -7, -30, (int)DevToolsHost.ActualWidth + 14, (int)DevToolsHost.ActualHeight + 37, DllUtils.SWP_NOZORDER | DllUtils.SWP_FRAMECHANGED | DllUtils.SWP_NOACTIVATE);
         }
 
         bool PIsReaderMode = false;
@@ -3711,18 +3713,17 @@ namespace SLBr.Pages
             string ProcessedText = CurrentText.Trim();
             if (!string.IsNullOrEmpty(ProcessedText))
             {
-                SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
                 SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
                 string FirstType = App.GetMiniSearchType(ProcessedText);
                 bool SmartSuggestions = bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions"));
                 if (FirstType == "W")
                 {
                     Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, LinkColor, "- Visit", null, OmniBoxOverrideSearch));
-                    Suggestions.Add(App.GenerateSuggestion(ProcessedText, "S", Color, "- Search", $"search:{ProcessedText}", OmniBoxOverrideSearch));
+                    Suggestions.Add(App.GenerateSuggestion(ProcessedText, "S", null, "- Search", $"search:{ProcessedText}", OmniBoxOverrideSearch));
                 }
                 else
                 {
-                    Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, Color, "", null, OmniBoxOverrideSearch));
+                    Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, null, "", null, OmniBoxOverrideSearch));
                     if (SmartSuggestions)
                     {
                         foreach (Match _Match in Utils.UrlRegex().Matches(ProcessedText))
@@ -3778,7 +3779,7 @@ namespace SLBr.Pages
                             {
                                 if (Search.Name.StartsWith(OmniBox.Text[1..], StringComparison.OrdinalIgnoreCase))
                                 {
-                                    OmniSuggestion Suggestion = new() { ProviderOverride = Search, Text = $"@{Search.Name.ToLower()}", Display = $"@{Search.Name.ToLower()}", Color = Color, SubText = $"- Search {Search.Name}" };
+                                    OmniSuggestion Suggestion = new() { ProviderOverride = Search, Text = $"@{Search.Name.ToLower()}", Display = $"@{Search.Name.ToLower()}", SubText = $"- Search {Search.Name}" };
                                     switch (Search.Name)
                                     {
                                         case "Tabs":
@@ -3800,7 +3801,7 @@ namespace SLBr.Pages
                             }
                             else
                             {
-                                OmniSuggestion Suggestion = new() { ProviderOverride = Search, Text = $"@{Search.Name.ToLower()}", Display = $"@{Search.Name.ToLower()}", Color = Color, SubText = $"- Search {Search.Name}" };
+                                OmniSuggestion Suggestion = new() { ProviderOverride = Search, Text = $"@{Search.Name.ToLower()}", Display = $"@{Search.Name.ToLower()}", SubText = $"- Search {Search.Name}" };
                                 switch (Search.Name)
                                 {
                                     case "Tabs":
@@ -4009,8 +4010,7 @@ namespace SLBr.Pages
             SmartSuggestionCancellation?.Cancel();
             SmartSuggestionCancellation = new CancellationTokenSource();
             var Token = SmartSuggestionCancellation.Token;
-            SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
-            OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type, Color);
+            OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type);
             if (!Token.IsCancellationRequested)
             {
                 Suggestions.RemoveAt(0);

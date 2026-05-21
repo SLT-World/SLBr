@@ -683,6 +683,16 @@ namespace SLBr
                 RaisePropertyChanged();
             }
         }
+        private SolidColorBrush PColor;
+        public SolidColorBrush Color
+        {
+            get => PColor;
+            set
+            {
+                PColor = value;
+                RaisePropertyChanged();
+            }
+        }
 
         private Visibility POpen;
         public Visibility Open
@@ -877,10 +887,11 @@ namespace SLBr
         }
         public ObservableCollection<DownloadEntry> VisibleDownloads = [];
         public Dictionary<string, WebDownloadItem> Downloads = [];
-        public void UpdateDownloadItem(WebDownloadItem Item)
+        public async void UpdateDownloadItem(WebDownloadItem Item)
         {
             Downloads[Item.ID] = Item;
-            Dispatcher.BeginInvoke(() =>
+#pragma warning disable CS4014
+            Dispatcher.BeginInvoke(async () =>
             {
                 foreach (MainWindow _Window in AllWindows)
                     _Window.TaskbarItem.ProgressValue = Item.State == WebDownloadState.Completed ? 0 : Item.Progress;
@@ -932,6 +943,34 @@ namespace SLBr
                         _Entry.Open = Visibility.Visible;
                         _Entry.Stop = Visibility.Collapsed;
                         _Entry.Progress = Visibility.Collapsed;
+                        if (DownloadSecurityService != DownloadSecurityService.None)
+                        {
+                            try
+                            {
+                                DownloadVerdict Verdict = await _DownloadRiskHandler.IsSafe(Item.FullPath, Item.Url, DownloadSecurityService);
+                                switch (Verdict)
+                                {
+                                    case DownloadVerdict.Dangerous:
+                                        File.Delete(Item.FullPath);
+                                        _Entry.Icon = "\uea39";
+                                        _Entry.FormattedProgress = "Dangerous - Blocked";
+                                        _Entry.Color = RedColor;
+                                        _Entry.Open = Visibility.Collapsed;
+                                        break;
+                                    case DownloadVerdict.Uncommon:
+                                        _Entry.Icon = "\ue7ba";
+                                        _Entry.FormattedProgress = "Suspicious - Complete";
+                                        _Entry.Color = OrangeColor;
+                                        break;
+                                    case DownloadVerdict.DangerousHost:
+                                        _Entry.Icon = "\ue7ba";
+                                        _Entry.FormattedProgress = "Dangerous host - Complete";
+                                        _Entry.Color = OrangeColor;
+                                        break;
+                                }
+                            }
+                            catch { }
+                        }
                     }
                     else if (Item.State == WebDownloadState.Canceled)
                     {
@@ -965,14 +1004,13 @@ namespace SLBr
                         _Entry.Stop = Visibility.Visible;
                         _Entry.Progress = Visibility.Visible;
                     }
-                    /*_Entry.Icon = "\ue7ba"
-                     _Entry.FormattedProgress = "Suspicious download blocked"
-                    _Entry.Icon = "\uea39"
-                     _Entry.FormattedProgress = "Dangerous download blocked"*/
                 }
                 else
+                {
                     VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID });
+                }
             });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
 
         static readonly string[] FileSizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -1437,9 +1475,9 @@ namespace SLBr
             return -1;
         }
 
-        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, int Type, SolidColorBrush Color)
+        public async Task<OmniSuggestion> GenerateSmartSuggestion(string Text, int Type)
         {
-            OmniSuggestion Suggestion = new() { Text = Text, Display = Text, Color = Color, Icon = "\xE721" };
+            OmniSuggestion Suggestion = new() { Text = Text, Display = Text, Icon = "\xE721" };
             switch (Type)
             {
                 case 1:
@@ -2089,12 +2127,20 @@ Inner Exception: {7}";
             ExternalFonts = Toggle;
         }
 
-        public WebRiskHandler.SecurityService WebRiskService;
+        public WebSecurityService WebRiskService;
+        public DownloadSecurityService DownloadSecurityService;
+
+        public void SetDownloadSecurityService(int Service)
+        {
+            GlobalSave.Set("DownloadSecurityService", Service);
+            DownloadSecurityService = (DownloadSecurityService)Service;
+            _DownloadRiskHandler?.SafeHashes.Clear();
+        }
 
         public void SetWebRiskService(int Service)
         {
             GlobalSave.Set("WebRiskService", Service);
-            WebRiskService = (WebRiskHandler.SecurityService)Service;
+            WebRiskService = (WebSecurityService)Service;
             _WebRiskHandler?.SafeHashes.Clear();
             var ToRemove = WebViewManager.OverrideRequests.Where(i => !string.IsNullOrEmpty(i.Value.Error)).Select(i => i.Key);
             foreach (var Key in ToRemove)
@@ -2836,6 +2882,7 @@ Inner Exception: {7}";
                 GlobalSave.Set("FaviconService", 0);
 
             SetWebRiskService(GlobalSave.GetInt("WebRiskService", 1));
+            SetDownloadSecurityService(GlobalSave.GetInt("DownloadSecurityService", 1));
 
             try
             {
@@ -3337,6 +3384,7 @@ Inner Exception: {7}";
         ];
 
         public WebRiskHandler _WebRiskHandler;
+        public DownloadRiskHandler _DownloadRiskHandler;
 
         public string ReleaseVersion;
 
@@ -3466,7 +3514,7 @@ Inner Exception: {7}";
             Settings.GPUAcceleration = bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration"));
             Settings.SpellCheck = bool.Parse(GlobalSave.Get("SpellCheck"));
 
-            SetBrowserFlags(Settings);
+            //SetBrowserFlags(Settings);
 
             WebViewManager.Settings = Settings;
             WebViewManager.RuntimeSettings.PDFViewer = bool.Parse(GlobalSave.Get("PDF"));
@@ -3523,6 +3571,7 @@ Inner Exception: {7}";
             WebViewManager.DownloadManager.DownloadCompleted += UpdateDownloadItem;
 
             _WebRiskHandler = new WebRiskHandler();
+            _DownloadRiskHandler = new DownloadRiskHandler();
 
             switch ((WebEngineType)GlobalSave.GetInt("WebEngine"))
             {

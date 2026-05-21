@@ -1842,7 +1842,7 @@ namespace SLBr
             BrowserCore.Settings.IsSwipeNavigationEnabled = false;
             BrowserCore.Settings.IsPinchZoomEnabled = false;
 
-            BrowserCore.Settings.IsReputationCheckingRequired = Settings.Private ? false : App.Instance.WebRiskService != WebRiskHandler.SecurityService.None;
+            BrowserCore.Settings.IsReputationCheckingRequired = Settings.Private ? false : App.Instance.WebRiskService != WebSecurityService.None;
 
             BrowserCore.Settings.IsGeneralAutofillEnabled = false;
             BrowserCore.Settings.AreDefaultScriptDialogsEnabled = false;

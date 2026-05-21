@@ -157,7 +157,7 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
                                                             <Border Width="30" Height="30" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                                                                <TextBlock Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
+                                                                <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
                                                             </Border>
                                                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                                                 <Grid.RowDefinitions>
@@ -165,7 +165,7 @@
                                                                     <RowDefinition/>
                                                                 </Grid.RowDefinitions>
                                                                 <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
-                                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
                                                             </Grid>
                                                             <Button Grid.Column="2" Width="65" Height="30" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
                                                                 <DockPanel VerticalAlignment="Center">
@@ -431,7 +431,7 @@
                                         <Border Margin="-8,0,5,0" Width="30" Height="30" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}">
                                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
                                         </Border>
-                                        <TextBlock Text="{Binding Display}" Foreground="{Binding Color}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding Display}"  Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                         <TextBlock Text="{Binding SubText}" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </DataTemplate>

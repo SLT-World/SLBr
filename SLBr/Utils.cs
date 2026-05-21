@@ -242,7 +242,7 @@ namespace SLBr
         //public const int WM_KILLFOCUS = 0x0008;
         public const int WM_MOUSEACTIVATE = 0x0021;
         public const int WS_OVERLAPPED = 0x00000000;
-        //public const int WS_POPUP = unchecked((int)0x80000000);
+        public const int WS_POPUP = unchecked((int)0x80000000);
         public const int WS_VISIBLE = 0x10000000;
         //public const int WS_DISABLED = 0x08000000;
         //public const int WS_CLIPSIBLINGS = 0x04000000;
@@ -255,8 +255,6 @@ namespace SLBr
         //public const int WS_TABSTOP = 0x00010000;
         public const int WS_MINIMIZEBOX = 0x00020000;
         public const int WS_MAXIMIZEBOX = 0x00010000;
-
-        public const int WS_OVERLAPPEDWINDOW = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
         //public const int WS_POPUPWINDOW = WS_POPUP | WS_BORDER | WS_SYSMENU;
 

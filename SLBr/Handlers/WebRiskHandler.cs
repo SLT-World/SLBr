@@ -11,24 +11,24 @@ using System.Xml.Linq;
 
 namespace SLBr.Handlers
 {
+    public enum WebSecurityService
+    {
+        None,
+        Google,
+        Yandex,
+        PhishTank
+    }
+
+    public enum ThreatType
+    {
+        Unknown,
+        Malware,
+        Social_Engineering,
+        Unwanted_Software,
+    }
+
     public class WebRiskHandler
     {
-        public enum SecurityService
-        {
-            None,
-            Google,
-            Yandex,
-            PhishTank
-        }
-
-        public enum ThreatType
-        {
-            Unknown,
-            Malware,
-            Social_Engineering,
-            Unwanted_Software,
-        }
-
         const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v5/hashes:search?key=";
         const string YandexEndpoint = "https://sba.yandex.net/v4/threatMatches:find?key=";
         const string PhishTankEndpoint = "https://checkurl.phishtank.com/checkurl/";
@@ -36,7 +36,7 @@ namespace SLBr.Handlers
 
         public FastHashSet<ulong> SafeHashes = [];
 
-        public static ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
+        private static ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
         {
             foreach (FullHash _FullHash in Response.FullHashes)
             {
@@ -59,7 +59,7 @@ namespace SLBr.Handlers
             }
             return ThreatType.Unknown;
         }
-        public static SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
+        private static SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
         {
             HttpClientInstance ??= new(new SocketsHttpHandler
             {
@@ -87,7 +87,7 @@ namespace SLBr.Handlers
         }
 
 
-        public static ThreatType SBv4GetThreatType(string Data)
+        private static ThreatType SBv4GetThreatType(string Data)
         {
             if (Data.Length > 2)
             {
@@ -118,7 +118,7 @@ namespace SLBr.Handlers
             }
             return ThreatType.Unknown;
         }
-        public static string SBv4Response(string Url, string Endpoint)
+        private static string SBv4Response(string Url, string Endpoint)
         {
             HttpClientInstance ??= new(new SocketsHttpHandler
             {
@@ -150,7 +150,7 @@ namespace SLBr.Handlers
             return "{}";
         }
 
-        public static ThreatType PTCheck(string Url, string APIKey)
+        private static ThreatType PTCheck(string Url, string APIKey)
         {
             HttpClientInstance ??= new(new SocketsHttpHandler
             {
@@ -199,7 +199,7 @@ namespace SLBr.Handlers
         }
 
 
-        public ThreatType IsSafe(string Url, SecurityService Service = SecurityService.Google)
+        public ThreatType IsSafe(string Url, WebSecurityService Service = WebSecurityService.Google)
         {
             byte[] LocalHash = SHA256.HashData(Encoding.UTF8.GetBytes(Utils.CleanUrl(Url, true, false, true, false, true)));
             ulong HashKey = BitConverter.ToUInt64(LocalHash, 0);
@@ -208,17 +208,17 @@ namespace SLBr.Handlers
             ThreatType Result = ThreatType.Unknown;
             switch (Service)
             {
-                case SecurityService.Google:
+                case WebSecurityService.Google:
                     Result = SBv5GetThreatType(SBv5Response(LocalHash, GoogleEndpoint + SECRETS.GOOGLE_API_KEY), LocalHash);
                     break;
-                case SecurityService.Yandex:
+                case WebSecurityService.Yandex:
                     //TODO: Implement Yandex Hash-based check.
                     //https://yandex.com/dev/safebrowsing/doc/en/concepts/url-hash
                     //https://yandex.com/dev/safebrowsing/doc/en/concepts/update-fullhashes-find
                     //https://yandex.com/dev/safebrowsing/doc/en/
                     Result = SBv4GetThreatType(SBv4Response(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
                     break;
-                case SecurityService.PhishTank:
+                case WebSecurityService.PhishTank:
                     Result = PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
                     break;
             }

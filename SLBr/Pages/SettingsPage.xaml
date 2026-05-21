@@ -450,6 +450,13 @@
                                         <ComboBoxItem>PhishTank</ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
+                                <DockPanel Margin="0,0,0,5">
+                                    <TextBlock VerticalAlignment="Center" Text="Download Security Service"/>
+                                    <ComboBox x:Name="DownloadSecurityServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="DownloadSecurityServiceComboBox_SelectionChanged">
+                                        <ComboBoxItem>Disabled</ComboBoxItem>
+                                        <ComboBoxItem>Google Safe Browsing</ComboBoxItem>
+                                    </ComboBox>
+                                </DockPanel>
                                 <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
                                     Edge web views will rely on Microsoft Defender SmartScreen if not disabled.
                                     <LineBreak/>

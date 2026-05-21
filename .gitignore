@@ -5,7 +5,7 @@
 **/obj
 SECRETS.cs
 
-SLBr/Handlers/SearchHashes.cs
+**/Generated
 
 .vs/
 MigrationBackup/

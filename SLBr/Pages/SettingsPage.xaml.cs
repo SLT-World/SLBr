@@ -346,6 +346,7 @@ namespace SLBr.Pages
 
             AdBlockComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("AdBlock");
             WebRiskServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebRiskService");
+            DownloadSecurityServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("DownloadSecurityService");
 
             TrimURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TrimURL"));
             PunycodeURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PunycodeURL"));
@@ -749,6 +750,11 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetWebRiskService(WebRiskServiceComboBox.SelectedIndex);
+        }
+        private void DownloadSecurityServiceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetDownloadSecurityService(DownloadSecurityServiceComboBox.SelectedIndex);
         }
         private void TabAlignmentComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
