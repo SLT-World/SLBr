@@ -2199,6 +2199,8 @@ Inner Exception: {7}";
         }
         public void SetAdBlock(int Type)
         {
+            if (Type > 1)
+                Type = 1;
             GlobalSave.Set("AdBlock", Type);
             AdBlock = Type;
             if (AdBlock != 0 && _AdBlockHandler == null)
@@ -2220,12 +2222,6 @@ Inner Exception: {7}";
                     foreach (string FileContent in Results)
                         _AdBlockHandler.ParseAdd(FileContent);
                 });
-            }
-            bool EfficientMode = AdBlock == 2;
-            foreach (MainWindow _Window in AllWindows)
-            {
-                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
-                    BrowserView.ToggleEfficientAdBlock(EfficientMode);
             }
         }
         public void SetAMP(bool Toggle)

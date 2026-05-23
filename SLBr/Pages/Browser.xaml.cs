@@ -496,6 +496,24 @@ namespace SLBr.Pages
             WebView?.StatusMessage += WebView_StatusMessage;
             WebView?.TitleChanged += WebView_TitleChanged;
             WebView?.AudioPlayingChanged += WebView_AudioPlayingChanged;
+            /*WebView.FaviconChanged += (s, e) => Debug.WriteLine("WebView: FaviconChanged");
+            WebView.AuthenticationRequested += (s, e) => Debug.WriteLine("WebView: AuthenticationRequested");
+            WebView.BeforeNavigation += (s, e) => Debug.WriteLine("WebView: BeforeNavigation");
+            WebView.ContextMenuRequested += (s, e) => Debug.WriteLine("WebView: ContextMenuRequested");
+            WebView.ExternalProtocolRequested += (s, e) => Debug.WriteLine("WebView: ExternalProtocolRequested");
+            WebView.FrameLoadStart += (s, e) => Debug.WriteLine("WebView: FrameLoadStart");
+            WebView.FullscreenChanged += (s, e) => Debug.WriteLine("WebView: FullscreenChanged");
+            WebView.JavaScriptMessageReceived += (s, e) => Debug.WriteLine("WebView: JavaScriptMessageReceived");
+            WebView.LoadingStateChanged += (s, e) => Debug.WriteLine("WebView: LoadingStateChanged");
+            WebView.NavigationError += (s, e) => Debug.WriteLine("WebView: NavigationError");
+            WebView.NewTabRequested += (s, e) => Debug.WriteLine("WebView: NewTabRequested");
+            WebView.PermissionRequested += (s, e) => Debug.WriteLine("WebView: PermissionRequested");
+            WebView.ResourceLoaded += (s, e) => Debug.WriteLine("WebView: ResourceLoaded");
+            WebView.ResourceRequested += (s, e) => Debug.WriteLine("WebView: ResourceRequested");
+            WebView.ScriptDialogOpened += (s, e) => Debug.WriteLine("WebView: ScriptDialogOpened");
+            WebView.StatusMessage += (s, e) => Debug.WriteLine("WebView: StatusMessage");
+            WebView.TitleChanged += (s, e) => Debug.WriteLine("WebView: TitleChanged");
+            WebView.AudioPlayingChanged += (s, e) => Debug.WriteLine("WebView: AudioPlayingChanged");*/
 
             CoreContainer.Visibility = Visibility.Collapsed;
             CoreContainer.Children.Add(WebView?.Control);
@@ -520,7 +538,6 @@ namespace SLBr.Pages
                     float Bandwidth = float.Parse(App.Instance.GlobalSave.Get("Bandwidth"));
                     LimitNetwork(0, Bandwidth, Bandwidth);
                 }
-                await ToggleEfficientAdBlock(App.Instance.AdBlock == 2);
                 //TODO: Apply UA branding on Edge & Trident web views.
                 UserAgentBranding = !Private && WebView.Engine == WebEngineType.Chromium;
                 if (UserAgentBranding)
@@ -727,6 +744,7 @@ namespace SLBr.Pages
             }
             if (App.Instance.AdBlock == 1)
             {
+                Debug.WriteLine(e.Url);
                 if (App.Instance._AdBlockHandler.ShouldBlockRequest(e.Url, e.FocusedUrl, e.ResourceRequestType))
                 {
                     Interlocked.Increment(ref App.Instance.AdsBlocked);
@@ -1716,27 +1734,6 @@ namespace SLBr.Pages
         }
 
         bool IsCustomTheme = false;
-        bool DevToolsAdBlock = false;
-
-        public async Task ToggleEfficientAdBlock(bool Boolean)
-        {
-            if (WebView == null || !WebView.IsBrowserInitialized)
-                return;
-            AdBlockToggleButton.IsEnabled = !Boolean;
-            AdBlockContainer.ToolTip = Boolean ? "Whitelist is unavailable in efficient ad block mode." : string.Empty;
-            if (Boolean && !DevToolsAdBlock)
-            {
-                await WebView?.CallDevToolsAsync("Network.enable");
-                await WebView?.CallDevToolsAsync("Network.setBlockedURLs", new { urls = App.Instance._AdBlockHandler.Domains.AllDomains.ToArray() });
-                DevToolsAdBlock = true;
-            }
-            else if (!Boolean && DevToolsAdBlock)
-            {
-                await WebView?.CallDevToolsAsync("Network.setBlockedURLs", new { urls = Array.Empty<string>() });
-                await WebView?.CallDevToolsAsync("Network.disable");
-                DevToolsAdBlock = false;
-            }
-        }
 
         WebAppManifest? CurrentWebAppManifest;
         string CurrentWebAppManifestUrl;

@@ -417,7 +417,6 @@
                                     <ComboBox x:Name="AdBlockComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="AdBlockComboBox_SelectionChanged">
                                         <ComboBoxItem>Disabled</ComboBoxItem>
                                         <ComboBoxItem>Standard</ComboBoxItem>
-                                        <ComboBoxItem>Efficient</ComboBoxItem>
                                     </ComboBox>
                                 </DockPanel>
                             </StackPanel>

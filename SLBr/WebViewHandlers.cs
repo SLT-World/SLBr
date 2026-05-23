@@ -430,18 +430,17 @@ namespace SLBr
         {
             try
             {
-                Uri _Uri = new(Url);
-                string Host = _Uri.Host.ToLower();
+                string Host = Utils.Host(Url);
                 string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris", "favourites"];
                 if (SLBrURLs.Contains(Host))
                 {
-                    string Page = _Uri.AbsolutePath.TrimStart('/');
+                    string Page = Url.TrimStart('/');
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;
                     if (string.IsNullOrWhiteSpace(Page) && Host == "newtab")
                     {
                         if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
                             FileName = "guest.html";
-                        if (Extra == "1")
+                        else if (Extra == "1")
                             FileName = "private.html";
                     }
                     string FilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", FileName);
@@ -482,8 +481,7 @@ namespace SLBr
             return false;
         }
 
-        public static bool UnregisterOverrideRequest(string Url) =>
-            OverrideRequests.TryRemove(Url, out _);
+        public static bool UnregisterOverrideRequest(string Url) => OverrideRequests.TryRemove(Url, out _);
         public static ConcurrentDictionary<string, RequestOverrideItem> OverrideRequests = new(StringComparer.OrdinalIgnoreCase);
     }
 
@@ -790,14 +788,9 @@ namespace SLBr
                 bool HasShift = modifiers == CefEventFlags.ShiftDown;
                 bool HasAlt = modifiers == CefEventFlags.AltDown;
                 int WPFKeyCode = (int)KeyInterop.KeyFromVirtualKey(windowsKeyCode);
-                foreach (HotKey Key in HotKeyManager.HotKeys)
-                {
-                    if (Key.KeyCode == WPFKeyCode && Key.Control == HasControl && Key.Shift == HasShift && Key.Alt == HasAlt)
-                    {
-                        Application.Current?.Dispatcher.Invoke(() => Key.Callback());
-                        break;
-                    }
-                }
+                HotKey? Key = HotKeyManager.HotKeys.FirstOrDefault(i => i.KeyCode == WPFKeyCode && i.Control == HasControl && i.Shift == HasShift && i.Alt == HasAlt);
+                if (Key != null)
+                    Application.Current?.Dispatcher.BeginInvoke(() => Key.Callback());
             }
             return false;
         }
@@ -812,10 +805,18 @@ namespace SLBr
 
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
-            ResourceRequestEventArgs Args = new ResourceRequestEventArgs(request.Url, browser.FocusedFrame == null ? string.Empty : browser.FocusedFrame.Url, request.Method, request.ResourceType.ToResourceRequestType(), request.Headers.AllKeys.ToDictionary(i => i, i => request.Headers[i], StringComparer.OrdinalIgnoreCase));
+            Dictionary<string, string> Headers = [with(StringComparer.OrdinalIgnoreCase)];
+            foreach (string? Key in request.Headers.AllKeys)
+                Headers[Key] = request.Headers[Key];
+            ResourceRequestEventArgs Args = new(
+                request.Url,
+                browser.FocusedFrame?.Url ?? string.Empty,
+                request.Method,
+                request.ResourceType.ToResourceRequestType(),
+                Headers
+            );
             WebView.RaiseResourceRequest(Args);
-            if (Args.Cancel)
-                return CefReturnValue.Cancel;
+            if (Args.Cancel) return CefReturnValue.Cancel;
             if (Args.ModifiedHeaders != null && Args.ModifiedHeaders.Count != 0)
             {
                 foreach (var Header in Args.ModifiedHeaders)
@@ -839,7 +840,7 @@ namespace SLBr
         }
         public bool OnProtocolExecution(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request)
         {
-            ExternalProtocolEventArgs Args = new ExternalProtocolEventArgs(request.Url, frame.Url);
+            ExternalProtocolEventArgs Args = new(request.Url, frame.Url);
             WebView.RaiseExternalProtocolRequested(Args);
             if (Args.Launch)
             {
@@ -851,11 +852,7 @@ namespace SLBr
             }
             return true;
         }
-        public void Dispose()
-        {
-            GC.Collect(GC.MaxGeneration);
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() { }
     }
     public class ChromiumPermissionHandler : IPermissionHandler
     {
@@ -1061,16 +1058,9 @@ namespace SLBr
 
         public IResourceHandler Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
         {
-            ChromiumWebView ChromiumWebView = null;
-            foreach (var KeyValue in WebViewManager.ChromiumWebViews)
-            {
-                if (KeyValue.Key.BrowserCore != null && KeyValue.Key.BrowserCore.IsSame(browser))
-                {
-                    ChromiumWebView = KeyValue.Value;
-                    break;
-                }
-            }
-            return new ChromiumResourceHandler(Handler, request.Url, ChromiumWebView?.Settings.Private.ToInt().ToString() ?? string.Empty, ChromiumWebView);
+            ChromiumWebView _ChromiumWebView = WebViewManager.ChromiumWebViews.FirstOrDefault(i => i.Key.BrowserCore != null && i.Key.BrowserCore.IsSame(browser)).Value;
+            //WebViewManager.ChromiumWebViews.TryGetValue(browser, out ChromiumWebView _ChromiumWebView);
+            return new ChromiumResourceHandler(Handler, request.Url, _ChromiumWebView?.Settings.Private.ToInt().ToString() ?? string.Empty, _ChromiumWebView);
         }
     }
     public class ChromiumResourceHandler : ResourceHandler
@@ -1092,45 +1082,46 @@ namespace SLBr
         public override CefReturnValue ProcessRequestAsync(IRequest request, ICallback callback)
         {
             TokenSource = new CancellationTokenSource();
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    var Response = await Handler(Url, Extra, TokenSource.Token);
-
-                    if (TokenSource.IsCancellationRequested || callback.IsDisposed)
-                        return;
-
-                    Stream = new MemoryStream(Response.Data);
-                    MimeType = Response.MimeType;
-                    StatusCode = Response.StatusCode;
-                    StatusText = "OK";
-
-                    callback.Continue();
-
-                    if (Response.ErrorCode != WebErrorCode.None)
-                        WebView?.RaiseNavigationError(new NavigationErrorEventArgs(Response.ErrorCode, "", Url));
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception Exception)
-                {
-                    Stream = GetMemoryStream($"<h1>Protocol error</h1><pre>{WebUtility.HtmlEncode(Exception.Message)}</pre>", Encoding.UTF8, true);
-                    MimeType = "text/html";
-                    StatusCode = 500;
-                    StatusText = "Error";
-                    if (!callback.IsDisposed)
-                        callback.Continue();
-                }
-            });
-
+            _ = ExecuteRequest(callback, TokenSource.Token);
             return CefReturnValue.ContinueAsync;
+        }
+
+        private async Task ExecuteRequest(ICallback Callback, CancellationToken Token)
+        {
+            try
+            {
+                var Response = await Handler(Url, Extra, Token).ConfigureAwait(false);
+
+                if (Token.IsCancellationRequested || Callback.IsDisposed)
+                    return;
+
+                Stream = new MemoryStream(Response.Data, false);
+                MimeType = Response.MimeType;
+                StatusCode = Response.StatusCode;
+                StatusText = "OK";
+
+                if (!Callback.IsDisposed)
+                    Callback.Continue();
+
+                if (Response.ErrorCode != WebErrorCode.None)
+                    WebView?.RaiseNavigationError(new NavigationErrorEventArgs(Response.ErrorCode, string.Empty, Url));
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception Exception)
+            {
+                Stream = new MemoryStream(Encoding.UTF8.GetBytes($"<h1>Protocol error</h1><pre>{WebUtility.HtmlEncode(Exception.Message)}</pre>"), false);
+                MimeType = "text/html";
+                StatusCode = 500;
+                StatusText = "Error";
+                if (!Callback.IsDisposed)
+                    Callback.Continue();
+            }
         }
 
         public override void Dispose()
         {
             TokenSource?.Cancel();
             TokenSource?.Dispose();
-            GC.SuppressFinalize(this);
             base.Dispose();
         }
     }

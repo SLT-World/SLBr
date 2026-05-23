@@ -505,7 +505,9 @@ namespace SLBr
         public string Method { get; } = _Method;
         public ResourceRequestType ResourceRequestType { get; } = _RequestType;
         public Dictionary<string, string> Headers { get; } = _Headers;
-        public Dictionary<string, string> ModifiedHeaders { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        private Dictionary<string, string>? _ModifiedHeaders;
+        public Dictionary<string, string> ModifiedHeaders => _ModifiedHeaders ??= [with(StringComparer.OrdinalIgnoreCase)];
 
         public bool Cancel { get; set; }
     }
@@ -1178,7 +1180,7 @@ namespace SLBr
             Browser = new ChromiumWebBrowser();
             WebViewManager.ChromiumWebViews[Browser] = this;
 
-            BrowserSettings _BrowserSettings = new BrowserSettings()
+            BrowserSettings _BrowserSettings = new()
             {
                 BackgroundColor = 0xFF000000,
                 ChromeStatusBubble = CefState.Disabled,
@@ -1194,12 +1196,12 @@ namespace SLBr
                 _BrowserSettings.Databases = CefState.Disabled;
                 _BrowserSettings.JavascriptAccessClipboard = CefState.Disabled;
                 _BrowserSettings.JavascriptDomPaste = CefState.Disabled;
-                RequestContextSettings ContextSettings = new RequestContextSettings
+                RequestContextSettings ContextSettings = new()
                 {
                     PersistSessionCookies = false,
                     CachePath = null
                 };
-                RequestContext PrivateRequestContext = new RequestContext(ContextSettings);
+                RequestContext PrivateRequestContext = new(ContextSettings);
                 /*IRequestContext _RequestContext = Browser.RequestContext;
                 if (_RequestContext != null && !_RequestContext.IsGlobal)
                 {*/
