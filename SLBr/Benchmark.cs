@@ -45,6 +45,29 @@ namespace SLBr
             });
         }
 
+        public static async Task RunAsync(string Name, int Iterations, Func<Task> Function)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long MemoryBefore = GC.GetTotalMemory(true);
+            Stopwatch _Stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < Iterations; i++)
+                await Function();
+
+            _Stopwatch.Stop();
+            long MemoryAfter = GC.GetTotalMemory(false);
+
+            Results.Add(new Result
+            {
+                Name = Name,
+                Time = _Stopwatch.ElapsedMilliseconds,
+                Memory = MemoryAfter - MemoryBefore
+            });
+        }
+
         public static string Report()
         {
             StringBuilder _String = new StringBuilder();

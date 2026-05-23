@@ -397,21 +397,7 @@
                             </GroupBox.Header>
                             <StackPanel>
                                 <DockPanel Margin="0,0,0,10" LastChildFill="False">
-                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
-                                        <Grid VerticalAlignment="Center">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-                                            <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="&#xeb3b;" FontSize="20" Foreground="{StaticResource FontBrush}" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                            <TextBlock Grid.Row="1" Text="Ads blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                            <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
-                                                <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="125" Height="100">
+                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="150" Height="100">
                                         <Grid VerticalAlignment="Center">
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -419,9 +405,9 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="&#xe7b3;" FontSize="20" Foreground="{StaticResource FontBrush}" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                            <TextBlock Grid.Row="1" Text="Trackers blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
+                                            <TextBlock Grid.Row="1" Text="Ads &amp; trackers blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
                                             <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
-                                                <TextBlock x:Name="TrackersBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                         </Grid>
                                     </Border>

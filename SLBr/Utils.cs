@@ -4,6 +4,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Win32;
+using System.Buffers;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -710,8 +711,9 @@ namespace SLBr
             string[] Words = Input.Split(' ');
             for (int i = 0; i < Words.Length; i++)
             {
-                if (!string.IsNullOrEmpty(Words[i]))
-                    Words[i] = char.ToUpper(Words[i][0]) + Words[i].Substring(1);
+                string Word = Words[i];
+                if (!string.IsNullOrEmpty(Word))
+                    Words[i] = char.ToUpper(Word[0]) + Word[1..];
             }
             return string.Join(" ", Words);
         }
@@ -1095,10 +1097,6 @@ namespace SLBr
 
         public static bool IsProgramUrl(string Url) =>
             Url.StartsWith("callto:") || Url.StartsWith("mailto:") || Url.StartsWith("news:") || Url.StartsWith("feed:");
-        public static bool IsPossiblyAd(ResourceType _ResourceType) =>
-             _ResourceType is ResourceType.Xhr or ResourceType.Media or ResourceType.Script or ResourceType.SubFrame or ResourceType.Image;
-        public static bool IsPossiblyAd(ResourceRequestType _ResourceType) =>
-             _ResourceType is ResourceRequestType.XMLHTTPRequest or ResourceRequestType.Media or ResourceRequestType.Script or ResourceRequestType.SubFrame or ResourceRequestType.Image;
         public static bool IsHttpScheme(string Url) =>
             Url.StartsWith("https:") || Url.StartsWith("http:");
 
@@ -1163,6 +1161,7 @@ namespace SLBr
             }
             return Url.Length > Colon + 2;
         }
+        public static SearchValues<char> HostEndSearchValues = SearchValues.Create("/?#");
         //TODO: Validate domain TLDs from https://data.iana.org/TLD/tlds-alpha-by-domain.txt
         public static bool IsUrl(string Url)
         {
@@ -1201,7 +1200,7 @@ namespace SLBr
                 }
             }
 
-            int HostEnd = _Span.IndexOfAny('/', '?', '#');
+            int HostEnd = _Span.IndexOfAny(HostEndSearchValues);
             ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
 
             if (Protocol == -1 || Scheme is "http" or "https")
@@ -1401,7 +1400,7 @@ namespace SLBr
                     Span = Span[2..];
             }
 
-            int Separator = Span.IndexOfAny('/', '?', '#');
+            int Separator = Span.IndexOfAny(HostEndSearchValues);
             if (Separator >= 0)
                 Span = Span[..Separator];
 
@@ -1512,7 +1511,7 @@ namespace SLBr
             }
             else
             {
-                int HostEnd = Rest.IndexOfAny('/', '?', '#');
+                int HostEnd = Rest.IndexOfAny(HostEndSearchValues);
                 Host = HostEnd >= 0 ? Rest[..HostEnd] : Rest;
                 _Path = HostEnd >= 0 ? Rest[HostEnd..] : ReadOnlySpan<char>.Empty;
             }

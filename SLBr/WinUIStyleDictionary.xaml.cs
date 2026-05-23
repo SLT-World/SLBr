@@ -48,7 +48,7 @@ namespace SLBr
                     if (i == 0 && CurrentTab.Type == BrowserTabType.Navigation)
                         CurrentTab.Content?.Address = Files[i];
                     else
-                        FocusedWindow.NewTab(Files[i], false, NewIndex, CurrentTab.Content != null ? CurrentTab.Content.Private : false, CurrentTab.TabGroup);
+                        FocusedWindow.NewTab(Files[i], false, NewIndex, CurrentTab.Content != null && CurrentTab.Content.Private, CurrentTab.TabGroup);
                 }
                 e.Handled = true;
             }

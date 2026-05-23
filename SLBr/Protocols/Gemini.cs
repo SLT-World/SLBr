@@ -53,7 +53,7 @@ namespace SLBr.Protocols
             Input = Input.Substring(LinkSymbol.Length).Trim();
             if (Input.EndsWith("<br/>"))
                 Input = Input[..^"<br/>".Length].Trim();
-            int FirstWhitespace = Input.IndexOfAny([' ', '\t']);
+            int FirstWhitespace = Input.IndexOfAny(' ', '\t');
             string Url = FirstWhitespace == -1 ? Input : Input[..FirstWhitespace].Trim();
             string Label = FirstWhitespace == -1 ? Input : Input[FirstWhitespace..].Trim();
 

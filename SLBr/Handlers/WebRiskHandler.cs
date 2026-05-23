@@ -32,7 +32,17 @@ namespace SLBr.Handlers
         const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v5/hashes:search?key=";
         const string YandexEndpoint = "https://sba.yandex.net/v4/threatMatches:find?key=";
         const string PhishTankEndpoint = "https://checkurl.phishtank.com/checkurl/";
-        private static HttpClient? HttpClientInstance;
+        private static Lazy<HttpClient> HttpClientInstance = new(() => new HttpClient(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.All,
+            EnableMultipleHttp2Connections = true,
+            EnableMultipleHttp3Connections = true,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15)
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(10),
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+        });
 
         public FastHashSet<ulong> SafeHashes = [];
 
@@ -61,20 +71,9 @@ namespace SLBr.Handlers
         }
         private static SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
         {
-            HttpClientInstance ??= new(new SocketsHttpHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All,
-                EnableMultipleHttp2Connections = true,
-                EnableMultipleHttp3Connections = true,
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
             try
             {
-                var Response = HttpClientInstance.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash, 0, 4))}").Result;
+                var Response = HttpClientInstance.Value.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash, 0, 4))}").Result;
                 if (Response.IsSuccessStatusCode)
                 {
                     byte[] Bytes = Response.Content.ReadAsByteArrayAsync().Result;
@@ -120,17 +119,6 @@ namespace SLBr.Handlers
         }
         private static string SBv4Response(string Url, string Endpoint)
         {
-            HttpClientInstance ??= new(new SocketsHttpHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All,
-                EnableMultipleHttp2Connections = true,
-                EnableMultipleHttp3Connections = true,
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
             //TODO: Investigate Yandex clientId & clientVersion.
             string Payload = $@"{{
     ""client"":{{""clientId"":""{SECRETS.GOOGLE_DEFAULT_CLIENT_ID}"",""clientVersion"":""1.0.0""}},
@@ -143,7 +131,7 @@ namespace SLBr.Handlers
 }}";
             try
             {
-                var Response = HttpClientInstance.PostAsync(Endpoint, new StringContent(Payload, Encoding.UTF8, "application/json")).Result;
+                var Response = HttpClientInstance.Value.PostAsync(Endpoint, new StringContent(Payload, Encoding.UTF8, "application/json")).Result;
                 return Response.Content.ReadAsStringAsync().Result;
             }
             catch { }
@@ -152,17 +140,6 @@ namespace SLBr.Handlers
 
         private static ThreatType PTCheck(string Url, string APIKey)
         {
-            HttpClientInstance ??= new(new SocketsHttpHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All,
-                EnableMultipleHttp2Connections = true,
-                EnableMultipleHttp3Connections = true,
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
             FormUrlEncodedContent Data = new FormUrlEncodedContent(
             [
                 new KeyValuePair<string, string>("url", Url),
@@ -173,7 +150,7 @@ namespace SLBr.Handlers
             {
                 HttpRequestMessage Request = new(HttpMethod.Post, PhishTankEndpoint) { Content = Data };
                 Request.Headers.UserAgent.ParseAdd("phishtank/slbr");
-                var Response = HttpClientInstance.SendAsync(Request).Result;
+                var Response = HttpClientInstance.Value.SendAsync(Request).Result;
                 var ResponseText = Response.Content.ReadAsStringAsync().Result;
 
                 var Result = XDocument.Parse(ResponseText).Root?.Element("results")?.Element("url0");

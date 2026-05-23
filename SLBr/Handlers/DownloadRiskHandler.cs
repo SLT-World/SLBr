@@ -18,6 +18,7 @@ namespace SLBr.Handlers
         None,
         Google,
         //VirusTotal
+        //Windows Defender//Unnecessary
     }
 
     public enum DownloadVerdict
@@ -35,7 +36,17 @@ namespace SLBr.Handlers
     {
         const string GoogleEndpoint = "https://sb-ssl.google.com/safebrowsing/clientreport/download?key=";
         //const string VirusTotalEndpoint = "";
-        HttpClient HttpClientInstance;
+        private static Lazy<HttpClient> HttpClientInstance = new(() => new HttpClient(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.All,
+            EnableMultipleHttp2Connections = true,
+            EnableMultipleHttp3Connections = true,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15)
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(10),
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+        });
 
         public FastHashSet<ulong> SafeHashes = [];
 
@@ -61,11 +72,9 @@ namespace SLBr.Handlers
             return Result;
         }
 
-        public static FastHashSet<string> SafeFileExtensions;
-
-        public bool IsSupportedDownload(string FilePath, string DownloadUrl)
-        {
-            SafeFileExtensions ??= [
+        public static Lazy<FastHashSet<string>> SafeFileExtensions = new(() =>
+            new(StringComparer.OrdinalIgnoreCase)
+            {
                 ".jpg",  ".jpeg", ".mp3",      ".mp4",  ".png",  ".csv",  ".ica",
                 ".gif",  ".txt",  ".package",  ".tif",  ".webp", ".mkv",  ".wav",
                 ".mov",  ".paf",  ".vbscript", ".ad",   ".inx",  ".isu",  ".job",
@@ -73,29 +82,21 @@ namespace SLBr.Handlers
                 ".flac", ".ico",  ".jfif",     ".m4a",  ".m4v",  ".mpeg", ".mpg",
                 ".oga",  ".ogg",  ".ogm",      ".ogv",  ".opus", ".pjp",  ".pjpeg",
                 ".svgz", ".text", ".tiff",     ".weba", ".webm", ".xbm"
-            ];
+            });
+
+        public bool IsSupportedDownload(string FilePath, string DownloadUrl)
+        {
             if (!Utils.IsHttpScheme(DownloadUrl))
                 return false;
-            if (SafeFileExtensions.Contains(Path.GetExtension(FilePath).ToLowerInvariant()))
+            if (SafeFileExtensions.Value.Contains(Path.GetExtension(FilePath)))
                 return false;
             return true;
         }
 
-        private async Task<DownloadVerdict> SBGetDownloadVerdict(string Endpoint, string FilePath, string DownloadUrl, string? Referrer = null, CancellationToken Token = default)
+        private static async Task<DownloadVerdict> SBGetDownloadVerdict(string Endpoint, string FilePath, string DownloadUrl, string? Referrer = null, CancellationToken Token = default)
         {
             if (!File.Exists(FilePath))
                 return DownloadVerdict.Safe;
-            HttpClientInstance ??= new(new SocketsHttpHandler
-            {
-                AutomaticDecompression = DecompressionMethods.All,
-                EnableMultipleHttp2Connections = true,
-                EnableMultipleHttp3Connections = true,
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            })
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-            };
             byte[] LocalHash;
             await using (FileStream _FileStream = File.OpenRead(FilePath))
             using (SHA256 SHA = SHA256.Create())
@@ -126,7 +127,7 @@ namespace SLBr.Handlers
 
             using ByteArrayContent Content = new(Request.ToByteArray());
             Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            HttpResponseMessage Response = await HttpClientInstance.PostAsync(Endpoint, Content, Token);
+            HttpResponseMessage Response = await HttpClientInstance.Value.PostAsync(Endpoint, Content, Token);
 
             if (!Response.IsSuccessStatusCode)
                 return DownloadVerdict.Safe;

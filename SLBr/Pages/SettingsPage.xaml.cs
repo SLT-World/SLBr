@@ -476,7 +476,6 @@ namespace SLBr.Pages
             }
 
             AdsBlocked.Text = App.Instance.AdsBlocked.ToString();
-            TrackersBlocked.Text = App.Instance.TrackersBlocked.ToString();
 
             HomeButtonToggleButton.IsChecked = App.Instance.AllowHomeButton;
             TranslateButtonToggleButton.IsChecked = App.Instance.AllowTranslateButton;

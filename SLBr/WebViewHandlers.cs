@@ -586,7 +586,17 @@ namespace SLBr
         public void Updated(WebDownloadItem Item) => DownloadUpdated?.RaiseUIAsync(Item);
         public void Completed(WebDownloadItem Item) => DownloadCompleted?.RaiseUIAsync(Item);
 
-        private static HttpClient? DownloadHttpClient;
+        private static Lazy<HttpClient> DownloadHttpClient = new(() => new(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.All,
+            EnableMultipleHttp2Connections = true,
+            EnableMultipleHttp3Connections = true,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15),
+            ConnectTimeout = TimeSpan.FromSeconds(30)
+        })
+        {
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
+        });
 
         public async Task StartDownloadAsync(string Url, string TargetPath, bool ShowDialog, string DialogFilter = "")
         {
@@ -617,18 +627,7 @@ namespace SLBr
 
             try
             {
-                DownloadHttpClient ??= new(new SocketsHttpHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.All,
-                    EnableMultipleHttp2Connections = true,
-                    EnableMultipleHttp3Connections = true,
-                    PooledConnectionLifetime = TimeSpan.FromMinutes(15),
-                    ConnectTimeout = TimeSpan.FromSeconds(30)
-                })
-                {
-                    DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-                };
-                using var Response = await DownloadHttpClient.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
+                using var Response = await DownloadHttpClient.Value.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
 
                 Response.EnsureSuccessStatusCode();
                 Item.TotalBytes = Response.Content.Headers.ContentLength ?? -1;

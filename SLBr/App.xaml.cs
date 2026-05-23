@@ -761,7 +761,6 @@ namespace SLBr
             new Theme("Dark", (Color)ColorConverter.ConvertFromString("#202225"), (Color)ColorConverter.ConvertFromString("#2F3136"), (Color)ColorConverter.ConvertFromString("#36393F"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#3399FF"), true, true),
             new Theme("Purple", (Color)ColorConverter.ConvertFromString("#191025"), (Color)ColorConverter.ConvertFromString("#251C31"), (Color)ColorConverter.ConvertFromString("#2B2237"), Colors.Gainsboro, Colors.White, (Color)ColorConverter.ConvertFromString("#934CFE"), true, true),
         ];
-        public DomainList AdBlockAllowList = [];
 
         public IdnMapping _IdnMapping = new();
 
@@ -797,15 +796,14 @@ namespace SLBr
 
         public bool AppInitialized;
 
-        public static readonly string[] URLConfusables =
-        [
+        public static readonly Lazy<string[]> URLConfusables = new(() => [
             "rn",//m, rnicrosoft
             "vv",//w
             "cl",//d
             "0",//o
             "1",//l
             "5",//S
-        ];
+        ]);
 
         public ObservableCollection<Favourite> Favourites = [];
         public ObservableCollection<ActionStorage> History = [];
@@ -858,8 +856,7 @@ namespace SLBr
         {
             for (int i = 0; i < History.Count; i++)
             {
-                ActionStorage Entry = History[i];
-                if (Entry.Tooltip == Url)
+                if (History[i].Tooltip == Url)
                     History.RemoveAt(i);
             }
             History.Insert(0, new ActionStorage(Title, $"4<,>{Url}", Url));
@@ -887,10 +884,9 @@ namespace SLBr
         }
         public ObservableCollection<DownloadEntry> VisibleDownloads = [];
         public Dictionary<string, WebDownloadItem> Downloads = [];
-        public async void UpdateDownloadItem(WebDownloadItem Item)
+        public void UpdateDownloadItem(WebDownloadItem Item)
         {
             Downloads[Item.ID] = Item;
-#pragma warning disable CS4014
             Dispatcher.BeginInvoke(async () =>
             {
                 foreach (MainWindow _Window in AllWindows)
@@ -1010,10 +1006,9 @@ namespace SLBr
                     VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID });
                 }
             });
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
 
-        static readonly string[] FileSizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+        static readonly Lazy<string[]> FileSizes = new(() => ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]);
         public static string FormatBytes(long Bytes, bool ContainSizes = true)
         {
             if (Bytes == 0)
@@ -1021,7 +1016,7 @@ namespace SLBr
             int i = (int)Math.Floor(Math.Log(Bytes) / Math.Log(1000));
             string Output = (Bytes / Math.Pow(1000, i)).ToString("F2");
             if (ContainSizes)
-                Output += $" {FileSizes[i]}";
+                Output += $" {FileSizes.Value[i]}";
             return Output;
         }
         public ObservableCollection<Profile> Profiles { get; set; } = [
@@ -2067,7 +2062,6 @@ Stack Trace: {6}
 
 Inner Exception: {7}";
 #endif
-        public int TrackersBlocked;
         public int AdsBlocked;
 
         public int AdBlock;
@@ -2207,10 +2201,31 @@ Inner Exception: {7}";
         {
             GlobalSave.Set("AdBlock", Type);
             AdBlock = Type;
+            if (AdBlock != 0 && _AdBlockHandler == null)
+            {
+                _AdBlockHandler = new AdBlockHandler(AllowListSave);
+                Dispatcher.BeginInvoke(async () =>
+                {
+                    string[] Urls = [
+                        //"https://raw.githubusercontent.com/d3ward/toolz/master/src/d3host.txt",
+                        "https://easylist.to/easylist/easylist.txt",
+                        "https://easylist.to/easylist/easyprivacy.txt",
+                        //"https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/adguard/ads-ags.txt",
+                        //"https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/adguard/tracking-ags.txt",
+                        //"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
+                        //"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
+                    ];
+                    List<Task<string>> DownloadTasks = Urls.Select(i => MiniHttpClient.GetStringAsync(i)).ToList();
+                    string[] Results = await Task.WhenAll(DownloadTasks);
+                    foreach (string FileContent in Results)
+                        _AdBlockHandler.ParseAdd(FileContent);
+                });
+            }
+            bool EfficientMode = AdBlock == 2;
             foreach (MainWindow _Window in AllWindows)
             {
-                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
-                    BrowserView.ToggleEfficientAdBlock(AdBlock == 2);
+                foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null && i.WebView != null && i.WebView.IsBrowserInitialized))
+                    BrowserView.ToggleEfficientAdBlock(EfficientMode);
             }
         }
         public void SetAMP(bool Toggle)
@@ -2733,17 +2748,6 @@ Inner Exception: {7}";
             }
             string SearchEngineName = GlobalSave.Get("SearchEngine", "Google");
             DefaultSearchProvider = SearchEngines.FirstOrDefault(i => i.Name == SearchEngineName) ?? SearchEngines.FirstOrDefault(i => i.SearchUrl.Contains("google.com"));
-            int AllowListCount = AllowListSave.GetInt("Count", -1);
-            if (AllowListCount != -1)
-            {
-                for (int i = 0; i < AllowListCount; i++)
-                    AdBlockAllowList.Add(AllowListSave.Get($"{i}"));
-            }
-            else
-            {
-                AdBlockAllowList.Add("ecosia.org");
-                AdBlockAllowList.Add("youtube.com");
-            }
 
             int LanguageCount = LanguagesSave.GetInt("Count", 0);
             if (LanguageCount != 0)
@@ -2794,7 +2798,6 @@ Inner Exception: {7}";
 
             if (!GlobalSave.Has("Homepage"))
                 GlobalSave.Set("Homepage", "slbr://newtab");
-            TrackersBlocked = StatisticsSave.GetInt("BlockedTrackers", 0);
             AdsBlocked = StatisticsSave.GetInt("BlockedAds", 0);
 
             if (!GlobalSave.Has("TabUnloading"))
@@ -3019,372 +3022,11 @@ Inner Exception: {7}";
             _Window.TabsUI.Visibility = Visibility.Visible;
         }
 
-        //TODO: Automatically fetch & update blocklists from online sources
         public static FastHashSet<string> FailedScripts = [];
-        public static readonly string[] BlockedAdPatterns = ["ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
-                        "googleadservices.com", "doubleclick.net", "google-analytics.com",
-                        "syndicatedsearch.goog", "*.doubleclick.net", "*.g.doubleclick.net",
-            "gads.pubmatic.com", "ads.pubmatic.com", "ogads-pa.clients6.google.com",
-            "ads.facebook.com", "an.facebook.com",
-            "cdn.snigelweb.com", "cdn.connectad.io",
-            "pool.admedo.com", "c.pub.network",
-            "media.ethicalads.io",
-            "app-measurement.com",
-            "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn",
-            "prod.di.api.cnn.io", "get.s-onetag.com", "assets.bounceexchange.com", "gn-web-assets.api.bbc.com", "pub.doubleverify.com",
-            "events.reddit.com",
-            "ads.tiktok.com", "ads-sg.tiktok.com", "ads.adthrive.com", "ads-api.tiktok.com", "business-api.tiktok.com",
-            "ads.reddit.com", "d.reddit.com", "rereddit.com", "events.redditmedia.com",
-            "ads-twitter.com", "static.ads-twitter.com", "ads-api.twitter.com", "advertising.twitter.com",
-            "ads.pinterest.com", "ads-dev.pinterest.com",
-            "adtago.s3.amazonaws.com", "advice-ads.s3.amazonaws.com", "advertising-api-eu.amazon.com", "amazonclix.com",
-            "ads.linkedin.com",
-            "*.dianomi.com",
-            "*.media.net",
-            "media.fastclick.net", "cdn.fastclick.net",
-            "global.adserver.yahoo.com", "advertising.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com", "adserver.yahoo.com", "partnerads.ysm.yahoo.com", "adtech.yahooinc.com", "advertising.yahooinc.co",
-            "api-adservices.apple.com", "advertising.apple.com", "tr.iadsdk.apple.com",
-            "yandexadexchange.net", "adsdk.yandex.ru", "advertising.yandex.ru", "an.yandex.ru",
-
-            "secure-ds.serving-sys.com", "*.innovid.com",
-            "*.outbrain.com.",
-            "*.adcolony.com",
-            "adm.hotjar.com",
-            "files.adform.net",
-            "static.adsafeprotected.com", "pixel.adsafeprotected.com",
-            "t.adx.opera.com",
-            "asadcdn.com",
-            "ads.yieldmo.com", "ads.servenobid.com", "e3.adpushup.com", "c1.adform.net",
-            "ib.adnxs.com",
-            "*.smartadserver.com", "ad.a-ads.com",
-            "cdn.carbonads.com", "px.ads.linkedin.com",
-            "*.adsrvr.org",
-            "scdn.cxense.com",
-            "acdn.adnxs.com",
-            "js.adscale.de",
-            "js.hsadspixel.net",
-            "ad.mopub.com",
-            "*.juicyads.com",
-            "a.realsrv.com", "mc.yandex.ru", "a.vdo.ai", "adfox.yandex.ru", "adfstat.yandex.ru", "offerwall.yandex.net",
-            "ads.msn.com", "adnxs.com", "adnexus.net", "bingads.microsoft.com",
-            "dt.adsafeprotected.com",
-            "amazonaax.com", "*.amazon-adsystem.com",
-            "ads.betweendigital.com", "rtb.adpone.com", "ads.themoneytizer.com", "*.criteo.com",
-
-            "*.rubiconproject.com",
-
-            "*.ad.gt", "powerad.ai", "hb.brainlyads.com", "pixel.quantserve.com", "ads.anura.io", "static.getclicky.com",
-            "ad.turn.com", "rtb.mfadsrvr.com", "ad.mrtnsvr.com", "s.ad.smaato.net",
-            "adpush.technoratimedia.com", "pixel.tapad.com", "secure.adnxs.com", "px.adhigh.net",
-            "epnt.ebay.com", "*.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
-            "btloader.com", "ad-delivery.net",
-            "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com",
-            "*.adserver.snapads.com",
-            "cdn.adsafeprotected.com",
-            "rp.liadm.com",
-
-            "adx.adform.net",
-            "prebid.a-mo.net",
-            "a.pub.network",
-            "widgets.outbrain.com",
-            "hb.adscale.de", "bitcasino.io",
-
-            "h.seznam.cz", "d.seznam.cz", "ssp.seznam.cz",
-            "cdn.performax.cz", "dale.performax.cz", "chip.performax.cz","ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "*.google-analytics.com",
-            "analytics.google.com", "*.googleanalytics.com", "*.admobclick.com", "firebaselogging-pa.googleapis.com",
-            "sp.ecosia.org",
-            "analytics.facebook.com", "pixel.facebook.com",
-            "analytics.tiktok.com", "analytics-sg.tiktok.com", "log.byteoversea.com",
-            "analytics.pinterest.com", "widgets.pinterest.com", "log.pinterest.com", "trk.pinterest.com",
-            "analytics.pointdrive.linkedin.com",
-            "analyticsengine.s3.amazonaws.com", "affiliationjs.s3.amazonaws.com", "analytics.s3.amazonaws.com",
-            "analytics.mobile.yandex.net", "appmetrica.yandex.com", "extmaps-api.yandex.net", "appmetrica.yandex.ru", "metrika.yandex.ru",
-            "analytics.yahoo.com", "ups.analytics.yahoo.com", "analytics.query.yahoo.com", "log.fc.yahoo.com", "geo.yahoo.com", "udc.yahoo.com", "udcm.yahoo.com", "gemini.yahoo.com",
-            "metrics.apple.com",
-            "*.bugsnag.com",
-            "*.sentry-cdn.com", "app.getsentry.com",
-            "stats.gc.apple.com", "iadsdk.apple.com",
-            "collector.github.com",
-            "cloudflareinsights.com",
-            "*.hotjar.com",
-            "hotjar-analytics.com",
-            "mouseflow.com", "*.mouseflow.com",
-            "stats.wp.com",
-            "*.datatrics.com",
-            "*.ero-advertising.com",
-            "analytics.archive.org",
-            "*.freshmarketer.com", "freshmarketer.com",
-            "openbid.pubmatic.com", "prebid.media.net", "hbopenbid.pubmatic.com",
-            "collector.cdp.cnn.com", "smetrics.cnn.com", "mybbc-analytics.files.bbci.co.uk", "a1.api.bbc.co.uk", "xproxy.api.bbc.com",
-            "*.dotmetrics.net", "scripts.webcontentassessor.com",
-            "collector.brandmetrics.com", "Builder.scorecardresearch.com",
-            "queue.simpleanalyticscdn.com",
-            "cdn.permutive.com", "api.permutive.com",
-
-            "luckyorange.com", "*.luckyorange.com", "*.luckyorange.net",
-
-            "securemetrics.apple.com", "supportmetrics.apple.com", "metrics.icloud.com",
-
-            "tr.snapchat.com", "sc-analytics.appspot.com", "app-analytics.snapchat.com",
-            "crashlogs.whatsapp.net",
-            "metrics.mzstatic.com",
-
-            "click.a-ads.com",
-            "static.criteo.net",
-            "www.clarity.ms",
-            "u.clarity.ms",
-
-            "s.cdn.turner.com",
-            "logx.optimizely.com",
-            "signal-metrics-collector-beta.s-onetag.com",
-            "connect-metrics-collector.s-onetag.com",
-            "ping.chartbeat.net",
-            "logs.browser-intake-datadoghq.com",
-            "onsiterecs.api.boomtrain.com",
-
-            "b.6sc.co",
-            "api.bounceexchange.com", "events.bouncex.net",
-            "assets.adobedtm.com",
-            "static.chartbeat.com",
-            "dsum-sec.casalemedia.com",
-
-            "aa.agkn.com",
-            "material.anonymised.io",
-            "static.anonymised.io",
-            "*.tinypass.com",
-            "dw-usr.userreport.com",
-            "capture-api.reachlocalservices.com",
-            "discovery.evvnt.com",
-            "mab.chartbeat.com",
-            "sync.sharethis.com",
-            "bcp.crwdcntrl.net",
-
-            "*.doubleverify.com", "onetag-sys.com",
-            "id5-sync.com", "bttrack.com", "idsync.rlcdn.com", "u.openx.net", "sync-t1.taboola.com", "x.bidswitch.net", "rtd-tm.everesttech.net", "usermatch.krxd.net", "visitor.omnitagjs.com", "ping.chartbeat.net",
-            "sync.outbrain.com",
-            "collect.mopinion.com", "pb-server.ezoic.com",
-            "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
-            "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com"];
-
-        public static readonly string[] HasInLink = [
-            //https://github.com/the-advoid/ad-void/blob/main/AdVoid.Full.txt
-            //https://github.com/hoshsadiq/adblock-nocoin-list/blob/master/nocoin.txt
-            "/ads.js", "/ads.min.js", "/ad.js", "/ad.min.js", "/pagead.js",
-            "/async-ads.js", "/admanager.js", "/ad-manager.js",
-            "/analytics.js", "/analytics.min.js", "/tracker.js", "/tracker.min.js",
-            "/ad-provider.js", "/adframe.js", "/adsbygoogle.js", "/advertising.js", "/advertisers.js", "/advertisement.min.js",
-            "/gtag.js", "/insight.js", "/insight.min.js", "/tag.js", "/tag.min.js",
-            "/trace.js", "/track.js", "/track.min.js", "/tracking.js", "/tracking.min.js",
-            "/prebid.js", "/moneybid.js",
-            "/webcoin.js", "/webcoin.min.js",
-            "miner.js", "miner.min.js", //Don't add / for these miners so they cover deepminer and etc
-            "/outbrain.js"
-            //"cryptonight.wasm"
-            //disable-devtool.min.js
-            //jsdelivr.net/npm/disable-devtool$script
-            //redditstatic.com/ads/$script
-            //redditstatic.com/ads/pixel.js^$script
-
-            /*"survey.min.js", "/survey.js", "/social-icons.js", "intergrator.js", "cookie.js", "analytics.js", "ads.js",
-            "tracker.js", "tracker.ga.js", "tracker.min.js", "bugsnag.min.js", "async-ads.js", "displayad.js", "j.ad", "ads-beacon.js", "adframe.js", "ad-provider.js",
-            "admanager.js", "usync.js", "moneybid.js", "miner.js", "prebid",
-            "advertising.js", "adsense.js", "track", "plusone.js", "pagead.js", "gtag.js",
-            "google.com/ads", "play.google.com/log"*//*, "youtube.com/ptracking", "youtube.com/pagead/adview", "youtube.com/api/stats/ads", "youtube.com/pagead/interaction",*/
-        ];
-        public static readonly Regex HasInLinkRegex = new(string.Join("|", HasInLink.Select(Regex.Escape)), RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-        /*public static readonly Trie MinersFiles = new Trie {
-         //https://github.com/xd4rker/MinerBlock/blob/master/assets/filters.txt
-            "cryptonight.wasm", "deepminer.js", "deepminer.min.js", "coinhive.min.js", "monero-miner.js", "wasmminer.wasm", "wasmminer.js", "cn-asmjs.min.js", "gridcash.js",
-            "worker-asmjs.min.js", "miner.js", "webmr4.js", "webmr.js", "webxmr.js",
-            "lib/crypta.js", "static/js/tpb.js", "bitrix/js/main/core/core_tasker.js", "bitrix/js/main/core/core_loader.js", "vbb/me0w.js", "lib/crlt.js", "pool/direct.js",
-            "plugins/wp-monero-miner-pro", "plugins/ajcryptominer", "plugins/aj-cryptominer",
-            "?perfekt=wss://", "?proxy=wss://", "?proxy=ws://"
-        };*/
-        /*public static readonly DomainList Miners = new DomainList {
-            //https://v.firebog.net/hosts/static/w3kbl.txt
-            //https://github.com/hoshsadiq/adblock-nocoin-list/blob/master/hosts.txt
-            "jsecoin.com", "crypto-loot.com", "minerad.com"
-        };*/
-        public static readonly DomainList Ads = [
-            "ads.google.com", "*.googlesyndication.com", "googletagservices.com", "googletagmanager.com", "*.googleadservices.com", "adservice.google.com",
-
-            "syndicatedsearch.goog", "*.doubleclick.net", "*.g.doubleclick.net",
-            "gads.pubmatic.com", "ads.pubmatic.com", "ogads-pa.clients6.google.com",
-            "ads.facebook.com", "an.facebook.com",
-            "cdn.snigelweb.com", "cdn.connectad.io",
-            "pool.admedo.com", "c.pub.network",
-            "media.ethicalads.io",
-            "app-measurement.com",
-            "ad.youtube.com", "ads.youtube.com", "youtube.cleverads.vn",
-            "prod.di.api.cnn.io", "get.s-onetag.com", "assets.bounceexchange.com", "gn-web-assets.api.bbc.com", "pub.doubleverify.com",
-            "events.reddit.com",
-            "ads.tiktok.com", "ads-sg.tiktok.com", "ads.adthrive.com", "ads-api.tiktok.com", "business-api.tiktok.com",
-            "ads.reddit.com", "d.reddit.com", "rereddit.com", "events.redditmedia.com",
-            "ads-twitter.com", "static.ads-twitter.com", "ads-api.twitter.com", "advertising.twitter.com",
-            "ads.pinterest.com", "ads-dev.pinterest.com",
-            "adtago.s3.amazonaws.com", "advice-ads.s3.amazonaws.com", "advertising-api-eu.amazon.com", "amazonclix.com",
-            "ads.linkedin.com",
-            "*.dianomi.com",
-            "*.media.net",
-            "media.fastclick.net", "cdn.fastclick.net",
-            "global.adserver.yahoo.com", "advertising.yahoo.com", "ads.yahoo.com", "ads.yap.yahoo.com", "adserver.yahoo.com", "partnerads.ysm.yahoo.com", "adtech.yahooinc.com", "advertising.yahooinc.co",
-            "api-adservices.apple.com", "advertising.apple.com", "tr.iadsdk.apple.com",
-            "yandexadexchange.net", "adsdk.yandex.ru", "advertising.yandex.ru", "an.yandex.ru",
-
-            "secure-ds.serving-sys.com", "*.innovid.com", "*.html-load.com", "html-load.com",
-            "*.outbrain.com.",
-            "*.adcolony.com",
-            "adm.hotjar.com",
-            "files.adform.net",
-            "static.adsafeprotected.com", "pixel.adsafeprotected.com",
-            //"*.ad.xiaomi.com", "*.ad.intl.xiaomi.com",
-            //"adsfs.oppomobile.com", "*.ads.oppomobile.com",
-            "t.adx.opera.com",
-            //"bdapi-ads.realmemobile.com", "bdapi-in-ads.realmemobile.com",
-            //"business.samsungusa.com", "*.samsungads.com", "*.samsungadhub.com", "samsung-com.112.2o7.net", "ads.samsung.com",
-            //"click.oneplus.com", "click.oneplus.cn", "open.oneplus.net",
-            "asadcdn.com",
-            "ads.yieldmo.com", "ads.servenobid.com", "e3.adpushup.com", "c1.adform.net",
-            "ib.adnxs.com",
-            "*.smartadserver.com", "ad.a-ads.com",
-            "cdn.carbonads.com", "px.ads.linkedin.com",
-            "*.adsrvr.org",
-            "scdn.cxense.com",
-            "acdn.adnxs.com",
-            "js.adscale.de",
-            "js.hsadspixel.net",
-            "ad.mopub.com",
-            "*.juicyads.com",
-            "a.realsrv.com", "mc.yandex.ru", "a.vdo.ai", "adfox.yandex.ru", "adfstat.yandex.ru", "offerwall.yandex.net",
-            "ads.msn.com", "adnxs.com", "adnexus.net", "bingads.microsoft.com",
-            "dt.adsafeprotected.com",
-            "amazonaax.com", "*.amazon-adsystem.com",
-            "ads.betweendigital.com", "rtb.adpone.com", "ads.themoneytizer.com", "*.criteo.com",
-
-            "*.rubiconproject.com",
-
-            "*.ad.gt", "powerad.ai", "hb.brainlyads.com", "pixel.quantserve.com", "ads.anura.io", "static.getclicky.com",
-            "ad.turn.com", "rtb.mfadsrvr.com", "ad.mrtnsvr.com", "s.ad.smaato.net",
-            "adpush.technoratimedia.com", "pixel.tapad.com", "secure.adnxs.com", "px.adhigh.net",
-            "epnt.ebay.com", "*.moatads.com", "s.pubmine.com", "px.ads.linkedin.com", "p.adsymptotic.com",
-            "btloader.com", "ad-delivery.net",
-            "services.vlitag.com", "tag.vlitag.com", "assets.vlitag.com",
-            "*.adserver.snapads.com",
-            "cdn.adsafeprotected.com",
-            "rp.liadm.com",
-            "ads.playground.xyz",
-            "prebid.ad.smaato.net",
-            "a.teads.tv",
-            "targeting.unrulymedia.com",
-
-            "adx.adform.net",
-            "prebid.a-mo.net",
-            "a.pub.network",
-            "widgets.outbrain.com",
-            "hb.adscale.de", "bitcasino.io",
-
-            "h.seznam.cz", "d.seznam.cz", "ssp.seznam.cz",
-            "cdn.performax.cz", "dale.performax.cz", "chip.performax.cz"
-        ];
-        public static readonly DomainList Analytics = [ "ssl-google-analytics.l.google.com", "www-google-analytics.l.google.com", "www-googletagmanager.l.google.com", "analytic-google.com", "*.google-analytics.com",
-            "analytics.google.com", "*.googleanalytics.com", "*.admobclick.com", "firebaselogging-pa.googleapis.com",
-            "sp.ecosia.org",
-            "analytics.facebook.com", "pixel.facebook.com",
-            "analytics.tiktok.com", "analytics-sg.tiktok.com", "log.byteoversea.com",
-            "analytics.pinterest.com", "widgets.pinterest.com", "log.pinterest.com", "trk.pinterest.com",
-            "analytics.pointdrive.linkedin.com",
-            "analyticsengine.s3.amazonaws.com", "affiliationjs.s3.amazonaws.com", "analytics.s3.amazonaws.com",
-            "analytics.mobile.yandex.net", "appmetrica.yandex.com", "extmaps-api.yandex.net", "appmetrica.yandex.ru", "metrika.yandex.ru",
-            "analytics.yahoo.com", "ups.analytics.yahoo.com", "analytics.query.yahoo.com", "log.fc.yahoo.com", "geo.yahoo.com", "udc.yahoo.com", "udcm.yahoo.com", "gemini.yahoo.com",
-            "metrics.apple.com",
-            "*.bugsnag.com",
-            "*.sentry-cdn.com", "app.getsentry.com",
-            "stats.gc.apple.com", "iadsdk.apple.com",
-            "collector.github.com",
-            "cloudflareinsights.com",
-            "*.hotjar.com",
-            "hotjar-analytics.com",
-            "mouseflow.com", "*.mouseflow.com",
-            "stats.wp.com",
-            "*.datatrics.com",
-            "fundingchoicesmessages.google.com",
-            "mp.4dex.io",
-            "*.inmobi.com",
-            "script.4dex.io",
-            "*.ero-advertising.com",
-            "analytics.archive.org",
-            "*.freshmarketer.com",
-            "*.presage.io",
-            "openbid.pubmatic.com", "prebid.media.net", "hbopenbid.pubmatic.com",
-            "collector.cdp.cnn.com", "smetrics.cnn.com", "mybbc-analytics.files.bbci.co.uk", "a1.api.bbc.co.uk", "xproxy.api.bbc.com",
-            "*.dotmetrics.net", "scripts.webcontentassessor.com",
-            "collector.brandmetrics.com", "Builder.scorecardresearch.com",
-            "queue.simpleanalyticscdn.com",
-            "cdn.permutive.com", "api.permutive.com",
-
-            "luckyorange.com", "*.luckyorange.com", "*.luckyorange.net",
-
-            //"smetrics.samsung.com", "nmetrics.samsung.com", "analytics-api.samsunghealthcn.com", "analytics.samsungknox.com",
-            //"iot-eu-logser.realme.com", "iot-logser.realme.com",
-            "securemetrics.apple.com", "supportmetrics.apple.com", "metrics.icloud.com",
-            //"books-analytics-events.apple.com", "weather-analytics-events.apple.com", "notes-analytics-events.apple.com",
-
-            "tr.snapchat.com", "sc-analytics.appspot.com", "app-analytics.snapchat.com",
-            "crashlogs.whatsapp.net",
-            "metrics.mzstatic.com",
-
-            "click.a-ads.com",
-            "static.criteo.net",
-            "www.clarity.ms",
-            "u.clarity.ms",
-
-            /*"data.mistat.xiaomi.com",
-            "data.mistat.intl.xiaomi.com",
-            "data.mistat.india.xiaomi.com",
-            "data.mistat.rus.xiaomi.com",
-            "tracking.miui.com",
-            "sa.api.intl.miui.com",
-            "tracking.intl.miui.com",
-            "tracking.india.miui.com",
-            "tracking.rus.miui.com",
-
-            "*.hicloud.com",*/
-
-            "s.cdn.turner.com",
-            "logx.optimizely.com",
-            "signal-metrics-collector-beta.s-onetag.com",
-            "connect-metrics-collector.s-onetag.com",
-            "ping.chartbeat.net",
-            "logs.browser-intake-datadoghq.com",
-            "onsiterecs.api.boomtrain.com",
-
-            "b.6sc.co",
-            "api.bounceexchange.com", "events.bouncex.net",
-            "assets.adobedtm.com",
-            "static.chartbeat.com",
-            "dsum-sec.casalemedia.com",
-
-            "aa.agkn.com",
-            "material.anonymised.io",
-            "static.anonymised.io",
-            "*.tinypass.com",
-            "dw-usr.userreport.com",
-            "capture-api.reachlocalservices.com",
-            "discovery.evvnt.com",
-            "mab.chartbeat.com",
-            "sync.sharethis.com",
-            "bcp.crwdcntrl.net",
-
-            "*.doubleverify.com", "onetag-sys.com",
-            "id5-sync.com", "bttrack.com", "idsync.rlcdn.com", "u.openx.net", "sync-t1.taboola.com", "x.bidswitch.net", "rtd-tm.everesttech.net", "usermatch.krxd.net", "visitor.omnitagjs.com", "ping.chartbeat.net",
-            "sync.outbrain.com",
-            "collect.mopinion.com", "pb-server.ezoic.com",
-            "demand.trafficroots.com", "sync.srv.stackadapt.com", "sync.ipredictive.com", "analytics.vdo.ai", "tag-api-2-1.ccgateway.net", "sync.search.spotxchange.com",
-            "reporting.powerad.ai", "monitor.ebay.com", "beacon.walmart.com", "capture.condenastdigital.com"
-        ];
 
         public WebRiskHandler _WebRiskHandler;
         public DownloadRiskHandler _DownloadRiskHandler;
+        public AdBlockHandler _AdBlockHandler;
 
         public string ReleaseVersion;
 
@@ -3514,7 +3156,7 @@ Inner Exception: {7}";
             Settings.GPUAcceleration = bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration"));
             Settings.SpellCheck = bool.Parse(GlobalSave.Get("SpellCheck"));
 
-            //SetBrowserFlags(Settings);
+            SetBrowserFlags(Settings);
 
             WebViewManager.Settings = Settings;
             WebViewManager.RuntimeSettings.PDFViewer = bool.Parse(GlobalSave.Get("PDF"));
@@ -3638,9 +3280,9 @@ Inner Exception: {7}";
             //force-gpu-mem-available-mb https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/service/gpu_switches.cc
             //disable-file-system Disable FileSystem API.
         }
-        public const string DummyUrl = "dummy.invalid";
         public static void SetUrlFlags(WebViewSettings Settings)
         {
+            const string DummyUrl = "dummy.invalid";
             //https://github.com/melo936/ChromiumHardening/blob/main/flags/chrome-command-line.md
 
             //https://source.chromium.org/chromium/chromium/src/+/main:google_apis/gaia/gaia_switches.cc
@@ -4258,10 +3900,13 @@ Inner Exception: {7}";
 
         private static void SetEdgeFlags(WebViewSettings Settings)
         {
+            //edge-webview-foreground-boost-opt-in
             // Does this actually work? Disabling msSmartScreenProtection in --disable-features does seem to work
             //msLocalSpellcheck,msFreezeAdFramesImmediately,msEdgeAdaptiveCPUThrottling
             //msEdgeWebViewApplyWebResourceRequestedFilterForOOPIFs
-            string EnableFeatures = "msWebView2CancelInitialNavigation,msWebView2CodeCache,msWebView2TreatAppSuspendAsDeviceSuspend";
+
+            //WARNING: Do not include msWebView2CancelInitialNavigation. application/octet-stream URLs cause crashes on boot.
+            string EnableFeatures = "msWebView2CodeCache,msWebView2TreatAppSuspendAsDeviceSuspend";
             try
             {
                 Settings.AddFlag("enable-features", EnableFeatures);
@@ -4290,7 +3935,6 @@ Inner Exception: {7}";
         public void ClearAllData()
         {
             AdsBlocked = 0;
-            TrackersBlocked = 0;
             History.Clear();
             Cef.GetGlobalCookieManager().DeleteCookies(string.Empty, string.Empty);
             Cef.GetGlobalRequestContext().ClearHttpAuthCredentialsAsync();
@@ -4328,7 +3972,6 @@ Inner Exception: {7}";
                 return;
             string GlobalRaw = GlobalSave.Save();
 
-            StatisticsSave.Set("BlockedTrackers", TrackersBlocked.ToString());
             StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
             StatisticsSave.Save();
 
@@ -4348,13 +3991,16 @@ Inner Exception: {7}";
             }
             string SearchRaw = SearchSave.Save();
 
-            AllowListSave.Clear();
-            AllowListSave.Set("Count", AdBlockAllowList.AllDomains.Count.ToString());
-            int DomainIndex = 0;
-            foreach (string Domain in AdBlockAllowList.AllDomains)
+            if (_AdBlockHandler != null)
             {
-                AllowListSave.Set(DomainIndex.ToString(), Domain);
-                DomainIndex++;
+                AllowListSave.Clear();
+                AllowListSave.Set("Count", _AdBlockHandler.Whitelist.Count.ToString());
+                int DomainIndex = 0;
+                foreach (string Domain in _AdBlockHandler.Whitelist)
+                {
+                    AllowListSave.Set(DomainIndex.ToString(), Domain);
+                    DomainIndex++;
+                }
             }
             string AllowListRaw = AllowListSave.Save();
 

@@ -361,12 +361,40 @@ namespace SLBr
         }*/
 
 
-        //const int Iterations = 5_000_000;
+        /*const int Iterations = 5_000_000;
+        private async void PerformBenchmark()
+        {
+            Benchmark.Clear();
+            const string Domain = "adc3-launch.adcolony.com";
+            SLBr.Handlers.AdBlockHandler _AdBlockHandler = new(App.Instance.AllowListSave);
+            Benchmark.Run("ParseAdd", 1, () =>
+            {
+                _AdBlockHandler.ParseAdd(System.IO.File.ReadAllText(@"ads-ags.txt"));
+            });
+            Benchmark.Run("BlockRequest", Iterations, () =>
+            {
+                _ = _AdBlockHandler.ShouldBlockRequest(Domain, Domain, ResourceRequestType.Script);
+            });
+            MessageBox.Show(Benchmark.Report());
+        }*/
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             SetAppearance(App.Instance.CurrentTheme);
             #region Benchmark
-            //Benchmark.Clear();
+            //PerformBenchmark();
+            /*Benchmark.Clear();
+            const string Domain = "adc3-launch.adcolony.com";
+            SLBr.Handlers.AdBlockHandler _AdBlockHandler = new(App.Instance.AllowListSave);
+            //MessageBox.Show("0");
+            Benchmark.RunAsync("ParseAdd", 1, async () =>
+            {
+                await _AdBlockHandler.ParseAdd(System.IO.File.ReadAllText(@"ads-ags.txt"));
+            });
+            //MessageBox.Show("1");
+            Benchmark.Run("BlockRequest", Iterations, () =>
+            {
+                _ = _AdBlockHandler.ShouldBlockRequest(Domain, Domain, ResourceRequestType.Script);
+            });*/
             /*string E = "1+1/54334235*(2131234)";
             Benchmark.Run("Generated Regex", Iterations, () =>
             {
@@ -775,6 +803,11 @@ namespace SLBr
                 MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
                 if (Tabs.Count != 0)
                     Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
+            }
+            else
+            {
+                if (Tabs.Count != 0)
+                    Tabs[TabsUI.SelectedIndex].Content?.UnFocus();
             }
             foreach (BrowserTabItem Tab in Tabs)
                 Tab.Content?.MaxHeight = TabsUI.ActualHeight;

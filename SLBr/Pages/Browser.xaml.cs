@@ -8,6 +8,7 @@ using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data;
@@ -726,60 +727,11 @@ namespace SLBr.Pages
             }
             if (App.Instance.AdBlock == 1)
             {
-                bool ContinueAdBlock = true;
-                if (!string.IsNullOrEmpty(e.FocusedUrl))
+                if (App.Instance._AdBlockHandler.ShouldBlockRequest(e.Url, e.FocusedUrl, e.ResourceRequestType))
                 {
-                    string Host = Utils.FastHost(e.FocusedUrl);
-                    if (App.Instance.AdBlockAllowList.Has(Host))
-                    {
-                        e.Cancel = false;
-                        ContinueAdBlock = false;
-                    }
-                }
-                if (ContinueAdBlock)
-                {
-                    if (e.ResourceRequestType == ResourceRequestType.Ping)
-                    {
-                        Interlocked.Increment(ref App.Instance.TrackersBlocked);
-                        e.Cancel = true;
-                        return;
-                    }
-                    else if (Utils.IsPossiblyAd(e.ResourceRequestType))
-                    {
-                        string Host = Utils.FastHost(e.Url);
-                        bool Cached = HostCache.TryGetValue(Host, out bool Blocked);
-                        if (Blocked)
-                        {
-                            e.Cancel = true;
-                            return;
-                        }
-                        if (!Cached)
-                        {
-                            if (App.Ads.Has(Host))
-                            {
-                                Interlocked.Increment(ref App.Instance.AdsBlocked);
-                                HostCache[Host] = true;
-                                e.Cancel = true;
-                                return;
-                            }
-                            else if (App.Analytics.Has(Host))
-                            {
-                                Interlocked.Increment(ref App.Instance.TrackersBlocked);
-                                HostCache[Host] = true;
-                                e.Cancel = true;
-                                return;
-                            }
-                            HostCache[Host] = false;
-                        }
-                        if (e.ResourceRequestType == ResourceRequestType.Script)
-                        {
-                            if (App.HasInLinkRegex.IsMatch(e.Url))
-                            {
-                                e.Cancel = true;
-                                return;
-                            }
-                        }
-                    }
+                    Interlocked.Increment(ref App.Instance.AdsBlocked);
+                    e.Cancel = true;
+                    return;
                 }
             }
 
@@ -1768,12 +1720,14 @@ namespace SLBr.Pages
 
         public async Task ToggleEfficientAdBlock(bool Boolean)
         {
+            if (WebView == null || !WebView.IsBrowserInitialized)
+                return;
             AdBlockToggleButton.IsEnabled = !Boolean;
             AdBlockContainer.ToolTip = Boolean ? "Whitelist is unavailable in efficient ad block mode." : string.Empty;
             if (Boolean && !DevToolsAdBlock)
             {
                 await WebView?.CallDevToolsAsync("Network.enable");
-                await WebView?.CallDevToolsAsync("Network.setBlockedURLs", new { urls = App.BlockedAdPatterns });
+                await WebView?.CallDevToolsAsync("Network.setBlockedURLs", new { urls = App.Instance._AdBlockHandler.Domains.AllDomains.ToArray() });
                 DevToolsAdBlock = true;
             }
             else if (!Boolean && DevToolsAdBlock)
@@ -1834,9 +1788,9 @@ namespace SLBr.Pages
         {
             string Host = Utils.FastHost(Address);
             if (AdBlockToggleButton.IsChecked.ToBool())
-                App.Instance.AdBlockAllowList.Remove(Host);
+                App.Instance._AdBlockHandler.Whitelist.Remove(Host);
             else
-                App.Instance.AdBlockAllowList.Add(Host);
+                App.Instance._AdBlockHandler.Whitelist.Add(Host);
         }
 
         async void BrowserLoadChanged(string Address, bool? IsLoading = null, int? StatusCode = null)
@@ -1914,15 +1868,13 @@ namespace SLBr.Pages
             if (IsHTTP && App.Instance.AdBlock != 0)
             {
                 AdBlockHostText.Text = Host;
-                AdBlockToggleButton.IsChecked = !App.Instance.AdBlockAllowList.Has(Host);
+                AdBlockToggleButton.IsChecked = !App.Instance._AdBlockHandler.Whitelist.Contains(Host);
                 AdBlockContainer.Visibility = Visibility.Visible;
             }
             else
                 AdBlockContainer.Visibility = Visibility.Collapsed;
-            if (Translated)
-                Translated = false;
-            if (IsReaderMode)
-                IsReaderMode = false;
+            Translated = false;
+            IsReaderMode = false;
             Tab.Preview = null;
             if (IsLoading != null)
             {
@@ -2562,8 +2514,8 @@ namespace SLBr.Pages
                         Dispatcher.BeginInvoke(() => ReaderModeButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
                     else
                         Dispatcher.BeginInvoke(() => ReaderModeButton.ClearValue(ForegroundProperty));
+                    PIsReaderMode = value;
                 }
-                PIsReaderMode = value;
             }
         }
         public async void ToggleReaderMode()
@@ -2730,8 +2682,8 @@ namespace SLBr.Pages
                         Dispatcher.BeginInvoke(() => TranslateButton.Foreground = new SolidColorBrush(App.Instance.CurrentTheme.IndicatorColor));
                     else
                         Dispatcher.BeginInvoke(() => TranslateButton.ClearValue(ForegroundProperty));
+                    PrivateTranslate = value;
                 }
-                PrivateTranslate = value;
             }
         }
 
@@ -3387,7 +3339,7 @@ namespace SLBr.Pages
                 _Span = _Span[2..];
             }
 
-            int HostEnd = _Span.IndexOfAny('/', '?', '#');
+            int HostEnd = _Span.IndexOfAny(Utils.HostEndSearchValues);
             ReadOnlySpan<char> Host = HostEnd >= 0 ? _Span[..HostEnd] : _Span;
 
             //Opportunity cost of rendering punycode as unicode
@@ -3488,7 +3440,7 @@ namespace SLBr.Pages
                     }
 
                     bool Matched = false;
-                    foreach (string Confusable in App.URLConfusables)
+                    foreach (string Confusable in App.URLConfusables.Value)
                     {
                         //WARNING: Do not remove StringComparison.Ordinal
                         if (HostIndex + Confusable.Length <= Host.Length && Host.Slice(HostIndex, Confusable.Length).Equals(Confusable.AsSpan(), StringComparison.Ordinal))

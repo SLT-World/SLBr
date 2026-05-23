@@ -1569,11 +1569,7 @@ namespace SLBr
 
                 if (Parameters != null)
                 {
-                    var JSON = JsonSerializer.Serialize(Parameters, new JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                    });
+                    var JSON = JsonSerializer.Serialize(Parameters, DevToolsSerializer.Value);
                     using JsonDocument Document = JsonDocument.Parse(JSON);
                     Dict = ConvertJsonElement(Document.RootElement) as IDictionary<string, object>;
                 }
@@ -1583,6 +1579,12 @@ namespace SLBr
             }
             catch (Exception _Exception) { return JsonSerializer.Serialize(new { Error = _Exception.Message }); }
         }
+
+        Lazy<JsonSerializerOptions> DevToolsSerializer = new(() => new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
 
         private readonly Dictionary<string, List<Action<string>>> DevToolsHandlers = [];
         public void SubscribeDevToolsEvent(string Event, Action<string> Handler)
@@ -2042,7 +2044,7 @@ namespace SLBr
         {
             e.Cancel = true;
             if (InitializingHistory) return;
-            ExternalProtocolEventArgs Args = new ExternalProtocolEventArgs(e.Uri, e.InitiatingOrigin);
+            ExternalProtocolEventArgs Args = new(e.Uri, e.InitiatingOrigin);
             Browser?.Dispatcher.Invoke(() => ExternalProtocolRequested?.Invoke(this, Args));
             if (Args.Launch)
             {
@@ -2056,7 +2058,7 @@ namespace SLBr
 
         private void Browser_BasicAuthenticationRequested(object? sender, CoreWebView2BasicAuthenticationRequestedEventArgs e)
         {
-            WebAuthenticationRequestedEventArgs Args = new WebAuthenticationRequestedEventArgs(e.Uri);
+            WebAuthenticationRequestedEventArgs Args = new(e.Uri);
             Browser?.Dispatcher.Invoke(() => AuthenticationRequested?.Invoke(this, Args));
             if (Args.Cancel)
                 e.Cancel = true;
@@ -2087,7 +2089,7 @@ namespace SLBr
             RequestContexts.Remove(e.Request.Uri);
         }
 
-        private Dictionary<string, CoreWebView2WebResourceContext> RequestContexts = new Dictionary<string, CoreWebView2WebResourceContext>();
+        private Dictionary<string, CoreWebView2WebResourceContext> RequestContexts = [];
 
         private void Browser_ContextMenuRequested(object? sender, CoreWebView2ContextMenuRequestedEventArgs e)
         {
@@ -2148,7 +2150,7 @@ namespace SLBr
             var Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var Header in e.Request.Headers)
                 Headers[Header.Key] = Header.Value;
-            ResourceRequestEventArgs Args = new ResourceRequestEventArgs(e.Request.Uri, Address, e.Request.Method, e.ResourceContext.ToResourceRequestType(), Headers);
+            ResourceRequestEventArgs Args = new(e.Request.Uri, Address, e.Request.Method, e.ResourceContext.ToResourceRequestType(), Headers);
             ResourceRequested?.Invoke(this, Args);
             if (Args.Cancel)
                 e.Response = WebViewManager.WebView2CancelResponse;
@@ -2204,26 +2206,22 @@ namespace SLBr
 
         private void Browser_DownloadStarting(object? sender, CoreWebView2DownloadStartingEventArgs e)
         {
-            WebDownloadItem Item = new WebDownloadItem
+            WebDownloadItem Item = new()
             {
                 ID = Guid.NewGuid().ToString(),
                 Url = e.DownloadOperation.Uri,
                 FileName = Path.GetFileName(e.DownloadOperation.ResultFilePath),
                 FullPath = e.DownloadOperation.ResultFilePath,
                 TotalBytes = (long)(e.DownloadOperation.TotalBytesToReceive ?? 0),
-                State = WebDownloadState.InProgress
+                State = WebDownloadState.InProgress,
+                Pause = e.DownloadOperation.Pause,
+                Resume = () =>
+                    {
+                        if (e.DownloadOperation.CanResume)
+                            e.DownloadOperation.Resume();
+                    },
+                Cancel = e.DownloadOperation.Cancel
             };
-
-            Item.Pause = e.DownloadOperation.Pause;
-
-            Item.Resume = () =>
-            {
-                if (e.DownloadOperation.CanResume)
-                    e.DownloadOperation.Resume();
-            };
-
-            Item.Cancel = e.DownloadOperation.Cancel;
-
 
             WebViewManager.DownloadManager.Started(Item);
             //DownloadStarted?.RaiseUIAsync(Item);
@@ -2261,6 +2259,8 @@ namespace SLBr
                         break;
                 }
             };
+
+            Browser_SourceChanged(null, null);
         }
 
         private void Browser_PermissionRequested(object? sender, CoreWebView2PermissionRequestedEventArgs e)
@@ -2660,16 +2660,17 @@ namespace SLBr
         {
             try
             {
-                string Json = Parameters != null ? JsonSerializer.Serialize(Parameters, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                }) : "{}";
+                string Json = Parameters != null ? JsonSerializer.Serialize(Parameters, DevToolsSerializer.Value) : "{}";
                 return await BrowserCore?.CallDevToolsProtocolMethodAsync(Method, Json) ?? "";
             }
             catch (Exception _Exception) { return JsonSerializer.Serialize(new { Error = _Exception.Message }); }
         }
 
+        Lazy<JsonSerializerOptions> DevToolsSerializer = new(() => new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
 
         private readonly Dictionary<string, CoreWebView2DevToolsProtocolEventReceiver> DevToolsReceivers = [];
         public void SubscribeDevToolsEvent(string Event, Action<string> Handler)
