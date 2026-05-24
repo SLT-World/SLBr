@@ -72,6 +72,7 @@ namespace Updater
 
                 if (File.Exists(TemporaryZip))
                     File.Delete(TemporaryZip);
+                //TODO: Implement Happy Eyeballs.
                 using (HttpClient Client = new(new SocketsHttpHandler
                 {
                     AutomaticDecompression = DecompressionMethods.All,

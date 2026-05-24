@@ -32,17 +32,13 @@ namespace SLBr.Handlers
         const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v5/hashes:search?key=";
         const string YandexEndpoint = "https://sba.yandex.net/v4/threatMatches:find?key=";
         const string PhishTankEndpoint = "https://checkurl.phishtank.com/checkurl/";
-        private static Lazy<HttpClient> HttpClientInstance = new(() => new HttpClient(new SocketsHttpHandler
+        private static Lazy<HttpClient> HttpClientInstance = new(() => HttpClientFactory.Create(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
             EnableMultipleHttp2Connections = true,
             EnableMultipleHttp3Connections = true,
             PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-        })
-        {
-            Timeout = TimeSpan.FromSeconds(10),
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-        });
+        }, TimeSpan.FromSeconds(10)));
 
         public FastHashSet<ulong> SafeHashes = [];
 

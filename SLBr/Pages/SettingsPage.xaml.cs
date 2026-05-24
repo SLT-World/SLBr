@@ -286,6 +286,7 @@ namespace SLBr.Pages
             SettingsInitialized = false;
             CheckUpdateButton_Click(null, null);
             SyncWarning.Visibility = Visibility.Collapsed;
+            HappyEyeballsCheckBox.IsChecked = HttpClientFactory.IsHappyEyeballsEnabled;
             SyncCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("Sync"));
             if (SyncCheckBox.IsChecked.ToBool() && !App.Instance.Synchronized)
             {
@@ -1496,8 +1497,7 @@ namespace SLBr.Pages
 
         private void NavigateButton_Click(object sender, RoutedEventArgs e)
         {
-            string Page = ((FrameworkElement)sender).Tag.ToString();
-            switch (Page)
+            switch (((FrameworkElement)sender).Tag.ToString())
             {
                 case "Privacy":
                     AdListsPage.Visibility = Visibility.Collapsed;
@@ -1573,6 +1573,12 @@ namespace SLBr.Pages
         private void AdBlockCheckBox_Click(object sender, RoutedEventArgs e)
         {
             App.Instance.SetAdBlockLists();
+        }
+
+        private void HappyEyeballsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            HttpClientFactory.IsHappyEyeballsEnabled = HappyEyeballsCheckBox.IsChecked.ToBool();
+            App.Instance.GlobalSave.Set("HappyEyeballs", HttpClientFactory.IsHappyEyeballsEnabled);
         }
 
         private async void AdBlockUpdateButton_Click(object sender, RoutedEventArgs e)

@@ -1604,16 +1604,13 @@ namespace SLBr
 
         public bool Background = false;
 
-        public static HttpClient MiniHttpClient = new(new SocketsHttpHandler
+        public static HttpClient MiniHttpClient = HttpClientFactory.Create(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
             EnableMultipleHttp2Connections = true,
             EnableMultipleHttp3Connections = true,
             PooledConnectionLifetime = TimeSpan.FromMinutes(15),
-        })
-        {
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-        };
+        });
         /*public static HttpClient MimicHttpClient = new(new SocketsHttpHandler
         {
             PooledConnectionLifetime = TimeSpan.FromMinutes(2),
@@ -2605,6 +2602,7 @@ Inner Exception: {7}";
             AllowListSave = new Saving("AllowList.bin", UserApplicationDataPath);
             AdBlockSave = new Saving("AdBlock.bin", UserApplicationDataPath);
 
+            HttpClientFactory.IsHappyEyeballsEnabled = bool.Parse(GlobalSave.Get("HappyEyeballs", true.ToString()));
             if (!GlobalSave.Has("SyncGitHub"))
                 GlobalSave.Set("SyncGitHub", "");
             if (!GlobalSave.Has("SyncGist"))
@@ -2848,6 +2846,7 @@ Inner Exception: {7}";
                     {
                         AdBlockLists =
                         [
+                            //https://easylist-downloads.adblockplus.org/easylist_noelemhide.txt
                             new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
                             new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
                         ];
@@ -3341,28 +3340,6 @@ Inner Exception: {7}";
                     BrowserView?.InitializeBrowserComponent();
             }
         }
-
-        /*#if DEBUG
-                public string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
-                {
-                    if (ObjectPair.Value is System.Dynamic.ExpandoObject expando)
-                    {
-                        foreach (KeyValuePair<string, object> property in (IDictionary<string, object>)expando)
-                            _String = $"{GetPreferencesString(_String, Parents + $"[{ObjectPair.Key}]", property)}";
-                        if (string.IsNullOrEmpty(Parents))
-                            _String += "\n";
-                    }
-                    else if (ObjectPair.Value is List<object> _List)
-                        _String += string.Join(", ", _List);
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(Parents))
-                            _String += $"{Parents}: ";
-                        _String += $"{ObjectPair.Key}: {ObjectPair.Value}\n";
-                    }
-                    return _String;
-                }
-        #endif*/
 
         public static string GenerateCannotConnect(string Url, WebErrorCode ErrorCode, string ErrorText) =>
             string.Format(CannotConnectError, Utils.FastHost(Url), ErrorCode, ErrorText);

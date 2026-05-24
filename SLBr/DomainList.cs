@@ -15,7 +15,7 @@ namespace SLBr
         private readonly List<IntPtr> ArenaChunks = [];
         private byte* CurrentChunkPtr;
         private nint RemainingChunkBytes;
-        private const nint ChunkSize = 4 * 1024 * 1024;
+        private const nint ChunkSize = 64 * 1024 * 1024;
 
         public DomainList()
         {
@@ -39,7 +39,7 @@ namespace SLBr
                 Node = GetOrCreateChildNative(Node, label);
             }
 
-            Node->IsEnd = true;
+            Node->IsEnd = 1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -53,7 +53,7 @@ namespace SLBr
 
             while (End > 0)
             {
-                if (Node->IsEnd)
+                if (Node->IsEnd != 0)
                     return true;
 
                 int Dot = Span[..End].LastIndexOf('.');
@@ -65,7 +65,7 @@ namespace SLBr
                     return false;
             }
 
-            return Node->IsEnd;
+            return Node->IsEnd != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,16 +77,20 @@ namespace SLBr
             if (Parent->HasHashTable != 0)
             {
                 uint Hash = CalculateHash(Label);
-                uint Mask = (uint)Parent->ChildCapacity - 1;
+                uint Capacity = (uint)Parent->ChildCapacity;
+                uint Mask = Capacity - 1;
                 uint Index = Hash & Mask;
 
                 ChildLink* Table = Parent->Children;
+                uint Probes = 0;
                 while (Table[Index].Label != null)
                 {
                     ReadOnlySpan<char> CurrentLabelSpan = new(Table[Index].Label, Table[Index].LabelLength);
                     if (Label.Equals(CurrentLabelSpan, StringComparison.Ordinal))
                         return Table[Index].TargetNode;
                     Index = (Index + 1) & Mask;
+                    if (++Probes > Capacity)
+                        return null;
                 }
                 return null;
             }
@@ -183,10 +187,12 @@ namespace SLBr
             uint Hash = CalculateHash(new ReadOnlySpan<char>(Label, Length));
             uint Mask = Capacity - 1;
             uint Index = Hash & Mask;
-
+            uint Probes = 0;
             while (Table[Index].Label != null)
             {
                 Index = (Index + 1) & Mask;
+                if (++Probes > Capacity)
+                    throw new InvalidOperationException("Hash table corrupted.");
             }
 
             Table[Index].Label = Label;
@@ -219,13 +225,23 @@ namespace SLBr
             (T*)AllocateRaw((nuint)sizeof(T));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private T* AllocateArray<T>(nuint Count) where T : unmanaged =>
-            (T*)AllocateRaw(Count * (nuint)sizeof(T));
+        private T* AllocateArray<T>(nuint Count) where T : unmanaged
+        {
+            nuint Bytes = Count * (nuint)sizeof(T);
+            T* Ptr = (T*)AllocateRaw(Bytes);
+            return Ptr;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte* AllocateRaw(nuint Bytes)
         {
             Bytes = (Bytes + 7) & ~(nuint)7;
+            if (Bytes > (nuint)ChunkSize)
+            {
+                byte* LargeBlock = (byte*)NativeMemory.AllocZeroed(Bytes);
+                ArenaChunks.Add((IntPtr)LargeBlock);
+                return LargeBlock;
+            }
             if (RemainingChunkBytes < (nint)Bytes)
                 AllocateNewArenaChunk();
             byte* Result = CurrentChunkPtr;
@@ -262,7 +278,7 @@ namespace SLBr
         [StructLayout(LayoutKind.Sequential)]
         struct UnmanagedNode
         {
-            public bool IsEnd;
+            public byte IsEnd;
             //public bool Wildcard;
             public byte HasHashTable;
             public int ChildCount;

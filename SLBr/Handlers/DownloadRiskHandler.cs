@@ -36,17 +36,13 @@ namespace SLBr.Handlers
     {
         const string GoogleEndpoint = "https://sb-ssl.google.com/safebrowsing/clientreport/download?key=";
         //const string VirusTotalEndpoint = "";
-        private static Lazy<HttpClient> HttpClientInstance = new(() => new HttpClient(new SocketsHttpHandler
+        private static Lazy<HttpClient> HttpClientInstance = new(() => HttpClientFactory.Create(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
             EnableMultipleHttp2Connections = true,
             EnableMultipleHttp3Connections = true,
             PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-        })
-        {
-            Timeout = TimeSpan.FromSeconds(10),
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-        });
+        }, TimeSpan.FromSeconds(10)));
 
         public FastHashSet<ulong> SafeHashes = [];
 

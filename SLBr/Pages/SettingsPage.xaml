@@ -1103,13 +1103,14 @@
                                         WPF
                                     </GroupBox.Header>
                                     <StackPanel>
-                                        <DockPanel>
+                                        <DockPanel Margin="0,0,0,10">
                                             <TextBlock VerticalAlignment="Center" Text="Render Mode"/>
                                             <ComboBox x:Name="RenderModeComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="RenderModeComboBox_SelectionChanged">
                                                 <ComboBoxItem>Hardware</ComboBoxItem>
                                                 <ComboBoxItem>Software</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>
+                                        <CheckBox x:Name="HappyEyeballsCheckBox" Click="HappyEyeballsCheckBox_Click" Content="Enable IPv6 fast fallback" Width="Auto"/>
                                     </StackPanel>
                                 </GroupBox>
                                 <GroupBox>

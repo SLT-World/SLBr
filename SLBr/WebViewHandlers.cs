@@ -88,10 +88,10 @@ namespace SLBr
         }
         /*public static string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
         {
-            if (ObjectPair.Value is System.Dynamic.ExpandoObject expando)
+            if (ObjectPair.Value is System.Dynamic.ExpandoObject _Expando)
             {
-                foreach (KeyValuePair<string, object> property in (IDictionary<string, object>)expando)
-                    _String = $"{GetPreferencesString(_String, Parents + $"[{ObjectPair.Key}]", property)}";
+                foreach (KeyValuePair<string, object> Property in (IDictionary<string, object>)_Expando)
+                    _String = $"{GetPreferencesString(_String, Parents + $"[{ObjectPair.Key}]", Property)}";
                 if (string.IsNullOrEmpty(Parents))
                     _String += "\n";
             }
@@ -198,11 +198,11 @@ namespace SLBr
                 GlobalRequestContext.SetPreference("autofill.profile_enabled", false, out _);
                 GlobalRequestContext.SetPreference("autofill.credit_card_enabled", false, out _);
 
+                //TODO: Investigate the absence of "net.happy_eyeballs_v3_enabled" https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/pref_names.h;l=3033?q=HappyEyeballsV3
                 /*string _Preferences = string.Empty;
                 foreach (KeyValuePair<string, object> e in GlobalRequestContext.GetAllPreferences(true))
                     _Preferences = GetPreferencesString(_Preferences, string.Empty, e);
-                string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "WriteLines.txt")))
+                using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WriteLines.txt")))
                     outputFile.Write(_Preferences);*/
 
                 GlobalRequestContext.SetPreference("download_bubble.partial_view_enabled", false, out _);
@@ -584,17 +584,14 @@ namespace SLBr
         public void Updated(WebDownloadItem Item) => DownloadUpdated?.RaiseUIAsync(Item);
         public void Completed(WebDownloadItem Item) => DownloadCompleted?.RaiseUIAsync(Item);
 
-        private static Lazy<HttpClient> DownloadHttpClient = new(() => new(new SocketsHttpHandler
+        private static Lazy<HttpClient> DownloadHttpClient = new(() => HttpClientFactory.Create(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.All,
             EnableMultipleHttp2Connections = true,
             EnableMultipleHttp3Connections = true,
             PooledConnectionLifetime = TimeSpan.FromMinutes(15),
             ConnectTimeout = TimeSpan.FromSeconds(30)
-        })
-        {
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-        });
+        }));
 
         public async Task StartDownloadAsync(string Url, string TargetPath, bool ShowDialog, string DialogFilter = "")
         {
