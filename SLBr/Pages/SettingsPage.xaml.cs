@@ -7,10 +7,12 @@ using Microsoft.Win32;
 using SLBr.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -173,7 +175,7 @@ namespace SLBr.Pages
                         InfoWindow.ShowDialog();
                         return;
                     }
-                    ActionStorage _Language = App.Instance.Languages.Where(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString()).First();
+                    ActionStorage _Language = App.Instance.Languages.First(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString());
                     App.Instance.Languages.Remove(_Language);
 
                     /*If replace all items in the collection and have more than 10 items.
@@ -201,7 +203,7 @@ namespace SLBr.Pages
             {
                 if (sender != null)
                 {
-                    ActionStorage _Language = AddableLanguages.Where(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString()).First();
+                    ActionStorage _Language = AddableLanguages.First(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString());
                     App.Instance.Languages.Add(_Language);
                     AddableLanguages.Remove(_Language);
                 }
@@ -304,6 +306,7 @@ namespace SLBr.Pages
                 }
                 AddableLanguages = [with(AddableLanguages.OrderBy(x => x.Tooltip))];
             }
+            AdBlockLists.ItemsSource = App.Instance.AdBlockLists;
 
             LanguageSelection.SelectionChanged -= LanguageSelection_SelectionChanged;
             LanguageSelection.ItemsSource = App.Instance.Languages;
@@ -1474,15 +1477,117 @@ namespace SLBr.Pages
 
         private void SettingsTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (e.OriginalSource != sender)
+                return;
             if (BrowserView != null && BrowserView.WebView != null && BrowserView.WebView.IsBrowserInitialized)
             {
                 if (SettingsTabControl.SelectedItem is TabItem SelectedTabItem && SelectedTabItem.IsEnabled)
                 {
+                    var Pages = ((SelectedTabItem.Content as ScrollViewer).Content as Grid).Children;
+                    foreach (UIElement Page in Pages)
+                        Page.Visibility = Visibility.Collapsed;
+                    Pages[0].Visibility = Visibility.Visible;
                     string Name = Uri.EscapeDataString(SelectedTabItem.Header.ToString().ToLowerInvariant());
                     if (BrowserView.Address != $"slbr://settings/#{Name}")
                         BrowserView.WebView.ExecuteScript($"history.pushState(null, \"\", \"#{Name}\");");
                 }
             }
+        }
+
+        private void NavigateButton_Click(object sender, RoutedEventArgs e)
+        {
+            string Page = ((FrameworkElement)sender).Tag.ToString();
+            switch (Page)
+            {
+                case "Privacy":
+                    AdListsPage.Visibility = Visibility.Collapsed;
+                    PrivacyPage.Visibility = Visibility.Visible;
+                    break;
+                case "AdBlockLists":
+                    AdListsPage.Visibility = Visibility.Visible;
+                    PrivacyPage.Visibility = Visibility.Collapsed;
+                    break;
+            }
+        }
+
+        private void AdBlockLists_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            AdBlockDeleteButton.Visibility = AdBlockLists.SelectedItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void AdBlockAddButton_Click(object sender, RoutedEventArgs e)
+        {
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Filter List",
+            [
+                new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text },
+                new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
+            ],
+            "\ue946"
+            )
+            {
+                Topmost = true
+            };
+            if (_DynamicDialogWindow.ShowDialog() == true)
+                App.Instance.AdBlockLists.Add(new AdBlockList() { Url = _DynamicDialogWindow.InputFields[1].Value.Trim(), Name = _DynamicDialogWindow.InputFields[0].Value });
+        }
+
+        private void AdBlockEditButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (((FrameworkElement)sender).DataContext is AdBlockList List)
+            {
+                List<InputField> Inputs = [
+                    new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = List.Name },
+                    new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = List.Url }
+                ];
+                DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Edit Filter List", Inputs, "\ue70f")
+                {
+                    Topmost = true
+                };
+                if (_DynamicDialogWindow.ShowDialog() == true)
+                {
+                    List.Name = _DynamicDialogWindow.InputFields[0].Value;
+                    List.Url = _DynamicDialogWindow.InputFields[1].Value.Trim();
+                }
+            }
+        }
+
+        private void AdBlockDeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            List<AdBlockList> Lists = AdBlockLists.SelectedItems.Cast<AdBlockList>().ToList();
+            bool Changed = false;
+            for (int i = 0; i < Lists.Count; i++)
+            {
+                AdBlockList _List = Lists[i];
+                if (_List.IsEnabled)
+                    Changed = true;
+                string FileName = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(_List.Url))) + ".txt";
+                string FilePath = Path.Combine(App.Instance.AdBlockDataPath, FileName);
+                if (File.Exists(FilePath))
+                    File.Delete(FilePath);
+                App.Instance.AdBlockLists.Remove(_List);
+            }
+            if (Changed)
+                App.Instance.SetAdBlockLists();
+        }
+
+        private void AdBlockCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            App.Instance.SetAdBlockLists();
+        }
+
+        private async void AdBlockUpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            AdBlockUpdateButton.IsEnabled = false;
+            foreach (AdBlockList List in App.Instance.AdBlockLists)
+            {
+                string FileName = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(List.Url))) + ".txt";
+                string FilePath = Path.Combine(App.Instance.AdBlockDataPath, FileName);
+                if (File.Exists(FilePath))
+                    File.Delete(FilePath);
+            }
+            await App.Instance.SetAdBlockLists();
+            BrowserView.Tab.ParentWindow.OpenToast("Filter lists updated", "\xe73a");
+            AdBlockUpdateButton.IsEnabled = true;
         }
     }
 }

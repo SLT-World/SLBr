@@ -430,11 +430,11 @@ namespace SLBr
         {
             try
             {
-                string Host = Utils.Host(Url);
+                string Host = Utils.FastHost(Url);
                 string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris", "favourites"];
                 if (SLBrURLs.Contains(Host))
                 {
-                    string Page = Url.TrimStart('/');
+                    string Page = Utils.RemovePrefix(Utils.CleanUrl(Url[7..]), Host).TrimStart('/');
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;
                     if (string.IsNullOrWhiteSpace(Page) && Host == "newtab")
                     {
@@ -852,7 +852,10 @@ namespace SLBr
             }
             return true;
         }
-        public void Dispose() { }
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+        }
     }
     public class ChromiumPermissionHandler : IPermissionHandler
     {

@@ -1,6 +1,7 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using System;
 using System.Diagnostics;
 using System.Text;
 
@@ -22,11 +23,16 @@ namespace SLBr
 
         public static void Clear() => Results.Clear();
 
+        private static void ForceGC()
+        {
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+        }
+
         public static void Run(string Name, int Iterations, Action Function)
         {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
+            ForceGC();
 
             long MemoryBefore = GC.GetTotalMemory(true);
             Stopwatch _Stopwatch = Stopwatch.StartNew();
@@ -47,9 +53,7 @@ namespace SLBr
 
         public static async Task RunAsync(string Name, int Iterations, Func<Task> Function)
         {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
+            ForceGC();
 
             long MemoryBefore = GC.GetTotalMemory(true);
             Stopwatch _Stopwatch = Stopwatch.StartNew();

@@ -277,48 +277,5 @@ namespace SLBr
             public int LabelLength;
             public UnmanagedNode* TargetNode;
         }
-
-        public void MergeFrom(DomainList Other)
-        {
-            if (Other == null || Other.Root == null) return;
-            foreach (string Domain in Other.AllDomains)
-                AllDomains.Add(Domain);
-            MergeNodes(Root, Other.Root);
-        }
-
-        private void MergeNodes(UnmanagedNode* TargetParent, UnmanagedNode* SourceParent)
-        {
-            int Count = SourceParent->ChildCount;
-            if (Count == 0)
-                return;
-            if (SourceParent->HasHashTable != 0)
-            {
-                ChildLink* Table = SourceParent->Children;
-                int Capacity = SourceParent->ChildCapacity;
-                for (int i = 0; i < Capacity; i++)
-                {
-                    var Entry = Table[i];
-                    if (Entry.Label != null)
-                        MergeSingleLink(TargetParent, &Entry);
-                }
-            }
-            else
-            {
-                ChildLink* Links = SourceParent->Children;
-                for (int i = 0; i < Count; i++)
-                    MergeSingleLink(TargetParent, &Links[i]);
-            }
-        }
-
-        private void MergeSingleLink(UnmanagedNode* TargetParent, ChildLink* SourceLink)
-        {
-            ReadOnlySpan<char> Label = new(SourceLink->Label, SourceLink->LabelLength);
-            UnmanagedNode* TargetChild = GetOrCreateChildNative(TargetParent, Label);
-            if (SourceLink->TargetNode->IsEnd)
-                TargetChild->IsEnd = true;
-            //if (SourceLink->TargetNode->Wildcard)
-            //    TargetChild->Wildcard = true;
-            MergeNodes(TargetChild, SourceLink->TargetNode);
-        }
     }
 }

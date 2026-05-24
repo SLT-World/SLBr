@@ -744,7 +744,6 @@ namespace SLBr.Pages
             }
             if (App.Instance.AdBlock == 1)
             {
-                Debug.WriteLine(e.Url);
                 if (App.Instance._AdBlockHandler.ShouldBlockRequest(e.Url, e.FocusedUrl, e.ResourceRequestType))
                 {
                     Interlocked.Increment(ref App.Instance.AdsBlocked);
@@ -819,9 +818,9 @@ namespace SLBr.Pages
                             //TODO: Async & CancellationToken.
                             ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
                             if (_ThreatType is ThreatType.Malware or ThreatType.Unwanted_Software)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskError, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                             else if (_ThreatType == ThreatType.Social_Engineering)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskError, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
                         }
                     }
                     else if (e.Url.StartsWith("chrome:"))
@@ -2381,7 +2380,6 @@ namespace SLBr.Pages
                     SideBarWindowInfo?.Dispose();
                     SideBarWindowInfo = null;
                     IsUtilityContainerOpen = false;
-                    GC.Collect();
                 }
             }
             else
@@ -3633,8 +3631,6 @@ namespace SLBr.Pages
             }
             PageOverlay?.Dispose();
             PageOverlay = null;
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
 
         private void InspectorDockDropdown_SelectionChanged(object sender, SelectionChangedEventArgs e)

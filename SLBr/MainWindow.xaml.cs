@@ -1211,7 +1211,6 @@ namespace SLBr
             else if (App.Instance.WindowsSaves.Count == App.Instance.AllWindows.Count)
                 App.Instance.WindowsSaves.RemoveAt(App.Instance.WindowsSaves.Count - 1);
             App.Instance.AllWindows.Remove(this);
-            GC.SuppressFinalize(this);
         }
 
         public async void ShowPreview(BrowserTabItem? Tab, FrameworkElement Anchor = null)

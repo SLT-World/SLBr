@@ -202,6 +202,49 @@ namespace SLBr
         private double? _BorderThickness;
     }
 
+    public class AdBlockList : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        public bool IsEnabled
+        {
+            get => _IsEnabled;
+            set
+            {
+                _IsEnabled = value;
+                RaisePropertyChanged();
+            }
+        }
+        private bool _IsEnabled = false;
+
+        public string Url
+        {
+            get => _Url;
+            set
+            {
+                _Url = value.ToLowerInvariant();
+                RaisePropertyChanged();
+            }
+        }
+        private string _Url = "";
+
+        public string Name
+        {
+            get => _Name;
+            set
+            {
+                _Name = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Name = "";
+    }
+
     public static class HotKeyManager
     {
         public static HashSet<HotKey> HotKeys = [];
@@ -770,6 +813,7 @@ namespace SLBr
         public Saving StatisticsSave;
         public Saving LanguagesSave;
         public Saving AllowListSave;
+        public Saving AdBlockSave;
 
         public List<Saving> WindowsSaves = [];
 
@@ -792,6 +836,7 @@ namespace SLBr
         public string ExecutablePath;
         public string ExtensionsPath;
         public string ResourcesPath;
+        public string AdBlockDataPath;
         //public string CdnPath;
 
         public bool AppInitialized;
@@ -1686,6 +1731,7 @@ namespace SLBr
             UserApplicationWindowsPath = Path.Combine(UserApplicationDataPath, "Windows");
             ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
+            AdBlockDataPath = Path.Combine(UserApplicationDataPath, "Adblock");
             //CdnPath = Path.Combine(ResourcesPath, "cdn");
 
             LocaleNames = AllLocales.Select(i => i.Value).ToList();
@@ -2208,20 +2254,44 @@ Inner Exception: {7}";
                 _AdBlockHandler = new AdBlockHandler(AllowListSave);
                 Dispatcher.BeginInvoke(async () =>
                 {
-                    string[] Urls = [
-                        //"https://raw.githubusercontent.com/d3ward/toolz/master/src/d3host.txt",
-                        "https://easylist.to/easylist/easylist.txt",
-                        "https://easylist.to/easylist/easyprivacy.txt",
-                        //"https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/adguard/ads-ags.txt",
-                        //"https://raw.githubusercontent.com/blocklistproject/Lists/refs/heads/master/adguard/tracking-ags.txt",
-                        //"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
-                        //"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
-                    ];
-                    List<Task<string>> DownloadTasks = Urls.Select(i => MiniHttpClient.GetStringAsync(i)).ToList();
-                    string[] Results = await Task.WhenAll(DownloadTasks);
-                    foreach (string FileContent in Results)
-                        _AdBlockHandler.ParseAdd(FileContent);
+                    await SetAdBlockLists();
                 });
+            }
+        }
+        public async Task SetAdBlockLists()
+        {
+            _AdBlockHandler.Clear();
+            if (!Directory.Exists(AdBlockDataPath))
+                Directory.CreateDirectory(AdBlockDataPath);
+            foreach (AdBlockList List in AdBlockLists)
+            {
+                if (List.IsEnabled)
+                {
+                    string FileName = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(List.Url))) + ".txt";
+                    string FilePath = Path.Combine(AdBlockDataPath, FileName);
+                    if (File.Exists(FilePath))
+                        _AdBlockHandler.ParseAdd(File.ReadAllText(FilePath));
+                    else
+                    {
+                        try
+                        {
+                            using CancellationTokenSource _CancellationTokenSource = new(TimeSpan.FromSeconds(120));
+                            using HttpResponseMessage Response = await MiniHttpClient.GetAsync(List.Url, _CancellationTokenSource.Token);
+                            Response.EnsureSuccessStatusCode();
+                            using Stream _Stream = await Response.Content.ReadAsStreamAsync(_CancellationTokenSource.Token);
+                            using FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+
+                            await _Stream.CopyToAsync(_FileStream, _CancellationTokenSource.Token);
+                            _FileStream.Close();
+                            _AdBlockHandler.ParseAdd(File.ReadAllText(FilePath));
+                        }
+                        catch
+                        {
+                            if (File.Exists(FilePath))
+                                File.Delete(FilePath);
+                        }
+                    }
+                }
             }
         }
         public void SetAMP(bool Toggle)
@@ -2503,6 +2573,8 @@ Inner Exception: {7}";
         };
         public List<string> LocaleNames = null;
 
+        public ObservableCollection<AdBlockList> AdBlockLists = [];
+
         public static string GetLocaleIcon(string ISO)
         {
             if (ISO.StartsWith("zh-TW"))
@@ -2531,6 +2603,7 @@ Inner Exception: {7}";
             StatisticsSave = new Saving("Statistics.bin", UserApplicationDataPath);
             LanguagesSave = new Saving("Languages.bin", UserApplicationDataPath);
             AllowListSave = new Saving("AllowList.bin", UserApplicationDataPath);
+            AdBlockSave = new Saving("AdBlock.bin", UserApplicationDataPath);
 
             if (!GlobalSave.Has("SyncGitHub"))
                 GlobalSave.Set("SyncGitHub", "");
@@ -2601,6 +2674,8 @@ Inner Exception: {7}";
                                             LanguagesSave.Process(LanguagesRaw);
                                         if (SyncedFiles.TryGetValue("AllowList.bin", out var AllowListRaw))
                                             AllowListSave.Process(AllowListRaw);
+                                        if (SyncedFiles.TryGetValue("AdBlock.bin", out var AdBlockRaw))
+                                            AdBlockSave.Process(AdBlockRaw);
                                     }
                                     if (SyncedData.Contains("Favourites") && SyncedFiles.TryGetValue("Favourites.bin", out var FavouritesRaw))
                                     {
@@ -2699,7 +2774,7 @@ Inner Exception: {7}";
             {
                 for (int i = 0; i < SearchCount; i++)
                 {
-                    var Values = SearchSave.Get($"{i}").Split("<#>");
+                    string[] Values = SearchSave.Get($"{i}").Split("<#>");
                     if (Values.Length != 3)
                     {
                         DefaultSearchProvider = new() { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
@@ -2761,6 +2836,42 @@ Inner Exception: {7}";
                 Languages.Add(new ActionStorage(AllLocales.GetValueOrDefault("en-US"), GetLocaleIcon("en-US"), "en-US"));
                 Languages.Add(new ActionStorage(AllLocales.GetValueOrDefault("en"), GetLocaleIcon("en"), "en"));
                 Locale = Languages[0];
+            }
+
+            int AdBlockUrlCount = AdBlockSave.GetInt("Count", 0);
+            if (AdBlockUrlCount != 0)
+            {
+                for (int i = 0; i < AdBlockUrlCount; i++)
+                {
+                    string[] Values = AdBlockSave.Get($"{i}").Split("<#>");
+                    if (Values.Length != 3)
+                    {
+                        AdBlockLists =
+                        [
+                            new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
+                            new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
+                        ];
+                        break;
+                    }
+                    else
+                    {
+                        AdBlockList _AdBlockList = new()
+                        {
+                            Name = Values[0],
+                            Url = Values[1],
+                            IsEnabled = Values[2] == "1"
+                        };
+                        AdBlockLists.Add(_AdBlockList);
+                    }
+                }
+            }
+            else
+            {
+                AdBlockLists =
+                [
+                    new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
+                    new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
+                ];
             }
 
             SetMobileView(bool.Parse(GlobalSave.Get("MobileView", false.ToString())));
@@ -3258,7 +3369,7 @@ Inner Exception: {7}";
 
         public const string CannotConnectError = @"<html><head><title>Unable to connect to {0}</title><style>body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width:700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Unable to connect to {0}</h2><h5 id=""description"">{1}</h5><h5 id=""error"" style=""margin:0px; color:#646464;"">{2}</h5></div></body></html>";
         public const string ProcessCrashedError = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}button{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}#content{width:90%;max-width:700px;margin: 140px auto 0 auto;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
-        public const string WebRiskError = @"<html><head><title>Dangerous site ahead</title><style>html{{background:#A4000F;color:white;}}body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width:700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>{0}</h5><div style=""position:relative;""><button style=""left:0;border:1px solid white;background:transparent;color:white;"" onclick=""engine.postMessage({{type:'__web_risk_ignore__'}})"">Proceed anyway</button><button style=""right:0;background:white;"" onclick=""history.back()"">Go back</button></div></div></body></html>";
+        public const string WebRiskInterstitialPage = @"<html><head><title>Dangerous site ahead</title><style>html{{background:#A4000F;color:white;}}body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width:700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>{0}</h5><div style=""position:relative;""><button style=""left:0;border:1px solid white;background:transparent;color:white;"" onclick=""engine.postMessage({{type:'__web_risk_ignore__'}})"">Proceed anyway</button><button style=""right:0;background:white;"" onclick=""history.back()"">Go back</button></div></div></body></html>";
         public const string HistoryPlaceholder = @"<html><head><script>window.addEventListener(""pageshow"",function(e){e.persisted&&location.reload()});</script></head></html>";
 
         private void SetBrowserFlags(WebViewSettings Settings)
@@ -4000,6 +4111,17 @@ Inner Exception: {7}";
             }
             string AllowListRaw = AllowListSave.Save();
 
+            AdBlockSave.Clear();
+            AdBlockSave.Set("Count", AdBlockLists.Count.ToString());
+            for (int i = 0; i < AdBlockLists.Count; i++)
+            {
+                AdBlockList _AdBlockList = AdBlockLists[i];
+                int Enabled = _AdBlockList.IsEnabled ? 1 : 0;
+                AdBlockSave.Set(i.ToString(), $"{_AdBlockList.Name}<#>{_AdBlockList.Url}<#>{Enabled}");
+            }
+            string AdBlockRaw = AdBlockSave.Save();
+
+
             LanguagesSave.Clear();
             LanguagesSave.Set("Count", Languages.Count.ToString());
             LanguagesSave.Set("Selected", Languages.IndexOf(Locale));
@@ -4043,9 +4165,9 @@ Inner Exception: {7}";
                 }
             }
 
-            try
+            if (!PreventSync && bool.Parse(GlobalSave.Get("Sync")) && Utils.IsInternetAvailable())
             {
-                if (!PreventSync && bool.Parse(GlobalSave.Get("Sync")) && Utils.IsInternetAvailable())
+                try
                 {
                     PreventSync = true;
                     string SyncGitHubToken = GlobalSave.Get("SyncGitHub");
@@ -4053,7 +4175,7 @@ Inner Exception: {7}";
                     {
                         string SyncGistID = GlobalSave.Get("SyncGist");
                         string[] SyncedData = GlobalSave.Get("SyncData").Split(',');
-                        Dictionary<string, string> SyncData = new();
+                        Dictionary<string, string> SyncData = [];
                         //if (SyncedData.Contains("Tabs"))
                         if (SyncedData.Contains("Favourites"))
                             SyncData["Favourites.bin"] = FavouritesRaw;
@@ -4063,6 +4185,7 @@ Inner Exception: {7}";
                             SyncData["Search.bin"] = SearchRaw;
                             SyncData["Languages.bin"] = LanguagesRaw;
                             SyncData["AllowList.bin"] = AllowListRaw;
+                            SyncData["AdBlock.bin"] = AdBlockRaw;
                         }
                         string SyncJson = JsonSerializer.Serialize(SyncData, new JsonSerializerOptions { WriteIndented = false });
                         HttpClient Client = new();
@@ -4100,8 +4223,8 @@ Inner Exception: {7}";
                         }
                     }
                 }
+                catch { }
             }
-            catch { }
         }
 
         public bool PreventSync = false;

@@ -193,7 +193,6 @@ namespace SLBr.Controls
 
         public void Dispose()
         {
-            GC.Collect(GC.MaxGeneration);
             GC.SuppressFinalize(this);
         }
 

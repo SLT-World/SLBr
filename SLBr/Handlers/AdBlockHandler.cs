@@ -56,6 +56,12 @@ namespace SLBr.Handlers
             return false;
         }
 
+        public void Clear()
+        {
+            HostCache.Clear();
+            Domains.Clear();
+        }
+
         private static bool IsPossiblyAd(ResourceRequestType _ResourceType) =>
              _ResourceType is ResourceRequestType.XMLHTTPRequest or ResourceRequestType.Media or ResourceRequestType.Script or ResourceRequestType.SubFrame or ResourceRequestType.Image;
 
