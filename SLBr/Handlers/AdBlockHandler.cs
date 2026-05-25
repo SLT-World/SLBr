@@ -70,7 +70,7 @@ namespace SLBr.Handlers
         {
             if (string.IsNullOrEmpty(Data)) return;
 
-            //SearchValues<char> _SearchValues = SearchValues.Create(" /?#!:@[]*&^%$#@!");
+            SearchValues<char> _SearchValues = SearchValues.Create(" /?#!:@[]{}()*&^%$#!=,'\"~`<>\\");
             int ProcessorCount = Environment.ProcessorCount;
             int TotalLength = Data.Length;
             int ChunkTarget = TotalLength / ProcessorCount;
@@ -136,12 +136,9 @@ namespace SLBr.Handlers
                                     Domain = SpaceIndex != -1 ? Span[..SpaceIndex] : Span;
                                 }
                                 /*else
-                                {
-                                    if (Span.IndexOfAny(_SearchValues) == -1)
-                                        Domain = Span;
-                                }*/
+                                    Domain = Span;*/
 
-                                if (!Domain.IsEmpty)
+                                if (!Domain.IsEmpty && Domain.IndexOfAny(_SearchValues) == -1)
                                     LocalList.Add(Domain.ToString());
                             }
                         }

@@ -77,15 +77,18 @@ namespace SLBr.Pages
         {
             BrowserView = _BrowserView;
         }
-
+        string PreviousUrl = string.Empty;
+        string CurrentUrl = string.Empty;
         public void OnNavigated()
         {
-            if (BrowserView != null)
+            if (BrowserView != null && BrowserView.Address != PreviousUrl)
             {
-                string[] UrlParts = BrowserView.Address.Split("#");
-                if (UrlParts.Length == 2)
+                PreviousUrl = CurrentUrl;
+                CurrentUrl = BrowserView.Address;
+                string[] UrlParts = BrowserView.Address[16..].Split("/", StringSplitOptions.RemoveEmptyEntries);
+                if (UrlParts.Length != 0)
                 {
-                    switch (UrlParts[1])
+                    switch (UrlParts[0])
                     {
                         case "user":
                             if (UserTab.Visibility == Visibility.Visible)
@@ -136,6 +139,27 @@ namespace SLBr.Pages
                             else
                                 SettingsTabControl.SelectedItem = AboutTab;
                             break;
+                    }
+                    if (UrlParts.Length == 2)
+                    {
+                        if (SettingsTabControl.SelectedItem is TabItem SelectedTabItem && SelectedTabItem.IsEnabled)
+                        {
+                            var Pages = ((SelectedTabItem.Content as ScrollViewer).Content as Grid).Children;
+                            string SubName = UrlParts[1];
+                            Border? Target = null;
+                            foreach (Border Page in Pages)
+                            {
+                                if (Page.Tag as string == SubName)
+                                {
+                                    Target = Page;
+                                    Page.Visibility = Visibility.Visible;
+                                }
+                                else
+                                    Page.Visibility = Visibility.Collapsed;
+                            }
+                            if (Target == null)
+                                Pages[0].Visibility = Visibility.Visible;
+                        }
                     }
                 }
             }
@@ -1484,29 +1508,63 @@ namespace SLBr.Pages
             {
                 if (SettingsTabControl.SelectedItem is TabItem SelectedTabItem && SelectedTabItem.IsEnabled)
                 {
-                    var Pages = ((SelectedTabItem.Content as ScrollViewer).Content as Grid).Children;
-                    foreach (UIElement Page in Pages)
-                        Page.Visibility = Visibility.Collapsed;
+                    UIElementCollection Pages = ((SelectedTabItem.Content as ScrollViewer).Content as Grid).Children;
                     Pages[0].Visibility = Visibility.Visible;
-                    string Name = Uri.EscapeDataString(SelectedTabItem.Header.ToString().ToLowerInvariant());
-                    if (BrowserView.Address != $"slbr://settings/#{Name}")
-                        BrowserView.WebView.ExecuteScript($"history.pushState(null, \"\", \"#{Name}\");");
+                    for (int i = 1; i < Pages.Count; i++)
+                        Pages[i].Visibility = Visibility.Collapsed;
+                    SetNavigation(SelectedTabItem, Pages);
                 }
             }
         }
 
+        private void SetNavigation(TabItem SelectedTabItem, UIElementCollection Pages)
+        {
+            string Name = Uri.EscapeDataString(SelectedTabItem.Header.ToString().ToLowerInvariant());
+            string? SubName = null;
+            foreach (Border Page in Pages)
+            {
+                if (Page.Visibility == Visibility.Visible)
+                {
+                    SubName = Page.Tag as string;
+                    break;
+                }
+            }
+            string SubPath = string.IsNullOrEmpty(SubName) ? "" : $"/{SubName}";
+            PreviousUrl = CurrentUrl;
+            CurrentUrl = $"slbr://settings/{Name}{SubPath}";
+            if (BrowserView.Address != CurrentUrl)
+                BrowserView.WebView.ExecuteScript($"history.replaceState(null, \"\", \"{CurrentUrl}\");");
+        }
+
         private void NavigateButton_Click(object sender, RoutedEventArgs e)
         {
-            switch (((FrameworkElement)sender).Tag.ToString())
+            if (SettingsTabControl.SelectedItem is TabItem SelectedTabItem && SelectedTabItem.IsEnabled)
             {
-                case "Privacy":
-                    AdListsPage.Visibility = Visibility.Collapsed;
-                    PrivacyPage.Visibility = Visibility.Visible;
-                    break;
-                case "AdBlockLists":
-                    AdListsPage.Visibility = Visibility.Visible;
-                    PrivacyPage.Visibility = Visibility.Collapsed;
-                    break;
+                UIElementCollection Pages = ((SelectedTabItem.Content as ScrollViewer).Content as Grid).Children;
+                string Tag = ((FrameworkElement)sender).Tag.ToString();
+                if (Tag == "Return")
+                {
+                    Pages[0].Visibility = Visibility.Visible;
+                    for (int i = 1; i < Pages.Count; i++)
+                        Pages[i].Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    Border? Target = null;
+                    foreach (Border Page in Pages)
+                    {
+                        if (Page.Tag as string == Tag)
+                        {
+                            Target = Page;
+                            Page.Visibility = Visibility.Visible;
+                        }
+                        else
+                            Page.Visibility = Visibility.Collapsed;
+                    }
+                    if (Target == null)
+                        Pages[0].Visibility = Visibility.Visible;
+                }
+                SetNavigation(SelectedTabItem, Pages);
             }
         }
 

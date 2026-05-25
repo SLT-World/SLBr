@@ -163,7 +163,7 @@
   </ItemGroup>
 
 	<Target Name="DeleteFiles" AfterTargets="Publish">
-		<Copy SourceFiles="..\Updater\bin\$(Configuration)\net9.0\publish\Updater.exe" DestinationFolder="$(PublishDir)" />
+		<Copy SourceFiles="..\Updater\bin\$(Configuration)\net\publish\Updater.exe" DestinationFolder="$(PublishDir)" />
 		<Delete Files="$(PublishDir)\Microsoft.Web.WebView2.WinForms.dll" />
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.exe" />
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.dll" />

@@ -402,7 +402,7 @@
             <TabItem IsEnabled="False" x:Name="PrivacyTab" Header="Privacy &amp; Security" Tag="&#xE72E;">
                 <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
                     <Grid>
-                        <Border x:Name="PrivacyPage" Margin="10" MaxWidth="550" CornerRadius="5" Padding="25">
+                        <Border Margin="10" MaxWidth="550" CornerRadius="5" Padding="25">
                             <StackPanel>
                                 <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Privacy &amp; Security</TextBlock>
                                 <GroupBox Margin="0,0,0,10">
@@ -435,7 +435,7 @@
                                         </DockPanel>
                                         <DockPanel>
                                             <TextBlock VerticalAlignment="Center" Text="Manage lists"/>
-                                            <Button Style="{StaticResource IconButton}" Click="NavigateButton_Click" Tag="AdBlockLists" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xE76C;" />
+                                            <Button Style="{StaticResource IconButton}" Click="NavigateButton_Click" Tag="filters" VerticalAlignment="Center" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="&#xE76C;" />
                                         </DockPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -534,14 +534,14 @@
                                 </GroupBox>-->
                             </StackPanel>
                         </Border>
-                        <Border Visibility="Collapsed" x:Name="AdListsPage" Margin="10" MaxWidth="550" CornerRadius="5" Padding="25">
+                        <Border Tag="filters" Visibility="Collapsed" Margin="10" MaxWidth="550" CornerRadius="5" Padding="25">
                             <StackPanel>
                                 <Grid Margin="0,0,0,25">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition/>
                                     </Grid.ColumnDefinitions>
-                                    <Button Click="NavigateButton_Click" BorderThickness="0" Tag="Privacy" ToolTip="Back" Content="&#xE76B;" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
+                                    <Button Click="NavigateButton_Click" BorderThickness="0" Tag="Return" ToolTip="Back" Content="&#xE76B;" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                                     <TextBlock FontWeight="DemiBold" Grid.Column="1" FontSize="25">Content Filters</TextBlock>
                                 </Grid>
                                 <GroupBox Margin="0,0,0,10">

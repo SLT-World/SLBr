@@ -426,13 +426,13 @@ namespace SLBr
                 MessageBox.Show(Response.SSLStatus.X509Certificate.NotAfter.Date.ToShortDateString());
             }*/
         }
+        private static Lazy<string[]> SLBrURLs = new(() => ["credits", "newtab", "downloads", "history", "settings", "tetris", "favourites"]);
         public static async Task<ProtocolResponse> SLBrHandler(string Url, string Extra = "", CancellationToken? Token = null)
         {
             try
             {
                 string Host = Utils.FastHost(Url);
-                string[] SLBrURLs = ["credits", "newtab", "downloads", "history", "settings", "tetris", "favourites"];
-                if (SLBrURLs.Contains(Host))
+                if (SLBrURLs.Value.Contains(Host))
                 {
                     string Page = Utils.RemovePrefix(Utils.CleanUrl(Url[7..]), Host).TrimStart('/');
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;
@@ -444,9 +444,8 @@ namespace SLBr
                             FileName = "private.html";
                     }
                     string FilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", FileName);
-                    if (!File.Exists(FilePath))
-                        return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
-                    return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), Cef.GetMimeType(Utils.GetFileExtension(FilePath)), 200);
+                    if (File.Exists(FilePath))
+                        return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), Cef.GetMimeType(Utils.GetFileExtension(FilePath)), 200);
                 }
                 return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
             }
@@ -632,7 +631,7 @@ namespace SLBr
 
                 var Buffer = new byte[8192];
                 int Read;
-                while ((Read = await Stream.ReadAsync(Buffer, 0, Buffer.Length)) > 0)
+                while ((Read = await Stream.ReadAsync(Buffer)) > 0)
                 {
                     await _FileStream.WriteAsync(Buffer, 0, Read);
                     Item.ReceivedBytes += Read;
@@ -698,7 +697,7 @@ namespace SLBr
                     browser.MainFrame.LoadUrl(targetUrl);
                 else
                 {
-                    NewTabRequestEventArgs Args = new NewTabRequestEventArgs(targetUrl, targetDisposition == WindowOpenDisposition.NewBackgroundTab, targetDisposition == WindowOpenDisposition.NewPopup ? new Rect(popupFeatures.X ?? 0, popupFeatures.Y ?? 0, popupFeatures.Width ?? 0, popupFeatures.Height ?? 0) : null);
+                    NewTabRequestEventArgs Args = new(targetUrl, targetDisposition == WindowOpenDisposition.NewBackgroundTab, targetDisposition == WindowOpenDisposition.NewPopup ? new Rect(popupFeatures.X ?? 0, popupFeatures.Y ?? 0, popupFeatures.Width ?? 0, popupFeatures.Height ?? 0) : null);
                     WebViewManager.ChromiumWebViews[browserControl]?.NotifyNewTabRequested(Args);
 
                     //CefSharp doesn't seem to support the ability to set something like "var myWindow = window.open("", "MsgWindow", "width=200,height=100");"
@@ -732,7 +731,7 @@ namespace SLBr
         {
             string Address = string.Empty;
             Application.Current?.Dispatcher.Invoke(() => Address = chromiumWebBrowser.Address);
-            var Args = new ScriptDialogEventArgs(ScriptDialogType.BeforeUnload, Address, messageText, string.Empty, isReload);
+            ScriptDialogEventArgs Args = new(ScriptDialogType.BeforeUnload, Address, messageText, string.Empty, isReload);
             WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaiseScriptDialog(Args);
             if (Args.Handled)
             {
@@ -747,7 +746,7 @@ namespace SLBr
 
         public bool OnJSDialog(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, CefJsDialogType DialogType, string messageText, string defaultPromptText, IJsDialogCallback callback, ref bool suppressMessage)
         {
-            var Args = new ScriptDialogEventArgs((ScriptDialogType)DialogType, originUrl, messageText, defaultPromptText);
+            ScriptDialogEventArgs Args = new((ScriptDialogType)DialogType, originUrl, messageText, defaultPromptText);
             WebViewManager.ChromiumWebViews[chromiumWebBrowser]?.RaiseScriptDialog(Args);
             if (Args.Handled)
             {
@@ -989,17 +988,17 @@ namespace SLBr
             {
                 Item.Url = downloadItem.Url;
                 Item.FileName = Path.GetFileName(Item.FullPath);
+                Item.FullPath = downloadItem.FullPath;
             }
             Item.TotalBytes = downloadItem.TotalBytes;
             Item.ReceivedBytes = downloadItem.ReceivedBytes;
-            Item.Pause = () => { DownloadCallbacks[downloadItem.Id].Pause(); };
-            Item.Resume = () => { DownloadCallbacks[downloadItem.Id].Resume(); };
-            Item.Cancel = () => { DownloadCallbacks[downloadItem.Id].Cancel(); };
-            Item.FullPath = downloadItem.FullPath;
 
             if (downloadItem.IsInProgress)
             {
                 DownloadCallbacks[downloadItem.Id] = callback;
+                Item.Pause = () => { DownloadCallbacks[downloadItem.Id].Pause(); };
+                Item.Resume = () => { DownloadCallbacks[downloadItem.Id].Resume(); };
+                Item.Cancel = () => { DownloadCallbacks[downloadItem.Id].Cancel(); };
                 Item.State = WebDownloadState.InProgress;
                 WebViewManager.DownloadManager.Updated(Item);
             }
@@ -1043,7 +1042,6 @@ namespace SLBr
         }
 
         public bool OnContextMenuCommand(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags) => false;
-
         public void OnContextMenuDismissed(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame) { }
         public bool RunContextMenu(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model, IRunContextMenuCallback callback) => false;
     }

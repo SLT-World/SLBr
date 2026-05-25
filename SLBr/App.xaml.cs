@@ -2257,6 +2257,8 @@ Inner Exception: {7}";
         }
         public async Task SetAdBlockLists()
         {
+            if (_AdBlockHandler == null)
+                return;
             _AdBlockHandler.Clear();
             if (!Directory.Exists(AdBlockDataPath))
                 Directory.CreateDirectory(AdBlockDataPath);
@@ -2767,6 +2769,7 @@ Inner Exception: {7}";
                 }
             }
 
+            bool UseDefaultSearchEngines = false;
             int SearchCount = SearchSave.GetInt("Count", 0);
             if (SearchCount != 0)
             {
@@ -2775,44 +2778,35 @@ Inner Exception: {7}";
                     string[] Values = SearchSave.Get($"{i}").Split("<#>");
                     if (Values.Length != 3)
                     {
-                        DefaultSearchProvider = new() { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
-                        SearchEngines =
-                        [
-                            DefaultSearchProvider,
-                            new() { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
-                            new() { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?q={0}&type=list" },
-                            new() { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
-                            new() { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
-                            new() { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
-                            new() { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
-                        ];
+                        UseDefaultSearchEngines = true;
                         break;
                     }
                     else
                     {
-                        SearchProvider _SearchProvider = new()
+                        SearchEngines.Add(new SearchProvider()
                         {
                             Name = Values[0],
                             Host = Utils.FastHost(Values[1]),
                             SearchUrl = Values[1],
                             SuggestUrl = Values[2]
-                        };
-                        SearchEngines.Add(_SearchProvider);
+                        });
                     }
                 }
             }
             else
+                UseDefaultSearchEngines = true;
+            if (UseDefaultSearchEngines)
             {
-                DefaultSearchProvider = new SearchProvider { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
+                DefaultSearchProvider = new() { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
                 SearchEngines =
                 [
                     DefaultSearchProvider,
-                    new SearchProvider { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
-                    new SearchProvider { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?type=list&q={0}" },
-                    new SearchProvider { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
-                    new SearchProvider { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
-                    new SearchProvider { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
-                    new SearchProvider { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
+                    new() { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
+                    new() { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?q={0}&type=list" },
+                    new() { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
+                    new() { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
+                    new() { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
+                    new() { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
                 ];
             }
             string SearchEngineName = GlobalSave.Get("SearchEngine", "Google");
@@ -2837,6 +2831,7 @@ Inner Exception: {7}";
             }
 
             int AdBlockUrlCount = AdBlockSave.GetInt("Count", 0);
+            bool UseDefaultAdBlockLists = false;
             if (AdBlockUrlCount != 0)
             {
                 for (int i = 0; i < AdBlockUrlCount; i++)
@@ -2844,32 +2839,33 @@ Inner Exception: {7}";
                     string[] Values = AdBlockSave.Get($"{i}").Split("<#>");
                     if (Values.Length != 3)
                     {
-                        AdBlockLists =
-                        [
-                            //https://easylist-downloads.adblockplus.org/easylist_noelemhide.txt
-                            new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
-                            new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
-                        ];
+                        UseDefaultAdBlockLists = true;
                         break;
                     }
                     else
                     {
-                        AdBlockList _AdBlockList = new()
+                        AdBlockLists.Add(new AdBlockList()
                         {
                             Name = Values[0],
                             Url = Values[1],
                             IsEnabled = Values[2] == "1"
-                        };
-                        AdBlockLists.Add(_AdBlockList);
+                        });
                     }
                 }
             }
             else
+                UseDefaultAdBlockLists = true;
+            if (UseDefaultAdBlockLists)
             {
+                //TODO: Fetch title from file content.
                 AdBlockLists =
                 [
+                    //https://easylist-downloads.adblockplus.org/easylist_noelemhide.txt
                     new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
                     new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
+                    new AdBlockList { Name = "AdGuard Base filter", Url = "https://filters.adtidy.org/extension/chromium/filters/2.txt" },
+                    new AdBlockList { Name = "Peter Lowe Adservers", Url = "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&mimetype=plaintext" },
+                    new AdBlockList { Name = "NoCoin Filter List", Url = "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/refs/heads/master/nocoin.txt" },
                 ];
             }
 
@@ -3386,9 +3382,10 @@ Inner Exception: {7}";
             Settings.AddFlag("google-apis-url", DummyUrl);
             Settings.AddFlag("google-base-url", DummyUrl);
             Settings.AddFlag("lso-url", DummyUrl);
-            Settings.AddFlag("model-quality-service-url", DummyUrl);
             Settings.AddFlag("oauth-account-manager-url", DummyUrl);
             Settings.AddFlag("secure-connect-api-url", DummyUrl);
+
+            Settings.AddFlag("model-quality-service-url", DummyUrl);
 
             //https://source.chromium.org/chromium/chromium/src/+/main:components/variations/variations_switches.cc
             Settings.AddFlag("variations-server-url", DummyUrl);
@@ -3892,11 +3889,6 @@ Inner Exception: {7}";
              * https://www.chromium.org/developers/design-documents/network-stack/disk-cache/very-simple-backend/
              */
 
-            /*TODO:
-             * Investigate Chrome runtime style crash, caused by the addition of "--disable-features".
-             * No issues perceived in Alloy runtime style.
-             */
-
             //https://source.chromium.org/chromium/chromium/src/+/main:components/network_session_configurator/browser/network_session_configurator.cc
             Settings.AddFlag("force-fieldtrials", "SimpleCacheTrial/ExperimentYes/");
             
@@ -3913,7 +3905,8 @@ Inner Exception: {7}";
             //MHTML_Improvements, OptimizeHTMLElementUrls,WebFontsCacheAwareTimeoutAdaption, EstablishGpuChannelAsync
             //https://source.chromium.org/chromium/chromium/src/+/main:components/download/public/common/download_features.cc
             //https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/features.cc
-            string EnableFeatures = "JXLImageFormat,EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,ParallelDownloading,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
+            //NOTE: Removed ParallelDownloading due to crashes.
+            string EnableFeatures = "JXLImageFormat,EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
             //https://github.com/chromiumembedded/cef/issues/3991
             //https://github.com/chromiumembedded/cef/issues/3966
             string DisableFeatures = "StorageNotificationService,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
