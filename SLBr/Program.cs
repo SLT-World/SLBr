@@ -33,12 +33,25 @@ namespace SLBr
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
             if (args.Length > 0)
             {
-                if (args[0].StartsWith("--type="))
+                string FirstArgument = args[0];
+                //MessageBox.Show(FirstArgument);
+                if (FirstArgument.StartsWith("--type="))
+                {
+                    if (FirstArgument[7..] == "utility" && args.Length > 1)
+                    {
+                        //https://www.magpcss.org/ceforum/viewtopic.php?f=6&t=20441
+                        //string? UtilitySubType = args.FirstOrDefault(i => i.StartsWith("--utility-sub-type="));
+                        string UtilitySubType = args[1];
+                        //MessageBox.Show(UtilitySubType);
+                        if (!string.IsNullOrEmpty(UtilitySubType) && UtilitySubType[19..] == "on_device_model.mojom.OnDeviceModelService")
+                            return Environment.ExitCode;
+                    }
                     return SelfHost.Main(args);
-                else if (args[0].StartsWith("--app="))
+                }
+                else if (FirstArgument.StartsWith("--app="))
                 {
                     string AppsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SLBr", "Apps");
-                    string ID = args[0].Substring(6).Trim('"');
+                    string ID = FirstArgument[6..].Trim('"');
                     string ManifestPath = Path.Combine(AppsFolder, $"{ID}.json");
                     WebAppManifest? Manifest = WebAppHandler.LoadManifest(File.ReadAllText(ManifestPath));
                     if (Manifest == null)

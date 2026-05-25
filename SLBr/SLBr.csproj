@@ -79,7 +79,7 @@
 
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="147.0.100" />
-    <PackageReference Include="Google.Protobuf" Version="3.34.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.35.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4015-prerelease" />
   </ItemGroup>
 
@@ -112,12 +112,6 @@
     <None Update="Resources\credits.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\downloads.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\history.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Resources\guest.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -125,12 +119,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\newtab.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\favourites.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\settings.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\SLBr.ico">

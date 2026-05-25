@@ -434,7 +434,7 @@ namespace SLBr
                 string Host = Utils.FastHost(Url);
                 if (SLBrURLs.Value.Contains(Host))
                 {
-                    string Page = Utils.RemovePrefix(Utils.CleanUrl(Url[7..]), Host).TrimStart('/');
+                    string Page = Url[(7 + Host.Length)..].TrimStart('/');
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;
                     if (string.IsNullOrWhiteSpace(Page) && Host == "newtab")
                     {
@@ -446,6 +446,8 @@ namespace SLBr
                     string FilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", FileName);
                     if (File.Exists(FilePath))
                         return ProtocolResponse.FromBytes(File.ReadAllBytes(FilePath), Cef.GetMimeType(Utils.GetFileExtension(FilePath)), 200);
+                    else if (App.CustomPageOverlays.TryGetValue(Host, out _))
+                        return ProtocolResponse.FromString(string.Format(App.OverlayPagePlaceholder, Utils.CapitalizeAllFirstCharacters(Host)), "text/html", 200);
                 }
                 return ProtocolResponse.FromString($"<h1>404 Not Found</h1>", "text/html", 404);
             }

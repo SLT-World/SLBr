@@ -556,7 +556,7 @@
                                             <Button x:Name="AdBlockUpdateButton" Click="AdBlockUpdateButton_Click" Tag="0" Margin="0,0,10,0">
                                                 <DockPanel VerticalAlignment="Center">
                                                     <TextBlock Text="&#xe895;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
-                                                    <TextBlock TextAlignment="Center" Text="Update" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <TextBlock TextAlignment="Center" Text="Update all" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </DockPanel>
                                             </Button>
                                             <Button Visibility="Collapsed" x:Name="AdBlockDeleteButton" DockPanel.Dock="Right" Click="AdBlockDeleteButton_Click">
@@ -571,7 +571,7 @@
                                 <GroupBox Margin="0,0,0,10" Header="Filter lists">
                                     <StackPanel>
                                         <TextBlock Margin="0,0,0,10" FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                            Please ensure all custom filter lists provided follow the standard <Hyperlink NavigateUri="https://github.com/gorhill/uBlock/wiki/Static-filter-syntax" RequestNavigate="Hyperlink_RequestNavigate">adblock filter syntax</Hyperlink>.
+                                            All custom filter lists provided must comply with the standard <Hyperlink NavigateUri="https://github.com/gorhill/uBlock/wiki/Static-filter-syntax" RequestNavigate="Hyperlink_RequestNavigate">adblock filter syntax</Hyperlink>.
                                             <LineBreak/>
                                             Some plain URLs and advanced syntaxes may not be fully supported by SLBr.
                                         </TextBlock>

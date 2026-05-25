@@ -2084,7 +2084,7 @@ namespace SLBr
         }
 #endif
 
-        public static readonly Dictionary<string, Type> CustomPageOverlays = new Dictionary<string, Type>
+        public static readonly Dictionary<string, Type> CustomPageOverlays = new()
         {
             { "settings", typeof(SettingsPage) },
             { "favourites", typeof(FavouritesPage) },
@@ -2943,6 +2943,7 @@ Inner Exception: {7}";
                 GlobalSave.Set("Performance", 1);
             LiteMode = GlobalSave.GetInt("Performance") == 0;
             HighPerformanceMode = GlobalSave.GetInt("Performance") == 2;
+            //HappyEyeballs.ConnectionAttemptDelay = HighPerformanceMode ? 200 : 250;
 
             if (!GlobalSave.Has("JIT"))
                 GlobalSave.Set("JIT", true);
@@ -3344,6 +3345,7 @@ Inner Exception: {7}";
         public const string ProcessCrashedError = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}button{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}#content{width:90%;max-width:700px;margin: 140px auto 0 auto;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
         public const string WebRiskInterstitialPage = @"<html><head><title>Dangerous site ahead</title><style>html{{background:#A4000F;color:white;}}body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width:700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>{0}</h5><div style=""position:relative;""><button style=""left:0;border:1px solid white;background:transparent;color:white;"" onclick=""engine.postMessage({{type:'__web_risk_ignore__'}})"">Proceed anyway</button><button style=""right:0;background:white;"" onclick=""history.back()"">Go back</button></div></div></body></html>";
         public const string HistoryPlaceholder = @"<html><head><script>window.addEventListener(""pageshow"",function(e){e.persisted&&location.reload()});</script></head></html>";
+        public const string OverlayPagePlaceholder = "<html><head><title>{0}</title></head></html>";
 
         private void SetBrowserFlags(WebViewSettings Settings)
         {
@@ -3909,7 +3911,7 @@ Inner Exception: {7}";
             string EnableFeatures = "JXLImageFormat,EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
             //https://github.com/chromiumembedded/cef/issues/3991
             //https://github.com/chromiumembedded/cef/issues/3966
-            string DisableFeatures = "StorageNotificationService,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
+            string DisableFeatures = "StorageNotificationService,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,OptimizationGuideOnDeviceModel,OptimizationGuideModelExecution,OnDeviceModelService,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
             //WebBluetooth,MediaRouter,
             string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
             string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI";//Adding ,DocumentPictureInPictureAPI would stop WebView2's NewWindowRequested from being called on PiP popups
@@ -3931,11 +3933,10 @@ Inner Exception: {7}";
 
             //https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform2/login_manager/feature_flags_tables.h;l=840?q=enable-lazy-image-loading
 
-
             //https://github.com/Alex313031/thorium/blob/main/src/chrome/browser/chrome_content_browser_client.cc
             //https://chromium.googlesource.com/chromium/src/third_party/+/master/blink/renderer/core/frame/settings.json5
             //https://chromium.googlesource.com/chromium/src/+/HEAD/third_party/blink/public/platform/web_effective_connection_type.h
-            Settings.AddFlag("blink-settings", "hyperlinkAuditingEnabled=false,smoothScrollForFindEnabled=true,disallowFetchForDocWrittenScriptsInMainFrame=true");
+            Settings.AddFlag("blink-settings", "hyperlinkAuditingEnabled=false,smoothScrollForFindEnabled=true,spellCheckEnabledByDefault=false,hideDownloadUI=true");//,disallowFetchForDocWrittenScriptsInMainFrame=true
 
             if (HighPerformanceMode)
             {
@@ -3946,7 +3947,7 @@ Inner Exception: {7}";
             }
             else
             {
-                Settings.Flags["blink-settings"] += ",lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
+                Settings.Flags["blink-settings"] += ",batterySaverEnabled=true,preloadingDisabled=true,lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
                 Settings.Flags["enable-features"] += ",LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
                 Settings.Flags["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
 
@@ -3960,7 +3961,7 @@ Inner Exception: {7}";
                     Settings.Flags["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
                     Settings.Flags["enable-features"] += ",LiteVideo,AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
                     Settings.Flags["enable-blink-features"] += ",PrefersReducedData,ForceReduceMotion";
-                    Settings.Flags["blink-settings"] += ",imageAnimationPolicy=1,prefersReducedTransparency=true,prefersReducedMotion=true,lazyLoadingFrameMarginPxUnknown=0,lazyLoadingFrameMarginPxOffline=0,lazyLoadingFrameMarginPxSlow2G=0,lazyLoadingFrameMarginPx2G=0,lazyLoadingFrameMarginPx3G=0,lazyLoadingFrameMarginPx4G=0,lazyLoadingImageMarginPxUnknown=0,lazyLoadingImageMarginPxOffline=0,lazyLoadingImageMarginPxSlow2G=0,lazyLoadingImageMarginPx2G=0,lazyLoadingImageMarginPx3G=0,lazyLoadingImageMarginPx4G=0";
+                    Settings.Flags["blink-settings"] += ",webGL1Enabled=false,webGL2Enabled=false,imageAnimationPolicy=1,prefersReducedTransparency=true,prefersReducedMotion=true,lazyLoadingFrameMarginPxUnknown=0,lazyLoadingFrameMarginPxOffline=0,lazyLoadingFrameMarginPxSlow2G=0,lazyLoadingFrameMarginPx2G=0,lazyLoadingFrameMarginPx3G=0,lazyLoadingFrameMarginPx4G=0,lazyLoadingImageMarginPxUnknown=0,lazyLoadingImageMarginPxOffline=0,lazyLoadingImageMarginPxSlow2G=0,lazyLoadingImageMarginPx2G=0,lazyLoadingImageMarginPx3G=0,lazyLoadingImageMarginPx4G=0";
                     JsFlags += " --max-lazy --lite-mode --noexpose-wasm --optimize-for-size";
                 }
                 else
