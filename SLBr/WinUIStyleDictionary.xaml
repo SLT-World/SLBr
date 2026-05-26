@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:WinUI="clr-namespace:WinUI" xmlns:controls="clr-namespace:SLBr.Controls"
+                    xmlns:local="clr-namespace:SLBr"
                     x:Class="SLBr.WinUIStyleDictionary">
     <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
@@ -1074,6 +1075,74 @@ Margin="{TemplateBinding Padding}"/>
                         <!--<TextBlock Padding="{TemplateBinding Padding}" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>-->
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
+                            <Setter Property="Background" Value="{DynamicResource SecondaryBrush}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsPressed" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BackgroundMouseOver" Duration="0:0:0.250" To="1.0" Storyboard.TargetProperty="Opacity"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BackgroundMouseOver" Duration="0:0:0.250" To="0.0" Storyboard.TargetProperty="Opacity"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.ExitActions>
+                        </MultiTrigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="BackgroundMouseOver" Property="Opacity" Value="0.0"/>
+                            <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type Button}" x:Key="NavigationButton" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Height" Value="Auto"/>
+        <Setter Property="Width" Value="Auto"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Padding" Value="10,15"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
+                        <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Opacity="0.0"/>
+                        <Grid Margin="{TemplateBinding Padding}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter x:Name="myContentPresenter" Content="{TemplateBinding Content}" TextBlock.TextAlignment="{TemplateBinding HorizontalContentAlignment}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{Binding Path=Foreground,RelativeSource={RelativeSource AncestorType={x:Type Button}}}"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                            <TextBlock Grid.Column="1" Margin="5,0,0,0" Foreground="{Binding Path=Foreground,RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Text="{Binding Path=(local:ButtonExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type Button}}}" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                        </Grid>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Background" Value="{StaticResource PrimaryBrush}">
+                            <Setter TargetName="BackgroundMouseOver" Property="Background" Value="{DynamicResource SecondaryBrush}"/>
+                        </Trigger>
+                        <Trigger Property="Background" Value="{StaticResource SecondaryBrush}">
+                            <Setter TargetName="BackgroundMouseOver" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
                             <Setter Property="Background" Value="{DynamicResource SecondaryBrush}"/>
@@ -3313,7 +3382,7 @@ Margin="{TemplateBinding Padding}"/>
         </Setter>
         <Style.Resources>
             <Style TargetType="{x:Type TabItem}" x:Key="TabSeparator">
-                <Setter Property="Height" Value="1"/>
+                <Setter Property="Height" Value="5"/>
                 <Setter Property="UseLayoutRounding" Value="True"/>
                 <Setter Property="SnapsToDevicePixels" Value="True"/>
                 <Setter Property="IsEnabled" Value="False"/>
@@ -3321,21 +3390,7 @@ Margin="{TemplateBinding Padding}"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TabItem">
-                            <Border Name="Border" Background="{DynamicResource BorderBrush}" Margin="0,0,0,0"/>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-            <Style TargetType="{x:Type TabItem}" x:Key="ThickTabSeparator">
-                <Setter Property="Height" Value="7.5"/>
-                <Setter Property="UseLayoutRounding" Value="True"/>
-                <Setter Property="SnapsToDevicePixels" Value="True"/>
-                <Setter Property="IsEnabled" Value="False"/>
-                <Setter Property="IsHitTestVisible" Value="False"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TabItem">
-                            <Border Name="Border" Background="{DynamicResource BorderBrush}" CornerRadius="1.25" Margin="0,0,0,5"/>
+                            <Border Height="1" Name="Border" Background="{DynamicResource BorderBrush}" Margin="0,0,0,3"/>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

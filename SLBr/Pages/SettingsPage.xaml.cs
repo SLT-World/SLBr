@@ -279,7 +279,11 @@ namespace SLBr.Pages
         public async void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender != null)
+            {
+                CheckUpdateButton.IsEnabled = false;
                 await App.Instance.CheckUpdate();
+                CheckUpdateButton.IsEnabled = true;
+            }
             if (!string.IsNullOrEmpty(App.Instance.UpdateAvailable))
             {
                 CheckUpdateButton.Visibility = Visibility.Collapsed;

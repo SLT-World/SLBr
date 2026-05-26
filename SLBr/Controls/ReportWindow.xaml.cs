@@ -49,7 +49,7 @@ namespace SLBr.Controls
                 To = 0,
                 Duration = TimeSpan.FromSeconds(0.125)
             });
-            await Task.Delay(0125);
+            await Task.Delay(125);
             Close();
         }
     }
