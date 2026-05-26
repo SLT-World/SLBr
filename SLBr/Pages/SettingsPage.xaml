@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:slbr="clr-namespace:SLBr"
              xmlns:local="clr-namespace:SLBr.Pages"
              xmlns:controls="clr-namespace:SLBr.Controls"
              xmlns:WinUI="clr-namespace:WinUI"
@@ -123,7 +122,7 @@
                                     </GroupBox.Header>
                                     <StackPanel>
                                         <CheckBox IsEnabled="{Binding ElementName=PrivateTabsCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="RestoreTabsCheckBox" Width="Auto" Click="RestoreTabsCheckBox_Click" Content="Restore previous tabs &amp; windows"/>
-                                        <CheckBox Margin="0,0,0,0" x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for updates"/>
+                                        <CheckBox Margin="0,0,0,0" x:Name="CheckUpdateCheckBox" Width="Auto" Click="CheckUpdateCheckBox_Click" Content="Check for SLBr updates"/>
                                     </StackPanel>
                                 </GroupBox>
                                 <GroupBox Margin="0,0,0,10">
@@ -131,17 +130,12 @@
                                         Browser
                                     </GroupBox.Header>
                                     <StackPanel>
-                                        <CheckBox IsEnabled="{Binding ElementName=PunycodeURLCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="HomographInfoBarCheckBox" Width="Auto" Click="HomographInfoBarCheckBox_Click" Content="Show homograph warning on suspicious pages"/>
-                                        <CheckBox Margin="0,0,0,10" x:Name="WaybackInfoBarCheckBox" Width="Auto" Click="WaybackInfoBarCheckBox_Click" Content="Show Wayback Machine bar on 404 pages"/>
-                                        <CheckBox Margin="0,0,0,10" x:Name="WarnCodecCheckBox" Width="Auto" Click="WarnCodecCheckBox_Click" Content="Warn when unsupported proprietary codecs are requested"/>
-                                        <CheckBox Margin="0,0,0,10" x:Name="ToastCheckBox" Width="Auto" Click="ToastCheckBox_Click" Content="Enable toasts to present confirmation of user actions"/>
-                                        <CheckBox Margin="0,0,0,10" x:Name="FullscreenPopupCheckBox" Width="Auto" Click="FullscreenPopupCheckBox_Click" Content="Show fullscreen warning"/>
-                                        <CheckBox x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Smooth scrolling"/>
-                                        <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not available when Lite Performance Mode is enabled</TextBlock>
-                                        <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show popup with clipboard and downloads when uploading images"/>
-                                        <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
+                                        <CheckBox Margin="0,0,0,10" x:Name="WebAppsCheckBox" Click="WebAppsCheckBox_Click" Content="Check if websites can be installed as apps" Width="Auto"/>
+                                        <CheckBox Margin="0,0,0,10" x:Name="WaybackInfoBarCheckBox" Width="Auto" Click="WaybackInfoBarCheckBox_Click" Content="Show Wayback Machine prompt on 404 pages"/>
+                                        <CheckBox Margin="0,0,0,10" x:Name="WarnCodecCheckBox" Width="Auto" Click="WarnCodecCheckBox_Click" Content="Warn if a video or audio format is not supported"/>
+                                        <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show recent downloads and clipboard items when uploading files"/>
+                                        <TextBlock Margin="0,5,0,0" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
                                         <!--<CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>-->
-                                        <CheckBox Margin="0,0,0,0" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Download favicons"/>
                                     </StackPanel>
                                 </GroupBox>
                             </StackPanel>
@@ -268,8 +262,11 @@
                                         <CheckBox x:Name="SmartDarkModeCheckBox" Click="SmartDarkModeCheckBox_Click" Content="Smart dark mode" Width="Auto"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <GroupBox Margin="0,0,0,10">
+                                <GroupBox Margin="0,0,0,10" Header="Browser">
                                     <StackPanel>
+                                        <CheckBox Margin="0,0,0,0" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Enable smooth page scrolling"/>
+                                        <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not available when Lite Performance Mode is enabled</TextBlock>
+                                        <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Show website icons in tabs"/>
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock VerticalAlignment="Center" Text="Tab alignment"/>
                                             <ComboBox x:Name="TabAlignmentComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="TabAlignmentComboBox_SelectionChanged">
@@ -434,7 +431,7 @@
                                                 <ComboBoxItem>Standard</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>
-                                        <Button Style="{StaticResource NavigationButton}" slbr:ButtonExtensions.Icon="&#xe76c;" Click="NavigateButton_Click" Tag="filters" VerticalAlignment="Center" Content="Manage lists"/>
+                                        <Button Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe76c;" Click="NavigateButton_Click" Tag="filters" VerticalAlignment="Center" Content="Manage lists"/>
                                     </StackPanel>
                                 </GroupBox>
                                 <GroupBox Margin="0,0,0,10">
@@ -442,6 +439,7 @@
                                         Security
                                     </GroupBox.Header>
                                     <StackPanel>
+                                        <CheckBox IsEnabled="{Binding ElementName=PunycodeURLCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="HomographInfoBarCheckBox" Width="Auto" Click="HomographInfoBarCheckBox_Click" Content="Warn about websites using lookalike characters"/>
                                         <DockPanel Margin="0,0,0,5">
                                             <TextBlock VerticalAlignment="Center" Text="Web Risk Service"/>
                                             <ComboBox x:Name="WebRiskServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="WebRiskServiceComboBox_SelectionChanged">
@@ -509,7 +507,7 @@
                                         <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="AntiFullscreenCheckBox" Width="Auto" Click="AntiFullscreenCheckBox_Click" Content="Disable Fullscreen API"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" slbr:ButtonExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="slbr://history" VerticalAlignment="Center" Content="History"/>
+                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="controls://history" VerticalAlignment="Center" Content="History"/>
                                 <!--<GroupBox Margin="0,0,0,10">
                                     <GroupBox.Header>
                                         Data Collection
@@ -666,8 +664,7 @@
                                         Services
                                     </GroupBox.Header>
                                     <StackPanel>
-                                        <CheckBox Margin="0,0,0,10" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Content="Web notifications" Width="Auto"/>
-                                        <CheckBox Margin="0,0,0,10" x:Name="WebAppsCheckBox" Click="WebAppsCheckBox_Click" Content="Check for Web Apps" Width="Auto"/>
+                                        <CheckBox Margin="0,0,0,10" x:Name="WebNotificationsCheckBox" Click="WebNotificationsCheckBox_Click" Content="Enable web notifications" Width="Auto"/>
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock VerticalAlignment="Center" Text="Reverse image search engine"/>
                                             <ComboBox x:Name="ImageSearchComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ImageSearchComboBox_SelectionChanged">
@@ -940,9 +937,6 @@
                             <StackPanel>
                                 <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Downloads</TextBlock>
                                 <GroupBox Margin="0,0,0,10">
-                                    <GroupBox.Header>
-                                        Downloads
-                                    </GroupBox.Header>
                                     <StackPanel>
                                         <DockPanel LastChildFill="True" Margin="0,0,0,10">
                                             <Button Margin="10,0,0,0" Content="Change" DockPanel.Dock="Right" Click="ChangeDownloadPathButton_Click"/>
@@ -954,7 +948,24 @@
                                         <CheckBox x:Name="DownloadPromptCheckBox" Click="DownloadPromptCheckBox_Click" Content="Ask before downloading" Width="Auto"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" slbr:ButtonExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="slbr://downloads" VerticalAlignment="Center" Content="Downloads"/>
+                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="controls://downloads" VerticalAlignment="Center" Content="Downloads"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem IsEnabled="False" x:Name="AccessibilityTab" Header="Accessibility" Tag="&#xe776;">
+                <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
+                    <Grid>
+                        <Border Margin="10" MaxWidth="550" CornerRadius="5" Padding="25">
+                            <StackPanel>
+                                <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Accessibility</TextBlock>
+                                <GroupBox Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <CheckBox Margin="0,0,0,10" x:Name="ToastCheckBox" Width="Auto" Click="ToastCheckBox_Click" Content="Show brief confirmations of user actions"/>
+                                        <CheckBox x:Name="FullscreenPopupCheckBox" Width="Auto" Click="FullscreenPopupCheckBox_Click" Content="Show confirmation when website enters fullscreen"/>
+                                    </StackPanel>
+                                </GroupBox>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -974,8 +985,8 @@
                                         </DockPanel>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button Padding="10,20" Margin="0,0,0,10" Style="{StaticResource NavigationButton}" slbr:ButtonExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="http://chromewebstore.google.com" VerticalAlignment="Center" Content="Chrome Web Store"/>
-                                <Button Padding="10,20" Margin="0,0,0,10" Style="{StaticResource NavigationButton}" slbr:ButtonExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="chrome://extensions" VerticalAlignment="Center" Content="Chromium Extensions"/>
+                                <Button Padding="10,20" Margin="0,0,0,10" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="http://chromewebstore.google.com" VerticalAlignment="Center" Content="Chrome Web Store"/>
+                                <Button Padding="10,20" Margin="0,0,0,10" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="chrome://extensions" VerticalAlignment="Center" Content="Chromium Extensions"/>
                                 <ScrollViewer Margin="0,0,0,10" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                                     <StackPanel>
                                         <Border Height="100" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
@@ -1215,7 +1226,7 @@
                         Made possible by
                         <Hyperlink NavigateUri="https://github.com/cefsharp/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">CefSharp</Hyperlink>
                         and other
-                        <Hyperlink NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">open-source software</Hyperlink>.
+                        <Hyperlink NavigateUri="controls://credits" RequestNavigate="Hyperlink_RequestNavigate">open-source software</Hyperlink>.
                                 </TextBlock>
                                 <TextBlock Margin="0,0,0,10">
                         If you find SLBr useful, consider starring the
@@ -1224,7 +1235,7 @@
                                 </TextBlock>
                                 <GroupBox Margin="0,0,0,10">
                                     <StackPanel>
-                                        <Button Margin="0,0,0,10" Padding="10" Style="{StaticResource NavigationButton}" slbr:ButtonExtensions.Icon="&#xe8a7;" Click="HyperlinkButton_Click" Tag="https://github.com/SLT-World/SLBr" VerticalAlignment="Center">
+                                        <Button Margin="0,0,0,10" Padding="10" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Click="HyperlinkButton_Click" Tag="https://github.com/SLT-World/SLBr" VerticalAlignment="Center">
                                             <DockPanel>
                                                 <StackPanel VerticalAlignment="Center" Margin="0">
                                                     <TextBlock Text="GitHub"/>

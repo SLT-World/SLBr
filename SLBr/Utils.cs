@@ -573,13 +573,6 @@ namespace SLBr
          * This is done to expose our product name in a manner that is maximally compatible with Safari, we hope!!*/
     }
 
-    public static class ButtonExtensions
-    {
-        public static readonly DependencyProperty IconProperty = DependencyProperty.RegisterAttached("Icon", typeof(string), typeof(ButtonExtensions), new PropertyMetadata(string.Empty));
-        public static string GetIcon(DependencyObject obj) => (string)obj.GetValue(IconProperty);
-        public static void SetIcon(DependencyObject obj, string value) => obj.SetValue(IconProperty, value);
-    }
-
     public static class ClassExtensions
     {
         public static MColor ToMediaColor(this DColor color) =>

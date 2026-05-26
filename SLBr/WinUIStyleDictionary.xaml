@@ -1,7 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:WinUI="clr-namespace:WinUI" xmlns:controls="clr-namespace:SLBr.Controls"
-                    xmlns:local="clr-namespace:SLBr"
                     x:Class="SLBr.WinUIStyleDictionary">
     <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
@@ -1133,7 +1132,7 @@ Margin="{TemplateBinding Padding}"/>
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
-                            <TextBlock Grid.Column="1" Margin="5,0,0,0" Foreground="{Binding Path=Foreground,RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Text="{Binding Path=(local:ButtonExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type Button}}}" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                            <TextBlock Grid.Column="1" Margin="5,0,0,0" Foreground="{Binding Path=Foreground,RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Text="{Binding Path=(controls:ControlExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type Button}}}" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                         </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -3304,7 +3303,7 @@ Margin="{TemplateBinding Padding}"/>
                             </ScrollViewer>
                             <ScrollViewer WindowChrome.IsHitTestVisibleInChrome="False" Width="250" MinWidth="45" MaxWidth="250" x:Name="TabPanelScroll" VerticalScrollBarVisibility="Hidden" HorizontalAlignment="Left" Margin="{TemplateBinding Padding}">
                                 <Grid>
-                                    <TabPanel Panel.ZIndex="1" Margin="5,0" IsItemsHost="True" Background="Transparent" AllowDrop="True" DragOver="HeaderPanel_DragOver" DragLeave="HeaderPanel_DragLeave" Drop="HeaderPanel_Drop"/>
+                                    <TabPanel Panel.ZIndex="1" Margin="5,0,5,5" IsItemsHost="True" Background="Transparent" AllowDrop="True" DragOver="HeaderPanel_DragOver" DragLeave="HeaderPanel_DragLeave" Drop="HeaderPanel_Drop"/>
                                     <Border Panel.ZIndex="2" x:Name="InsertIndicator" Height="2.5" Background="{StaticResource IndicatorBrush}" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Top" CornerRadius="1.5"/>
                                 </Grid>
                             </ScrollViewer>

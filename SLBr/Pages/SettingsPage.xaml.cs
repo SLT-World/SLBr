@@ -57,18 +57,9 @@ namespace SLBr.Pages
             InitializeComponent();
             if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
             {
-                UserTab.Visibility = Visibility.Collapsed;
-                BrowserTab.Visibility = Visibility.Collapsed;
-                AppearanceTab.Visibility = Visibility.Collapsed;
-                PrivacyTab.Visibility = Visibility.Collapsed;
-                ServicesTab.Visibility = Visibility.Collapsed;
-                PerformanceTab.Visibility = Visibility.Collapsed;
-                TabSeparator1.Visibility = Visibility.Collapsed;
-                LanguagesTab.Visibility = Visibility.Collapsed;
-                DownloadsTab.Visibility = Visibility.Collapsed;
-                ExtensionsTab.Visibility = Visibility.Collapsed;
-                SystemTab.Visibility = Visibility.Collapsed;
-                TabSeparator2.Visibility = Visibility.Collapsed;
+                foreach (TabItem Tab in SettingsTabControl.Items)
+                    Tab.Visibility = Visibility.Collapsed;
+                AboutTab.Visibility = Visibility.Visible;
                 SettingsTabControl.SelectedItem = AboutTab;
             }
         }
@@ -88,57 +79,27 @@ namespace SLBr.Pages
                 string[] UrlParts = BrowserView.Address[16..].Split("/", StringSplitOptions.RemoveEmptyEntries);
                 if (UrlParts.Length != 0)
                 {
-                    switch (UrlParts[0])
+                    string TabName = UrlParts[0];
+                    bool FoundTab = false;
+                    foreach (TabItem Tab in SettingsTabControl.Items)
                     {
-                        case "user":
-                            if (UserTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = UserTab;
-                            break;
-                        case "browser":
-                            if (BrowserTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = BrowserTab;
-                            break;
-                        case "appearance":
-                            if (AppearanceTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = AppearanceTab;
-                            break;
-                        case "privacy%20%26%20security":
-                            if (PrivacyTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = PrivacyTab;
-                            break;
-                        case "search%20%26%20services":
-                            if (ServicesTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = ServicesTab;
-                            break;
-                        case "performance":
-                            if (PerformanceTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = PerformanceTab;
-                            break;
-                        case "languages":
-                            if (LanguagesTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = LanguagesTab;
-                            break;
-                        case "downloads":
-                            if (DownloadsTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = DownloadsTab;
-                            break;
-                        case "extensions":
-                            if (ExtensionsTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = ExtensionsTab;
-                            break;
-                        case "system":
-                            if (SystemTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = SystemTab;
-                            break;
-                        case "about":
+                        if (Tab.Visibility == Visibility.Visible && Tab.Header != null)
+                        {
+                            string Header = Uri.EscapeDataString(Tab.Header.ToString().ToLowerInvariant());
+                            if (TabName == Header)
+                            {
+                                SettingsTabControl.SelectedItem = Tab;
+                                FoundTab = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!FoundTab)
+                    {
+                        if (UserTab.Visibility == Visibility.Visible)
+                            SettingsTabControl.SelectedItem = UserTab;
+                        else
                             SettingsTabControl.SelectedItem = AboutTab;
-                            break;
-                        default:
-                            if (UserTab.Visibility == Visibility.Visible)
-                                SettingsTabControl.SelectedItem = UserTab;
-                            else
-                                SettingsTabControl.SelectedItem = AboutTab;
-                            break;
                     }
                     if (UrlParts.Length == 2)
                     {
@@ -163,17 +124,11 @@ namespace SLBr.Pages
                     }
                 }
             }
-            UserTab.IsEnabled = true;
-            BrowserTab.IsEnabled = true;
-            AppearanceTab.IsEnabled = true;
-            PrivacyTab.IsEnabled = true;
-            ServicesTab.IsEnabled = true;
-            PerformanceTab.IsEnabled = true;
-            LanguagesTab.IsEnabled = true;
-            DownloadsTab.IsEnabled = true;
-            ExtensionsTab.IsEnabled = true;
-            SystemTab.IsEnabled = true;
-            AboutTab.IsEnabled = true;
+            foreach (TabItem Tab in SettingsTabControl.Items)
+            {
+                if (Tab.Header != null)
+                    Tab.IsEnabled = true;
+            }
         }
 
         public void Dispose()

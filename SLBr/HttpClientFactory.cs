@@ -184,9 +184,9 @@ namespace SLBr
 
                 Tasks.Remove(CompletedTask);
 
-                if (CompletedTask is Task<Socket> socketTask && socketTask.IsCompletedSuccessfully)
+                if (CompletedTask is Task<Socket> SocketTask && SocketTask.IsCompletedSuccessfully)
                 {
-                    SuccessTask = socketTask;
+                    SuccessTask = SocketTask;
                     break;
                 }
             }
