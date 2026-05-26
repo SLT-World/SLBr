@@ -1728,7 +1728,7 @@ namespace SLBr
             UserApplicationWindowsPath = Path.Combine(UserApplicationDataPath, "Windows");
             ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
-            AdBlockDataPath = Path.Combine(UserApplicationDataPath, "Adblock");
+            AdBlockDataPath = Path.Combine(UserApplicationDataPath, "Filters");
             //CdnPath = Path.Combine(ResourcesPath, "cdn");
 
             LocaleNames = AllLocales.Select(i => i.Value).ToList();

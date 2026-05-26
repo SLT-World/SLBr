@@ -6,12 +6,26 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using WinUI;
 
 namespace SLBr
 {
     public partial class WinUIStyleDictionary
     {
+        public WinUIStyleDictionary()
+        {
+            InitializeComponent();
+            if (TabHoverTimer == null)
+            {
+                TabHoverTimer = new DispatcherTimer(DispatcherPriority.Background, Application.Current.Dispatcher)
+                {
+                    Interval = TimeSpan.FromMilliseconds(400)
+                };
+                TabHoverTimer.Tick += TabHoverTimer_Tick;
+            }
+        }
+
         private void TabIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
         {
             Image? Image = sender as Image;
@@ -251,49 +265,50 @@ namespace SLBr
             return Math.Clamp(Index, CurrentWindow.Tabs[0]?.Type == BrowserTabType.Add ? 1 : 0, MaxIndex);
         }
 
-        CancellationTokenSource TabHoverToken;
+        private static DispatcherTimer TabHoverTimer;
+        private static FrameworkElement? CurrentHoverElement;
+        private static BrowserTabItem? CurrentHoverTab;
 
-        private async void TabItem_MouseEnter(object sender, MouseEventArgs e)
+        private void TabItem_MouseEnter(object sender, MouseEventArgs e)
         {
-            TabHoverToken?.Cancel();
-            TabHoverToken = new CancellationTokenSource();
-
-            FrameworkElement Element = (FrameworkElement)sender;
-            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
-            if (Tab == null || Tab?.Type != BrowserTabType.Navigation) return;
-
-            try
-            {
-                await Task.Delay(400, TabHoverToken.Token);
-                Tab.ParentWindow.ShowPreview(Tab, Element);
-            }
-            catch { }
+            TabHoverTimer.Stop();
+            if (sender is not FrameworkElement Element || Element.DataContext is not BrowserTabItem Tab || Tab.Type != BrowserTabType.Navigation)
+                return;
+            CurrentHoverElement = Element;
+            CurrentHoverTab = Tab;
+            TabHoverTimer.Start();
         }
 
         private void TabItem_MouseLeave(object sender, MouseEventArgs e)
         {
-            TabHoverToken?.Cancel();
-            FrameworkElement Element = (FrameworkElement)sender;
-            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
-            if (Tab == null || Tab?.Type != BrowserTabType.Navigation) return;
-            Tab?.ParentWindow.ShowPreview(null);
+            ResetHoverState();
         }
 
         private void TabItem_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            TabHoverToken?.Cancel();
-            FrameworkElement Element = (FrameworkElement)sender;
-            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
-            if (Tab == null || Tab?.Type != BrowserTabType.Navigation) return;
-            Tab?.ParentWindow.ShowPreview(null);
+            ResetHoverState();
+        }
+
+        private static void TabHoverTimer_Tick(object? sender, EventArgs e)
+        {
+            TabHoverTimer.Stop();
+            if (CurrentHoverTab != null && CurrentHoverElement != null)
+                CurrentHoverTab.ParentWindow.ShowPreview(CurrentHoverTab, CurrentHoverElement);
+        }
+
+        private static void ResetHoverState()
+        {
+            TabHoverTimer?.Stop();
+            CurrentHoverTab?.ParentWindow.ShowPreview(null);
+            CurrentHoverElement = null;
+            CurrentHoverTab = null;
         }
 
         private void TabGroup_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left) return;
-            FrameworkElement Element = (FrameworkElement)sender;
-            BrowserTabItem? Tab = Element.DataContext as BrowserTabItem;
-            if (Tab == null || Tab?.Type != BrowserTabType.Group) return;
+            if (sender is not FrameworkElement Element || Element.DataContext is not BrowserTabItem Tab || Tab?.Type != BrowserTabType.Group)
+                return;
             e.Handled = true;
             //if (Tab.ParentWindow.Tabs.Any(i => i.Type == BrowserTabType.Navigation && i.TabGroup == Tab.TabGroup))
             //{

@@ -17,12 +17,16 @@ namespace SLBr
             DnsEndPoint EndPoint = Context.DnsEndPoint;
             if (IsHappyEyeballsEnabled)
             {
-                IPAddress[] ResolvedAddresses = await Dns.GetHostAddressesAsync(EndPoint.Host, CancellationToken).ConfigureAwait(false);
-                if (ResolvedAddresses == null || ResolvedAddresses.Length == 0)
-                    throw new Exception($"Host {EndPoint.Host} resolved to no IPs.");
+                try
+                {
+                    IPAddress[] ResolvedAddresses = await Dns.GetHostAddressesAsync(EndPoint.Host, CancellationToken).ConfigureAwait(false);
+                    if (ResolvedAddresses == null || ResolvedAddresses.Length == 0)
+                        throw new Exception($"Host {EndPoint.Host} resolved to no IPs.");
 
-                Socket? _CustomSocket = await HappyEyeballs.ParallelTask(HappyEyeballs.SortInterleaved(ResolvedAddresses), EndPoint.Port, TimeSpan.FromMilliseconds(HappyEyeballs.ConnectionAttemptDelay), CancellationToken).ConfigureAwait(false);
-                return new NetworkStream(_CustomSocket, true);
+                    Socket? _CustomSocket = await HappyEyeballs.ParallelTask(HappyEyeballs.SortInterleaved(ResolvedAddresses), EndPoint.Port, TimeSpan.FromMilliseconds(HappyEyeballs.ConnectionAttemptDelay), CancellationToken).ConfigureAwait(false);
+                    return new NetworkStream(_CustomSocket, true);
+                }
+                catch { }
             }
             Socket _Socket = new(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
             try

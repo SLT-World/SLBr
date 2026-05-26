@@ -3487,8 +3487,18 @@ namespace SLBr.Pages
 
             if (HostEnd >= 0)
             {
-                if (UseModernURL && !string.IsNullOrEmpty(WebView.Title))
-                    OmniBoxOverlayText.Inlines.Add(new Run(" / " + WebView.Title) { Foreground = GrayBrush });
+                if (UseModernURL)
+                {
+                    if (Scheme == "slbr")
+                        OmniBoxOverlayText.Inlines.Add(new Run(Utils.CapitalizeAllFirstCharacters(Utils.UnescapeDataString(_Span[HostEnd..].ToString().Replace("/", " / ")))) { Foreground = GrayBrush });
+                    else if (!string.IsNullOrEmpty(Title))
+                    {
+                        if (Title == Utils.CleanUrl(Address, false, false, false, false, true))
+                            OmniBoxOverlayText.Inlines.Add(new Run(Utils.CapitalizeAllFirstCharacters(Utils.UnescapeDataString(_Span[HostEnd..].ToString().Replace("/", " / ")))) { Foreground = GrayBrush });
+                        else
+                            OmniBoxOverlayText.Inlines.Add(new Run(" / " + Title) { Foreground = GrayBrush });
+                    }
+                }
                 else
                     OmniBoxOverlayText.Inlines.Add(new Run(Utils.UnescapeDataString(_Span[HostEnd..].ToString())) { Foreground = GrayBrush });
             }
