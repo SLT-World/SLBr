@@ -2390,10 +2390,8 @@ Inner Exception: {7}";
 
         public int GCTimerDuration;
 
-        public void SwitchUserPopup()
-        {
+        public void SwitchUserPopup() =>
             new ProfileManagerWindow().Show();
-        }
 
         public void CopyToClipboard(object Object, int Type)
         {
@@ -2992,8 +2990,8 @@ Inner Exception: {7}";
 
             try
             {
-                using (var Key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", true))
-                    Themes.Add(new Theme("System", (Key.GetValue("SystemUsesLightTheme") as int? == 1) ? Themes[0] : Themes[1]));
+                using var Key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", true);
+                Themes.Add(new Theme("System", (Key.GetValue("SystemUsesLightTheme") as int? == 1) ? Themes[0] : Themes[1]));
             }
             catch
             {
@@ -3041,7 +3039,7 @@ Inner Exception: {7}";
                         for (int i = 0; i < TabCount; i++)
                         {
                             string[] Data = TabsSave.Get(i.ToString(), true);
-                            string Url = string.Empty;
+                            string Url;
                             string TabGroupName = string.Empty;
                             BrowserTabType TabType;
                             if (Data.Length == 1)
@@ -3121,7 +3119,7 @@ Inner Exception: {7}";
         {
             MainWindow _Window = new();
             _Window.Show();
-            _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, ForcePrivate ? true : bool.Parse(GlobalSave.Get("PrivateTabs")));
+            _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, ForcePrivate || bool.Parse(GlobalSave.Get("PrivateTabs")));
             _Window.TabsUI.Visibility = Visibility.Visible;
         }
 
@@ -3514,8 +3512,6 @@ Inner Exception: {7}";
 
         private void SetBackgroundFlags(WebViewSettings Settings)
         {
-            //https://github.com/cefsharp/CefSharp/commit/2f96ee9bb16254d40cce8eaa6144107b689c8ff4
-            //Settings.Flags.Remove("disable-back-forward-cache");
             //DISABLES ECOSIA SEARCHBOX
             //Settings.AddFlag("headless"); //Run in headless mode without a UI or display server dependencies.
 
@@ -3643,77 +3639,6 @@ Inner Exception: {7}";
             Settings.AddFlag("enable-parallel-downloading");
         }
 
-        /*NEVER SLOW MODE FLAGS
-        // The adapter selecting strategy related to GPUPowerPreference.
-        https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/service/service_utils.cc
-        none = WebGPUPowerPreference::kNone
-        default-low-power = WebGPUPowerPreference::kDefaultLowPower;
-        default-high-performance = WebGPUPowerPreference::kDefaultHighPerformance;
-        force-low-power = WebGPUPowerPreference::kForceLowPower;
-        force-high-performance = WebGPUPowerPreference::kForceHighPerformance;
-
-        use-webgpu-power-preference = force-low-power
-
-        // Allows explicitly specifying the shader disk cache size for embedded devices. Default value is 6MB. On Android, 2MB is default and 128KB for low-end devices.
-        //https://source.chromium.org/chromium/chromium/src/+/main:gpu/config/gpu_preferences.h
-        gpu-disk-cache-size-kb = 2 * 1024 * 1024 / Low End Device Mode 128 * 1024
-
-        // Override the maximum framerate as can be specified in calls to getUserMedia. This flag expects a value. Example: --max-gum-fps=17.5
-        max-gum-fps
-
-        // Forces the maximum disk space to be used by the disk cache, in bytes.
-        disk-cache-size
-
-        // Specifies the max number of bytes that should be used by the skia font cache. If the cache needs to allocate more, skia will purge previous entries.
-        skia-font-cache-limit-mb = 100KiB
-
-        // Specifies the max number of bytes that should be used by the skia resource cache. The previous entries are purged from the cache when the memory useage exceeds this limit.
-        skia-resource-cache-limit-mb = 100KiB
-
-        // Allows user to override maximum number of active WebGL contexts per renderer process.
-        max-active-webgl-contexts
-
-        // Sets the maximium decoded image size limitation.
-        max-decoded-image-size-mb = 1MiB
-
-        // Sets the maximum number of WebMediaPlayers allowed per frame.
-        max-web-media-player-count
-
-        // Sets the maximum size, in megabytes. The log file can grow to before older data is overwritten. Do not use this flag if you want an unlimited file size.
-        net-log-max-size-mb
-
-        // This is only used when we did not set buffer size in trace config and will be used for all trace sessions. If not provided, we will use the default value provided in perfetto_config.cc
-        default-trace-buffer-size-limit-in-kb
-
-        // Configures the size of the shared memory buffer used for tracing. Value is provided in kB. Defaults to 4096. Should be a multiple of the SMB page size (currently 32kB on Desktop or 4kB on Android).
-        trace-smb-size
-
-        // Sets the maximum GPU memory to use for discardable caches.
-        force-gpu-mem-discardable-limit-mb
-
-        // Sets the total amount of memory that may be allocated for GPU resources
-        force-gpu-mem-available-mb
-
-        // Sets the maximum texture size in pixels.
-        force-max-texture-size
-
-        // Sets the maximum size of the in-memory gpu program cache, in kb //https://source.chromium.org/chromium/chromium/src/+/main:gpu/config/gpu_preferences.h
-        gpu-program-cache-size-kb = 2 * 1024 * 1024 / Low End Device Mode 128 * 1024
-
-        // Specifies the heap limit for Vulkan memory. TODO(crbug.com/40161102): Remove this switch.
-        vulkan-heap-memory-limit-mb
-        // Specifies the sync CPU limit for total Vulkan memory. TODO(crbug.com/40161102): Remove this switch.
-        vulkan-sync-cpu-memory-limit-mb
-
-        // Allows explicitly specifying MSE audio/video buffer sizes as megabytes. Default values are 150M for video and 12M for audio.
-        mse-audio-buffer-size-limit-mb
-        mse-video-buffer-size-limit-mb
-
-        disallow-doc-written-script-loads
-        BlinkSettings = "disallowFetchForDocWrittenScriptsInMainFrame=true"
-        6 connections per proxy server
-        */
-
         private void SetGraphicsFlags(WebViewSettings Settings)
         {
             //Settings.AddFlag("in-process-gpu");//WARNING: Causes blank HTML dropdowns.
@@ -3811,15 +3736,6 @@ Inner Exception: {7}";
 
         private void SetFeatureFlags(WebViewSettings Settings)
         {
-            /*[Blink Settings]
-             * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/common/web_preferences/web_preferences.h
-             * https://chromium.googlesource.com/chromium/blink/+/refs/heads/main/Source/core/frame/Settings.in
-             * https://source.chromium.org/chromium/chromium/src/+/main:out/lacros-Debug/gen/third_party/blink/public/mojom/webpreferences/web_preferences.mojom.js
-             * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/settings.json5
-             * 
-             * bypassCSP=true //disable Content Security Policy
-             */
-
             /*[Enums]
              * https://chromium.googlesource.com/chromium/blink/+/master/Source/bindings/core/v8/V8CacheOptions.h
              * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/mojom/webpreferences/web_preferences.mojom
@@ -3852,18 +3768,7 @@ Inner Exception: {7}";
 
             /*[js-flags]
              * https://chromium.googlesource.com/v8/v8/+/master/src/flags/flag-definitions.h
-             * 
-             * https://stackoverflow.com/questions/73055564/which-nodejs-v8-flags-for-benchmarking
-             * https://stackoverflow.com/questions/48387040/how-do-i-determine-the-correct-max-old-space-size-for-node-js
-             * 
              * --always-opt //This does not improve performance, on the contrary; it causes V8 to waste CPU cycles on useless work.
-             * --predictable-gc-schedule
-             */
-
-            /*[enable/disable-blink-features]
-             * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/runtime_enabled_features.json5
-             * 
-             * NetInfoConstantType, NetInfoDownlinkMax, V8IdleTasks, PrettyPrintJSONDocument
              */
 
             /*[Others]
@@ -3916,6 +3821,7 @@ Inner Exception: {7}";
             string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
             string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI";//Adding ,DocumentPictureInPictureAPI would stop WebView2's NewWindowRequested from being called on PiP popups
 
+            //enable/disable-blink-features: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/runtime_enabled_features.json5
             try
             {
                 Settings.AddFlag("disable-features", DisableFeatures);
@@ -3931,12 +3837,15 @@ Inner Exception: {7}";
                 Settings.Flags["disable-blink-features"] += "," + DisableBlinkFeatures;
             }
 
-            //https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform2/login_manager/feature_flags_tables.h;l=840?q=enable-lazy-image-loading
-
-            //https://github.com/Alex313031/thorium/blob/main/src/chrome/browser/chrome_content_browser_client.cc
-            //https://chromium.googlesource.com/chromium/src/third_party/+/master/blink/renderer/core/frame/settings.json5
+            /*[Blink Settings]
+             * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/common/web_preferences/web_preferences.h
+             * https://chromium.googlesource.com/chromium/blink/+/refs/heads/main/Source/core/frame/Settings.in
+             * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/settings.json5
+             * bypassCSP=true //disable Content Security Policy
+             */
             //https://chromium.googlesource.com/chromium/src/+/HEAD/third_party/blink/public/platform/web_effective_connection_type.h
-            Settings.AddFlag("blink-settings", "hyperlinkAuditingEnabled=false,smoothScrollForFindEnabled=true,spellCheckEnabledByDefault=false,hideDownloadUI=true");//,disallowFetchForDocWrittenScriptsInMainFrame=true
+            Settings.AddFlag("blink-settings", "hyperlinkAuditingEnabled=false,smoothScrollForFindEnabled=true,spellCheckEnabledByDefault=false,hideDownloadUI=true");
+            //,disallowFetchForDocWrittenScriptsInMainFrame=true
 
             if (HighPerformanceMode)
             {

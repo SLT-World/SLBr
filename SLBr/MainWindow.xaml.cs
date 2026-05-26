@@ -79,11 +79,6 @@ namespace SLBr
             SetWindowDisplayAffinity();
         }
 
-        private void Window_SourceInitialized(object sender, EventArgs e)
-        {
-            WindowState = WindowState.Maximized;
-        }
-
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
@@ -380,6 +375,7 @@ namespace SLBr
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             SetAppearance(App.Instance.CurrentTheme);
+            WindowState = WindowState.Maximized;
             #region Benchmark
             //PerformBenchmark();
             /*Benchmark.Clear();

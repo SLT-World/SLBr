@@ -8,7 +8,6 @@ using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data;
@@ -1808,6 +1807,12 @@ namespace SLBr.Pages
                 }
                 OmniBoxIsDropdown = false;
                 SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
+                if (OmniBoxOverrideSearch != null)
+                {
+                    OmniBoxStatus.Visibility = Visibility.Collapsed;
+                    OmniBoxOverrideSearch = null;
+                    SetTemporarySiteInformation();
+                }
             }
             if (FavouriteExists(Address) != -1)
             {
@@ -2974,7 +2979,7 @@ namespace SLBr.Pages
             string SearchUrl = App.Instance.DefaultSearchProvider.SearchUrl;
             if (OmniBoxOverrideSearch != null && !string.IsNullOrEmpty(OmniBoxOverrideSearch.SearchUrl))
                 SearchUrl = OmniBoxOverrideSearch.SearchUrl;
-            string Url = Utils.FilterUrlForBrowser(OmniBox.Text, SearchUrl);
+            string Url = Utils.FilterUrlForBrowser(OmniBoxText, SearchUrl);
             if (Url.StartsWith("javascript:"))
             {
                 WebView?.ExecuteScript(Url.Substring(11));
@@ -2995,11 +3000,11 @@ namespace SLBr.Pages
             {
                 OmniBoxStatus.Visibility = Visibility.Collapsed;
                 OmniBoxOverrideSearch = null;
-                if (OmniBox.Text.Length != 0)
+                if (OmniBoxText.Length != 0)
                 {
                     foreach (SearchProvider Search in App.Instance.SearchEngines)
                     {
-                        if (Search.Name.StartsWith(OmniBox.Text, StringComparison.OrdinalIgnoreCase))
+                        if (Search.Name.StartsWith(OmniBoxText, StringComparison.OrdinalIgnoreCase))
                         {
                             OmniBoxStatus.Tag = App.Instance.SearchEngines.IndexOf(Search);
                             OmniBoxStatusText.Text = $"Search {Search.Name}";
@@ -3040,11 +3045,11 @@ namespace SLBr.Pages
                 {
                     OmniBoxStatus.Visibility = Visibility.Collapsed;
                     OmniBoxOverrideSearch = null;
-                    if (OmniBox.Text.Length != 0)
+                    if (OmniBoxText.Length != 0)
                     {
                         foreach (SearchProvider Search in App.Instance.SearchEngines)
                         {
-                            if (Search.Name.StartsWith(OmniBox.Text, StringComparison.OrdinalIgnoreCase))
+                            if (Search.Name.StartsWith(OmniBoxText, StringComparison.OrdinalIgnoreCase))
                             {
                                 OmniBoxStatus.Tag = App.Instance.SearchEngines.IndexOf(Search);
                                 OmniBoxStatusText.Text = $"Search {Search.Name}";
@@ -3112,7 +3117,7 @@ namespace SLBr.Pages
         {
             if (e.Key == Key.Return)
             {
-                if (OmniBox.Text.Trim().Length > 0)
+                if (OmniBoxText.Trim().Length > 0)
                     OmniBoxEnter();
             }
             else
@@ -3147,41 +3152,41 @@ namespace SLBr.Pages
             SiteInformationIcon.Foreground = (SolidColorBrush)FindResource("FontBrush");
             if (OmniBoxOverrideSearch == null)
             {
-                if (OmniBox.Text.StartsWith("search:"))
+                if (OmniBoxText.StartsWith("search:"))
                 {
                     SiteInformationIcon.Text = "\xE721";
                     SiteInformationText.Text = "Search";
-                    SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text.Substring(7).Trim()}";
+                    SiteInformationPopupButton.ToolTip = $"Searching: {OmniBoxText.Substring(7).Trim()}";
                 }
-                else if (OmniBox.Text.StartsWith("domain:"))
+                else if (OmniBoxText.StartsWith("domain:"))
                 {
                     SiteInformationIcon.Text = "\xE71B";
                     SiteInformationText.Text = "Address";
-                    SiteInformationPopupButton.ToolTip = $"Address: {OmniBox.Text.Substring(7).Trim()}";
+                    SiteInformationPopupButton.ToolTip = $"Address: {OmniBoxText.Substring(7).Trim()}";
                 }
-                else if (Utils.IsProgramUrl(OmniBox.Text))
+                else if (Utils.IsProgramUrl(OmniBoxText))
                 {
                     SiteInformationIcon.Text = "\xE756";
                     SiteInformationText.Text = "Program";
-                    SiteInformationPopupButton.ToolTip = $"Open program: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Open program: {OmniBoxText}";
                 }
-                else if (Utils.IsCode(OmniBox.Text))
+                else if (Utils.IsCode(OmniBoxText))
                 {
                     SiteInformationIcon.Text = "\xE943";
                     SiteInformationText.Text = "Code";
-                    SiteInformationPopupButton.ToolTip = $"Code: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Code: {OmniBoxText}";
                 }
-                else if (Utils.IsUrl(OmniBox.Text))
+                else if (Utils.IsUrl(OmniBoxText))
                 {
                     SiteInformationIcon.Text = "\xE71B";
                     SiteInformationText.Text = "Address";
-                    SiteInformationPopupButton.ToolTip = $"Address: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Address: {OmniBoxText}";
                 }
                 else
                 {
                     SiteInformationIcon.Text = "\xE721";
                     SiteInformationText.Text = "Search";
-                    SiteInformationPopupButton.ToolTip = $"Searching: {OmniBox.Text}";
+                    SiteInformationPopupButton.ToolTip = $"Searching: {OmniBoxText}";
                 }
             }
             else
@@ -3207,7 +3212,7 @@ namespace SLBr.Pages
                 else
                     SiteInformationIcon.Text = "\xED37";
                 SiteInformationText.Text = OmniBoxOverrideSearch.Name;
-                SiteInformationPopupButton.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBox.Text.Trim()}";
+                SiteInformationPopupButton.ToolTip = $"Searching {OmniBoxOverrideSearch.Name}: {OmniBoxText.Trim()}";
             }
         }
 
@@ -3230,7 +3235,7 @@ namespace SLBr.Pages
                 OmniBox.IsDropDownOpen = false;
                 try
                 {
-                    if (OmniBox.Text.Trim().Length == 0)
+                    if (OmniBoxText.Trim().Length == 0)
                         OmniBoxPlaceholder.Visibility = Visibility.Visible;
                     if (OmniBox.Text == OmniBox.Tag.ToString())
                         SetOverlayDisplay(App.Instance.TrimURL, App.Instance.HomographProtection);
@@ -3647,7 +3652,7 @@ namespace SLBr.Pages
 
         public void ShowOmniBoxSuggestions()
         {
-            string CurrentText = OmniBox.Text;
+            string CurrentText = OmniBoxText;
             if (Suggestions.FirstOrDefault()?.Display == CurrentText)
                 return;
             OmniBoxStatus.Visibility = Visibility.Collapsed;
@@ -3716,13 +3721,13 @@ namespace SLBr.Pages
                 catch { }
                 if (OmniBoxOverrideSearch == null)
                 {
-                    if (OmniBox.Text.StartsWith('@'))
+                    if (OmniBoxText.StartsWith('@'))
                     {
                         foreach (SearchProvider Search in App.Instance.AllSystemSearchEngines)
                         {
-                            if (OmniBox.Text.Length > 1)
+                            if (OmniBoxText.Length > 1)
                             {
-                                if (Search.Name.StartsWith(OmniBox.Text[1..], StringComparison.OrdinalIgnoreCase))
+                                if (Search.Name.StartsWith(OmniBoxText[1..], StringComparison.OrdinalIgnoreCase))
                                 {
                                     OmniSuggestion Suggestion = new() { ProviderOverride = Search, Text = $"@{Search.Name.ToLower()}", Display = $"@{Search.Name.ToLower()}", SubText = $"- Search {Search.Name}" };
                                     switch (Search.Name)
@@ -3767,7 +3772,7 @@ namespace SLBr.Pages
                     {
                         foreach (SearchProvider Search in App.Instance.SearchEngines)
                         {
-                            if (Search.Name.StartsWith(OmniBox.Text, StringComparison.OrdinalIgnoreCase))
+                            if (Search.Name.StartsWith(OmniBoxText, StringComparison.OrdinalIgnoreCase))
                             {
                                 OmniBoxStatus.Tag = App.Instance.SearchEngines.IndexOf(Search);
                                 OmniBoxStatusText.Text = $"Search {Search.Name}";
@@ -3813,11 +3818,12 @@ namespace SLBr.Pages
 
         private void OmniBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!OmniBox.IsDropDownOpen || e.AddedItems.Count == 0)
+            if (e.AddedItems.Count == 0)
                 return;
             if (OmniBox.SelectedItem is not OmniSuggestion Suggestion)
                 return;
-            if (OmniBoxSelectionByMouse)
+            bool Exists = Suggestions.Contains(Suggestion);
+            if (OmniBoxSelectionByMouse && Exists)
             {
                 if (Suggestion.ProviderOverride == OmniBoxOverrideSearch || Suggestion.ProviderOverride != null && !string.IsNullOrEmpty(Suggestion.Hidden))
                 {
@@ -3848,6 +3854,8 @@ namespace SLBr.Pages
                     OmniBoxOverrideSearch = Suggestion.ProviderOverride;
                     SetTemporarySiteInformation();
                 }
+                else if (!Exists)
+                    e.Handled = true;
             }
             OmniBoxSelectionByMouse = false;
         }
@@ -3857,7 +3865,7 @@ namespace SLBr.Pages
             OmniBoxFastTimer?.Stop();
             if (!OmniBox.IsDropDownOpen)
                 return;
-            string CurrentText = OmniBox.Text.Trim();
+            string CurrentText = OmniBoxText.Trim();
             try
             {
                 string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
@@ -3887,7 +3895,7 @@ namespace SLBr.Pages
             OmniBoxFastTimer?.Stop();
             if (!OmniBox.IsDropDownOpen)
                 return;
-            string CurrentText = OmniBox.Text.Trim();
+            string CurrentText = OmniBoxText.Trim();
             SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
             SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
             List<(int, OmniSuggestion)> ScoredSuggestions = [];
@@ -3948,7 +3956,7 @@ namespace SLBr.Pages
             OmniBoxSmartTimer?.Stop();
             if (!OmniBox.IsDropDownOpen)
                 return;
-            string Text = OmniBox.Text.Trim();
+            string Text = OmniBoxText.Trim();
             int Type = App.GetSmartType(Text);
             if (Type == -1)
                 return;
@@ -3997,6 +4005,10 @@ namespace SLBr.Pages
                     OmniBoxSelectionLength = OmniTextBox.SelectionLength;
                 }), DispatcherPriority.Input);
             };
+            /*OmniTextBox.PreviewKeyDown += (s, e) => Debug.WriteLine("OmniBox: PreviewKeyDown");
+            OmniTextBox.PreviewKeyUp += (s, e) => Debug.WriteLine("OmniBox: PreviewKeyUp");
+            OmniTextBox.SelectionChanged += (s, e) => Debug.WriteLine("OmniBox: SelectionChanged");
+            OmniTextBox.TextInput += (s, e) => Debug.WriteLine("OmniBox: TextInput");*/
 
             OmniTextBox.GotKeyboardFocus += (sender, args) =>
             {

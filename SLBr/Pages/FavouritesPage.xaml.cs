@@ -51,7 +51,7 @@ namespace SLBr.Pages
                     new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text },
                     new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
                 ],
-                "\ue946"
+                "\ueb51"
             )
             {
                 Topmost = true

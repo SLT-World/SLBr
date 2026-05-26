@@ -1293,57 +1293,57 @@ namespace SLBr
              * Incomplete initialization, resulting in permanent loading without interaction.
              * Incorrect web engine information.
              */
-#if !DEBUG
             try
             {
-#endif
-            if (Browser?.IsBrowserInitialized ?? false)
-            {
-                bool LastActive = InitialUrls.Last().IsCurrent == true;
-                int CurrentIndex = InitialUrls.IndexOf(InitialUrls.First(i => i.IsCurrent));
-                for (int i = 0; i < InitialUrls.Count; i++)
+                if (Browser?.IsBrowserInitialized ?? false)
                 {
-                    string Url = InitialUrls[i].Url;
-                    bool IsHistory = !LastActive || i < InitialUrls.Count - 1;
-                    if (IsHistory)
-                        WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
-                    await CallDevToolsAsync("Page.navigate", new
+                    bool LastActive = InitialUrls.Last().IsCurrent == true;
+                    int CurrentIndex = InitialUrls.IndexOf(InitialUrls.First(i => i.IsCurrent));
+                    for (int i = 0; i < InitialUrls.Count; i++)
                     {
-                        url = Url,
-                        transitionType = "generated"
-                    });
-                    InitializingHistory = IsHistory;
-                    if (IsHistory)
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(100));
-                        if (i == 0)
-                            await Browser.WaitForInitialLoadAsync();
-                    }
-                }
-                if (!LastActive)
-                    await Task.Delay(TimeSpan.FromMilliseconds(100));
-                await Browser.WaitForInitialLoadAsync();
-                InitializingHistory = false;
-                if (!LastActive)
-                {
-                    List<WebNavigationEntry> History = await GetNavigationHistoryAsync();
-                    if (CurrentIndex < History.Count - 1)
-                    {
-                        WebNavigationEntry SelectedHistory = History[CurrentIndex];
-                        await CallDevToolsAsync("Page.navigateToHistoryEntry", new
+                        string Url = InitialUrls[i].Url;
+                        bool IsHistory = !LastActive || i < InitialUrls.Count - 1;
+                        if (IsHistory)
+                            WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
+                        await CallDevToolsAsync("Page.navigate", new
                         {
-                            entryId = SelectedHistory.ID
+                            url = Url,
+                            transitionType = "generated"
                         });
-                        //await CallDevToolsAsync("Page.reload");
+                        InitializingHistory = IsHistory;
+                        if (IsHistory)
+                        {
+                            await Task.Delay(TimeSpan.FromMilliseconds(100));
+                            if (i == 0)
+                                await Browser.WaitForInitialLoadAsync();
+                        }
                     }
+                    if (!LastActive)
+                        await Task.Delay(TimeSpan.FromMilliseconds(100));
+                    await Browser.WaitForInitialLoadAsync();
+                    InitializingHistory = false;
+                    if (!LastActive)
+                    {
+                        List<WebNavigationEntry> History = await GetNavigationHistoryAsync();
+                        if (CurrentIndex < History.Count - 1)
+                        {
+                            WebNavigationEntry SelectedHistory = History[CurrentIndex];
+                            await CallDevToolsAsync("Page.navigateToHistoryEntry", new
+                            {
+                                entryId = SelectedHistory.ID
+                            });
+                            //await CallDevToolsAsync("Page.reload");
+                        }
+                    }
+                    DevToolsClient Client = Browser.GetDevToolsClient();
+                    Client.DevToolsEvent += (s, e) => DispatchDevToolsEvent(e.EventName, e.ParametersAsJsonString);
                 }
-                DevToolsClient Client = Browser.GetDevToolsClient();
-                Client.DevToolsEvent += (s, e) => DispatchDevToolsEvent(e.EventName, e.ParametersAsJsonString);
             }
-#if !DEBUG
+            catch (TaskCanceledException Ex)
+            {
+                InitializingHistory = false;
+                return;
             }
-            catch { }
-#endif
 
             /*if (Settings.Private)
             {

@@ -1580,7 +1580,7 @@ namespace SLBr.Pages
                 new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text },
                 new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
             ],
-            "\ue946"
+            "\uecc8"
             )
             {
                 Topmost = true
@@ -1611,18 +1611,21 @@ namespace SLBr.Pages
 
         private void AdBlockDeleteButton_Click(object sender, RoutedEventArgs e)
         {
-            List<AdBlockList> Lists = AdBlockLists.SelectedItems.Cast<AdBlockList>().ToList();
             bool Changed = false;
-            for (int i = 0; i < Lists.Count; i++)
+            if (Directory.Exists(App.Instance.AdBlockDataPath))
             {
-                AdBlockList _List = Lists[i];
-                if (_List.IsEnabled)
-                    Changed = true;
-                string FileName = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(_List.Url))) + ".txt";
-                string FilePath = Path.Combine(App.Instance.AdBlockDataPath, FileName);
-                if (File.Exists(FilePath))
-                    File.Delete(FilePath);
-                App.Instance.AdBlockLists.Remove(_List);
+                List<AdBlockList> Lists = AdBlockLists.SelectedItems.Cast<AdBlockList>().ToList();
+                for (int i = 0; i < Lists.Count; i++)
+                {
+                    AdBlockList _List = Lists[i];
+                    if (_List.IsEnabled)
+                        Changed = true;
+                    string FileName = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(_List.Url))) + ".txt";
+                    string FilePath = Path.Combine(App.Instance.AdBlockDataPath, FileName);
+                    if (File.Exists(FilePath))
+                        File.Delete(FilePath);
+                    App.Instance.AdBlockLists.Remove(_List);
+                }
             }
             if (Changed)
                 App.Instance.SetAdBlockLists();
@@ -1642,11 +1645,9 @@ namespace SLBr.Pages
         private async void AdBlockUpdateButton_Click(object sender, RoutedEventArgs e)
         {
             AdBlockUpdateButton.IsEnabled = false;
-            foreach (AdBlockList List in App.Instance.AdBlockLists)
+            if (Directory.Exists(App.Instance.AdBlockDataPath))
             {
-                string FileName = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(List.Url))) + ".txt";
-                string FilePath = Path.Combine(App.Instance.AdBlockDataPath, FileName);
-                if (File.Exists(FilePath))
+                foreach (string FilePath in Directory.EnumerateFiles(App.Instance.AdBlockDataPath))
                     File.Delete(FilePath);
             }
             await App.Instance.SetAdBlockLists();
