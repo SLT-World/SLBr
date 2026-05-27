@@ -1000,16 +1000,14 @@ namespace SLBr
                 WindowState = WindowState.Normal;
                 Activate();
             }
-            if (VerticalTabs)
-                Index = Index != -1 ? Index : Tabs.Count;
-            else
-                Index = Index != -1 ? Index : Tabs.Count - 1;
+            if (Index == -1)
+                Index = VerticalTabs ? Tabs.Count : Tabs.Count - 1;
             if (Group == null)
             {
                 BrowserTabItem LeftTab = null;
                 BrowserTabItem RightTab = null;
                 if (Index > 0)
-                    LeftTab = Tabs[Index - 1];
+                    LeftTab = Index > Tabs.Count ? Tabs.Last() : Tabs[Index - 1];
                 if (Index < Tabs.Count - 1)
                     RightTab = Tabs[Index];
 

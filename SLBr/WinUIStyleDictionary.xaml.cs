@@ -1,6 +1,8 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -108,12 +110,14 @@ namespace SLBr
 
             if (e.Data.GetDataPresent(typeof(TabItem)))
             {
-                ShowInsertIndicator(Panel, GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.CurrentFocusedWindow()));
+                (int NewIndex, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.CurrentFocusedWindow());
+                ShowInsertIndicator(Panel, NewIndex, RealIndex);
                 e.Effects = DragDropEffects.Move;
             }
             else if (e.Data.GetDataPresent(DataFormats.FileDrop) || e.Data.GetDataPresent(DataFormats.StringFormat))
             {
-                ShowInsertIndicator(Panel, GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.CurrentFocusedWindow()));
+                (int NewIndex, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.CurrentFocusedWindow());
+                ShowInsertIndicator(Panel, NewIndex, RealIndex);
                 e.Effects = DragDropEffects.Copy;
             }
             else
@@ -138,31 +142,22 @@ namespace SLBr
                 BrowserTabItem Tab = (BrowserTabItem)SourceTabItem.DataContext;
                 int OldIndex = FocusedWindow.Tabs.IndexOf(Tab);
 
-                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i == FocusedWindow.TabsUI.SelectedItem || i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
-
-                int NewIndex = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
-                BrowserTabItem TargetTab = NewIndex > VisibleTabs.Count - 1 ? VisibleTabs.Last() : VisibleTabs[NewIndex];
-                if (NewIndex > FocusedWindow.Tabs.Count - 1)
-                    NewIndex = FocusedWindow.Tabs.IndexOf(TargetTab) + 1;
-                else if (FocusedWindow.Tabs[NewIndex] != TargetTab)
-                    NewIndex = FocusedWindow.Tabs.IndexOf(TargetTab);
-                if (OldIndex == NewIndex || OldIndex == NewIndex - 1)
+                (_, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
+                if (OldIndex == RealIndex || OldIndex == RealIndex - 1)
                     return;
+                if (RealIndex > OldIndex)
+                    RealIndex--;
 
-                if (NewIndex > OldIndex)
-                    NewIndex--;
-
-                FocusedWindow.Tabs.Move(OldIndex, NewIndex);
-                FocusedWindow.TabsUI.SelectedIndex = NewIndex;
+                FocusedWindow.Tabs.Move(OldIndex, RealIndex);
+                FocusedWindow.TabsUI.SelectedIndex = RealIndex;
                 if (FocusedWindow.TabGroups.Count != 0)
                 {
                     BrowserTabItem LeftTab = null;
                     BrowserTabItem RightTab = null;
-                    if (NewIndex > 0)
-                        LeftTab = FocusedWindow.Tabs[NewIndex - 1];
-                    if (NewIndex < FocusedWindow.Tabs.Count - 1)
-                        //WARNING: Functions as intended, do not modify.
-                        RightTab = FocusedWindow.Tabs[NewIndex + 1];
+                    if (RealIndex > 0)
+                        LeftTab = FocusedWindow.Tabs[RealIndex - 1];
+                    if (RealIndex < FocusedWindow.Tabs.Count - 1)
+                        RightTab = FocusedWindow.Tabs[RealIndex + 1];
 
                     if (LeftTab != null && RightTab != null && LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
                         Tab.TabGroup = LeftTab.TabGroup;
@@ -174,19 +169,25 @@ namespace SLBr
             else if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] Files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                foreach (string File in Files)
-                    FocusedWindow.NewTab(File, true, GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow));
+
+                (_, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
+
+                for (int i = 0; i < Files.Length; i++)
+                    FocusedWindow.NewTab(Files[i], i == Files.Length - 1, RealIndex);
                 e.Handled = true;
             }
             else if (e.Data.GetDataPresent(DataFormats.StringFormat))
             {
                 string Data = (string)e.Data.GetData(DataFormats.StringFormat);
-                FocusedWindow.NewTab(Utils.FilterUrlForBrowser(Data, App.Instance.DefaultSearchProvider.SearchUrl), true, GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow));
+
+                (_, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
+
+                FocusedWindow.NewTab(Utils.FilterUrlForBrowser(Data, App.Instance.DefaultSearchProvider.SearchUrl), true, RealIndex);
                 e.Handled = true;
             }
         }
 
-        private void ShowInsertIndicator(Panel Panel, int Index)
+        private void ShowInsertIndicator(Panel Panel, int VisibleIndex, int RealIndex)
         {
             List<UIElement> VisibleElements = Panel.Children.OfType<UIElement>().Where(i => i.Visibility == Visibility.Visible).ToList();
             TabControl _TabControl = Panel.TemplatedParent as TabControl;
@@ -196,9 +197,9 @@ namespace SLBr
             bool Vertical = _TabControl.TabStripPlacement == Dock.Left || _TabControl.TabStripPlacement == Dock.Right;
 
             double Offset = 0;
-            if (Index < VisibleElements.Count)
+            if (VisibleIndex < VisibleElements.Count)
             {
-                FrameworkElement TargetTab = (FrameworkElement)VisibleElements[Index];
+                FrameworkElement TargetTab = (FrameworkElement)VisibleElements[VisibleIndex];
                 Point Position = TargetTab.TranslatePoint(new Point(0, 0), Panel);
                 Offset = Vertical ? Position.Y : Position.X;
             }
@@ -210,14 +211,21 @@ namespace SLBr
             }
             if (Window.GetWindow(_TabControl) is MainWindow FocusedWindow && FocusedWindow.TabGroups.Count != 0)
             {
-                List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i == FocusedWindow.TabsUI.SelectedItem || i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
+                /*List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i == FocusedWindow.TabsUI.SelectedItem || i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
                 BrowserTabItem LeftTab = null;
                 BrowserTabItem RightTab = null;
-                if (Index > 0)
-                    LeftTab = Index > VisibleTabs.Count ? VisibleTabs.Last() : VisibleTabs[Index - 1];
-                if (Index < VisibleTabs.Count - 1)
+                if (VisibleIndex > 0)
+                    LeftTab = VisibleIndex > VisibleTabs.Count ? VisibleTabs.Last() : VisibleTabs[VisibleIndex - 1];
+                if (VisibleIndex < VisibleTabs.Count - 1)
                     //WARNING: Functions as intended, do not modify.
-                    RightTab = VisibleTabs[Index];
+                    RightTab = VisibleTabs[VisibleIndex];*/
+
+                BrowserTabItem LeftTab = null;
+                BrowserTabItem RightTab = null;
+                if (RealIndex > 0)
+                    LeftTab = VisibleIndex > FocusedWindow.Tabs.Count ? FocusedWindow.Tabs.Last() : FocusedWindow.Tabs[RealIndex - 1];
+                if (RealIndex < FocusedWindow.Tabs.Count - 1)
+                    RightTab = FocusedWindow.Tabs[RealIndex];
 
                 if (LeftTab != null && RightTab != null && LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
                     InsertIndicator.Background = LeftTab.TabGroup.Background;
@@ -235,7 +243,7 @@ namespace SLBr
             InsertIndicator?.Visibility = Visibility.Collapsed;
         }
 
-        private int GetInsertIndex(Panel Panel, Point MousePosition, MainWindow CurrentWindow)
+        private (int, int) GetInsertIndex(Panel Panel, Point MousePosition, MainWindow CurrentWindow)
         {
             bool Vertical = Panel.TemplatedParent is TabControl _TabControl && (_TabControl.TabStripPlacement == Dock.Left || _TabControl.TabStripPlacement == Dock.Right);
             List<UIElement> VisibleElements = Panel.Children.OfType<UIElement>().Where(i => i.Visibility == Visibility.Visible).ToList();
@@ -243,9 +251,9 @@ namespace SLBr
 
             for (int i = 0; i < VisibleElements.Count; i++)
             {
-                FrameworkElement TargetTab = (FrameworkElement)VisibleElements[i];
-                Point TabPosition = TargetTab.TranslatePoint(new Point(0, 0), Panel);
-                double Midpoint = Vertical ? TabPosition.Y + TargetTab.ActualHeight / 2 : TabPosition.X + TargetTab.ActualWidth / 2;
+                FrameworkElement VisibleTargetTab = (FrameworkElement)VisibleElements[i];
+                Point TabPosition = VisibleTargetTab.TranslatePoint(new Point(0, 0), Panel);
+                double Midpoint = Vertical ? TabPosition.Y + VisibleTargetTab.ActualHeight / 2 : TabPosition.X + VisibleTargetTab.ActualWidth / 2;
                 double MouseAxis = Vertical ? MousePosition.Y : MousePosition.X;
                 if (MouseAxis < Midpoint)
                 {
@@ -254,15 +262,35 @@ namespace SLBr
                 }
             }
             int MaxIndex = VisibleElements.Count + 1;
-            for (int i = 0; i < VisibleElements.Count; i++)
+            bool LastAdd = false;
+            List<BrowserTabItem> VisibleTabs = CurrentWindow.Tabs.Where(i => i == CurrentWindow.TabsUI.SelectedItem || i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
+            /*for (int i = VisibleElements.Count - 1; i >= 0; i--)
             {
-                if (CurrentWindow.Tabs[i]?.Type == BrowserTabType.Add && i > 0)
+                if (VisibleTabs[i]?.Type == BrowserTabType.Add)
                 {
+                    LastAdd = true;
                     MaxIndex = i;
                     break;
                 }
+            }*/
+            if (VisibleTabs[^1]?.Type == BrowserTabType.Add)
+            {
+                LastAdd = true;
+                MaxIndex = VisibleTabs.Count - 1;
             }
-            return Math.Clamp(Index, CurrentWindow.Tabs[0]?.Type == BrowserTabType.Add ? 1 : 0, MaxIndex);
+
+            //int VisibleIndex = Math.Clamp(Index, CurrentWindow.Tabs[0]?.Type == BrowserTabType.Add ? 1 : 0, MaxIndex);
+            int VisibleIndex = Math.Clamp(Index, 0, MaxIndex);
+            int RealIndex = VisibleIndex;
+            bool Surpass = RealIndex > VisibleTabs.Count - 1;
+            BrowserTabItem TargetTab = Surpass ? VisibleTabs.Last() : VisibleTabs[RealIndex];
+            if (RealIndex > CurrentWindow.Tabs.Count - 1)
+                RealIndex = CurrentWindow.Tabs.IndexOf(TargetTab) + 1;
+            else if (CurrentWindow.Tabs[RealIndex] != TargetTab)
+                RealIndex = CurrentWindow.Tabs.IndexOf(TargetTab);
+            if (Surpass && !LastAdd)
+                RealIndex++;
+            return (VisibleIndex, RealIndex);
         }
 
         private static DispatcherTimer TabHoverTimer;
