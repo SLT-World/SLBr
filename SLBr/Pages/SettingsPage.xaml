@@ -264,8 +264,7 @@
                                 </GroupBox>
                                 <GroupBox Margin="0,0,0,10" Header="Browser">
                                     <StackPanel>
-                                        <CheckBox Margin="0,0,0,0" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Enable smooth page scrolling"/>
-                                        <TextBlock Margin="0,5" FontSize="10" Foreground="{StaticResource GrayBrush}">Not available when Lite Performance Mode is enabled</TextBlock>
+                                        <CheckBox Margin="0,0,0,10" x:Name="SmoothScrollCheckBox" Width="Auto" Click="SmoothScrollCheckBox_Click" Content="Enable smooth page scrolling"/>
                                         <CheckBox Margin="0,0,0,10" x:Name="DownloadFaviconsCheckBox" Width="Auto" Click="DownloadFaviconsCheckBox_Click" Content="Show website icons in tabs"/>
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock VerticalAlignment="Center" Text="Tab alignment"/>

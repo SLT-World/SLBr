@@ -2930,8 +2930,7 @@ Inner Exception: {7}";
 
             if (!GlobalSave.Has("Favicons"))
                 GlobalSave.Set("Favicons", true);
-            if (!GlobalSave.Has("SmoothScroll"))
-                GlobalSave.Set("SmoothScroll", true);
+            SmoothScrollBehavior.IsDisabled = !bool.Parse(GlobalSave.Get("SmoothScroll", true.ToString()));
 
             if (!GlobalSave.Has("BrowserHardwareAcceleration"))
                 GlobalSave.Set("BrowserHardwareAcceleration", (RenderCapability.Tier >> 16) != 0);

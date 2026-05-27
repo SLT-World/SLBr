@@ -1127,7 +1127,7 @@ namespace SLBr.Pages
             {
                 if (!Private)
                     App.Instance.AddHistory(Address, Title);
-                if (!App.Instance.LiteMode && bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll")))
+                if (bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll")))
                     WebView.ExecuteScript(Scripts.ScrollScript);
                 if (!Address.StartsWith("slbr:"))
                 {

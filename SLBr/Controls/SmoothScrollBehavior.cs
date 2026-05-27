@@ -11,6 +11,8 @@ namespace SLBr.Controls
 {
     public static class SmoothScrollBehavior
     {
+        public static bool IsDisabled { get; set; } = false;
+
         public static readonly DependencyProperty EnableProperty = DependencyProperty.RegisterAttached("Enable", typeof(bool), typeof(SmoothScrollBehavior), new PropertyMetadata(false, OnEnableChanged));
 
         private static double VelocityX;
@@ -54,6 +56,7 @@ namespace SLBr.Controls
 
         private static void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            if (IsDisabled) return;
             ScrollViewer Viewer = FindScrollViewer(sender as DependencyObject);
             if (Viewer == null || IsInnerScrollable(e.OriginalSource as DependencyObject, Viewer))
                 return;

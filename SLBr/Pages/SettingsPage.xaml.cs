@@ -863,7 +863,11 @@ namespace SLBr.Pages
         private void SmoothScrollCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("SmoothScroll", SmoothScrollCheckBox.IsChecked.ToBool().ToString());
+            {
+                bool Toggle = SmoothScrollCheckBox.IsChecked.ToBool();
+                App.Instance.GlobalSave.Set("SmoothScroll", Toggle.ToString());
+                SmoothScrollBehavior.IsDisabled = !Toggle;
+            }
         }
         private void QuickImageCheckBox_Click(object sender, RoutedEventArgs e)
         {
