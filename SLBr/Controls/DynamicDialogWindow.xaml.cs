@@ -129,6 +129,8 @@ namespace SLBr.Controls
         }
         private async void PositiveButton_Click(object sender, RoutedEventArgs e)
         {
+            PositiveButton.IsEnabled = false;
+            NegativeButton.IsEnabled = false;
             BeginAnimation(OpacityProperty, new DoubleAnimation
             {
                 From = 1,

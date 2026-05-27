@@ -1,13 +1,8 @@
-﻿using CefSharp;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
+using CefSharp;
 using Microsoft.Web.WebView2.Core;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace SLBr.WebView
 {
@@ -109,6 +104,7 @@ namespace SLBr.WebView
 
     public class TridentCookieManager : IWebCookieManager
     {
+        //TODO: InternetGetCookieEx
         public async Task<List<IWebCookie>> GetCookies(string Url)
         {
             return [];

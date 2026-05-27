@@ -72,8 +72,8 @@ namespace SLBr.Controls
         private void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
             bool IsPageMenu = true;
-            ContextMenu BrowserMenu = new ContextMenu();
-            foreach (WebContextMenuType i in Enum.GetValues(typeof(WebContextMenuType)))
+            ContextMenu BrowserMenu = new();
+            foreach (WebContextMenuType i in Enum.GetValues<WebContextMenuType>())
             {
                 if (e.MenuType.HasFlag(i))
                 {

@@ -36,8 +36,10 @@ namespace SLBr.Controls
             Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
         }
-        private async void DialogOk_Click(object sender, RoutedEventArgs e)
+        private async void PositiveButton_Click(object sender, RoutedEventArgs e)
         {
+            PositiveButton.IsEnabled = false;
+            NegativeButton.IsEnabled = false;
             BeginAnimation(OpacityProperty, new DoubleAnimation
             {
                 From = 1,

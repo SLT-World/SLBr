@@ -114,8 +114,8 @@
                 </StackPanel>
 
                 <WrapPanel Grid.Row="3" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                    <Button BorderBrush="{StaticResource BorderBrush}" IsDefault="True" Name="btnDialogOk" Click="DialogOk_Click" MinWidth="60">OK</Button>
-                    <Button BorderBrush="{StaticResource BorderBrush}" IsCancel="True" MinWidth="60" Margin="10,0,0,0">Cancel</Button>
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsDefault="True" x:Name="PositiveButton" Click="PositiveButton_Click" MinWidth="60">OK</Button>
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsCancel="True" x:Name="NegativeButton" MinWidth="60" Margin="10,0,0,0">Cancel</Button>
                 </WrapPanel>
             </Grid>
         </Border>

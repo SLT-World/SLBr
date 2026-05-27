@@ -237,6 +237,74 @@ namespace SLBr.WebView
                     GlobalRequestContext.SetPreference("spellcheck.dictionaries", string.Join(',', Settings.Languages), out _);
                     GlobalRequestContext.SetPreference("intl.accept_languages", string.Join(',', Settings.Languages), out _);
                 }
+                /*foreach (ContentSettingTypes SettingType in Enum.GetValues<ContentSettingTypes>())
+                {
+                    switch (SettingType)
+                    {
+                        case ContentSettingTypes.AutoSelectCertificate:
+                        case ContentSettingTypes.DeprecatedPpapiBroker:
+                        case ContentSettingTypes.SslCertDecisions:
+                        case ContentSettingTypes.AppBanner:
+                        case ContentSettingTypes.SiteEngagement:
+                        case ContentSettingTypes.UsbChooserData:
+                        case ContentSettingTypes.ImportantSiteInfo:
+                        case ContentSettingTypes.PermissionAutoblockerData:
+                        case ContentSettingTypes.AdsData:
+                        case ContentSettingTypes.Midi:
+                        case ContentSettingTypes.PasswordProtection:
+                        case ContentSettingTypes.MediaEngagement:
+                        case ContentSettingTypes.ClientHints:
+                        case ContentSettingTypes.DeprecatedAccessibilityEvents:
+                        case ContentSettingTypes.BackgroundFetch:
+                        case ContentSettingTypes.IntentPickerDisplay:
+                        case ContentSettingTypes.SerialChooserData:
+                        case ContentSettingTypes.PeriodicBackgroundSync:
+                        case ContentSettingTypes.HidChooserData:
+                        case ContentSettingTypes.WakeLockScreen:
+                        case ContentSettingTypes.WakeLockSystem:
+                        case ContentSettingTypes.BluetoothChooserData:
+                        case ContentSettingTypes.ClipboardSanitizedWrite:
+                        case ContentSettingTypes.SafeBrowsingUrlCheckData:
+                        case ContentSettingTypes.PermissionAutorevocationData:
+                        case ContentSettingTypes.FileSystemLastPickedDirectory:
+                        case ContentSettingTypes.DisplayCapture:
+                        case ContentSettingTypes.FileSystemAccessChooserData:
+                        case ContentSettingTypes.FederatedIdentitySharing:
+                        case ContentSettingTypes.HttpAllowed:
+                        case ContentSettingTypes.FormfillMetadata:
+                        case ContentSettingTypes.DeprecatedFederatedIdentityActiveSession:
+                        case ContentSettingTypes.AutoDarkWebContent:
+                        case ContentSettingTypes.RequestDesktopSite:
+                        case ContentSettingTypes.NotificationInteractions:
+                        case ContentSettingTypes.ReducedAcceptLanguage:
+                        case ContentSettingTypes.NotificationPermissionReview://
+                        case ContentSettingTypes.PrivateNetworkChooserData://Works for some reason
+                        case ContentSettingTypes.FederatedIdentityIdentityProviderSigninStatus:
+                        case ContentSettingTypes.RevokedUnusedSitePermissions:
+                        case ContentSettingTypes.FederatedIdentityIdentityProviderRegistration:
+                        case ContentSettingTypes.HttpsEnforced:
+                        case ContentSettingTypes.AllScreenCapture://
+                        case ContentSettingTypes.CookieControlsMetadata://
+                        case ContentSettingTypes.TpcdHeuristicsGrants://
+                        case ContentSettingTypes.TpcdMetadataGrants://
+                        case ContentSettingTypes.TpcdTrial://
+                        case ContentSettingTypes.TopLevelTpcdTrial://
+                        case ContentSettingTypes.TopLevelTpcdOriginTrial://
+                        case ContentSettingTypes.SmartCardGuard:
+                        case ContentSettingTypes.SmartCardData://
+                        case ContentSettingTypes.WebPrinting:
+                        case ContentSettingTypes.AutomaticFullscreen://
+                        case ContentSettingTypes.SubAppInstallationPrompts://
+                        case ContentSettingTypes.SpeakerSelection://
+                        case ContentSettingTypes.RevokedAbusiveNotificationPermissions:
+                        case ContentSettingTypes.TrackingProtection://
+                        case ContentSettingTypes.DisplayMediaSystemAudio://
+                        case ContentSettingTypes.StorageAccessHeaderOriginTrial://
+                            continue;
+                    }
+                    ContentSettingValues Value = GlobalRequestContext.GetContentSetting("https://example.com", "https://example.com", SettingType);
+                    Debug.WriteLine($"Setting: {SettingType}, Value: {Value}");
+                }*/
                 //enable_a_ping
                 /*ContentSettingValues SettingValue = GlobalRequestContext.GetContentSetting("https://example.com", "https://example.com", ContentSettingTypes.JavaScript);
                 if (SettingValue == ContentSettingValues.Allow)
@@ -952,6 +1020,8 @@ namespace SLBr.WebView
                     callback.Continue(PermissionRequestResult.Accept);
                 else if (Args.State == WebPermissionState.Deny)
                     callback.Continue(PermissionRequestResult.Deny);
+                else if (Args.State == WebPermissionState.Ask)
+                    callback.Continue(PermissionRequestResult.Ignore);
                 callback.Dispose();
             }));
             return true;

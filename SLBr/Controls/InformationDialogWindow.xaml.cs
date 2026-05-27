@@ -47,9 +47,10 @@ namespace SLBr.Controls
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
         }
 
-        private async void DialogOk_Click(object sender, RoutedEventArgs e)
+        private async void PositiveButton_Click(object sender, RoutedEventArgs e)
         {
-            //if (this.IsModal())
+            PositiveButton.IsEnabled = false;
+            NegativeButton.IsEnabled = false;
             BeginAnimation(OpacityProperty, new DoubleAnimation
             {
                 From = 1,
@@ -57,11 +58,7 @@ namespace SLBr.Controls
                 Duration = TimeSpan.FromSeconds(0.125)
             });
             await Task.Delay(125);
-            //WARNING: Do not uncommet, breaks dialog results.
-            //if (IsLoaded && Owner != null)
             DialogResult = true;
-            //else
-            //    Close();
         }
     }
 }

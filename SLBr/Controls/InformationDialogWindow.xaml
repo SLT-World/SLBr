@@ -32,8 +32,8 @@
                     <TextBlock x:Name="DescriptionText" TextTrimming="CharacterEllipsis" VerticalAlignment="Center">DescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescriptionDescription</TextBlock>
                 </DockPanel>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right">
-                    <Button BorderBrush="{StaticResource BorderBrush}" IsDefault="True" Name="PositiveButton" Click="DialogOk_Click" MinWidth="60">Yes</Button>
-                    <Button BorderBrush="{StaticResource BorderBrush}" IsCancel="True" Name="NegativeButton" MinWidth="60" Margin="10,0,0,0">No</Button>
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsDefault="True" x:Name="PositiveButton" Click="PositiveButton_Click" MinWidth="60">Yes</Button>
+                    <Button BorderBrush="{StaticResource BorderBrush}" IsCancel="True" x:Name="NegativeButton" MinWidth="60" Margin="10,0,0,0">No</Button>
                 </StackPanel>
             </Grid>
         </Border>

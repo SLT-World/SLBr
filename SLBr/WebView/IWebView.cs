@@ -9,7 +9,6 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using SLBr;
 using SLBr.Handlers;
-using SLBr.Pages;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
@@ -570,10 +569,94 @@ namespace SLBr.WebView
         Default = 0,
         Allow = 1,
         Deny = 2,
+        Ask = 3,
     }
 
     public static class WebViewUtils
     {
+        public static ContentSettingTypes ToContentSettingType(this WebPermissionType State)
+        {
+            return State switch
+            {
+                WebPermissionType.Cookies => ContentSettingTypes.Cookies,
+                WebPermissionType.Images => ContentSettingTypes.Images,
+                WebPermissionType.JavaScript => ContentSettingTypes.JavaScript,
+                WebPermissionType.Popups => ContentSettingTypes.Popups,
+                WebPermissionType.Geolocation => ContentSettingTypes.Geolocation,
+                WebPermissionType.Notifications => ContentSettingTypes.Notifications,
+                WebPermissionType.MixedScript => ContentSettingTypes.MixedScript,
+                WebPermissionType.MediaStreamMic => ContentSettingTypes.MediaStreamMic,
+                WebPermissionType.MediaStreamCamera => ContentSettingTypes.MediaStreamCamera,
+                WebPermissionType.ProtocolHandlers => ContentSettingTypes.ProtocolHandlers,
+                WebPermissionType.AutomaticDownloads => ContentSettingTypes.AutomaticDownloads,
+                WebPermissionType.MidiSysex => ContentSettingTypes.MidiSysex,
+                WebPermissionType.ProtectedMediaIdentifier => ContentSettingTypes.ProtectedMediaIdentifier,
+                WebPermissionType.DurableStorage => ContentSettingTypes.DurableStorage,
+                WebPermissionType.BluetoothGuard => ContentSettingTypes.BluetoothGuard,
+                WebPermissionType.BackgroundSync => ContentSettingTypes.BackgroundSync,
+                WebPermissionType.Autoplay => ContentSettingTypes.Autoplay,
+                WebPermissionType.Ads => ContentSettingTypes.Ads,
+                WebPermissionType.Sound => ContentSettingTypes.Sound,
+                WebPermissionType.Sensors => ContentSettingTypes.Sensors,
+                WebPermissionType.PaymentHandler => ContentSettingTypes.PaymentHandler,
+                WebPermissionType.UsbGuard => ContentSettingTypes.UsbGuard,
+                WebPermissionType.IdleDetection => ContentSettingTypes.IdleDetection,
+                WebPermissionType.SerialGuard => ContentSettingTypes.SerialGuard,
+                WebPermissionType.BluetoothScanning => ContentSettingTypes.BluetoothScanning,
+                WebPermissionType.HidGuard => ContentSettingTypes.HidGuard,
+                WebPermissionType.LegacyCookieAccess => ContentSettingTypes.LegacyCookieAccess,
+                WebPermissionType.FileSystemWriteGuard => ContentSettingTypes.FileSystemWriteGuard,
+                WebPermissionType.Nfc => ContentSettingTypes.Nfc,
+                WebPermissionType.ClipboardReadWrite => ContentSettingTypes.ClipboardReadWrite,
+                WebPermissionType.Vr => ContentSettingTypes.Vr,
+                WebPermissionType.Ar => ContentSettingTypes.Ar,
+                WebPermissionType.FileSystemReadGuard => ContentSettingTypes.FileSystemReadGuard,
+                WebPermissionType.StorageAccess => ContentSettingTypes.StorageAccess,
+                WebPermissionType.CameraPanTiltZoom => ContentSettingTypes.CameraPanTiltZoom,
+                WebPermissionType.WindowManagement => ContentSettingTypes.WindowManagement,
+                WebPermissionType.InsecurePrivateNetwork => ContentSettingTypes.InsecurePrivateNetwork,
+                WebPermissionType.LocalFonts => ContentSettingTypes.LocalFonts,
+                WebPermissionType.JavascriptJit => ContentSettingTypes.JavascriptJit,
+                WebPermissionType.FederatedIdentityApi => ContentSettingTypes.FederatedIdentityApi,
+                WebPermissionType.PrivateNetworkGuard => ContentSettingTypes.PrivateNetworkGuard,
+                WebPermissionType.TopLevelStorageAccess => ContentSettingTypes.TopLevelStorageAccess,
+                WebPermissionType.FederatedIdentityAutoReauthnPermission => ContentSettingTypes.FederatedIdentityAutoReauthnPermission,
+                WebPermissionType.AntiAbuse => ContentSettingTypes.AntiAbuse,
+                WebPermissionType.ThirdPartyStoragePartitioning => ContentSettingTypes.ThirdPartyStoragePartitioning,
+                WebPermissionType.AutoPictureInPicture => ContentSettingTypes.AutoPictureInPicture,
+                WebPermissionType.FileSystemAccessExtendedPermission => ContentSettingTypes.FileSystemAccessExtendedPermission,
+                WebPermissionType.FileSystemAccessRestorePermission => ContentSettingTypes.FileSystemAccessRestorePermission,
+                WebPermissionType.CapturedSurfaceControl => ContentSettingTypes.CapturedSurfaceControl,
+                WebPermissionType.DirectSockets => ContentSettingTypes.DirectSockets,
+                WebPermissionType.KeyboardLock => ContentSettingTypes.KeyboardLock,
+                WebPermissionType.PointerLock => ContentSettingTypes.PointerLock,
+                WebPermissionType.JavascriptOptimizer => ContentSettingTypes.JavascriptOptimizer,
+                WebPermissionType.HandTracking => ContentSettingTypes.HandTracking,
+                WebPermissionType.WebAppInstallation => ContentSettingTypes.WebAppInstallation,
+                WebPermissionType.DirectSocketsPrivateNetworkAccess => ContentSettingTypes.DirectSocketsPrivateNetworkAccess,
+            };
+        }
+        public static ContentSettingValues ToContentSettingValue(this WebPermissionState State)
+        {
+            return State switch
+            {
+                WebPermissionState.Default => ContentSettingValues.Default,
+                WebPermissionState.Allow => ContentSettingValues.Allow,
+                WebPermissionState.Deny => ContentSettingValues.Block,
+                WebPermissionState.Ask => ContentSettingValues.Ask,
+            };
+        }
+        public static WebPermissionState ToWebPermissionValue(this ContentSettingValues State)
+        {
+            return State switch
+            {
+                ContentSettingValues.Default => WebPermissionState.Default,
+                ContentSettingValues.Allow => WebPermissionState.Allow,
+                ContentSettingValues.Block => WebPermissionState.Default,
+                ContentSettingValues.Ask => WebPermissionState.Ask,
+                _ => WebPermissionState.Default,
+            };
+        }
         public static WebCookieSameSite ToWebCookieSameSite(this CoreWebView2CookieSameSiteKind State)
         {
             return State switch
@@ -1049,6 +1132,54 @@ namespace SLBr.WebView
             }
             return Flags;
         }
+        /*public static WebPermissionType ToWebPermissionType(this CoreWebView2PermissionKind Kind)
+        {
+            return Kind switch
+            {
+                CoreWebView2PermissionKind.Microphone => WebPermissionType.MediaStreamMic,
+                CoreWebView2PermissionKind.Camera => WebPermissionType.MediaStreamCamera,
+                CoreWebView2PermissionKind.Geolocation => WebPermissionType.Geolocation,
+                CoreWebView2PermissionKind.Notifications => WebPermissionType.Notifications,
+                CoreWebView2PermissionKind.ClipboardRead => WebPermissionType.ClipboardReadWrite,
+                CoreWebView2PermissionKind.MultipleAutomaticDownloads => WebPermissionType.AutomaticDownloads,
+                CoreWebView2PermissionKind.FileReadWrite => WebPermissionType.FileSystemAccessExtendedPermission,//TODO: Investigate.
+                CoreWebView2PermissionKind.LocalFonts => WebPermissionType.LocalFonts,
+                CoreWebView2PermissionKind.MidiSystemExclusiveMessages => WebPermissionType.MidiSysex,
+                CoreWebView2PermissionKind.WindowManagement => WebPermissionType.WindowManagement,
+                CoreWebView2PermissionKind.Autoplay => WebPermissionType.Autoplay,
+                CoreWebView2PermissionKind.OtherSensors => WebPermissionType.Sensors,
+                CoreWebView2PermissionKind.PersistentStorage => WebPermissionType.StorageAccess,
+            };
+        }*/
+        public static CoreWebView2PermissionKind? ToWebView2PermissionKind(this WebPermissionType Kind)
+        {
+            return Kind switch
+            {
+                WebPermissionType.MediaStreamMic => CoreWebView2PermissionKind.Microphone,
+                WebPermissionType.MediaStreamCamera => CoreWebView2PermissionKind.Camera,
+                WebPermissionType.Geolocation => CoreWebView2PermissionKind.Geolocation,
+                WebPermissionType.Notifications => CoreWebView2PermissionKind.Notifications,
+                WebPermissionType.ClipboardReadWrite => CoreWebView2PermissionKind.ClipboardRead,
+                WebPermissionType.AutomaticDownloads => CoreWebView2PermissionKind.MultipleAutomaticDownloads,
+                WebPermissionType.FileSystemAccessExtendedPermission => CoreWebView2PermissionKind.FileReadWrite,
+                WebPermissionType.LocalFonts => CoreWebView2PermissionKind.LocalFonts,
+                WebPermissionType.MidiSysex => CoreWebView2PermissionKind.MidiSystemExclusiveMessages,
+                WebPermissionType.WindowManagement => CoreWebView2PermissionKind.WindowManagement,
+                WebPermissionType.Autoplay => CoreWebView2PermissionKind.Autoplay,
+                WebPermissionType.Sensors => CoreWebView2PermissionKind.OtherSensors,
+                WebPermissionType.StorageAccess => CoreWebView2PermissionKind.PersistentStorage,
+                _ => null
+            };
+        }
+        public static WebPermissionState ToWebPermissionState(this CoreWebView2PermissionState Kind)
+        {
+            return Kind switch
+            {
+                CoreWebView2PermissionState.Default => WebPermissionState.Default,
+                CoreWebView2PermissionState.Allow => WebPermissionState.Allow,
+                CoreWebView2PermissionState.Deny => WebPermissionState.Deny,
+            };
+        }
         public static ResourceRequestType ToResourceRequestType(this CoreWebView2WebResourceContext Kind)
         {
             switch (Kind)
@@ -1221,6 +1352,7 @@ namespace SLBr.WebView
         //Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType);
         Task<List<WebNavigationEntry>> GetNavigationHistoryAsync();
         Task<IWebCookieManager> GetCookieManager();
+        Task<IPermissionManager?> GetPermissionManager();
 
         public FrameworkElement Control { get; }
     }
@@ -1748,6 +1880,19 @@ namespace SLBr.WebView
                 CookieManager = new ChromiumCookieManager(BaseCookieManager);
             }
             return CookieManager;
+        }
+
+        ChromiumPermissionManager PermissionManager;
+        public async Task<IPermissionManager?> GetPermissionManager()
+        {
+            if (!Browser.IsBrowserInitialized)
+                return null;
+            if (PermissionManager == null)
+            {
+                IRequestContext Context = Browser.RequestContext ?? Cef.GetGlobalRequestContext();
+                PermissionManager = new ChromiumPermissionManager(Context);
+            }
+            return PermissionManager;
         }
 
         public FrameworkElement Control => Browser;
@@ -2487,6 +2632,11 @@ namespace SLBr.WebView
                 }
                 catch { }
             }
+            /*IReadOnlyList<CoreWebView2PermissionSetting> CorePermissionList = await BrowserCore.Profile.GetNonDefaultPermissionSettingsAsync();
+            foreach (CoreWebView2PermissionSetting Setting in CorePermissionList)
+            {
+                Debug.WriteLine($"{Setting.PermissionKind} {Setting.PermissionState} {Setting.PermissionOrigin}");
+            }*/
         }
 
         public async Task<bool> DetectViewSource()
@@ -2801,6 +2951,15 @@ namespace SLBr.WebView
         {
             CookieManager ??= new ChromiumEdgeCookieManager(BrowserCore.CookieManager);
             return CookieManager;
+        }
+
+        ChromiumEdgePermissionManager PermissionManager;
+        public async Task<IPermissionManager?> GetPermissionManager()
+        {
+            if (BrowserCore == null)
+                return null;
+            PermissionManager ??= new ChromiumEdgePermissionManager(BrowserCore);
+            return PermissionManager;
         }
 
         public FrameworkElement Control => Browser;
@@ -3357,12 +3516,18 @@ namespace SLBr.WebView
             return History;
         }
 
-
         TridentCookieManager CookieManager;
         public async Task<IWebCookieManager> GetCookieManager()
         {
             CookieManager ??= new TridentCookieManager();
             return CookieManager;
+        }
+
+        TridentPermissionManager PermissionManager;
+        public async Task<IPermissionManager?> GetPermissionManager()
+        {
+            PermissionManager ??= new TridentPermissionManager();
+            return PermissionManager;
         }
 
         public FrameworkElement Control => Browser;

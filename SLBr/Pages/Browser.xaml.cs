@@ -1181,6 +1181,15 @@ namespace SLBr.Pages
                     List<IWebCookie> CookiesList = await CookieManager.GetCookies(Address);
                     foreach (var Cookie in CookiesList)
                         Debug.WriteLine($"Name: {Cookie.Name}, Value: {Cookie.Value}");*/
+                    /*IPermissionManager? PermissionManager = await WebView.GetPermissionManager();
+                    if (PermissionManager != null)
+                    {
+                        foreach (WebPermissionType SettingType in Enum.GetValues<WebPermissionType>())
+                        {
+                            (WebPermissionState Value, bool IsSupported) = await PermissionManager.GetSetting(Utils.FastHost(Address, false, true) + "/", SettingType);
+                            Debug.WriteLine($"Setting: {SettingType}, Value: {Value}, Supported: {IsSupported}");
+                        }
+                    }*/
                 }
             }
         }
