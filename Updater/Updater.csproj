@@ -11,6 +11,7 @@
     <SignAssembly>False</SignAssembly>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
     <Company>$(Authors)</Company>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
