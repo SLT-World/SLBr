@@ -5,6 +5,7 @@ using CefSharp;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
+using SLBr.WebView;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;

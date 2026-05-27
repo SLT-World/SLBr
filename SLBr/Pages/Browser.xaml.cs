@@ -8,6 +8,7 @@ using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
+using SLBr.WebView;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data;
@@ -1176,6 +1177,10 @@ namespace SLBr.Pages
                         }
                         catch { }
                     }
+                    /*IWebCookieManager CookieManager = await WebView.GetCookieManager();
+                    List<IWebCookie> CookiesList = await CookieManager.GetCookies(Address);
+                    foreach (var Cookie in CookiesList)
+                        Debug.WriteLine($"Name: {Cookie.Name}, Value: {Cookie.Value}");*/
                 }
             }
         }

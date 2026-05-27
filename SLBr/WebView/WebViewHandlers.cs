@@ -2,6 +2,7 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using CefSharp;
+using CefSharp.Enums;
 using CefSharp.Internals;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
@@ -19,7 +20,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Input;
 
-namespace SLBr
+namespace SLBr.WebView
 {
     public static class WebViewManager
     {
@@ -183,7 +184,7 @@ namespace SLBr
             if (!Success)
                 return false;
 
-            Cef.UIThreadTaskFactory.StartNew(delegate
+            await Cef.UIThreadTaskFactory.StartNew(async delegate
             {
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
                 GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !RuntimeSettings.PDFViewer, out _);
@@ -237,6 +238,13 @@ namespace SLBr
                     GlobalRequestContext.SetPreference("intl.accept_languages", string.Join(',', Settings.Languages), out _);
                 }
                 //enable_a_ping
+                /*ContentSettingValues SettingValue = GlobalRequestContext.GetContentSetting("https://example.com", "https://example.com", ContentSettingTypes.JavaScript);
+                if (SettingValue == ContentSettingValues.Allow)
+                    Debug.WriteLine("JavaScript is allowed.");
+                ICookieManager CookieManager = Cef.GetGlobalCookieManager();
+                List<CefSharp.Cookie> CookiesList = await CookieManager.VisitAllCookiesAsync();
+                foreach (var Cookie in CookiesList)
+                    Debug.WriteLine($"Name: {Cookie.Name}, Value: {Cookie.Value}");*/
             });
 
             GlobalLifeSpanHandler = new ChromiumLifeSpanHandler();
@@ -1160,7 +1168,6 @@ namespace SLBr
             return false;
         }
     }
-
     public class OverrideResourceRequestHandlerFactory : IResourceRequestHandlerFactory
     {
         ChromiumWebView WebView;

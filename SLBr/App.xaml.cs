@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
 using SLBr.Pages;
+using SLBr.WebView;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;

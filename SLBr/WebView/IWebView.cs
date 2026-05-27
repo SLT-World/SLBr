@@ -3,10 +3,13 @@ Use of this source code is governed by a GNU license that can be found in the LI
 
 using CefSharp;
 using CefSharp.DevTools;
+using CefSharp.Enums;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+using SLBr;
 using SLBr.Handlers;
+using SLBr.Pages;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
@@ -21,9 +24,9 @@ using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using static SLBr.ChromiumPermissionHandler;
+using static SLBr.WebView.ChromiumPermissionHandler;
 
-namespace SLBr
+namespace SLBr.WebView
 {
     public enum WebEngineType { Chromium, ChromiumEdge, Trident }
 
@@ -571,6 +574,67 @@ namespace SLBr
 
     public static class WebViewUtils
     {
+        public static WebCookieSameSite ToWebCookieSameSite(this CoreWebView2CookieSameSiteKind State)
+        {
+            return State switch
+            {
+                CoreWebView2CookieSameSiteKind.None => WebCookieSameSite.None,
+                CoreWebView2CookieSameSiteKind.Lax => WebCookieSameSite.Lax,
+                CoreWebView2CookieSameSiteKind.Strict => WebCookieSameSite.Strict,
+                _ => WebCookieSameSite.Unspecified
+            };
+        }
+        public static CoreWebView2CookieSameSiteKind ToWebView2CookieSameSite(this WebCookieSameSite State)
+        {
+            return State switch
+            {
+                WebCookieSameSite.None => CoreWebView2CookieSameSiteKind.None,
+                WebCookieSameSite.Lax => CoreWebView2CookieSameSiteKind.Lax,
+                WebCookieSameSite.Strict => CoreWebView2CookieSameSiteKind.Strict,
+                _ => CoreWebView2CookieSameSiteKind.None
+            };
+        }
+        public static WebCookieSameSite ToWebCookieSameSite(this CookieSameSite State)
+        {
+            return State switch
+            {
+                CookieSameSite.Unspecified => WebCookieSameSite.Unspecified,
+                CookieSameSite.NoRestriction => WebCookieSameSite.None,
+                CookieSameSite.LaxMode => WebCookieSameSite.Lax,
+                CookieSameSite.StrictMode => WebCookieSameSite.Strict,
+                _ => WebCookieSameSite.Unspecified
+            };
+        }
+        /*public static WebCookiePriority ToWebCookiePriority(this CookiePriority State)
+        {
+            return State switch
+            {
+                CookiePriority.Low => WebCookiePriority.Low,
+                CookiePriority.Medium => WebCookiePriority.Medium,
+                CookiePriority.High => WebCookiePriority.High,
+                _ => WebCookiePriority.Low
+            };
+        }*/
+        public static CookieSameSite ToCefCookieSameSite(this WebCookieSameSite State)
+        {
+            return State switch
+            {
+                WebCookieSameSite.None => CookieSameSite.NoRestriction,
+                WebCookieSameSite.Lax => CookieSameSite.LaxMode,
+                WebCookieSameSite.Strict => CookieSameSite.StrictMode,
+                _ => CookieSameSite.Unspecified
+            };
+        }
+        /*public static CookiePriority ToCefCookiePriority(this WebCookiePriority State)
+        {
+            return State switch
+            {
+                WebCookiePriority.Low => CookiePriority.Low,
+                WebCookiePriority.Medium => CookiePriority.Medium,
+                WebCookiePriority.High => CookiePriority.High,
+                _ => CookiePriority.Low
+            };
+        }*/
         public static PermissionRequestResult ToCefPermissionState(this WebPermissionState State)
         {
             return State switch
@@ -1156,6 +1220,7 @@ namespace SLBr
         void SubscribeDevToolsEvent(string Event, Action<string> Handler);
         //Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType);
         Task<List<WebNavigationEntry>> GetNavigationHistoryAsync();
+        Task<IWebCookieManager> GetCookieManager();
 
         public FrameworkElement Control { get; }
     }
@@ -1670,6 +1735,19 @@ namespace SLBr
                 case JsonValueKind.False: return false;
                 default: return null;
             }
+        }
+
+        ChromiumCookieManager CookieManager;
+        public async Task<IWebCookieManager> GetCookieManager()
+        {
+            if (CookieManager == null)
+            {
+                TaskCompletionCallback Callback = new();
+                ICookieManager BaseCookieManager = Browser.GetCookieManager(Callback);
+                await Callback.Task;
+                CookieManager = new ChromiumCookieManager(BaseCookieManager);
+            }
+            return CookieManager;
         }
 
         public FrameworkElement Control => Browser;
@@ -2718,6 +2796,13 @@ namespace SLBr
             return History;
         }
 
+        ChromiumEdgeCookieManager CookieManager;
+        public async Task<IWebCookieManager> GetCookieManager()
+        {
+            CookieManager ??= new ChromiumEdgeCookieManager(BrowserCore.CookieManager);
+            return CookieManager;
+        }
+
         public FrameworkElement Control => Browser;
 
         private bool _Disposed;
@@ -3270,6 +3355,14 @@ namespace SLBr
             List<WebNavigationEntry> History = [];
             History.Add(new WebNavigationEntry(true, Address, Title, null));
             return History;
+        }
+
+
+        TridentCookieManager CookieManager;
+        public async Task<IWebCookieManager> GetCookieManager()
+        {
+            CookieManager ??= new TridentCookieManager();
+            return CookieManager;
         }
 
         public FrameworkElement Control => Browser;

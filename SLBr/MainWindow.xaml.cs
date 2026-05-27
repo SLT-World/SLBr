@@ -4,6 +4,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Pages;
+using SLBr.WebView;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

@@ -1,6 +1,7 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using SLBr.WebView;
 using System.IO;
 using System.Net;
 using System.Net.Security;
