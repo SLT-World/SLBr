@@ -40,7 +40,7 @@ namespace SLBr.Controls
                 return;
             await App.DiscordWebhookSendInfo($"**Bug Report**\n" +
                 $"> - Version: `{App.Instance.ReleaseVersion}`\n\n" +
-                $"Urgent: `{UrgentCheckBox.IsChecked.ToBool()}`\n\n" +
+                $"Urgent: `{UrgentCheckBox.IsChecked.GetValueOrDefault()}`\n\n" +
                 $"Message: ```{new TextRange(ExplanationRichTextBox.Document.ContentStart, ExplanationRichTextBox.Document.ContentEnd).Text.Trim()} ```\n" +
                 $"Steps to reproduce: ```{new TextRange(STRRichTextBox.Document.ContentStart, STRRichTextBox.Document.ContentEnd).Text.Trim()} ```\n");
             BeginAnimation(OpacityProperty, new DoubleAnimation

@@ -133,7 +133,7 @@ namespace SLBr.Controls
                     {
                         Topmost = true
                     };
-                    if (_CredentialsDialogWindow.ShowDialog().ToBool())
+                    if (_CredentialsDialogWindow.ShowDialog().GetValueOrDefault())
                         callback.Continue(_CredentialsDialogWindow.Username, _CredentialsDialogWindow.Password);
                     else
                         callback.Cancel();

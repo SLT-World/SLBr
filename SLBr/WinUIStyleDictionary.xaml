@@ -3303,7 +3303,7 @@ Margin="{TemplateBinding Padding}"/>
                             </ScrollViewer>
                             <ScrollViewer WindowChrome.IsHitTestVisibleInChrome="False" Width="250" MinWidth="45" MaxWidth="250" x:Name="TabPanelScroll" VerticalScrollBarVisibility="Hidden" HorizontalAlignment="Left" Margin="{TemplateBinding Padding}">
                                 <Grid>
-                                    <TabPanel Panel.ZIndex="1" Margin="5,0,5,5" IsItemsHost="True" Background="Transparent" AllowDrop="True" DragOver="HeaderPanel_DragOver" DragLeave="HeaderPanel_DragLeave" Drop="HeaderPanel_Drop"/>
+                                    <TabPanel controls:SmoothScrollBehavior.Enable="True" Panel.ZIndex="1" Margin="5,0,5,5" IsItemsHost="True" Background="Transparent" AllowDrop="True" DragOver="HeaderPanel_DragOver" DragLeave="HeaderPanel_DragLeave" Drop="HeaderPanel_Drop"/>
                                     <Border Panel.ZIndex="2" x:Name="InsertIndicator" Height="2.5" Background="{StaticResource IndicatorBrush}" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Top" CornerRadius="1.5"/>
                                 </Grid>
                             </ScrollViewer>

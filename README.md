@@ -6,7 +6,7 @@
   **Fast, lightweight browsing with a clean interface.**
 
 [![C#](https://img.shields.io/static/v1?style=for-the-badge&message=C%23&color=239120&logo=csharp&logoColor=239120&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
-[![XAML](https://img.shields.io/static/v1?style=for-the-badge&message=XAML&color=0C54C2&logo=XAML&logoColor=0C54C2&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
+[![XAML](https://img.shields.io/static/v1?style=for-the-badge&message=WPF&color=0C54C2&logo=WPF&logoColor=0C54C2&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
 [![.NET](https://img.shields.io/static/v1?style=for-the-badge&message=.NET&color=512BD4&logo=.NET&logoColor=512BD4&label=&labelColor=black)](https://github.com/SLT-World/SLBr)
 [![Chromium](https://img.shields.io/static/v1?style=for-the-badge&message=Chromium&color=006CFF&logo=GoogleChrome&logoColor=006CFF&label=&labelColor=black)](https://github.com/SLT-World/SLBr)<br/>
 
@@ -21,15 +21,16 @@ SLBr is an open-source, lightweight web browser based on Chromium. Built with .N
 See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Clean, Modern UI:** Simple & clean design.
 - **Multi Web Engine:** Choose between Chromium engine (CEF), Edge engine (WebView2), Internet Explorer engine (Trident).
-- **Ad & Tracker Blocking:** Browse with fewer ads & less tracking.
+- **Ad & Tracker Blocking:** Browse with fewer ads & less tracking, customize ad block filter lists.
 - **Tab Layouts:** Choose vertical or horizontal tab alignment.
-- **Tab Unloading:** Save memory by unloading inactive tabs.
+- **Tab Unloading:** Save memory by unloading inactive tabs
+- **Phishing & Malware Site Protection:** Protect against malicious websites with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
+- **Download Protection:** Protect against suspicious files and malware with Google Safe Browsing.
+- **Web Page Translation:** Directly translate websites without proxies with Google, Microsoft, Yandex & Lingvanex providers..
 - **Smart Address Bar:** Search suggestions directly in the address bar, with quick calculations, weather, and translation.
 - **Private Tabs (Incognito Tabs):** Open private browsing sessions that don't store history and cookies.
 - **Tab Groups:** Organize tabs with color-coding & naming.
-- **Profile Manager:** Manage multiple profiles on startup.
-- **Web Risk Service:** Protects against malicious websites with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
-- **Web Page Translation:** Directly translate websites without proxies with Google, Microsoft, Yandex & Lingvanex providers.
+- **Profiles:** Browse with multiple profiles.
 - **Clipboard & Download Popup:** Attach recent images from the clipboard/downloads, inspired by Opera's Easy Files. (Only for the Chromium web engine)
 - **Extension Support:** Supports Chrome web store extensions. (Only for the Chromium web engine)
 
@@ -37,7 +38,7 @@ See the full feature list, [here](https://slt-world.github.io/slbr/)
 To install SLBr, follow these steps:
 1. Download the [latest release](https://github.com/SLT-World/SLBr/releases/latest).
 2. Ensure the following requirements are met:
-    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe): Typically pre-installed on modern Windows environments.
+    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)
     - [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0): An automated prompt to the .NET download page will be shown if .NET 9.0 is not detected upon launch.
     - Windows 10 & above.
 ## Thanks

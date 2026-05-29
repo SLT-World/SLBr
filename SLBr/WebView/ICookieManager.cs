@@ -8,6 +8,7 @@ namespace SLBr.WebView
 {
     public interface IWebCookieManager : IDisposable
     {
+        Task<List<string>> GetAllSites();
         Task<List<IWebCookie>> GetCookies(string Url);
         Task SetCookie(string Url, IWebCookie Cookie);
         Task DeleteCookie(string Url, string Name);
@@ -31,12 +32,21 @@ namespace SLBr.WebView
     {
         ICookieManager Core = _Core;
 
+        public async Task<List<string>> GetAllSites()
+        {
+            List<Cookie> CoreCookiesList = await Core.VisitAllCookiesAsync();
+            HashSet<string> Sites = [];
+            foreach (Cookie CoreCookie in CoreCookiesList)
+                Sites.Add(CoreCookie.Domain);
+            return Sites.ToList();
+        }
+
         public async Task<List<IWebCookie>> GetCookies(string Url)
         {
             List<Cookie> CoreCookiesList = await Core.VisitUrlCookiesAsync(Url, true);
             List<IWebCookie> Cookies = [];
-            foreach (Cookie CefCookie in CoreCookiesList)
-                Cookies.Add(new ChromiumWebCookie(CefCookie));
+            foreach (Cookie CoreCookie in CoreCookiesList)
+                Cookies.Add(new ChromiumWebCookie(CoreCookie));
             return Cookies;
         }
 
@@ -64,6 +74,15 @@ namespace SLBr.WebView
     public class ChromiumEdgeCookieManager(CoreWebView2CookieManager _Core) : IWebCookieManager
     {
         CoreWebView2CookieManager Core = _Core;
+
+        public async Task<List<string>> GetAllSites()
+        {
+            List<CoreWebView2Cookie> CoreCookiesList = await Core.GetCookiesAsync("");
+            HashSet<string> Sites = [];
+            foreach (CoreWebView2Cookie CoreCookie in CoreCookiesList)
+                Sites.Add(CoreCookie.Domain);
+            return Sites.ToList();
+        }
 
         public async Task<List<IWebCookie>> GetCookies(string Url)
         {
@@ -105,6 +124,10 @@ namespace SLBr.WebView
     public class TridentCookieManager : IWebCookieManager
     {
         //TODO: InternetGetCookieEx
+        public async Task<List<string>> GetAllSites()
+        {
+            return [];
+        }
         public async Task<List<IWebCookie>> GetCookies(string Url)
         {
             return [];

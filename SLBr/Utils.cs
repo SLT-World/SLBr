@@ -575,20 +575,16 @@ namespace SLBr
 
     public static class ClassExtensions
     {
-        public static MColor ToMediaColor(this DColor color) =>
-            MColor.FromArgb(color.A, color.R, color.G, color.B);
-        public static bool ToBool(this bool? self) =>
-            self == true;
-        public static int ToInt(this bool self) =>
-            self == true ? 1 : 0;
+        public static MColor ToMediaColor(this DColor Color) =>
+            MColor.FromArgb(Color.A, Color.R, Color.G, Color.B);
+        public static int ToInt(this bool Self) =>
+            Self == true ? 1 : 0;
         public static string Cut(this string Self, int MaxLength, bool AddEllipsis = false)
         {
             if (Self.Length <= MaxLength)
                 return Self;
             return string.Concat(Self.AsSpan(0, MaxLength - (AddEllipsis ? 3 : 0)), AddEllipsis ? "..." : string.Empty);
         }
-        /*public static uint ToUInt(this System.Drawing.Color color) =>
-               (uint)((color.A << 24) | (color.R << 16) | (color.G << 8) | (color.B << 0));*/
 
         public static void AddNoErrorFlag(this CefSettings Settings, string Key, string Value)
         {

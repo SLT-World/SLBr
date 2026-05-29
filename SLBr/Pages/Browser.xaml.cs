@@ -1178,7 +1178,10 @@ namespace SLBr.Pages
                         catch { }
                     }
                     /*IWebCookieManager CookieManager = await WebView.GetCookieManager();
-                    List<IWebCookie> CookiesList = await CookieManager.GetCookies(Address);
+                    List<string> CookieSites = await CookieManager.GetAllSites();
+                    foreach (var Site in CookieSites)
+                        Debug.WriteLine($"Name: {Site}");*/
+                    /*List<IWebCookie> CookiesList = await CookieManager.GetCookies(Address);
                     foreach (var Cookie in CookiesList)
                         Debug.WriteLine($"Name: {Cookie.Name}, Value: {Cookie.Value}");*/
                     /*IPermissionManager? PermissionManager = await WebView.GetPermissionManager();
@@ -1199,9 +1202,7 @@ namespace SLBr.Pages
             if (!string.IsNullOrEmpty(Color))
             {
                 IsCustomTheme = true;
-                Color PrimaryColor = Utils.ParseThemeColor(Color);
-
-                Theme SiteTheme = App.Instance.GenerateTheme(PrimaryColor);
+                Theme SiteTheme = App.Instance.GenerateTheme(Utils.ParseThemeColor(Color));
                 SetAppearance(SiteTheme);
                 TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
                 _TabItem.Foreground = new SolidColorBrush(SiteTheme.FontColor);
@@ -1626,7 +1627,7 @@ namespace SLBr.Pages
                 {
                     Topmost = true
                 };
-                if (_CredentialsDialogWindow.ShowDialog().ToBool())
+                if (_CredentialsDialogWindow.ShowDialog().GetValueOrDefault())
                 {
                     e.Username = _CredentialsDialogWindow.Username;
                     e.Password = _CredentialsDialogWindow.Password;
@@ -1796,7 +1797,7 @@ namespace SLBr.Pages
         private void AdBlockToggleButton_Click(object sender, RoutedEventArgs e)
         {
             string Host = Utils.FastHost(Address);
-            if (AdBlockToggleButton.IsChecked.ToBool())
+            if (AdBlockToggleButton.IsChecked.GetValueOrDefault())
                 App.Instance._AdBlockHandler.Whitelist.Remove(Host);
             else
                 App.Instance._AdBlockHandler.Whitelist.Add(Host);
@@ -1896,7 +1897,7 @@ namespace SLBr.Pages
                 SiteInformationIcon.FontFamily = App.Instance.IconFont;
                 SiteInformationPopupIcon.FontFamily = App.Instance.IconFont;
                 LoadingStoryboard = SiteInformationIcon.FindResource("LoadingAnimation") as Storyboard;
-                bool IsLoadingBool = IsLoading.ToBool();
+                bool IsLoadingBool = IsLoading.GetValueOrDefault();
                 if (App.Instance.AllowTranslateButton)
                     TranslateButton.IsEnabled = !IsLoadingBool;
                 if (!IsLoadingBool)

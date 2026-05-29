@@ -74,7 +74,7 @@ namespace SLBr.WebView
                             return CBView;
                         }
                     }
-                    ChromiumEdgeWebView EView = new ChromiumEdgeWebView(Urls, _BrowserSettings);
+                    ChromiumEdgeWebView EView = new(Urls, _BrowserSettings);
                     await EView.InitializeAsync();
                     return EView;
                 case WebEngineType.Trident:

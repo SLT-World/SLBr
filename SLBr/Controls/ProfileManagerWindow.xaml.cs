@@ -43,7 +43,7 @@ namespace SLBr.Controls
 
         private void StartupProfilesCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            App.Instance.AppSave.Set("StartupProfiles", StartupProfilesCheckBox.IsChecked.ToBool());
+            App.Instance.AppSave.Set("StartupProfiles", StartupProfilesCheckBox.IsChecked.GetValueOrDefault());
             App.Instance.AppSave.Save();
         }
 

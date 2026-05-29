@@ -14,10 +14,12 @@ namespace SLBr.Controls
     /// </summary>
     public partial class ColorPickerWindow : Window
     {
-        public ColorPickerWindow(Color DefaultColor)
+        public ColorPickerWindow(Color DefaultColor)//, bool AllowCancel = true
         {
             InitializeComponent();
             SelectedHue = DefaultColor;
+            /*if (!AllowCancel)
+                NegativeButton.Visibility = Visibility.Collapsed;*/
             ApplyColor(DefaultColor);
             ApplyTheme(App.Instance.CurrentTheme);
             BeginAnimation(OpacityProperty, new DoubleAnimation

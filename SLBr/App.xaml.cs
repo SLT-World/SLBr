@@ -2270,25 +2270,27 @@ Inner Exception: {7}";
                     string FileName = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(List.Url))) + ".txt";
                     string FilePath = Path.Combine(AdBlockDataPath, FileName);
                     if (File.Exists(FilePath))
-                        _AdBlockHandler.ParseAdd(File.ReadAllText(FilePath));
+                        _AdBlockHandler.ParseAdd(await File.ReadAllTextAsync(FilePath));
                     else
                     {
                         try
                         {
                             using CancellationTokenSource _CancellationTokenSource = new(TimeSpan.FromSeconds(120));
-                            using HttpResponseMessage Response = await MiniHttpClient.GetAsync(List.Url, _CancellationTokenSource.Token);
+                            using HttpResponseMessage Response = await MiniHttpClient.GetAsync(List.Url, HttpCompletionOption.ResponseHeadersRead, _CancellationTokenSource.Token);
                             Response.EnsureSuccessStatusCode();
                             using Stream _Stream = await Response.Content.ReadAsStreamAsync(_CancellationTokenSource.Token);
                             using FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
 
                             await _Stream.CopyToAsync(_FileStream, _CancellationTokenSource.Token);
                             _FileStream.Close();
-                            _AdBlockHandler.ParseAdd(File.ReadAllText(FilePath));
+                            _AdBlockHandler.ParseAdd(await File.ReadAllTextAsync(FilePath));
                         }
                         catch
                         {
                             if (File.Exists(FilePath))
-                                File.Delete(FilePath);
+                            {
+                                try { File.Delete(FilePath); } catch { }
+                            }
                         }
                     }
                 }
@@ -2859,10 +2861,17 @@ Inner Exception: {7}";
                 //TODO: Fetch title from file content.
                 AdBlockLists =
                 [
+                    //https://github.com/yokoffing/filterlists?tab=readme-ov-file#optimized-lists
                     //https://easylist-downloads.adblockplus.org/easylist_noelemhide.txt
-                    new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
-                    new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
-                    new AdBlockList { Name = "AdGuard Base filter", Url = "https://filters.adtidy.org/extension/chromium/filters/2.txt" },
+
+                    //new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
+                    //new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
+                    //new AdBlockList { Name = "AdGuard Base filter", Url = "https://filters.adtidy.org/extension/chromium/filters/2.txt" },
+
+                    new AdBlockList { Name = "EasyList", Url = "https://filters.adtidy.org/extension/ublock/filters/101_optimized.txt", IsEnabled = true },
+                    new AdBlockList { Name = "EasyPrivacy", Url = "https://filters.adtidy.org/extension/ublock/filters/118_optimized.txt", IsEnabled = true },
+                    new AdBlockList { Name = "AdGuard Base filter + EasyList", Url = "https://filters.adtidy.org/extension/ublock/filters/2_optimized.txt" },
+                    new AdBlockList { Name = "AdGuard Tracking Protection filter", Url = "https://filters.adtidy.org/extension/ublock/filters/3_optimized.txt" },
                     new AdBlockList { Name = "Peter Lowe Adservers", Url = "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&mimetype=plaintext" },
                     new AdBlockList { Name = "NoCoin Filter List", Url = "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/refs/heads/master/nocoin.txt" },
                 ];
