@@ -167,17 +167,12 @@
                                                                 <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
                                                                 <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
                                                             </Grid>
-                                                            <Button Grid.Column="2" Width="65" Height="30" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
-                                                                <DockPanel VerticalAlignment="Center">
-                                                                    <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
-                                                                    <TextBlock TextAlignment="Center" Text="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                </DockPanel>
+                                                            <!--TODO: Support pause & resume.-->
+                                                            <Button Grid.Column="2" Width="30" Height="30" ToolTip="Cancel" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
+                                                                <TextBlock Text="&#xE71A;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                             </Button>
-                                                            <Button Grid.Column="2" Width="65" Height="30" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
-                                                                <DockPanel VerticalAlignment="Center">
-                                                                    <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
-                                                                    <TextBlock TextAlignment="Center" Text="Open" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                </DockPanel>
+                                                            <Button Grid.Column="2" Width="30" Height="30" ToolTip="Open" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
+                                                                <TextBlock Text="&#xE838;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                             </Button>
                                                         </Grid>
                                                         <ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Margin="0,5,0,0" Width="Auto" Maximum="100" Visibility="{Binding Progress}" Value="{Binding PercentComplete}"/>

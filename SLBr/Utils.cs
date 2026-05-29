@@ -146,6 +146,10 @@ namespace SLBr
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
 
+
+        [DllImport("wininet.dll")]
+        public extern static bool InternetGetConnectedState(out int description, int reservedValue);
+
         public const int WM_KEYDOWN = 0x0100;
         public const int WM_KEYUP = 0x0101;
 
@@ -884,9 +888,9 @@ namespace SLBr
 
         public static MColor ColorFromHSL(double H, double S, double L)
         {
-            double R = 0;
-            double G = 0;
-            double B = 0;
+            double R;
+            double G;
+            double B;
             if (S == 0)
                 R = G = B = L;
             else
@@ -934,10 +938,8 @@ namespace SLBr
         public static double GetHue(MColor _Color) =>
             DColor.FromArgb(_Color.R, _Color.G, _Color.B).GetHue();
 
-        [DllImport("wininet.dll")]
-        private extern static bool InternetGetConnectedState(out int description, int reservedValue);
         public static bool IsInternetAvailable() =>
-            InternetGetConnectedState(out int Description, 0);
+            DllUtils.InternetGetConnectedState(out int Description, 0);
 
         public static void SaveImage(BitmapSource Bitmap, string FilePath)
         {
@@ -1557,7 +1559,7 @@ namespace SLBr
             return IP.ToString();
         }
 
-        private static readonly Dictionary<char, char> DeceptiveCharMap = new()
+        private static readonly Lazy<Dictionary<char, char>> DeceptiveCharMap = new(() => new()
         {
             //Cyrillic
             ['а'] = 'a',
@@ -1644,7 +1646,7 @@ namespace SLBr
             ['ℴ'] = 'o',
             ['K'] = 'K',
             ['Å'] = 'A',
-        };
+        });
 
         /*TODO: Investigate usage of https://www.unicode.org/Public/security/8.0.0/confusables.txt
          * https://www.unicode.org/reports/tr36/confusables.txt
@@ -1662,7 +1664,7 @@ namespace SLBr
                     continue;
                 if (_Char <= 127)
                     Builder.Append(_Char);
-                else if (DeceptiveCharMap.TryGetValue(_Char, out char Mapped))
+                else if (DeceptiveCharMap.Value.TryGetValue(_Char, out char Mapped))
                     Builder.Append(Mapped);
                 else
                     Builder.Append(_Char);

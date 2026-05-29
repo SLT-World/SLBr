@@ -360,12 +360,17 @@ namespace SLBr.WebView
         public string FullPath { get; set; }
         public long ReceivedBytes { get; set; }
         public long TotalBytes { get; set; }
+        public DateTime? EndTime { get; set; }
         public double Progress => TotalBytes > 0 ? (double)ReceivedBytes / TotalBytes : 0;
         public WebDownloadState State { get; set; }
 
         public Action? Pause { get; set; }
         public Action? Resume { get; set; }
         public Action? Cancel { get; set; }
+
+        public DateTime? CalculatedEndTime { get; set; }
+        public DateTime LastCheckTime = DateTime.Now;
+        public long LastReceivedBytes = 0;
     }
 
     public delegate Task<ProtocolResponse> ProtocolHandler(string Url, string Extra = "", CancellationToken? Token = null);
@@ -2441,22 +2446,24 @@ namespace SLBr.WebView
                 State = WebDownloadState.InProgress,
                 Pause = e.DownloadOperation.Pause,
                 Resume = () =>
-                    {
-                        if (e.DownloadOperation.CanResume)
-                            e.DownloadOperation.Resume();
-                    },
+                {
+                    if (e.DownloadOperation.CanResume)
+                        e.DownloadOperation.Resume();
+                },
                 Cancel = e.DownloadOperation.Cancel
             };
 
             WebViewManager.DownloadManager.Started(Item);
-            //DownloadStarted?.RaiseUIAsync(Item);
-
+            e.DownloadOperation.EstimatedEndTimeChanged += (s2, e2) =>
+            {
+                Item.EndTime = e.DownloadOperation.EstimatedEndTime;
+                WebViewManager.DownloadManager.Updated(Item);
+            };
             e.DownloadOperation.BytesReceivedChanged += (s2, e2) =>
             {
                 Item.ReceivedBytes = e.DownloadOperation.BytesReceived;
                 Item.TotalBytes = (long)(e.DownloadOperation.TotalBytesToReceive ?? 0);
                 WebViewManager.DownloadManager.Updated(Item);
-                //DownloadUpdated?.RaiseUIAsync(Item);
             };
             e.DownloadOperation.StateChanged += (s2, e2) =>
             {

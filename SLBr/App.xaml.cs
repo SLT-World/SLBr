@@ -1035,11 +1035,34 @@ namespace SLBr
                     }
                     else
                     {
+                        string FormattedDescription;
+                        DateTime? EndTime = Item.EndTime ?? Item.CalculatedEndTime;
+                        if (EndTime.HasValue)
+                        {
+                            TimeSpan TimeLeft = EndTime.Value - DateTime.Now;
+                            if (TimeLeft.Ticks < 0)
+                                TimeLeft = TimeSpan.Zero;
+                            if (TimeLeft.TotalDays > 0)
+                                FormattedDescription = $"{TimeLeft.TotalDays} days left";
+                            else if (TimeLeft.TotalHours > 0)
+                                FormattedDescription = $"{TimeLeft.TotalHours} hours left";
+                            else if (TimeLeft.TotalMinutes > 0)
+                                FormattedDescription = $"{TimeLeft.TotalMinutes} minutes left";
+                            else
+                                FormattedDescription = $"{TimeLeft.TotalSeconds} seconds left";
+                        }
+                        else
+                            FormattedDescription = "Downloading";
                         if (Item.TotalBytes > 0)
-                            _Entry.FormattedProgress = FormatBytes(Item.ReceivedBytes, false) + "/" + FormatBytes(Item.TotalBytes) + " - Downloading";
+                        {
+                            int TargetIndex = (int)Math.Floor(Math.Log(Item.TotalBytes) / Math.Log(1000));
+                            if (TargetIndex >= FileSizes.Value.Length)
+                                TargetIndex = FileSizes.Value.Length - 1;
+                            _Entry.FormattedProgress = $"{FormatBytes(Item.ReceivedBytes, false, TargetIndex)}/{FormatBytes(Item.TotalBytes, true, TargetIndex)} - {FormattedDescription}";
+                        }
                         else
                         {
-                            _Entry.FormattedProgress = FormatBytes(Item.ReceivedBytes) + " - Downloading";
+                            _Entry.FormattedProgress = $"{FormatBytes(Item.ReceivedBytes)} - {FormattedDescription}";
                             _Entry.IsIndeterminate = true;
                         }
                         _Entry.Open = Visibility.Collapsed;
@@ -1048,18 +1071,18 @@ namespace SLBr
                     }
                 }
                 else
-                {
                     VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID });
-                }
             });
         }
 
         static readonly Lazy<string[]> FileSizes = new(() => ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]);
-        public static string FormatBytes(long Bytes, bool ContainSizes = true)
+        public static string FormatBytes(long Bytes, bool ContainSizes = true, int? ForcedIndex = null)
         {
             if (Bytes == 0)
-                return "0 Byte";
-            int i = (int)Math.Floor(Math.Log(Bytes) / Math.Log(1000));
+                return ContainSizes ? "0 Bytes" : "0.00";
+            int i = ForcedIndex ?? (int)Math.Floor(Math.Log(Bytes) / Math.Log(1000));
+            if (i >= FileSizes.Value.Length)
+                i = FileSizes.Value.Length - 1;
             string Output = (Bytes / Math.Pow(1000, i)).ToString("F2");
             if (ContainSizes)
                 Output += $" {FileSizes.Value[i]}";

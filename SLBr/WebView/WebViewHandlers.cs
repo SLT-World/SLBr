@@ -658,7 +658,32 @@ namespace SLBr.WebView
         public event Action<WebDownloadItem> DownloadCompleted;
 
         public void Started(WebDownloadItem Item) => DownloadStarted?.RaiseUIAsync(Item);
-        public void Updated(WebDownloadItem Item) => DownloadUpdated?.RaiseUIAsync(Item);
+        public void Updated(WebDownloadItem Item)
+        {
+            if (!Item.EndTime.HasValue && Item.State == WebDownloadState.InProgress && !App.Instance.LiteMode)
+            {
+                if (Item.TotalBytes <= 0 || Item.ReceivedBytes >= Item.TotalBytes)
+                    Item.CalculatedEndTime = DateTime.Now;
+                else
+                {
+                    DateTime Now = DateTime.Now;
+                    double ElapsedSeconds = (Now - Item.LastCheckTime).TotalSeconds;
+                    if (ElapsedSeconds <= 0)
+                        Item.CalculatedEndTime = null;
+                    else
+                    {
+                        double BytesPerSecond = (Item.ReceivedBytes - Item.LastReceivedBytes) / ElapsedSeconds;
+                        Item.LastCheckTime = Now;
+                        Item.LastReceivedBytes = Item.ReceivedBytes;
+                        if (BytesPerSecond <= 0)
+                            Item.CalculatedEndTime = null;
+                        else
+                            Item.CalculatedEndTime = DateTime.Now.AddSeconds((Item.TotalBytes - Item.ReceivedBytes) / BytesPerSecond);
+                    }
+                }
+            }
+            DownloadUpdated?.RaiseUIAsync(Item);
+        }
         public void Completed(WebDownloadItem Item) => DownloadCompleted?.RaiseUIAsync(Item);
 
         private static Lazy<HttpClient> DownloadHttpClient = new(() => HttpClientFactory.Create(new SocketsHttpHandler
@@ -1072,6 +1097,9 @@ namespace SLBr.WebView
             }
             Item.TotalBytes = downloadItem.TotalBytes;
             Item.ReceivedBytes = downloadItem.ReceivedBytes;
+
+            //TODO: Null provided.
+            Item.EndTime = downloadItem.EndTime;
 
             if (downloadItem.IsInProgress)
             {

@@ -91,6 +91,7 @@ namespace SLBr.Handlers
                 catch { }
             }
 
+            //TODO: Utilize Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(Manifest.Name or Manifest.StartUrl)));
             string AppName = !string.IsNullOrWhiteSpace(Manifest.Name) ? Manifest.Name : new Uri(Manifest.StartUrl).Host;
             string ShortcutPath = Path.Combine(StartMenuFolder, $"{Utils.SanitizeFileName(AppName)}.lnk");
             CreateShortcut(ShortcutPath, AppName, ID);
