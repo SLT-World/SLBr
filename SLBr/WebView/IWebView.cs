@@ -7,6 +7,7 @@ using CefSharp.Enums;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+using Microsoft.Win32;
 using SLBr;
 using SLBr.Handlers;
 using System.Diagnostics;
@@ -358,6 +359,7 @@ namespace SLBr.WebView
         public string Url { get; set; }
         public string FileName { get; set; }
         public string FullPath { get; set; }
+        public string TempPath { get; set; }
         public long ReceivedBytes { get; set; }
         public long TotalBytes { get; set; }
         public DateTime? EndTime { get; set; }
@@ -2063,8 +2065,8 @@ namespace SLBr.WebView
             Browser.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
             BrowserCore.Profile.PreferredTrackingPreventionLevel = CoreWebView2TrackingPreventionLevel.Basic;
             BrowserCore.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Auto;
-            if (!Utils.IsEmptyOrWhiteSpace(WebViewManager.Settings.DownloadFolderPath))
-                BrowserCore.Profile.DefaultDownloadFolderPath = WebViewManager.Settings.DownloadFolderPath;
+            if (!Utils.IsEmptyOrWhiteSpace(WebViewManager.RuntimeSettings.DownloadFolderPath))
+                BrowserCore.Profile.DefaultDownloadFolderPath = WebViewManager.RuntimeSettings.DownloadFolderPath;
             BrowserCore.Settings.AreHostObjectsAllowed = false;
             BrowserCore.Settings.IsScriptEnabled = Settings.JavaScript;
             BrowserCore.Settings.IsStatusBarEnabled = false;
@@ -2074,7 +2076,7 @@ namespace SLBr.WebView
             BrowserCore.Settings.IsSwipeNavigationEnabled = false;
             BrowserCore.Settings.IsPinchZoomEnabled = false;
 
-            BrowserCore.Settings.IsReputationCheckingRequired = Settings.Private ? false : App.Instance.WebRiskService != WebSecurityService.None;
+            BrowserCore.Settings.IsReputationCheckingRequired = !Settings.Private && App.Instance.WebRiskService != WebSecurityService.None;
 
             BrowserCore.Settings.IsGeneralAutofillEnabled = false;
             BrowserCore.Settings.AreDefaultScriptDialogsEnabled = false;
@@ -2436,12 +2438,36 @@ namespace SLBr.WebView
 
         private void Browser_DownloadStarting(object? sender, CoreWebView2DownloadStartingEventArgs e)
         {
+            e.Handled = true;
+            string SuggestedFileName = Path.GetFileName(e.ResultFilePath);
+            string PreferredPath = Path.Combine(WebViewManager.RuntimeSettings.DownloadFolderPath, SuggestedFileName);
+            if (WebViewManager.RuntimeSettings.DownloadPrompt)
+            {
+                SaveFileDialog SaveDialog = new()
+                {
+                    FileName = SuggestedFileName,
+                    InitialDirectory = WebViewManager.RuntimeSettings.DownloadFolderPath,
+                    Filter = "All files (*.*)|*.*"
+                };
+                if (SaveDialog.ShowDialog() == true)
+                    PreferredPath = SaveDialog.FileName;
+                else
+                {
+                    e.Cancel = true;
+                    Browser_SourceChanged(null, null);
+                    return;
+                }
+            }
+            string TempPath = PreferredPath + ".crdownload";
+            e.ResultFilePath = TempPath;
+
             WebDownloadItem Item = new()
             {
                 ID = Guid.NewGuid().ToString(),
                 Url = e.DownloadOperation.Uri,
-                FileName = Path.GetFileName(e.DownloadOperation.ResultFilePath),
-                FullPath = e.DownloadOperation.ResultFilePath,
+                FileName = Path.GetFileName(PreferredPath),
+                FullPath = PreferredPath,
+                TempPath = TempPath,
                 TotalBytes = (long)(e.DownloadOperation.TotalBytesToReceive ?? 0),
                 State = WebDownloadState.InProgress,
                 Pause = e.DownloadOperation.Pause,
@@ -2458,13 +2484,30 @@ namespace SLBr.WebView
             {
                 Item.EndTime = e.DownloadOperation.EstimatedEndTime;
                 WebViewManager.DownloadManager.Updated(Item);
+                //Debug.WriteLine($"EstimatedEndTimeChanged: {e.DownloadOperation.State} {e.DownloadOperation.BytesReceived} {e.DownloadOperation.InterruptReason} {e.DownloadOperation.TotalBytesToReceive}");
+
+                /*if (e.DownloadOperation.TotalBytesToReceive.HasValue && e.DownloadOperation.State == CoreWebView2DownloadState.InProgress && e.DownloadOperation.BytesReceived == (long)e.DownloadOperation.TotalBytesToReceive.Value)
+                {
+                    e.DownloadOperation.Cancel();
+                    Item.State = WebDownloadState.Canceled;
+                    WebViewManager.DownloadManager.Completed(Item);
+                }*/
             };
             e.DownloadOperation.BytesReceivedChanged += (s2, e2) =>
             {
                 Item.ReceivedBytes = e.DownloadOperation.BytesReceived;
                 Item.TotalBytes = (long)(e.DownloadOperation.TotalBytesToReceive ?? 0);
                 WebViewManager.DownloadManager.Updated(Item);
+                //Debug.WriteLine($"BytesReceivedChanged: {e.DownloadOperation.State} {e.DownloadOperation.BytesReceived} {e.DownloadOperation.InterruptReason} {e.DownloadOperation.TotalBytesToReceive}");
+                
+                /*if (e.DownloadOperation.TotalBytesToReceive.HasValue && e.DownloadOperation.State == CoreWebView2DownloadState.InProgress && e.DownloadOperation.BytesReceived == (long)e.DownloadOperation.TotalBytesToReceive.Value)
+                {
+                    e.DownloadOperation.Cancel();
+                    Item.State = WebDownloadState.Canceled;
+                    WebViewManager.DownloadManager.Completed(Item);
+                }*/
             };
+            //TODO: Incomplete download observed, https://www.thinkbroadband.com/download, "can't be downloaded securely" observed in Edge.
             e.DownloadOperation.StateChanged += (s2, e2) =>
             {
                 switch (e.DownloadOperation.State)
@@ -2517,7 +2560,7 @@ namespace SLBr.WebView
             if (!WebViewManager.RuntimeSettings.PDFViewer && Utils.GetFileExtension(e.Uri) == ".pdf")
             {
                 e.Cancel = true;
-                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(e.Uri, string.Empty, WebViewManager.Settings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
+                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(e.Uri, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
                 return;
             }
             NavigationCancellationTokenSource?.Cancel();
@@ -2833,7 +2876,7 @@ namespace SLBr.WebView
         public event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         public event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.Settings.DownloadPrompt, "");
+        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "");
 
         public void ExecuteScript(string Script) => Browser.ExecuteScriptAsync(Script);
         public bool CanExecuteJavascript => BrowserCore != null;
@@ -3244,7 +3287,7 @@ namespace SLBr.WebView
             if (!WebViewManager.RuntimeSettings.PDFViewer && e.Uri != null && e.Uri.Segments[e.Uri.Segments.Length - 1].EndsWith(".pdf"))
             {
                 e.Cancel = true;
-                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.Settings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
+                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
                 return;
             }
             if (Utils.IsCustomScheme(Url))
@@ -3456,7 +3499,7 @@ namespace SLBr.WebView
         public event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         public event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.Settings.DownloadPrompt, "");
+        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "");
 
         public void ExecuteScript(string Script) { try { Browser?.InvokeScript("execScript", [Script, "JavaScript"]); } catch { } }
 

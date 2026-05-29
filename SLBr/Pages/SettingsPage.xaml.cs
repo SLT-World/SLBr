@@ -318,7 +318,7 @@ namespace SLBr.Pages
             SmoothScrollCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll"));
             QuickImageCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("QuickImage"));
             //SuppressErrorCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SuppressError"));
-            SpellCheckCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SpellCheck"));
+            SpellCheckCheckBox.IsChecked = WebViewManager.RuntimeSettings.SpellCheck;
             DownloadPromptCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt"));
             ExternalFontsCheckBox.IsChecked = App.Instance.ExternalFonts;
             TabUnloadingCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabUnloading"));
@@ -885,7 +885,7 @@ namespace SLBr.Pages
             if (SettingsInitialized)
             {
                 bool Enabled = SpellCheckCheckBox.IsChecked.GetValueOrDefault();
-
+                WebViewManager.RuntimeSettings.SpellCheck = Enabled;
                 App.Instance.GlobalSave.Set("SpellCheck", Enabled.ToString());
                 if (WebViewManager.IsCefInitialized)
                 {
@@ -974,7 +974,11 @@ namespace SLBr.Pages
         private void DownloadPromptCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("DownloadPrompt", DownloadPromptCheckBox.IsChecked.GetValueOrDefault().ToString());
+            {
+                bool Value = DownloadPromptCheckBox.IsChecked.GetValueOrDefault();
+                WebViewManager.RuntimeSettings.DownloadPrompt = Value;
+                App.Instance.GlobalSave.Set("DownloadPrompt", Value.ToString());
+            }
         }
         private void TabUnloadingCheckBox_Click(object sender, RoutedEventArgs e)
         {
@@ -1117,6 +1121,7 @@ namespace SLBr.Pages
             if (FolderDialog.ShowDialog() == true)
             {
                 DownloadPathText.Text = FolderDialog.FolderName;
+                WebViewManager.RuntimeSettings.DownloadFolderPath = FolderDialog.FolderName;
                 App.Instance.GlobalSave.Set("DownloadPath", FolderDialog.FolderName);
             }
         }

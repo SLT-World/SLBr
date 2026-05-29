@@ -1520,7 +1520,7 @@ namespace SLBr.Pages
                     }) });
                     BrowserMenu.Items.Add(new Separator());
                 }*/
-                if (!string.IsNullOrEmpty(e.SelectionText) && !e.SelectionText.Contains(' ') && bool.Parse(App.Instance.GlobalSave.Get("SpellCheck")))
+                if (WebViewManager.RuntimeSettings.SpellCheck && !string.IsNullOrEmpty(e.SelectionText) && !e.SelectionText.Contains(' '))
                 {
                     List<(string Word, List<string> Suggestions)> Results = await App.Instance.SpellCheck(e.SelectionText);
                     if (Results.Count != 0)

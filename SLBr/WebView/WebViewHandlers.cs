@@ -230,7 +230,7 @@ namespace SLBr.WebView
                 //GlobalRequestContext.SetPreference("profile.password_manager_enabled", false, out _);
                 //GlobalRequestContext.SetPreference("credentials_enable_service", false, out _);
 
-                GlobalRequestContext.SetPreference("browser.enable_spellchecking", Settings.SpellCheck, out _);
+                GlobalRequestContext.SetPreference("browser.enable_spellchecking", RuntimeSettings.SpellCheck, out _);
                 //GlobalRequestContext.SetPreference("spellcheck.use_spelling_service", false, out _);
                 if (Settings.Languages?.Length != 0)
                 {
@@ -434,7 +434,7 @@ namespace SLBr.WebView
             SetIEFeatureControlKey("FEATURE_BLOCK_LMZ_OBJECT", 1);
             SetIEFeatureControlKey("FEATURE_BLOCK_LMZ_SCRIPT", 1);
 
-            SetIEFeatureControlKey("FEATURE_SPELLCHECKING", (uint)(Settings.SpellCheck ? 1 : 0));
+            SetIEFeatureControlKey("FEATURE_SPELLCHECKING", (uint)(RuntimeSettings.SpellCheck ? 1 : 0));
             SetIEFeatureControlKey("FEATURE_VIEWLINKEDWEBOC_IS_UNSAFE", 1);
             SetIEFeatureControlKey("FEATURE_BLOCK_CROSS_PROTOCOL_FILE_NAVIGATION", 1);
             SetIEFeatureControlKey("FEATURE_RESTRICT_ABOUT_PROTOCOL_IE7", 1);
@@ -594,13 +594,10 @@ namespace SLBr.WebView
 
         public string? UserDataPath = null;
         public string LogFile;
-        public string DownloadFolderPath = string.Empty;
-        public bool DownloadPrompt = true;
 
         public PerformancePreset Performance = PerformancePreset.Default;
         public TridentEmulationVersion TridentVersion = TridentEmulationVersion.IE11;
         public CefRuntimeStyle CefRuntimeStyle = CefRuntimeStyle.Default;
-        public bool SpellCheck = true;
 
         public string JavaScriptFlags = string.Empty;
         public Dictionary<string, string> Flags = [];
@@ -631,6 +628,11 @@ namespace SLBr.WebView
     }
     public class WebViewRuntimeSettings
     {
+        public bool SpellCheck = true;
+
+        //TODO: WebView2 Profile.DefaultDownloadFolderPath = DownloadFolderPath;
+        public string DownloadFolderPath = string.Empty;
+        public bool DownloadPrompt = true;
         private bool _PDFViewer = true;
         public bool PDFViewer
         {
@@ -668,23 +670,39 @@ namespace SLBr.WebView
                 {
                     DateTime Now = DateTime.Now;
                     double ElapsedSeconds = (Now - Item.LastCheckTime).TotalSeconds;
-                    if (ElapsedSeconds <= 0)
-                        Item.CalculatedEndTime = null;
-                    else
+                    if (ElapsedSeconds > 0)
                     {
                         double BytesPerSecond = (Item.ReceivedBytes - Item.LastReceivedBytes) / ElapsedSeconds;
                         Item.LastCheckTime = Now;
                         Item.LastReceivedBytes = Item.ReceivedBytes;
-                        if (BytesPerSecond <= 0)
-                            Item.CalculatedEndTime = null;
-                        else
+                        if (BytesPerSecond > 0)
                             Item.CalculatedEndTime = DateTime.Now.AddSeconds((Item.TotalBytes - Item.ReceivedBytes) / BytesPerSecond);
                     }
                 }
             }
             DownloadUpdated?.RaiseUIAsync(Item);
         }
-        public void Completed(WebDownloadItem Item) => DownloadCompleted?.RaiseUIAsync(Item);
+        public void Completed(WebDownloadItem Item)
+        {
+            if (File.Exists(Item.TempPath))
+            {
+                switch (Item.State)
+                {
+                    case WebDownloadState.Canceled:
+                        try { File.Delete(Item.TempPath); } catch { }
+                        break;
+                    case WebDownloadState.Completed:
+                        try
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(Item.FullPath));
+                            File.Move(Item.TempPath, Item.FullPath, true);
+                        }
+                        catch { }
+                        break;
+                }
+            }
+            DownloadCompleted?.RaiseUIAsync(Item);
+        }
 
         private static Lazy<HttpClient> DownloadHttpClient = new(() => HttpClientFactory.Create(new SocketsHttpHandler
         {
@@ -703,7 +721,7 @@ namespace SLBr.WebView
                 {
                     Filter = string.IsNullOrEmpty(DialogFilter) ? "All Files (*.*)|*.*" : DialogFilter,
                     //https://learn.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/dd459587(v=vs.95) Guide on proper file dialog wild cards
-                    InitialDirectory = WebViewManager.Settings.DownloadFolderPath,
+                    InitialDirectory = WebViewManager.RuntimeSettings.DownloadFolderPath,
                     FileName = Path.GetFileName(Url)
                 };
                 if (SaveDialog.ShowDialog() == true)
@@ -1061,43 +1079,52 @@ namespace SLBr.WebView
 
         public bool OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IBeforeDownloadCallback callback)
         {
-            WebDownloadItem Item = new()
+            if (callback.IsDisposed) return false;
+            using (callback)
             {
-                ID = downloadItem.Id.ToString(),
-                Url = downloadItem.Url,
-                FileName = downloadItem.SuggestedFileName,
-                FullPath = Path.Combine(WebViewManager.Settings.DownloadFolderPath, downloadItem.SuggestedFileName),
-                TotalBytes = downloadItem.TotalBytes,
-                State = WebDownloadState.InProgress
-            };
-            WebDownloadItems[downloadItem.Id] = Item;
+                string PreferredPath = Path.Combine(WebViewManager.RuntimeSettings.DownloadFolderPath, downloadItem.SuggestedFileName);
+                if (WebViewManager.RuntimeSettings.DownloadPrompt)
+                {
+                    SaveFileDialog SaveDialog = new()
+                    {
+                        FileName = downloadItem.SuggestedFileName,
+                        InitialDirectory = WebViewManager.RuntimeSettings.DownloadFolderPath,
+                        Filter = "All files (*.*)|*.*"
+                    };
+                    if (SaveDialog.ShowDialog() == true)
+                        PreferredPath = SaveDialog.FileName;
+                    else
+                        return false;
+                }
+                string TempPath = PreferredPath + ".crdownload";
 
-            WebViewManager.DownloadManager.Started(Item);
-            if (!callback.IsDisposed)
-            {
-                using (callback)
-                    callback.Continue(Path.Combine(WebViewManager.Settings.DownloadFolderPath, downloadItem.SuggestedFileName), WebViewManager.Settings.DownloadPrompt);
+                WebDownloadItem Item = new()
+                {
+                    ID = downloadItem.Id.ToString(),
+                    Url = downloadItem.Url,
+                    FileName = Path.GetFileName(PreferredPath),
+                    FullPath = PreferredPath,
+                    TempPath = TempPath,
+                    TotalBytes = downloadItem.TotalBytes,
+                    State = WebDownloadState.InProgress
+                };
+
+                WebDownloadItems[downloadItem.Id] = Item;
+                WebViewManager.DownloadManager.Started(Item);
+                callback.Continue(TempPath, false);
             }
+            /*using (callback)
+                callback.Continue(Path.Combine(WebViewManager.Settings.DownloadFolderPath, downloadItem.SuggestedFileName), WebViewManager.Settings.DownloadPrompt);*/
             return true;
         }
 
         public void OnDownloadUpdated(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IDownloadItemCallback callback)
         {
             if (!WebDownloadItems.TryGetValue(downloadItem.Id, out var Item))
-            {
-                Item = new WebDownloadItem { ID = downloadItem.Id.ToString() };
-                WebDownloadItems[downloadItem.Id] = Item;
-            }
-
-            if (string.IsNullOrEmpty(Item.FileName))
-            {
-                Item.Url = downloadItem.Url;
-                Item.FileName = Path.GetFileName(Item.FullPath);
-                Item.FullPath = downloadItem.FullPath;
-            }
+                return;
+            //Item.Url = downloadItem.Url;
             Item.TotalBytes = downloadItem.TotalBytes;
             Item.ReceivedBytes = downloadItem.ReceivedBytes;
-
             //TODO: Null provided.
             Item.EndTime = downloadItem.EndTime;
 

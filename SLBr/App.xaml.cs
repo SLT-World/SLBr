@@ -1042,14 +1042,14 @@ namespace SLBr
                             TimeSpan TimeLeft = EndTime.Value - DateTime.Now;
                             if (TimeLeft.Ticks < 0)
                                 TimeLeft = TimeSpan.Zero;
-                            if (TimeLeft.TotalDays > 0)
-                                FormattedDescription = $"{TimeLeft.TotalDays} days left";
-                            else if (TimeLeft.TotalHours > 0)
-                                FormattedDescription = $"{TimeLeft.TotalHours} hours left";
-                            else if (TimeLeft.TotalMinutes > 0)
-                                FormattedDescription = $"{TimeLeft.TotalMinutes} minutes left";
+                            if (TimeLeft.TotalDays >= 1)
+                                FormattedDescription = $"{(int)TimeLeft.TotalDays} days left";
+                            else if (TimeLeft.TotalHours >= 1)
+                                FormattedDescription = $"{(int)TimeLeft.TotalHours} hours left";
+                            else if (TimeLeft.TotalMinutes >= 1)
+                                FormattedDescription = $"{(int)TimeLeft.TotalMinutes} minutes left";
                             else
-                                FormattedDescription = $"{TimeLeft.TotalSeconds} seconds left";
+                                FormattedDescription = $"{(int)TimeLeft.TotalSeconds} seconds left";
                         }
                         else
                             FormattedDescription = "Downloading";
@@ -3284,14 +3284,14 @@ Inner Exception: {7}";
             Settings.LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log"));
 
             Settings.Performance = (PerformancePreset)GlobalSave.GetInt("Performance");
-            Settings.DownloadFolderPath = GlobalSave.Get("DownloadPath");
-            Settings.DownloadPrompt = bool.Parse(GlobalSave.Get("DownloadPrompt"));
             Settings.GPUAcceleration = bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration"));
-            Settings.SpellCheck = bool.Parse(GlobalSave.Get("SpellCheck"));
 
             SetBrowserFlags(Settings);
 
             WebViewManager.Settings = Settings;
+            WebViewManager.RuntimeSettings.SpellCheck = bool.Parse(GlobalSave.Get("SpellCheck"));
+            WebViewManager.RuntimeSettings.DownloadFolderPath = GlobalSave.Get("DownloadPath");
+            WebViewManager.RuntimeSettings.DownloadPrompt = bool.Parse(GlobalSave.Get("DownloadPrompt"));
             WebViewManager.RuntimeSettings.PDFViewer = bool.Parse(GlobalSave.Get("PDF"));
 
             //https://support.google.com/chrome/answer/157179
