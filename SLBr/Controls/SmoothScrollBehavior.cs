@@ -57,7 +57,7 @@ namespace SLBr.Controls
         private static void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (IsDisabled) return;
-            ScrollViewer Viewer = FindScrollViewer(sender as DependencyObject);
+            ScrollViewer Viewer = Utils.FindAncestorOfType<ScrollViewer>(sender as DependencyObject);
             if (Viewer == null || IsInnerScrollable(e.OriginalSource as DependencyObject, Viewer))
                 return;
 
@@ -114,17 +114,6 @@ namespace SLBr.Controls
                 CompositionTarget.Rendering -= OnRendering;
                 Hooked = false;
             }
-        }
-
-        private static ScrollViewer FindScrollViewer(DependencyObject element)
-        {
-            while (element != null)
-            {
-                if (element is ScrollViewer Viewer)
-                    return Viewer;
-                element = VisualTreeHelper.GetParent(element);
-            }
-            return null;
         }
     }
 }

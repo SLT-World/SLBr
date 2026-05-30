@@ -1518,13 +1518,14 @@ namespace SLBr.WebView
                         if (IsHistory)
                         {
                             await Task.Delay(TimeSpan.FromMilliseconds(100));
-                            if (i == 0)
+                            if (i == 0 && Browser != null)
                                 await Browser.WaitForInitialLoadAsync();
                         }
                     }
                     if (!LastActive)
                         await Task.Delay(TimeSpan.FromMilliseconds(100));
-                    await Browser.WaitForInitialLoadAsync();
+                    if (Browser != null)
+                        await Browser.WaitForInitialLoadAsync();
                     InitializingHistory = false;
                     if (!LastActive)
                     {
@@ -1539,11 +1540,14 @@ namespace SLBr.WebView
                             //await CallDevToolsAsync("Page.reload");
                         }
                     }
-                    DevToolsClient Client = Browser.GetDevToolsClient();
-                    Client.DevToolsEvent += (s, e) => DispatchDevToolsEvent(e.EventName, e.ParametersAsJsonString);
+                    if (Browser != null)
+                    {
+                        DevToolsClient Client = Browser.GetDevToolsClient();
+                        Client.DevToolsEvent += (s, e) => DispatchDevToolsEvent(e.EventName, e.ParametersAsJsonString);
+                    }
                 }
             }
-            catch (TaskCanceledException Ex)
+            catch (Exception Ex) when (Ex is NullReferenceException || Ex is TaskCanceledException)
             {
                 InitializingHistory = false;
                 return;
@@ -2029,7 +2033,7 @@ namespace SLBr.WebView
         private WebView2 Browser;
         private WebViewBrowserSettings Settings;
         private readonly List<WebNavigationEntry> InitialUrls;
-        CoreWebView2 BrowserCore;
+        public CoreWebView2 BrowserCore;
 
         public ChromiumEdgeWebView(List<WebNavigationEntry> Urls = null, WebViewBrowserSettings _Settings = null)
         {

@@ -77,50 +77,53 @@ namespace SLBr.Pages
             {
                 PreviousUrl = CurrentUrl;
                 CurrentUrl = BrowserView.Address;
-                string[] UrlParts = BrowserView.Address[16..].Split("/", StringSplitOptions.RemoveEmptyEntries);
-                if (UrlParts.Length != 0)
+                if (CurrentUrl != null && CurrentUrl.Length > 16)
                 {
-                    string TabName = UrlParts[0];
-                    bool FoundTab = false;
-                    foreach (TabItem Tab in SettingsTabControl.Items)
+                    string[] UrlParts = BrowserView.Address[16..].Split("/", StringSplitOptions.RemoveEmptyEntries);
+                    if (UrlParts.Length != 0)
                     {
-                        if (Tab.Visibility == Visibility.Visible && Tab.Header != null)
+                        string TabName = UrlParts[0];
+                        bool FoundTab = false;
+                        foreach (TabItem Tab in SettingsTabControl.Items)
                         {
-                            string Header = Uri.EscapeDataString(Tab.Header.ToString().ToLowerInvariant());
-                            if (TabName == Header)
+                            if (Tab.Visibility == Visibility.Visible && Tab.Header != null)
                             {
-                                SettingsTabControl.SelectedItem = Tab;
-                                FoundTab = true;
-                                break;
+                                string Header = Uri.EscapeDataString(Tab.Header.ToString().ToLowerInvariant());
+                                if (TabName == Header)
+                                {
+                                    SettingsTabControl.SelectedItem = Tab;
+                                    FoundTab = true;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if (!FoundTab)
-                    {
-                        if (UserTab.Visibility == Visibility.Visible)
-                            SettingsTabControl.SelectedItem = UserTab;
-                        else
-                            SettingsTabControl.SelectedItem = AboutTab;
-                    }
-                    if (UrlParts.Length == 2)
-                    {
-                        if (SettingsTabControl.SelectedItem is TabItem SelectedTabItem && SelectedTabItem.IsEnabled)
+                        if (!FoundTab)
                         {
-                            var Pages = ((SelectedTabItem.Content as ScrollViewer).Content as Grid).Children;
-                            string SubName = UrlParts[1];
-                            Border? Target = null;
-                            foreach (Border Page in Pages)
+                            if (UserTab.Visibility == Visibility.Visible)
+                                SettingsTabControl.SelectedItem = UserTab;
+                            else
+                                SettingsTabControl.SelectedItem = AboutTab;
+                        }
+                        if (UrlParts.Length == 2)
+                        {
+                            if (SettingsTabControl.SelectedItem is TabItem SelectedTabItem && SelectedTabItem.IsEnabled)
                             {
-                                if (Page.Tag as string == SubName)
+                                var Pages = ((SelectedTabItem.Content as ScrollViewer).Content as Grid).Children;
+                                string SubName = UrlParts[1];
+                                Border? Target = null;
+                                foreach (Border Page in Pages)
                                 {
-                                    Target = Page;
-                                    Page.Visibility = Visibility.Visible;
+                                    if (Page.Tag as string == SubName)
+                                    {
+                                        Target = Page;
+                                        Page.Visibility = Visibility.Visible;
+                                    }
+                                    else
+                                        Page.Visibility = Visibility.Collapsed;
                                 }
-                                else
-                                    Page.Visibility = Visibility.Collapsed;
+                                if (Target == null)
+                                    Pages[0].Visibility = Visibility.Visible;
                             }
-                            if (Target == null)
-                                Pages[0].Visibility = Visibility.Visible;
                         }
                     }
                 }

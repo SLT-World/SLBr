@@ -3983,6 +3983,8 @@ Inner Exception: {7}";
                         BrowserView.WebView.CallDevToolsAsync("Page.resetNavigationHistory");
                         BrowserView.WebView.CallDevToolsAsync("Network.clearBrowserCookies");
                         BrowserView.WebView.CallDevToolsAsync("Network.clearBrowserCache");
+                        if (BrowserView.WebView is ChromiumEdgeWebView EdgeWebView)
+                            EdgeWebView.BrowserCore?.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);
                     }
                 }
             }

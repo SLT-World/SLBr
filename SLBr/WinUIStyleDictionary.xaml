@@ -2497,6 +2497,9 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
         <Setter Property="ToolTip" Value="{Binding TabGroup.Header}"/>
         <Setter Property="AllowDrop" Value="True"/>
+        <EventSetter Event="PreviewMouseDown" Handler="TabItem_PreviewMouseDown"/>
+        <EventSetter Event="PreviewMouseUp" Handler="TabItem_PreviewMouseUp"/>
+        <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
         <EventSetter Event="DragOver" Handler="TabItem_DragOver"/>
         <EventSetter Event="Drop" Handler="TabItem_Drop"/>
         <Setter Property="Template">
@@ -2543,6 +2546,8 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Header" Value="{Binding Header}"/>
         <Setter Property="Tag" Value="{Binding ID}"/>
         <Setter Property="AllowDrop" Value="True"/>
+        <EventSetter Event="PreviewMouseDown" Handler="TabItem_PreviewMouseDown"/>
+        <EventSetter Event="PreviewMouseUp" Handler="TabItem_PreviewMouseUp"/>
         <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
         <EventSetter Event="DragOver" Handler="TabItem_DragOver"/>
         <EventSetter Event="Drop" Handler="TabItem_Drop"/>
@@ -2780,6 +2785,8 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Header" Value="{Binding Header}"/>
         <Setter Property="Tag" Value="{Binding ID}"/>
         <Setter Property="AllowDrop" Value="True"/>
+        <EventSetter Event="PreviewMouseDown" Handler="TabItem_PreviewMouseDown"/>
+        <EventSetter Event="PreviewMouseUp" Handler="TabItem_PreviewMouseUp"/>
         <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
         <EventSetter Event="DragOver" Handler="TabItem_DragOver"/>
         <EventSetter Event="Drop" Handler="TabItem_Drop"/>
@@ -2919,6 +2926,9 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="Header" Value="{Binding TabGroup.Header}"/>
         <Setter Property="ToolTip" Value="{Binding TabGroup.Header}"/>
         <Setter Property="AllowDrop" Value="True"/>
+        <EventSetter Event="PreviewMouseDown" Handler="TabItem_PreviewMouseDown"/>
+        <EventSetter Event="PreviewMouseUp" Handler="TabItem_PreviewMouseUp"/>
+        <EventSetter Event="PreviewMouseMove" Handler="TabItem_PreviewMouseMove"/>
         <EventSetter Event="DragOver" Handler="TabItem_DragOver"/>
         <EventSetter Event="Drop" Handler="TabItem_Drop"/>
         <Setter Property="Template">

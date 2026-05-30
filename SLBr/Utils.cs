@@ -677,6 +677,17 @@ namespace SLBr
             return true;
         }
 
+        public static T FindAncestorOfType<T>(DependencyObject Element) where T : DependencyObject
+        {
+            while (Element != null)
+            {
+                if (Element is T TypedElement)
+                    return TypedElement;
+                Element = VisualTreeHelper.GetParent(Element);
+            }
+            return null;
+        }
+
         public static void RaiseUIAsync(this EventHandler Handler, object? Sender)
         {
             Application.Current?.Dispatcher.BeginInvoke(async () => Handler?.Invoke(Sender, null));

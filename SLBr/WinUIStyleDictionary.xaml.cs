@@ -1,8 +1,6 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
-using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -40,8 +38,24 @@ namespace SLBr
             App.Instance.CurrentFocusedWindow().ButtonAction(sender, e);
         }
 
+        private object? TabDragSender = null;
+        private void TabItem_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            /*if (e.OriginalSource is DependencyObject OriginalSource && Utils.FindAncestorOfType<Button>(OriginalSource) != null)
+                return;*/
+            //e.LeftButton == MouseButtonState.Pressed || 
+            if (e.MiddleButton == MouseButtonState.Pressed)
+                TabDragSender = sender;
+        }
+
         private void TabItem_PreviewMouseMove(object sender, MouseEventArgs e)
         {
+            if (TabDragSender != sender)
+                return;
+            TabItem SourceTabItem = (TabItem)sender;
+            BrowserTabItem Tab = (BrowserTabItem)SourceTabItem.DataContext;
+            if (Tab.Type == BrowserTabType.Group && !Tab.TabGroup.IsCollapsed)
+                return;
             //Interferes with close button
             //if (Mouse.PrimaryDevice.LeftButton == MouseButtonState.Pressed || Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
             if (Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
@@ -49,6 +63,12 @@ namespace SLBr
                 TabItem _TabItem = (TabItem)e.Source;
                 DragDrop.DoDragDrop(_TabItem, _TabItem, DragDropEffects.All);
             }
+        }
+        private void TabItem_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            //e.ChangedButton == MouseButton.Left || 
+            if (e.ChangedButton == MouseButton.Middle)
+                TabDragSender = null;
         }
 
         private void TabItem_Drop(object sender, DragEventArgs e)
@@ -82,15 +102,18 @@ namespace SLBr
             {
                 TabItem TabItemSource = (TabItem)e.Data.GetData(typeof(TabItem));
                 BrowserTabItem Tab = (BrowserTabItem)TabItemSource.DataContext;
-                Tab.TabGroup = CurrentTab.TabGroup;
-                int OldIndex = FocusedWindow.Tabs.IndexOf(Tab);
-                int NewIndex = FocusedWindow.Tabs.IndexOf(CurrentTab) + 1;
-                if (OldIndex == NewIndex || OldIndex == NewIndex - 1)
-                    return;
-                if (NewIndex > OldIndex)
-                    NewIndex--;
-                FocusedWindow.Tabs.Move(OldIndex, NewIndex);
-                FocusedWindow.TabsUI.SelectedIndex = NewIndex;
+                if (Tab.Type == BrowserTabType.Navigation)
+                {
+                    Tab.TabGroup = CurrentTab.TabGroup;
+                    int OldIndex = FocusedWindow.Tabs.IndexOf(Tab);
+                    int NewIndex = FocusedWindow.Tabs.IndexOf(CurrentTab) + 1;
+                    if (OldIndex == NewIndex || OldIndex == NewIndex - 1)
+                        return;
+                    if (NewIndex > OldIndex)
+                        NewIndex--;
+                    FocusedWindow.Tabs.Move(OldIndex, NewIndex);
+                    FocusedWindow.TabsUI.SelectedIndex = NewIndex;
+                }
                 e.Handled = true;
             }
         }
@@ -145,24 +168,43 @@ namespace SLBr
                 (_, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), FocusedWindow);
                 if (OldIndex == RealIndex || OldIndex == RealIndex - 1)
                     return;
-                if (RealIndex > OldIndex)
-                    RealIndex--;
 
-                FocusedWindow.Tabs.Move(OldIndex, RealIndex);
-                FocusedWindow.TabsUI.SelectedIndex = RealIndex;
-                if (FocusedWindow.TabGroups.Count != 0)
+                if (Tab.Type == BrowserTabType.Group)
                 {
-                    BrowserTabItem LeftTab = null;
-                    BrowserTabItem RightTab = null;
-                    if (RealIndex > 0)
-                        LeftTab = FocusedWindow.Tabs[RealIndex - 1];
-                    if (RealIndex < FocusedWindow.Tabs.Count - 1)
-                        RightTab = FocusedWindow.Tabs[RealIndex + 1];
+                    if (Tab.TabGroup.IsCollapsed && FocusedWindow.TabGroups.Count > 1)
+                    {
+                        BrowserTabItem LeftTab = null;
+                        BrowserTabItem RightTab = null;
+                        if (RealIndex > 0)
+                        {
+                            LeftTab = FocusedWindow.Tabs[RealIndex - 1];
+                            if (RealIndex < FocusedWindow.Tabs.Count - 1)
+                                RightTab = FocusedWindow.Tabs[RealIndex];
+                        }
+                        if (LeftTab == null || RightTab == null || RightTab.TabGroup == null || LeftTab.TabGroup == null || RightTab.TabGroup == Tab.TabGroup)
+                            MoveCollapsedGroup(Tab, RealIndex, FocusedWindow);
+                    }
+                }
+                else
+                {
+                    if (RealIndex > OldIndex)
+                        RealIndex--;
+                    FocusedWindow.Tabs.Move(OldIndex, RealIndex);
+                    FocusedWindow.TabsUI.SelectedIndex = RealIndex;
+                    if (FocusedWindow.TabGroups.Count != 0)
+                    {
+                        BrowserTabItem LeftTab = null;
+                        BrowserTabItem RightTab = null;
+                        if (RealIndex > 0)
+                            LeftTab = FocusedWindow.Tabs[RealIndex - 1];
+                        if (RealIndex < FocusedWindow.Tabs.Count - 1)
+                            RightTab = FocusedWindow.Tabs[RealIndex + 1];
 
-                    if (LeftTab != null && RightTab != null && LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
-                        Tab.TabGroup = LeftTab.TabGroup;
-                    else
-                        Tab.TabGroup = null;
+                        if (LeftTab != null && RightTab != null && LeftTab.TabGroup != null && (/*LeftTab.Type == BrowserTabType.Group || */LeftTab.TabGroup == RightTab.TabGroup))
+                            Tab.TabGroup = LeftTab.TabGroup;
+                        else
+                            Tab.TabGroup = null;
+                    }
                 }
                 e.Handled = true;
             }
@@ -291,6 +333,45 @@ namespace SLBr
             if (Surpass && !LastAdd)
                 RealIndex++;
             return (VisibleIndex, RealIndex);
+        }
+
+        private static (int Start, int Count) GetGroupRange(MainWindow CurrentWindow, TabGroup Group)
+        {
+            int Start = -1;
+            int Count = 0;
+            for (int i = 0; i < CurrentWindow.Tabs.Count; i++)
+            {
+                BrowserTabItem Tab = CurrentWindow.Tabs[i];
+                if (Tab.TabGroup == Group)
+                {
+                    if (Start == -1)
+                        Start = i;
+                    Count++;
+                }
+                else if (Start != -1)
+                    break;
+            }
+            return (Start, Count);
+        }
+
+        private static void MoveCollapsedGroup(BrowserTabItem GroupHeader, int TargetIndex, MainWindow CurrentWindow)
+        {
+            var (Start, Count) = GetGroupRange(CurrentWindow, GroupHeader.TabGroup);
+            if (Start < 0 || Count == 0)
+                return;
+            if (TargetIndex >= Start && TargetIndex <= Start + Count)
+                return;
+            List<BrowserTabItem> Block = CurrentWindow.Tabs.Skip(Start).Take(Count).ToList();
+
+            for (int i = 0; i < Count; i++)
+                CurrentWindow.Tabs.RemoveAt(Start);
+            if (TargetIndex > Start)
+                TargetIndex -= Count;
+
+            TargetIndex = Math.Clamp(TargetIndex, 0, CurrentWindow.Tabs.Count);
+            for (int i = 0; i < Block.Count; i++)
+                CurrentWindow.Tabs.Insert(TargetIndex + i, Block[i]);
+            //window.TabsUI.SelectedItem = GroupHeader;
         }
 
         private static DispatcherTimer TabHoverTimer;
