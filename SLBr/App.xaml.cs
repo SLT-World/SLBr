@@ -981,37 +981,59 @@ namespace SLBr
                     _Entry.PercentComplete = (int)(Item.Progress * 100);
                     if (Item.State == WebDownloadState.Completed)
                     {
-                        _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
-                        _Entry.Open = Visibility.Visible;
                         _Entry.Stop = Visibility.Collapsed;
-                        _Entry.Progress = Visibility.Collapsed;
                         if (DownloadSecurityService != DownloadSecurityService.None)
                         {
                             try
                             {
-                                DownloadVerdict Verdict = await _DownloadRiskHandler.IsSafe(Item.FullPath, Item.Url, DownloadSecurityService);
+                                _Entry.FormattedProgress = "Threat Check - Scanning";
+                                _Entry.IsIndeterminate = true;
+                                DownloadVerdict Verdict = await _DownloadRiskHandler.IsSafe(Item.TempPath, Item.FullPath, Item.Url, DownloadSecurityService);
+                                _Entry.Progress = Visibility.Collapsed;
                                 switch (Verdict)
                                 {
                                     case DownloadVerdict.Dangerous:
-                                        File.Delete(Item.FullPath);
+                                        File.Delete(Item.TempPath);
                                         _Entry.Icon = "\uea39";
-                                        _Entry.FormattedProgress = "Dangerous - Blocked";
                                         _Entry.Color = RedColor;
-                                        _Entry.Open = Visibility.Collapsed;
+                                        _Entry.FormattedProgress = "Dangerous - Blocked";
+                                        //_Entry.Open = Visibility.Collapsed;
                                         break;
                                     case DownloadVerdict.Uncommon:
                                         _Entry.Icon = "\ue7ba";
-                                        _Entry.FormattedProgress = "Suspicious - Complete";
                                         _Entry.Color = OrangeColor;
+                                        _Entry.FormattedProgress = "Suspicious - Complete";
+                                        _Entry.Open = Visibility.Visible;
+                                        WebViewManager.DownloadManager.RemoveFileStaging(Item);
                                         break;
                                     case DownloadVerdict.DangerousHost:
                                         _Entry.Icon = "\ue7ba";
-                                        _Entry.FormattedProgress = "Dangerous host - Complete";
                                         _Entry.Color = OrangeColor;
+                                        _Entry.FormattedProgress = "Dangerous host - Complete";
+                                        _Entry.Open = Visibility.Visible;
+                                        WebViewManager.DownloadManager.RemoveFileStaging(Item);
+                                        break;
+                                    default:
+                                        _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
+                                        _Entry.Open = Visibility.Visible;
+                                        WebViewManager.DownloadManager.RemoveFileStaging(Item);
                                         break;
                                 }
                             }
-                            catch { }
+                            catch
+                            {
+                                _Entry.Progress = Visibility.Collapsed;
+                                _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
+                                _Entry.Open = Visibility.Visible;
+                                WebViewManager.DownloadManager.RemoveFileStaging(Item);
+                            }
+                        }
+                        else
+                        {
+                            _Entry.Progress = Visibility.Collapsed;
+                            _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
+                            _Entry.Open = Visibility.Visible;
+                            WebViewManager.DownloadManager.RemoveFileStaging(Item);
                         }
                     }
                     else if (Item.State == WebDownloadState.Canceled)

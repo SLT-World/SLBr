@@ -186,6 +186,7 @@ namespace SLBr.WebView
             await Cef.UIThreadTaskFactory.StartNew(async delegate
             {
                 var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                //GlobalRequestContext.SetPreference("extensions.ui.developer_mode", true, out _);
                 GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !RuntimeSettings.PDFViewer, out _);
                 GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !RuntimeSettings.PDFViewer, out _);
 
@@ -681,7 +682,9 @@ namespace SLBr.WebView
             }
             DownloadUpdated?.RaiseUIAsync(Item);
         }
-        public void Completed(WebDownloadItem Item)
+        public void Completed(WebDownloadItem Item) => DownloadCompleted?.RaiseUIAsync(Item);
+
+        public void RemoveFileStaging(WebDownloadItem Item)
         {
             if (File.Exists(Item.TempPath))
             {
@@ -691,16 +694,18 @@ namespace SLBr.WebView
                         try { File.Delete(Item.TempPath); } catch { }
                         break;
                     case WebDownloadState.Completed:
-                        try
+                        if (Item.TempPath != Item.FullPath)
                         {
-                            Directory.CreateDirectory(Path.GetDirectoryName(Item.FullPath));
-                            File.Move(Item.TempPath, Item.FullPath, true);
+                            try
+                            {
+                                Directory.CreateDirectory(Path.GetDirectoryName(Item.FullPath));
+                                File.Move(Item.TempPath, Item.FullPath, true);
+                            }
+                            catch { }
                         }
-                        catch { }
                         break;
                 }
             }
-            DownloadCompleted?.RaiseUIAsync(Item);
         }
 
         private static Lazy<HttpClient> DownloadHttpClient = new(() => HttpClientFactory.Create(new SocketsHttpHandler
@@ -741,6 +746,7 @@ namespace SLBr.WebView
 
             try
             {
+                //TODO: Implement pause & resume functionality.
                 using var Response = await DownloadHttpClient.Value.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
 
                 Response.EnsureSuccessStatusCode();
@@ -753,7 +759,7 @@ namespace SLBr.WebView
                 int Read;
                 while ((Read = await Stream.ReadAsync(Buffer)) > 0)
                 {
-                    await _FileStream.WriteAsync(Buffer, 0, Read);
+                    await _FileStream.WriteAsync(Buffer.AsMemory(0, Read));
                     Item.ReceivedBytes += Read;
                     Updated(Item);
                 }
@@ -1071,8 +1077,8 @@ namespace SLBr.WebView
     }
     public class ChromiumDownloadHandler : IDownloadHandler
     {
-        private Dictionary<int, WebDownloadItem> WebDownloadItems = new Dictionary<int, WebDownloadItem>();
-        private Dictionary<int, IDownloadItemCallback> DownloadCallbacks = new Dictionary<int, IDownloadItemCallback>();
+        private Dictionary<int, WebDownloadItem> WebDownloadItems = [];
+        private Dictionary<int, IDownloadItemCallback> DownloadCallbacks = [];
 
         public bool CanDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, string url, string requestMethod) => true;
 
@@ -1095,7 +1101,11 @@ namespace SLBr.WebView
                     else
                         return false;
                 }
-                string TempPath = PreferredPath + ".part";
+                string TempPath;
+                if (Path.GetExtension(PreferredPath) == ".crx")
+                    TempPath = PreferredPath;
+                else
+                    TempPath = PreferredPath + ".part";
 
                 WebDownloadItem Item = new()
                 {

@@ -2462,7 +2462,12 @@ namespace SLBr.WebView
                     return;
                 }
             }
-            string TempPath = PreferredPath + ".part";
+            string TempPath;
+            if (Path.GetExtension(PreferredPath) == ".crx")
+                TempPath = PreferredPath;
+            else
+                TempPath = PreferredPath + ".part";
+
             e.ResultFilePath = TempPath;
 
             WebDownloadItem Item = new()

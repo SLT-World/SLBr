@@ -46,7 +46,7 @@ namespace SLBr.Handlers
 
         public FastHashSet<ulong> SafeHashes = [];
 
-        public async Task<DownloadVerdict> IsSafe(string FilePath, string DownloadUrl, DownloadSecurityService Service = DownloadSecurityService.Google, string? Referrer = null, CancellationToken Token = default)
+        public async Task<DownloadVerdict> IsSafe(string ActualPath, string FilePath, string DownloadUrl, DownloadSecurityService Service = DownloadSecurityService.Google, string? Referrer = null, CancellationToken Token = default)
         {
             if (!IsSupportedDownload(FilePath, DownloadUrl))
                 return DownloadVerdict.Safe;
@@ -57,7 +57,7 @@ namespace SLBr.Handlers
             switch (Service)
             {
                 case DownloadSecurityService.Google:
-                    Result = await SBGetDownloadVerdict(GoogleEndpoint + SECRETS.GOOGLE_API_KEY, FilePath, DownloadUrl, Referrer, Token);
+                    Result = await SBGetDownloadVerdict(GoogleEndpoint + SECRETS.GOOGLE_API_KEY, ActualPath, FilePath, DownloadUrl, Referrer, Token);
                     break;
                     //case DownloadSecurityService.VirusTotal:
                     //TODO: Implement VirusTotal.
@@ -89,17 +89,17 @@ namespace SLBr.Handlers
             return true;
         }
 
-        private static async Task<DownloadVerdict> SBGetDownloadVerdict(string Endpoint, string FilePath, string DownloadUrl, string? Referrer = null, CancellationToken Token = default)
+        private static async Task<DownloadVerdict> SBGetDownloadVerdict(string Endpoint, string ActualPath, string FilePath, string DownloadUrl, string? Referrer = null, CancellationToken Token = default)
         {
-            if (!File.Exists(FilePath))
+            if (!File.Exists(ActualPath))
                 return DownloadVerdict.Safe;
             byte[] LocalHash;
-            await using (FileStream _FileStream = File.OpenRead(FilePath))
+            await using (FileStream _FileStream = File.OpenRead(ActualPath))
             using (SHA256 SHA = SHA256.Create())
             {
                 LocalHash = await SHA.ComputeHashAsync(_FileStream, Token);
             }
-            FileInfo _FileInfo = new(FilePath);
+            FileInfo _FileInfo = new(ActualPath);
             ClientDownloadRequest Request = new()
             {
                 Url = DownloadUrl,
