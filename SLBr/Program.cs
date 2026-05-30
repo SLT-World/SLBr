@@ -31,10 +31,9 @@ namespace SLBr
             */
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
-            if (args.Length > 0)
+            string? FirstArgument = args.FirstOrDefault();
+            if (FirstArgument != null && (FirstArgument.StartsWith("--type=") || FirstArgument.StartsWith("--app=")))
             {
-                string FirstArgument = args[0];
-                //MessageBox.Show(FirstArgument);
                 if (FirstArgument.StartsWith("--type="))
                 {
                     if (FirstArgument[7..] == "utility" && args.Length > 1)

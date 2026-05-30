@@ -1650,6 +1650,8 @@ namespace SLBr
 
         public async void InitializeApp(IEnumerable<string> Args, Profile? SelectedProfile = null)
         {
+            if (SelectedProfile != null && SelectedProfile.Type == ProfileType.System && SelectedProfile.Name == "Guest")
+                ReadOnlyInstance = true;
             JumpList _JumpList = new()
             {
                 ShowRecentCategory = true,
@@ -1798,7 +1800,6 @@ namespace SLBr
 
             InitializeBrowser();
             InitializeUISaves(CommandLineUrl);
-
             if (Environment.IsPrivilegedProcess)
             {
                 try
@@ -1961,8 +1962,11 @@ namespace SLBr
             Background = false;
             if (Environment.IsPrivilegedProcess)
                 InfoBars.Add(new() { Icon = "\ue7ba", IconForeground = OrangeColor, Title = "Elevated Privileges Detected", Description = [new() { Text = "SLBr is running with administrator privileges, which may pose security risks. It is recommended to run SLBr without elevated rights." }] });
-            if (Utils.IsInternetAvailable() && bool.Parse(GlobalSave.Get("CheckUpdate")))
-                CheckUpdate();
+            if (Utils.IsInternetAvailable())
+            {
+                if (bool.Parse(GlobalSave.Get("CheckUpdate")))
+                    CheckUpdate();
+            }
         }
 
         public async Task CheckUpdate()
@@ -2622,6 +2626,8 @@ Inner Exception: {7}";
         public bool Synchronized = false;
         public bool FavouritesSetUp = false;
 
+        public bool ReadOnlyInstance = false;
+
         private async Task InitializeSaves()
         {
             GlobalSave = new Saving("Save.bin", UserApplicationDataPath);
@@ -2776,7 +2782,7 @@ Inner Exception: {7}";
                 GlobalSave.Set("StartupBoost", CurrentProfile.Default.ToString());
             }*/
 
-            if (!(CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest"))
+            if (!ReadOnlyInstance)
             {
                 if (!Directory.Exists(UserApplicationWindowsPath))
                 {
@@ -3047,7 +3053,7 @@ Inner Exception: {7}";
             SetTrimURL(bool.Parse(GlobalSave.Get("TrimURL", true.ToString())));
             SetHomographProtection(bool.Parse(GlobalSave.Get("HomographProtection", true.ToString())));
             SetNeverSlowMode(bool.Parse(GlobalSave.Get("NeverSlowMode", false.ToString())));
-            SetAdBlock(GlobalSave.GetInt("AdBlock", 1));
+            SetAdBlock(GlobalSave.GetInt("AdBlock", 0));
             SetAMP(bool.Parse(GlobalSave.Get("AMP", false.ToString())));
             SetRenderMode(GlobalSave.GetInt("RenderMode", (RenderCapability.Tier >> 16) == 0 ? 1 : 0));
 
@@ -3055,8 +3061,9 @@ Inner Exception: {7}";
 
             SetAppearance(GetTheme(GlobalSave.Get("Theme", "System")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
             bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
-            if (bool.Parse(GlobalSave.Get("RestoreTabs", true.ToString())))
-            {
+            //WARNING: Do not remove RestoreTabs boolean.
+            bool RestoreTabs = bool.Parse(GlobalSave.Get("RestoreTabs", (!ReadOnlyInstance).ToString()));
+            if (WindowsSaves.Count != 0 && RestoreTabs)
                 foreach (Saving TabsSave in WindowsSaves)
                 {
                     MainWindow _Window = new();
@@ -3102,7 +3109,6 @@ Inner Exception: {7}";
                         _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, PrivateTabs);
                     _Window.TabsUI.Visibility = Visibility.Visible;
                 }
-            }
             else
             {
                 MainWindow _Window = new();
@@ -3280,7 +3286,7 @@ Inner Exception: {7}";
                 case 4: Settings.TridentVersion = TridentEmulationVersion.IE11; break;
                 case 5: Settings.TridentVersion = TridentEmulationVersion.Edge; break;
             }
-            if (!(CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest"))
+            if (!ReadOnlyInstance)
                 Settings.UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
             Settings.Language = Locale.Tooltip;
             Settings.Languages = Languages.Select(i => i.Tooltip).ToArray();
@@ -3991,7 +3997,7 @@ Inner Exception: {7}";
 
         public async Task Save()
         {
-            if (CurrentProfile.Type == ProfileType.System && CurrentProfile.Name == "Guest")
+            if (ReadOnlyInstance)
                 return;
             string GlobalRaw = GlobalSave.Save();
 

@@ -798,12 +798,12 @@ namespace SLBr
                     MaximizeRestoreButton.Content = "\xe922";
                 }
                 MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
-                if (Tabs.Count != 0)
+                if (Tabs.Count != 0 && TabsUI.SelectedIndex != -1)
                     Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
             }
             else
             {
-                if (Tabs.Count != 0)
+                if (Tabs.Count != 0 && TabsUI.SelectedIndex != -1)
                     Tabs[TabsUI.SelectedIndex].Content?.UnFocus();
             }
             foreach (BrowserTabItem Tab in Tabs)
@@ -1145,7 +1145,7 @@ namespace SLBr
                         return _Tab;
                 }
             }
-            else if (TabsUI != null && Tabs.Count != 0)
+            else if (TabsUI != null && Tabs.Count != 0 && TabsUI.SelectedIndex != -1)
             {
                 try
                 {
@@ -1160,7 +1160,7 @@ namespace SLBr
 
         public void SetWindowDisplayAffinity()
         {
-            if (Handle == null || Tabs.Count == 0)
+            if (Handle == null || Tabs.Count == 0 || TabsUI.SelectedIndex == -1)
                 return;
             BrowserTabItem CurrentTab = Tabs[TabsUI.SelectedIndex];
             bool ExcludeFromCapture = App.Instance.BlockScreenCapture == 2 || (App.Instance.BlockScreenCapture == 1 && (CurrentTab?.Content?.Private ?? false));

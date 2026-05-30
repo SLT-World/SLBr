@@ -56,7 +56,7 @@ namespace SLBr.Pages
         public SettingsPage()
         {
             InitializeComponent();
-            if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
+            if (App.Instance.ReadOnlyInstance)
             {
                 foreach (TabItem Tab in SettingsTabControl.Items)
                     Tab.Visibility = Visibility.Collapsed;

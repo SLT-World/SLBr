@@ -513,7 +513,7 @@ namespace SLBr.WebView
                     string FileName = string.IsNullOrWhiteSpace(Page) ? $"{Host}.html" : Page;
                     if (string.IsNullOrWhiteSpace(Page) && Host == "newtab")
                     {
-                        if (App.Instance.CurrentProfile.Type == ProfileType.System && App.Instance.CurrentProfile.Name == "Guest")
+                        if (App.Instance.ReadOnlyInstance)
                             FileName = "guest.html";
                         else if (Extra == "1")
                             FileName = "private.html";
