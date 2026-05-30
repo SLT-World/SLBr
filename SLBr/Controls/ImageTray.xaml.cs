@@ -2,6 +2,7 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using Microsoft.Win32;
+using SLBr.WebView;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
@@ -42,7 +43,7 @@ namespace SLBr.Controls
             for (int i = 0; i < ExtensionsArray.Length; i++)
             {
                 IEnumerable<string> Extensions = ExtensionsArray[i].Split([',', ';'], StringSplitOptions.RemoveEmptyEntries).Select(e => e.Trim());
-                ImageFiles.AddRange(Directory.EnumerateFiles(App.Instance.GlobalSave.Get("DownloadPath"), "*.*", SearchOption.TopDirectoryOnly).Where(f => Extensions.Contains(Path.GetExtension(f).ToLowerInvariant())).OrderByDescending(File.GetCreationTime).Take(20));
+                ImageFiles.AddRange(Directory.EnumerateFiles(WebViewManager.RuntimeSettings.DownloadFolderPath, "*.*", SearchOption.TopDirectoryOnly).Where(f => Extensions.Contains(Path.GetExtension(f).ToLowerInvariant())).OrderByDescending(File.GetCreationTime).Take(20));
             }
             DownloadImages.Clear();
             foreach (var Image in ImageFiles)

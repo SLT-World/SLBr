@@ -304,7 +304,7 @@ namespace SLBr.Pages
 
             HomepageTextBox.Text = App.Instance.GlobalSave.Get("Homepage");
 
-            DownloadPathText.Text = App.Instance.GlobalSave.Get("DownloadPath");
+            DownloadPathText.Text = WebViewManager.RuntimeSettings.DownloadFolderPath;
             ScreenshotPathText.Text = App.Instance.GlobalSave.Get("ScreenshotPath");
 
             PrivateTabsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs"));
@@ -319,7 +319,7 @@ namespace SLBr.Pages
             QuickImageCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("QuickImage"));
             //SuppressErrorCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SuppressError"));
             SpellCheckCheckBox.IsChecked = WebViewManager.RuntimeSettings.SpellCheck;
-            DownloadPromptCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DownloadPrompt"));
+            DownloadPromptCheckBox.IsChecked = WebViewManager.RuntimeSettings.DownloadPrompt;
             ExternalFontsCheckBox.IsChecked = App.Instance.ExternalFonts;
             TabUnloadingCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TabUnloading"));
 
@@ -375,7 +375,7 @@ namespace SLBr.Pages
             BrowserHardwareAccelerationCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("BrowserHardwareAcceleration"));
             JITCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("JIT"));
             StartupBoostCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("StartupBoost"));
-            PDFViewerToggleButton.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("PDF"));
+            PDFViewerToggleButton.IsChecked = WebViewManager.RuntimeSettings.PDFViewer;
 
             PerformanceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("Performance");
             ReduceDiskCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ReduceDisk"));

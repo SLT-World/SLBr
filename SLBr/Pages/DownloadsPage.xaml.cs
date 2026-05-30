@@ -1,6 +1,7 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using SLBr.WebView;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,7 +52,7 @@ namespace SLBr.Pages
 
         private void DownloadsFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{App.Instance.GlobalSave.Get("DownloadPath")}\"") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{WebViewManager.RuntimeSettings.DownloadFolderPath}\"") { UseShellExecute = true });
         }
 
         private void DeleteSelectedButton_Click(object sender, RoutedEventArgs e)

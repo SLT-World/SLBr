@@ -2447,7 +2447,7 @@ namespace SLBr.WebView
                 {
                     FileName = SuggestedFileName,
                     InitialDirectory = WebViewManager.RuntimeSettings.DownloadFolderPath,
-                    Filter = "All files (*.*)|*.*"
+                    Filter = "All Files (*.*)|*.*"
                 };
                 if (SaveDialog.ShowDialog() == true)
                     PreferredPath = SaveDialog.FileName;
@@ -2458,7 +2458,7 @@ namespace SLBr.WebView
                     return;
                 }
             }
-            string TempPath = PreferredPath + ".crdownload";
+            string TempPath = PreferredPath + ".part";
             e.ResultFilePath = TempPath;
 
             WebDownloadItem Item = new()

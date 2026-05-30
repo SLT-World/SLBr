@@ -2,7 +2,6 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using CefSharp;
-using CefSharp.Enums;
 using CefSharp.Internals;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
@@ -1089,14 +1088,14 @@ namespace SLBr.WebView
                     {
                         FileName = downloadItem.SuggestedFileName,
                         InitialDirectory = WebViewManager.RuntimeSettings.DownloadFolderPath,
-                        Filter = "All files (*.*)|*.*"
+                        Filter = "All Files (*.*)|*.*"
                     };
                     if (SaveDialog.ShowDialog() == true)
                         PreferredPath = SaveDialog.FileName;
                     else
                         return false;
                 }
-                string TempPath = PreferredPath + ".crdownload";
+                string TempPath = PreferredPath + ".part";
 
                 WebDownloadItem Item = new()
                 {

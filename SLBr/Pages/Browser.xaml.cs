@@ -4155,7 +4155,7 @@ namespace SLBr.Pages
 
         private void DownloadsFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{App.Instance.GlobalSave.Get("DownloadPath")}\"") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{WebViewManager.RuntimeSettings.DownloadFolderPath}\"") { UseShellExecute = true });
         }
 
         private void FavouriteAction_Click(object sender, RoutedEventArgs e)
