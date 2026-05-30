@@ -1217,7 +1217,10 @@ namespace SLBr
             }
             if (SelectedProfile == null && DefaultProfile != null && !bool.Parse(AppSave.Get("StartupProfiles")))
                 SelectedProfile = DefaultProfile;
+            //SelectedProfile = Profiles.First(i => i.Type == ProfileType.System && i.Name == "Guest");
             //Warning: Keep separate.
+
+            //TODO: Investigate, this specific feature appears to be highly unstable, consistently breaking without any direct modification.
             if (SelectedProfile == null)
             {
                 ProfileManagerWindow ProfileManager = new();
@@ -3844,8 +3847,9 @@ Inner Exception: {7}";
             //MHTML_Improvements, OptimizeHTMLElementUrls,WebFontsCacheAwareTimeoutAdaption, EstablishGpuChannelAsync
             //https://source.chromium.org/chromium/chromium/src/+/main:components/download/public/common/download_features.cc
             //https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/features.cc
+            //OptimizeWebRequestProxy
             //NOTE: Removed ParallelDownloading due to crashes.
-            string EnableFeatures = "JXLImageFormat,EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
+            string EnableFeatures = "HappyEyeballsV3,JXLImageFormat,EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
             //https://github.com/chromiumembedded/cef/issues/3991
             //https://github.com/chromiumembedded/cef/issues/3966
             string DisableFeatures = "StorageNotificationService,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,OptimizationGuideOnDeviceModel,OptimizationGuideModelExecution,OnDeviceModelService,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";

@@ -159,8 +159,8 @@ namespace SLBr.WebView
             }
 
             ChromiumSettings.CefCommandLineArgs.Remove("disable-back-forward-cache");
-            //TODO: Maintain default CEF flags (DisableFeatureByDefault): https://github.com/chromiumembedded/cef/blob/master/libcef/common/chrome/chrome_main_delegate_cef.cc
-            ChromiumSettings.AddNoErrorFlag("disable-features", "EnableHangWatcher,GlicActorUi,AutofillActorMode,LensOverlay");
+            //NOTE: Resolved in https://github.com/cefsharp/CefSharp/pull/5245
+            //ChromiumSettings.AddNoErrorFlag("disable-features", "EnableHangWatcher,GlicActorUi,AutofillActorMode,LensOverlay");
             foreach (var Flag in Settings.Flags)
                 ChromiumSettings.AddNoErrorFlag(Flag.Key, Flag.Value);
 

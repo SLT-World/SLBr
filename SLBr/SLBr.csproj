@@ -78,7 +78,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="147.0.100" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="148.0.90" />
     <PackageReference Include="Google.Protobuf" Version="3.35.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4015-prerelease" />
   </ItemGroup>
@@ -139,15 +139,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="147.0.10" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="148.0.9" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="147.0.10" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="148.0.9" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="147.0.10" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="148.0.9" />
   </ItemGroup>
 
 	<Target Name="DeleteFiles" AfterTargets="Publish">
