@@ -344,8 +344,7 @@ namespace SLBr.Pages
             SmartDarkModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartDarkMode"));
 
             MobileViewCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("MobileView"));
-            ForceLazyCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ForceLazy"));
-
+            
             AntiTamperCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiTamper"));
             AntiFullscreenCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiFullscreen"));
             AntiInspectDetectCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AntiInspectDetect"));
@@ -921,12 +920,6 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.GlobalSave.Set("FullscreenPopup", FullscreenPopupCheckBox.IsChecked.GetValueOrDefault().ToString());
-        }
-
-        private void ForceLazyCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("ForceLazy", ForceLazyCheckBox.IsChecked.GetValueOrDefault().ToString());
         }
         private void MobileViewCheckBox_Click(object sender, RoutedEventArgs e)
         {

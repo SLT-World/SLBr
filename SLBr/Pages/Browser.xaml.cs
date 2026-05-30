@@ -1355,8 +1355,6 @@ namespace SLBr.Pages
                     if (bool.Parse(App.Instance.GlobalSave.Get("RemoveOverlay")))
                         WebView?.ExecuteScript(Scripts.RemoveOverlayCSS);
                 }
-                if (bool.Parse(App.Instance.GlobalSave.Get("ForceLazy")))
-                    WebView?.ExecuteScript(Scripts.ForceLazyLoad);
             }
         }
 

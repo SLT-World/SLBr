@@ -3019,8 +3019,6 @@ Inner Exception: {7}";
                 GlobalSave.Set("RemoveFilter", false);
             if (!GlobalSave.Has("RemoveOverlay"))
                 GlobalSave.Set("RemoveOverlay", false);
-            if (!GlobalSave.Has("ForceLazy"))
-                GlobalSave.Set("ForceLazy", false);
             if (!GlobalSave.Has("FullscreenPopup"))
                 GlobalSave.Set("FullscreenPopup", true);
             if (!GlobalSave.Has("FaviconService"))
@@ -5100,36 +5098,6 @@ window.addEventListener(""contextmenu"",e=>{e.stopImmediatePropagation();},true)
     };
 })();
 ";
-        public const string ForceLazyLoad = @"function applyLazyLoading(el) {
-    if (el.tagName !== 'IMG' && el.tagName !== 'IFRAME') return;
-    const originalSrc = el.getAttribute('src');
-    if (!originalSrc || el.dataset.lazyfixed) return;
-    el.dataset.lazyfixed = '1';
-    el.setAttribute('loading', 'lazy');
-    el.src = '';
-    requestAnimationFrame(() => {
-        el.setAttribute('src', originalSrc);
-    });
-}
-function initObserver() {
-    document.querySelectorAll('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
-    const __slbr_lazy_observer__ = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            if (mutation.type === 'childList') {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType !== 1) continue;
-                    if (node.tagName === 'IMG' || node.tagName === 'IFRAME') applyLazyLoading(node);
-                    else node.querySelectorAll?.('img:not([loading]), iframe:not([loading])').forEach(applyLazyLoading);
-                }
-            }
-        }
-    });
-    const target = document.documentElement || document.body;
-    if (target) __slbr_lazy_observer__.observe(target, { childList: true, subtree: true });
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initObserver);
-else initObserver();";
-
         public const string DetectPWA = "(async()=>{const link=document.querySelector('link[rel=\"manifest\"]');const manifest=link?link.href:null;let service_worker=false;try{service_worker=!!(navigator.serviceWorker&&(await navigator.serviceWorker.ready));}catch{}return{manifest,service_worker};})();";
 
         public const string GetTranslationText = @"(function() {

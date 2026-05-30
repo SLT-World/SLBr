@@ -729,7 +729,6 @@
                                         <CheckBox x:Name="ReduceDiskCheckBox" Click="ReduceDiskCheckBox_Click" Margin="0,0,0,10" Content="Reduce disk activity" Width="Auto"/>
                                         <CheckBox x:Name="StartupBoostCheckBox" Click="StartupBoostCheckBox_Click" Margin="0,0,0,10" Content="Startup boost" Width="Auto"/>
                                         <CheckBox x:Name="AMPCheckBox" Click="AMPCheckBox_Click" Margin="0,0,0,10" Content="Prefer AMP pages" Width="Auto"/>
-                                        <CheckBox x:Name="ForceLazyCheckBox" Click="ForceLazyCheckBox_Click" Margin="0,0,0,10" Content="Force lazy loading" Width="Auto"/>
                                         <CheckBox x:Name="MobileViewCheckBox" Click="MobileViewCheckBox_Click" Content="View as mobile site" Width="Auto"/>
                                         <!--<CheckBox x:Name="ReduceMotionCheckBox" Click="ReduceMotionCheckBox_Click" Width="Auto" Content="Reduce Motion"/>-->
                                     </StackPanel>
