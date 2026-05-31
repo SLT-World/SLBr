@@ -77,7 +77,7 @@ namespace SLBr.Handlers
                 ".rgs",  ".u3p",  ".out",      ".run",  ".bmp",  ".css",  ".ehtml",
                 ".flac", ".ico",  ".jfif",     ".m4a",  ".m4v",  ".mpeg", ".mpg",
                 ".oga",  ".ogg",  ".ogm",      ".ogv",  ".opus", ".pjp",  ".pjpeg",
-                ".svgz", ".text", ".tiff",     ".weba", ".webm", ".xbm"
+                ".svgz", ".text", ".tiff",     ".weba", ".webm", ".xbm",  ".crx"
             });
 
         public bool IsSupportedDownload(string FilePath, string DownloadUrl)
@@ -157,8 +157,8 @@ namespace SLBr.Handlers
                 case ".xz":
                 case ".iso":
                     return DownloadType.Archive;
-                case ".crx":
-                    return DownloadType.ChromeExtension;
+                //case ".crx":
+                //    return DownloadType.ChromeExtension;
                 /*case ".dmg":
                 case ".img":
                 case ".iso":

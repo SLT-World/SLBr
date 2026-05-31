@@ -4069,7 +4069,20 @@ namespace SLBr.Pages
             if (_Extension == null)
                 return;
             ExtensionWindow = new Window();
-            ChromiumWebBrowser ExtensionBrowser = new(_Extension.Popup);
+            ChromiumWebBrowser ExtensionBrowser = new("about:blank");
+            ExtensionBrowser.IsBrowserInitializedChanged += async (s, e) => {
+                if (ExtensionBrowser.IsBrowserInitialized)
+                {
+                    /*TODO: Implement chrome extension polyfill
+                     * string WindowJson = await WebView.CallDevToolsAsync("Browser.getWindowForTarget");
+                     * int WindowId = JsonNode.Parse(WindowJson)["windowId"].GetValue<int>();
+                     * Based on experimentation, results from "chrome.tabs.query" matches with
+                     * tab.id = WindowId + 1
+                     * tab.windowId = WindowId
+                     */
+                    ExtensionBrowser.Load(_Extension.Popup);
+                }
+            };
             ExtensionBrowser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
             nint ExtensionHandle = new WindowInteropHelper(ExtensionWindow).EnsureHandle();
             HwndSource.FromHwnd(ExtensionHandle).AddHook(WndProc);

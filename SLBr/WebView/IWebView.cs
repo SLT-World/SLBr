@@ -1366,7 +1366,7 @@ namespace SLBr.WebView
 
     public class ChromiumWebView : IWebView, IDisposable, IRequestHandler, IDisplayHandler
     {
-        private ChromiumWebBrowser Browser;
+        public ChromiumWebBrowser Browser;
         public WebViewBrowserSettings Settings;
         private readonly List<WebNavigationEntry> InitialUrls;
 
@@ -1953,7 +1953,7 @@ namespace SLBr.WebView
         #region RequestHandler
         public bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
         {
-            WebAuthenticationRequestedEventArgs Args = new WebAuthenticationRequestedEventArgs(originUrl);
+            WebAuthenticationRequestedEventArgs Args = new(originUrl);
             Browser?.Dispatcher.Invoke(() => AuthenticationRequested?.Invoke(this, Args));
             if (Args.Cancel)
                 callback.Cancel();
@@ -1963,7 +1963,7 @@ namespace SLBr.WebView
         }
         public bool OnBeforeBrowse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool userGesture, bool isRedirect)
         {
-            BeforeNavigationEventArgs Args = new BeforeNavigationEventArgs(request.Url, frame.IsMain);
+            BeforeNavigationEventArgs Args = new(request.Url, frame.IsMain);
             Browser?.Dispatcher.Invoke(() => BeforeNavigation?.Invoke(this, Args));
 
             return Args.Cancel;
