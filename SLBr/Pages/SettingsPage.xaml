@@ -798,7 +798,7 @@
                                         <CheckBox Margin="0,0,0,10" x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Check for spelling errors"/>
                                         <DockPanel Margin="0">
                                             <TextBlock VerticalAlignment="Center" Text="Spellcheck provider"/>
-                                            <ComboBox IsEnabled="{Binding ElementName=SpellCheckCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SpellcheckProviderComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SpellcheckProviderComboBox_SelectionChanged">
+                                            <ComboBox IsEnabled="{Binding ElementName=SpellCheckCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SpellCheckProviderComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SpellCheckProviderComboBox_SelectionChanged">
                                                 <ComboBoxItem>Basic</ComboBoxItem>
                                                 <ComboBoxItem>Google</ComboBoxItem>
                                                 <ComboBoxItem>Microsoft</ComboBoxItem>
@@ -811,7 +811,7 @@
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ElementName=SpellcheckProviderComboBox, Path=SelectedIndex}" Value="0">
+                                                        <DataTrigger Binding="{Binding ElementName=SpellCheckProviderComboBox, Path=SelectedIndex}" Value="0">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>

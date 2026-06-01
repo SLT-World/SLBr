@@ -1373,7 +1373,7 @@ namespace SLBr
             List<(string, List<string>)> Results = [];
             try
             {
-                switch (GlobalSave.GetInt("SpellcheckProvider"))
+                switch (GlobalSave.GetInt("SpellCheckProvider"))
                 {
                     case 0:
                         TextBox SpellCheckTextBox = new();
@@ -2834,6 +2834,11 @@ Inner Exception: {7}";
                 ];
             }
             string SearchEngineName = GlobalSave.Get("SearchEngine", "Google");
+            if (string.IsNullOrEmpty(SearchEngineName))
+            {
+                GlobalSave.Set("SearchEngine", "Google");
+                SearchEngineName = "Google";
+            }
             DefaultSearchProvider = SearchEngines.FirstOrDefault(i => i.Name == SearchEngineName) ?? SearchEngines.FirstOrDefault(i => i.SearchUrl.Contains("google.com"));
 
             int LanguageCount = LanguagesSave.GetInt("Count", 0);
@@ -2984,8 +2989,8 @@ Inner Exception: {7}";
                 GlobalSave.Set("ImageSearch", 0);
             if (!GlobalSave.Has("TranslationProvider"))
                 GlobalSave.Set("TranslationProvider", 0);
-            if (!GlobalSave.Has("SpellcheckProvider"))
-                GlobalSave.Set("SpellcheckProvider", 0);
+            if (!GlobalSave.Has("SpellCheckProvider"))
+                GlobalSave.Set("SpellCheckProvider", 0);
 
             if (!GlobalSave.Has("WebEngine"))
             {
@@ -3032,7 +3037,7 @@ Inner Exception: {7}";
         }
         private void InitializeUISaves(string CommandLineUrl = "")
         {
-            SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", true.ToString())));
+            SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", false.ToString())));
             SetBlockScreenCapture(int.Parse(GlobalSave.Get("BlockScreenCapture", "1")));
             SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
             SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", true.ToString())));

@@ -1328,6 +1328,7 @@ namespace SLBr.WebView
         event EventHandler<string> TitleChanged;
         event EventHandler<string> StatusMessage;
         event EventHandler<string> FaviconChanged;
+        event EventHandler<string> AddressChanged;
         event EventHandler<FindResult> FindResult;
         event EventHandler<string> JavaScriptMessageReceived;
 
@@ -1695,6 +1696,7 @@ namespace SLBr.WebView
         public event EventHandler<string> TitleChanged;
         public event EventHandler<string> StatusMessage;
         public event EventHandler<string> FaviconChanged;
+        public event EventHandler<string> AddressChanged;
         public event EventHandler<FindResult> FindResult;
         public event EventHandler<string> JavaScriptMessageReceived;
         public event EventHandler<ResourceRequestEventArgs> ResourceRequested;
@@ -1999,6 +2001,8 @@ namespace SLBr.WebView
         {
             if (addressChangedArgs.Address.StartsWith("devtools://"))
                 return;
+            //if (CurrentAddress != addressChangedArgs.Address)
+            AddressChanged?.RaiseUIAsync(this, addressChangedArgs.Address);
             CurrentAddress = addressChangedArgs.Address;
             NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
@@ -2198,6 +2202,7 @@ namespace SLBr.WebView
         private void Browser_SourceChanged(object? sender, CoreWebView2SourceChangedEventArgs e)
         {
             CurrentAddress = Browser?.Source?.AbsoluteUri ?? "";
+            AddressChanged?.RaiseUIAsync(this, CurrentAddress);
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
             //Investigate e.IsNewDocument;
         }
@@ -2869,6 +2874,7 @@ namespace SLBr.WebView
         public event EventHandler<string> TitleChanged;
         public event EventHandler<string> StatusMessage;
         public event EventHandler<string> FaviconChanged;
+        public event EventHandler<string> AddressChanged;
         public event EventHandler<FindResult> FindResult;
         public event EventHandler<string> JavaScriptMessageReceived;
         public event EventHandler<ResourceRequestEventArgs> ResourceRequested;
@@ -3452,6 +3458,8 @@ namespace SLBr.WebView
         //about:blank doesn't work?
         public void Navigate(string Url)
         {
+            if (Url != Address)
+                AddressChanged?.RaiseUIAsync(this, Url);
             try
             {
                 if (Settings.Private && BrowserCore != null)
@@ -3496,6 +3504,7 @@ namespace SLBr.WebView
         public event EventHandler<string> TitleChanged;
         public event EventHandler<string> StatusMessage;
         public event EventHandler<string> FaviconChanged;
+        public event EventHandler<string> AddressChanged;
         public event EventHandler<FindResult> FindResult;
         public event EventHandler<string> JavaScriptMessageReceived;
         public event EventHandler<ResourceRequestEventArgs> ResourceRequested;

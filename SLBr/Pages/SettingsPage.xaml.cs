@@ -386,7 +386,7 @@ namespace SLBr.Pages
             RenderModeComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("RenderMode");
             ImageSearchComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("ImageSearch");
             TranslationProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TranslationProvider");
-            SpellcheckProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("SpellcheckProvider");
+            SpellCheckProviderComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("SpellCheckProvider");
             WebEngineComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebEngine");
             TridentVersionComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TridentVersion");
 
@@ -659,9 +659,9 @@ namespace SLBr.Pages
                 }
             }
         }
-        private void SpellcheckProviderComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void SpellCheckProviderComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch (SpellcheckProviderComboBox.SelectedIndex)
+            switch (SpellCheckProviderComboBox.SelectedIndex)
             {
                 case 1:
                     SpellcheckAttribution.Inlines.Clear();
@@ -685,7 +685,7 @@ namespace SLBr.Pages
                     break;
             }
             if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("SpellcheckProvider", SpellcheckProviderComboBox.SelectedIndex);
+                App.Instance.GlobalSave.Set("SpellCheckProvider", SpellCheckProviderComboBox.SelectedIndex);
         }
         private void WebEngineComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

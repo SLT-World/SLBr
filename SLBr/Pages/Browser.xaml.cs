@@ -484,6 +484,7 @@ namespace SLBr.Pages
             //WebView?.FindResult += WebView_FindResult;
             WebView?.FrameLoadStart += WebView_FrameLoadStart;
             WebView?.FullscreenChanged += WebView_FullscreenChanged;
+            WebView?.AddressChanged += WebView_AddressChanged;
             WebView?.JavaScriptMessageReceived += WebView_JavaScriptMessageReceived;
             WebView?.LoadingStateChanged += WebView_LoadingStateChanged;
             WebView?.NavigationError += WebView_NavigationError;
@@ -523,6 +524,11 @@ namespace SLBr.Pages
             Tab.ParentWindow.WindowStyle = WindowStyle.None;//VIDEO
             Tab.ParentWindow.WindowState = WindowState.Maximized;//VIDEO*/
             InitializingWebView = false;
+        }
+
+        private void WebView_AddressChanged(object? sender, string e)
+        {
+            Tab.Preview = null;
         }
 
         private async void WebView_IsBrowserInitializedChanged(object? sender, EventArgs e)
@@ -1889,7 +1895,6 @@ namespace SLBr.Pages
                 AdBlockContainer.Visibility = Visibility.Collapsed;
             Translated = false;
             IsReaderMode = false;
-            Tab.Preview = null;
             if (IsLoading != null)
             {
                 SiteInformationIcon.FontFamily = App.Instance.IconFont;
@@ -2064,6 +2069,8 @@ namespace SLBr.Pages
                     if (App.Instance.TabPreview && WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null && Tab == Tab.ParentWindow.GetTab() && WebView?.Control?.Visibility != Visibility.Collapsed)
                     {
                         BitmapImage _BitmapImage = new();
+                        //WARNING: Do not move, prevents duplicate captures caused by async race condition.
+                        Tab.Preview = _BitmapImage;
                         using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = (int)CoreContainerSizeEmulator.ActualHeight, Width = (int)CoreContainerSizeEmulator.ActualWidth })))
                         {
                             _BitmapImage.BeginInit();
@@ -2074,8 +2081,17 @@ namespace SLBr.Pages
                             if (_BitmapImage.CanFreeze)
                                 _BitmapImage.Freeze();
                         }
-                        Tab.Preview = _BitmapImage;
                         SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
+                        //WARNING: Prevents undesirable behaviour in CefSharp subsequent to capture.
+                        if (WebView is ChromiumWebView ChromiumView)
+                        {
+                            ChromiumView.Browser.Width = CoreContainerSizeEmulator.ActualWidth + 1;
+                            await Dispatcher.InvokeAsync(() =>
+                            {
+                                ChromiumView.Browser.ClearValue(WidthProperty);
+                                ChromiumView.Browser.GetBrowser()?.GetHost()?.WasResized();
+                            }, DispatcherPriority.Render);
+                        }
                     }
                 }
                 else if (SiteInformationText.Text != "Loading")
@@ -3643,6 +3659,7 @@ namespace SLBr.Pages
                 //DisposingWebView?.FindResult -= WebView_FindResult;
                 DisposingWebView?.FrameLoadStart -= WebView_FrameLoadStart;
                 DisposingWebView?.FullscreenChanged -= WebView_FullscreenChanged;
+                DisposingWebView?.AddressChanged -= WebView_AddressChanged;
                 DisposingWebView?.JavaScriptMessageReceived -= WebView_JavaScriptMessageReceived;
                 DisposingWebView?.LoadingStateChanged -= WebView_LoadingStateChanged;
                 DisposingWebView?.NavigationError -= WebView_NavigationError;
