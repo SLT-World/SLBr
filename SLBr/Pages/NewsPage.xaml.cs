@@ -56,7 +56,7 @@ namespace SLBr.Pages
                 string Url = string.Empty;
                 if (SearchTextBox.Text.Length > 0)
                 {
-                    Url = $"http://news.google.com/rss/search?q={Uri.EscapeDataString(SearchTextBox.Text)}";//&hl=en-US
+                    Url = $"http://news.google.com/rss/search?q={Uri.EscapeDataString(SearchTextBox.Text.AsSpan().Trim())}";//&hl=en-US
                     BackButton.Visibility = Visibility.Visible;
                 }
                 else

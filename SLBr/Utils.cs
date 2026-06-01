@@ -229,18 +229,21 @@ namespace SLBr
         public const int SWP_NOSIZE = 0x0001;
 
         public const int HOST_ID = 0x00000002;
-        [StructLayout(LayoutKind.Sequential)]
+        /*[StructLayout(LayoutKind.Sequential)]
         public struct POINT
         {
             public int X;
             public int Y;
-        }
+        }*/
 
-        [DllImport("user32.dll")]
+        /*[DllImport("user32.dll")]
         public static extern bool GetCursorPos(out POINT lpPoint);
 
         [DllImport("user32.dll")]
-        public static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+        public static extern bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);*/
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        public static extern int SHGetKnownFolderPath(ref Guid id, int flags, IntPtr token, out IntPtr path);
 
         public const int WM_SIZE = 0x0005;
         public const int WM_SETFOCUS = 0x0007;
@@ -607,11 +610,33 @@ namespace SLBr
         {
             try { Settings.CefCommandLineArgs.Add(Value); } catch { }
         }
+
+        public static string ToTitleCase(this string Input)
+        {
+            if (string.IsNullOrEmpty(Input))
+                return Input;
+
+            char[] Characters = Input.ToCharArray();
+            bool DelayCapitalization = false;
+
+            for (int i = 0; i < Characters.Length; i++)
+            {
+                if (Characters[i] == ' ')
+                    DelayCapitalization = false;
+                else if (!DelayCapitalization)
+                {
+                    Characters[i] = char.ToUpperInvariant(Characters[i]);
+                    DelayCapitalization = true;
+                }
+            }
+
+            return new string(Characters);
+        }
     }
 
     public static partial class Utils
     {
-        public static bool? _IsSnapLayoutEnabled;
+        private static bool? _IsSnapLayoutEnabled;
         public static bool IsSnapLayoutEnabled
         {
             get
@@ -711,22 +736,8 @@ namespace SLBr
         public static string ResolveUrl(string BaseUrl, string RelativeAbsolutePath)
         {
             if (string.IsNullOrWhiteSpace(RelativeAbsolutePath)) return BaseUrl;
-            if (Uri.TryCreate(RelativeAbsolutePath, UriKind.Absolute, out var _Absolute)) return _Absolute.ToString();
+            if (Uri.TryCreate(RelativeAbsolutePath, UriKind.Absolute, out var _Absolute)) return _Absolute.OriginalString;
             return new Uri(new Uri(BaseUrl), RelativeAbsolutePath).ToString();
-        }
-
-        public static string CapitalizeAllFirstCharacters(string Input)
-        {
-            if (string.IsNullOrEmpty(Input))
-                return Input;
-            string[] Words = Input.Split(' ');
-            for (int i = 0; i < Words.Length; i++)
-            {
-                string Word = Words[i];
-                if (!string.IsNullOrEmpty(Word))
-                    Words[i] = char.ToUpper(Word[0]) + Word[1..];
-            }
-            return string.Join(" ", Words);
         }
 
         /*public static string? ParseAMPLink(string HTML, string BaseUrl)
@@ -800,7 +811,7 @@ namespace SLBr
         [GeneratedRegex(@"\d+\.?\d*")]
         public static partial Regex DigitsRegex();
 
-        public static MColor ParseThemeColor(string ColorString)
+        public static MColor ParseHTMLColor(string ColorString)
         {
             if (ColorString.StartsWith("rgb"))
             {
@@ -999,8 +1010,6 @@ namespace SLBr
         }
         private static Guid DownloadsGuid = new("374DE290-123F-4565-9164-39C4925E467B");
         private static Guid PicturesGuid = new("33E28130-4E1E-4676-835A-98395C3BC3BB");
-        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
-        private static extern int SHGetKnownFolderPath(ref Guid id, int flags, IntPtr token, out IntPtr path);
         public static string GetFolderPath(FolderGuids FolderGuid)
         {
             IntPtr PathPtr = IntPtr.Zero;
@@ -1016,7 +1025,7 @@ namespace SLBr
                         _FolderGuid = PicturesGuid;
                         break;
                 }
-                SHGetKnownFolderPath(ref _FolderGuid, 0, IntPtr.Zero, out PathPtr);
+                DllUtils.SHGetKnownFolderPath(ref _FolderGuid, 0, IntPtr.Zero, out PathPtr);
                 return Marshal.PtrToStringUni(PathPtr);
             }
             finally
@@ -1081,27 +1090,26 @@ namespace SLBr
         {
             int SchemeSeparatorIndex = Url.IndexOf(':');
             if (SchemeSeparatorIndex != -1)
-                return Url.Substring(0, SchemeSeparatorIndex);
+                return Url[..SchemeSeparatorIndex];
             return string.Empty;
         }
 
-        public static string GetFileExtension(string Url)
+        public static string GetFileExtension(ReadOnlySpan<char> Url)
         {
-            ReadOnlySpan<char> Span = Url.AsSpan();
-            int Query = Span.IndexOf("?");
+            int Query = Url.IndexOf("?");
             if (Query >= 0)
-                Span = Span[..Query];
+                Url = Url[..Query];
 
-            int Hash = Span.IndexOf("#");
+            int Hash = Url.IndexOf("#");
             if (Hash >= 0)
-                Span = Span[..Hash];
+                Url = Url[..Hash];
 
-            int Slash = Span.LastIndexOf("/");
+            int Slash = Url.LastIndexOf("/");
             if (Slash >= 0)
-                Span = Span[(Slash + 1)..];
+                Url = Url[(Slash + 1)..];
 
-            int Dot = Span.LastIndexOf(".");
-            return Dot >= 0 ? Span[Dot..].ToString() : string.Empty;
+            int Dot = Url.LastIndexOf(".");
+            return Dot >= 0 ? Url[Dot..].ToString() : string.Empty;
         }
 
         public static bool IsProgramUrl(string Url) =>
@@ -1162,6 +1170,8 @@ namespace SLBr
                 return false;
             if (!char.IsLetter(Url[0]))
                 return false;
+            ReadOnlySpan<char> Scheme = Url[..Colon];
+            if (Scheme.Equals("localhost", StringComparison.OrdinalIgnoreCase)) return false;
             for (int i = 1; i < Colon; i++)
             {
                 char _Char = Url[i];
@@ -1228,7 +1238,7 @@ namespace SLBr
         }
         public static string RemovePort(string Host)
         {
-            if (Host.StartsWith("["))
+            if (Host.StartsWith('['))
             {
                 int End = Host.IndexOf(']');
                 if (End >= 0)
@@ -1246,45 +1256,15 @@ namespace SLBr
         public static bool IsProprietaryCodec(string Extension) =>
             Extension is ".mp4" or ".m4a" or ".aac" or ".m4v" or ".mov" or ".mp3" or ".wma" or ".wmv";
         public static bool IsIPAddress(string Host) =>
-            IPAddress.TryParse(Host, out _) && (Host.Contains('.') || Host.Contains(':'));
-
-        public static string EscapeDataString(string Input)
-        {
-            StringBuilder _StringBuilder = new(Input.Length + 8);
-            foreach (char Character in Input)
-            {
-                if ((Character >= 'A' && Character <= 'Z') || (Character >= 'a' && Character <= 'z') || (Character >= '0' && Character <= '9') || Character == '-' || Character == '_' || Character == '.' || Character == '~')
-                    _StringBuilder.Append(Character);
-                else
-                    _StringBuilder.Append('%').Append(((int)Character).ToString("X2"));
-            }
-            return _StringBuilder.ToString();
-        }
-
-        public static string UnescapeDataString(string Input)
-        {
-            Span<char> Buffer = stackalloc char[Input.Length];
-            int j = 0;
-            for (int i = 0; i < Input.Length;)
-            {
-                if (Input[i] == '%' && i + 2 < Input.Length && byte.TryParse(Input.AsSpan(i + 1, 2), NumberStyles.HexNumber, null, out byte b))
-                {
-                    Buffer[j++] = (char)b;
-                    i += 3;
-                }
-                else
-                    Buffer[j++] = Input[i++];
-            }
-            return new string(Buffer[..j]);
-        }
+            (Host.Contains('.') || Host.Contains(':')) && IPAddress.TryParse(Host, out _);
 
         public static string GenerateSID()
         {
             string TimePart = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString("x");
             byte[] RandomBytes = new byte[8];
             RandomNumberGenerator.Fill(RandomBytes);
-            string RandomPart = BitConverter.ToString(RandomBytes).Replace("-", "").ToLower();
-            return (TimePart + RandomPart).Substring(0, 16);
+            string RandomPart = Convert.ToHexStringLower(RandomBytes);
+            return (TimePart + RandomPart)[..16];
         }
 
         public static string GetProtocolAppName(string Protocol)
@@ -1380,24 +1360,27 @@ namespace SLBr
             if (Span.StartsWith("search:"))
             {
                 ReadOnlySpan<char> Query = Span[7..];
-                string Encoded = EscapeDataString(Query.ToString());
+                string Encoded = Uri.EscapeDataString(Query);
                 return string.IsNullOrEmpty(SearchEngineUrl) ? FixUrl(Encoded) : FixUrl(string.Format(SearchEngineUrl, Encoded));
             }
             if (Span.StartsWith("domain:"))
                 return FixUrl(Span[7..].ToString());
             return Url;
         }
+
+        //TODO: Higher memory usage observed in FastHost in comparison to Host.
         public static string FastHost(string Url, bool RemoveTrivialSubdomain = true, bool KeepProtocol = false)
         {
             if (string.IsNullOrEmpty(Url))
                 return Url;
-            ReadOnlySpan<char> Span = Url.AsSpan();
+            ReadOnlySpan<char> Span = Url.AsSpan().Trim();
 
             int Protocol = Span.IndexOf("://");
-            ReadOnlySpan<char> ProtocolSpan = ReadOnlySpan<char>.Empty;
+            ReadOnlySpan<char> ProtocolSpan = [];
             if (Protocol >= 0)
             {
-                ProtocolSpan = Span[..(Protocol + 3)];
+                if (KeepProtocol)
+                    ProtocolSpan = Span[..(Protocol + 3)];
                 Span = Span[(Protocol + 3)..];
             }
 
@@ -1413,6 +1396,8 @@ namespace SLBr
             if (Separator >= 0)
                 Span = Span[..Separator];
 
+            /*if (!KeepProtocol && Span.Length == Url.Length)
+                return Url;*/
             if (KeepProtocol && !ProtocolSpan.IsEmpty)
                 return string.Concat(ProtocolSpan, Span);
             return Span.ToString();
@@ -1423,7 +1408,7 @@ namespace SLBr
             if (IsHttpScheme(Url) || Url.StartsWith("file:///"))
             {
                 int SlashIndex = Host.IndexOf('/');
-                return SlashIndex >= 0 ? Host.Substring(0, SlashIndex) : Host;
+                return SlashIndex >= 0 ? Host[..SlashIndex] : Host;
             }
             return Host;
         }
@@ -1436,7 +1421,7 @@ namespace SLBr
                 if (Protocol >= 0)
                     Host = Host[(Protocol + 3)..];
                 int SlashIndex = Host.IndexOf('/');
-                return SlashIndex >= 0 ? Host.Substring(0, SlashIndex) : Host;
+                return SlashIndex >= 0 ? Host[..SlashIndex] : Host;
             }
             return Host;
         }
@@ -1447,13 +1432,6 @@ namespace SLBr
             foreach (char _Char in Host)
                 if (_Char == '.') Dots++;
             return Dots >= 1;//Switch to 2 to support "www.co.uk"
-        }
-        public static bool CanRemoveTrivialSubdomain(string Host)
-        {
-            int Dots = 0;
-            foreach (char _Char in Host)
-                if (_Char == '.') Dots++;
-            return Dots >= 1;
         }
         public static string CleanUrl(string Url, bool RemoveParameters = false, bool RemoveLastSlash = true, bool RemoveFragment = true, bool RemoveTrivialSubdomain = false, bool RemoveProtocol = true)
         {
@@ -1499,7 +1477,7 @@ namespace SLBr
                 return Url;
             ReadOnlySpan<char> _Span = Url.AsSpan().Trim();
             if (!IsProtocol(Url))
-                _Span = ("https://" + Url).AsSpan();
+                _Span = ((_Span.StartsWith("localhost:") ? "http://" : "https://") + Url).AsSpan();
             int Protocol = _Span.IndexOf("://");
             if (Protocol < 0)
                 return _Span.ToString();
@@ -1526,7 +1504,7 @@ namespace SLBr
             }
 
             ReadOnlySpan<char> HostOnly = Host;
-            ReadOnlySpan<char> Port = ReadOnlySpan<char>.Empty;
+            ReadOnlySpan<char> Port = [];
 
             if (HostOnly.Length > 0 && HostOnly[0] != '[')
             {
@@ -1560,10 +1538,12 @@ namespace SLBr
         }
         public static string NormalizeIP(string Host)
         {
+            if (string.IsNullOrWhiteSpace(Host))
+                return Host;
             string RawHost = Host;
             if (RawHost.StartsWith('[') && RawHost.EndsWith(']'))
                 RawHost = RawHost[1..^1];
-            if (!IPAddress.TryParse(RawHost, out var IP) || !Host.Contains('.') || !Host.Contains(':'))
+            if ((!Host.Contains('.') && !Host.Contains(':')) || !IPAddress.TryParse(RawHost, out IPAddress? IP))
                 return Host;
             if (IP.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
                 return $"[{IP}]";

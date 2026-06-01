@@ -69,7 +69,7 @@ namespace SLBr.Handlers
         {
             try
             {
-                var Response = HttpClientInstance.Value.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash, 0, 4))}").Result;
+                var Response = HttpClientInstance.Value.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash, 0, 4).AsSpan())}").Result;
                 if (Response.IsSuccessStatusCode)
                 {
                     byte[] Bytes = Response.Content.ReadAsByteArrayAsync().Result;

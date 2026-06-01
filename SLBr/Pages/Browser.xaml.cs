@@ -1202,7 +1202,7 @@ namespace SLBr.Pages
             if (!string.IsNullOrEmpty(Color))
             {
                 IsCustomTheme = true;
-                Theme SiteTheme = App.Instance.GenerateTheme(Utils.ParseThemeColor(Color));
+                Theme SiteTheme = App.Instance.GenerateTheme(Utils.ParseHTMLColor(Color));
                 SetAppearance(SiteTheme);
                 TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
                 _TabItem.Foreground = new SolidColorBrush(SiteTheme.FontColor);
@@ -1234,7 +1234,7 @@ namespace SLBr.Pages
                             Data = await App.MiniHttpClient.GetStringAsync(FetchUrl);
                         else if (File.Exists(FetchUrl))
                             Data = $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(FetchUrl))}";
-                        WebView?.ExecuteScript($"window.internal.receive('cors={Uri.EscapeDataString(Data)}');");
+                        WebView?.ExecuteScript($"window.internal.receive('cors={Uri.EscapeDataString(Data.AsSpan())}');");
                         break;
                     case "file_picker":
                         string Accept = Message["accept"].ToString();
@@ -1262,7 +1262,7 @@ namespace SLBr.Pages
                         };
 
                         if (OpenFileDialog.ShowDialog() == true)
-                            WebView?.ExecuteScript($"window.internal.receive('file_picker={Uri.EscapeDataString(OpenFileDialog.FileName)}');");
+                            WebView?.ExecuteScript($"window.internal.receive('file_picker={Uri.EscapeDataString(OpenFileDialog.FileName.AsSpan())}');");
                         break;
                     case "search":
                         Address = Utils.FilterUrlForBrowser(Message["variable"]?.ToString() ?? string.Empty, App.Instance.DefaultSearchProvider.SearchUrl);
@@ -1448,16 +1448,16 @@ namespace SLBr.Pages
                                     switch (App.Instance.GlobalSave.GetInt("ImageSearch"))
                                     {
                                         case 0:
-                                            Url = $"https://lens.google.com/uploadbyurl?url={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://lens.google.com/uploadbyurl?url={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                         case 1:
-                                            Url = $"https://www.bing.com/images/searchbyimage?cbir=sbi&imgurl={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://www.bing.com/images/searchbyimage?cbir=sbi&imgurl={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                         case 2:
-                                            Url = $"https://yandex.com/images/search?rpt=imageview&url={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://yandex.com/images/search?rpt=imageview&url={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                         case 3:
-                                            Url = $"https://tineye.com/search?url={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://tineye.com/search?url={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                     }
                                     Tab.ParentWindow.NewTab(Url, true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup);
@@ -3319,7 +3319,7 @@ namespace SLBr.Pages
                     return;
                 case "gopher":
                 case "gemini":
-                    OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL ? Utils.CapitalizeAllFirstCharacters(Scheme) : Scheme) { Foreground = GrayBrush });
+                    OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL ? Scheme.ToTitleCase() : Scheme) { Foreground = GrayBrush });
                     break;
                 default:
                     OmniBoxOverlayText.Inlines.Add(new Run(Url) { Foreground = GrayBrush });
@@ -3496,24 +3496,24 @@ namespace SLBr.Pages
                 }
             }
             else
-                OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL && Scheme == "slbr" ? Utils.CapitalizeAllFirstCharacters(Host.ToString()) : Host.ToString()) { Foreground = FontBrush });
+                OmniBoxOverlayText.Inlines.Add(new Run(UseModernURL && Scheme == "slbr" ? Host.ToString().ToTitleCase() : Host.ToString()) { Foreground = FontBrush });
 
             if (HostEnd >= 0)
             {
                 if (UseModernURL)
                 {
                     if (Scheme == "slbr")
-                        OmniBoxOverlayText.Inlines.Add(new Run(Utils.CapitalizeAllFirstCharacters(Utils.UnescapeDataString(_Span[HostEnd..].ToString().Replace("/", " / ")))) { Foreground = GrayBrush });
+                        OmniBoxOverlayText.Inlines.Add(new Run(Uri.UnescapeDataString(_Span[HostEnd..]).Replace("/", " / ").ToTitleCase()) { Foreground = GrayBrush });
                     else if (!string.IsNullOrEmpty(Title))
                     {
                         if (Title == Utils.CleanUrl(Address, false, false, false, false, true))
-                            OmniBoxOverlayText.Inlines.Add(new Run(Utils.CapitalizeAllFirstCharacters(Utils.UnescapeDataString(_Span[HostEnd..].ToString().Replace("/", " / ")))) { Foreground = GrayBrush });
+                            OmniBoxOverlayText.Inlines.Add(new Run(Uri.UnescapeDataString(_Span[HostEnd..]).Replace("/", " / ").ToTitleCase()) { Foreground = GrayBrush });
                         else
                             OmniBoxOverlayText.Inlines.Add(new Run(" / " + Title) { Foreground = GrayBrush });
                     }
                 }
                 else
-                    OmniBoxOverlayText.Inlines.Add(new Run(Utils.UnescapeDataString(_Span[HostEnd..].ToString())) { Foreground = GrayBrush });
+                    OmniBoxOverlayText.Inlines.Add(new Run(Uri.UnescapeDataString(_Span[HostEnd..])) { Foreground = GrayBrush });
             }
         }
 
@@ -3891,7 +3891,7 @@ namespace SLBr.Pages
             string CurrentText = OmniBoxText.Trim();
             try
             {
-                string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText));
+                string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText.AsSpan()));
                 if (!string.IsNullOrEmpty(SuggestionsUrl))
                 {
                     var ExistingSuggestions = Suggestions.Select(i => i.Text);

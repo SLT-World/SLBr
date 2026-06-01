@@ -139,8 +139,8 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
         private static string GetMime(Uri URI)
         {
             //var Response = "application/gopher-menu";
-            var ExtensionFull = Path.GetExtension(URI.AbsolutePath);
-            string Extension = (ExtensionFull.Length > 0) ? ExtensionFull.Substring(1) : string.Empty;
+            var ExtensionFull = Utils.GetFileExtension(URI.AbsolutePath);
+            string Extension = (ExtensionFull.Length > 0) ? ExtensionFull[1..] : string.Empty;
             return Cef.GetMimeType(Extension);
         }
 
@@ -165,9 +165,9 @@ function gopherSearch(e,r,t){let c=prompt(""Search query:"");if(!c)return;let h=
 
             var TrimmedUrl = HostURL.AbsolutePath;
             if (HostURL.AbsolutePath.Length > 1)
-                TrimmedUrl = TrimmedUrl.Substring(1);
+                TrimmedUrl = TrimmedUrl[1..];
 
-            byte[] Message = Encoding.UTF8.GetBytes(Uri.UnescapeDataString(TrimmedUrl) + "\r\n");
+            byte[] Message = Encoding.UTF8.GetBytes(Uri.UnescapeDataString(TrimmedUrl.AsSpan()) + "\r\n");
             await Stream.WriteAsync(Message.AsMemory(0, Message.Length), CancellationToken);
             await Stream.FlushAsync(CancellationToken);
             GopherResponse Response = new() { _Uri = HostURL, Mime = GetMime(HostURL), SSLStatus = new WebSSLStatus { PolicyErrors = SslPolicyErrors.None } };

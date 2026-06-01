@@ -127,16 +127,16 @@ namespace SLBr.Controls
                                     switch (App.Instance.GlobalSave.GetInt("ImageSearch"))
                                     {
                                         case 0:
-                                            Url = $"https://lens.google.com/uploadbyurl?url={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://lens.google.com/uploadbyurl?url={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                         case 1:
-                                            Url = $"https://www.bing.com/images/searchbyimage?cbir=sbi&imgurl={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://www.bing.com/images/searchbyimage?cbir=sbi&imgurl={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                         case 2:
-                                            Url = $"https://yandex.com/images/search?rpt=imageview&url={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://yandex.com/images/search?rpt=imageview&url={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                         case 3:
-                                            Url = $"https://tineye.com/search?url={Uri.EscapeDataString(e.SourceUrl)}";
+                                            Url = $"https://tineye.com/search?url={Uri.EscapeDataString(e.SourceUrl.AsSpan())}";
                                             break;
                                     }
                                     App.Instance.CurrentFocusedWindow().NewTab(Url, true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));

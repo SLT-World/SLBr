@@ -1,7 +1,6 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
-using System;
 using System.Diagnostics;
 using System.Text;
 
@@ -16,7 +15,7 @@ namespace SLBr
             public long Memory;
 
             public override string ToString() =>
-                $"{Name.PadRight(30)} | Time: {Time, 5} ms | Memory: {Memory, 8} bytes";
+                $"Time:\t{Time:D}\tms | Memory:\t{Memory:D} bytes | {Name}";
         }
 
         private static readonly List<Result> Results = [];
@@ -74,7 +73,7 @@ namespace SLBr
 
         public static string Report()
         {
-            StringBuilder _String = new StringBuilder();
+            StringBuilder _String = new();
             _String.AppendLine("Results");
             foreach (Result _Result in Results)
                 _String.AppendLine(_Result.ToString());

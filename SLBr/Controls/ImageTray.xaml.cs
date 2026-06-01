@@ -38,7 +38,7 @@ namespace SLBr.Controls
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            List<string> ImageFiles = new();
+            List<string> ImageFiles = [];
             string[] ExtensionsArray = FileExtensions.ToArray();
             for (int i = 0; i < ExtensionsArray.Length; i++)
             {

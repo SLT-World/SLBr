@@ -7,6 +7,7 @@ using SLBr.Pages;
 using SLBr.WebView;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -357,11 +358,53 @@ namespace SLBr
         }*/
 
 
-        /*const int Iterations = 5_000_000;
+        /*const int Iterations = 10_000_000;
         private async void PerformBenchmark()
         {
-            Benchmark.Clear();
-            const string Domain = "adc3-launch.adcolony.com";
+            Benchmark.Clear();*/
+            /*MessageBox.Show($"{Utils.GetFileExtension("https://example.com/example.pdf#id?query=123")} {System.IO.Path.GetExtension("https://example.com/example.pdf#id?query=123")}");
+            Benchmark.Run("GetFileExtension", Iterations, () =>
+            {
+                _ = Utils.GetFileExtension("https://example.com/example.pdf#id?query=123");
+            });
+            Benchmark.Run("GetExtension", Iterations, () =>
+            {
+                _ = System.IO.Path.GetExtension("https://example.com/example.pdf#id?query=123");
+            });*/
+            //MessageBox.Show($"{Utils.FastHost("https://google.com/search?q=Hello+World")} {Utils.Host("https://google.com/search?q=Hello+World")}");
+            /*Benchmark.Run("CapitalizeAllFirstCharacters", Iterations, () =>
+            {
+                _ = Utils.CapitalizeAllFirstCharacters("example.html foo bar");
+            });
+            Benchmark.Run("ToTitleCase", Iterations, () =>
+            {
+                _ = CultureInfo.InvariantCulture.TextInfo.ToTitleCase("example.html foo bar");
+            });*/
+            /*Benchmark.Run("FastHost", Iterations, () =>
+            {
+                _ = Utils.FastHost("https://google.com/search?q=Hello+World");
+            });
+            Benchmark.Run("Host", Iterations, () =>
+            {
+                _ = Utils.Host("https://google.com/search?q=Hello+World");
+            });*/
+            /*Benchmark.Run("Uri EscapeDataString JIT", 1, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar");
+            });
+            Benchmark.Run("Utils EscapeDataString Span JIT", 1, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar".AsSpan());
+            });
+            Benchmark.Run("Uri EscapeDataString", Iterations, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar");
+            });
+            Benchmark.Run("Utils EscapeDataString Span", Iterations, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar".AsSpan());
+            });*/
+            /*const string Domain = "adc3-launch.adcolony.com";
             SLBr.Handlers.AdBlockHandler _AdBlockHandler = new(App.Instance.AllowListSave);
             Benchmark.Run("ParseAdd", 1, () =>
             {
@@ -370,8 +413,8 @@ namespace SLBr
             Benchmark.Run("BlockRequest", Iterations, () =>
             {
                 _ = _AdBlockHandler.ShouldBlockRequest(Domain, Domain, ResourceRequestType.Script);
-            });
-            MessageBox.Show(Benchmark.Report());
+            });*/
+            /*MessageBox.Show(Benchmark.Report());
         }*/
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -1079,7 +1122,7 @@ namespace SLBr
             else if (_Tab.Type == BrowserTabType.Group)
             {
                 List<BrowserTabItem> ProcessTabs = Tabs.Where(i => i.TabGroup == _Tab.TabGroup).ToList();
-                for (int i = 0; i < ProcessTabs.Count(); i++)
+                for (int i = 0; i < ProcessTabs.Count; i++)
                 {
                     var _FTab = ProcessTabs[i];
                     bool IsSelected = Id == -1 || _FTab == Tabs[TabsUI.SelectedIndex];

@@ -33,10 +33,10 @@ namespace SLBr
 
             while (End > 0)
             {
-                int Dot = Span.Slice(0, End).LastIndexOf('.');
-                ReadOnlySpan<char> label = Dot == -1 ? Span.Slice(0, End) : Span.Slice(Dot + 1, End - Dot - 1);
+                int Dot = Span[..End].LastIndexOf('.');
+                ReadOnlySpan<char> Label = Dot == -1 ? Span[..End] : Span.Slice(Dot + 1, End - Dot - 1);
                 End = Dot == -1 ? 0 : Dot;
-                Node = GetOrCreateChildNative(Node, label);
+                Node = GetOrCreateChildNative(Node, Label);
             }
 
             Node->IsEnd = 1;
@@ -57,10 +57,10 @@ namespace SLBr
                     return true;
 
                 int Dot = Span[..End].LastIndexOf('.');
-                ReadOnlySpan<char> label = Dot == -1 ? Span[..End] : Span.Slice(Dot + 1, End - Dot - 1);
+                ReadOnlySpan<char> Label = Dot == -1 ? Span[..End] : Span.Slice(Dot + 1, End - Dot - 1);
                 End = Dot == -1 ? 0 : Dot;
 
-                Node = TryGetChildNative(Node, label);
+                Node = TryGetChildNative(Node, Label);
                 if (Node == null)
                     return false;
             }
@@ -201,7 +201,7 @@ namespace SLBr
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint CalculateHash(ReadOnlySpan<char> Label)
+        private static uint CalculateHash(ReadOnlySpan<char> Label)
         {
             uint Hash = 2166136261;
             for (int i = 0; i < Label.Length; i++)

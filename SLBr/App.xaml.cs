@@ -1136,43 +1136,12 @@ namespace SLBr
                 }
                 MessageBox.Show($"{ReadTest} {Different.Count} LEFT: {string.Join("|", Different)}");
             }*/
-            //MessageBox.Show(Cef.GetMimeType(".html"));
-            //MessageBox.Show(Cef.GetMimeType("html"));
-            //MessageBox.Show(Utils.IsIPAddress("101").ToString());
-            //MessageBox.Show(Utils.IsUrl("101").ToString());
-            //MessageBox.Show(Utils.FixUrl("101").ToString());
-            //MessageBox.Show(Utils.IsDomain("101").ToString());
-            /*MessageBox.Show(Utils.IsUrl("foo bar https://example.com/").ToString());
-            MessageBox.Show(Utils.IsUrl("foo bar").ToString());
-            MessageBox.Show(Utils.FixUrl("steam:foo").ToString());
-            MessageBox.Show(Utils.FixUrl("2001:db8:0:0:0:0:2:1").ToString());
-            MessageBox.Show(Utils.FixUrl("http://[::1]:3000/").ToString());
-            MessageBox.Show(Utils.FixUrl("127.0.0.1:8080").ToString());
-            MessageBox.Show(Utils.FixUrl("2001:db8::1").ToString());
-            MessageBox.Show(Utils.FixUrl("[2001:db8::1]:3000").ToString());
-            MessageBox.Show(Utils.FixUrl("localhost:8000").ToString());
-            MessageBox.Show(Utils.FixUrl("apple").ToString());//F
-            MessageBox.Show(Utils.IsDomain("ñ.com").ToString());//T
-            MessageBox.Show(Utils.IsDomain("www.a&b.com").ToString());//F
-            MessageBox.Show(Utils.IsDomain("る.com").ToString());//T
-            MessageBox.Show(Utils.IsDomain("a b").ToString());//F
-
-            MessageBox.Show(Utils.IsUrl("る.com").ToString());//T
-            MessageBox.Show(Utils.IsUrl("http://www.🌾.com/").ToString());//T
-            MessageBox.Show(Utils.IsUrl("file:///Z:/A B").ToString());//T
-            MessageBox.Show(Utils.IsUrl("http://www.a&b.com").ToString());//F
-            MessageBox.Show(Utils.IsUrl("http://www.a b.com").ToString());//F
-            MessageBox.Show(Utils.IsUrl("http://www.a\b.com").ToString());//F
-            MessageBox.Show(Utils.IsUrl("invalid://a b").ToString());//T
-            MessageBox.Show(Utils.IsUrl("file:///C:/Example/Example/Example").ToString());//T
-            MessageBox.Show(Utils.IsUrl("file:///C:/Foo Bar/").ToString());//T
-            MessageBox.Show(Utils.IsUrl("custom://foo/bar").ToString());//T*/
 
             Instance = this;
             try
             {
-                using (var Key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", true))
-                    CurrentTheme = Key.GetValue("SystemUsesLightTheme") as int? == 1 ? Themes[0] : Themes[1];
+                using var Key = Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", true);
+                CurrentTheme = Key.GetValue("SystemUsesLightTheme") as int? == 1 ? Themes[0] : Themes[1];
             }
             catch { CurrentTheme = Themes[0]; }
             AppSave = new Saving("App.bin", ApplicationLocalDataPath);
@@ -1598,7 +1567,7 @@ namespace SLBr
                         {
                             using JsonDocument Document = JsonDocument.Parse(Response.Content.ReadAsStringAsync().Result);
                             double Temperature = Document.RootElement.GetProperty("main").GetProperty("temp").GetDouble();
-                            string Description = Utils.CapitalizeAllFirstCharacters(Document.RootElement.GetProperty("weather")[0].GetProperty("description").GetString());
+                            string Description = Document.RootElement.GetProperty("weather")[0].GetProperty("description").GetString().ToTitleCase();
 
                             Suggestion.SubText = $"{Temperature} °C | {Description}";
                         }
@@ -1620,7 +1589,7 @@ namespace SLBr
                         {
                             try
                             {
-                                string Response = await MiniHttpClient.GetStringAsync($"https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl={LanguageCode}&q={Uri.EscapeDataString(TranslateMatch.Groups["Phrase"].Value.Trim())}");
+                                string Response = await MiniHttpClient.GetStringAsync($"https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl={LanguageCode}&q={Uri.EscapeDataString(TranslateMatch.Groups["Phrase"].Value.AsSpan().Trim())}");
                                 using JsonDocument Document = JsonDocument.Parse(Response);
                                 Suggestion.SubText = $"- {Document.RootElement[0][0][0].GetString()}";
                             }

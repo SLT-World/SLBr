@@ -88,7 +88,7 @@ namespace SLBr.Pages
                         {
                             if (Tab.Visibility == Visibility.Visible && Tab.Header != null)
                             {
-                                string Header = Uri.EscapeDataString(Tab.Header.ToString().ToLowerInvariant());
+                                string Header = Uri.EscapeDataString(Tab.Header.ToString().ToLowerInvariant().AsSpan());
                                 if (TabName == Header)
                                 {
                                     SettingsTabControl.SelectedItem = Tab;
@@ -1492,7 +1492,7 @@ namespace SLBr.Pages
 
         private void SetNavigation(TabItem SelectedTabItem, UIElementCollection Pages)
         {
-            string Name = Uri.EscapeDataString(SelectedTabItem.Header.ToString().ToLowerInvariant());
+            string Name = Uri.EscapeDataString(SelectedTabItem.Header.ToString().ToLowerInvariant().AsSpan());
             string? SubName = null;
             foreach (Border Page in Pages)
             {
