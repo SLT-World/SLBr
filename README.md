@@ -59,10 +59,10 @@ Alternatively, you can also contribute by sponsoring [CefSharp](https://github.c
 [Website](https://slt-world.github.io/slbr/)
 [YouTube Video](https://www.youtube.com/watch?v=jqx1v6sxK34)
 
-![Browser](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/SLBr%20Browser.png)
+![Browser](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Browser.png)
 ![Grouped Vertical Tabs](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Grouped%20Vertical%20Tabs.png)
+![Ad Block](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Ad%20Block.png)
 ![Performance Settings](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Performance.png)
-![News Feed](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/News%20Feed.png)
 ![Moai](https://raw.githubusercontent.com/SLT-World/SLBr/main/Assets/Moai.png)
 
 [Old YouTube](https://youtu.be/PtmDRjgwmHI)
