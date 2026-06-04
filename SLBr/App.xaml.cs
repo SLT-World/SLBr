@@ -1368,31 +1368,36 @@ namespace SLBr
             return "Search";
         }*/
 
-        public async Task<List<(string Word, List<string> Suggestions)>> SpellCheck(string Text)
+        private static Lazy<TextBox> SpellCheckTextBox = new(() => new() { SpellCheck = { IsEnabled = true } });
+
+        public async Task<List<(string Word, List<string> Suggestions)>> SpellCheck(string Text, CancellationToken Token)
         {
             List<(string, List<string>)> Results = [];
             try
             {
+                Token.ThrowIfCancellationRequested();
                 switch (GlobalSave.GetInt("SpellCheckProvider"))
                 {
                     case 0:
-                        TextBox SpellCheckTextBox = new();
-                        SpellCheckTextBox.SpellCheck.IsEnabled = true;
-                        SpellCheckTextBox.Language = XmlLanguage.GetLanguage(Locale.Tooltip);
+                        XmlLanguage CurrentLanguage = XmlLanguage.GetLanguage(Locale.Tooltip);
+                        if (SpellCheckTextBox.Value.Language != CurrentLanguage)
+                            SpellCheckTextBox.Value.Language = CurrentLanguage;
                         string[] Words = Text.Split([' ', ',', ';', '.']);
                         foreach (string Word in Words)
                         {
-                            SpellCheckTextBox.Text = Word;
-                            SpellingError SpellError = SpellCheckTextBox.GetSpellingError(0);
+                            Token.ThrowIfCancellationRequested();
+
+                            SpellCheckTextBox.Value.Text = Word;
+                            SpellingError SpellError = SpellCheckTextBox.Value.GetSpellingError(0);
                             if (SpellError != null && SpellError.Suggestions.Any())
                                 Results.Add((Word, new List<string>(SpellError.Suggestions)));
                         }
                         break;
                     case 1:
                         {
-                            HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.GOOGLE_SPELLCHECK_ENDPOINT, new StringContent($"{{\"text\":\"{Text}\",\"language\":\"{Locale.Tooltip}\",\"originCountry\":\"USA\"}}", Encoding.UTF8, "application/json"));
+                            HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.GOOGLE_SPELLCHECK_ENDPOINT, new StringContent($"{{\"text\":\"{Text}\",\"language\":\"{Locale.Tooltip}\",\"originCountry\":\"USA\"}}", Encoding.UTF8, "application/json"), Token);
                             Response.EnsureSuccessStatusCode();
-                            string Json = await Response.Content.ReadAsStringAsync();
+                            string Json = await Response.Content.ReadAsStringAsync(Token);
 
                             using JsonDocument Document = JsonDocument.Parse(Json);
                             if (Document.RootElement.TryGetProperty("spellingCheckResponse", out JsonElement SpellcheckResponse) && SpellcheckResponse.TryGetProperty("misspellings", out JsonElement Misspellings))
@@ -1415,9 +1420,9 @@ namespace SLBr
                         }
                     case 2:
                         {
-                            HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.MICROSOFT_SPELLCHECK_ENDPOINT, new StringContent($"{{\"SessionId\": \"\",\"AppId\": \"Edge_Win32\",\"LanguageUxId\": \"{Locale.Tooltip}\",\"Content\": [{{\"TileId\": \"{Locale.Tooltip}\",\"RevisionId\": \"0\",\"TileElements\": [{{\"LanguageId\": \"{Locale.Tooltip}\",\"Text\": \"{Text}\",\"TextUnit\": 8}}]}}],\"Descriptors\":[{{\"Name\": \"FlightIds\",\"Value\": \"wac-wordeditorservicemultiplegrammarcritiquespersentence-treatment\"}},{{\"Name\": \"LicenseType\",\"Value\": \"NoLicense\"}}]}}", Encoding.UTF8, "application/json"));
+                            HttpResponseMessage Response = await MiniHttpClient.PostAsync(SECRETS.MICROSOFT_SPELLCHECK_ENDPOINT, new StringContent($"{{\"SessionId\": \"\",\"AppId\": \"Edge_Win32\",\"LanguageUxId\": \"{Locale.Tooltip}\",\"Content\": [{{\"TileId\": \"{Locale.Tooltip}\",\"RevisionId\": \"0\",\"TileElements\": [{{\"LanguageId\": \"{Locale.Tooltip}\",\"Text\": \"{Text}\",\"TextUnit\": 8}}]}}],\"Descriptors\":[{{\"Name\": \"FlightIds\",\"Value\": \"wac-wordeditorservicemultiplegrammarcritiquespersentence-treatment\"}},{{\"Name\": \"LicenseType\",\"Value\": \"NoLicense\"}}]}}", Encoding.UTF8, "application/json"), Token);
                             Response.EnsureSuccessStatusCode();
-                            string Json = await Response.Content.ReadAsStringAsync();
+                            string Json = await Response.Content.ReadAsStringAsync(Token);
 
                             using JsonDocument Document = JsonDocument.Parse(Json);
                             if (Document.RootElement.TryGetProperty("Critiques", out JsonElement Critiques))
@@ -1446,7 +1451,7 @@ namespace SLBr
                         }
                     case 3:
                         {
-                            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.LANGUAGETOOL_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
+                            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.LANGUAGETOOL_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)), Token);
 
                             using JsonDocument Document = JsonDocument.Parse(Json);
                             if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches))
@@ -1475,7 +1480,7 @@ namespace SLBr
                         }
                     case 4:
                         {
-                            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.YANDEX_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)));
+                            string Json = await MiniHttpClient.GetStringAsync(string.Format(SECRETS.YANDEX_SPELLCHECK_ENDPOINT, Locale.Tooltip, WebUtility.UrlEncode(Text)), Token);
 
                             using JsonDocument Document = JsonDocument.Parse(Json);
                             if (Document.RootElement.ValueKind == JsonValueKind.Array)

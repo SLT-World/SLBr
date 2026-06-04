@@ -26,7 +26,6 @@ namespace SLBr.WebView
         public static CoreWebView2Environment WebView2Environment { get; set; }
         public static CoreWebView2ControllerOptions WebView2ControllerOptions { get; set; }
         public static CoreWebView2ControllerOptions WebView2PrivateControllerOptions { get; set; }
-        public static CoreWebView2WebResourceResponse WebView2CancelResponse { get; set; }
         public static CoreWebView2FindOptions WebView2FindOptions { get; set; }
 
         public static ChromiumLifeSpanHandler GlobalLifeSpanHandler { get; set; }
@@ -352,7 +351,6 @@ namespace SLBr.WebView
             foreach (var Scheme in Settings.Schemes.Where(i => i.Key != "*"))
                 CustomSchemeRegistrations.Add(new(Scheme.Key) { HasAuthorityComponent = true, TreatAsSecure = true });
             CoreWebView2EnvironmentOptions EnvironmentOptions = new(Settings.BuildFlags(true), Settings.Language, null, false, CustomSchemeRegistrations);
-
             try { WebView2Version = CoreWebView2Environment.GetAvailableBrowserVersionString(null, EnvironmentOptions); }
             catch (WebView2RuntimeNotFoundException)
             {
@@ -383,8 +381,6 @@ namespace SLBr.WebView
             WebView2PrivateControllerOptions.IsInPrivateModeEnabled = true;
             WebView2PrivateControllerOptions.DefaultBackgroundColor = Color.Black;
             WebView2PrivateControllerOptions.AllowHostInputProcessing = false;
-
-            WebView2CancelResponse = WebView2Environment.CreateWebResourceResponse(Stream.Null, 403, "Blocked", "Content-Type: text/plain");
 
             WebView2FindOptions = WebView2Environment.CreateFindOptions();
             WebView2FindOptions.ShouldHighlightAllMatches = true;
@@ -1186,7 +1182,7 @@ namespace SLBr.WebView
                 SelectionText = parameters.SelectionText,
                 IsEditable = parameters.IsEditable,
                 DictionarySuggestions = parameters.DictionarySuggestions,
-                MisspelledWord = parameters.MisspelledWord,
+                //MisspelledWord = parameters.MisspelledWord,
                 SourceUrl = parameters.SourceUrl,
                 SpellCheck = parameters.IsSpellCheckEnabled,
                 MediaType = parameters.MediaType.ToWebContextMenuMediaType(),
@@ -1273,6 +1269,7 @@ namespace SLBr.WebView
         {
             TokenSource?.Cancel();
             TokenSource?.Dispose();
+            TokenSource = null;
             base.Dispose();
         }
     }

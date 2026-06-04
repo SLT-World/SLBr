@@ -341,7 +341,7 @@ namespace SLBr.WebView
         public int Y { get; set; }
         public string LinkText { get; set; }
         public string LinkUrl { get; set; }
-        public string MisspelledWord { get; set; }
+        //public string MisspelledWord { get; set; }
         public string SourceUrl { get; set; }
         public string FrameUrl { get; set; }
         public string SelectionText { get; set; }
@@ -2412,8 +2412,8 @@ namespace SLBr.WebView
 
         private void Browser_ContextMenuRequested(object? sender, CoreWebView2ContextMenuRequestedEventArgs e)
         {
-            //https://github.com/MicrosoftEdge/WebView2Feedback/issues/2340
-            //God knows when the WebView2 developers will fix this
+            //https://github.com/MicrosoftEdge/WebView2Feedback/pull/5553
+            //TODO: https://github.com/MicrosoftEdge/WebView2Feedback/blob/main/specs/CustomContextMenuSpellcheck.md
 
             CoreWebView2ContextMenuTarget? Target = e.ContextMenuTarget;
 
@@ -2440,7 +2440,7 @@ namespace SLBr.WebView
                 SelectionText = SelectionText,
                 IsEditable = Target?.IsEditable ?? false,
                 DictionarySuggestions = [],
-                MisspelledWord = string.Empty,
+                //MisspelledWord = string.Empty,
                 SourceUrl = SourceUrl,
                 FrameUrl = FrameUrl,
                 SpellCheck = false,
@@ -2456,11 +2456,12 @@ namespace SLBr.WebView
 
         private void Browser_WebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
         {
+            //TODO: Set Content-Length.
             ProtocolResponse OverrideResponse = WebViewManager.OverrideHandler(e.Request.Uri);
             if (OverrideResponse != null)
             {
                 EncounteredError = true;
-                e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(OverrideResponse.Data), 200, "OK", $"Content-Type: {OverrideResponse.MimeType}");
+                e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(OverrideResponse.Data), 200, "OK", $"Content-Type: {OverrideResponse.MimeType}\r\nContent-Length: {OverrideResponse.Data.Length}");
                 return;
             }
             if (!RequestContexts.ContainsKey(e.Request.Uri))
@@ -2471,8 +2472,10 @@ namespace SLBr.WebView
                 Headers[Header.Key] = Header.Value;
             ResourceRequestEventArgs Args = new(e.Request.Uri, Address, e.Request.Method, e.ResourceContext.ToResourceRequestType(), Headers);
             ResourceRequested?.Invoke(this, Args);
+            //NOTE: Ad block testers misinterpret blocked requests as successful, due to the lack of invalid "(canceled)" responses
+            //Ad block functionality remain consistent for all intents and purposes.
             if (Args.Cancel)
-                e.Response = WebViewManager.WebView2CancelResponse;
+                e.Response = BrowserCore.Environment.CreateWebResourceResponse(Stream.Null, 403, "Forbidden", "Content-Type: text/plain\r\nContent-Length: 0");
             else
             {
                 if (Utils.IsCustomScheme(e.Request.Uri) && Utils.IsCustomScheme(Address))

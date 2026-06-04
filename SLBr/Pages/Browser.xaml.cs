@@ -1379,11 +1379,16 @@ namespace SLBr.Pages
             };
             e.Launch = InfoWindow.ShowDialog() == true;
         }
-
+        CancellationTokenSource? SpellCheckTokenCancellationTokenSource;
         private async void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
+            SpellCheckTokenCancellationTokenSource?.Cancel();
+            SpellCheckTokenCancellationTokenSource?.Dispose();
+            SpellCheckTokenCancellationTokenSource = null;
+
             bool IsPageMenu = true;
             ContextMenu BrowserMenu = new();
+
             foreach (WebContextMenuType i in Enum.GetValues<WebContextMenuType>())
             {
                 if (e.MenuType.HasFlag(i))
@@ -1528,41 +1533,58 @@ namespace SLBr.Pages
                 }*/
                 if (WebViewManager.RuntimeSettings.SpellCheck && !string.IsNullOrEmpty(e.SelectionText) && !e.SelectionText.Contains(' '))
                 {
-                    List<(string Word, List<string> Suggestions)> Results = await App.Instance.SpellCheck(e.SelectionText);
-                    if (Results.Count != 0)
+                    SpellCheckTokenCancellationTokenSource = new();
+                    CancellationToken SpellCheckToken = SpellCheckTokenCancellationTokenSource.Token;
+                    BrowserMenu.Closed += (s, e) =>
                     {
-                        int Count = 0;
-                        MenuItem? SuggestionsSubMenuModel = null;
-                        foreach ((string Word, List<string> Suggestions) in Results)
+                        SpellCheckTokenCancellationTokenSource?.Cancel();
+                        SpellCheckTokenCancellationTokenSource?.Dispose();
+                        SpellCheckTokenCancellationTokenSource = null;
+                    };
+                    _ = Application.Current.Dispatcher.BeginInvoke(async () =>
+                    {
+                        try
                         {
-                            foreach (string Suggestion in Suggestions)
+                            List<(string Word, List<string> Suggestions)> Results = await App.Instance.SpellCheck(e.SelectionText, SpellCheckToken);
+                            if (SpellCheckToken.IsCancellationRequested) return;
+                            if (Results.Count != 0)
                             {
-                                MenuItem SuggestionItem = new()
+                                int InsertIndex = 0;
+                                int Count = 0;
+                                MenuItem? SuggestionsSubMenuModel = null;
+                                foreach ((string Word, List<string> Suggestions) in Results)
                                 {
-                                    Icon = "\uf87b",
-                                    Header = Suggestion,
-                                    Command = new RelayCommand(_ =>
+                                    foreach (string Suggestion in Suggestions)
                                     {
-                                        if (WebView is ChromiumWebView ChromiumWebView)
-                                            ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().ReplaceMisspelling(Suggestion);
-                                        else if (WebView is ChromiumEdgeWebView EdgeWebView)
-                                            EdgeWebView.ExecuteScript(Scripts.WebView2ReplaceMisspelling.Replace("{0}", Suggestion));
-                                    })
-                                };
-                                if (Count < 3)
-                                    BrowserMenu.Items.Add(SuggestionItem);
-                                else
-                                {
-                                    SuggestionsSubMenuModel ??= new MenuItem { Icon = "\ue82d", Header = "More" };
-                                    SuggestionsSubMenuModel.Items.Add(SuggestionItem);
+                                        MenuItem SuggestionItem = new()
+                                        {
+                                            Icon = "\uf87b",
+                                            Header = Suggestion,
+                                            Command = new RelayCommand(_ =>
+                                            {
+                                                if (WebView is ChromiumWebView ChromiumWebView)
+                                                    ((ChromiumWebBrowser)ChromiumWebView.Control).GetBrowserHost().ReplaceMisspelling(Suggestion);
+                                                else if (WebView is ChromiumEdgeWebView EdgeWebView)
+                                                    EdgeWebView.ExecuteScript(Scripts.WebView2ReplaceMisspelling.Replace("{0}", Suggestion));
+                                            })
+                                        };
+                                        if (Count < 3)
+                                            BrowserMenu.Items.Insert(InsertIndex++, SuggestionItem);
+                                        else
+                                        {
+                                            SuggestionsSubMenuModel ??= new MenuItem { Icon = "\ue82d", Header = "More" };
+                                            SuggestionsSubMenuModel.Items.Add(SuggestionItem);
+                                        }
+                                        Count++;
+                                    }
                                 }
-                                Count++;
+                                if (SuggestionsSubMenuModel != null)
+                                    BrowserMenu.Items.Insert(InsertIndex++, SuggestionsSubMenuModel);
+                                BrowserMenu.Items.Insert(InsertIndex++, new Separator());
                             }
                         }
-                        if (SuggestionsSubMenuModel != null)
-                            BrowserMenu.Items.Add(SuggestionsSubMenuModel);
-                        BrowserMenu.Items.Add(new Separator());
-                    }
+                        catch { }
+                    });
                 }
 
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Win+Period", Icon = "\ue76e", Header = "Emoji", Command = new RelayCommand(_ => CoreInputView.GetForCurrentView().TryShow(CoreInputViewKind.Emoji)) });
@@ -3007,6 +3029,8 @@ namespace SLBr.Pages
         public void OmniBoxEnter()
         {
             SmartSuggestionCancellation?.Cancel();
+            SmartSuggestionCancellation?.Dispose();
+            SmartSuggestionCancellation = null;
             OmniBoxFastTimer?.Stop();
             OmniBoxSmartTimer?.Stop();
             string SearchUrl = App.Instance.DefaultSearchProvider.SearchUrl;
@@ -3127,6 +3151,8 @@ namespace SLBr.Pages
                 if (OmniBox.Text.Trim().Length == 0)
                     OmniBoxPlaceholder.Visibility = Visibility.Visible;
                 SmartSuggestionCancellation?.Cancel();
+                SmartSuggestionCancellation?.Dispose();
+                SmartSuggestionCancellation = null;
                 OmniBoxFastTimer?.Stop();
                 OmniBoxSmartTimer?.Stop();
                 OmniBox.IsDropDownOpen = false;
@@ -3702,6 +3728,8 @@ namespace SLBr.Pages
             OmniBoxStatus.Visibility = Visibility.Collapsed;
             Suggestions.Clear();
             SmartSuggestionCancellation?.Cancel();
+            SmartSuggestionCancellation?.Dispose();
+            SmartSuggestionCancellation = null;
             OmniBoxFastTimer?.Stop();
             OmniBoxSmartTimer?.Stop();
             string ProcessedText = CurrentText.Trim();
@@ -3727,7 +3755,9 @@ namespace SLBr.Pages
                 try
                 {
                     SmartSuggestionCancellation?.Cancel();
-                    
+                    SmartSuggestionCancellation?.Dispose();
+                    SmartSuggestionCancellation = null;
+
                     OmniBoxSmartTimer?.Stop();
                     if (OmniBoxOverrideSearch?.Host == "__Program__")
                     {
@@ -4005,6 +4035,7 @@ namespace SLBr.Pages
             if (Type == -1)
                 return;
             SmartSuggestionCancellation?.Cancel();
+            SmartSuggestionCancellation?.Dispose();
             SmartSuggestionCancellation = new CancellationTokenSource();
             var Token = SmartSuggestionCancellation.Token;
             OmniSuggestion Suggestion = await App.Instance.GenerateSmartSuggestion(Text, Type);
