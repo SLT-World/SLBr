@@ -117,6 +117,24 @@ namespace SLBr
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        public static readonly IntPtr HWND_TOPMOST = new(-1);
+        public static readonly IntPtr HWND_NOTOPMOST = new(-2);
+        public static readonly IntPtr HWND_TOP = new(0);
+        public static readonly IntPtr HWND_BOTTOM = new(1);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
@@ -131,7 +149,7 @@ namespace SLBr
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);*/
 
         [DllImport("user32.dll", EntryPoint = "CreateWindowEx", CharSet = CharSet.Unicode)]
-        public static extern IntPtr CreateWindowEx(int dwExStyle, string lpszClassName, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr hwndParent, IntPtr hMenu, IntPtr hInst, [MarshalAs(UnmanagedType.AsAny)] object pvParam);
+        public static extern IntPtr CreateWindowEx(int dwExStyle, string lpszClassName, string lpszWindowName, int style, int x, int y, int width, int height, IntPtr hwndParent, IntPtr hMenu, IntPtr hInst, IntPtr pvParam);
 
         [DllImport("user32.dll", EntryPoint = "DestroyWindow", CharSet = CharSet.Unicode)]
         public static extern bool DestroyWindow(IntPtr hwnd);
@@ -177,6 +195,13 @@ namespace SLBr
         //public const int WM_NCLBUTTONDBLCLK = 0x00A3;
         //public const int WM_GETMINMAXINFO = 0x0024;
         public const int HTMAXBUTTON = 9;
+
+        public const uint SWP_NOREDRAW = 0x0008;
+
+        public const uint SWP_NOOWNERZORDER = 0x0200;
+        public const uint SWP_NOSENDCHANGING = 0x0400;
+
+        public const uint TOPMOST_FLAGS = SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOSENDCHANGING;
 
         //public const int WM_SYSKEYDOWN = 0x0104;
 
@@ -1464,9 +1489,9 @@ namespace SLBr
 
             if (RemoveTrivialSubdomain)
             {
-                if (Url.StartsWith("www.") && CanRemoveTrivialSubdomain(Url[4..]))
+                if (Url.StartsWith("www.") && CanRemoveTrivialSubdomain(Url.AsSpan()[4..]))
                     Url = Url[4..];
-                else if (Url.StartsWith("m.") && CanRemoveTrivialSubdomain(Url[2..]))
+                else if (Url.StartsWith("m.") && CanRemoveTrivialSubdomain(Url.AsSpan()[2..]))
                     Url = Url[2..];
             }
             return Url;

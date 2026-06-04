@@ -111,6 +111,8 @@ namespace SLBr.Pages
                     TranslateAttribution.NavigateUri = new Uri("https://lingvanex.com/products/translationapi/");
                     break;
             }
+            FindPopup.CustomPopupPlacementCallback = new CustomPopupPlacementCallback(FindPopupPlacement);
+            StatusBubblePopup.CustomPopupPlacementCallback = new CustomPopupPlacementCallback(StatusBubblePopupPlacement);
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -1674,6 +1676,7 @@ namespace SLBr.Pages
 
         public void ReFocus()
         {
+            Tab.Content?.MaxHeight = Tab.ParentWindow.TabsUI.ActualHeight;
             LastActive = DateTime.Now;
             if (!bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 App.Instance.ScheduleNextEfficientTick();
@@ -2066,7 +2069,7 @@ namespace SLBr.Pages
                         ReaderModeButton.Visibility = Visibility.Collapsed;
                     SiteInformationPopupButton.IsEnabled = true;
                     //TODO: Investigate relocation to Unfocus for optimization.
-                    if (App.Instance.TabPreview && WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null && Tab == Tab.ParentWindow.GetTab() && WebView?.Control?.Visibility != Visibility.Collapsed)
+                    if (App.Instance.TabPreview && WebView != null && WebView.IsBrowserInitialized && Tab.Preview == null && WebView?.Control?.Visibility != Visibility.Collapsed && Tab == Tab.ParentWindow.GetTab())
                     {
                         BitmapImage _BitmapImage = new();
                         //WARNING: Do not move, prevents duplicate captures caused by async race condition.
@@ -2085,11 +2088,11 @@ namespace SLBr.Pages
                         //WARNING: Prevents undesirable behaviour in CefSharp subsequent to capture.
                         if (WebView is ChromiumWebView ChromiumView)
                         {
-                            ChromiumView.Browser.Width = CoreContainerSizeEmulator.ActualWidth + 1;
+                            ChromiumView.Browser.Height = CoreContainerSizeEmulator.ActualHeight + 1;
                             await Dispatcher.InvokeAsync(() =>
                             {
-                                ChromiumView.Browser.ClearValue(WidthProperty);
-                                ChromiumView.Browser.GetBrowser()?.GetHost()?.WasResized();
+                                ChromiumView.Browser.ClearValue(HeightProperty);
+                                //ChromiumView.Browser.GetBrowser()?.GetHost()?.WasResized();
                             }, DispatcherPriority.Render);
                         }
                     }
@@ -2103,7 +2106,7 @@ namespace SLBr.Pages
                     SiteInformationPopupButton.IsEnabled = false;
                 }
                 //https://github.com/brave/brave-core/blob/master/components/brave_wayback_machine/brave_wayback_machine_tab_helper.cc
-                if (WaybackInfoBar == null && StatusCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526 && IsHTTP && Host != "web.archive.org" && bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar")))
+                if (WaybackInfoBar == null && StatusCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526 && Host != "web.archive.org" && bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar")))
                 {
                     Dispatcher.BeginInvoke(async () =>
                     {
@@ -2421,6 +2424,7 @@ namespace SLBr.Pages
                 SetSideBarDock(3 - SideBarDockDropdown.SelectedIndex);
                 IsUtilityContainerOpen = true;
             }
+            UpdatePopupPlacement(FindPopup);
             SideBar.Visibility = IsUtilityContainerOpen ? Visibility.Visible : Visibility.Collapsed;
         }
 
@@ -4081,6 +4085,17 @@ namespace SLBr.Pages
         Window ExtensionWindow;
         private void LoadExtensionPopup(object sender, RoutedEventArgs e)
         {
+            /*NOTE: Full implementation of extension popups is practically impossible at this stage, in both WebView2 & CefSharp.
+             * Possible solutions:
+             * "chrome" namespace extension API polyfill.
+             * Request feature implementation in upstream Cef & WebView2, though unlikely to gain traction.
+             * Remove extension popup support.
+             */
+            //TODO: Investigate kPrivilegedExtension.
+            //https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/renderer/native_extension_bindings_system.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:extensions/renderer/script_context_set.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:extensions/renderer/script_context.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:extensions/common/extension.cc
             //TODO: Utilize PopupBrowser.
             Extension? _Extension = App.Instance.Extensions.FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             if (_Extension == null)
@@ -4242,12 +4257,85 @@ namespace SLBr.Pages
         InfoBar? HomographInfoBar;
         InfoBar? EngineInitializationInfoBar;
 
+        public void TriggerLocationChanged()
+        {
+            UpdatePopupPlacement(FindPopup);
+        }
+
+        public void TriggerSizeChanged()
+        {
+            UpdatePopupPlacement(FindPopup);
+        }
+
         private void InfoBarRun_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             if (((FrameworkElement)sender).DataContext is UIElementLayer Element)
             {
                 if (Element.Command != null && Element.Command.CanExecute(null))
                     Element.Command.Execute(null);
+            }
+        }
+
+        private CustomPopupPlacement[] FindPopupPlacement(Size PopupSize, Size TargetSize, Point Offset)
+        {
+            double X = TargetSize.Width - PopupSize.Width - 5;
+            double Y = 5;
+            if (CoreContainer.IsLoaded && VisualTreeHelper.GetParent(CoreContainer) != null)
+            {
+                try
+                {
+                    Point ContainerPosition = CoreContainer.TransformToAncestor(this).Transform(new Point(0, 0));
+                    if (ContainerPosition.X + X < 0)
+                        X = -ContainerPosition.X;
+                    if (ContainerPosition.Y + Y < 0)
+                        Y = 0;
+                }
+                catch (InvalidOperationException)
+                {
+                    X = TargetSize.Width - PopupSize.Width;
+                    Y = 5;
+                }
+            }
+
+            return [new(new Point(X, Y), PopupPrimaryAxis.Horizontal)];
+        }
+
+        private CustomPopupPlacement[] StatusBubblePopupPlacement(Size PopupSize, Size TargetSize, Point Offset)
+        {
+            double X = 5;
+            double Y = TargetSize.Height - PopupSize.Height - 5;
+
+            if (CoreContainer.IsLoaded && VisualTreeHelper.GetParent(CoreContainer) != null)
+            {
+                try
+                {
+                    Point ContainerPosition = CoreContainer.TransformToAncestor(this).Transform(new Point(0, 0));
+
+                    if (ContainerPosition.X + X < 0)
+                        X = -ContainerPosition.X;
+                    if (ContainerPosition.Y + Y + PopupSize.Height > ActualHeight)
+                        Y = ActualHeight - ContainerPosition.Y - PopupSize.Height;
+                }
+                catch (InvalidOperationException)
+                {
+                    X = 5;
+                    Y = TargetSize.Height - PopupSize.Height - 5;
+                }
+            }
+
+            return [new(new Point(X, Y), PopupPrimaryAxis.Horizontal)];
+        }
+
+        private void UpdatePopupPlacement(Popup _Popup)
+        {
+            if (_Popup.IsOpen)
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    double Offset = _Popup.HorizontalOffset;
+                    _Popup.HorizontalOffset = Offset + 0.01;
+                    _Popup.HorizontalOffset = Offset;
+                }), DispatcherPriority.Render);
             }
         }
     }

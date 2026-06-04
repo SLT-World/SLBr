@@ -647,27 +647,23 @@
             <GridSplitter x:Name="SideBarRowSplitterTop" Visibility="Collapsed" Grid.Column="1" Grid.Row="0" Height="5" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"/>
             <GridSplitter x:Name="SideBarRowSplitterBottom" Visibility="Collapsed" Grid.Column="1" Grid.Row="2" Height="5" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
 
-            <Grid Grid.Row="1" Grid.Column="1" IsHitTestVisible="False" Focusable="False" Margin="5,37.5" VerticalAlignment="Bottom">
-                <Popup SnapsToDevicePixels="True" x:Name="StatusBubblePopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
-                    <Border Background="{StaticResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
-                        <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300">
-                            <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="7.5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{StaticResource FontBrush}"/>
-                        </Grid>
-                    </Border>
-                </Popup>
-            </Grid>
-            <Grid Grid.Row="1" Grid.Column="1" x:Name="FindBar" Margin="5" VerticalAlignment="Top" HorizontalAlignment="Right">
-                <Popup SnapsToDevicePixels="True" x:Name="FindPopup" Placement="RelativePoint" AllowsTransparency="True" IsOpen="False" PopupAnimation="Slide">
-                    <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
-                        <DockPanel Margin="5">
-                            <TextBox x:Name="FindTextBox" GotKeyboardFocus="FindTextBox_GotKeyboardFocus" KeyUp="FindTextBox_KeyUp" Width="200" Margin="0,0,5,0"/>
-                            <Button x:Name="PreviousFindButton" Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xe70e;" Margin="0,0,5,0" ToolTip="Previous"/>
-                            <Button x:Name="NextFindButton" Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xe70d;" Margin="0,0,5,0" ToolTip="Next"/>
-                            <Button Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xF78A;" ToolTip="Close"/>
-                        </DockPanel>
-                    </Border>
-                </Popup>
-            </Grid>
+            <controls:NonTopmostPopup SnapsToDevicePixels="True" x:Name="StatusBubblePopup" PlacementTarget="{Binding ElementName=CoreContainer}" Placement="Custom" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
+                <Border Background="{StaticResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
+                    <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300">
+                        <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="7.5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{StaticResource FontBrush}"/>
+                    </Grid>
+                </Border>
+            </controls:NonTopmostPopup>
+            <controls:NonTopmostPopup SnapsToDevicePixels="True" x:Name="FindPopup" PlacementTarget="{Binding ElementName=CoreContainer}" Placement="Custom" AllowsTransparency="True" IsOpen="False" PopupAnimation="Slide">
+                <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
+                    <DockPanel Margin="5">
+                        <TextBox x:Name="FindTextBox" GotKeyboardFocus="FindTextBox_GotKeyboardFocus" KeyUp="FindTextBox_KeyUp" Width="200" Margin="0,0,5,0"/>
+                        <Button x:Name="PreviousFindButton" Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xe70e;" Margin="0,0,5,0" ToolTip="Previous"/>
+                        <Button x:Name="NextFindButton" Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xe70d;" Margin="0,0,5,0" ToolTip="Next"/>
+                        <Button Click="FindButton_Click" Style="{StaticResource IconButton}" Content="&#xF78A;" ToolTip="Close"/>
+                    </DockPanel>
+                </Border>
+            </controls:NonTopmostPopup>
             <Border x:Name="WebContainerBorder" BorderBrush="{StaticResource BorderBrush}" Grid.ColumnSpan="10" Grid.RowSpan="10" BorderThickness="0" IsHitTestVisible="False"/>
         </Grid>
     </Grid>

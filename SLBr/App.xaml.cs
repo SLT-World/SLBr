@@ -2279,7 +2279,7 @@ Inner Exception: {7}";
         }
         public async Task SetAdBlockLists()
         {
-            if (_AdBlockHandler == null)
+            if (AdBlock == 0 || _AdBlockHandler == null)
                 return;
             _AdBlockHandler.Clear();
             if (!Directory.Exists(AdBlockDataPath))

@@ -7,7 +7,6 @@ using SLBr.Pages;
 using SLBr.WebView;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -857,6 +856,7 @@ namespace SLBr
         {
             TabPreviewPopup.IsOpen = false;
             MaximizeRestoreButton.Tag = null;
+            GetTab()?.Content?.TriggerLocationChanged();
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -868,6 +868,7 @@ namespace SLBr
                 if (e.HeightChanged)
                     Tab.Content?.MaxHeight = TabsUI.ActualHeight;
             }
+            GetTab()?.Content?.TriggerSizeChanged();
         }
 
         public void UnloadTabs()

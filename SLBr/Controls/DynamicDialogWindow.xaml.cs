@@ -192,10 +192,10 @@ namespace SLBr.Controls
                     }
                 }
             }
-            Initialized = true;
+            HasInitialized = true;
         }
 
-        bool Initialized = false;
+        bool HasInitialized = false;
 
         private void ValidateInputs(object sender, KeyEventArgs e)
         {
@@ -204,7 +204,7 @@ namespace SLBr.Controls
 
         private void ColorList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!Initialized)
+            if (!HasInitialized)
                 return;
             if (sender is not ListBox List)
                 return;

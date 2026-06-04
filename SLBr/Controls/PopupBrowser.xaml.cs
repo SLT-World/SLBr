@@ -5,7 +5,9 @@ using SLBr.WebView;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
+using System.Windows.Media;
 using Windows.UI.ViewManagement.Core;
 
 namespace SLBr.Controls
@@ -31,6 +33,7 @@ namespace SLBr.Controls
             Handle = new WindowInteropHelper(this).EnsureHandle();
             DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             CreateWebView();
+            StatusBubblePopup.CustomPopupPlacementCallback = new CustomPopupPlacementCallback(StatusBubblePopupPlacement);
         }
 
         async void CreateWebView()
@@ -231,7 +234,7 @@ namespace SLBr.Controls
         {
             if (!string.IsNullOrEmpty(e))
                 StatusMessage.Text = e;
-            StatusBarPopup.IsOpen = !string.IsNullOrEmpty(e);
+            StatusBubblePopup.IsOpen = !string.IsNullOrEmpty(e);
         }
 
         public void ApplyTheme(Theme _Theme)
@@ -249,6 +252,32 @@ namespace SLBr.Controls
             Resources["GrayBrushColor"] = _Theme.GrayColor;
             Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
+        }
+
+        private CustomPopupPlacement[] StatusBubblePopupPlacement(Size PopupSize, Size TargetSize, Point Offset)
+        {
+            double X = 5;
+            double Y = TargetSize.Height - PopupSize.Height - 5;
+
+            if (WebContent.IsLoaded && VisualTreeHelper.GetParent(WebContent) != null)
+            {
+                try
+                {
+                    Point ContainerPosition = WebContent.TransformToAncestor(this).Transform(new Point(0, 0));
+
+                    if (ContainerPosition.X + X < 0)
+                        X = -ContainerPosition.X;
+                    if (ContainerPosition.Y + Y + PopupSize.Height > ActualHeight)
+                        Y = ActualHeight - ContainerPosition.Y - PopupSize.Height;
+                }
+                catch (InvalidOperationException)
+                {
+                    X = 5;
+                    Y = TargetSize.Height - PopupSize.Height - 5;
+                }
+            }
+
+            return [new(new Point(X, Y), PopupPrimaryAxis.Horizontal)];
         }
     }
 }

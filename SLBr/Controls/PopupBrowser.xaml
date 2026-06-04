@@ -13,14 +13,12 @@
         <Grid x:Name="WebContent">
 
         </Grid>
-        <Grid IsHitTestVisible="False" Focusable="False" x:Name="StatusBar" Margin="5,37.5" VerticalAlignment="Bottom">
-            <Popup SnapsToDevicePixels="True" x:Name="StatusBarPopup" Placement="RelativePoint" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
-                <Border Background="{StaticResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
-                    <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300">
-                        <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="7.5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{StaticResource FontBrush}"/>
-                    </Grid>
-                </Border>
-            </Popup>
-        </Grid>
+        <local:NonTopmostPopup SnapsToDevicePixels="True" x:Name="StatusBubblePopup" PlacementTarget="{Binding ElementName=WebContent}" Placement="Custom" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade">
+            <Border Background="{StaticResource PrimaryBrush}" IsHitTestVisible="False" Focusable="False" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5">
+                <Grid IsHitTestVisible="False" Focusable="False" MaxWidth="300">
+                    <TextBlock IsHitTestVisible="False" x:Name="StatusMessage" Margin="7.5" FontFamily="None" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Foreground="{StaticResource FontBrush}"/>
+                </Grid>
+            </Border>
+        </local:NonTopmostPopup>
     </Grid>
 </Window>

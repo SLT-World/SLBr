@@ -1601,13 +1601,13 @@ namespace SLBr.WebView
             get => (IsViewSource ? "view-source:" : "") + (Browser?.Address != null ? CurrentAddress : InitialUrls.Last().Url);
             set => Navigate(value);
         }
-        public string Title => Browser.Title;
+        public string Title => Browser?.Title ?? "";
 
         public bool CanGoBack { get; private set; }
         public bool CanGoForward { get; private set; }
         public bool CanReload { get; private set; }
         public bool IsLoading { get; private set; }
-        public bool IsBrowserInitialized => Browser.IsBrowserInitialized;
+        public bool IsBrowserInitialized => Browser?.IsBrowserInitialized ?? false;
 
         public bool IsSecure { get; private set; }
         public bool AudioPlaying { get; private set; }
@@ -1626,54 +1626,128 @@ namespace SLBr.WebView
             set
             {
                 _IsMuted = value;
-                Application.Current.Dispatcher.BeginInvoke(() => Cef.UIThreadTaskFactory.StartNew(() => Browser.GetBrowserHost()?.SetAudioMuted(value)));
+                if (Browser.IsBrowserInitialized)
+                    Application.Current.Dispatcher.BeginInvoke(() => Cef.UIThreadTaskFactory.StartNew(() => Browser?.GetBrowserHost()?.SetAudioMuted(value)));
             }
         }
 
         public double ZoomFactor
         {
             get => Browser.ZoomLevel + 1;
-            set { Browser.ZoomLevel = value - 1; }
+            set => Browser.ZoomLevel = value - 1;
         }
 
         bool IsViewSource;
-        public void Navigate(string Url) => Browser?.Dispatcher.Invoke(() => Browser.Load(Url));
-        public void Back() { if (CanGoBack) Browser.Back(); }
-        public void Forward() { if (CanGoForward) Browser.Forward(); }
+        public void Navigate(string Url)
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Dispatcher.Invoke(() => Browser?.Load(Url));
+        }
+        public void Back()
+        {
+            if (CanGoBack && Browser.IsBrowserInitialized)
+                Browser?.Back();
+        }
+        public void Forward()
+        {
+            if (CanGoForward && Browser.IsBrowserInitialized)
+                Browser?.Forward();
+        }
         public void Refresh(bool IgnoreCache = false, bool ClearCache = false)
         {
+            if (Browser == null)
+                return;
+            //TODO: https://github.com/cefsharp/CefSharp/pull/5257
             if (ClearCache)
             {
-                using (DevToolsClient _DevToolsClient = Browser?.GetDevToolsClient())
+                /*if (WebViewManager.Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
                 {
-                    _DevToolsClient.Page.ClearCompilationCacheAsync();
-                    _DevToolsClient.Network.ClearBrowserCacheAsync();
+                    Browser.ExecuteChromeCommand(CefIdMappers.CefIdForCommandIdName("IDC_RELOAD_CLEARING_CACHE"), WindowOpenDisposition.CurrentTab);
+                    return;
                 }
+                else
+                {*/
+                using DevToolsClient _DevToolsClient = Browser.GetDevToolsClient();
+                _DevToolsClient.Page.ClearCompilationCacheAsync();
+                _DevToolsClient.Network.ClearBrowserCacheAsync();
+                //}
             }
             Browser.Reload(IgnoreCache);
         }
-        public void Stop() => Browser.Stop();
-        public void Print() => Browser.Print();
+        public void Stop()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Stop();
+        }
+        public void Print()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Print();
+        }
         public void SetFindResult(int ActiveMatch, int MatchCount) => FindResult.RaiseUIAsync(this, new FindResult(ActiveMatch, MatchCount));
-        public void Find(string Text, bool Forward, bool MatchCase, bool FindNext) => Browser.Find(Text, Forward, MatchCase, FindNext);
-        public void StopFind() => Browser.StopFinding(true);
-        //TODO: Non-functional on local webpages.
-        public void SaveAs() => Browser.StartDownload(Address);
-        /*{
-            SaveFileDialog SaveDialog = new SaveFileDialog
-            {
-                Filter = "Webpage, Complete (*.htm;*.html)|*.htm;*.html|Webpage, Single File (*.mhtml)|*.mhtml",
-                FileName = "page"
-            };
-        }*/
+        public void Find(string Text, bool Forward, bool MatchCase, bool FindNext)
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Find(Text, Forward, MatchCase, FindNext);
+        }
+        public void StopFind()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.StopFinding(true);
+        }
 
-        public void Cut() => Browser.Cut();
-        public void Copy() => Browser.Copy();
-        public void Paste() => Browser.Paste();
-        public void Delete() => Browser.Delete();
-        public void SelectAll() => Browser.SelectAll();
-        public void Undo() => Browser.Undo();
-        public void Redo() => Browser.Redo();
+        //TODO: https://github.com/cefsharp/CefSharp/pull/5257
+        /*public void SaveAs()
+        {
+            if (Browser.IsBrowserInitialized) return;
+            if (WebViewManager.Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
+                Browser?.ExecuteChromeCommand(CefIdMappers.CefIdForCommandIdName("IDC_SAVE_PAGE"), WindowOpenDisposition.CurrentTab);
+            else
+                Browser?.StartDownload(Address);
+        }*/
+        public void SaveAs() => Browser?.StartDownload(Address);
+
+        public void Cut()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Cut();
+        }
+
+        public void Copy()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Copy();
+        }
+
+        public void Paste()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Paste();
+        }
+
+        public void Delete()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Delete();
+        }
+
+        public void SelectAll()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.SelectAll();
+        }
+
+        public void Undo()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Undo();
+        }
+
+        public void Redo()
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.Redo();
+        }
 
         public void SetAudioPlaying(bool Playing)
         {
@@ -1744,12 +1818,16 @@ namespace SLBr.WebView
         }
         public event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        public void Download(string Url) => Browser.StartDownload(Url);
+        public void Download(string Url)
+        {
+            if (Browser.IsBrowserInitialized)
+                Browser?.StartDownload(Url);
+        }
 
         public void ExecuteScript(string Script)
         {
             if (Browser.CanExecuteJavascriptInMainFrame)
-                Browser.ExecuteScriptAsync(Script);
+                Browser?.ExecuteScriptAsync(Script);
         }
 
         public bool CanExecuteJavascript => Browser.CanExecuteJavascriptInMainFrame;

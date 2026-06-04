@@ -1146,6 +1146,15 @@ namespace SLBr.WebView
                 Item.State = WebDownloadState.InProgress;
                 WebViewManager.DownloadManager.Updated(Item);
             }
+            //TODO: Submit pull request for downloadItem.IsInterrupted & GetInterruptReason.
+            //https://cef-builds.spotifycdn.com/docs/148.0/classCefDownloadItem.html
+
+            //TODO: https://github.com/cefsharp/CefSharp/pull/5259
+            /*else if (downloadItem.IsPaused)
+            {
+                Item.State = WebDownloadState.Paused;
+                WebViewManager.DownloadManager.Updated(Item);
+            }*/
             else
             {
                 //WARNING: Keep this warning path otherwise the open downloads wouldn't work

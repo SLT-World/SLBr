@@ -158,11 +158,11 @@
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.runtimeconfig.json" />
 		<ItemGroup>
 			<FilesToDelete Include="$(PublishDir)*.pdb;$(PublishDir)\*.xml" />
+            <FilesToDelete Include="$(PublishDir)\locales\*_FEMININE.pak" />
+            <FilesToDelete Include="$(PublishDir)\locales\*_MASCULINE.pak" />
+            <FilesToDelete Include="$(PublishDir)\locales\*_NEUTER.pak" />
 		</ItemGroup>
-		<Delete Files="@(FilesToDelete)">
-			<Output TaskParameter="DeletedFiles" ItemName="FilesDeleted" />
-		</Delete>
-		<Message Text="Deleted PDB files: @(FilesDeleted)" Importance="high" />
+		<Delete Files="@(FilesToDelete)" />
 	</Target>
 
 	<!--<Target Name="RemoveWinFormsDll" AfterTargets="Build">

@@ -157,11 +157,11 @@
             </TabControl.ContentTemplate>
         </WinUI:WinUITabControl>
         <Grid x:Name="FullscreenContainer" Grid.RowSpan="2" Grid.ColumnSpan="4" Visibility="Visible">
-            <Popup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" StaysOpen="False" PopupAnimation="Fade">
+            <controls:NonTopmostPopup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" StaysOpen="False" PopupAnimation="Fade">
                 <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Opacity="0.8">
                     <TextBlock FontSize="25" Text="To exit fullscreen, press F11 or Esc" Margin="7.5" Foreground="{StaticResource FontBrush}"/>
                 </Border>
-            </Popup>
+            </controls:NonTopmostPopup>
         </Grid>
         <Grid Background="Transparent" Grid.ColumnSpan="4" IsHitTestVisible="False" Grid.Row="1" VerticalAlignment="Top">
             <Popup x:Name="ToastPopup" SnapsToDevicePixels="True" IsOpen="False" VerticalOffset="110" Placement="Center" IsHitTestVisible="True" MouseDown="ToastPopup_MouseDown" Focusable="False" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
@@ -183,7 +183,7 @@
                 </Border>
             </Popup>
         </Grid>
-        <Popup x:Name="TabPreviewPopup" SnapsToDevicePixels="True" Placement="Bottom" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade" VerticalOffset="-7.5" HorizontalOffset="-10">
+        <controls:NonTopmostPopup x:Name="TabPreviewPopup" SnapsToDevicePixels="True" Placement="Bottom" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" PopupAnimation="Fade" VerticalOffset="-7.5" HorizontalOffset="-10">
             <Border CornerRadius="5">
                 <Border.Effect>
                     <DropShadowEffect Direction="-75" ShadowDepth="1" Opacity="0.5" BlurRadius="15" Color="Gray"/>
@@ -212,6 +212,6 @@
                     </Grid>
                 </Border>
             </Border>
-        </Popup>
+        </controls:NonTopmostPopup>
     </Grid>
 </Window>
