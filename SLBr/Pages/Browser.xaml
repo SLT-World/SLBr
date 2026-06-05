@@ -136,52 +136,65 @@
                     <WinUI:PopupButton BorderThickness="0" x:Name="OpenDownloadsButton" ToolTip="Downloads" Content="&#xE896;" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" DockPanel.Dock="Right">
                         <WinUI:PopupButton.PopupContent>
                             <Border Width="250" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5">
-                                <StackPanel>
-                                    <Border CornerRadius="5,5,0,0" Background="{StaticResource SecondaryBrush}" Padding="10">
-                                        <DockPanel>
-                                            <Button DockPanel.Dock="Right" Background="Transparent" Width="Auto" Height="Auto" Click="ButtonAction" BorderThickness="0" Tag="5&lt;,&gt;slbr://downloads" Content="&#xe9a4;" Margin="0,0,0,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Downloads Manager"/>
-                                            <Button DockPanel.Dock="Right" Background="Transparent" Width="Auto" Height="Auto" Click="DownloadsFolderButton_Click" BorderThickness="0" Content="&#xe8b7;" Margin="0,0,10,0" Style="{StaticResource ToolBarIconButton}" ToolTip="Open downloads folder"/>
-
-                                            <TextBlock VerticalAlignment="Center" Text="Downloads"/>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Margin="10">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <DockPanel Margin="0,0,0,10" Height="Auto">
+                                            <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE896;</TextBlock>
+                                            <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Downloads</Label>
+                                        </DockPanel>
+                                        <ItemsControl Grid.Row="1" Margin="0,0,0,0" x:Name="DownloadsPopup">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="0,2.5" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5">
+                                                        <StackPanel>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="35"/>
+                                                                    <ColumnDefinition/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Border Width="30" Height="30" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
+                                                                    <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
+                                                                </Border>
+                                                                <Grid Grid.Column="1" VerticalAlignment="Center">
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition/>
+                                                                        <RowDefinition/>
+                                                                    </Grid.RowDefinitions>
+                                                                    <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
+                                                                </Grid>
+                                                                <!--TODO: Support pause & resume.-->
+                                                                <Button Grid.Column="2" Width="30" Height="30" ToolTip="Cancel" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
+                                                                    <TextBlock Text="&#xE71A;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                                                                </Button>
+                                                                <Button Grid.Column="2" Width="30" Height="30" ToolTip="Open" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
+                                                                    <TextBlock Text="&#xE838;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                                                                </Button>
+                                                            </Grid>
+                                                            <ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Margin="0,5,0,0" Width="Auto" Maximum="100" Visibility="{Binding Progress}" Value="{Binding PercentComplete}"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                    <Border Background="{StaticResource SecondaryBrush}" Grid.Row="1" Padding="10" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
+                                        <DockPanel LastChildFill="False">
+                                            <Button Click="ButtonAction" Tag="5&lt;,&gt;slbr://downloads" Content="&#xe9a4;" Margin="0,0,0,0" Style="{StaticResource IconButton}" ToolTip="Download manager"/>
+                                            <Button Click="DownloadsFolderButton_Click" Content="&#xe8b7;" Margin="10,0,0,0" Style="{StaticResource IconButton}" ToolTip="Open downloads folder"/>
                                         </DockPanel>
                                     </Border>
-                                    <ItemsControl Margin="5,2.5" x:Name="DownloadsPopup">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Margin="0,2.5" Background="{StaticResource PrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="5">
-                                                    <StackPanel>
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="35"/>
-                                                                <ColumnDefinition/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <Border Width="30" Height="30" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                                                                <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
-                                                            </Border>
-                                                            <Grid Grid.Column="1" VerticalAlignment="Center">
-                                                                <Grid.RowDefinitions>
-                                                                    <RowDefinition/>
-                                                                    <RowDefinition/>
-                                                                </Grid.RowDefinitions>
-                                                                <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
-                                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
-                                                            </Grid>
-                                                            <!--TODO: Support pause & resume.-->
-                                                            <Button Grid.Column="2" Width="30" Height="30" ToolTip="Cancel" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
-                                                                <TextBlock Text="&#xE71A;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
-                                                            </Button>
-                                                            <Button Grid.Column="2" Width="30" Height="30" ToolTip="Open" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
-                                                                <TextBlock Text="&#xE838;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
-                                                            </Button>
-                                                        </Grid>
-                                                        <ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Margin="0,5,0,0" Width="Auto" Maximum="100" Visibility="{Binding Progress}" Value="{Binding PercentComplete}"/>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
+                                </Grid>
                             </Border>
                         </WinUI:PopupButton.PopupContent>
                     </WinUI:PopupButton>

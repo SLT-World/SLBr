@@ -43,7 +43,7 @@
             <ItemsControl x:Name="ProfilesList">
                 <ItemsControl.Resources>
                     <DataTemplate x:Key="UserTemplate">
-                        <Border MouseUp="OpenProfile_Click" Background="{StaticResource SecondaryBrush}" Margin="10" Height="175" Width="150" CornerRadius="5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        <Border MouseUp="OpenProfile_Click" Background="{StaticResource SecondaryBrush}" Margin="10" Height="175" Width="175" CornerRadius="5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition/>
@@ -54,8 +54,8 @@
                                 </Border>
                                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Grid.Row="1" Padding="10" Height="60">
                                     <DockPanel>
-                                        <Button Click="DeleteButton_Click" DockPanel.Dock="Right" ToolTip="Delete" Content="&#xe74d;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
-                                        <Button Visibility="{Binding Default, Converter={StaticResource OppositeBooleanToVisibility}}" Click="SetDefaultButton_Click" DockPanel.Dock="Right" ToolTip="Set as Default" Content="&#xe734;" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
+                                        <Button Background="Transparent" Width="Auto" Height="Auto" BorderThickness="0" Click="DeleteButton_Click" DockPanel.Dock="Right" ToolTip="Delete" Content="&#xe74d;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
+                                        <Button Background="Transparent" Width="Auto" Height="Auto" BorderThickness="0" Visibility="{Binding Default, Converter={StaticResource OppositeBooleanToVisibility}}" Click="SetDefaultButton_Click" DockPanel.Dock="Right" ToolTip="Set as Default" Content="&#xe734;" Margin="0,0,10,0" Style="{StaticResource IconButton}"/>
                                         <TextBlock VerticalAlignment="Center" ToolTip="{Binding Name}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" DockPanel.Dock="Left"/>
                                     </DockPanel>
                                 </Border>
@@ -63,7 +63,7 @@
                         </Border>
                     </DataTemplate>
                     <DataTemplate x:Key="GuestTemplate">
-                        <Border MouseUp="OpenProfile_Click" Background="{StaticResource SecondaryBrush}" Margin="10" Height="175" Width="150" CornerRadius="5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        <Border MouseUp="OpenProfile_Click" Background="{StaticResource SecondaryBrush}" Margin="10" Height="175" Width="175" CornerRadius="5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition/>
@@ -79,7 +79,7 @@
                         </Border>
                     </DataTemplate>
                     <DataTemplate x:Key="AddTemplate">
-                        <Border MouseUp="NewProfile" Background="{StaticResource PrimaryBrush}" Margin="10" Height="175" Width="150" CornerRadius="5" BorderThickness="1">
+                        <Border MouseUp="NewProfile" Background="{StaticResource PrimaryBrush}" Margin="10" Height="175" Width="175" CornerRadius="5" BorderThickness="1">
                             <Border.BorderBrush>
                                 <DrawingBrush Viewport="0,0,8,8" ViewportUnits="Absolute" TileMode="Tile">
                                     <DrawingBrush.Drawing>
@@ -104,7 +104,23 @@
                                 <Border Width="75" Height="75" Background="{StaticResource BorderBrush}" CornerRadius="1000" Margin="10">
                                     <TextBlock FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xe710;"/>
                                 </Border>
-                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0" Grid.Row="1" Padding="10" Height="60">
+                                <Border BorderThickness="0,1,0,0" Grid.Row="1" Padding="10" Height="60">
+                                    <!--<Border.BorderBrush>
+                                        <DrawingBrush Viewport="0,0,8,8" ViewportUnits="Absolute" TileMode="Tile">
+                                            <DrawingBrush.Drawing>
+                                                <DrawingGroup>
+                                                    <GeometryDrawing Brush="{StaticResource BorderBrush}">
+                                                        <GeometryDrawing.Geometry>
+                                                            <GeometryGroup>
+                                                                <RectangleGeometry Rect="0,0,50,50" />
+                                                                <RectangleGeometry Rect="50,50,50,50" />
+                                                            </GeometryGroup>
+                                                        </GeometryDrawing.Geometry>
+                                                    </GeometryDrawing>
+                                                </DrawingGroup>
+                                            </DrawingBrush.Drawing>
+                                        </DrawingBrush>
+                                    </Border.BorderBrush>-->
                                     <TextBlock VerticalAlignment="Center" ToolTip="{Binding Name}" Text="{Binding Name}" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                 </Border>
                             </Grid>
