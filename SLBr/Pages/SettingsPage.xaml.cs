@@ -147,19 +147,18 @@ namespace SLBr.Pages
         {
             try
             {
-                if (sender != null)
+                if (sender is Control _Control && _Control.DataContext is ActionStorage LocaleEntry)
                 {
                     if (App.Instance.Languages.Count == 1)
                     {
-                        InformationDialogWindow InfoWindow = new("Error", $"Settings", "The selected languages could not be removed.", "\uece4")
+                        InformationDialogWindow InfoWindow = new("Error", $"Settings", "The selected language could not be removed.", "\uece4")
                         {
                             Topmost = true
                         };
                         InfoWindow.ShowDialog();
                         return;
                     }
-                    ActionStorage _Language = App.Instance.Languages.First(i => i.Tooltip == ((FrameworkElement)sender).Tag.ToString());
-                    App.Instance.Languages.Remove(_Language);
+                    App.Instance.Languages.Remove(LocaleEntry);
 
                     /*If replace all items in the collection and have more than 10 items.
                      * There is a significant performance improvement to gain used the Clear() -> Add() method.
@@ -169,11 +168,38 @@ namespace SLBr.Pages
                      * MyObservableCollection needs to invoke the PropertyChanged event (or you can do it manually afterwords)
                      * Doing this can speed up collection renders significantly.*/
 
-                    PrivateAddableLanguages.Add(_Language);
-                    List<ActionStorage> SortedList = PrivateAddableLanguages.OrderBy(x => x.Tooltip).ToList();
-                    PrivateAddableLanguages.Clear();
-                    foreach (ActionStorage Item in SortedList)
-                        PrivateAddableLanguages.Add(Item);
+                    int Index = 0;
+                    while (Index < PrivateAddableLanguages.Count && string.Compare(PrivateAddableLanguages[Index].Tooltip, LocaleEntry.Tooltip, StringComparison.Ordinal) < 0)
+                    {
+                        Index++;
+                    }
+                    PrivateAddableLanguages.Insert(Index, LocaleEntry);
+                    RaisePropertyChanged();
+                }
+            }
+            catch { }
+        }
+
+        public void MoveLocale(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (sender is Control _Control && _Control.DataContext is ActionStorage LocaleEntry)
+                {
+                    if (App.Instance.Languages.Count == 1)
+                        return;
+                    bool Up = ((FrameworkElement)sender).Tag.ToString() == "0";
+                    int Index = App.Instance.Languages.IndexOf(LocaleEntry);
+                    if (Up)
+                    {
+                        if (Index > 0)
+                            App.Instance.Languages.Move(Index, Index - 1);
+                    }
+                    else
+                    {
+                        if (Index >= 0 && Index < App.Instance.Languages.Count - 1)
+                            App.Instance.Languages.Move(Index, Index + 1);
+                    }
                     RaisePropertyChanged();
                 }
             }
@@ -1626,6 +1652,15 @@ namespace SLBr.Pages
             await App.Instance.SetAdBlockLists();
             BrowserView.Tab.ParentWindow.OpenToast("Filter lists updated", "\xe73a");
             AdBlockUpdateButton.IsEnabled = true;
+        }
+
+        private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBoxItem Item && Item.IsSelected)
+            {
+                Item.IsSelected = false;
+                e.Handled = true;
+            }
         }
     }
 }

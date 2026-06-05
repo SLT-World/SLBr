@@ -49,6 +49,7 @@
                                     <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
                                     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                     <Setter Property="BorderThickness" Value="1"/>
+                                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_DeselectPreviewMouseLeftButtonDown"/>
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ListBoxItem}">

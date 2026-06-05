@@ -108,5 +108,14 @@ namespace SLBr.Pages
             else
                 DownloadsList.ItemsSource = App.Instance.VisibleDownloads.Where(i => i.FileName?.ToLowerInvariant().Contains(SearchText) ?? false);
         }
+
+        private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBoxItem Item && Item.IsSelected)
+            {
+                Item.IsSelected = false;
+                e.Handled = true;
+            }
+        }
     }
 }

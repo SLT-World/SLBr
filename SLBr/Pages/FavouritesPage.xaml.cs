@@ -133,5 +133,14 @@ namespace SLBr.Pages
             else
                 FavouritesList.ItemsSource = App.Instance.Favourites.Where(i => i.Type == "url" && (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Url?.ToLowerInvariant().Contains(SearchText) ?? false));
         }
+
+        private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBoxItem Item && Item.IsSelected)
+            {
+                Item.IsSelected = false;
+                e.Handled = true;
+            }
+        }
     }
 }

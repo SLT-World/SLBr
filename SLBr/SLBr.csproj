@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows10.0.17763</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -19,7 +19,7 @@
     <Company>$(Authors)</Company>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
-
+	
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>portable</DebugType>
   </PropertyGroup>
@@ -158,9 +158,10 @@
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.runtimeconfig.json" />
 		<ItemGroup>
 			<FilesToDelete Include="$(PublishDir)*.pdb;$(PublishDir)\*.xml" />
-            <FilesToDelete Include="$(PublishDir)\locales\*_FEMININE.pak" />
+            <!--<FilesToDelete Include="$(PublishDir)\locales\*_FEMININE.pak" />
             <FilesToDelete Include="$(PublishDir)\locales\*_MASCULINE.pak" />
-            <FilesToDelete Include="$(PublishDir)\locales\*_NEUTER.pak" />
+            <FilesToDelete Include="$(PublishDir)\locales\*_NEUTER.pak" />-->
+			<FilesToDelete Include="$(PublishDir)\locales\*.pak" Exclude="$(PublishDir)\locales\en-US.pak" />
 		</ItemGroup>
 		<Delete Files="@(FilesToDelete)" />
 	</Target>

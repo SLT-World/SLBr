@@ -2897,12 +2897,12 @@ Inner Exception: {7}";
                     //https://github.com/yokoffing/filterlists?tab=readme-ov-file#optimized-lists
                     //https://easylist-downloads.adblockplus.org/easylist_noelemhide.txt
 
-                    //new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
-                    //new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
+                    new AdBlockList { Name = "EasyList", Url = "https://easylist.to/easylist/easylist.txt", IsEnabled = true },
+                    new AdBlockList { Name = "EasyPrivacy", Url = "https://easylist.to/easylist/easyprivacy.txt", IsEnabled = true },
                     //new AdBlockList { Name = "AdGuard Base filter", Url = "https://filters.adtidy.org/extension/chromium/filters/2.txt" },
 
-                    new AdBlockList { Name = "EasyList", Url = "https://filters.adtidy.org/extension/ublock/filters/101_optimized.txt", IsEnabled = true },
-                    new AdBlockList { Name = "EasyPrivacy", Url = "https://filters.adtidy.org/extension/ublock/filters/118_optimized.txt", IsEnabled = true },
+                    //new AdBlockList { Name = "EasyList", Url = "https://filters.adtidy.org/extension/ublock/filters/101_optimized.txt", IsEnabled = true },
+                    //new AdBlockList { Name = "EasyPrivacy", Url = "https://filters.adtidy.org/extension/ublock/filters/118_optimized.txt", IsEnabled = true },
                     new AdBlockList { Name = "AdGuard Base filter + EasyList", Url = "https://filters.adtidy.org/extension/ublock/filters/2_optimized.txt" },
                     new AdBlockList { Name = "AdGuard Tracking Protection filter", Url = "https://filters.adtidy.org/extension/ublock/filters/3_optimized.txt" },
                     new AdBlockList { Name = "Peter Lowe Adservers", Url = "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&mimetype=plaintext" },
@@ -3840,7 +3840,6 @@ Inner Exception: {7}";
              */
 
             //https://source.chromium.org/chromium/chromium/src/+/main:components/network_session_configurator/browser/network_session_configurator.cc
-            Settings.AddFlag("force-fieldtrials", "SimpleCacheTrial/ExperimentYes/");
             
             string JsFlags = string.Empty;
             //TODO: Add high performance mode JS flags
@@ -3857,6 +3856,7 @@ Inner Exception: {7}";
             //https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/features.cc
             //OptimizeWebRequestProxy
             //NOTE: Removed ParallelDownloading due to crashes.
+            //DiskCacheBackendExperiment:backend/simple,
             string EnableFeatures = "HappyEyeballsV3,JXLImageFormat,EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
             //https://github.com/chromiumembedded/cef/issues/3991
             //https://github.com/chromiumembedded/cef/issues/3966
@@ -3866,20 +3866,14 @@ Inner Exception: {7}";
             string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI";//Adding ,DocumentPictureInPictureAPI would stop WebView2's NewWindowRequested from being called on PiP popups
 
             //enable/disable-blink-features: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/runtime_enabled_features.json5
-            try
-            {
-                Settings.AddFlag("disable-features", DisableFeatures);
-                Settings.AddFlag("enable-features", EnableFeatures);
-                Settings.AddFlag("enable-blink-features", EnableBlinkFeatures);
-                Settings.AddFlag("disable-blink-features", DisableBlinkFeatures);
-            }
-            catch
-            {
-                Settings.Flags["disable-features"] += "," + DisableFeatures;
-                Settings.Flags["enable-features"] += "," + EnableFeatures;
-                Settings.Flags["enable-blink-features"] += "," + EnableBlinkFeatures;
-                Settings.Flags["disable-blink-features"] += "," + DisableBlinkFeatures;
-            }
+            try { Settings.AddFlag("disable-features", DisableFeatures); }
+            catch { Settings.Flags["disable-features"] += "," + DisableFeatures; }
+            try { Settings.AddFlag("enable-features", EnableFeatures); }
+            catch { Settings.Flags["enable-features"] += "," + EnableFeatures; }
+            try { Settings.AddFlag("enable-blink-features", EnableBlinkFeatures); }
+            catch { Settings.Flags["enable-blink-features"] += "," + EnableBlinkFeatures; }
+            try { Settings.AddFlag("disable-blink-features", DisableBlinkFeatures); }
+            catch { Settings.Flags["disable-blink-features"] += "," + DisableBlinkFeatures; }
 
             /*[Blink Settings]
              * https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/public/common/web_preferences/web_preferences.h

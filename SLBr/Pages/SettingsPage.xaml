@@ -330,7 +330,7 @@
                                             <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
-                                            <TextBlock VerticalAlignment="Center" Text="Extension"/>
+                                            <TextBlock VerticalAlignment="Center" Text="Extensions"/>
                                             <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ExtensionButtonComboBox_SelectionChanged">
                                                 <ComboBoxItem>Show automatically</ComboBoxItem>
                                                 <ComboBoxItem>Always show</ComboBoxItem>
@@ -574,6 +574,7 @@
                                                     <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
                                                     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                                     <Setter Property="BorderThickness" Value="1"/>
+                                                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_DeselectPreviewMouseLeftButtonDown"/>
                                                     <Setter Property="Template">
                                                         <Setter.Value>
                                                             <ControlTemplate TargetType="{x:Type ListBoxItem}">
@@ -793,11 +794,11 @@
                         <Border Margin="10" MaxWidth="550" CornerRadius="5" Padding="25">
                             <StackPanel>
                                 <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Languages</TextBlock>
-                                <GroupBox Margin="0,0,0,10">
+                                <GroupBox Margin="0,0,0,10" Header="Spell Check">
                                     <StackPanel>
-                                        <CheckBox Margin="0,0,0,10" x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Check for spelling errors"/>
+                                        <CheckBox Margin="0,0,0,10" x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Check for spelling errors while typing"/>
                                         <DockPanel Margin="0">
-                                            <TextBlock VerticalAlignment="Center" Text="Spellcheck provider"/>
+                                            <TextBlock VerticalAlignment="Center" Text="Spell check provider"/>
                                             <ComboBox IsEnabled="{Binding ElementName=SpellCheckCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SpellCheckProviderComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SpellCheckProviderComboBox_SelectionChanged">
                                                 <ComboBoxItem>Basic</ComboBoxItem>
                                                 <ComboBoxItem>Google</ComboBoxItem>
@@ -820,7 +821,7 @@
                                         </TextBlock>
                                     </StackPanel>
                                 </GroupBox>
-                                <GroupBox Margin="0,0,0,10">
+                                <GroupBox Margin="0,0,0,10" Header="Translate">
                                     <StackPanel>
                                         <DockPanel>
                                             <TextBlock VerticalAlignment="Center" Text="Translation provider"/>
@@ -903,17 +904,22 @@
                                             </ListBox.Resources>
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Tag="{Binding Tooltip}" CornerRadius="6" Width="Auto" HorizontalAlignment="Stretch" Height="35">
+                                                    <Border CornerRadius="6" Width="Auto" HorizontalAlignment="Stretch" Height="35">
                                                         <DockPanel VerticalAlignment="Center" Height="35" Margin="10,0,5,0">
                                                             <!--f2b7-->
+                                                            <!--TODO: Disable buttons accordingly.-->
                                                             <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="&#xe8c1;" Margin="0,0,10,0" FontSize="18" FontWeight="UltraLight" TextAlignment="Center" VerticalAlignment="Center"/>
                                                             <WinUI:DropDownButton ToolTip="Options" BorderThickness="1" Content="&#xE712;" Margin="0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Right" Width="25" Height="25">
                                                                 <WinUI:DropDownButton.Menu>
                                                                     <ContextMenu>
-                                                                        <MenuItem Icon="&#xe738;" Header="Remove" Click="RemoveLocale" Tag="{Binding Tooltip}"/>
+                                                                        <MenuItem Icon="&#xe74d;" Header="Remove" Click="RemoveLocale"/>
+                                                                        <MenuItem Icon="&#xe70e;" Tag="0" Header="Move up" Click="MoveLocale"/>
+                                                                        <MenuItem Icon="&#xe70d;" Tag="1" Header="Move down" Click="MoveLocale"/>
                                                                     </ContextMenu>
                                                                 </WinUI:DropDownButton.Menu>
                                                             </WinUI:DropDownButton>
+                                                            <Button Click="MoveLocale" Tag="1" Content="&#xe70d;" Margin="0,0,5,0" Style="{StaticResource IconButton}" ToolTip="Move down" DockPanel.Dock="Right" Width="25" Height="25"/>
+                                                            <Button Click="MoveLocale" Tag="0" Content="&#xe70e;" Margin="0,0,5,0" Style="{StaticResource IconButton}" ToolTip="Move up" DockPanel.Dock="Right" Width="25" Height="25"/>
                                                             <TextBlock Text="{Binding Name}" TextAlignment="Left" VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto"/>
                                                             <TextBlock Text="{Binding Tooltip}" FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="5,0" VerticalAlignment="Center"/>
                                                         </DockPanel>
