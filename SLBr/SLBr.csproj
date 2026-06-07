@@ -81,6 +81,7 @@
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="148.0.90" />
     <PackageReference Include="Google.Protobuf" Version="3.35.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4015-prerelease" />
+    <PackageReference Include="NUglify" Version="1.21.17" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -124,9 +125,6 @@
     <None Update="Resources\SLBr.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\SLBr.svg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Resources\style.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -149,8 +147,8 @@
   <ItemGroup>
     <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="148.0.9" />
   </ItemGroup>
-
-	<Target Name="DeleteFiles" AfterTargets="Publish">
+	
+	<Target Name="PublishTask" AfterTargets="Publish">
 		<Copy SourceFiles="..\Updater\bin\$(Configuration)\net\publish\Updater.exe" DestinationFolder="$(PublishDir)" />
 		<Delete Files="$(PublishDir)\Microsoft.Web.WebView2.WinForms.dll" />
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.exe" />
@@ -164,6 +162,7 @@
 			<FilesToDelete Include="$(PublishDir)\locales\*.pak" Exclude="$(PublishDir)\locales\en-US.pak" />
 		</ItemGroup>
 		<Delete Files="@(FilesToDelete)" />
+		<Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\minify.ps1&quot; -PublishDir &quot;$(PublishDir.TrimEnd('\'))&quot;" />
 	</Target>
 
 	<!--<Target Name="RemoveWinFormsDll" AfterTargets="Build">

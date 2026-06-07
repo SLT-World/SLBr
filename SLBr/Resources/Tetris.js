@@ -12,7 +12,6 @@ let config = {
 }
 config.size = config.map_width / config.cols
 canvas.style.outline = `${config.border_size}px solid ${config.stroke}`
-canvas.style.borderRadius = `5px`
 let prev_time = 0,
 	prev_pos = { x: 0, y: 0 },
 	prev_block = [[]],
@@ -141,7 +140,6 @@ const draw = (field, ctx) => {
 			const args = [j * size, i * size, size, size]
 			ctx.fillRect(...args)
 			ctx.strokeRect(...args)
-
 		})
 	})
 }

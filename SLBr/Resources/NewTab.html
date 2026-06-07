@@ -1,8 +1,11 @@
-﻿<html style="background-repeat: no-repeat;background-size: cover;background-position: center;">
+﻿<!--Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.-->
+
+<html style="background-repeat: no-repeat;background-size: cover;background-position: center;">
     <head>
-        <meta charset="utf-8"/>
+        <meta charset="utf-8">
         <title>New Tab</title>
-        <link rel="stylesheet" type="text/css" href="./style.css"/>
+        <link rel="stylesheet" type="text/css" href="./style.css">
     </head>
     <body>
         <style>
@@ -10,7 +13,6 @@ html {
     background-repeat: no-repeat;
     background-size: auto;
 }
-
 html.background-image::before {
     content: "";
     position: absolute;
@@ -21,15 +23,12 @@ html.background-image::before {
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 0.5) 100%);
     pointer-events: none;
 }
-
 html.background-image .SearchInput {
     box-shadow: 0 2px 6px 0 #20212451;
 }
-
 html.background-image div.nav > a > p {
     text-shadow: 0 0 10px rgba(0, 0, 0, 0.75);
 }
-
 div.nav {
     padding-left: 0px;
     background-color: transparent;
@@ -45,7 +44,6 @@ div.nav {
     align-items: center;
     justify-content: center;
 }
-
 div.nav > a {
     display: inline-flex;
     flex-direction: column;
@@ -55,7 +53,6 @@ div.nav > a {
     width: 70px;
     height: 70px;
 }
-
 div.nav > a > div {
     display: flex;
     align-items: center;
@@ -67,16 +64,13 @@ div.nav > a > div {
     border-radius: 10px;
     transition: background-color 0.25s ease;
 }
-
 div.nav > a:hover > div {
     background-color: color-mix(in srgb, var(--tertiary), transparent);
 }
-
 div.nav > a > div > img {
     user-select: none;
     border-radius: 5px;
 }
-
 div.nav > a > p {
     color: color-mix(in srgb, transparent, var(--font) 80%);
     font-size: small;
@@ -342,11 +336,11 @@ div.nav > a > p {
                 let bingMode = parseInt(localStorage.getItem("bingBackground") || "0");
                 //WARNING: mkt query necessary for title.
                 if (bingMode === 0) engine.postMessage({ type: "__internal__", function: "cors", url: "https://www.bing.com/hpimagearchive.aspx?format=js&idx=0&n=1&mkt=en-US" });
-                else setBackground("http://bingw.jasonzeng.dev/?index=random");
+                else setBackground("https://bingw.jasonzeng.dev/?index=random");
                 return;
             }
             case 2: {
-                setBackground("http://picsum.photos/1920/1080?random");
+                setBackground("https://picsum.photos/1920/1080?random");
                 return;
             }
             case 3: {
