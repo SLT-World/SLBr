@@ -1093,7 +1093,10 @@ namespace SLBr
                     }
                 }
                 else
+                {
                     VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID });
+                    CurrentFocusedWindow().GetTab()?.Content?.SetDownloadsButtonVisibility();
+                }
             });
         }
 
@@ -2981,8 +2984,9 @@ Inner Exception: {7}";
                 GlobalSave.Set("ReduceDisk", false);
             if (!GlobalSave.Has("Performance"))
                 GlobalSave.Set("Performance", 1);
-            LiteMode = GlobalSave.GetInt("Performance") == 0;
-            HighPerformanceMode = GlobalSave.GetInt("Performance") == 2;
+            int PerformanceMode = GlobalSave.GetInt("Performance");
+            LiteMode = PerformanceMode == 0;
+            HighPerformanceMode = PerformanceMode == 2;
             //HappyEyeballs.ConnectionAttemptDelay = HighPerformanceMode ? 200 : 250;
 
             if (!GlobalSave.Has("JIT"))
@@ -3045,7 +3049,7 @@ Inner Exception: {7}";
             SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", false.ToString())));
             SetBlockScreenCapture(int.Parse(GlobalSave.Get("BlockScreenCapture", "1")));
             SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
-            SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", true.ToString())));
+            SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", false.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
             SetModernURL(bool.Parse(GlobalSave.Get("ModernURL", false.ToString())));
             SetPunycodeURL(bool.Parse(GlobalSave.Get("PunycodeURL", false.ToString())));
@@ -3058,7 +3062,7 @@ Inner Exception: {7}";
 
             Favourites.CollectionChanged += Favourites_CollectionChanged;
 
-            SetAppearance(GetTheme(GlobalSave.Get("Theme", "System")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
+            SetAppearance(GetTheme(GlobalSave.Get("Theme", "System")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0),  GlobalSave.GetInt("DownloadsButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
             bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
             //WARNING: Do not remove RestoreTabs boolean.
             bool RestoreTabs = bool.Parse(GlobalSave.Get("RestoreTabs", (!ReadOnlyInstance).ToString()));
@@ -3854,22 +3858,24 @@ Inner Exception: {7}";
             //MHTML_Improvements, OptimizeHTMLElementUrls,WebFontsCacheAwareTimeoutAdaption, EstablishGpuChannelAsync
             //https://source.chromium.org/chromium/chromium/src/+/main:components/download/public/common/download_features.cc
             //https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/features.cc
+            //https://source.chromium.org/chromium/chromium/src/+/main:base/features.cc
             //OptimizeWebRequestProxy
             //NOTE: Removed ParallelDownloading due to crashes.
             //DiskCacheBackendExperiment:backend/simple,
+            //PartialLowEndModeOnMidRangeDevices,PartialLowEndModeOn3GbDevices, Android / ChromeOS exclusive.
             string EnableFeatures = "HappyEyeballsV3,JXLImageFormat,EnableLazyLoadImageForInvisiblePage:enabled_page_type/all_invisible_page,HeapProfilerReporting,ReducedReferrerGranularity,ThirdPartyStoragePartitioning,PrecompileInlineScripts,OptimizeHTMLElementUrls,UseEcoQoSForBackgroundProcess,EnableLazyLoadImageForInvisiblePage,TrackingProtection3pcd,LazyBindJsInjection,SkipUnnecessaryThreadHopsForParseHeaders,SimplifyLoadingTransparentPlaceholderImage,OptimizeLoadingDataUrls,ThrottleUnimportantFrameTimers,Prerender2MemoryControls,PrefetchPrivacyChanges,DIPS,LightweightNoStatePrefetch,BackForwardCacheMemoryControls,ClearCanvasResourcesInBackground,Canvas2DReclaimUnusedResources,EvictionUnlocksResources,SpareRendererForSitePerProcess,ReduceSubresourceResponseStartedIPC";
             //https://github.com/chromiumembedded/cef/issues/3991
             //https://github.com/chromiumembedded/cef/issues/3966
-            string DisableFeatures = "StorageNotificationService,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,OptimizationGuideOnDeviceModel,OptimizationGuideModelExecution,OnDeviceModelService,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
+            string DisableFeatures = "KeepDefaultSearchEngineRendererAlive,StorageNotificationService,KAnonymityService,NetworkTimeServiceQuerying,LiveCaption,DefaultWebAppInstallation,PersistentHistograms,Translate,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,OptimizationGuideOnDeviceModel,OptimizationGuideModelExecution,OnDeviceModelService,AcceptCHFrame,PrivacySandboxSettings4,ImprovedCookieControls,GlobalMediaControls,HardwareMediaKeyHandling,PrivateAggregationApi,PrintCompositorLPAC,CrashReporting,SegmentationPlatform,InstalledApp,BrowsingTopics,Fledge,FledgeBiddingAndAuctionServer,InterestFeedContentSuggestions,OptimizationHintsFetchingSRP,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints";
             //WebBluetooth,MediaRouter,
             string EnableBlinkFeatures = "UnownedAnimationsSkipCSSEvents,StaticAnimationOptimization,PageFreezeOptIn,FreezeFramesOnVisibility";
             string DisableBlinkFeatures = "DocumentWrite,LanguageDetectionAPI";//Adding ,DocumentPictureInPictureAPI would stop WebView2's NewWindowRequested from being called on PiP popups
 
-            //enable/disable-blink-features: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/runtime_enabled_features.json5
             try { Settings.AddFlag("disable-features", DisableFeatures); }
             catch { Settings.Flags["disable-features"] += "," + DisableFeatures; }
             try { Settings.AddFlag("enable-features", EnableFeatures); }
             catch { Settings.Flags["enable-features"] += "," + EnableFeatures; }
+            //enable/disable-blink-features: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/runtime_enabled_features.json5
             try { Settings.AddFlag("enable-blink-features", EnableBlinkFeatures); }
             catch { Settings.Flags["enable-blink-features"] += "," + EnableBlinkFeatures; }
             try { Settings.AddFlag("disable-blink-features", DisableBlinkFeatures); }
@@ -3895,7 +3901,7 @@ Inner Exception: {7}";
             else
             {
                 Settings.Flags["blink-settings"] += ",batterySaverEnabled=true,preloadingDisabled=true,lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
-                Settings.Flags["enable-features"] += ",LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
+                Settings.Flags["enable-features"] += ",UnimportantFramesPriority,ThrottleUnimportantFrameRate,LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
                 Settings.Flags["disable-features"] += ",LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
 
                 Settings.Flags["enable-blink-features"] += ",SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
@@ -4386,10 +4392,11 @@ Inner Exception: {7}";
         public bool AllowQRButton;
         public bool AllowWebEngineButton;
         public int ShowExtensionButton;
+        public int ShowDownloadsButton;
         public int ShowFavouritesBar;
         public int TabAlignment;
         public double VerticalTabWidth;
-        public void SetAppearance(Theme _Theme, int _TabAlignment, double _VerticalTabWidth, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowReaderModeButton, int _ShowExtensionButton, int _ShowFavouritesBar, bool _AllowQRButton, bool _AllowWebEngineButton)
+        public void SetAppearance(Theme _Theme, int _TabAlignment, double _VerticalTabWidth, bool _AllowHomeButton, bool _AllowTranslateButton, bool _AllowReaderModeButton, int _ShowExtensionButton, int _ShowDownloadsButton, int _ShowFavouritesBar, bool _AllowQRButton, bool _AllowWebEngineButton)
         {
             AllowHomeButton = _AllowHomeButton;
             AllowTranslateButton = _AllowTranslateButton;
@@ -4397,6 +4404,7 @@ Inner Exception: {7}";
             AllowQRButton = _AllowQRButton;
             AllowWebEngineButton = _AllowWebEngineButton;
             ShowExtensionButton = _ShowExtensionButton;
+            ShowDownloadsButton = _ShowDownloadsButton;
             ShowFavouritesBar = _ShowFavouritesBar;
             TabAlignment = _TabAlignment;
             VerticalTabWidth = _VerticalTabWidth;
@@ -4409,6 +4417,7 @@ Inner Exception: {7}";
             GlobalSave.Set("QRButton", AllowQRButton);
             GlobalSave.Set("WebEngineButton", AllowWebEngineButton);
             GlobalSave.Set("ExtensionButton", ShowExtensionButton);
+            GlobalSave.Set("DownloadsButton", ShowDownloadsButton);
             GlobalSave.Set("FavouritesBar", ShowFavouritesBar);
 
             CurrentTheme = _Theme;

@@ -170,7 +170,7 @@ namespace SLBr
                                         SystemTheme.DarkWebPage = TargetTheme.DarkWebPage;
                                         Theme CurrentTheme = App.Instance.GetTheme();
                                         if (CurrentTheme.Name == SystemTheme.Name)
-                                            App.Instance.SetAppearance(CurrentTheme, App.Instance.TabAlignment, App.Instance.VerticalTabWidth, App.Instance.AllowHomeButton, App.Instance.AllowTranslateButton, App.Instance.AllowReaderModeButton, App.Instance.ShowExtensionButton, App.Instance.ShowFavouritesBar, App.Instance.AllowQRButton, App.Instance.AllowWebEngineButton);
+                                            App.Instance.SetAppearance(CurrentTheme, App.Instance.TabAlignment, App.Instance.VerticalTabWidth, App.Instance.AllowHomeButton, App.Instance.AllowTranslateButton, App.Instance.AllowReaderModeButton, App.Instance.ShowExtensionButton, App.Instance.ShowDownloadsButton, App.Instance.ShowFavouritesBar, App.Instance.AllowQRButton, App.Instance.AllowWebEngineButton);
                                     }
                                 }
                             }

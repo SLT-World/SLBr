@@ -325,13 +325,22 @@
                                             <TextBlock VerticalAlignment="Center" Text="Switch web engine"/>
                                             <ToggleButton x:Name="WebEngineButtonToggleButton" Click="WebEngineButtonToggleButton_Click" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                         </DockPanel>
-                                        <DockPanel>
+                                        <DockPanel Margin="0,0,0,10">
                                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xEA86;" Margin="0,0,10,0"/>
                                             <!--<Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
                                     <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xF000;"/>
                                 </Border>-->
                                             <TextBlock VerticalAlignment="Center" Text="Extensions"/>
                                             <ComboBox x:Name="ExtensionButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ExtensionButtonComboBox_SelectionChanged">
+                                                <ComboBoxItem>Show automatically</ComboBoxItem>
+                                                <ComboBoxItem>Always show</ComboBoxItem>
+                                                <ComboBoxItem>Never show</ComboBoxItem>
+                                            </ComboBox>
+                                        </DockPanel>
+                                        <DockPanel>
+                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xe896;" Margin="0,0,10,0"/>
+                                            <TextBlock VerticalAlignment="Center" Text="Downloads"/>
+                                            <ComboBox x:Name="DownloadsButtonComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="DownloadsButtonComboBox_SelectionChanged">
                                                 <ComboBoxItem>Show automatically</ComboBoxItem>
                                                 <ComboBoxItem>Always show</ComboBoxItem>
                                                 <ComboBoxItem>Never show</ComboBoxItem>

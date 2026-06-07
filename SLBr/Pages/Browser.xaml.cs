@@ -1702,6 +1702,7 @@ namespace SLBr.Pages
             LastActive = DateTime.Now;
             if (!bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 App.Instance.ScheduleNextEfficientTick();
+            SetDownloadsButtonVisibility();
             if (Tab.IsUnloaded)
             {
                 InitializeBrowserComponent();
@@ -2678,6 +2679,16 @@ namespace SLBr.Pages
             }
         }
 
+        public void SetDownloadsButtonVisibility()
+        {
+            if (App.Instance.ShowDownloadsButton == 0)
+                OpenDownloadsButton.Visibility = App.Instance.VisibleDownloads.Count != 0 ? Visibility.Visible : Visibility.Collapsed;
+            else if (App.Instance.ShowDownloadsButton == 1)
+                OpenDownloadsButton.Visibility = Visibility.Visible;
+            else
+                OpenDownloadsButton.Visibility = Visibility.Collapsed;
+        }
+
         static int FavouriteExists(string Url)
         {
             if (App.Instance.Favourites.Count == 0)
@@ -3588,6 +3599,7 @@ namespace SLBr.Pages
         public async void SetAppearance(Theme _Theme)
         {
             SetFavouritesBarVisibility();
+            SetDownloadsButtonVisibility();
             HomeButton.Visibility = App.Instance.AllowHomeButton ? Visibility.Visible : Visibility.Collapsed;
             QRButton.Visibility = App.Instance.AllowQRButton ? Visibility.Visible : Visibility.Collapsed;
             WebEngineButton.Visibility = App.Instance.AllowWebEngineButton ? Visibility.Visible : Visibility.Collapsed;

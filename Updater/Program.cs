@@ -115,7 +115,7 @@ namespace Updater
                 })
                 {
                     Client.Timeout = TimeSpan.FromMinutes(15);
-                    Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36");
+                    Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36");
 
                     using (HttpResponseMessage Response = await Client.GetAsync("https://github.com/SLT-World/SLBr/releases/latest/download/SLBr.zip", HttpCompletionOption.ResponseHeadersRead))
                     {

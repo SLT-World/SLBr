@@ -5,6 +5,7 @@ using SLBr.Controls;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace SLBr.Pages
 {
@@ -136,6 +137,13 @@ namespace SLBr.Pages
 
         private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            DependencyObject ClickedElement = e.OriginalSource as DependencyObject;
+            while (ClickedElement != null && ClickedElement != sender)
+            {
+                if (ClickedElement is Button)
+                    return;
+                ClickedElement = VisualTreeHelper.GetParent(ClickedElement);
+            }
             if (sender is ListBoxItem Item && Item.IsSelected)
             {
                 Item.IsSelected = false;

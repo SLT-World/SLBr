@@ -500,6 +500,7 @@ namespace SLBr.Pages
             WebEngineButtonToggleButton.IsChecked = App.Instance.AllowWebEngineButton;
 
             ExtensionButtonComboBox.SelectedIndex = App.Instance.ShowExtensionButton;
+            DownloadsButtonComboBox.SelectedIndex = App.Instance.ShowDownloadsButton;
             BlockScreenCaptureComboBox.SelectedIndex = App.Instance.BlockScreenCapture;
 
             FavouritesBarComboBox.SelectedIndex = App.Instance.ShowFavouritesBar;
@@ -774,17 +775,22 @@ namespace SLBr.Pages
         private void TabAlignmentComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
         private void ExtensionButtonComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+        }
+        private void DownloadsButtonComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
         private void FavouritesBarComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
         private void BlockScreenCaptureComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -1074,27 +1080,27 @@ namespace SLBr.Pages
         private void TranslateButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
         private void HomeButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
         private void ReaderButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
         private void QRButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
         private void WebEngineButtonToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(App.Instance.CurrentTheme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
         }
 
         //int PreviousThemeIndex = 0;
@@ -1127,7 +1133,7 @@ namespace SLBr.Pages
                         return;
                     }*/
                 }
-                App.Instance.SetAppearance(_Theme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
+                App.Instance.SetAppearance(_Theme, TabAlignmentComboBox.SelectedIndex, App.Instance.VerticalTabWidth, HomeButtonToggleButton.IsChecked.GetValueOrDefault(), TranslateButtonToggleButton.IsChecked.GetValueOrDefault(), ReaderButtonToggleButton.IsChecked.GetValueOrDefault(), ExtensionButtonComboBox.SelectedIndex, DownloadsButtonComboBox.SelectedIndex, FavouritesBarComboBox.SelectedIndex, QRButtonToggleButton.IsChecked.GetValueOrDefault(), WebEngineButtonToggleButton.IsChecked.GetValueOrDefault());
                 ApplyTheme(_Theme);
             }
             //PreviousThemeIndex = ThemeSelection.SelectedIndex;
@@ -1656,6 +1662,13 @@ namespace SLBr.Pages
 
         private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            DependencyObject ClickedElement = e.OriginalSource as DependencyObject;
+            while (ClickedElement != null && ClickedElement != sender)
+            {
+                if (ClickedElement is Button)
+                    return;
+                ClickedElement = VisualTreeHelper.GetParent(ClickedElement);
+            }
             if (sender is ListBoxItem Item && Item.IsSelected)
             {
                 Item.IsSelected = false;

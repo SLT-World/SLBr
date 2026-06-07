@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace SLBr.Pages
 {
@@ -21,7 +22,7 @@ namespace SLBr.Pages
 
         public void Initialize(Browser _BrowserView)
         {
-            //BrowserView = _BrowserView;
+            BrowserView = _BrowserView;
         }
         
         public void OnNavigated() { }
@@ -32,7 +33,7 @@ namespace SLBr.Pages
             GC.SuppressFinalize(this);
         }
 
-        //Browser BrowserView;
+        Browser BrowserView;
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
@@ -59,7 +60,10 @@ namespace SLBr.Pages
         {
             List<DownloadEntry> Selected = DownloadsList.SelectedItems.Cast<DownloadEntry>().Where(i => i.Stop == Visibility.Collapsed).ToList();
             foreach (DownloadEntry DownloadsEntry in Selected)
+            {
                 App.Instance.VisibleDownloads.Remove(DownloadsEntry);
+                BrowserView.SetDownloadsButtonVisibility();
+            }
         }
 
         private void CancelSingleButton_Click(object sender, RoutedEventArgs e)
@@ -83,7 +87,10 @@ namespace SLBr.Pages
         private void DeleteSingleButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button _Button && _Button.DataContext is DownloadEntry DownloadsEntry && DownloadsEntry.Stop == Visibility.Collapsed)
+            {
                 App.Instance.VisibleDownloads.Remove(DownloadsEntry);
+                BrowserView.SetDownloadsButtonVisibility();
+            }
         }
 
         private void DownloadsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -111,6 +118,13 @@ namespace SLBr.Pages
 
         private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            DependencyObject ClickedElement = e.OriginalSource as DependencyObject;
+            while (ClickedElement != null && ClickedElement != sender)
+            {
+                if (ClickedElement is Button)
+                    return;
+                ClickedElement = VisualTreeHelper.GetParent(ClickedElement);
+            }
             if (sender is ListBoxItem Item && Item.IsSelected)
             {
                 Item.IsSelected = false;

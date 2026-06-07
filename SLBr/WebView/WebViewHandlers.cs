@@ -222,7 +222,10 @@ namespace SLBr.WebView
                 GlobalRequestContext.SetPreference("side_search.enabled", false, out _);
                 GlobalRequestContext.SetPreference("translate.enabled", false, out _);
                 GlobalRequestContext.SetPreference("alternate_error_pages.enabled", false, out _);
-                GlobalRequestContext.SetPreference("https_first_balanced_mode_enabled", true, out _);
+                GlobalRequestContext.SetPreference("https_first_balanced_mode_enabled", false, out _);
+                GlobalRequestContext.SetPreference("https_first_mode_incognito_enabled", false, out _);
+                GlobalRequestContext.SetPreference("https_only_mode_auto_enabled", false, out _);
+                GlobalRequestContext.SetPreference("https_only_mode_enabled", false, out _);
                 GlobalRequestContext.SetPreference("net.network_prediction_options", Settings.Performance == PerformancePreset.High ? 0 : 2, out _);
                 GlobalRequestContext.SetPreference("safebrowsing.enabled", false, out _);
 
