@@ -5201,6 +5201,16 @@ return Math.round(total / (1024 * 1024) * 10) / 10;
     return null;
 })();";
 
+        public const string WebView2DocumentCreatedScript = @"window.engine = window.chrome.webview;
+window.addEventListener('auxclick', function(e) {
+    if (e.button === 1) window.chrome.webview.postMessage({ type: '__edge_tab__', background: 1 });
+}, true);
+window.addEventListener('click', function(e) {
+    if (e.ctrlKey) window.chrome.webview.postMessage({ type: '__edge_tab__', background: 1 });
+    else if (e.shiftKey) window.chrome.webview.postMessage({ type: '__edge_tab__', background: 0 });
+    else if (e.button === 0) window.chrome.webview.postMessage({ type: '__edge_tab__', background: 0 });
+}, true);";
+
         /*public const string FetchOpenGraphProtocolScript = @"(async () => {
   const getMeta = (selectors) => {
     for (const selector of selectors) {

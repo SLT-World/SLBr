@@ -2209,11 +2209,6 @@ namespace SLBr.WebView
             BrowserCore.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
             BrowserCore.WebResourceRequested += Browser_WebResourceRequested;
             BrowserCore.WebResourceResponseReceived += Browser_WebResourceResponseReceived;
-            if (Settings.JavaScriptMessage)
-            {
-                BrowserCore.WebMessageReceived += (s, e) => JavaScriptMessageReceived?.RaiseUIAsync(this, e.WebMessageAsJson);
-                BrowserCore.AddScriptToExecuteOnDocumentCreatedAsync("window.engine = window.chrome.webview;");
-            }
 
             BrowserCore.DownloadStarting += Browser_DownloadStarting;
 
@@ -2228,6 +2223,12 @@ namespace SLBr.WebView
 
             BrowserCore.SourceChanged += Browser_SourceChanged;
             //BrowserCore.HistoryChanged += Browser_HistoryChanged;
+
+            if (Settings.JavaScriptMessage)
+            {
+                await BrowserCore.AddScriptToExecuteOnDocumentCreatedAsync(Scripts.WebView2DocumentCreatedScript);
+                BrowserCore.WebMessageReceived += Browser_WebMessageReceived;
+            }
 
 #if !DEBUG
             try
@@ -2269,6 +2270,42 @@ namespace SLBr.WebView
             }
             catch { }
 #endif
+        }
+
+        private async void Browser_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            string Json = e.WebMessageAsJson;
+            if (Json.StartsWith(@"{""type"":""__edge_tab__"""))
+            {
+                bool IsBackground = Json.EndsWith(@"""background"":1}");
+                if (PendingRequests.Count > 0)
+                {
+                    PendingTabRequest Pending = PendingRequests.Dequeue();
+                    if (!Pending.IsHandled)
+                    {
+                        Pending.IsHandled = true;
+                        await NewWindow(Pending.Args, IsBackground, null);
+                        try { Pending.Deferral.Complete(); } catch { }
+                    }
+                }
+                else
+                {
+                    LastTabIntentBackground = IsBackground;
+                    _ = Task.Delay(200).ContinueWith(_ => LastTabIntentBackground = null, TaskContinuationOptions.ExecuteSynchronously);
+                }
+                return;
+            }
+            JavaScriptMessageReceived?.RaiseUIAsync(this, Json);
+        }
+
+        private Queue<PendingTabRequest> PendingRequests = [];
+        private bool? LastTabIntentBackground = null;
+
+        public class PendingTabRequest
+        {
+            public CoreWebView2NewWindowRequestedEventArgs Args { get; set; }
+            public CoreWebView2Deferral Deferral { get; set; }
+            public bool IsHandled { get; set; } = false;
         }
 
         /*private void Browser_HistoryChanged(object? sender, object e)
@@ -2707,29 +2744,70 @@ namespace SLBr.WebView
             _ = HandleNewWindowAsync(e, e.GetDeferral());
         }
 
+        private async Task NewWindow(CoreWebView2NewWindowRequestedEventArgs e, bool Background, Rect? Popup)
+        {
+            var Args = new NewTabRequestEventArgs(e.Uri, Background, Popup);
+            Browser?.Dispatcher.Invoke(() => NewTabRequested?.Invoke(this, Args));
+            if (Args.WebView is ChromiumEdgeWebView EdgeWebView)
+            {
+                await EdgeWebView.WaitForCoreWebView2Async();
+                e.NewWindow = EdgeWebView.BrowserCore;
+            }
+        }
+
         private async Task HandleNewWindowAsync(CoreWebView2NewWindowRequestedEventArgs e, CoreWebView2Deferral Deferral)
         {
-            //TODO: Fix PiP popups & determine whether a tab is background or foreground
+            e.Handled = true;
+            //TODO: Fix PiP popups.
             //MessageBox.Show($"{e.WindowFeatures.ShouldDisplayStatus} {e.WindowFeatures.ShouldDisplayToolbar} {e.WindowFeatures.ShouldDisplayMenuBar} {e.WindowFeatures.ShouldDisplayScrollBars}");
             try
             {
                 Rect? Popup = null;
                 if (e.WindowFeatures.HasSize || e.WindowFeatures.HasPosition)
                     Popup = new Rect(e.WindowFeatures.Left, e.WindowFeatures.Top, e.WindowFeatures.Width, e.WindowFeatures.Height);
-                var Args = new NewTabRequestEventArgs(e.Uri, false, Popup);
-                Browser?.Dispatcher.Invoke(() => NewTabRequested?.Invoke(this, Args));
-                if (Args.WebView is ChromiumEdgeWebView EdgeWebView)
+                if (Popup != null)
                 {
-                    await EdgeWebView.WaitForCoreWebView2Async();
-                    e.NewWindow = EdgeWebView.BrowserCore;
+                    await NewWindow(e, false, Popup);
+                    Deferral.Complete();
                 }
-
-                e.Handled = true;
+                else
+                {
+                    if (LastTabIntentBackground.HasValue)
+                    {
+                        await NewWindow(e, LastTabIntentBackground.Value, Popup);
+                        LastTabIntentBackground = null;
+                        Deferral.Complete();
+                    }
+                    else
+                    {
+                        PendingTabRequest Request = new() { Args = e, Deferral = Deferral };
+                        PendingRequests.Enqueue(Request);
+                        _ = NewWindowTimeoutFallback(Request, Popup);
+                    }
+                }
             }
             finally
             {
-                Deferral.Complete();
+                try { Deferral.Complete(); } catch { }
             }
+        }
+
+        private async Task NewWindowTimeoutFallback(PendingTabRequest Request, Rect? popup)
+        {
+            try
+            {
+                await Task.Delay(400);
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
+                {
+                    if (!Request.IsHandled)
+                    {
+                        Request.IsHandled = true;
+                        await NewWindow(Request.Args, false, popup);
+                        try { Request.Deferral.Complete(); } catch { }
+                    }
+                });
+            }
+            catch { }
         }
 
         private void Browser_ScriptDialogOpening(object? sender, CoreWebView2ScriptDialogOpeningEventArgs e)
@@ -3147,7 +3225,7 @@ namespace SLBr.WebView
                     Core.WebResourceRequested -= Browser_WebResourceRequested;
                     Core.WebResourceResponseReceived -= Browser_WebResourceResponseReceived;
                     if (Settings.JavaScriptMessage)
-                        Core.WebMessageReceived -= (s, e) => JavaScriptMessageReceived?.RaiseUIAsync(this, e.TryGetWebMessageAsString());
+                        Core.WebMessageReceived -= Browser_WebMessageReceived;
 
                     Core.DownloadStarting -= Browser_DownloadStarting;
 
