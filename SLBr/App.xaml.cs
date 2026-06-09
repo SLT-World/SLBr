@@ -1764,14 +1764,23 @@ namespace SLBr
             InfoBars.CollectionChanged += InfoBars_CollectionChanged;
 
             FavouriteColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#FA2A55");
+            FavouriteColor.SafeFreeze();
             SLBrColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#0092FF");
+            SLBrColor.SafeFreeze();
             RedColor = new SolidColorBrush(Colors.Red);
+            RedColor.SafeFreeze();
             CornflowerBlueColor = new SolidColorBrush(Colors.CornflowerBlue);
+            CornflowerBlueColor.SafeFreeze();
             NavajoWhiteColor = new SolidColorBrush(Colors.NavajoWhite);
+            NavajoWhiteColor.SafeFreeze();
             LimeGreenColor = new SolidColorBrush(Colors.LimeGreen);
+            LimeGreenColor.SafeFreeze();
             GreenColor = (SolidColorBrush)new BrushConverter().ConvertFrom("#3AE872");
+            GreenColor.SafeFreeze();
             OrangeColor = new SolidColorBrush(Colors.Orange);
+            OrangeColor.SafeFreeze();
             WhiteColor = new SolidColorBrush(Colors.White);
+            WhiteColor.SafeFreeze();
             IconFont = (FontFamily)Resources["IconFontFamily"];
             SLBrFont = new FontFamily(new Uri("pack://application:,,,/SLBr;component/"), "./Fonts/#SLBr Icons");
 
@@ -4199,8 +4208,7 @@ Inner Exception: {7}";
                             /*if (FaviconCache.TryGetValue(GIconUrl, out BitmapImage GCachedImage))
                                 return GCachedImage;*/
                             BitmapImage _GImage = new(new Uri(GIconUrl));
-                            if (_GImage.CanFreeze)
-                                _GImage.Freeze();
+                            _GImage.SafeFreeze();
                             //FaviconCache[GIconUrl] = _GImage;
                             return _GImage;
                         case 1:
@@ -4208,8 +4216,7 @@ Inner Exception: {7}";
                             /*if (FaviconCache.TryGetValue(YIconUrl, out BitmapImage YCachedImage))
                                 return YCachedImage;*/
                             BitmapImage _YImage = new(new Uri(YIconUrl));
-                            if (_YImage.CanFreeze)
-                                _YImage.Freeze();
+                            _YImage.SafeFreeze();
                             //FaviconCache[YIconUrl] = _YImage;
                             return _YImage;
                         case 2:
@@ -4217,8 +4224,7 @@ Inner Exception: {7}";
                             /*if (FaviconCache.TryGetValue(DIconUrl, out BitmapImage DCachedImage))
                                 return DCachedImage;*/
                             BitmapImage _DImage = new(new Uri(DIconUrl));
-                            if (_DImage.CanFreeze)
-                                _DImage.Freeze();
+                            _DImage.SafeFreeze();
                             //FaviconCache[DIconUrl] = _DImage;
                             return _DImage;
                         case 3:
@@ -4226,8 +4232,7 @@ Inner Exception: {7}";
                             /*if (FaviconCache.TryGetValue(AIconUrl, out BitmapImage ACachedImage))
                                 return ACachedImage;*/
                             BitmapImage _AImage = new(new Uri(AIconUrl));
-                            if (_AImage.CanFreeze)
-                                _AImage.Freeze();
+                            _AImage.SafeFreeze();
                             //FaviconCache[AIconUrl] = _AImage;
                             return _AImage;
                     }
@@ -4290,8 +4295,7 @@ Inner Exception: {7}";
                                 Bitmap.StreamSource = _Stream;
                                 Bitmap.CacheOption = BitmapCacheOption.OnLoad;
                                 Bitmap.EndInit();
-                                if (Bitmap.CanFreeze)
-                                    Bitmap.Freeze();
+                                Bitmap.SafeFreeze();
                                 CacheFavicon(IconUrl, Bitmap);
                                 return Bitmap;
                             }
@@ -4442,8 +4446,7 @@ Inner Exception: {7}";
                 }
                 RenderTargetBitmap Bitmap = new(IconSize, IconSize, DPI, DPI, PixelFormats.Pbgra32);
                 Bitmap.Render(Visual);
-                if (Bitmap.CanFreeze)
-                    Bitmap.Freeze();
+                Bitmap.SafeFreeze();
                 return Bitmap;
             }
 

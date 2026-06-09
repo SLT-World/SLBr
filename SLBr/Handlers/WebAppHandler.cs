@@ -76,8 +76,7 @@ namespace SLBr.Handlers
                     using MemoryStream Stream = new(await App.MiniHttpClient.GetByteArrayAsync(Best.Source));
                     BitmapDecoder Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
                     BitmapFrame Frame = Decoder.Frames[0];
-                    if (Frame.CanFreeze)
-                        Frame.Freeze();
+                    Frame.SafeFreeze();
                     try
                     {
                         using FileStream ImageStream = new(ImagePath, FileMode.Create);

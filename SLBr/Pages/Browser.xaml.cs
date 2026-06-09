@@ -33,8 +33,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Threading;
-using Windows.UI.Notifications;
-using Windows.UI.ViewManagement.Core;
 
 namespace SLBr.Pages
 {
@@ -1310,7 +1308,7 @@ namespace SLBr.Pages
                         Refresh();
                     }
                     break;
-                case "__notification__":
+                /*case "__notification__":
                     try
                     {
                         var DataJson = Message["data"]?.ToString();
@@ -1333,7 +1331,7 @@ namespace SLBr.Pages
                         }
                     }
                     catch { }
-                    break;
+                    break;*/
             }
         }
 
@@ -1587,7 +1585,7 @@ namespace SLBr.Pages
                     });
                 }
 
-                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Win+Period", Icon = "\ue76e", Header = "Emoji", Command = new RelayCommand(_ => CoreInputView.GetForCurrentView().TryShow(CoreInputViewKind.Emoji)) });
+                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Win+Period", Icon = "\ue76e", Header = "Emoji", Command = new RelayCommand(_ => Utils.ShowEmojiPicker()) });
                 BrowserMenu.Items.Add(new Separator());
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+Z", Icon = "\ue7a7", Header = "Undo", Command = new RelayCommand(_ => WebView?.Undo()) });
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+Y", Icon = "\ue7a6", Header = "Redo", Command = new RelayCommand(_ => WebView?.Redo()) });
@@ -1621,15 +1619,14 @@ namespace SLBr.Pages
                 BrowserMenu.Items.Add(new Separator());
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save as", Command = new RelayCommand(_ => WebView?.SaveAs()) });
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\uE749", Header = "Print", Command = new RelayCommand(_ => WebView?.Print()) });
-                BrowserMenu.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                 BrowserMenu.Items.Add(new Separator());
 
 
                 MenuItem ToolsSubMenuModel = new() { Icon = "\ue821", Header = "More tools" };
+                ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
                 ToolsSubMenuModel.Items.Add(new MenuItem { IsEnabled = !IsLoading && !Address.StartsWith("slbr:"), Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
                 ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
-                ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
                 BrowserMenu.Items.Add(ToolsSubMenuModel);
 
                 /*MenuItem ZoomSubMenuModel = new MenuItem { Icon = "\ue71e", Header = "Zoom" };
@@ -2104,8 +2101,7 @@ namespace SLBr.Pages
                             _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
                             _BitmapImage.StreamSource = Stream;
                             _BitmapImage.EndInit();
-                            if (_BitmapImage.CanFreeze)
-                                _BitmapImage.Freeze();
+                            _BitmapImage.SafeFreeze();
                         }
                         SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
                         //WARNING: Prevents undesirable behaviour in CefSharp subsequent to capture.
@@ -2235,11 +2231,8 @@ namespace SLBr.Pages
             WebView?.Stop();
         }
 
-        public void Share(string? Url = null)
-        {
-            if (Uri.TryCreate(Url ?? Address, UriKind.Absolute, out Uri? _Uri) && Tab.ParentWindow.Handle != null)
-                Utils.Share(Tab.ParentWindow.Handle.Value, Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
-        }
+        public void Share(string? Url = null) =>
+            Utils.Share(WebView, Url == null && Title.Length != 0 ? Title : "Shared link", Url ?? Address);
 
         public async void Find(string Text, bool Forward = true, bool FindNext = false)
         {
@@ -2728,8 +2721,8 @@ namespace SLBr.Pages
                 }
                 string ScreenshotPath = App.Instance.GlobalSave.Get("ScreenshotPath");
                 DateTime CurrentTime = DateTime.Now;
-                string Url = Path.Combine(ScreenshotPath, Regex.Replace($"{WebView?.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", string.Empty));
-                File.WriteAllBytes(Url, await WebView?.TakeScreenshotAsync(ScreenshotFormat));
+                string Url = Path.Combine(ScreenshotPath, Regex.Replace($"{WebView.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", string.Empty));
+                File.WriteAllBytes(Url, await WebView.TakeScreenshotAsync(ScreenshotFormat));
                 SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
                 Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true });
             }

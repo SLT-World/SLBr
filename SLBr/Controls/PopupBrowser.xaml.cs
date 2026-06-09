@@ -8,7 +8,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
 using System.Windows.Media;
-using Windows.UI.ViewManagement.Core;
 
 namespace SLBr.Controls
 {
@@ -38,7 +37,7 @@ namespace SLBr.Controls
 
         async void CreateWebView()
         {
-            WebViewBrowserSettings Settings = new WebViewBrowserSettings()
+            WebViewBrowserSettings Settings = new()
             {
                 JavaScriptMessage = false
             };
@@ -66,11 +65,8 @@ namespace SLBr.Controls
             WebContent.Children.Add(WebView.Control);
         }
 
-        public void Share(string? Url = null)
-        {
-            if (Uri.TryCreate(Url, UriKind.Absolute, out Uri? _Uri))
-                Utils.Share(Handle, Url == null && Title.Length != 0 ? Title : "Shared link", _Uri);
-        }
+        public void Share(string? Url = null) =>
+            Utils.Share(WebView, Url == null && Title.Length != 0 ? Title : "Shared link", Url ?? WebView.Address);
 
         private void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
@@ -157,7 +153,7 @@ namespace SLBr.Controls
             }
             if (e.IsEditable)
             {
-                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Win+Period", Icon = "\ue76e", Header = "Emoji", Command = new RelayCommand(_ => CoreInputView.GetForCurrentView().TryShow(CoreInputViewKind.Emoji)) });
+                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Win+Period", Icon = "\ue76e", Header = "Emoji", Command = new RelayCommand(_ => Utils.ShowEmojiPicker()) });
                 BrowserMenu.Items.Add(new Separator());
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+Z", Icon = "\ue7a7", Header = "Undo", Command = new RelayCommand(_ => WebView?.Undo()) });
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+Y", Icon = "\ue7a6", Header = "Redo", Command = new RelayCommand(_ => WebView?.Redo()) });
@@ -176,20 +172,25 @@ namespace SLBr.Controls
             }
             else if (IsPageMenu && e.MediaType == WebContextMenuMediaType.None)
             {
-                BrowserMenu.Items.Add(new MenuItem { IsEnabled = WebView.CanGoBack, Icon = "\uE76B", Header = "Back", Command = new RelayCommand(_ => WebView?.Back()) });
-                BrowserMenu.Items.Add(new MenuItem { IsEnabled = WebView.CanGoForward, Icon = "\uE76C", Header = "Forward", Command = new RelayCommand(_ => WebView?.Forward()) });
-                BrowserMenu.Items.Add(new MenuItem { Icon = "\uE72C", Header = "Refresh", Command = new RelayCommand(_ => WebView?.Refresh()) });
+                StackPanel TopMenuStack = new() { Orientation = Orientation.Horizontal };
+                TopMenuStack.Children.Add(new MenuItem { IsEnabled = WebView.CanGoBack, Icon = "\uE76B", ToolTip = "Back", Command = new RelayCommand(_ => WebView?.Back()), Template = (ControlTemplate)FindResource("IconMenuItemTemplate") });
+
+                TopMenuStack.Children.Add(new MenuItem { IsEnabled = WebView.CanGoForward, Icon = "\uE76C", ToolTip = "Forward", Command = new RelayCommand(_ => WebView?.Forward()), Template = (ControlTemplate)FindResource("IconMenuItemTemplate") });
+                TopMenuStack.Children.Add(new MenuItem { Icon = "\uE72C", ToolTip = "Refresh", Command = new RelayCommand(_ => WebView?.Refresh()), Template = (ControlTemplate)FindResource("IconMenuItemTemplate") });
+                
+                BrowserMenu.Items.Add(new MenuItem { Template = (ControlTemplate)FindResource("EmptyMenuItemTemplate"), Focusable = false, Header = TopMenuStack });
+
                 BrowserMenu.Items.Add(new Separator());
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save as", Command = new RelayCommand(_ => WebView?.Download(WebView.Address)) });
                 BrowserMenu.Items.Add(new MenuItem { Icon = "\uE749", Header = "Print", Command = new RelayCommand(_ => WebView?.Print()) });
                 BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                 BrowserMenu.Items.Add(new Separator());
 
-                BrowserMenu.Items.Add(new MenuItem { IsEnabled = Utils.IsHttpScheme(e.FrameUrl), Icon = "\uE8C1", Header = "Translate", Command = new RelayCommand(_ => WebView.Navigate($"https://translate.google.com/translate?sl=auto&tl=en&hl=en&u={e.FrameUrl}")) });
-                
-                BrowserMenu.Items.Add(new Separator());
+                MenuItem ToolsSubMenuModel = new() { Icon = "\ue821", Header = "More tools" };
+                ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
+                BrowserMenu.Items.Add(ToolsSubMenuModel);
 
-                MenuItem AdvancedSubMenuModel = new MenuItem { Icon = "\uec7a", Header = "Advanced" };
+                MenuItem AdvancedSubMenuModel = new() { Icon = "\uec7a", Header = "Advanced" };
                 AdvancedSubMenuModel.Items.Add(new MenuItem { IsEnabled = Utils.IsHttpScheme(e.FrameUrl), Icon = "\ue943", Header = "View source", Command = new RelayCommand(_ => App.Instance.CurrentFocusedWindow().NewTab($"view-source:{e.FrameUrl}", true, App.Instance.CurrentFocusedWindow().TabsUI.SelectedIndex + 1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")))) });
                 BrowserMenu.Items.Add(AdvancedSubMenuModel);
             }

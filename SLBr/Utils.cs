@@ -4,6 +4,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Win32;
+using SLBr.WebView;
 using System.Buffers;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -16,7 +17,6 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -25,7 +25,6 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using WinRT;
 using DColor = System.Drawing.Color;
 using MColor = System.Windows.Media.Color;
 
@@ -46,10 +45,10 @@ namespace SLBr
 
         public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
-        [DllImport("kernel32.dll")]
+        /*[DllImport("kernel32.dll")]
         public static extern bool SetProcessWorkingSetSize(IntPtr proc, int min, int max);
         [DllImport("psapi.dll")]
-        public static extern int EmptyWorkingSet(IntPtr hwProc);
+        public static extern int EmptyWorkingSet(IntPtr hwProc);*/
 
         [DllImport("dwmapi.dll")]
         public static extern int DwmSetWindowAttribute(IntPtr hwnd, DwmWindowAttribute dwAttribute, ref int pvAttribute, int cbAttribute);
@@ -176,8 +175,8 @@ namespace SLBr
         public const int WM_CHAR = 0x0102;
         //public const int WM_DEADCHAR = 0x0103;
 
-        /*[DllImport("user32.dll")]
-        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);*/
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
 
         public static string GetWindowTextRaw(IntPtr hWnd)
         {
@@ -205,9 +204,10 @@ namespace SLBr
 
         //public const int WM_SYSKEYDOWN = 0x0104;
 
-        //public const byte VK_LWIN = 0x5B;
+        public const byte VK_LWIN = 0x5B;
+        public const byte VK_PERIOD = 0xBE;
         //public const byte VK_Z = 0x5A;
-        //public const uint KEYEVENTF_KEYUP = 0x0002;
+        public const uint KEYEVENTF_KEYUP = 0x0002;
 
         /*[DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
@@ -657,6 +657,12 @@ namespace SLBr
 
             return new string(Characters);
         }
+        
+        public static void SafeFreeze(this Freezable Object)
+        {
+            if (Object.CanFreeze)
+                Object.Freeze();
+        }
     }
 
     public static partial class Utils
@@ -711,8 +717,7 @@ namespace SLBr
                 Bitmap.StreamSource = _Stream;
                 Bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 Bitmap.EndInit();
-                if (Bitmap.CanFreeze)
-                    Bitmap.Freeze();
+                Bitmap.SafeFreeze();
                 App.Instance.CopyToClipboard(Bitmap, 1);
             }
             catch { }
@@ -725,6 +730,17 @@ namespace SLBr
             for (int i = 0; i < Value.Length; i++)
                 if (!char.IsWhiteSpace(Value[i])) return false;
             return true;
+        }
+
+        public static void ShowEmojiPicker()
+        {
+            //NOTE: Remove WinRT & Windows.SDK.NET usage.
+            //CoreInputView.GetForCurrentView().TryShow(CoreInputViewKind.Emoji));
+            DllUtils.keybd_event(DllUtils.VK_LWIN, 0, 0, 0);
+            DllUtils.keybd_event(DllUtils.VK_PERIOD, 0, 0, 0);
+
+            DllUtils.keybd_event(DllUtils.VK_PERIOD, 0, DllUtils.KEYEVENTF_KEYUP, 0);
+            DllUtils.keybd_event(DllUtils.VK_LWIN, 0, DllUtils.KEYEVENTF_KEYUP, 0);
         }
 
         public static T FindAncestorOfType<T>(DependencyObject Element) where T : DependencyObject
@@ -1009,8 +1025,7 @@ namespace SLBr
             _Bitmap.CacheOption = BitmapCacheOption.OnLoad;
             _Bitmap.StreamSource = _Stream;
             _Bitmap.EndInit();
-            if (_Bitmap.CanFreeze)
-                _Bitmap.Freeze();
+            _Bitmap.SafeFreeze();
             return _Bitmap;
         }
 
@@ -1059,30 +1074,11 @@ namespace SLBr
             }
         }
 
-        static Guid DTM_IID = new(0xa5caee9b, 0x8708, 0x49d1, 0x8d, 0x36, 0x67, 0xd2, 0x5a, 0x8d, 0xa0, 0x0c);
-
-        [GeneratedComInterface]
-        [Guid("3A3DCD6C-3EAB-43DC-BCDE-45671CE800C8")]
-        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        internal partial interface IDataTransferManagerInterop
-        {
-            IntPtr GetForWindow(IntPtr appWindow, ref Guid riid);
-
-            void ShowShareUIForWindow(IntPtr appWindow);
-        }
-
-        public static void Share(nint HWND, string Title, Uri Url)
-        {
-            IDataTransferManagerInterop DataTransferManagerFactory = Windows.ApplicationModel.DataTransfer.DataTransferManager.As<IDataTransferManagerInterop>();
-            var _DataTransferManager = MarshalInterface<Windows.ApplicationModel.DataTransfer.DataTransferManager>.FromAbi(DataTransferManagerFactory.GetForWindow(HWND, ref DTM_IID));
-            _DataTransferManager.DataRequested += (sender, args) =>
-            {
-                args.Request.Data.Properties.Title = Title;
-                args.Request.Data.SetUri(Url);
-                args.Request.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Link;
-            };
-            DataTransferManagerFactory.ShowShareUIForWindow(HWND);
-        }
+        //NOTE: Remove WinRT & Windows.SDK.NET usage.
+        //JS implementation is observably less reliable within Cef.
+        //TODO: No internet explorer support & unreliable activation in Cef.
+        public static void Share(IWebView View, string Title, string Url) =>
+            View.ExecuteScript($"navigator.share({{title:'{Title}',url:'{Url}'}});");
 
         //public static bool IsAdministrator() =>
         //    new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
