@@ -156,16 +156,41 @@ namespace Updater
                 if (Directory.Exists(ExtractDirectory))
                     Directory.Delete(ExtractDirectory, true);
                 ZipFile.ExtractToDirectory(TemporaryZip, ExtractDirectory);
-                foreach (string _File in Directory.GetFiles(ExtractDirectory, "*", SearchOption.AllDirectories))
+
+                string[] NewFiles = Directory.GetFiles(ExtractDirectory, "*", SearchOption.AllDirectories);
+                HashSet<string> AllowedDestinations = [with(StringComparer.OrdinalIgnoreCase)];
+
+                foreach (string _File in NewFiles)
                 {
-                    string Destination = Path.Combine(ApplicationDirectory, _File.Substring(ExtractDirectory.Length + 1));
+                    string Destination = Path.Combine(ApplicationDirectory, _File[(ExtractDirectory.Length + 1)..]);
+                    AllowedDestinations.Add(Destination);
+                }
+
+                if (Directory.Exists(ApplicationDirectory))
+                {
+                    string[] CurrentFiles = Directory.GetFiles(ApplicationDirectory, "*", SearchOption.AllDirectories);
+                    foreach (string CurrentFile in CurrentFiles)
+                    {
+                        if (!AllowedDestinations.Contains(CurrentFile))
+                        {
+                            try { File.Delete(CurrentFile); }
+                            catch (Exception Ex)
+                            {
+                                Console.WriteLine($"Warning: Could not delete old file {Path.GetFileName(CurrentFile)}: {Ex.Message}");
+                            }
+                        }
+                    }
+                }
+
+                foreach (string _File in NewFiles)
+                {
+                    string Destination = Path.Combine(ApplicationDirectory, _File[(ExtractDirectory.Length + 1)..]);
                     Directory.CreateDirectory(Path.GetDirectoryName(Destination)!);
                     File.Copy(_File, Destination, true);
                 }
 
                 Console.WriteLine("Update complete. Restarting SLBr...");
                 Process.Start(Path.Combine(ApplicationDirectory, "SLBr.exe"));
-
 
                 return 0;
             }
