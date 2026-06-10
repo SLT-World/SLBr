@@ -20,6 +20,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -838,6 +839,7 @@ namespace SLBr
         public string ExtensionsPath;
         public string ResourcesPath;
         public string AdBlockDataPath;
+        public string NotificationTempPath;
         //public string CdnPath;
 
         public bool AppInitialized;
@@ -1703,7 +1705,7 @@ namespace SLBr
                     Profiles.Insert(0, CurrentProfile);
                 }
             }
-            AppUserModelID = "{ab11da56-fbdf-4678-916e-67e165b21f30-" + CurrentProfile.Name + "}";
+            AppUserModelID = $"SLT.SLBr.{CurrentProfile.Name}";
             DllUtils.SetCurrentProcessExplicitAppUserModelID(AppUserModelID);
 
             _Mutex = new Mutex(true, AppUserModelID);
@@ -1757,6 +1759,7 @@ namespace SLBr
             ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             AdBlockDataPath = Path.Combine(UserApplicationDataPath, "Filters");
+            NotificationTempPath = Path.Combine(Path.GetTempPath(), "SLBr_NotificationCache");
             //CdnPath = Path.Combine(ResourcesPath, "cdn");
 
             LocaleNames = AllLocales.Select(i => i.Value).ToList();
@@ -1883,9 +1886,145 @@ namespace SLBr
                 }
                 catch { }
             }
+            try
+            {
+                using var CheckKey = Registry.CurrentUser.OpenSubKey("Software\\Classes\\AppUserModelId\\SLBr.Toast", false);
+                if (CheckKey == null)
+                {
+                    using RegistryKey Key = Registry.CurrentUser.CreateSubKey("Software\\Classes\\AppUserModelId\\SLBr.Toast");
+                    if (Key != null)
+                    {
+                        Key.SetValue("DisplayName", "SLBr", RegistryValueKind.String);
+                        Key.SetValue("IconUri", Path.Combine(ResourcesPath, "SLBr.ico"), RegistryValueKind.String);
+                    }
+                }
+            }
+            catch { }
             AppInitialized = true;
+            _ = CleanTempCache();
             if (!Background)
                 ContinueBackgroundInitialization();
+        }
+
+        //TODO: Implement full https://developer.mozilla.org/en-US/docs/Web/API/Notification API support.
+        //, bool RTL = false
+        public static void ShowPortableNotification(string Title, string Body, string SubText, string? Icon, string? Image, bool Silent = false)
+        {
+            StringBuilder XML = new(); XML.Append("<toast>");
+            if (Silent)
+                XML.Append("<audio silent='true'/>");
+            XML.Append("<visual><binding template='ToastGeneric'>");
+            if (!string.IsNullOrEmpty(Icon) && (Utils.IsHttpScheme(Icon) || File.Exists(Icon)))
+                XML.Append("<image placement='appLogoOverride' src='").Append(SecurityElement.Escape(Icon)).Append("'/>");
+
+            if (!string.IsNullOrEmpty(Image) && (Utils.IsHttpScheme(Image) || File.Exists(Image)))
+                XML.Append("<image placement='hero' src='").Append(SecurityElement.Escape(Image)).Append("'/>");
+            XML.Append("<text>").Append(SecurityElement.Escape(Title)).Append("</text>");
+            XML.Append("<text>").Append(SecurityElement.Escape(Body)).Append("</text>");
+            XML.Append("<text>").Append(SecurityElement.Escape(SubText)).Append("</text>");
+            XML.Append("</binding></visual></toast>");
+            string Script = $@"[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null
+$XML = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType=WindowsRuntime]::new()
+
+$XML.LoadXml('{XML.ToString().Replace("'", "''")}')
+
+$Toast = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType=WindowsRuntime]::new($XML)
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('SLBr.Toast').Show($Toast)";
+
+            Process.Start(new ProcessStartInfo()
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Sta -EncodedCommand {Convert.ToBase64String(Encoding.Unicode.GetBytes(Script))}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+        }
+
+        public async Task<string?> DownloadNotificationAsset(string Url)
+        {
+            if (string.IsNullOrEmpty(Url) || !Utils.IsHttpScheme(Url))
+                return null;
+            //if (!Utils.IsHttpScheme(Url))
+            //    return File.Exists(Url) ? "file:///" + Path.GetFullPath(Url).Replace("\\", "/") : null;
+            try
+            {
+                string Extension = Utils.GetFileExtension(Url).ToLower();
+                if (string.IsNullOrEmpty(Extension) || Extension is not ".png" and not ".jpg" and not ".jpeg" and not ".gif" and not ".webp" and not ".bmp" and not ".ico")
+                    return null;
+                if (!Directory.Exists(NotificationTempPath))
+                    Directory.CreateDirectory(NotificationTempPath);
+                string TargetPath = Path.Combine(NotificationTempPath, $"{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(Url)))}{Extension}");
+                if (File.Exists(TargetPath))
+                    return TargetPath;
+                /*byte[] Data = await MiniHttpClient.GetByteArrayAsync(Url);
+                if (Data == null || Data.Length < 4)
+                    return null;
+                if (!Utils.IsValidImageFromBytes(Data))
+                    return null;
+                await File.WriteAllBytesAsync(TargetPath, Data);
+                return TargetPath;*/
+
+                using (var HeadRequest = new HttpRequestMessage(HttpMethod.Head, Url))
+                using (var HeaderResponse = await MiniHttpClient.SendAsync(HeadRequest, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    if (HeaderResponse.IsSuccessStatusCode && HeaderResponse.Content.Headers.ContentType != null)
+                    {
+                        string MimeType = HeaderResponse.Content.Headers.ContentType.MediaType.ToLower();
+                        if (!MimeType.StartsWith("image/") && MimeType != "application/octet-stream")
+                            return null;
+                    }
+                }
+
+                using var Response = await MiniHttpClient.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
+                if (!Response.IsSuccessStatusCode) return null;
+
+                using Stream NetworkStream = await Response.Content.ReadAsStreamAsync();
+                using MemoryStream _MemoryStream = new();
+                byte[] Buffer = new byte[4096];
+                int BytesRead;
+                bool SignatureVerified = false;
+
+                while ((BytesRead = await NetworkStream.ReadAsync(Buffer)) > 0)
+                {
+                    _MemoryStream.Write(Buffer, 0, BytesRead);
+                    if (!SignatureVerified && _MemoryStream.Length >= 12)
+                    {
+                        if (!Utils.IsValidImageBytes(_MemoryStream.ToArray()))
+                            return null;
+                        SignatureVerified = true;
+                    }
+                }
+                if (!SignatureVerified && !Utils.IsValidImageBytes(_MemoryStream.ToArray()))
+                    return null;
+                await File.WriteAllBytesAsync(TargetPath, _MemoryStream.ToArray());
+                return TargetPath;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task CleanTempCache(bool Force = false)
+        {
+            try
+            {
+                if (!Directory.Exists(NotificationTempPath))
+                    return;
+                if (Force)
+                    Directory.Delete(NotificationTempPath, true);
+                else
+                {
+                    DirectoryInfo DirectoryInfo = new(NotificationTempPath);
+                    DateTime Threshold = DateTime.Now.AddDays(-7);
+                    foreach (FileInfo File in DirectoryInfo.GetFiles())
+                    {
+                        if (File.LastAccessTime < Threshold)
+                            File.Delete();
+                    }
+                }
+            }
+            catch { }
         }
 
         private void InfoBars_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -3972,12 +4111,12 @@ Inner Exception: {7}";
             base.OnExit(e);
         }
 
-        public void ClearAllData()
+        public async Task ClearAllData()
         {
             AdsBlocked = 0;
             History.Clear();
             Cef.GetGlobalCookieManager().DeleteCookies(string.Empty, string.Empty);
-            Cef.GetGlobalRequestContext().ClearHttpAuthCredentialsAsync();
+            await Cef.GetGlobalRequestContext().ClearHttpAuthCredentialsAsync();
             foreach (MainWindow _Window in AllWindows)
             {
                 foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
@@ -3987,20 +4126,21 @@ Inner Exception: {7}";
                         if (BrowserView.WebView.CanExecuteJavascript)
                             BrowserView.WebView.ExecuteScript("localStorage.clear();sessionStorage.clear();");
                         //https://github.com/cefsharp/CefSharp/issues/1234
-                        BrowserView.WebView.CallDevToolsAsync("Storage.clearDataForOrigin", new
+                        await BrowserView.WebView.CallDevToolsAsync("Storage.clearDataForOrigin", new
                         {
                             origin = "*",
                             storageTypes = "all"
                         });
-                        BrowserView.WebView.CallDevToolsAsync("Page.clearCompilationCache");
-                        BrowserView.WebView.CallDevToolsAsync("Page.resetNavigationHistory");
-                        BrowserView.WebView.CallDevToolsAsync("Network.clearBrowserCookies");
-                        BrowserView.WebView.CallDevToolsAsync("Network.clearBrowserCache");
+                        await BrowserView.WebView.CallDevToolsAsync("Page.clearCompilationCache");
+                        await BrowserView.WebView.CallDevToolsAsync("Page.resetNavigationHistory");
+                        await BrowserView.WebView.CallDevToolsAsync("Network.clearBrowserCookies");
+                        await BrowserView.WebView.CallDevToolsAsync("Network.clearBrowserCache");
                         if (BrowserView.WebView is ChromiumEdgeWebView EdgeWebView)
                             EdgeWebView.BrowserCore?.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);
                     }
                 }
             }
+            await CleanTempCache(true);
             InformationDialogWindow InfoWindow = new("Information", $"Settings", "All browsing data has been cleared.", "\ue713")
             {
                 Topmost = true
@@ -5016,13 +5156,25 @@ window.__slbr_notification__ = true;
 class Notification {
 constructor(title, options = {}) {
     if(Notification.permission!=='granted') throw new Error(""Notification permission not granted."");
+    this.title = title;
+    this.body = options.body || """";
+    this.icon = options.icon || """";
+    this.image = options.image || """";
+    this.silent = options.silent === true; 
     this.onclick = null;
     this.onshow = null;
     this.onclose = null;
     this.onerror = null;
     if(typeof engine !== 'undefined' && typeof engine.postMessage === 'function') {
         let packageSet=new Set();packageSet.add(title).add(options);
-        engine.postMessage({type:""__notification__"",data:JSON.stringify([...packageSet])});
+        engine.postMessage({type:""__notification__"",
+                data: JSON.stringify({
+                    title: this.title,
+                    body: this.body,
+                    icon: this.icon,
+                    image: this.image,
+                    silent: this.silent
+                })});
     }
     setTimeout(() => {if(typeof this.onshow==='function')this.onshow();},0);
     if(Notification.autoClose) setTimeout(()=>this.close(),Notification.autoClose);

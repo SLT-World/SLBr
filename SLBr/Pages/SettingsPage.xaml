@@ -481,7 +481,7 @@
                                             <!--<Border Width="35" Height="35" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
                                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xea99;"/>
                                         </Border>-->
-                                            <Button DockPanel.Dock="Right" Click="ClearAllDataButton_Click">
+                                            <Button x:Name="ClearAllDataButton" DockPanel.Dock="Right" Click="ClearAllDataButton_Click">
                                                 <DockPanel VerticalAlignment="Center">
                                                     <TextBlock Text="&#xea99;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                     <TextBlock TextAlignment="Center" Text="Clear" HorizontalAlignment="Center" VerticalAlignment="Center"/>

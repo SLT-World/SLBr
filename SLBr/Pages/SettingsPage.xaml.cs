@@ -1173,14 +1173,18 @@ namespace SLBr.Pages
             BrowserView.Action(Actions.SwitchUserPopup);
         }
 
-        private void ClearAllDataButton_Click(object sender, RoutedEventArgs e)
+        private async void ClearAllDataButton_Click(object sender, RoutedEventArgs e)
         {
             InformationDialogWindow InfoWindow = new("Warning", "Clear Browsing Data", "This will permanently delete all browsing data. Do you want to continue?", "\uea99", "Yes", "No")
             {
                 Topmost = true
             };
             if (InfoWindow.ShowDialog() == true)
-                App.Instance.ClearAllData();
+            {
+                ClearAllDataButton.IsEnabled = false;
+                await App.Instance.ClearAllData();
+                ClearAllDataButton.IsEnabled = true;
+            }
         }
 
         private void ExtensionToggleButton_Click(object sender, RoutedEventArgs e)

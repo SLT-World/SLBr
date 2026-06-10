@@ -835,6 +835,27 @@ namespace SLBr
             //return AMPUrls[0].GetProperty("ampUrl").GetString();
         }
 
+        public static bool IsValidImageBytes(byte[] Bytes)//string? GetImageExtensionFromBytes
+        {
+            if (Bytes != null && Bytes.Length >= 2)
+            {
+                if (Bytes[0] == 0xFF && Bytes[1] == 0xD8)
+                    return true;//".jpg";
+                if (Bytes[0] == 0x42 && Bytes[1] == 0x4D)
+                    return true;//".bmp";
+                if (Bytes.Length >= 4)
+                {
+                    if (Bytes[0] == 0x89 && Bytes[1] == 0x50 && Bytes[2] == 0x4E && Bytes[3] == 0x47)
+                        return true;//".png";
+                    if (Bytes[0] == 0x47 && Bytes[1] == 0x49 && Bytes[2] == 0x46 && Bytes[3] == 0x38)
+                        return true;//".gif";
+                    if (Bytes[0] == 0x00 && Bytes[1] == 0x00 && Bytes[2] == 0x01 && Bytes[3] == 0x00)
+                        return true;//".ico";
+                }
+            }
+            return false;
+        }
+
         /*public static async Task RunSafeAsync(Func<Task> TaskFunction)
         {
             try

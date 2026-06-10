@@ -13,7 +13,6 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
-using System.Dynamic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -1308,30 +1307,33 @@ namespace SLBr.Pages
                         Refresh();
                     }
                     break;
-                /*case "__notification__":
+                case "__notification__":
                     try
                     {
                         var DataJson = Message["data"]?.ToString();
                         if (string.IsNullOrWhiteSpace(DataJson))
                             return;
-                        var Data = JsonSerializer.Deserialize<List<object>>(DataJson);
-                        if (Data != null && Data.Count == 2)
+                        using JsonDocument Document = JsonDocument.Parse(DataJson);
+                        string Title = Document.RootElement.GetProperty("title").GetString();
+                        string Body = Document.RootElement.GetProperty("body").GetString();
+                        string? RawIcon = Document.RootElement.GetProperty("icon").GetString();
+                        string? RawImage = Document.RootElement.GetProperty("image").GetString();
+                        bool ReduceDisk = bool.Parse(App.Instance.GlobalSave.Get("ReduceDisk"));
+                        string? Icon = ReduceDisk || string.IsNullOrEmpty(RawIcon) ? null : Utils.ResolveUrl(Address, Document.RootElement.GetProperty("icon").GetString());
+                        string? Image = ReduceDisk || string.IsNullOrEmpty(RawImage) ? null : Utils.ResolveUrl(Address, Document.RootElement.GetProperty("image").GetString());
+
+                        //string TextDirection = Document.RootElement.TryGetProperty("dir", out var DirElement) ? DirElement.GetString() : "ltr";
+                        bool Silent = Document.RootElement.TryGetProperty("silent", out var SilentElement) && SilentElement.GetBoolean();
+                        App.Instance.Dispatcher.BeginInvoke(async () =>
                         {
-                            var ToastXML = new Windows.Data.Xml.Dom.XmlDocument();
-                            ToastXML.LoadXml(@$"<toast>
-    <visual>
-        <binding template=""ToastText04"">
-            <text id=""1"">{Data[0]}</text>
-            <text id=""2"">{((IDictionary<string, object>)JsonSerializer.Deserialize<ExpandoObject>(((JsonElement)Data[1]).GetRawText()))["body"]}</text>
-            <text id=""3"">{Utils.Host(Address, false)}</text>
-        </binding>
-    </visual>
-</toast>");
-                            ToastNotificationManager.CreateToastNotifier("SLBr").Show(new ToastNotification(ToastXML));
-                        }
+                            string? LocalIconFile = await App.Instance.DownloadNotificationAsset(Icon);
+                            string? LocalImageFile = await App.Instance.DownloadNotificationAsset(Image);
+                            App.ShowPortableNotification(Title, Body, Utils.Host(Address, false), LocalIconFile, LocalImageFile, Silent);
+                            //, Silent, TextDirection == "rtl"
+                        });
                     }
                     catch { }
-                    break;*/
+                    break;
             }
         }
 
