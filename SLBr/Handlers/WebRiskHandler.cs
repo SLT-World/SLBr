@@ -21,12 +21,20 @@ namespace SLBr.Handlers
 
     public enum ThreatType
     {
-        Unknown,
-        Malware,
-        Social_Engineering,
-        Unwanted_Software,
+        Unknown,//0
+        Malware,//1
+        Social_Engineering,//2
+        Unwanted_Software,//3
+        Potentially_Harmful_Application,//4
+        //Malicious_Binary,//7
+        //Subresource_Filter,//13
+        Trick_To_Bill,//15
+        //Abusive_Experience_Violation,//20
+        //Better_Ads_Violation,//21
+        //Notification_Abuse,//24
     }
 
+    //https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/core/common/proto/safebrowsingv5.proto
     public class WebRiskHandler
     {
         const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v5/hashes:search?key=";
@@ -73,7 +81,7 @@ namespace SLBr.Handlers
                 if (Response.IsSuccessStatusCode)
                 {
                     byte[] Bytes = Response.Content.ReadAsByteArrayAsync().Result;
-                    if (Bytes.Length > 0)
+                    if (Bytes != null && Bytes.Length > 0)
                         return SearchHashesResponse.Parser.ParseFrom(Bytes);
                 }
             }
@@ -98,8 +106,9 @@ namespace SLBr.Handlers
                                 switch (ThreatElement.GetString())
                                 {
                                     case "MALWARE":
-                                    case "POTENTIALLY_HARMFUL_APPLICATION":
                                         return ThreatType.Malware;
+                                    case "POTENTIALLY_HARMFUL_APPLICATION":
+                                        return ThreatType.Potentially_Harmful_Application;
                                     case "SOCIAL_ENGINEERING":
                                         return ThreatType.Social_Engineering;
                                     case "UNWANTED_SOFTWARE":

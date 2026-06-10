@@ -69,8 +69,8 @@ namespace SLBr.Handlers
         }
 
         public static Lazy<FastHashSet<string>> SafeFileExtensions = new(() =>
-            new(StringComparer.OrdinalIgnoreCase)
-            {
+            [
+                with(StringComparer.OrdinalIgnoreCase),
                 ".jpg",  ".jpeg", ".mp3",      ".mp4",  ".png",  ".csv",  ".ica",
                 ".gif",  ".txt",  ".package",  ".tif",  ".webp", ".mkv",  ".wav",
                 ".mov",  ".paf",  ".vbscript", ".ad",   ".inx",  ".isu",  ".job",
@@ -78,7 +78,7 @@ namespace SLBr.Handlers
                 ".flac", ".ico",  ".jfif",     ".m4a",  ".m4v",  ".mpeg", ".mpg",
                 ".oga",  ".ogg",  ".ogm",      ".ogv",  ".opus", ".pjp",  ".pjpeg",
                 ".svgz", ".text", ".tiff",     ".weba", ".webm", ".xbm",  ".crx"
-            });
+            ]);
 
         public bool IsSupportedDownload(string FilePath, string DownloadUrl)
         {

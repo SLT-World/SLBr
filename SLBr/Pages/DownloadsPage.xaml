@@ -93,7 +93,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <Border Width="35" Height="35" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                                                <TextBlock Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
+                                                <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
                                             </Border>
                                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                                 <Grid.RowDefinitions>
@@ -101,7 +101,7 @@
                                                     <RowDefinition/>
                                                 </Grid.RowDefinitions>
                                                 <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
                                             </Grid>
                                             <Button Grid.Column="2" Height="35" Click="CancelSingleButton_Click" Visibility="{Binding Stop}">
                                                 <DockPanel VerticalAlignment="Center">

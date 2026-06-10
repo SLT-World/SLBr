@@ -1,0 +1,65 @@
+// Copyright 2023 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+//
+// This file includes the Safe Browsing V5 API SearchHashes and
+// BatchGetHashLists request and response protocol buffers, since that's the
+// only portion of the V5 API that Chrome currently uses. They should be kept in
+// sync with the server implementation.
+
+syntax = "proto3";
+
+option optimize_for = LITE_RUNTIME;
+
+message SearchHashesResponse {
+  repeated FullHash full_hashes = 1;
+}
+
+message FullHash {
+  bytes full_hash = 1;
+  repeated FullHashDetail full_hash_details = 2;
+}
+
+message FullHashDetail {
+  ThreatType threat_type = 1;
+}
+
+// Types of threats.
+enum ThreatType {
+  // Unknown.
+  THREAT_TYPE_UNSPECIFIED = 0;
+
+  // Malware threat type.
+  MALWARE = 1;
+
+  // Social engineering threat type.
+  SOCIAL_ENGINEERING = 2;
+
+  // Unwanted software threat type.
+  UNWANTED_SOFTWARE = 3;
+
+  // Potentially harmful application threat type.
+  POTENTIALLY_HARMFUL_APPLICATION = 4;
+
+  reserved 5, 6, 8 to 12, 14, 16 to 19;
+
+  // Malicious binary threat type.
+  MALICIOUS_BINARY = 7;
+
+  // Patterns to be used for activating the subresource filter.
+  SUBRESOURCE_FILTER = 13;
+
+  // Trick-to-bill threat list.
+  TRICK_TO_BILL = 15;
+
+  // Abusive experience violation threat type.
+  ABUSIVE_EXPERIENCE_VIOLATION = 20;
+
+  // Better advertisements threat type.
+  BETTER_ADS_VIOLATION = 21;
+
+  reserved 22;
+  reserved 23;
+
+  NOTIFICATION_ABUSE = 24;
+}

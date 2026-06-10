@@ -988,7 +988,7 @@ namespace SLBr
                         {
                             try
                             {
-                                _Entry.FormattedProgress = "Threat Check - Scanning";
+                                _Entry.FormattedProgress = "Safety Check - Scanning";
                                 _Entry.IsIndeterminate = true;
                                 DownloadVerdict Verdict = await _DownloadRiskHandler.IsSafe(Item.TempPath, Item.FullPath, Item.Url, DownloadSecurityService);
                                 _Entry.Progress = Visibility.Collapsed;
@@ -1786,7 +1786,6 @@ namespace SLBr
             WhiteColor.SafeFreeze();
             IconFont = (FontFamily)Resources["IconFontFamily"];
             SLBrFont = new FontFamily(new Uri("pack://application:,,,/SLBr;component/"), "./Fonts/#SLBr Icons");
-
             await InitializeSaves();
 
             //MimicHttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);

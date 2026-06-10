@@ -822,16 +822,17 @@ namespace SLBr.Pages
                         {
                             //TODO: Async & CancellationToken.
                             ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
-                            if (_ThreatType is ThreatType.Malware or ThreatType.Unwanted_Software)
+                            if (_ThreatType is ThreatType.Malware or ThreatType.Unwanted_Software or ThreatType.Potentially_Harmful_Application)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
-                            else if (_ThreatType == ThreatType.Social_Engineering)
+                            else if (_ThreatType == ThreatType.Social_Engineering || _ThreatType == ThreatType.Trick_To_Bill)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
+                            //TODO: Implement distinctive billing interstitial page.
                         }
                     }
                     else if (e.Url.StartsWith("chrome:"))
                     {
                         //https://source.chromium.org/chromium/chromium/src/+/main:ios/chrome/browser/shared/model/url/chrome_url_constants.cc
-                        ReadOnlySpan<char> Sub = e.Url.AsSpan().Slice(9);
+                        ReadOnlySpan<char> Sub = e.Url.AsSpan()[9..];
                         if (Sub.StartsWith("settings", StringComparison.OrdinalIgnoreCase) ||
                             Sub.StartsWith("history", StringComparison.OrdinalIgnoreCase) ||
                             Sub.StartsWith("downloads", StringComparison.OrdinalIgnoreCase) ||
