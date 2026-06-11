@@ -1,6 +1,7 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using ProtoBuf;
 using SLBr.SafeBrowsing;
 using System.Net;
 using System.Net.Http;
@@ -34,7 +35,6 @@ namespace SLBr.Handlers
         //Notification_Abuse,//24
     }
 
-    //https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/core/common/proto/safebrowsingv5.proto
     public class WebRiskHandler
     {
         const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v5/hashes:search?key=";
@@ -50,11 +50,11 @@ namespace SLBr.Handlers
 
         public FastHashSet<ulong> SafeHashes = [];
 
-        private static ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
+        public static ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
         {
             foreach (FullHash _FullHash in Response.FullHashes)
             {
-                if (!_FullHash.FullHash_.Span.SequenceEqual(LocalHash))
+                if (!_FullHash.full_hash.AsSpan().SequenceEqual(LocalHash))
                     continue;
                 FullHashDetail? Detail = _FullHash.FullHashDetails.FirstOrDefault();
                 if (Detail == null)
@@ -62,12 +62,25 @@ namespace SLBr.Handlers
                 switch (Detail.ThreatType)
                 {
                     case SafeBrowsing.ThreatType.Malware:
-                    case SafeBrowsing.ThreatType.PotentiallyHarmfulApplication:
                         return ThreatType.Malware;
                     case SafeBrowsing.ThreatType.SocialEngineering:
                         return ThreatType.Social_Engineering;
                     case SafeBrowsing.ThreatType.UnwantedSoftware:
                         return ThreatType.Unwanted_Software;
+                    case SafeBrowsing.ThreatType.PotentiallyHarmfulApplication:
+                        return ThreatType.Potentially_Harmful_Application;
+                    /*case SafeBrowsing.ThreatType.MaliciousBinary:
+                        return ThreatType.Malicious_Binary;
+                    case SafeBrowsing.ThreatType.SubresourceFilter:
+                        return ThreatType.Subresource_Filter;*/
+                    case SafeBrowsing.ThreatType.TrickToBill:
+                        return ThreatType.Trick_To_Bill;
+                        /*case SafeBrowsing.ThreatType.AbusiveExperienceViolation:
+                            return ThreatType.Abusive_Experience_Violation;
+                        case SafeBrowsing.ThreatType.BetterAdsViolation:
+                            return ThreatType.Better_Ads_Violation;
+                        case SafeBrowsing.ThreatType.NotificationAbuse:
+                            return ThreatType.Notification_Abuse;*/
                 }
                 continue;
             }
@@ -81,8 +94,10 @@ namespace SLBr.Handlers
                 if (Response.IsSuccessStatusCode)
                 {
                     byte[] Bytes = Response.Content.ReadAsByteArrayAsync().Result;
+                    //System.Diagnostics.Debug.WriteLine("byte[] LocalHash = [" + string.Join(", ", LocalHash.Select(b => $"0x{b:X2}")) + "];");
+                    //System.Diagnostics.Debug.WriteLine("byte[] Bytes = [" + string.Join(", ", Bytes.Select(b => $"0x{b:X2}")) + "];");
                     if (Bytes != null && Bytes.Length > 0)
-                        return SearchHashesResponse.Parser.ParseFrom(Bytes);
+                        return Serializer.Deserialize<SearchHashesResponse>(Bytes);
                 }
             }
             catch { }
@@ -106,9 +121,8 @@ namespace SLBr.Handlers
                                 switch (ThreatElement.GetString())
                                 {
                                     case "MALWARE":
-                                        return ThreatType.Malware;
                                     case "POTENTIALLY_HARMFUL_APPLICATION":
-                                        return ThreatType.Potentially_Harmful_Application;
+                                        return ThreatType.Malware;
                                     case "SOCIAL_ENGINEERING":
                                         return ThreatType.Social_Engineering;
                                     case "UNWANTED_SOFTWARE":

@@ -10,6 +10,7 @@
 syntax = "proto3";
 
 option optimize_for = LITE_RUNTIME;
+option csharp_namespace = "SLBr.SafeBrowsing";
 
 message SearchHashesResponse {
   repeated FullHash full_hashes = 1;
