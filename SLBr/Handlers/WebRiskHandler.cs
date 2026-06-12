@@ -1,7 +1,7 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
-using SLBr.SafeBrowsing;
+using SLBr.Protobuf;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -50,43 +50,46 @@ namespace SLBr.Handlers
 
         public FastHashSet<ulong> SafeHashes = [];
 
-        private static ThreatType SBv5GetThreatType(SearchHashesResponse Response, byte[] LocalHash)
+        private static ThreatType SBv5GetThreatType(SafeBrowsingV5Parser.SearchHashesResponse Response, byte[] LocalHash)
         {
-            foreach (FullHash _FullHash in Response.FullHashes)
+            foreach (SafeBrowsingV5Parser.FullHash _FullHash in Response.FullHashes)
             {
-                if (!_FullHash.FullHash_.Span.SequenceEqual(LocalHash))
+                if (!_FullHash.HashBytes.SequenceEqual(LocalHash))
                     continue;
-                FullHashDetail? Detail = _FullHash.FullHashDetails.FirstOrDefault();
-                if (Detail == null)
-                    continue;
-                switch (Detail.ThreatType)
+                foreach (int Threat in _FullHash.ThreatTypes)
                 {
-                    case SafeBrowsing.ThreatType.Malware:
-                    case SafeBrowsing.ThreatType.PotentiallyHarmfulApplication:
-                        return ThreatType.Malware;
-                    case SafeBrowsing.ThreatType.SocialEngineering:
-                        return ThreatType.Social_Engineering;
-                    case SafeBrowsing.ThreatType.UnwantedSoftware:
-                        return ThreatType.Unwanted_Software;
+                    switch (Threat)
+                    {
+                        case 0: return ThreatType.Unknown;
+                        case 1: return ThreatType.Malware;
+                        case 2: return ThreatType.Social_Engineering;
+                        case 3: return ThreatType.Unwanted_Software;
+                        case 4: return ThreatType.Potentially_Harmful_Application;
+                        /*case 7: return ThreatType.Malicious_Binary;
+                        case 13: return ThreatType.Subresource_Filter;*/
+                        case 15: return ThreatType.Trick_To_Bill;
+                            /*case 20: return ThreatType.Abusive_Experience_Violation;
+                            case 21: return ThreatType.Better_Ads_Violation;
+                            case 24: return ThreatType.Notification_Abuse;*/
+                    }
                 }
-                continue;
             }
             return ThreatType.Unknown;
         }
-        private static SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
+        private static SafeBrowsingV5Parser.SearchHashesResponse SBv5Response(byte[] LocalHash, string Endpoint)
         {
             try
             {
-                var Response = HttpClientInstance.Value.GetAsync(Endpoint + $"&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash, 0, 4).AsSpan())}").Result;
+                var Response = HttpClientInstance.Value.GetAsync($"{Endpoint}&hashPrefixes={Uri.EscapeDataString(Convert.ToBase64String(LocalHash, 0, 4).AsSpan())}").Result;
                 if (Response.IsSuccessStatusCode)
                 {
                     byte[] Bytes = Response.Content.ReadAsByteArrayAsync().Result;
                     if (Bytes != null && Bytes.Length > 0)
-                        return SearchHashesResponse.Parser.ParseFrom(Bytes);
+                        return SafeBrowsingV5Parser.ParseResponse(Bytes);
                 }
             }
             catch { }
-            return new SearchHashesResponse();
+            return new SafeBrowsingV5Parser.SearchHashesResponse();
         }
 
 

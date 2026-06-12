@@ -1,15 +1,13 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
-using Google.Protobuf;
-using SafeBrowsing;
+using SLBr.Protobuf;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
-using static SafeBrowsing.ClientDownloadRequest.Types;
 
 namespace SLBr.Handlers
 {
@@ -100,85 +98,73 @@ namespace SLBr.Handlers
                 LocalHash = await SHA.ComputeHashAsync(_FileStream, Token);
             }
             FileInfo _FileInfo = new(ActualPath);
-            ClientDownloadRequest Request = new()
+            ReadOnlySpan<byte> PayloadBytes;
+            byte[] RentedBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(4096);
+            try
             {
-                Url = DownloadUrl,
-                Length = _FileInfo.Length,
-                UserInitiated = true,
-                FileBasename = _FileInfo.Name,
-                Locale = "en-US",
-                DownloadType = SBGetDownloadType(FilePath),
-                Digests = new Digests
-                {
-                    Sha256 = ByteString.CopyFrom(LocalHash)
-                }
-            };
+                ProtobufWriter Writer = new(RentedBuffer);
+                Writer.WriteString(1, DownloadUrl);
 
-            Request.Resources.Add(new Resource
+                Span<byte> DigestsSpace = stackalloc byte[64];
+                ProtobufWriter DigestsWriter = new(DigestsSpace);
+                DigestsWriter.WriteBytes(1, LocalHash);
+                Writer.WriteBytes(2, DigestsWriter.WrittenSpan);
+
+                Writer.WriteInt64(3, _FileInfo.Length);
+
+                Span<byte> ResourceSpace = stackalloc byte[512];
+                ProtobufWriter ResourceWriter = new(ResourceSpace);
+                ResourceWriter.WriteString(1, DownloadUrl);
+                ResourceWriter.WriteEnum(2, 0);
+                ResourceWriter.WriteString(4, Referrer ?? "");
+                Writer.WriteBytes(4, ResourceWriter.WrittenSpan);
+
+                Writer.WriteBool(6, true);
+                Writer.WriteString(9, Path.GetFileName(FilePath));
+                int FileDownloadType = SBGetDownloadType(FilePath);
+                Writer.WriteEnum(10, FileDownloadType);
+                //Writer.WriteString(11, "en-US");
+                //TODO: Deliver 22 archived_binary information.
+                if (FileDownloadType is 3 or 6 or 11 or 15)
+                    Writer.WriteBool(26, false);
+                PayloadBytes = Writer.WrittenSpan;
+            }
+            finally
             {
-                Url = DownloadUrl,
-                Referrer = Referrer ?? "",
-                Type = ResourceType.DownloadUrl
-            });
+                System.Buffers.ArrayPool<byte>.Shared.Return(RentedBuffer);
+            }
 
-            using ByteArrayContent Content = new(Request.ToByteArray());
+            using ReadOnlyMemoryContent Content = new(PayloadBytes.ToArray());
             Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             HttpResponseMessage Response = await HttpClientInstance.Value.PostAsync(Endpoint, Content, Token);
 
             if (!Response.IsSuccessStatusCode)
                 return DownloadVerdict.Safe;
             byte[] ResponseBytes = await Response.Content.ReadAsByteArrayAsync(Token);
-            ClientDownloadResponse ProtoResponse = ClientDownloadResponse.Parser.ParseFrom(ResponseBytes);
+            if (ResponseBytes == null || ResponseBytes.Length == 0)
+                return DownloadVerdict.Safe;
+            //System.Diagnostics.Debug.WriteLine("byte[] Bytes = [" + string.Join(", ", ResponseBytes.Select(b => $"0x{b:X2}")) + "];");
+            SafeBrowsingDownloadParser.ClientDownloadResponse ProtoResponse = SafeBrowsingDownloadParser.ParseResponse(ResponseBytes);
             return ProtoResponse.ToVerdict();
         }
 
         //https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/safe_browsing/download_type_util.cc
-        private static DownloadType SBGetDownloadType(string FilePath)
+        private static int SBGetDownloadType(string FilePath)
         {
             switch (Path.GetExtension(FilePath).ToLowerInvariant())
             {
-                /*case ".exe":
-                case ".msi":
-                case ".cab":
-                    return WinExecutable;*/
-
-                /*TODO ZIP & RAR:*
-                 * Do not send a ClientDownloadRequest for archive files unless they contain either executables or archives.
-                 */
                 case ".zip":
-                    return DownloadType.ZippedExecutable;
+                    return 3;//ZippedExecutable;
                 case ".rar":
-                    return DownloadType.RarCompressedExecutable;
+                    return 11;//RarCompressedExecutable;
                 case ".7z":
-                    return DownloadType.SevenZipCompressedExecutable;
+                    return 15;//SevenZipCompressedExecutable;
                 case ".tar":
                 case ".gz":
                 case ".bz2":
                 case ".xz":
                 case ".iso":
-                    return DownloadType.Archive;
-                //case ".crx":
-                //    return DownloadType.ChromeExtension;
-                /*case ".dmg":
-                case ".img":
-                case ".iso":
-                case ".pkg":
-                case ".mpkg":
-                case ".smi":
-                case ".app":
-                case ".cdr":
-                case ".dmgpart":
-                case ".dvdr":
-                case ".dart":
-                case ".dc42":
-                case ".diskcopy42":
-                case ".imgpart":
-                case ".ndif":
-                case ".udif":
-                case ".toast":
-                case ".sparsebundle":
-                case ".sparseimage":
-                    return DownloadType.MacExecutable;*/
+                    return 6;//Archive;
                 case ".pdf":
                 case ".doc":
                 case ".docx":
@@ -212,27 +198,21 @@ namespace SLBr.Handlers
                 case ".sldx":
                 case ".rtf":
                 case ".wll":
-                    return DownloadType.Document;
-                /*case ".apk":
-                case ".apkm":
-                    return DownloadType.AndroidApk;*/
+                    return 14;//Document;
             }
-            return DownloadType.WinExecutable;
-            //return DownloadType.SampledUnsupportedFile;
+            return 0;//WinExecutable;
         }
     }
     public static class ProtoUtils
     {
-        public static DownloadVerdict ToVerdict(this ClientDownloadResponse Response)
+        public static DownloadVerdict ToVerdict(this SafeBrowsingDownloadParser.ClientDownloadResponse Response) => Response.Verdict switch
         {
-            return Response.Verdict switch
-            {
-                ClientDownloadResponse.Types.Verdict.Safe => DownloadVerdict.Safe,
-                ClientDownloadResponse.Types.Verdict.Dangerous => DownloadVerdict.Dangerous,
-                ClientDownloadResponse.Types.Verdict.Uncommon => DownloadVerdict.Uncommon,
-                ClientDownloadResponse.Types.Verdict.DangerousHost => DownloadVerdict.DangerousHost,
-                _ => DownloadVerdict.Safe
-            };
-        }
+            0 => DownloadVerdict.Safe,
+            1 => DownloadVerdict.Dangerous,
+            2 => DownloadVerdict.Uncommon,
+            3 => DownloadVerdict.Dangerous,//PotentiallyUnwanted,
+            4 => DownloadVerdict.DangerousHost,
+            _ => DownloadVerdict.Safe
+        };
     }
 }
