@@ -546,7 +546,7 @@ namespace SLBr.WebView
             return null;
         }
 
-        public static bool RegisterOverrideRequest(string Url, byte[] Data, string MimeType = ResourceHandler.DefaultMimeType/*, bool limitedUse = false*/, int Uses = 1, string Error = "")
+        public static bool RegisterOverrideRequest(string Url, byte[] Data, string MimeType = ResourceHandler.DefaultMimeType/*, bool limitedUse = false*/, int Uses = 1, int Error = -1)
         {
             if (Uri.TryCreate(Url, UriKind.Absolute, out Uri? URI))
             {
@@ -561,11 +561,11 @@ namespace SLBr.WebView
         public static ConcurrentDictionary<string, RequestOverrideItem> OverrideRequests = new(StringComparer.OrdinalIgnoreCase);
     }
 
-    public class RequestOverrideItem(byte[] _Data, string _MimeType, int _Uses = 1, string _Error = "")
+    public class RequestOverrideItem(byte[] _Data, string _MimeType, int _Uses = 1, int _Error = -1)
     {
         public byte[] Data = _Data;
         public string MimeType = _MimeType;
-        public string Error = _Error;
+        public int Error = _Error;
         public int Uses = _Uses;
     }
 

@@ -19,19 +19,19 @@ namespace SLBr.Handlers
         PhishTank
     }
 
-    public enum ThreatType
+    public enum ThreatType : int
     {
-        Unknown,//0
-        Malware,//1
-        Social_Engineering,//2
-        Unwanted_Software,//3
-        Potentially_Harmful_Application,//4
-        //Malicious_Binary,//7
-        //Subresource_Filter,//13
-        Trick_To_Bill,//15
-        //Abusive_Experience_Violation,//20
-        //Better_Ads_Violation,//21
-        //Notification_Abuse,//24
+        Unknown = 0,
+        Malware = 1,
+        Social_Engineering = 2,
+        Unwanted_Software = 3,
+        Potentially_Harmful_Application = 4,
+        //Malicious_Binary = 7,
+        //Subresource_Filter = 13,
+        Trick_To_Bill = 15,
+        //Abusive_Experience_Violation = 20,
+        //Better_Ads_Violation = 21,
+        //Notification_Abuse = 24,
     }
 
     //https://source.chromium.org/chromium/chromium/src/+/main:components/safe_browsing/core/common/proto/safebrowsingv5.proto

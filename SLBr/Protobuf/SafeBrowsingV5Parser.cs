@@ -3,10 +3,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
-using System.Security.Policy;
 using System.Windows;
-using static SLBr.Benchmark;
-using static SLBr.Protobuf.SafeBrowsingV5Parser;
 
 namespace SLBr.Protobuf
 {

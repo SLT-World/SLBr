@@ -1387,7 +1387,7 @@ namespace SLBr.WebView
 
             BrowserSettings _BrowserSettings = new()
             {
-                BackgroundColor = 0xFF000000,
+                BackgroundColor = 0x000000,
                 ChromeStatusBubble = CefState.Disabled,
                 ChromeZoomBubble = CefState.Disabled,
                 Javascript = Settings.JavaScript ? CefState.Default : CefState.Disabled,

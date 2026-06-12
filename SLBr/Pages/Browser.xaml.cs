@@ -823,10 +823,11 @@ namespace SLBr.Pages
                             //TODO: Async & CancellationToken.
                             ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
                             if (_ThreatType is ThreatType.Malware or ThreatType.Unwanted_Software or ThreatType.Potentially_Harmful_Application)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
-                            else if (_ThreatType == ThreatType.Social_Engineering || _ThreatType == ThreatType.Trick_To_Bill)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, _ThreatType.ToString());
-                            //TODO: Implement distinctive billing interstitial page.
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, (int)_ThreatType);
+                            else if (_ThreatType == ThreatType.Social_Engineering)
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, (int)_ThreatType);
+                            else if (_ThreatType == ThreatType.Trick_To_Bill)
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.WebRiskBillingInterstitialPage, Encoding.UTF8), "text/html", -1, (int)_ThreatType);
                         }
                     }
                     else if (e.Url.StartsWith("chrome:"))
@@ -1934,9 +1935,11 @@ namespace SLBr.Pages
                     string SetSiteInfo = string.Empty;
                     if (WebViewManager.OverrideRequests.TryGetValue(Address, out RequestOverrideItem Item))
                     {
-                        if (!string.IsNullOrEmpty(Item.Error))
+                        if (Item.Error != -1)
                         {
-                            if (Item.Error.StartsWith("Malware") || Item.Error.StartsWith("Potentially_Harmful_Application") || Item.Error.StartsWith("Social_Engineering") || Item.Error.StartsWith("Unwanted_Software"))
+                            if (Item.Error == 15)
+                                SetSiteInfo = "Bill";
+                            else
                                 SetSiteInfo = "Danger";
                         }
                     }
@@ -2047,6 +2050,14 @@ namespace SLBr.Pages
                             SiteInformationText.Text = "Danger";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
                             SiteInformationPopupText.Text = "Dangerous site";
+                            SiteInformationCertificate.Visibility = Visibility.Collapsed;
+                            break;
+                        case "Bill":
+                            SiteInformationIcon.Text = "\xe7ba";
+                            SiteInformationIcon.Foreground = App.Instance.RedColor;
+                            SiteInformationText.Text = "Danger";
+                            TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
+                            SiteInformationPopupText.Text = "Deceptive billing site";
                             SiteInformationCertificate.Visibility = Visibility.Collapsed;
                             break;
                         case "Protocol":
