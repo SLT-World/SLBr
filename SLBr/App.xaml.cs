@@ -4415,11 +4415,27 @@ Inner Exception: {7}";
 
         public async Task<BitmapSource> SetIcon(string IconUrl, string Url = "", bool IsPrivate = false)
         {
+            //TODO: Remove PDF icon.
             if (IsPrivate)
                 return PrivateIcon;
-            else if (Utils.GetFileExtension(Url) != ".pdf")
+            if (Utils.GetFileExtension(Url) != ".pdf")
             {
-                if (!IsPrivate && Utils.IsHttpScheme(IconUrl) && bool.Parse(GlobalSave.Get("Favicons")))
+                if (Utils.IsHttpScheme(Url) && bool.Parse(GlobalSave.Get("Favicons")))
+                {
+                    //NOTE: Data scheme is not utilized within internal URLs.
+                    if (IconUrl.StartsWith("data:"))
+                    {
+                        if (IconUrl.StartsWith("data:image/"))
+                        {
+                            try { return Utils.ConvertBase64ToBitmapImage(IconUrl); }
+                            catch { }
+                        }
+                    }
+                    else
+            {
+                        if (string.IsNullOrEmpty(IconUrl))
+                            IconUrl = Utils.FastHost(Url, false, true) + "/favicon.ico";
+                        if (Utils.IsHttpScheme(IconUrl))
                 {
                     if (FaviconCache.TryGetValue(IconUrl, out BitmapImage? CachedImage))
                         return CachedImage ?? TabIcon;
@@ -4434,7 +4450,11 @@ Inner Exception: {7}";
                                 using HttpRequestMessage Request = new(HttpMethod.Get, IconUrl);
                                 Request.Headers.Referrer = new Uri(Utils.FastHost(IconUrl, false, true));
                                 using var Response = await MiniHttpClient.SendAsync(Request);
-                                if (!Response.IsSuccessStatusCode) return null;
+                                        if (!Response.IsSuccessStatusCode)
+                                        {
+                                            CacheFavicon(IconUrl, null);
+                                            return null;
+                                        }
                                 using Stream _Stream = await Response.Content.ReadAsStreamAsync();
                                 BitmapImage Bitmap = new();
                                 Bitmap.BeginInit();
@@ -4445,7 +4465,7 @@ Inner Exception: {7}";
                                 CacheFavicon(IconUrl, Bitmap);
                                 return Bitmap;
                             }
-                            catch { return null; }
+                                    catch { CacheFavicon(IconUrl, null); return null; }
                             finally { DownloadingFavicons.Remove(IconUrl); }
                         }
                         Task<BitmapImage?> IconTask = DownloadIconTask();
