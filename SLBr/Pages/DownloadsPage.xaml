@@ -101,7 +101,7 @@
                                                     <RowDefinition/>
                                                 </Grid.RowDefinitions>
                                                 <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
+                                                <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
                                             </Grid>
                                             <Button Grid.Column="2" Height="35" Click="CancelSingleButton_Click" Visibility="{Binding Stop}">
                                                 <DockPanel VerticalAlignment="Center">

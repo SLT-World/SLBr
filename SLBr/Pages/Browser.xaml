@@ -171,7 +171,7 @@
                                                                         <RowDefinition/>
                                                                     </Grid.RowDefinitions>
                                                                     <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis"/>
-                                                                    <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" FontSize="10" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
+                                                                    <TextBlock Grid.Row="1" Text="{Binding FormattedProgress}" Foreground="{Binding Color, TargetNullValue={StaticResource GrayBrush}}"/>
                                                                 </Grid>
                                                                 <!--TODO: Support pause & resume.-->
                                                                 <Button Grid.Column="2" Width="30" Height="30" ToolTip="Cancel" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
@@ -211,7 +211,7 @@
                             </WinUI:DropDownButton.Menu>
                         </WinUI:DropDownButton>
                         <Border Background="{StaticResource PrimaryBrush}" Width="10" Height="5" IsHitTestVisible="False"/>
-                        <TextBlock x:Name="WebEngineButtonIcon" Text="&#x2600;" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="7.5" FontSize="10" FontFamily="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons" IsHitTestVisible="False" Background="{StaticResource PrimaryBrush}"/>
+                        <TextBlock x:Name="WebEngineButtonIcon" Text="&#x2600;" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="7.5" FontFamily="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons" IsHitTestVisible="False" Background="{StaticResource PrimaryBrush}"/>
                     </Grid>
                     <WinUI:PopupButton Click="ButtonAction" Tag="57&lt;,&gt;0" BorderThickness="0" x:Name="QRButton" ToolTip="Create QR Code" Content="&#xed14;" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" DockPanel.Dock="Right">
                         <WinUI:PopupButton.PopupContent>
@@ -330,7 +330,7 @@
                                         </Grid>
                                     </Grid>
                                     <Border Background="{StaticResource SecondaryBrush}" Grid.Row="1" Padding="10" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
-                                        <TextBlock VerticalAlignment="Center" FontSize="10" Foreground="{StaticResource GrayBrush}">Powered by <Hyperlink x:Name="TranslateAttribution" NavigateUri="" RequestNavigate="Hyperlink_RequestNavigate"></Hyperlink></TextBlock>
+                                        <TextBlock VerticalAlignment="Center" Foreground="{StaticResource GrayBrush}">Powered by <Hyperlink x:Name="TranslateAttribution" NavigateUri="" RequestNavigate="Hyperlink_RequestNavigate"></Hyperlink></TextBlock>
                                     </Border>
                                 </Grid>
                             </Border>

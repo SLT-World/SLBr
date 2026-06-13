@@ -148,7 +148,8 @@ namespace SLBr.WebView
                 LogSeverity = LogSeverity.Error,
                 Locale = Settings.Language,
                 AcceptLanguageList = string.Join(",", Settings.Languages),
-                JavascriptFlags = Settings.JavaScriptFlags
+                JavascriptFlags = Settings.JavaScriptFlags,
+                BackgroundColor = 0x000000
             };
 
             if (Settings.UserDataPath != null)
@@ -189,6 +190,7 @@ namespace SLBr.WebView
                 GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !RuntimeSettings.PDFViewer, out _);
                 GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !RuntimeSettings.PDFViewer, out _);
 
+                //GlobalRequestContext.SetPreference("browser.theme.color_scheme", 0, out _);
                 GlobalRequestContext.SetPreference("compact_mode", true, out _);
                 GlobalRequestContext.SetPreference("history.saving_disabled", true, out _);
                 GlobalRequestContext.SetPreference("profile.content_settings.enable_cpss.geolocation", false, out _);

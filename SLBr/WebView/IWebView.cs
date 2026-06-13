@@ -1387,7 +1387,6 @@ namespace SLBr.WebView
 
             BrowserSettings _BrowserSettings = new()
             {
-                BackgroundColor = 0x000000,
                 ChromeStatusBubble = CefState.Disabled,
                 ChromeZoomBubble = CefState.Disabled,
                 Javascript = Settings.JavaScript ? CefState.Default : CefState.Disabled,
@@ -1655,7 +1654,7 @@ namespace SLBr.WebView
         }
         public void Refresh(bool IgnoreCache = false, bool ClearCache = false)
         {
-            if (Browser == null)
+            if (!Browser.IsBrowserInitialized)
                 return;
             //TODO: https://github.com/cefsharp/CefSharp/pull/5257
             if (ClearCache)
@@ -1672,7 +1671,7 @@ namespace SLBr.WebView
                 _DevToolsClient.Network.ClearBrowserCacheAsync();
                 //}
             }
-            Browser.Reload(IgnoreCache);
+            Browser?.Reload(IgnoreCache);
         }
         public void Stop()
         {
@@ -2150,7 +2149,7 @@ namespace SLBr.WebView
             BrowserCore = Browser.CoreWebView2;
             Browser.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
             BrowserCore.Profile.PreferredTrackingPreventionLevel = CoreWebView2TrackingPreventionLevel.Basic;
-            BrowserCore.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Auto;
+            BrowserCore.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
             if (!Utils.IsEmptyOrWhiteSpace(WebViewManager.RuntimeSettings.DownloadFolderPath))
                 BrowserCore.Profile.DefaultDownloadFolderPath = WebViewManager.RuntimeSettings.DownloadFolderPath;
             BrowserCore.Settings.AreHostObjectsAllowed = false;

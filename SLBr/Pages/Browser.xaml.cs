@@ -62,7 +62,7 @@ namespace SLBr.Pages
             InitializeComponent();
             Tab = _Tab ?? Tab.ParentWindow.GetTab(this);
             Private = IsPrivate;
-            SetIcon(App.Instance.GetIcon(bool.Parse(App.Instance.GlobalSave.Get("Favicons")) ? Url : string.Empty, Private));
+            SetIcon(App.Instance.GetIcon(Url, Private));
             Address = Url;
             SetAudioState(false);
             DownloadsPopup.ItemsSource = App.Instance.VisibleDownloads;
@@ -1077,6 +1077,7 @@ namespace SLBr.Pages
         {
             if (WebView == null)
                 return;
+            WebView?.ExecuteScript(Scripts.DefaultBackgroundColorScript);
             if (App.Instance.SmartDarkMode)
             {
                 App.Instance.Dispatcher.BeginInvoke(async () =>
@@ -1668,7 +1669,7 @@ namespace SLBr.Pages
 
         private async void WebView_FaviconChanged(object? sender, string e)
         {
-            if (!Private && bool.Parse(App.Instance.GlobalSave.Get("Favicons")))
+            if (!Private)
                 SetIcon(await App.Instance.SetIcon(e, Address, Private));
         }
 
@@ -4150,6 +4151,7 @@ namespace SLBr.Pages
             Extension? _Extension = App.Instance.Extensions.FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             if (_Extension == null)
                 return;
+            //TODO: Investigate Extensions.triggerAction.
             ExtensionWindow = new Window();
             ChromiumWebBrowser ExtensionBrowser = new("about:blank");
             ExtensionBrowser.IsBrowserInitializedChanged += async (s, e) => {

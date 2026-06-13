@@ -363,6 +363,8 @@ namespace SLBr.Pages
 
             AdBlockComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("AdBlock");
             WebRiskServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("WebRiskService");
+            SmartScreenSubText.Visibility = WebRiskServiceComboBox.SelectedIndex == 0 ? Visibility.Collapsed : Visibility.Visible;
+            SafeBrowsingAdvisory.Visibility = WebRiskServiceComboBox.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
             DownloadSecurityServiceComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("DownloadSecurityService");
 
             TrimURLCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("TrimURL"));
@@ -765,7 +767,11 @@ namespace SLBr.Pages
         private void WebRiskServiceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsInitialized)
+            {
                 App.Instance.SetWebRiskService(WebRiskServiceComboBox.SelectedIndex);
+                SmartScreenSubText.Visibility = WebRiskServiceComboBox.SelectedIndex == 0 ? Visibility.Collapsed : Visibility.Visible;
+                SafeBrowsingAdvisory.Visibility = WebRiskServiceComboBox.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
         private void DownloadSecurityServiceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

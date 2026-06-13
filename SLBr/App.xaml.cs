@@ -4325,6 +4325,7 @@ Inner Exception: {7}";
         }
 
         public BitmapSource TabIcon;
+        public BitmapSource NewTabIcon;
         public BitmapSource PrivateIcon;
         public BitmapSource AudioIcon;
         public BitmapSource PDFTabIcon;
@@ -4336,9 +4337,11 @@ Inner Exception: {7}";
 
         public BitmapSource GetIcon(string Url, bool IsPrivate = false)
         {
-            if (Utils.GetFileExtension(Url) != ".pdf")
+            if (IsPrivate)
+                return PrivateIcon;
+            else if (Utils.GetFileExtension(Url) != ".pdf")
             {
-                if (!IsPrivate && Utils.IsHttpScheme(Url))
+                if (!IsPrivate && Utils.IsHttpScheme(Url) && bool.Parse(GlobalSave.Get("Favicons")))
                 {
                     switch (GlobalSave.GetInt("FaviconService", 0))
                     {
@@ -4376,15 +4379,17 @@ Inner Exception: {7}";
                             return _AImage;
                     }
                 }
+                else if (Url.StartsWith("slbr://newtab"))
+                    return NewTabIcon;
                 else if (Url.StartsWith("slbr://settings"))
                     return SettingsTabIcon;
+                else if (Url.StartsWith("slbr://downloads"))
+                    return DownloadsTabIcon;
                 else if (Url.StartsWith("slbr://history"))
                     return HistoryTabIcon;
                 else if (Url.StartsWith("slbr://favourites"))
                     return FavouritesTabIcon;
-                else if (Url.StartsWith("slbr://downloads"))
-                    return DownloadsTabIcon;
-                return IsPrivate ? PrivateIcon : TabIcon;
+                return TabIcon;
             }
             else
                 return PDFTabIcon;
@@ -4410,9 +4415,11 @@ Inner Exception: {7}";
 
         public async Task<BitmapSource> SetIcon(string IconUrl, string Url = "", bool IsPrivate = false)
         {
-            if (Utils.GetFileExtension(Url) != ".pdf")
+            if (IsPrivate)
+                return PrivateIcon;
+            else if (Utils.GetFileExtension(Url) != ".pdf")
             {
-                if (!IsPrivate && Utils.IsHttpScheme(IconUrl))
+                if (!IsPrivate && Utils.IsHttpScheme(IconUrl) && bool.Parse(GlobalSave.Get("Favicons")))
                 {
                     if (FaviconCache.TryGetValue(IconUrl, out BitmapImage? CachedImage))
                         return CachedImage ?? TabIcon;
@@ -4455,6 +4462,8 @@ Inner Exception: {7}";
                     }
                     catch { }
                 }
+                else if (Url.StartsWith("slbr://newtab"))
+                    return NewTabIcon;
                 else if (Url.StartsWith("slbr://settings"))
                     return SettingsTabIcon;
                 else if (Url.StartsWith("slbr://history"))
@@ -4463,7 +4472,7 @@ Inner Exception: {7}";
                     return FavouritesTabIcon;
                 else if (Url.StartsWith("slbr://downloads"))
                     return DownloadsTabIcon;
-                return IsPrivate ? PrivateIcon : TabIcon;
+                return TabIcon;
             }
             else
                 return PDFTabIcon;
@@ -4567,9 +4576,9 @@ Inner Exception: {7}";
             GlobalSave.Set("Theme", CurrentTheme.Name);
 
             const int IconSize = 40;
-            const int DPI = 96;
+            const int DPI = 94;
             Typeface IconTypeface = new(IconFont, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-            Point Origin = new(1, 0);
+            Point Origin = new(1, 1);
 
             RenderTargetBitmap RenderFontIcon(string Text, Brush Foreground, Point Origin)
             {
@@ -4591,7 +4600,8 @@ Inner Exception: {7}";
 
             Brush IconBrush = CurrentTheme.DarkWebPage ? Brushes.White : Brushes.Black;
 
-            TabIcon = RenderFontIcon("\uEC6C", IconBrush, Origin);
+            TabIcon = RenderFontIcon("\ue774", IconBrush, Origin);
+            NewTabIcon = RenderFontIcon("\uEC6C", IconBrush, Origin);
             PDFTabIcon = RenderFontIcon("\uEA90", IconBrush, Origin);
             PrivateIcon = RenderFontIcon("\uE727", IconBrush, Origin);
             AudioIcon = RenderFontIcon("\ue767", IconBrush, Origin);
@@ -5362,6 +5372,11 @@ window.addEventListener('click', function(e) {
     else if (e.shiftKey) window.chrome.webview.postMessage({ type: '__edge_tab__', background: 0 });
     else if (e.button === 0) window.chrome.webview.postMessage({ type: '__edge_tab__', background: 0 });
 }, true);";
+
+        public const string DefaultBackgroundColorScript = @"(function() {
+    function isTransparent(color){return !color||color==='transparent'||color==='rgba(0, 0, 0, 0)';}
+    if (isTransparent(window.getComputedStyle(document.documentElement).backgroundColor)&&isTransparent(window.getComputedStyle(document.body).backgroundColor))document.documentElement.style.setProperty('background-color', 'white');
+})();";
 
         /*public const string FetchOpenGraphProtocolScript = @"(async () => {
   const getMeta = (selectors) => {

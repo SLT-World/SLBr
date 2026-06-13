@@ -83,7 +83,7 @@
                             <RowDefinition Height="5"/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center">HEX</TextBlock>
+                        <TextBlock Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center">HEX</TextBlock>
                         <TextBox MaxLength="6" Grid.Row="2" Name="HexInputTextBox" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown" MinWidth="350" Width="Auto" TextChanged="HexInputTextBox_TextChanged"></TextBox>
                     </Grid>
                     <Grid x:Name="ThreeInputContainer" Margin="0,0,0,10">
@@ -99,9 +99,9 @@
                             <RowDefinition Height="5"/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <TextBlock Name="FirstInputHint" FontSize="10" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
-                        <TextBlock Name="SecondInputHint" FontSize="10" Grid.Column="2" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
-                        <TextBlock Name="ThirdInputHint" FontSize="10" Grid.Column="4" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
+                        <TextBlock Name="FirstInputHint" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
+                        <TextBlock Name="SecondInputHint" Grid.Column="2" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
+                        <TextBlock Name="ThirdInputHint" Grid.Column="4" Foreground="{StaticResource GrayBrush}" HorizontalAlignment="Center"></TextBlock>
                         <TextBox MaxLength="3" Grid.Row="2" Width="Auto" Name="FirstInputTextBox" GotFocus="ThreeInputTextBox_GotFocus" LostFocus="ThreeInputTextBox_LostFocus" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
                         <TextBox MaxLength="3" Grid.Row="2" Grid.Column="2" Width="Auto" Name="SecondInputTextBox" GotFocus="ThreeInputTextBox_GotFocus" LostFocus="ThreeInputTextBox_LostFocus" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>
                         <TextBox MaxLength="3" Grid.Row="2" Grid.Column="4" Width="Auto" Name="ThirdInputTextBox" GotFocus="ThreeInputTextBox_GotFocus" LostFocus="ThreeInputTextBox_LostFocus" PreviewTextInput="ThreeInputTextBox_PreviewTextInput" PreviewKeyDown="ThreeInputTextBox_PreviewKeyDown"></TextBox>

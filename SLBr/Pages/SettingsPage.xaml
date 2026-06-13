@@ -48,7 +48,7 @@
                                         </Button>
                                         <StackPanel VerticalAlignment="Center" Margin="0">
                                             <TextBlock x:Name="UsernameText"/>
-                                            <!--<TextBlock FontSize="10" Text="Description" Foreground="{StaticResource GrayBrush}"/>-->
+                                            <!--<TextBlock Text="Description" Foreground="{StaticResource GrayBrush}"/>-->
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>
@@ -63,8 +63,10 @@
                                                 <TextBlock VerticalAlignment="Center" Text="GitHub Access Token"/>
                                             </Grid>
                                         </DockPanel>
-                                        <TextBlock Margin="0,0,0,10" FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                    GitHub Gist is utilized by SLBr to sync data. Generate a 
+                                        <TextBlock Margin="0,0,0,10" Foreground="{StaticResource GrayBrush}">
+                                    GitHub Gist is utilized by SLBr to sync data.
+                                            <LineBreak/>
+                                            Generate a 
                                     <Hyperlink NavigateUri="https://github.com/settings/tokens/new?scopes=gist&amp;description=SLBr%20Browser" RequestNavigate="Hyperlink_RequestNavigate">GitHub Access Token</Hyperlink> to activate sync.
                                         </TextBlock>
                                         <Expander Margin="0,0,0,0" Background="{StaticResource PrimaryBrush}">
@@ -134,7 +136,7 @@
                                         <CheckBox Margin="0,0,0,10" x:Name="WaybackInfoBarCheckBox" Width="Auto" Click="WaybackInfoBarCheckBox_Click" Content="Show Wayback Machine prompt on 404 pages"/>
                                         <CheckBox Margin="0,0,0,10" x:Name="WarnCodecCheckBox" Width="Auto" Click="WarnCodecCheckBox_Click" Content="Warn if a video or audio format is not supported"/>
                                         <CheckBox x:Name="QuickImageCheckBox" Width="Auto" Click="QuickImageCheckBox_Click" Content="Show recent downloads and clipboard items when uploading files"/>
-                                        <TextBlock Margin="0,5,0,0" FontSize="10" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
+                                        <TextBlock Margin="0,5,0,0" Foreground="{StaticResource GrayBrush}">Not supported in Edge &amp; Trident web views</TextBlock>
                                         <!--<CheckBox Margin="0,0,0,10" x:Name="SuppressErrorCheckBox" Width="Auto" Click="SuppressErrorCheckBox_Click" Content="Suppress errors"/>-->
                                     </StackPanel>
                                 </GroupBox>
@@ -449,7 +451,7 @@
                                     <StackPanel>
                                         <CheckBox IsEnabled="{Binding ElementName=PunycodeURLCheckBox, Converter={StaticResource InvertBoolean}, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" x:Name="HomographInfoBarCheckBox" Width="Auto" Click="HomographInfoBarCheckBox_Click" Content="Warn about websites using lookalike characters"/>
                                         <DockPanel Margin="0,0,0,5">
-                                            <TextBlock VerticalAlignment="Center" Text="Web Risk Service"/>
+                                            <TextBlock VerticalAlignment="Center" Text="Web risk service"/>
                                             <ComboBox x:Name="WebRiskServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="WebRiskServiceComboBox_SelectionChanged">
                                                 <ComboBoxItem>Disabled</ComboBoxItem>
                                                 <ComboBoxItem>Google Safe Browsing</ComboBoxItem>
@@ -457,18 +459,22 @@
                                                 <ComboBoxItem>PhishTank</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>
-                                        <DockPanel Margin="0,0,0,5">
-                                            <TextBlock VerticalAlignment="Center" Text="Download Security Service"/>
+                                        <TextBlock Margin="0,0,0,5" x:Name="SafeBrowsingAdvisory" Foreground="{StaticResource GrayBrush}">
+                                            Advisory provided by <Hyperlink NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
+                                        </TextBlock>
+                                        <DockPanel Margin="0,0,0,5" x:Name="SmartScreenSubText">
+                                            <TextBlock FontSize="16" FontFamily="{StaticResource IconFontFamily}" Text="&#xe83d;" Foreground="dodgerblue" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock VerticalAlignment="Center" Foreground="{StaticResource GrayBrush}">
+                                            Microsoft Defender SmartScreen will be used for Edge web views.
+                                            </TextBlock>
+                                        </DockPanel>
+                                        <DockPanel Margin="0,0,0,0">
+                                            <TextBlock VerticalAlignment="Center" Text="Download security service"/>
                                             <ComboBox x:Name="DownloadSecurityServiceComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="DownloadSecurityServiceComboBox_SelectionChanged">
                                                 <ComboBoxItem>Disabled</ComboBoxItem>
                                                 <ComboBoxItem>Google Safe Browsing</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>
-                                        <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
-                                            Edge web views will rely on Microsoft Defender SmartScreen if not disabled.
-                                            <LineBreak/>
-                                            Advisory provided by <Hyperlink NavigateUri="https://developers.google.com/safe-browsing/v4/advisory" RequestNavigate="Hyperlink_RequestNavigate">Google Safe Browsing</Hyperlink>.
-                                        </TextBlock>
                                     </StackPanel>
                                 </GroupBox>
                                 <GroupBox Margin="0,0,0,10">
@@ -489,7 +495,7 @@
                                             </Button>
                                             <StackPanel VerticalAlignment="Center" Margin="0">
                                                 <TextBlock Text="Clear browsing data"/>
-                                                <TextBlock FontSize="10" Text="Clear history, cookies, cache, and more" Foreground="{StaticResource GrayBrush}"/>
+                                                <TextBlock Text="Clear history, cookies, cache, and more" Foreground="{StaticResource GrayBrush}"/>
                                             </StackPanel>
                                         </DockPanel>
                                         <DockPanel>
@@ -522,7 +528,7 @@
                                     </GroupBox.Header>
                                     <StackPanel>
                                         <CheckBox x:Name="SendDiagnosticsCheckBox" Click="SendDiagnosticsCheckBox_Click" Margin="0,0,0,10" Content="Allow SLBr to send crash reports" Width="Auto"/>
-                                        <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                        <TextBlock Foreground="{StaticResource GrayBrush}">
                                             <Run>SLBr sends diagnostic reports on crashes to help improve SLBr.</Run>
                                             <LineBreak/>
                                             <Run>Reports only include the version and the error.</Run>
@@ -567,7 +573,7 @@
                                 </GroupBox>
                                 <GroupBox Margin="0,0,0,10" Header="Filter lists">
                                     <StackPanel>
-                                        <TextBlock Margin="0,0,0,10" FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                        <TextBlock Margin="0,0,0,10" Foreground="{StaticResource GrayBrush}">
                                             All custom filter lists provided must comply with the standard <Hyperlink NavigateUri="https://github.com/gorhill/uBlock/wiki/Static-filter-syntax" RequestNavigate="Hyperlink_RequestNavigate">adblock filter syntax</Hyperlink>.
                                             <LineBreak/>
                                             Some plain URLs and advanced syntaxes may not be fully supported by SLBr.
@@ -631,7 +637,7 @@
                                                                 <RowDefinition/>
                                                             </Grid.RowDefinitions>
                                                             <TextBlock Grid.Row="0" Text="{Binding Name}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,5,0" Foreground="{StaticResource FontBrush}"/>
-                                                            <TextBlock Grid.Row="1" Text="{Binding Url}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                            <TextBlock Grid.Row="1" Text="{Binding Url}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{StaticResource GrayBrush}"/>
                                                         </Grid>
                                                         <Button Margin="5,0,0,0" Grid.Column="2" Click="AdBlockEditButton_Click" Content="&#xe70f;" ToolTip="Edit" Style="{StaticResource IconButton}"/>
                                                     </Grid>
@@ -748,7 +754,7 @@
                                         <CheckBox x:Name="TabUnloadingCheckBox" Click="TabUnloadingCheckBox_Click" Content="Unload Tabs" Width="Auto"/>
                                     </GroupBox.Header>
                                     <StackPanel>
-                                        <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                        <TextBlock Foreground="{StaticResource GrayBrush}">
                                 Unloading tabs frees memory and system resources from inactive tabs.
                                 <LineBreak/>
                                 Inactive tabs will automatically reactivate when revisited.
@@ -766,7 +772,7 @@
                                     <GroupBox.Header>
                                         <CheckBox x:Name="NeverSlowModeCheckBox" Click="NeverSlowModeCheckBox_Click" Content="Never Slow Mode" Width="Auto"/>
                                     </GroupBox.Header>
-                                    <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}">
+                                    <TextBlock Foreground="{StaticResource GrayBrush}">
                             Limits the number and size of scripts, images, fonts, subframes, and stylesheets.
                             <LineBreak/>
                             It also blocks scripts that previously failed to load, reducing retries and hangs.
@@ -777,7 +783,7 @@
                                         <CheckBox x:Name="NetworkLimitCheckBox" Click="NetworkLimitCheckBox_Click" Content="Network Limiter" Width="Auto"/>
                                     </GroupBox.Header>
                                     <StackPanel>
-                                        <TextBlock FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="0,0,0,10">Limits the amount of bandwidth that can be used.</TextBlock>
+                                        <TextBlock Foreground="{StaticResource GrayBrush}" Margin="0,0,0,10">Limits the amount of bandwidth that can be used.</TextBlock>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition/>
@@ -803,9 +809,11 @@
                         <Border Margin="10" MaxWidth="550" CornerRadius="5" Padding="25">
                             <StackPanel>
                                 <TextBlock FontWeight="DemiBold" Margin="0,0,0,25" FontSize="25">Languages</TextBlock>
-                                <GroupBox Margin="0,0,0,10" Header="Spell Check">
+                                <GroupBox Margin="0,0,0,10">
+                                    <GroupBox.Header>
+                                        <CheckBox x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Spell Check"/>
+                                    </GroupBox.Header>
                                     <StackPanel>
-                                        <CheckBox Margin="0,0,0,10" x:Name="SpellCheckCheckBox" Width="Auto" Click="SpellCheckCheckBox_Click" Content="Check for spelling errors while typing"/>
                                         <DockPanel Margin="0">
                                             <TextBlock VerticalAlignment="Center" Text="Spell check provider"/>
                                             <ComboBox IsEnabled="{Binding ElementName=SpellCheckCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="SpellCheckProviderComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="SpellCheckProviderComboBox_SelectionChanged">
@@ -816,7 +824,7 @@
                                                 <ComboBoxItem>Yandex</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>
-                                        <TextBlock Margin="0,10,0,0" FontSize="10" Foreground="{StaticResource GrayBrush}">Powered by <Hyperlink x:Name="SpellcheckAttribution" RequestNavigate="Hyperlink_RequestNavigate"></Hyperlink>
+                                        <TextBlock Margin="0,5,0,0" Foreground="{StaticResource GrayBrush}">Powered by <Hyperlink x:Name="SpellcheckAttribution" RequestNavigate="Hyperlink_RequestNavigate"></Hyperlink>
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Visible"/>
@@ -930,7 +938,7 @@
                                                             <Button Click="MoveLocale" Tag="1" Content="&#xe70d;" Margin="0,0,5,0" Style="{StaticResource IconButton}" ToolTip="Move down" DockPanel.Dock="Right" Width="25" Height="25"/>
                                                             <Button Click="MoveLocale" Tag="0" Content="&#xe70e;" Margin="0,0,5,0" Style="{StaticResource IconButton}" ToolTip="Move up" DockPanel.Dock="Right" Width="25" Height="25"/>
                                                             <TextBlock Text="{Binding Name}" TextAlignment="Left" VerticalAlignment="Center" HorizontalAlignment="Stretch" Width="Auto"/>
-                                                            <TextBlock Text="{Binding Tooltip}" FontSize="10" Foreground="{StaticResource GrayBrush}" Margin="5,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Tooltip}" Foreground="{StaticResource GrayBrush}" Margin="5,0" VerticalAlignment="Center"/>
                                                         </DockPanel>
                                                     </Border>
                                                 </DataTemplate>
@@ -1030,11 +1038,11 @@
                                                 <Grid Margin="10">
                                                     <DockPanel VerticalAlignment="Top">
                                                         <TextBlock Foreground="{StaticResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="PDF Viewer" Margin="0,0,5,0"/>
-                                                        <TextBlock Text="1.0.0" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                        <TextBlock Text="1.0.0" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
                                                     </DockPanel>
-                                                    <TextBlock Text="View and interact with PDF documents directly within the browser" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                    <TextBlock Text="View and interact with PDF documents directly within the browser" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
                                                     <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
-                                                        <!--<TextBlock Text="Manifest Version 3" DockPanel.Dock="Left" Height="Auto" VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>-->
+                                                        <!--<TextBlock Text="Manifest Version 3" DockPanel.Dock="Left" Height="Auto" VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>-->
                                                         <ToggleButton x:Name="PDFViewerToggleButton" Click="ExtensionToggleButton_Click" DockPanel.Dock="Right" Tag="PDF"/>
                                                     </DockPanel>
                                                 </Grid>
@@ -1071,9 +1079,9 @@
                                                             <Grid Margin="10">
                                                                 <DockPanel VerticalAlignment="Top">
                                                                     <TextBlock Foreground="{StaticResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,5,0"/>
-                                                                    <TextBlock Text="{Binding Version}" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                                    <TextBlock Text="{Binding Version}" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
                                                                 </DockPanel>
-                                                                <TextBlock Text="{Binding Description}" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                                                <TextBlock Text="{Binding Description}" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
                                                                 <!--<DockPanel LastChildFill="False" VerticalAlignment="Bottom">
                                                         <ToggleButton Click="ExtensionToggleButton_Click" DockPanel.Dock="Right" Content="&#xe8ad;" Tag="{Binding ID}" IsChecked="{Binding IsEnabled}"/>
                                                     </DockPanel>-->
@@ -1227,7 +1235,7 @@
                                         </Button>
                                         <StackPanel VerticalAlignment="Center" Margin="0">
                                             <TextBlock x:Name="UpdateStatusText" Text="SLBr is up to date"/>
-                                            <TextBlock x:Name="UpdateStatusDescription" FontSize="10" Text="Version" Foreground="{StaticResource GrayBrush}"/>
+                                            <TextBlock x:Name="UpdateStatusDescription" Text="Version" Foreground="{StaticResource GrayBrush}"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </GroupBox>
@@ -1252,7 +1260,7 @@
                                             <DockPanel>
                                                 <StackPanel VerticalAlignment="Center" Margin="0">
                                                     <TextBlock Text="GitHub"/>
-                                                    <TextBlock FontSize="10" Text="Suggest a new feature or report a bug" Foreground="{StaticResource GrayBrush}"/>
+                                                    <TextBlock Text="Suggest a new feature or report a bug" Foreground="{StaticResource GrayBrush}"/>
                                                 </StackPanel>
                                             </DockPanel>
                                         </Button>

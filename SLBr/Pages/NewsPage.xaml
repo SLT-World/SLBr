@@ -69,9 +69,9 @@
                                         <Button Click="Navigate" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8a7;" Tag="{Binding XPath=link}" ToolTip="Navigate"/>
                                         <Button Click="Copy" Margin="0,0,5,0" Style="{StaticResource IconButton}" Content="&#xe8c8;" Tag="{Binding XPath=link}" ToolTip="Copy URL"/>
                                         <Border Background="{Binding XPath=source, Converter={StaticResource StringToColorConverter}}" BorderBrush="{Binding XPath=source, Converter={StaticResource StringToColorConverter}, ConverterParameter=0.75}" BorderThickness="1" Height="20" Padding="5,0" CornerRadius="10" DockPanel.Dock="Right" VerticalAlignment="Center">
-                                            <TextBlock Foreground="White" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10"/>
+                                            <TextBlock Foreground="White" VerticalAlignment="Center" Text="{Binding XPath=source}" TextTrimming="CharacterEllipsis" Margin="2.5"/>
                                         </Border>
-                                        <TextBlock VerticalAlignment="Center" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" FontSize="10" Foreground="{StaticResource GrayBrush}"/>
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding XPath=pubDate}" TextTrimming="CharacterEllipsis" Margin="2.5" Foreground="{StaticResource GrayBrush}"/>
                                     </DockPanel>
                                 </StackPanel>
                             </Border>
