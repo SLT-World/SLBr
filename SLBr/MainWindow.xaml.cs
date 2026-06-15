@@ -836,6 +836,9 @@ namespace SLBr
                 case Actions.ModifyGroup:
                     ModifyGroup(V1);
                     break;
+                case Actions.Mute:
+                    ToggleMute(V1);
+                    break;
             }
         }
 
@@ -943,6 +946,11 @@ namespace SLBr
         {
             BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
             _Tab.Content?.FavouriteAction();
+        }
+        public void ToggleMute(string Id = "")
+        {
+            BrowserTabItem _Tab = string.IsNullOrEmpty(Id) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(Id));
+            _Tab.Content?.ToggleMute();
         }
         public void Undo(string Id = "")
         {

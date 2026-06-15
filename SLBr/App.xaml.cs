@@ -344,6 +344,9 @@ namespace SLBr
             if (_ParentWindow != null)
             {
                 ID = Utils.GenerateRandomId();
+                FavouriteCommandHeader = "Add to favourites";
+                MuteCommandIcon = "\xe74f";
+                MuteCommandHeader = "Mute";
                 ParentWindow = _ParentWindow;
             }
         }
@@ -396,7 +399,6 @@ namespace SLBr
             get => _ID;
             set
             {
-                FavouriteCommandHeader = "Add to favourites";
                 _ID = value;
                 RaisePropertyChanged();
             }
@@ -434,6 +436,46 @@ namespace SLBr
             }
         }
         private string _FavouriteCommandHeader;
+        public string MuteCommandIcon
+        {
+            get => _MuteCommandIcon;
+            set
+            {
+                _MuteCommandIcon = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _MuteCommandIcon;
+        public string MuteCommandHeader
+        {
+            get => _MuteCommandHeader;
+            set
+            {
+                _MuteCommandHeader = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _MuteCommandHeader;
+        public string? SubIcon
+        {
+            get => _SubIcon;
+            set
+            {
+                _SubIcon = value;
+                RaisePropertyChanged();
+    }
+        }
+        private string? _SubIcon = null;
+        public SolidColorBrush? SubIconForeground
+        {
+            get => _SubIconForeground;
+            set
+            {
+                _SubIconForeground = value;
+                RaisePropertyChanged();
+            }
+        }
+        private SolidColorBrush? _SubIconForeground = null;
     }
     public enum BrowserTabType
     {
@@ -4327,7 +4369,6 @@ Inner Exception: {7}";
         public BitmapSource TabIcon;
         public BitmapSource NewTabIcon;
         public BitmapSource PrivateIcon;
-        public BitmapSource AudioIcon;
         public BitmapSource PDFTabIcon;
         public BitmapSource SettingsTabIcon;
         public BitmapSource HistoryTabIcon;
@@ -4432,55 +4473,49 @@ Inner Exception: {7}";
                         }
                     }
                     else
-            {
+                    {
                         if (string.IsNullOrEmpty(IconUrl))
                             IconUrl = Utils.FastHost(Url, false, true) + "/favicon.ico";
                         if (Utils.IsHttpScheme(IconUrl))
-                {
-                    if (FaviconCache.TryGetValue(IconUrl, out BitmapImage? CachedImage))
-                        return CachedImage ?? TabIcon;
-                    try
-                    {
-                        if (DownloadingFavicons.TryGetValue(IconUrl, out Task<BitmapImage?>? PendingTask))
-                            return await PendingTask ?? TabIcon;
-                        async Task<BitmapImage?> DownloadIconTask()
                         {
+                            if (FaviconCache.TryGetValue(IconUrl, out BitmapImage? CachedImage))
+                                return CachedImage ?? TabIcon;
                             try
                             {
-                                using HttpRequestMessage Request = new(HttpMethod.Get, IconUrl);
-                                Request.Headers.Referrer = new Uri(Utils.FastHost(IconUrl, false, true));
-                                using var Response = await MiniHttpClient.SendAsync(Request);
+                                if (DownloadingFavicons.TryGetValue(IconUrl, out Task<BitmapImage?>? PendingTask))
+                                    return await PendingTask ?? TabIcon;
+                                async Task<BitmapImage?> DownloadIconTask()
+                                {
+                                    try
+                                    {
+                                        using HttpRequestMessage Request = new(HttpMethod.Get, IconUrl);
+                                        Request.Headers.Referrer = new Uri(Utils.FastHost(IconUrl, false, true));
+                                        using var Response = await MiniHttpClient.SendAsync(Request);
                                         if (!Response.IsSuccessStatusCode)
                                         {
                                             CacheFavicon(IconUrl, null);
                                             return null;
                                         }
-                                using Stream _Stream = await Response.Content.ReadAsStreamAsync();
-                                BitmapImage Bitmap = new();
-                                Bitmap.BeginInit();
-                                Bitmap.StreamSource = _Stream;
-                                Bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                Bitmap.EndInit();
-                                Bitmap.SafeFreeze();
-                                CacheFavicon(IconUrl, Bitmap);
-                                return Bitmap;
-                            }
+                                        using Stream _Stream = await Response.Content.ReadAsStreamAsync();
+                                        BitmapImage Bitmap = new();
+                                        Bitmap.BeginInit();
+                                        Bitmap.StreamSource = _Stream;
+                                        Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                        Bitmap.EndInit();
+                                        Bitmap.SafeFreeze();
+                                        CacheFavicon(IconUrl, Bitmap);
+                                        return Bitmap;
+                                    }
                                     catch { CacheFavicon(IconUrl, null); return null; }
-                            finally { DownloadingFavicons.Remove(IconUrl); }
+                                    finally { DownloadingFavicons.Remove(IconUrl); }
+                                }
+                                Task<BitmapImage?> IconTask = DownloadIconTask();
+                                DownloadingFavicons[IconUrl] = IconTask;
+                                return await IconTask ?? TabIcon;
+                            }
+                            catch { }
                         }
-                        Task<BitmapImage?> IconTask = DownloadIconTask();
-                        DownloadingFavicons[IconUrl] = IconTask;
-                        return await IconTask ?? TabIcon;
                     }
-                    catch { }
-                }
-                else if (IconUrl.StartsWith("data:image/"))
-                {
-                    try
-                    {
-                        return Utils.ConvertBase64ToBitmapImage(IconUrl);
-                    }
-                    catch { }
                 }
                 else if (Url.StartsWith("slbr://newtab"))
                     return NewTabIcon;
@@ -4624,7 +4659,6 @@ Inner Exception: {7}";
             NewTabIcon = RenderFontIcon("\uEC6C", IconBrush, Origin);
             PDFTabIcon = RenderFontIcon("\uEA90", IconBrush, Origin);
             PrivateIcon = RenderFontIcon("\uE727", IconBrush, Origin);
-            AudioIcon = RenderFontIcon("\ue767", IconBrush, Origin);
             SettingsTabIcon = RenderFontIcon("\uE713", IconBrush, Origin);
             HistoryTabIcon = RenderFontIcon("\ue81c", IconBrush, Origin);
             FavouritesTabIcon = RenderFontIcon("\ueb51", IconBrush, Origin);

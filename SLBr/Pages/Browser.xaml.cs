@@ -154,8 +154,13 @@ namespace SLBr.Pages
         {
             if (_AudioPlaying != null)
                 AudioPlaying = _AudioPlaying.Value;
-            if (WebIcon != null)
-                SetIcon(WebIcon);
+            /*TODO: Brainstorm & implement additional indicator uses.
+            * Unloaded tab: Replace leaf icon.
+            * Web risk.
+            * Private tab.
+            * Loading state.
+                 */
+            Tab.SubIcon = AudioPlaying ? (Muted ? "\ue74f" : "\ue767") : null;
             if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 Tab.ProgressBarVisibility = (Muted || !AudioPlaying) ? Visibility.Visible : Visibility.Collapsed;
             else
@@ -889,13 +894,8 @@ namespace SLBr.Pages
             }
         }
 
-        BitmapSource? WebIcon;
-
-        void SetIcon(BitmapSource Image, bool Force = false)
-        {
-            WebIcon = Image;
-            Tab.Icon = Force || Muted || !AudioPlaying ? Image : App.Instance.AudioIcon;
-        }
+        void SetIcon(BitmapSource Image) =>
+            Tab.Icon = Image;
 
         private void WebView_PermissionRequested(object? sender, PermissionRequestedEventArgs e)
         {
@@ -2211,7 +2211,7 @@ namespace SLBr.Pages
         {
             SetAudioState(false);
             if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadedIcon")))
-                SetIcon(App.Instance.UnloadedIcon, true);
+                SetIcon(App.Instance.UnloadedIcon);
             DisposeBrowserCore();
             Tab.IsUnloaded = true;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
@@ -2617,8 +2617,10 @@ namespace SLBr.Pages
         public void ToggleMute()
         {
             WebView?.IsMuted = !WebView.IsMuted;
-            MuteMenuItem.Icon = Muted ? "\xe767" : "\xe74f";
-            MuteMenuItem.Header = Muted ? "Unmute" : "Mute";
+            Tab.MuteCommandIcon = Muted ? "\xe767" : "\xe74f";
+            Tab.MuteCommandHeader = Muted ? "Unmute" : "Mute";
+            MuteMenuItem.Icon = Tab.MuteCommandIcon;
+            MuteMenuItem.Header = Tab.MuteCommandHeader;
             SetAudioState(null);
         }
 
