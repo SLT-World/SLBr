@@ -38,7 +38,7 @@ namespace SLBr.Handlers
     public class WebRiskHandler
     {
         const string GoogleEndpoint = "https://safebrowsing.googleapis.com/v5/hashes:search?key=";
-        const string YandexEndpoint = "https://sba.yandex.net/v4/threatMatches:find?key=";
+        const string YandexEndpoint = "https://sba.yandex.net/v4/fullHashes:find?key=";
         const string PhishTankEndpoint = "https://checkurl.phishtank.com/checkurl/";
         private static Lazy<HttpClient> HttpClientInstance = new(() => HttpClientFactory.Create(new SocketsHttpHandler
         {
@@ -93,7 +93,7 @@ namespace SLBr.Handlers
         }
 
 
-        private static ThreatType SBv4GetThreatType(string Data)
+        private static ThreatType SBv4GetThreatType(string Data, byte[] LocalHash)
         {
             if (Data.Length > 2)
             {
@@ -102,20 +102,27 @@ namespace SLBr.Handlers
                     using JsonDocument Document = JsonDocument.Parse(Data);
                     if (Document.RootElement.TryGetProperty("matches", out JsonElement Matches) && Matches.ValueKind == JsonValueKind.Array)
                     {
+                        string LocalBase64Hash = Convert.ToBase64String(LocalHash);
                         foreach (JsonElement Match in Matches.EnumerateArray())
                         {
-                            if (Match.TryGetProperty("threatType", out JsonElement ThreatElement))
+                            if (Match.TryGetProperty("threat", out JsonElement ThreatElement) && ThreatElement.TryGetProperty("hash", out JsonElement HashElement))
                             {
-                                switch (ThreatElement.GetString())
+                                if (LocalBase64Hash == HashElement.GetString())
                                 {
-                                    case "MALWARE":
-                                        return ThreatType.Malware;
-                                    case "POTENTIALLY_HARMFUL_APPLICATION":
-                                        return ThreatType.Potentially_Harmful_Application;
-                                    case "SOCIAL_ENGINEERING":
-                                        return ThreatType.Social_Engineering;
-                                    case "UNWANTED_SOFTWARE":
-                                        return ThreatType.Unwanted_Software;
+                                    if (Match.TryGetProperty("threatType", out JsonElement ThreatTypeElement))
+                                    {
+                                        switch (ThreatTypeElement.GetString())
+                                        {
+                                            case "MALWARE":
+                                                return ThreatType.Malware;
+                                            case "POTENTIALLY_HARMFUL_APPLICATION":
+                                                return ThreatType.Potentially_Harmful_Application;
+                                            case "SOCIAL_ENGINEERING":
+                                                return ThreatType.Social_Engineering;
+                                            case "UNWANTED_SOFTWARE":
+                                                return ThreatType.Unwanted_Software;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -125,7 +132,7 @@ namespace SLBr.Handlers
             }
             return ThreatType.Unknown;
         }
-        private static string SBv4Response(string Url, string Endpoint)
+        private static string SBv4Response(byte[] LocalHash, string Endpoint)
         {
             //TODO: Investigate Yandex clientId & clientVersion.
             string Payload = $@"{{
@@ -134,7 +141,7 @@ namespace SLBr.Handlers
         ""threatTypes"":[""MALWARE"",""POTENTIALLY_HARMFUL_APPLICATION"",""SOCIAL_ENGINEERING"",""UNWANTED_SOFTWARE""],
         ""platformTypes"":[""CHROME""],
         ""threatEntryTypes"":[""URL""],
-        ""threatEntries"":[{{""url"":""{Utils.CleanUrl(Url, false, false, true, false, false)}""}}]
+        ""threatEntries"":[{{""hash"":""{Convert.ToBase64String(LocalHash, 0, 4)}""}}]
     }}
 }}";
             try
@@ -201,7 +208,7 @@ namespace SLBr.Handlers
                     //https://yandex.com/dev/safebrowsing/doc/en/concepts/url-hash
                     //https://yandex.com/dev/safebrowsing/doc/en/concepts/update-fullhashes-find
                     //https://yandex.com/dev/safebrowsing/doc/en/
-                    Result = SBv4GetThreatType(SBv4Response(Url, YandexEndpoint + SECRETS.YANDEX_API_KEY));
+                    Result = SBv4GetThreatType(SBv4Response(LocalHash, YandexEndpoint + SECRETS.YANDEX_API_KEY), LocalHash);
                     break;
                 case WebSecurityService.PhishTank:
                     Result = PTCheck(Url, SECRETS.PHISHTANK_API_KEY);
