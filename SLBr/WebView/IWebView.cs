@@ -1279,6 +1279,7 @@ namespace SLBr.WebView
     {
         string Address { get; set; }
         string Title { get; }
+        string Favicon { get; }
         WebEngineType Engine { get; }
 
         bool CanGoBack { get; }
@@ -1563,11 +1564,23 @@ namespace SLBr.WebView
 
         private void Browser_FrameLoadStart(object? sender, FrameLoadStartEventArgs e)
         {
+            if (e.Frame.IsMain)
+            {
+                Favicon = string.Empty;
+                FaviconChanged?.RaiseUIAsync(this, Favicon);
+            }
             if (InitializingHistory) return;
             FrameLoadStart?.RaiseUIAsync(this, e.Url);
             if (Settings.AudioListener)
                 ExecuteScript(Scripts.CefAudioScript);
         }
+
+        private DateTime LastStateChange = DateTime.MinValue;
+        private string? LastStateAddress = null;
+
+        private int StateChangeCount = 0;
+        private bool LimitStateChanges = false;
+        private TimeSpan StateChangeCooldown = TimeSpan.FromMilliseconds(500);
 
         private async void Browser_LoadingStateChanged(object? sender, LoadingStateChangedEventArgs e)
         {
@@ -1575,20 +1588,50 @@ namespace SLBr.WebView
             CanGoBack = e.CanGoBack;
             CanGoForward = e.CanGoForward;
             CanReload = e.CanReload;
+
+            StateChangeCount++;
+
+            //LoadingStateChanged constantly triggered by https://www.skeptrune.com/posts/use-the-accept-header-to-serve-markdown-instead-of-html-to-llms/
+            //NOTE: IPC protection.
+            string _Address = CurrentAddress ?? InitialUrls.Last().Url;
+            if (_Address != LastStateAddress)
+            {
+                StateChangeCount = 0;
+                if (LimitStateChanges)
+                {
+                    StateChangeCooldown = TimeSpan.FromMilliseconds(500);
+                    LimitStateChanges = false;
+                }
+                LastStateChange = DateTime.MinValue;
+                LastStateAddress = _Address;
+            }
+            else
+            {
+                if (DateTime.Now - LastStateChange < StateChangeCooldown)
+                {
+                    if (!LimitStateChanges && StateChangeCount > 5)
+                    {
+                        LimitStateChanges = true;
+                        StateChangeCooldown = TimeSpan.FromMilliseconds(1000);
+                    }
+                    if (LimitStateChanges)
+                    {
+                        if (IsLoading != false)
+                        {
+                            IsLoading = false;
+                            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(false, null));
+                        }
+                        return;
+                    }
+                }
+                else if (!LimitStateChanges)
+                    StateChangeCount = 0;
+                LastStateChange = DateTime.Now;
+            }
             IsLoading = e.IsLoading;
             NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
             IsSecure = _NavigationEntry != null ? _NavigationEntry.SslStatus.IsSecureConnection : Address.StartsWith("https:");
             IsViewSource = _NavigationEntry?.DisplayUrl.StartsWith("view-source:") ?? false;
-            /*await Browser?.Dispatcher.BeginInvoke(async () =>
-            {
-                if (string.IsNullOrEmpty(ViewSource))
-                {
-                    if (await EvaluateScriptAsync(Scripts.DetectViewSourceScript) == "True")
-                        ViewSource = Browser?.Address;
-                }
-                if (Browser?.Address != ViewSource)
-                    ViewSource = "";
-            });*/
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(e.IsLoading, _NavigationEntry?.HttpStatusCode));
         }
 
@@ -1597,10 +1640,11 @@ namespace SLBr.WebView
         private string CurrentAddress;
         public string Address
         {
-            get => (IsViewSource ? "view-source:" : "") + (Browser?.Address != null ? CurrentAddress : InitialUrls.Last().Url);
+            get => (IsViewSource ? "view-source:" : string.Empty) + (Browser?.Address != null ? CurrentAddress : InitialUrls.Last().Url);
             set => Navigate(value);
         }
-        public string Title => Browser?.Title ?? "";
+        public string Title => Browser?.Title ?? string.Empty;
+        public string Favicon { get; private set; } = string.Empty;
 
         public bool CanGoBack { get; private set; }
         public bool CanGoForward { get; private set; }
@@ -2078,11 +2122,13 @@ namespace SLBr.WebView
         {
             if (addressChangedArgs.Address.StartsWith("devtools://"))
                 return;
-            //if (CurrentAddress != addressChangedArgs.Address)
-            AddressChanged?.RaiseUIAsync(this, addressChangedArgs.Address);
-            CurrentAddress = addressChangedArgs.Address;
-            NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
-            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
+            if (CurrentAddress != addressChangedArgs.Address)
+            {
+                AddressChanged?.RaiseUIAsync(this, addressChangedArgs.Address);
+                CurrentAddress = addressChangedArgs.Address;
+                NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
+                LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
+            }
         }
         public bool OnAutoResize(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.Structs.Size newSize) => false;
         public bool OnConsoleMessage(IWebBrowser chromiumWebBrowser, ConsoleMessageEventArgs consoleMessageArgs) => false;
@@ -2094,8 +2140,12 @@ namespace SLBr.WebView
             if (urls.Count != 0)
             {
                 string Url = urls.OrderBy(url => url.EndsWith(".ico") ? 0 : url.EndsWith(".png") ? 1 : 2).ToList().First();
-                if (!Url.EndsWith(".svg"))
-                    FaviconChanged?.RaiseUIAsync(this, Url);
+                if (Favicon != Url)
+                {
+                    Favicon = Url;
+                    if (!Url.EndsWith(".svg"))
+                        FaviconChanged?.RaiseUIAsync(this, Url);
+                }
             }
         }
         public void OnFullscreenModeChange(IWebBrowser chromiumWebBrowser, IBrowser browser, bool fullscreen)
@@ -2309,13 +2359,13 @@ namespace SLBr.WebView
 
         /*private void Browser_HistoryChanged(object? sender, object e)
         {
-            CurrentAddress = Browser?.Source?.AbsoluteUri ?? "";
+            CurrentAddress = Browser?.Source?.AbsoluteUri ?? string.Empty;
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
         }*/
 
         private void Browser_SourceChanged(object? sender, CoreWebView2SourceChangedEventArgs e)
         {
-            CurrentAddress = Browser?.Source?.AbsoluteUri ?? "";
+            CurrentAddress = Browser?.Source?.AbsoluteUri ?? string.Empty;
             AddressChanged?.RaiseUIAsync(this, CurrentAddress);
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
             //Investigate e.IsNewDocument;
@@ -2328,16 +2378,20 @@ namespace SLBr.WebView
             //FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
             try
             {
-                if (BrowserCore.FaviconUri.EndsWith(".svg"))
+                if (Favicon != BrowserCore.FaviconUri)
                 {
-                    string Icon = (await EvaluateScriptAsync(Scripts.GetFaviconScript)).ToString() ?? string.Empty;
-                    if (!string.IsNullOrEmpty(Icon))
-                        FaviconChanged?.RaiseUIAsync(this, Icon);
+                    Favicon = BrowserCore.FaviconUri;
+                    if (BrowserCore.FaviconUri.EndsWith(".svg"))
+                    {
+                        string Icon = (await EvaluateScriptAsync(Scripts.GetFaviconScript)).ToString() ?? string.Empty;
+                        if (!string.IsNullOrEmpty(Icon))
+                            FaviconChanged?.RaiseUIAsync(this, Icon);
+                        else
+                            LocateAlternativeIcon = true;
+                    }
                     else
-                        LocateAlternativeIcon = true;
+                        FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
                 }
-                else
-                    FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
             }
             catch { LocateAlternativeIcon = true; }
         }
@@ -2679,6 +2733,8 @@ namespace SLBr.WebView
 
         private void Browser_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
+            Favicon = string.Empty;
+            FaviconChanged?.RaiseUIAsync(this, Favicon);
             CurrentAddress = e.Uri;
             if (InitializingHistory) return;
             BeforeNavigationEventArgs Args = new BeforeNavigationEventArgs(e.Uri, true);
@@ -2849,8 +2905,12 @@ namespace SLBr.WebView
                 try
                 {
                     string Icon = (await EvaluateScriptAsync(Scripts.GetFaviconScript)).ToString() ?? string.Empty;
-                    if (!string.IsNullOrEmpty(Icon))
-                        FaviconChanged?.RaiseUIAsync(this, Icon);
+                    if (Favicon != Icon)
+                    {
+                        Favicon = Icon;
+                        if (!string.IsNullOrEmpty(Icon))
+                            FaviconChanged?.RaiseUIAsync(this, Icon);
+                    }
                 }
                 catch { }
             }
@@ -2908,6 +2968,7 @@ namespace SLBr.WebView
                 catch { return string.Empty; }
             }
         }
+        public string Favicon { get; private set; } = string.Empty;
 
         public bool CanGoBack => Browser.CanGoBack;
         public bool CanGoForward => Browser.CanGoForward;
@@ -3449,6 +3510,8 @@ namespace SLBr.WebView
 
         private void Navigating(object sender, NavigatingCancelEventArgs e)
         {
+            Favicon = string.Empty;
+            FaviconChanged?.RaiseUIAsync(this, Favicon);
             string Url = e.Uri?.AbsoluteUri ?? OverrideAddress;
             BeforeNavigationEventArgs Args = new BeforeNavigationEventArgs(Url, true);
             BeforeNavigation?.Invoke(this, Args);
@@ -3523,8 +3586,12 @@ namespace SLBr.WebView
             try
             {
                 string Icon = Browser.InvokeScript("eval", Scripts.GetFaviconScript).ToString() ?? string.Empty;
-                if (!string.IsNullOrEmpty(Icon))
-                    FaviconChanged?.RaiseUIAsync(this, Icon);
+                if (Favicon != Icon)
+                {
+                    Favicon = Icon;
+                    if (!string.IsNullOrEmpty(Icon))
+                        FaviconChanged?.RaiseUIAsync(this, Icon);
+                }
             }
             catch { }
         }
@@ -3538,6 +3605,7 @@ namespace SLBr.WebView
             set => Navigate(value);
         }
         public string Title { get; private set; } = string.Empty;
+        public string Favicon { get; private set; } = string.Empty;
 
         public bool CanGoBack => Browser.CanGoBack;
         public bool CanGoForward => Browser.CanGoForward;
