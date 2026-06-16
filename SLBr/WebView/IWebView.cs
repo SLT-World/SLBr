@@ -2553,7 +2553,7 @@ namespace SLBr.WebView
                         return;
                     e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(Response.Data), Response.StatusCode, "OK", $"Content-Type: {Response.MimeType}");
                     if (Response.ErrorCode != WebErrorCode.None)
-                        NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(Response.ErrorCode, "", e.Request.Uri));
+                        NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(Response.ErrorCode, string.Empty, e.Request.Uri));
                 }
             }
             finally
@@ -2879,11 +2879,11 @@ namespace SLBr.WebView
                 var CurrentEntry = Entries[CurrentIndex];
                 if (!CurrentEntry.TryGetProperty("userTypedURL", out var UserTyped))
                     return false;
-                if (!(UserTyped.GetString() ?? "").StartsWith("view-source:", StringComparison.OrdinalIgnoreCase))
+                if (!(UserTyped.GetString() ?? string.Empty).StartsWith("view-source:", StringComparison.OrdinalIgnoreCase))
                     return false;
                 if (CurrentEntry.TryGetProperty("title", out var Title))
                 {
-                    if (!string.IsNullOrEmpty(Title.GetString() ?? ""))
+                    if (!string.IsNullOrEmpty(Title.GetString() ?? string.Empty))
                         return false;
                 }
                 return true;
@@ -2895,7 +2895,7 @@ namespace SLBr.WebView
         private string CurrentAddress;
         public string Address
         {
-            get => (IsViewSource ? "view-source:" : "") + (Browser.Source != null ? CurrentAddress : InitialUrls.Last().Url);
+            get => (IsViewSource ? "view-source:" : string.Empty) + (Browser.Source != null ? CurrentAddress : InitialUrls.Last().Url);
             set => Navigate(value);
         }
         public string Title
@@ -3049,7 +3049,7 @@ namespace SLBr.WebView
         public event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         public event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "");
+        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, string.Empty);
 
         public void ExecuteScript(string Script) => Browser.ExecuteScriptAsync(Script);
         public bool CanExecuteJavascript => BrowserCore != null;
@@ -3114,7 +3114,7 @@ namespace SLBr.WebView
             try
             {
                 string Json = Parameters != null ? JsonSerializer.Serialize(Parameters, DevToolsSerializer.Value) : "{}";
-                return await BrowserCore?.CallDevToolsProtocolMethodAsync(Method, Json) ?? "";
+                return await BrowserCore?.CallDevToolsProtocolMethodAsync(Method, Json) ?? string.Empty;
             }
             catch (Exception _Exception) { return JsonSerializer.Serialize(new { Error = _Exception.Message }); }
         }
@@ -3349,7 +3349,7 @@ namespace SLBr.WebView
 
         private void NavigateError(object pDisp, ref object URL, ref object Frame, ref object StatusCode, ref bool Cancel)
         {
-            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(ToWebErrorCode((int)StatusCode), "", (string)URL));
+            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(ToWebErrorCode((int)StatusCode), string.Empty, (string)URL));
         }
 
 
@@ -3477,7 +3477,7 @@ namespace SLBr.WebView
                         //Browser.NavigateToString(Encoding.UTF8.GetString(Response.Data).Replace("<head>", $"<head>\n<base href=\"{BaseHref}\">"));
                         Browser.NavigateToStream(new MemoryStream(Response.Data));
                         if (Response.ErrorCode != WebErrorCode.None)
-                            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(Response.ErrorCode, "", Url));
+                            NavigationError?.RaiseUIAsync(this, new NavigationErrorEventArgs(Response.ErrorCode, string.Empty, Url));
                     }
                 }
             }
@@ -3675,7 +3675,7 @@ namespace SLBr.WebView
         public event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         public event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "");
+        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, string.Empty);
 
         public void ExecuteScript(string Script) { try { Browser?.InvokeScript("execScript", [Script, "JavaScript"]); } catch { } }
 

@@ -56,13 +56,16 @@ namespace SLBr.Pages
         public ObservableCollection<InfoBar> VisibleInfoBars = [];
 
         Storyboard LoadingStoryboard;
+        bool IsWebIcon = false;
+        bool HasInitialized = false;
 
         public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false)
         {
             InitializeComponent();
             Tab = _Tab ?? Tab.ParentWindow.GetTab(this);
             Private = IsPrivate;
-            SetIcon(App.Instance.GetIcon(Url, Private));
+            (BitmapSource, bool) IconData = App.Instance.GetIcon(Url, Private);
+            SetIcon(IconData.Item1, IconData.Item2);
             Address = Url;
             SetAudioState(false);
             DownloadsPopup.ItemsSource = App.Instance.VisibleDownloads;
@@ -110,6 +113,7 @@ namespace SLBr.Pages
             }
             FindPopup.CustomPopupPlacementCallback = new CustomPopupPlacementCallback(FindPopupPlacement);
             StatusBubblePopup.CustomPopupPlacementCallback = new CustomPopupPlacementCallback(StatusBubblePopupPlacement);
+            HasInitialized = true;
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -501,7 +505,8 @@ namespace SLBr.Pages
             WebView?.StatusMessage += WebView_StatusMessage;
             WebView?.TitleChanged += WebView_TitleChanged;
             WebView?.AudioPlayingChanged += WebView_AudioPlayingChanged;
-            /*WebView.FaviconChanged += (s, e) => Debug.WriteLine("WebView: FaviconChanged");
+            /*WebView.AddressChanged += (s, e) => Debug.WriteLine("WebView: AddressChanged");
+            WebView.FaviconChanged += (s, e) => Debug.WriteLine("WebView: FaviconChanged");
             WebView.AuthenticationRequested += (s, e) => Debug.WriteLine("WebView: AuthenticationRequested");
             WebView.BeforeNavigation += (s, e) => Debug.WriteLine("WebView: BeforeNavigation");
             WebView.ContextMenuRequested += (s, e) => Debug.WriteLine("WebView: ContextMenuRequested");
@@ -891,13 +896,17 @@ namespace SLBr.Pages
                         ResetBudgets();
                     HostCache.Clear();
                     QRBitmap = null;
-                    SetIcon(await App.Instance.SetIcon(string.Empty, e.Url, Private));
+                    //(BitmapSource, bool) IconData = await App.Instance.SetIcon(WebView.IsLoading, string.Empty, e.Url, Private);
+                    //SetIcon(IconData.Item1, IconData.Item2);
                 });
             }
         }
 
-        void SetIcon(BitmapSource Image) =>
+        void SetIcon(BitmapSource Image, bool IsWeb)
+        {
             Tab.Icon = Image;
+            IsWebIcon = IsWeb;
+        }
 
         private void WebView_PermissionRequested(object? sender, PermissionRequestedEventArgs e)
         {
@@ -1672,7 +1681,10 @@ namespace SLBr.Pages
         private async void WebView_FaviconChanged(object? sender, string e)
         {
             if (!Private)
-                SetIcon(await App.Instance.SetIcon(e, Address, Private));
+            {
+                (BitmapSource, bool) IconData = await App.Instance.SetIcon(WebView.IsLoading, e, Address, Private);
+                SetIcon(IconData.Item1, IconData.Item2);
+        }
         }
 
         public async void UnFocus()
@@ -2213,7 +2225,7 @@ namespace SLBr.Pages
         {
             SetAudioState(false);
             if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadedIcon")))
-                SetIcon(App.Instance.UnloadedIcon);
+                SetIcon(App.Instance.UnloadedIcon, false);
             DisposeBrowserCore();
             Tab.IsUnloaded = true;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
@@ -3610,6 +3622,11 @@ namespace SLBr.Pages
 
         public async void SetAppearance(Theme _Theme)
         {
+            if (HasInitialized && !IsWebIcon)
+            {
+                (BitmapSource, bool) IconData = await App.Instance.SetIcon(WebView?.IsLoading ?? false, "", Address, Private);
+                SetIcon(IconData.Item1, IconData.Item2);
+            }
             SetFavouritesBarVisibility();
             SetDownloadsButtonVisibility();
             HomeButton.Visibility = App.Instance.AllowHomeButton ? Visibility.Visible : Visibility.Collapsed;

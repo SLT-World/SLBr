@@ -703,7 +703,7 @@ namespace SLBr
         public string SubText { get; set; }
         public string Icon { get; set; }
         public string Hidden { get; set; }
-        public SolidColorBrush Color { get; set; }
+        public SolidColorBrush? Color { get; set; }
         public SearchProvider? ProviderOverride { get; set; }
     }
 
@@ -4392,10 +4392,10 @@ Inner Exception: {7}";
         public BitmapSource DownloadsTabIcon;
         public BitmapSource UnloadedIcon;
 
-        public BitmapSource GetIcon(string Url, bool IsPrivate = false)
+        public (BitmapSource, bool) GetIcon(string Url, bool IsPrivate = false)
         {
             if (IsPrivate)
-                return PrivateIcon;
+                return (PrivateIcon, false);
             else if (Utils.GetFileExtension(Url) != ".pdf")
             {
                 if (!IsPrivate && Utils.IsHttpScheme(Url) && bool.Parse(GlobalSave.Get("Favicons")))
@@ -4409,7 +4409,7 @@ Inner Exception: {7}";
                             BitmapImage _GImage = new(new Uri(GIconUrl));
                             _GImage.SafeFreeze();
                             //FaviconCache[GIconUrl] = _GImage;
-                            return _GImage;
+                            return (_GImage, true);
                         case 1:
                             string YIconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url);
                             /*if (FaviconCache.TryGetValue(YIconUrl, out BitmapImage YCachedImage))
@@ -4417,7 +4417,7 @@ Inner Exception: {7}";
                             BitmapImage _YImage = new(new Uri(YIconUrl));
                             _YImage.SafeFreeze();
                             //FaviconCache[YIconUrl] = _YImage;
-                            return _YImage;
+                            return (_YImage, true);
                         case 2:
                             string DIconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico";
                             /*if (FaviconCache.TryGetValue(DIconUrl, out BitmapImage DCachedImage))
@@ -4425,7 +4425,7 @@ Inner Exception: {7}";
                             BitmapImage _DImage = new(new Uri(DIconUrl));
                             _DImage.SafeFreeze();
                             //FaviconCache[DIconUrl] = _DImage;
-                            return _DImage;
+                            return (_DImage, true);
                         case 3:
                             string AIconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url);
                             /*if (FaviconCache.TryGetValue(AIconUrl, out BitmapImage ACachedImage))
@@ -4433,23 +4433,23 @@ Inner Exception: {7}";
                             BitmapImage _AImage = new(new Uri(AIconUrl));
                             _AImage.SafeFreeze();
                             //FaviconCache[AIconUrl] = _AImage;
-                            return _AImage;
+                            return (_AImage, true);
                     }
                 }
                 else if (Url.StartsWith("slbr://newtab"))
-                    return NewTabIcon;
+                    return (NewTabIcon, false);
                 else if (Url.StartsWith("slbr://settings"))
-                    return SettingsTabIcon;
+                    return (SettingsTabIcon, false);
                 else if (Url.StartsWith("slbr://downloads"))
-                    return DownloadsTabIcon;
+                    return (DownloadsTabIcon, false);
                 else if (Url.StartsWith("slbr://history"))
-                    return HistoryTabIcon;
+                    return (HistoryTabIcon, false);
                 else if (Url.StartsWith("slbr://favourites"))
-                    return FavouritesTabIcon;
-                return TabIcon;
+                    return (FavouritesTabIcon, false);
+                return (TabIcon, false);
             }
             else
-                return PDFTabIcon;
+                return (PDFTabIcon, false);
         }
 
         private static readonly Dictionary<string, BitmapImage?> FaviconCache = [];
@@ -4470,11 +4470,11 @@ Inner Exception: {7}";
             }
         }
 
-        public async Task<BitmapSource> SetIcon(string IconUrl, string Url = "", bool IsPrivate = false)
+        public async Task<(BitmapSource, bool)> SetIcon(bool IsLoading, string IconUrl, string Url = "", bool IsPrivate = false)
         {
             //TODO: Remove PDF icon.
             if (IsPrivate)
-                return PrivateIcon;
+                return (PrivateIcon, false);
             if (Utils.GetFileExtension(Url) != ".pdf")
             {
                 if (Utils.IsHttpScheme(Url) && bool.Parse(GlobalSave.Get("Favicons")))
@@ -4484,22 +4484,33 @@ Inner Exception: {7}";
                     {
                         if (IconUrl.StartsWith("data:image/"))
                         {
-                            try { return Utils.ConvertBase64ToBitmapImage(IconUrl); }
+                            try { return (Utils.ConvertBase64ToBitmapImage(IconUrl), true); }
                             catch { }
                         }
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty(IconUrl))
+                        if (!IsLoading && string.IsNullOrEmpty(IconUrl))
                             IconUrl = Utils.FastHost(Url, false, true) + "/favicon.ico";
                         if (Utils.IsHttpScheme(IconUrl))
                         {
                             if (FaviconCache.TryGetValue(IconUrl, out BitmapImage? CachedImage))
-                                return CachedImage ?? TabIcon;
+                            {
+                                if (CachedImage != null)
+                                    return (CachedImage, true);
+                                else
+                                    return (TabIcon, false);
+                            }
                             try
                             {
                                 if (DownloadingFavicons.TryGetValue(IconUrl, out Task<BitmapImage?>? PendingTask))
-                                    return await PendingTask ?? TabIcon;
+                                {
+                                    BitmapImage? PendingResult = await PendingTask;
+                                    if (PendingResult != null)
+                                        return (PendingResult, true);
+                                    else
+                                        return (TabIcon, false);
+                                }
                                 async Task<BitmapImage?> DownloadIconTask()
                                 {
                                     try
@@ -4527,26 +4538,30 @@ Inner Exception: {7}";
                                 }
                                 Task<BitmapImage?> IconTask = DownloadIconTask();
                                 DownloadingFavicons[IconUrl] = IconTask;
-                                return await IconTask ?? TabIcon;
+                                BitmapImage? Result = await IconTask;
+                                if (Result != null)
+                                    return (Result, true);
+                                else
+                                    return (TabIcon, false);
                             }
                             catch { }
                         }
                     }
                 }
                 else if (Url.StartsWith("slbr://newtab"))
-                    return NewTabIcon;
+                    return (NewTabIcon, false);
                 else if (Url.StartsWith("slbr://settings"))
-                    return SettingsTabIcon;
+                    return (SettingsTabIcon, false);
                 else if (Url.StartsWith("slbr://history"))
-                    return HistoryTabIcon;
+                    return (HistoryTabIcon, false);
                 else if (Url.StartsWith("slbr://favourites"))
-                    return FavouritesTabIcon;
+                    return (FavouritesTabIcon, false);
                 else if (Url.StartsWith("slbr://downloads"))
-                    return DownloadsTabIcon;
-                return TabIcon;
+                    return (DownloadsTabIcon, false);
+                return (TabIcon, false);
             }
             else
-                return PDFTabIcon;
+                return (PDFTabIcon, false);
         }
 
         public bool MobileView;
@@ -4646,14 +4661,17 @@ Inner Exception: {7}";
             CurrentTheme = _Theme;
             GlobalSave.Set("Theme", CurrentTheme.Name);
 
-            const int IconSize = 40;
+            int IconSize = LiteMode ? 40 : 80;
             const int DPI = 94;
-            Typeface IconTypeface = new(IconFont, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+            Typeface IconTypeface = new(IconFont, FontStyles.Normal, FontWeights.Thin, FontStretches.Normal);
             Point Origin = new(1, 1);
 
             RenderTargetBitmap RenderFontIcon(string Text, Brush Foreground, Point Origin)
             {
                 DrawingVisual Visual = new();
+                TextOptions.SetTextFormattingMode(Visual, TextFormattingMode.Display);
+                TextOptions.SetTextRenderingMode(Visual, TextRenderingMode.ClearType);
+                TextOptions.SetTextHintingMode(Visual, TextHintingMode.Fixed);
                 using (DrawingContext Context = Visual.RenderOpen())
                 {
                     FormattedText FormattedText = new(Text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, IconTypeface, IconSize, Foreground, VisualTreeHelper.GetDpi(Visual).PixelsPerDip)
@@ -4679,7 +4697,7 @@ Inner Exception: {7}";
             HistoryTabIcon = RenderFontIcon("\ue81c", IconBrush, Origin);
             FavouritesTabIcon = RenderFontIcon("\ueb51", IconBrush, Origin);
             DownloadsTabIcon = RenderFontIcon("\ue896", IconBrush, new Point(2, 0));
-            UnloadedIcon = RenderFontIcon("\uEC0A", new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3AE872")), Origin);
+            UnloadedIcon = RenderFontIcon("\uEC0A", GreenColor, Origin);
 
             foreach (MainWindow _Window in AllWindows)
                 _Window.SetAppearance(_Theme);

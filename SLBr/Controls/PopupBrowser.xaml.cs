@@ -209,7 +209,7 @@ namespace SLBr.Controls
 
         private void WebView_FaviconChanged(object? sender, string e)
         {
-            Icon = App.Instance.GetIcon(e);
+            Icon = App.Instance.GetIcon(e).Item1;
         }
 
         private void WebView_IsBrowserInitializedChanged(object? sender, EventArgs e)
