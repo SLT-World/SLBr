@@ -702,6 +702,7 @@ namespace SLBr
         public string Display { get; set; }
         public string SubText { get; set; }
         public string Icon { get; set; }
+        public string? Image { get; set; }
         public string Hidden { get; set; }
         public SolidColorBrush? Color { get; set; }
         public SearchProvider? ProviderOverride { get; set; }
@@ -1370,9 +1371,11 @@ namespace SLBr
             }
         }
 
-        public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null, string? Hidden = null)
+        public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush? Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null, string? Hidden = null, string? Image = null)
         {
-            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride, Hidden = Hidden };
+            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride, Hidden = Hidden, Image = Image };
+            //if (string.IsNullOrEmpty(Image))
+            //{
             switch (Type)
             {
                 case "S":
@@ -1388,13 +1391,13 @@ namespace SLBr
                     Suggestion.Icon = "\xE943";
                     break;
                 case "F":
-                    Suggestion.Icon = "\xe838";//e8b7
-                    //Suggestion.Color = Instance.NavajoWhiteColor;
+                    Suggestion.Icon = "\xe838";//e8b7//Suggestion.Color = Instance.NavajoWhiteColor;
                     break;
                 case "T":
                     Suggestion.Icon = "\xec6c";
                     break;
             }
+            //}
             return Suggestion;
         }
 
@@ -2340,6 +2343,9 @@ Inner Exception: {7}";
         public bool SmartDarkMode;
         public bool TabPreview;
         public bool TabMemory;
+        public bool SearchSuggestions;
+        public bool SmartSuggestions;
+        public bool RichSuggestions;
 
         public int BlockScreenCapture;
 
@@ -3018,7 +3024,7 @@ Inner Exception: {7}";
                 UseDefaultSearchEngines = true;
             if (UseDefaultSearchEngines)
             {
-                DefaultSearchProvider = new() { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://suggestqueries.google.com/complete/search?client=chrome&output=toolbar&q={0}" };
+                DefaultSearchProvider = new() { Name = "Google", Host = "google.com", SearchUrl = "https://google.com/search?q={0}", SuggestUrl = "https://www.google.com/complete/search?client=chrome-omni&gs_ri=chrome-ext-ansg&q={0}" };
                 SearchEngines =
                 [
                     DefaultSearchProvider,
@@ -3026,7 +3032,7 @@ Inner Exception: {7}";
                     new() { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?q={0}&type=list" },
                     new() { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
                     new() { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
-                    new() { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://suggest.yandex.com/suggest-ff.cgi?part={0}" },
+                    new() { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://yandex.ru/suggest/suggest-browser?part={0}&brandID=int&rich=1&srv=browser_desktop&rich_nav=1" },
                     new() { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
                 ];
             }
@@ -3120,10 +3126,6 @@ Inner Exception: {7}";
                 GlobalSave.Set("QuickImage", true);
             if (!GlobalSave.Has("OpenSearch"))
                 GlobalSave.Set("OpenSearch", false);
-            if (!GlobalSave.Has("SearchSuggestions"))
-                GlobalSave.Set("SearchSuggestions", true);
-            if (!GlobalSave.Has("SmartSuggestions"))
-                GlobalSave.Set("SmartSuggestions", true);
             if (!GlobalSave.Has("SpellCheck"))
                 GlobalSave.Set("SpellCheck", true);
             if (!GlobalSave.Has("NetworkLimit"))
@@ -3235,6 +3237,9 @@ Inner Exception: {7}";
         }
         private void InitializeUISaves(string CommandLineUrl = "")
         {
+            SetSearchSuggestions(bool.Parse(GlobalSave.Get("SearchSuggestions", true.ToString())));
+            SetSmartSuggestions(bool.Parse(GlobalSave.Get("SmartSuggestions", true.ToString())));
+            SetRichSuggestions(bool.Parse(GlobalSave.Get("RichSuggestions", true.ToString())));
             SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", false.ToString())));
             SetBlockScreenCapture(int.Parse(GlobalSave.Get("BlockScreenCapture", "1")));
             SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
@@ -4616,6 +4621,24 @@ Inner Exception: {7}";
                     }
                 }
             }
+        }
+
+        public void SetSearchSuggestions(bool Toggle)
+        {
+            GlobalSave.Set("SearchSuggestions", Toggle);
+            SearchSuggestions = Toggle;
+                }
+
+        public void SetSmartSuggestions(bool Toggle)
+        {
+            GlobalSave.Set("SmartSuggestions", Toggle);
+            SmartSuggestions = Toggle;
+            }
+
+        public void SetRichSuggestions(bool Toggle)
+        {
+            GlobalSave.Set("RichSuggestions", Toggle);
+            RichSuggestions = Toggle;
         }
 
         public void SetDimUnloadedIcon(bool Toggle)

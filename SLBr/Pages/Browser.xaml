@@ -437,7 +437,24 @@
                                 <DataTemplate>
                                     <StackPanel Focusable="False" Orientation="Horizontal" Margin="0">
                                         <Border Margin="-8,0,5,0" Width="30" Height="30" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}">
+                                            <Grid>
                                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
+                                                <Image Visibility="{Binding Image, Converter={StaticResource NullToVisibility}}" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" Source="{Binding Image}" Width="29" Height="29">
+                                                    <Image.Style>
+                                                        <Style TargetType="Image">
+                                                            <Setter Property="OpacityMask">
+                                                                <Setter.Value>
+                                                                    <VisualBrush>
+                                                                        <VisualBrush.Visual>
+                                                                            <Border Width="28" Height="28" Background="White" CornerRadius="5"/>
+                                                                        </VisualBrush.Visual>
+                                                                    </VisualBrush>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
+                                            </Grid>
                                         </Border>
                                         <TextBlock Text="{Binding Display}"  Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                         <TextBlock Text="{Binding SubText}" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center"/>

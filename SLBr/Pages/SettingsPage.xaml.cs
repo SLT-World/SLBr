@@ -396,8 +396,9 @@ namespace SLBr.Pages
 
             NetworkLimitCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit"));
 
-            SearchSuggestionsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions"));
-            SmartSuggestionsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions"));
+            SearchSuggestionsCheckBox.IsChecked = App.Instance.SearchSuggestions;
+            SmartSuggestionsCheckBox.IsChecked = App.Instance.SmartSuggestions;
+            RichSuggestionsCheckBox.IsChecked = App.Instance.RichSuggestions;
             OpenSearchCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("OpenSearch"));
 
             FullscreenPopupCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup"));
@@ -942,15 +943,17 @@ namespace SLBr.Pages
         private void SearchSuggestionsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-            {
-                bool SearchSuggestions = SearchSuggestionsCheckBox.IsChecked.GetValueOrDefault();
-                App.Instance.GlobalSave.Set("SearchSuggestions", SearchSuggestions.ToString());
-            }
+                App.Instance.SetSearchSuggestions(SearchSuggestionsCheckBox.IsChecked.GetValueOrDefault());
         }
         private void SmartSuggestionsCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
-                App.Instance.GlobalSave.Set("SmartSuggestions", SmartSuggestionsCheckBox.IsChecked.GetValueOrDefault().ToString());
+                App.Instance.SetSmartSuggestions(SmartSuggestionsCheckBox.IsChecked.GetValueOrDefault());
+        }
+        private void RichSuggestionsCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetRichSuggestions(RichSuggestionsCheckBox.IsChecked.GetValueOrDefault());
         }
         private void OpenSearchCheckBox_Click(object sender, RoutedEventArgs e)
         {

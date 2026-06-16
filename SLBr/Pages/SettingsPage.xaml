@@ -671,6 +671,7 @@
                                         </DockPanel>
                                         <CheckBox x:Name="SearchSuggestionsCheckBox" Margin="0,0,0,10" Width="Auto" Click="SearchSuggestionsCheckBox_Click" Content="Search suggestions"/>
                                         <CheckBox x:Name="SmartSuggestionsCheckBox" IsEnabled="{Binding ElementName=SearchSuggestionsCheckBox, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" Width="Auto" Click="SmartSuggestionsCheckBox_Click" Content="Smart suggestions"/>
+                                        <CheckBox x:Name="RichSuggestionsCheckBox" IsEnabled="{Binding ElementName=SearchSuggestionsCheckBox, Path=IsChecked, TargetNullValue=False}" Margin="0,0,0,10" Width="Auto" Click="RichSuggestionsCheckBox_Click" Content="Rich entity suggestions"/>
                                         <CheckBox x:Name="OpenSearchCheckBox" Width="Auto" Click="OpenSearchCheckBox_Click" Content="Index other search engines"/>
                                     </StackPanel>
                                 </GroupBox>

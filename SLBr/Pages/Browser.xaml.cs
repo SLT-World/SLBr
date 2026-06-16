@@ -8,6 +8,7 @@ using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
+using SLBr.Protobuf;
 using SLBr.WebView;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
@@ -3080,7 +3081,7 @@ namespace SLBr.Pages
             }
             else if (!Utils.IsProgramUrl(Url))
                 Address = Url;
-            if (!Private && bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
+            if (!Private && App.Instance.SearchSuggestions)
             {
                 OmniBoxFastTimer?.Stop();
                 OmniBoxSmartTimer?.Stop();
@@ -3222,7 +3223,7 @@ namespace SLBr.Pages
                 LoadingStoryboard?.Seek(TimeSpan.Zero);
                 LoadingStoryboard?.Stop();
                 SetTemporarySiteInformation();
-                if (!Private && bool.Parse(App.Instance.GlobalSave.Get("SearchSuggestions")))
+                if (!Private && App.Instance.SearchSuggestions)
                 {
                     Dispatcher.BeginInvoke(() =>
                     {
@@ -3787,7 +3788,7 @@ namespace SLBr.Pages
                 else
                 {
                     Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, null, "", null, OmniBoxOverrideSearch));
-                    if (SmartSuggestions)
+                    if (App.Instance.SmartSuggestions)
                     {
                         foreach (Match _Match in Utils.UrlRegex().Matches(ProcessedText))
                             Suggestions.Add(App.GenerateSuggestion(Utils.FixUrl(_Match.Value), "W", LinkColor, "- Visit", null, OmniBoxOverrideSearch));
@@ -3829,7 +3830,7 @@ namespace SLBr.Pages
                     else if (ProcessedText.Length <= 60)
                     {
                         OmniBoxFastTimer.Start();
-                        if (OmniBoxOverrideSearch == null && SmartSuggestions)
+                        if (App.Instance.SmartSuggestions && OmniBoxOverrideSearch == null)
                             OmniBoxSmartTimer.Start();
                     }
                 }
@@ -3986,25 +3987,175 @@ namespace SLBr.Pages
                 string SuggestionsUrl = string.Format(OmniBoxOverrideSearch?.SuggestUrl ?? App.Instance.DefaultSearchProvider.SuggestUrl, Uri.EscapeDataString(CurrentText.AsSpan()));
                 if (!string.IsNullOrEmpty(SuggestionsUrl))
                 {
-                    var ExistingSuggestions = Suggestions.Select(i => i.Text);
-                    string ResponseText = await App.MiniHttpClient.GetStringAsync(SuggestionsUrl);
-                    using JsonDocument Document = JsonDocument.Parse(ResponseText);
-                    SolidColorBrush Color = (SolidColorBrush)FindResource("FontBrush");
-                    SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
-                    foreach (JsonElement Suggestion in Document.RootElement[1].EnumerateArray())//.Take(10)
+                    using (HttpRequestMessage Request = new(HttpMethod.Get, SuggestionsUrl))
                     {
-                        string SuggestionStr = Suggestion.GetString();
-                        if (!ExistingSuggestions.Contains(SuggestionStr))
+                        Request.Headers.UserAgent.ParseAdd(UserAgentGenerator.BuildUserAgentFromProduct(UserAgentGenerator.BuildChromeBrand()));
+                        using var Response = await App.MiniHttpClient.SendAsync(Request);
+                        Response.EnsureSuccessStatusCode();
+
+                        string ResponseText = await Response.Content.ReadAsStringAsync();
+
+                    using JsonDocument Document = JsonDocument.Parse(ResponseText);
+                    SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
+
+                        JsonElement Root = Document.RootElement;
+                        //https://source.chromium.org/chromium/chromium/src/+/main:components/omnibox/browser/search_suggestion_parser.cc
+                        if (Root.ValueKind == JsonValueKind.Array && Root.GetArrayLength() >= 2)
                         {
-                            string SuggestionType = App.GetMiniSearchType(SuggestionStr);
-                            Suggestions.Add(App.GenerateSuggestion(SuggestionStr, SuggestionType, SuggestionType == "W" ? LinkColor : Color, "", null, OmniBoxOverrideSearch));
+                            Dictionary<string, OmniSuggestion> ExistingSuggestions = Suggestions.Skip(1).ToDictionary(i => i.Text, i => i);
+
+                            JsonElement SuggestionArray = Root[1];
+                            JsonElement DescriptionArray = Root.GetArrayLength() >= 3 ? Root[2] : default;
+
+                            JsonElement TypeArray = default;
+                            JsonElement DetailArray = default;
+
+                            if (Root.GetArrayLength() >= 5 && Root[4].ValueKind == JsonValueKind.Object)
+                            {
+                                Root[4].TryGetProperty("google:suggesttype", out TypeArray);
+                                Root[4].TryGetProperty("google:suggestdetail", out DetailArray);
+                            }
+
+                            int Index = 0;
+                            foreach (JsonElement SuggestionElement in SuggestionArray.EnumerateArray())
+                            {
+                                string Suggestion = SuggestionElement.GetString() ?? string.Empty;
+                                if (string.IsNullOrEmpty(Suggestion))
+                                {
+                                    Index++;
+                                    continue;
+                                }
+                                string SuggestionType = "S";
+                                if (App.Instance.RichSuggestions && TypeArray.ValueKind == JsonValueKind.Array && Index < TypeArray.GetArrayLength())
+                                {
+                                    string GoogleType = TypeArray[Index].GetString() ?? string.Empty;
+                                    if (GoogleType == "NAVIGATION")
+                                        SuggestionType = "W";
+                                    //else if (GoogleType == "ENTITY")
+                                    else if (GoogleType == "CALCULATOR")
+                                        continue;
+                                }
+                                if (SuggestionType == "S")
+                                    SuggestionType = App.GetMiniSearchType(Suggestion);
+
+                                string DisplayText = Suggestion;
+                                string? ActualText = null;
+                                string SubText = "";
+                                string? ImageUrl = null;
+
+                                if (App.Instance.RichSuggestions && DetailArray.ValueKind == JsonValueKind.Array && Index < DetailArray.GetArrayLength())
+                                {
+                                    JsonElement DetailElement = DetailArray[Index];
+                                    if (DetailElement.ValueKind == JsonValueKind.Object && DetailElement.TryGetProperty("google:entityinfo", out JsonElement EntityInfoElement))
+                                    {
+                                        string? Base64Entity = EntityInfoElement.GetString();
+                                        if (!string.IsNullOrEmpty(Base64Entity))
+                                        {
+                                            var (ExtractedDisplay, ExtractedSubText, ExtractedImage) = ParseEntityInfo(Base64Entity);
+                                            if (!string.IsNullOrEmpty(ExtractedDisplay))
+                                            {
+                                                DisplayText = ExtractedDisplay;
+                                                ActualText = Suggestion;
+                                    }
+                                                if (!string.IsNullOrEmpty(ExtractedSubText))
+                                                    SubText = "- " + ExtractedSubText;
+                                                if (!string.IsNullOrEmpty(ExtractedImage))
+                                                    ImageUrl = ExtractedImage;
+                                            }
+                                        }
+                                    }
+                                if (SuggestionType == "W")
+                                {
+                                    ActualText = Suggestion;
+                                    if (App.Instance.RichSuggestions && DescriptionArray.ValueKind == JsonValueKind.Array && Index < DescriptionArray.GetArrayLength())
+                                    {
+                                        string? Description = DescriptionArray[Index].GetString() ?? null;
+                                        if (!string.IsNullOrEmpty(Description))
+                                            DisplayText = Description;
+                                        else
+                                            DisplayText = Utils.CleanUrl(DisplayText);
+                                    }
+                                    else
+                                        DisplayText = Utils.CleanUrl(DisplayText);
+                                }
+                                string TargetTextKey = ActualText ?? DisplayText;
+
+                                if (ExistingSuggestions.TryGetValue(TargetTextKey, out var ExistingItem))
+                                    Suggestions.Remove(ExistingItem);
+
+                                OmniSuggestion NewSuggestion = App.GenerateSuggestion(
+                                    DisplayText,
+                                    SuggestionType,
+                                    SuggestionType == "W" ? LinkColor : null,
+                                    SubText,
+                                    ActualText,
+                                    OmniBoxOverrideSearch,
+                                    null,
+                                    ImageUrl
+                                );
+                                Suggestions.Add(NewSuggestion);
+                                ExistingSuggestions[TargetTextKey] = NewSuggestion;
+                                Index++;
+                            }
                         }
                     }
                 }
             }
             catch { }
         }
-
+        public static (string? Display, string? SubText, string? ImageUrl) ParseEntityInfo(string Input)
+        {
+            if (!string.IsNullOrEmpty(Input))
+            {
+                try
+                {
+                    ProtobufReader Reader = new(Convert.FromBase64String(Input.Replace("\\u003d", "=")));
+                    string? SubText = null;
+                    string? ImageUrl = null;
+                    string? Display = null;
+                    bool HasSubText = false;
+                    bool HasImageUrl = false;
+                    bool HasDisplay = false;
+                    while (!Reader.IsConsumed)
+                    {
+                        if (!Reader.TryReadTag(out int FieldNumber, out int WireType))
+                            break;
+                        /*if (FieldNumber > 7)//WARNING: Do not apply, protobuf fields are not constantly in ascending numerical order.
+                            break;*/
+                        //Debug.WriteLine($"{WireType} {FieldNumber}");
+                        if (WireType == 2)
+                    {
+                            ReadOnlySpan<byte> Slice = Reader.ReadLengthDelimited();
+                            //Debug.WriteLine($"{FieldNumber} {Encoding.UTF8.GetString(Slice)}");
+                            switch (FieldNumber)
+                        {
+                                case 2:
+                                    //WARNING: Do not optimize as Encoding.UTF8.GetString(Reader.ReadLengthDelimited())
+                                    SubText = Encoding.UTF8.GetString(Slice);
+                                    HasSubText = true;
+                                    break;
+                                case 6:
+                                    ImageUrl = Encoding.UTF8.GetString(Slice);
+                                    HasImageUrl = true;
+                                    break;
+                                case 7:
+                                    Display = Encoding.UTF8.GetString(Slice);
+                                    HasDisplay = true;
+                                    break;
+                                //case 17: Affiliated URL.
+                        }
+                    }
+                        else
+                            Reader.SkipField(WireType);
+                        if (HasSubText && HasImageUrl && HasDisplay)
+                            break;
+                }
+                    return (Display, SubText, ImageUrl);
+            }
+            catch { }
+        }
+            return (null, null, null);
+        }
         /*private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
         {
             OmniBoxFastTimer?.Stop();
