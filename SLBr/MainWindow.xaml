@@ -156,12 +156,14 @@
                 </DataTemplate>
             </TabControl.ContentTemplate>
         </WinUI:WinUITabControl>
-        <Grid x:Name="FullscreenContainer" Grid.RowSpan="2" Grid.ColumnSpan="4" Visibility="Visible">
-            <controls:NonTopmostPopup SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" StaysOpen="False" PopupAnimation="Fade">
-                <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Opacity="0.8">
-                    <TextBlock FontSize="25" Text="To exit fullscreen, press F11 or Esc" Margin="7.5" Foreground="{StaticResource FontBrush}"/>
-                </Border>
-            </controls:NonTopmostPopup>
+        <Grid x:Name="FullscreenContainer" Grid.ColumnSpan="10" Grid.RowSpan="10">
+            <Grid VerticalAlignment="Top">
+                <Popup VerticalOffset="75" SnapsToDevicePixels="True" x:Name="FullscreenPopup" Placement="Center" IsHitTestVisible="False" Focusable="False" AllowsTransparency="True" IsOpen="False" StaysOpen="False" PopupAnimation="Fade">
+                    <Border Background="{StaticResource PrimaryBrush}" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Opacity="0.8">
+                        <TextBlock FontSize="18" Text="To exit full screen, press F11 or Esc" Margin="7.5" Foreground="{StaticResource FontBrush}"/>
+                    </Border>
+                </Popup>
+            </Grid>
         </Grid>
         <Grid Background="Transparent" Grid.ColumnSpan="4" IsHitTestVisible="False" Grid.Row="1" VerticalAlignment="Top">
             <Popup x:Name="ToastPopup" SnapsToDevicePixels="True" IsOpen="False" VerticalOffset="110" Placement="Center" IsHitTestVisible="True" MouseDown="ToastPopup_MouseDown" Focusable="False" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">

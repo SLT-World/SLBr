@@ -100,12 +100,8 @@ namespace SLBr.Controls
 
         public void ApplyTheme(bool Dark)
         {
-            int trueValue = 0x01;
-            int falseValue = 0x00;
-            if (Dark)
-                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
-            else
-                DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref falseValue, Marshal.SizeOf(typeof(int)));
+            int DarkModeValue = Dark ? 0x01 : 0x00;
+            DllUtils.DwmSetWindowAttribute(Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref DarkModeValue, Marshal.SizeOf(typeof(int)));
         }
 
         private void Browser_TitleChanged(object sender, DependencyPropertyChangedEventArgs e)

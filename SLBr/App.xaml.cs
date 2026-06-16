@@ -3256,6 +3256,7 @@ Inner Exception: {7}";
             //WARNING: Do not remove RestoreTabs boolean.
             bool RestoreTabs = bool.Parse(GlobalSave.Get("RestoreTabs", (!ReadOnlyInstance).ToString()));
             if (WindowsSaves.Count != 0 && RestoreTabs)
+            {
                 foreach (Saving TabsSave in WindowsSaves)
                 {
                     MainWindow _Window = new();
@@ -3299,8 +3300,12 @@ Inner Exception: {7}";
                     }
                     else
                         _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, PrivateTabs);
+                    //WARNING: Do not modify, UpdateLayout is essential to force vertical TabPanel to calculate bounds.
+                    _Window.UpdateLayout();
+                    _Window.WindowState = WindowState.Maximized;
                     _Window.TabsUI.Visibility = Visibility.Visible;
                 }
+            }
             else
             {
                 MainWindow _Window = new();
@@ -3313,6 +3318,8 @@ Inner Exception: {7}";
                 {
                     _Window.Show();
                     _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, PrivateTabs);
+                    _Window.UpdateLayout();
+                    _Window.WindowState = WindowState.Maximized;
                     _Window.TabsUI.Visibility = Visibility.Visible;
                 }
             }
@@ -3332,6 +3339,13 @@ Inner Exception: {7}";
 
         public MainWindow CurrentFocusedWindow() =>
             AllWindows.FirstOrDefault(w => w.IsFocused || w.IsActive || w.WindowState == WindowState.Maximized || w.WindowState == WindowState.Normal) ?? AllWindows.First();
+
+        public MainWindow GetWindow(DependencyObject Object)
+        {
+            if (Window.GetWindow(Object) is MainWindow _Window)
+                return _Window;
+            return CurrentFocusedWindow();
+        }
 
         public void Refresh(bool IgnoreCache = false) =>
             CurrentFocusedWindow().Refresh(string.Empty, IgnoreCache);
@@ -3353,6 +3367,8 @@ Inner Exception: {7}";
             MainWindow _Window = new();
             _Window.Show();
             _Window.NewTab(GlobalSave.Get("Homepage"), true, -1, ForcePrivate || bool.Parse(GlobalSave.Get("PrivateTabs")));
+            _Window.UpdateLayout();
+            _Window.WindowState = WindowState.Maximized;
             _Window.TabsUI.Visibility = Visibility.Visible;
         }
 

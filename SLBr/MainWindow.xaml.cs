@@ -78,6 +78,11 @@ namespace SLBr
             Source.AddHook(WndProc);
             Handle = Source.Handle;
             SetWindowDisplayAffinity();
+
+            int DarkModeValue = App.Instance.CurrentTheme.DarkTitleBar ? 0x01 : 0x00;
+            DllUtils.DwmSetWindowAttribute(Handle.Value, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref DarkModeValue, Marshal.SizeOf(typeof(int)));
+            int NativeColor = Utils.NativeColor(App.Instance.CurrentTheme.SecondaryColor.ToDrawingColor());
+            DllUtils.DwmSetWindowAttribute(Handle.Value, DwmWindowAttribute.DWMWA_CAPTION_COLOR, ref NativeColor, sizeof(int));
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
@@ -168,9 +173,8 @@ namespace SLBr
 
                                         SystemTheme.DarkTitleBar = TargetTheme.DarkTitleBar;
                                         SystemTheme.DarkWebPage = TargetTheme.DarkWebPage;
-                                        Theme CurrentTheme = App.Instance.GetTheme();
-                                        if (CurrentTheme.Name == SystemTheme.Name)
-                                            App.Instance.SetAppearance(CurrentTheme, App.Instance.TabAlignment, App.Instance.VerticalTabWidth, App.Instance.AllowHomeButton, App.Instance.AllowTranslateButton, App.Instance.AllowReaderModeButton, App.Instance.ShowExtensionButton, App.Instance.ShowDownloadsButton, App.Instance.ShowFavouritesBar, App.Instance.AllowQRButton, App.Instance.AllowWebEngineButton);
+                                        if (App.Instance.CurrentTheme.Name == SystemTheme.Name)
+                                            App.Instance.SetAppearance(App.Instance.CurrentTheme, App.Instance.TabAlignment, App.Instance.VerticalTabWidth, App.Instance.AllowHomeButton, App.Instance.AllowTranslateButton, App.Instance.AllowReaderModeButton, App.Instance.ShowExtensionButton, App.Instance.ShowDownloadsButton, App.Instance.ShowFavouritesBar, App.Instance.AllowQRButton, App.Instance.AllowWebEngineButton);
                                     }
                                 }
                             }
@@ -178,6 +182,14 @@ namespace SLBr
                         catch { }
                     }
                     handled = true;
+                    break;
+                case DllUtils.WM_SYSCOMMAND:
+                    if (IsFullscreen)
+                    {
+                        int Command = wParam.ToInt32() & 0xFFF0;
+                        if (Command == DllUtils.SC_MOVE || Command == DllUtils.SC_SIZE || Command == DllUtils.SC_MINIMIZE || Command == DllUtils.SC_RESTORE || Command == DllUtils.SC_MAXIMIZE)
+                            handled = true;
+                    }
                     break;
             }
             return IntPtr.Zero;
@@ -452,7 +464,6 @@ namespace SLBr
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             SetAppearance(App.Instance.CurrentTheme);
-            WindowState = WindowState.Maximized;
             //PerformBenchmark();
             #region Benchmark
             /*Benchmark.Clear();
@@ -632,6 +643,14 @@ namespace SLBr
             Resources["FontBrushColor"] = _Theme.FontColor;
             Resources["IndicatorBrushColor"] = _Theme.IndicatorColor;
 
+            if (Handle.HasValue)
+            {
+                int DarkModeValue = _Theme.DarkTitleBar ? 0x01 : 0x00;
+                DllUtils.DwmSetWindowAttribute(Handle.Value, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref DarkModeValue, Marshal.SizeOf(typeof(int)));
+                int NativeColor = Utils.NativeColor(_Theme.SecondaryColor.ToDrawingColor());
+                DllUtils.DwmSetWindowAttribute(Handle.Value, DwmWindowAttribute.DWMWA_CAPTION_COLOR, ref NativeColor, sizeof(int));
+            }
+
             SetTabAlignment();
 
             foreach (BrowserTabItem Tab in Tabs)
@@ -667,21 +686,20 @@ namespace SLBr
                 CaptionIcon.Visibility = Visibility.Visible;
                 CaptionTitle.Visibility = Visibility.Visible;
                 VerticalTabs = true;
-                if (WindowState == WindowState.Maximized)
-                    CaptionHeight.Height = new GridLength(SystemParameters.CaptionHeight);
-                else
-                    CaptionHeight.Height = new GridLength(30);
+                CaptionHeight.Height = new GridLength(WindowState == WindowState.Maximized ? SystemParameters.CaptionHeight : 30);
                 TabsUI.Style = Resources["VerticalTabControl"] as Style;
                 Grid.SetRow(TabsUI, 1);
                 TabsUI.ApplyTemplate();
                 Tabs.Remove(NewTabTab);
                 //Tabs.Insert(0, NewTabTab);
+                TabsUI.LayoutUpdated -= TabsUI_LayoutUpdated;
                 TabsUI.LayoutUpdated += TabsUI_LayoutUpdated;
                 TabPreviewPopup.Placement = PlacementMode.Right;
                 TabPreviewPopup.VerticalOffset = -10;
                 TabPreviewPopup.HorizontalOffset = -7.5;
             }
-            MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
+            if (!IsFullscreen)
+                MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
             foreach (BrowserTabItem Tab in Tabs)
             {
                 Tab.Content?.MaxHeight = TabsUI.ActualHeight;
@@ -876,7 +894,8 @@ namespace SLBr
                         CaptionHeight.Height = new GridLength(30);
                     MaximizeRestoreButton.Content = "\xe922";
                 }
-                MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
+                if (!IsFullscreen)
+                    MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
                 if (Tabs.Count != 0 && TabsUI.SelectedIndex != -1)
                     Tabs[TabsUI.SelectedIndex].Content?.ReFocus();
             }
@@ -1019,42 +1038,44 @@ namespace SLBr
         public void Fullscreen(bool Fullscreen, Browser BrowserView = null)
         {
             MaximizeRestoreButton.Tag = null;
+            bool Changed = IsFullscreen != Fullscreen;
             IsFullscreen = Fullscreen;
-            BrowserView ??= GetTab().Content;
-            if (BrowserView != null)
+            if (Changed)
             {
-                Keyboard.Focus(BrowserView.WebView?.Control);
-                if (Fullscreen)
+                BrowserView ??= GetTab().Content;
+                if (BrowserView != null)
                 {
-                    ResizeMode = ResizeMode.NoResize;
-                    TabsUI.Margin = new Thickness(0, -45, 0, 0);
-                    CaptionHeight.Height = new GridLength(0);
-                    BrowserView.ToolBar.Visibility = Visibility.Collapsed;
-                    //WARNING: The removal of the following WindowState will result in the taskbar being visible.
-                    WindowState = WindowState.Normal;
-                    WindowStyle = WindowStyle.ToolWindow;
-                    WindowState = WindowState.Maximized;
-                    if (bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup")))
+                    if (Fullscreen)
                     {
-                        FullscreenPopup.IsOpen = true;
-                        FullscreenPopupTimer = new() { Interval = TimeSpan.FromSeconds(3) };
-                        FullscreenPopupTimer.Tick += FullscreenPopupTimer_Tick;
-                        FullscreenPopupTimer.Start();
+                        BrowserView.ToggleSideBar(true);
+                        BrowserView.CoreContainerSizeEmulator.Children.Remove(BrowserView.CoreContainer);
+                        FullscreenContainer.Children.Add(BrowserView.CoreContainer);
+                        MainWindowChrome.CaptionHeight = 0;
+                        ResizeMode = ResizeMode.NoResize;
+                        //WARNING: The removal of the following WindowState will result in the taskbar being visible.
+                        WindowState = WindowState.Normal;
+                        WindowStyle = WindowStyle.ToolWindow;
+                        WindowState = WindowState.Maximized;
+                        if (bool.Parse(App.Instance.GlobalSave.Get("FullscreenPopup")))
+                        {
+                            FullscreenPopup.IsOpen = true;
+                            FullscreenPopupTimer = new() { Interval = TimeSpan.FromSeconds(3) };
+                            FullscreenPopupTimer.Tick += FullscreenPopupTimer_Tick;
+                            FullscreenPopupTimer.Start();
+                        }
                     }
-                }
-                else
-                {
-                    ResizeMode = ResizeMode.CanResize;
-                    TabsUI.Margin = new Thickness(0);
-                    if (App.Instance.TabAlignment == 0)
-                        CaptionHeight.Height = new GridLength(45);
                     else
-                        CaptionHeight.Height = new GridLength(WindowState == WindowState.Maximized ? SystemParameters.CaptionHeight : 30);
-                    BrowserView.ToolBar.Visibility = Visibility.Visible;
-                    WindowStyle = WindowStyle.SingleBorderWindow;
-                    FullscreenPopupTimer_Tick(null, null);
+                    {
+                        FullscreenContainer.Children.Remove(BrowserView.CoreContainer);
+                        BrowserView.CoreContainerSizeEmulator.Children.Add(BrowserView.CoreContainer);
+                        MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
+                        ResizeMode = ResizeMode.CanResize;
+                        BrowserView.ToolBar.Visibility = Visibility.Visible;
+                        WindowStyle = WindowStyle.SingleBorderWindow;
+                        FullscreenPopupTimer_Tick(null, null);
+                    }
+                    Keyboard.Focus(BrowserView.WebView?.Control);
                 }
-                MainWindowChrome.CaptionHeight = CaptionHeight.Height.Value;
             }
         }
         private void FullscreenPopupTimer_Tick(object? sender, EventArgs e)
@@ -1264,7 +1285,10 @@ namespace SLBr
             {
                 BrowserTabItem _CurrentTab = Tabs[TabsUI.SelectedIndex];
                 if (PreviousTab != null && PreviousTab != _CurrentTab)
+                {
+                    Fullscreen(false, PreviousTab.Content);
                     PreviousTab.Content?.UnFocus();
+                }
                 if (_CurrentTab.Type != BrowserTabType.Add)
                 {
                     if (_CurrentTab.Content != null)

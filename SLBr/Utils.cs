@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Net;
@@ -191,6 +192,8 @@ namespace SLBr
         public const int WM_NCHITTEST = 0x0084;
         public const int WM_NCLBUTTONDOWN = 0x00A1;
         public const int WM_NCLBUTTONUP = 0x00A2;
+        //public const int WM_NCRBUTTONDOWN = 0x00A4;
+        //public const int WM_CONTEXTMENU = 0x007B;
         //public const int WM_NCLBUTTONDBLCLK = 0x00A3;
         //public const int WM_GETMINMAXINFO = 0x0024;
         public const int HTMAXBUTTON = 9;
@@ -313,6 +316,10 @@ namespace SLBr
 
         public const int WM_SYSCOMMAND = 0x0112;
         public const int SC_MOVE = 0xF010;
+        public const int SC_MINIMIZE = 0xF020;
+        public const int SC_SIZE = 0xF000;
+        public const int SC_RESTORE = 0xF120;
+        public const int SC_MAXIMIZE = 0xF030;
 
         public const uint WM_CLOSE = 0x0010;
 
@@ -360,7 +367,8 @@ namespace SLBr
     public enum DwmWindowAttribute : uint
     {
         DWMWA_USE_IMMERSIVE_DARK_MODE = 20,
-        DWMWA_MICA_EFFECT = 1029
+        DWMWA_MICA_EFFECT = 1029,
+        DWMWA_CAPTION_COLOR = 35
     }
 
     public static class UserAgentGenerator //https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc
@@ -609,6 +617,8 @@ namespace SLBr
     {
         public static MColor ToMediaColor(this DColor Color) =>
             MColor.FromArgb(Color.A, Color.R, Color.G, Color.B);
+        public static DColor ToDrawingColor(this MColor Color) =>
+            DColor.FromArgb(Color.A, Color.R, Color.G, Color.B);
         public static int ToInt(this bool Self) =>
             Self == true ? 1 : 0;
         public static string Cut(this string Self, int MaxLength, bool AddEllipsis = false)
@@ -702,7 +712,7 @@ namespace SLBr
         [GeneratedRegex(@"^translate\s+(?<Phrase>.+?)\s+to\s+(?<Lang>.+)", RegexOptions.IgnoreCase)]
         public static partial Regex TranslateRegex();
 
-        public static Brush GetContrastBrush(Color BackgroundColor) =>
+        public static Brush GetContrastBrush(MColor BackgroundColor) =>
             (0.299 * BackgroundColor.R + 0.587 * BackgroundColor.G + 0.114 * BackgroundColor.B) / 255 > 0.6 ? Brushes.Black : Brushes.White;
         public static void OpenFileExplorer(string Url) =>
             Process.Start(new ProcessStartInfo { Arguments = $"/select, \"{Url}\"", FileName = "explorer.exe" });
@@ -906,11 +916,11 @@ namespace SLBr
             }
             try
             {
-                return (MColor)ColorConverter.ConvertFromString(ColorString);
+                return (MColor)System.Windows.Media.ColorConverter.ConvertFromString(ColorString);
             }
             catch
             {
-                return System.Drawing.ColorTranslator.FromHtml(ColorString).ToMediaColor();
+                return ColorTranslator.FromHtml(ColorString).ToMediaColor();
             }
         }
 
@@ -989,6 +999,11 @@ namespace SLBr
             return MColor.FromArgb(255, (byte)(R * 255), (byte)(G * 255), (byte)(B * 255));
         }
 
+        public static int NativeColor(DColor _Color)
+        {
+            return ColorTranslator.ToWin32(_Color);
+        }
+
         private static double HueToRgb(double P, double Q, double T)
         {
             if (T < 0) T += 1;
@@ -1011,7 +1026,7 @@ namespace SLBr
             {
                 if (!Hex.StartsWith('#'))
                     Hex = "#" + Hex;
-                return (MColor)ColorConverter.ConvertFromString(Hex);
+                return (MColor)System.Windows.Media.ColorConverter.ConvertFromString(Hex);
             }
             catch
             {

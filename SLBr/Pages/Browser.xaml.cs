@@ -827,10 +827,12 @@ namespace SLBr.Pages
                         {
                             //TODO: Async & CancellationToken.
                             ThreatType _ThreatType = App.Instance._WebRiskHandler.IsSafe(e.Url, App.Instance.WebRiskService);
-                            if (_ThreatType is ThreatType.Malware or ThreatType.Unwanted_Software or ThreatType.Potentially_Harmful_Application)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may install harmful and malicious software that may manipulate or steal personal information."), Encoding.UTF8), "text/html", -1, (int)_ThreatType);
+                            if (_ThreatType is ThreatType.Malware or ThreatType.Potentially_Harmful_Application)
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may install harmful and malicious software that manipulates or steals personal information."), Encoding.UTF8), "text/html", -1, (int)_ThreatType);
                             else if (_ThreatType == ThreatType.Social_Engineering)
-                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may contain deceptive content that may trick you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, (int)_ThreatType);
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may contain deceptive content that tricks you into installing software or revealing personal information."), Encoding.UTF8), "text/html", -1, (int)_ThreatType);
+                            else if (_ThreatType == ThreatType.Unwanted_Software)
+                                WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(string.Format(App.WebRiskInterstitialPage, "The site may install harmful software that alters your browser settings or displays unwanted advertisements."), Encoding.UTF8), "text/html", -1, (int)_ThreatType);
                             else if (_ThreatType == ThreatType.Trick_To_Bill)
                                 WebViewManager.RegisterOverrideRequest(e.Url, ResourceHandler.GetByteArray(App.WebRiskBillingInterstitialPage, Encoding.UTF8), "text/html", -1, (int)_ThreatType);
                         }
@@ -2019,14 +2021,14 @@ namespace SLBr.Pages
                             SiteInformationIcon.Foreground = App.Instance.LimeGreenColor;
                             SiteInformationText.Text = "Secure";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is secure";
+                            SiteInformationPopupText.Text = $"Connection is secure";
                             break;
                         case "Insecure":
                             SiteInformationIcon.Text = "\xE785";
                             SiteInformationIcon.Foreground = App.Instance.RedColor;
                             SiteInformationText.Text = "Insecure";
                             TranslateButton.Visibility = !Private && App.Instance.AllowTranslateButton ? Visibility.Visible : Visibility.Collapsed;
-                            SiteInformationPopupText.Text = $"Connection to {Utils.Host(Address)} is insecure";
+                            SiteInformationPopupText.Text = $"Connection is insecure";
                             break;
                         case "File":
                             SiteInformationIcon.Text = "\xE8B7";
@@ -2468,7 +2470,7 @@ namespace SLBr.Pages
                     ToggleSideBar(ForceClose);
                     return;
                 }
-                if (WebView == null)
+                if (WebView == null || Tab.ParentWindow.IsFullscreen)
                     return;
                 if (WebView?.Engine == WebEngineType.Trident)
                 {
@@ -4177,9 +4179,9 @@ namespace SLBr.Pages
                 if (!args.IsLoading)
                     ExtensionBrowser.ExecuteScriptAsync(Scripts.ExtensionScript);
             };
+            int DarkModeValue = App.Instance.CurrentTheme.DarkTitleBar ? 0x01 : 0x00;
+            DllUtils.DwmSetWindowAttribute(ExtensionHandle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref DarkModeValue, Marshal.SizeOf(typeof(int)));
             int trueValue = 0x01;
-            int falseValue = 0x00;
-            DllUtils.DwmSetWindowAttribute(ExtensionHandle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref App.Instance.CurrentTheme.DarkTitleBar ? ref trueValue : ref falseValue, Marshal.SizeOf(typeof(int)));
             DllUtils.DwmSetWindowAttribute(ExtensionHandle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             ExtensionBrowser.JavascriptMessageReceived += ExtensionBrowser_JavascriptMessageReceived;
             ExtensionBrowser.SnapsToDevicePixels = true;
@@ -4201,7 +4203,7 @@ namespace SLBr.Pages
             switch (msg)
             {
                 case DllUtils.WM_SYSCOMMAND:
-                    int Command = wParam.ToInt32() & 0xfff0;
+                    int Command = wParam.ToInt32() & 0xFFF0;
                     if (Command == DllUtils.SC_MOVE)
                         handled = true;
                     break;

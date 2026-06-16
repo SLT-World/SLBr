@@ -35,7 +35,8 @@ namespace SLBr
 
         public void ButtonAction(object sender, RoutedEventArgs e)
         {
-            App.Instance.CurrentFocusedWindow().ButtonAction(sender, e);
+            if (sender is DependencyObject Object)
+                App.Instance.GetWindow(Object).ButtonAction(sender, e);
         }
 
         private object? TabDragSender = null;
@@ -54,8 +55,16 @@ namespace SLBr
                 return;
             TabItem SourceTabItem = (TabItem)sender;
             BrowserTabItem Tab = (BrowserTabItem)SourceTabItem.DataContext;
-            if (Tab.Type == BrowserTabType.Group && !Tab.TabGroup.IsCollapsed)
-                return;
+            if (Tab.Type == BrowserTabType.Group)
+            {
+                if (Tab.TabGroup.IsCollapsed)
+                {
+                    if (App.Instance.GetWindow(SourceTabItem).GetTab().TabGroup == Tab.TabGroup)
+                        return;
+                }
+                else
+                    return;
+            }
             //Interferes with close button
             //if (Mouse.PrimaryDevice.LeftButton == MouseButtonState.Pressed || Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
             if (Mouse.PrimaryDevice.MiddleButton == MouseButtonState.Pressed)
@@ -73,7 +82,7 @@ namespace SLBr
 
         private void TabItem_Drop(object sender, DragEventArgs e)
         {
-            MainWindow FocusedWindow = App.Instance.CurrentFocusedWindow();
+            MainWindow FocusedWindow = App.Instance.GetWindow((DependencyObject)sender);
             BrowserTabItem CurrentTab = (BrowserTabItem)((TabItem)e.Source).DataContext;
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
@@ -133,13 +142,13 @@ namespace SLBr
 
             if (e.Data.GetDataPresent(typeof(TabItem)))
             {
-                (int NewIndex, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.CurrentFocusedWindow());
+                (int NewIndex, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.GetWindow(Panel));
                 ShowInsertIndicator(Panel, NewIndex, RealIndex);
                 e.Effects = DragDropEffects.Move;
             }
             else if (e.Data.GetDataPresent(DataFormats.FileDrop) || e.Data.GetDataPresent(DataFormats.StringFormat))
             {
-                (int NewIndex, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.CurrentFocusedWindow());
+                (int NewIndex, int RealIndex) = GetInsertIndex(Panel, e.GetPosition(Panel), App.Instance.GetWindow(Panel));
                 ShowInsertIndicator(Panel, NewIndex, RealIndex);
                 e.Effects = DragDropEffects.Copy;
             }
@@ -157,7 +166,7 @@ namespace SLBr
         private void HeaderPanel_Drop(object sender, DragEventArgs e)
         {
             Panel Panel = (Panel)sender;
-            MainWindow FocusedWindow = App.Instance.CurrentFocusedWindow();
+            MainWindow FocusedWindow = App.Instance.GetWindow(Panel);
             HideInsertIndicator(Panel);
             if (e.Data.GetDataPresent(typeof(TabItem)))
             {
@@ -251,7 +260,8 @@ namespace SLBr
                 Point Position = LastTab.TranslatePoint(new Point(LastTab.ActualWidth, LastTab.ActualHeight), Panel);
                 Offset = Vertical ? Position.Y : Position.X;
             }
-            if (Window.GetWindow(_TabControl) is MainWindow FocusedWindow && FocusedWindow.TabGroups.Count != 0)
+            MainWindow FocusedWindow = App.Instance.GetWindow(Panel);
+            if (FocusedWindow.TabGroups.Count != 0)
             {
                 /*List<BrowserTabItem> VisibleTabs = FocusedWindow.Tabs.Where(i => i == FocusedWindow.TabsUI.SelectedItem || i.TabGroup == null || i.Type != BrowserTabType.Navigation || !i.TabGroup.IsCollapsed).ToList();
                 BrowserTabItem LeftTab = null;
@@ -432,8 +442,9 @@ namespace SLBr
 
         private void NewTab_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left && Window.GetWindow((FrameworkElement)sender) is MainWindow FocusedWindow)
+            if (e.ChangedButton == MouseButton.Left && sender is DependencyObject Object)
             {
+                MainWindow FocusedWindow = App.Instance.GetWindow(Object);
                 if (FocusedWindow.TabsUI.Visibility == Visibility.Visible)
                     FocusedWindow.NewTab(App.Instance.GlobalSave.Get("Homepage"), true, -1, bool.Parse(App.Instance.GlobalSave.Get("PrivateTabs")));
             }
@@ -441,12 +452,14 @@ namespace SLBr
 
         private void Hyperlink_MouseEnter(object sender, MouseEventArgs e)
         {
-            App.Instance.CurrentFocusedWindow().GetTab().Content?.WebView_StatusMessage(null, ((Hyperlink)sender).NavigateUri.AbsoluteUri);
+            if (sender is DependencyObject Object)
+                App.Instance.GetWindow(Object).GetTab().Content?.WebView_StatusMessage(null, ((Hyperlink)sender).NavigateUri.AbsoluteUri);
         }
 
         private void Hyperlink_MouseLeave(object sender, MouseEventArgs e)
         {
-            App.Instance.CurrentFocusedWindow().GetTab().Content?.WebView_StatusMessage(null, "");
+            if (sender is DependencyObject Object)
+                App.Instance.GetWindow(Object).GetTab().Content?.WebView_StatusMessage(null, "");
         }
     }
 }
