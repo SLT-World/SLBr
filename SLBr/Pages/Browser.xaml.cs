@@ -4019,34 +4019,89 @@ namespace SLBr.Pages
                             int Index = 0;
                             foreach (JsonElement SuggestionElement in SuggestionArray.EnumerateArray())
                             {
-                                string Suggestion = SuggestionElement.GetString() ?? string.Empty;
+                                string Suggestion = string.Empty;
+                                string SuggestionType = "S";
+                                string DisplayText = string.Empty;
+                                string? ActualText = null;
+                                string SubText = "";
+                                string? ImageUrl = null;
+
+                                //https://github.com/brave/brave-browser/issues/29997
+                                bool IsBraveObject = SuggestionElement.ValueKind == JsonValueKind.Object;
+                                if (IsBraveObject)
+                                {
+                                    if (SuggestionElement.TryGetProperty("q", out JsonElement QueryElement))
+                                    {
+                                        string? ExtractedQuery = QueryElement.GetString() ?? null;
+                                        if (!string.IsNullOrEmpty(ExtractedQuery))
+                                        {
+                                            Suggestion = ExtractedQuery;
+                                            DisplayText = Suggestion;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    Suggestion = SuggestionElement.GetString() ?? string.Empty;
+                                    DisplayText = Suggestion;
+                                }
                                 if (string.IsNullOrEmpty(Suggestion))
                                 {
                                     Index++;
                                     continue;
                                 }
-                                string SuggestionType = "S";
-                                if (App.Instance.RichSuggestions && TypeArray.ValueKind == JsonValueKind.Array && Index < TypeArray.GetArrayLength())
+
+                                if (App.Instance.RichSuggestions)
                                 {
+                                    if (IsBraveObject)
+                                    {
+                                        if (SuggestionElement.TryGetProperty("name", out JsonElement TitleElement))
+                                        {
+                                            string? ExtractedDisplay = TitleElement.GetString() ?? null;
+                                            if (!string.IsNullOrEmpty(ExtractedDisplay))
+                                            {
+                                                DisplayText = ExtractedDisplay;
+                                                ActualText = Suggestion;
+                                            }
+                                        }
+                                        //if (SuggestionElement.TryGetProperty("is_entity", out JsonElement EntityElement) && EntityElement.GetBoolean())
+                                        if (SuggestionElement.TryGetProperty("desc", out JsonElement SubTextElement))
+                                        {
+                                            string? ExtractedSubText = SubTextElement.GetString();
+                                            if (!string.IsNullOrEmpty(ExtractedSubText))
+                                                SubText = "- " + ExtractedSubText;
+                                        }
+                                        if (SuggestionElement.TryGetProperty("img", out JsonElement ImageElement))
+                                {
+                                            string? ExtractedImage = ImageElement.GetString() ?? null;
+                                            if (!string.IsNullOrEmpty(ExtractedImage))
+                                                ImageUrl = ExtractedImage;
+                                        }
+                                    }
+                                    else if (TypeArray.ValueKind == JsonValueKind.Array && Index < TypeArray.GetArrayLength())
+                                    {
                                     string GoogleType = TypeArray[Index].GetString() ?? string.Empty;
                                     if (GoogleType == "NAVIGATION")
                                         SuggestionType = "W";
                                     //else if (GoogleType == "ENTITY")
                                     else if (GoogleType == "CALCULATOR")
+                                        {
+                                            Index++;
                                         continue;
                                 }
+                                    }
+                                }
+
                                 if (SuggestionType == "S")
                                     SuggestionType = App.GetMiniSearchType(Suggestion);
 
-                                string DisplayText = Suggestion;
-                                string? ActualText = null;
-                                string SubText = "";
-                                string? ImageUrl = null;
-
-                                if (App.Instance.RichSuggestions && DetailArray.ValueKind == JsonValueKind.Array && Index < DetailArray.GetArrayLength())
+                                if (!IsBraveObject && App.Instance.RichSuggestions && DetailArray.ValueKind == JsonValueKind.Array && Index < DetailArray.GetArrayLength())
                                 {
                                     JsonElement DetailElement = DetailArray[Index];
-                                    if (DetailElement.ValueKind == JsonValueKind.Object && DetailElement.TryGetProperty("google:entityinfo", out JsonElement EntityInfoElement))
+                                    if (DetailElement.ValueKind == JsonValueKind.Object)
+                                    {
+                                        //NOTE: Utilized by Google.
+                                        if (DetailElement.TryGetProperty("google:entityinfo", out JsonElement EntityInfoElement))
                                     {
                                         string? Base64Entity = EntityInfoElement.GetString();
                                         if (!string.IsNullOrEmpty(Base64Entity))
@@ -4063,7 +4118,30 @@ namespace SLBr.Pages
                                                     ImageUrl = ExtractedImage;
                                             }
                                         }
+                                        else
+                                        {
+                                            //NOTE: Utilized by Bing.
+                                            if (DetailElement.TryGetProperty("t", out JsonElement TitleElement) && TitleElement.ValueKind == JsonValueKind.String)
+                                            {
+                                                string? ExtractedDisplay = TitleElement.GetString() ?? null;
+                                                if (!string.IsNullOrEmpty(ExtractedDisplay))
+                                                    DisplayText = ExtractedDisplay;
                                     }
+                                            if (DetailElement.TryGetProperty("a", out JsonElement SubTextElement) && SubTextElement.ValueKind == JsonValueKind.String)
+                                            {
+                                                string? ExtractedSubText = SubTextElement.GetString() ?? null;
+                                                if (!string.IsNullOrEmpty(ExtractedSubText))
+                                                    SubText = "- " + ExtractedSubText;
+                                            }
+                                            if (DetailElement.TryGetProperty("i", out JsonElement ImageUrlElement) && ImageUrlElement.ValueKind == JsonValueKind.String)
+                                            {
+                                                string? ExtractedImage = ImageUrlElement.GetString() ?? null;
+                                                if (!string.IsNullOrEmpty(ExtractedImage))
+                                                    ImageUrl = ExtractedImage;
+                                            }
+                                        }
+                                    }
+                                }
                                 if (SuggestionType == "W")
                                 {
                                     ActualText = Suggestion;

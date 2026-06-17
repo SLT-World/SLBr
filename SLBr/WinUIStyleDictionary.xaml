@@ -460,6 +460,7 @@
     </ControlTemplate>
 
     <Style x:Key="SliderUnfilledButton" TargetType="RepeatButton">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="IsTabStop" Value="False"/>
@@ -474,6 +475,7 @@
     </Style>
 
     <Style x:Key="SliderFilledButton" TargetType="RepeatButton">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
@@ -491,6 +493,7 @@
     </Style>
 
     <Style x:Key="SliderThumb" TargetType="Thumb">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="OverridesDefaultStyle" Value="True"/>
         <Setter Property="Template">
@@ -507,6 +510,7 @@
         </Setter>
     </Style>
     <Style TargetType="{x:Type Slider}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Height" Value="35"/>
         <Setter Property="Width" Value="100"/>
         <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
