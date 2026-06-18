@@ -123,9 +123,46 @@
                                     </ListBox>
                                 </StackPanel>
                             </DataTemplate>
+                            <DataTemplate x:Key="DropdownTemplate">
+                                <StackPanel Margin="0,0,0,10">
+                                    <Grid Margin="0,0,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,5,0"/>
+                                        <Ellipse ToolTip="Required" Grid.Column="1" Fill="Red" VerticalAlignment="Center" Height="5" Width="5" Visibility="{Binding IsRequired, Converter={StaticResource BooleanToVisibility}}"/>
+                                    </Grid>
+                                    <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SelectionChanged="ComboBox_SelectionChanged" Width="Auto"/>
+                                </StackPanel>
+                            </DataTemplate>
+                            <DataTemplate x:Key="TreeTemplate">
+                                <StackPanel Margin="0,0,0,10">
+                                    <Grid Margin="0,0,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,5,0"/>
+                                        <Ellipse ToolTip="Required" Grid.Column="1" Fill="Red" VerticalAlignment="Center" Height="5" Width="5" Visibility="{Binding IsRequired, Converter={StaticResource BooleanToVisibility}}"/>
+                                    </Grid>
+                                    <TreeView ItemsSource="{Binding Children}" SelectedItemChanged="TreeView_SelectedItemChanged">
+                                        <TreeView.ItemContainerStyle>
+                                            <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                                                <Setter Property="local:ControlExtensions.Icon" Value="{Binding Icon}"/>
+                                            </Style>
+                                        </TreeView.ItemContainerStyle>
+                                        <TreeView.ItemTemplate>
+                                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>
+                                            </HierarchicalDataTemplate>
+                                        </TreeView.ItemTemplate>
+                                    </TreeView>
+                                </StackPanel>
+                            </DataTemplate>
                         </ItemsControl.Resources>
                         <ItemsControl.ItemTemplateSelector>
-                            <local:InputFieldTemplateSelector TextTemplate="{StaticResource TextTemplate}" LabelTemplate="{StaticResource LabelTemplate}" BoolTemplate="{StaticResource BoolTemplate}" ColorTemplate="{StaticResource ColorTemplate}"/>
+                            <local:InputFieldTemplateSelector TextTemplate="{StaticResource TextTemplate}" LabelTemplate="{StaticResource LabelTemplate}" BoolTemplate="{StaticResource BoolTemplate}" ColorTemplate="{StaticResource ColorTemplate}" DropdownTemplate="{StaticResource DropdownTemplate}" TreeTemplate="{StaticResource TreeTemplate}"/>
                         </ItemsControl.ItemTemplateSelector>
                     </ItemsControl>
                 </StackPanel>

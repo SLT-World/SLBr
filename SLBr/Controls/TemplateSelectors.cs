@@ -12,6 +12,8 @@ namespace SLBr.Controls
         public DataTemplate LabelTemplate { get; set; }
         public DataTemplate BoolTemplate { get; set; }
         public DataTemplate ColorTemplate { get; set; }
+        public DataTemplate DropdownTemplate { get; set; }
+        public DataTemplate TreeTemplate { get; set; }
 
         public override DataTemplate SelectTemplate(object Item, DependencyObject Container)
         {
@@ -19,9 +21,12 @@ namespace SLBr.Controls
             {
                 return Field.Type switch
                 {
+                    DialogInputType.Text => TextTemplate,
                     DialogInputType.Label => LabelTemplate,
                     DialogInputType.Boolean => BoolTemplate,
                     DialogInputType.Color => ColorTemplate,
+                    DialogInputType.Dropdown => DropdownTemplate,
+                    DialogInputType.Tree => TreeTemplate,
                     _ => TextTemplate
                 };
             }
@@ -72,27 +77,6 @@ namespace SLBr.Controls
                 }
             }
             return base.SelectTemplate(Item, Container);
-        }
-    }
-
-    public class FavouriteStyleSelector : StyleSelector
-    {
-        public Style UrlStyle { get; set; }
-        public Style FolderStyle { get; set; }
-
-        public override Style SelectStyle(object Item, DependencyObject Container)
-        {
-            if (Item is Favourite _Favourite)
-            {
-                switch (_Favourite.Type)
-                {
-                    case "url":
-                        return UrlStyle;
-                    case "folder":
-                        return FolderStyle;
-                }
-            }
-            return base.SelectStyle(Item, Container);
         }
     }
 

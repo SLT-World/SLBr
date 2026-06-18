@@ -29,16 +29,48 @@
                 <TextBox x:Name="SearchBox" Grid.Column="2" HorizontalAlignment="Right" Width="300" TextChanged="SearchBox_TextChanged"/>
             </Grid>
         </Border>
-        <WinUI:WinUITabControl Grid.Row="1" Style="{StaticResource WinUITabControl}">
-            <TabItem Header="Favourites bar" Tag="&#xe8b7;">
-                <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=WinUI:WinUITabControl}}">
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <TreeView x:Name="FavouritesTreeView" Style="{StaticResource WinUITreeView}" SelectedItemChanged="TreeView_SelectedItemChanged">
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource WinUITreeViewItem}">
+                        <Setter Property="controls:ControlExtensions.Icon" Value="&#xe8b7;"/>
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Type}" Value="folder">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding HasFolderChildren}" Value="False">
+                                <Setter Property="Tag" Value="Hide"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+            <Border BorderThickness="1,0,0,0" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" Grid.Column="1">
+                <ScrollViewer controls:SmoothScrollBehavior.Enable="True" VerticalScrollBarVisibility="Auto" Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Border}}">
                     <StackPanel Margin="25" MaxWidth="800">
                         <DockPanel Margin="0,0,0,25" VerticalAlignment="Center" Width="Auto" HorizontalAlignment="Stretch" Height="35">
-                            <Button DockPanel.Dock="Right" Click="NewFavouriteButton_Click" x:Name="NewFavouriteButton" ToolTip="Add favourite" Content="&#xe710;" Margin="0,0,0,0" Style="{StaticResource IconButton}"/>
+                            <WinUI:DropDownButton DockPanel.Dock="Right" x:Name="NewFavouriteButton" ToolTip="Add favourite" Content="&#xe710;" Margin="0" Style="{StaticResource DropDownIconButton}">
+                                <WinUI:DropDownButton.Menu>
+                                    <ContextMenu Width="250">
+                                        <MenuItem Icon="&#xe774;" Header="Page" Click="NewFavouriteButton_Click"/>
+                                        <MenuItem Icon="&#xe8b7;" Header="Folder" Click="NewFavouriteFolderButton_Click"/>
+                                    </ContextMenu>
+                                </WinUI:DropDownButton.Menu>
+                            </WinUI:DropDownButton>
                             <Button Visibility="Collapsed" Foreground="Red" DockPanel.Dock="Right" Click="DeleteSelectedButton_Click" x:Name="DeleteSelectedButton" ToolTip="Delete selected" Content="&#xe74d;" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
-                            <TextBlock TextAlignment="Left" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" FontWeight="DemiBold" FontSize="25">Favourites bar</TextBlock>
+                            <TextBlock TextAlignment="Left" VerticalAlignment="Center" HorizontalAlignment="Left" Width="Auto" FontWeight="DemiBold" FontSize="25" Text="{Binding CurrentFolder.Name}"/>
                         </DockPanel>
-                        <ListBox KeyDown="FavouritesList_KeyDown" SelectionChanged="FavouritesList_SelectionChanged" SelectionMode="Extended" VirtualizingPanel.VirtualizationMode="Recycling" x:Name="FavouritesList" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
+                        <ListBox ItemsSource="{Binding CurrentFolder.Children}" KeyDown="FavouritesList_KeyDown" SelectionChanged="FavouritesList_SelectionChanged" SelectionMode="Extended" VirtualizingPanel.VirtualizationMode="Recycling" x:Name="FavouritesList" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" BorderThickness="0" Background="Transparent">
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel/>
@@ -49,7 +81,7 @@
                                     <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
                                     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                     <Setter Property="BorderThickness" Value="1"/>
-                                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_DeselectPreviewMouseLeftButtonDown"/>
+                                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ListBoxItem_PreviewMouseLeftButtonDown"/>
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type ListBoxItem}">
@@ -87,7 +119,7 @@
                                             <Button DockPanel.Dock="Right" Click="DeleteSingleButton_Click" ToolTip="Remove" Content="&#xe711;" Margin="0" Style="{StaticResource IconButton}"/>
                                             <Button DockPanel.Dock="Right" Click="EditButton_Click" Content="&#xe70f;" ToolTip="Edit" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                                             <Button DockPanel.Dock="Right" PreviewMouseUp="FavouriteButton_PreviewMouseUp" Content="&#xe8a7;" ToolTip="Open" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
-                                            <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xeb41;"/>
+                                            <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xe774;"/>
                                             <TextBlock Margin="0,0,5,0" Width="Auto" VerticalAlignment="Center" DockPanel.Dock="Left" Text="{Binding Name}" HorizontalAlignment="Stretch"/>
                                             <TextBlock Margin="0,0,5,0" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center" Text="{Binding Url}" HorizontalAlignment="Stretch" Width="Auto"/>
                                         </DockPanel>
@@ -100,6 +132,7 @@
                                             <Button DockPanel.Dock="Right" Click="EditButton_Click" Content="&#xe70f;" ToolTip="Edit" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                                             <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xe8b7;"/>
                                             <TextBlock Margin="0,0,5,0" Width="Auto" VerticalAlignment="Center" DockPanel.Dock="Left" Text="{Binding Name}" HorizontalAlignment="Stretch"/>
+                                            <!--TODO: Favourite count subtext (e.g. "N items").-->
                                             <TextBlock Margin="0,0,5,0" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center" Text="{Binding Url}" HorizontalAlignment="Stretch" Width="Auto"/>
                                         </DockPanel>
                                     </Border>
@@ -111,7 +144,7 @@
                         </ListBox>
                     </StackPanel>
                 </ScrollViewer>
-            </TabItem>
-        </WinUI:WinUITabControl>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

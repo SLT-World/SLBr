@@ -10,7 +10,26 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" GotFocus="Browser_GotFocus" Loaded="Browser_Loaded">
     <UserControl.Resources>
-        <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <ContextMenu x:Key="FavouritePageContextMenu" OverridesDefaultStyle="False">
+                <MenuItem Icon="&#xe70f;" Click="FavouriteAction_Click" Header="Edit"/>
+                <MenuItem Icon="&#xe74d;" Click="FavouriteAction_Click" Header="Delete"/>
+                <Separator/>
+                <MenuItem Header="Manage favourites" Icon="&#xe9a4;" Click="FavouriteAction_Click"/>
+            </ContextMenu>
+            <ContextMenu x:Key="FavouriteFolderContextMenu" OverridesDefaultStyle="False">
+                <MenuItem Icon="&#xe70f;" Click="FavouriteAction_Click" Header="Edit"/>
+                <MenuItem Icon="&#xe74d;" Click="FavouriteAction_Click" Header="Delete"/>
+                <Separator/>
+                <MenuItem Icon="&#xe774;" Click="FavouriteAction_Click" Header="Add page"/>
+                <MenuItem Icon="&#xe8b7;" Click="FavouriteAction_Click" Header="Add folder"/>
+                <Separator/>
+                <MenuItem Header="Manage favourites" Icon="&#xe9a4;" Click="FavouriteAction_Click"/>
+            </ContextMenu>
+        </ResourceDictionary>
     </UserControl.Resources>
     <Grid Background="{StaticResource SecondaryBrush}">
         <Grid.RowDefinitions>
@@ -40,7 +59,7 @@
                                 <MenuItem Icon="&#xE81C;" Header="History">
                                     <MenuItem.ItemsSource>
                                         <CompositeCollection>
-                                            <MenuItem Header="History Manager" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://history/"/>
+                                            <MenuItem Header="Manage history" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://history/"/>
                                             <Separator/>
                                             <CollectionContainer x:Name="HistoryListMenu"/>
                                         </CompositeCollection>
@@ -58,26 +77,27 @@
                                 <MenuItem Icon="&#xEB51;" Header="Favourites">
                                     <MenuItem.ItemsSource>
                                         <CompositeCollection>
-                                            <MenuItem Header="Favourites Manager" Click="ButtonAction" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://favourites/"/>
+                                            <MenuItem Header="Manage favourites" Click="ButtonAction" Icon="&#xe9a4;" Tag="5&lt;,&gt;slbr://favourites/"/>
                                             <Separator/>
                                             <CollectionContainer x:Name="FavouriteListMenu"/>
                                         </CompositeCollection>
                                     </MenuItem.ItemsSource>
-                                    <MenuItem.Resources>
-                                        <Style x:Key="UrlStyle" TargetType="MenuItem">
-                                            <Setter Property="Icon" Value="&#xEB41;"/>
+                                    <MenuItem.ItemContainerStyle>
+                                        <Style TargetType="MenuItem">
+                                            <Setter Property="Icon" Value="&#xe774;"/>
                                             <Setter Property="Header" Value="{Binding Name}"/>
                                             <Setter Property="ToolTip" Value="{Binding Url}"/>
+                                            <Setter Property="ItemsSource" Value="{Binding Children}"/>
+                                            <Setter Property="ContextMenu" Value="{StaticResource FavouritePageContextMenu}"/>
                                             <EventSetter Event="PreviewMouseUp" Handler="FavouriteButton_PreviewMouseUp"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Type}" Value="folder">
+                                                    <Setter Property="Icon" Value="&#xe8b7;"/>
+                                                    <Setter Property="ContextMenu" Value="{StaticResource FavouriteFolderContextMenu}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
                                         </Style>
-                                        <Style x:Key="FolderStyle" TargetType="MenuItem">
-                                            <Setter Property="Icon" Value="&#xe8b7;"/>
-                                            <Setter Property="Header" Value="{Binding Name}"/>
-                                        </Style>
-                                    </MenuItem.Resources>
-                                    <MenuItem.ItemContainerStyleSelector>
-                                        <controls:FavouriteStyleSelector UrlStyle="{StaticResource UrlStyle}" FolderStyle="{StaticResource FolderStyle}"/>
-                                    </MenuItem.ItemContainerStyleSelector>
+                                    </MenuItem.ItemContainerStyle>
                                 </MenuItem>
                                 <!--<MenuItem Icon="&#xea86;" x:Name="ExtensionListMenu" Header="Extensions">
                                     <MenuItem.ItemContainerStyle>
@@ -120,7 +140,7 @@
                     </WinUI:DropDownButton>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="1" x:Name="BackButton" ToolTip="Back" Content="&#xE76B;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
                     <Button Click="ButtonAction" BorderThickness="0" Tag="2" x:Name="ForwardButton" ToolTip="Forward" Content="&#xE76C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}"/>
-                    <Button ContextMenuService.Placement="Bottom" Click="ButtonAction" BorderThickness="0" Tag="3" x:Name="ReloadButton" ToolTip="Refresh" Content="&#xE72C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}">
+                    <Button ContextMenuService.Placement="Bottom" Click="ButtonAction" Tag="3" BorderThickness="0" x:Name="ReloadButton" ToolTip="Refresh" Content="&#xE72C;" Margin="0,0,5,0" Style="{StaticResource ToolBarIconButton}">
                         <Button.ContextMenu>
                             <ContextMenu OverridesDefaultStyle="False">
                                 <MenuItem Icon="&#xE72C;" Header="Normal Reload" Click="ButtonAction" Tag="3"/>
@@ -190,7 +210,7 @@
                                     </Grid>
                                     <Border Background="{StaticResource SecondaryBrush}" Grid.Row="1" Padding="10" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderBrush}">
                                         <DockPanel LastChildFill="False">
-                                            <Button Click="ButtonAction" Tag="5&lt;,&gt;slbr://downloads" Content="&#xe9a4;" Margin="0,0,0,0" Style="{StaticResource IconButton}" ToolTip="Download manager"/>
+                                            <Button Click="ButtonAction" Tag="5&lt;,&gt;slbr://downloads" Content="&#xe9a4;" Margin="0,0,0,0" Style="{StaticResource IconButton}" ToolTip="Manage downloads"/>
                                             <Button Click="DownloadsFolderButton_Click" Content="&#xe8b7;" Margin="10,0,0,0" Style="{StaticResource IconButton}" ToolTip="Open downloads folder"/>
                                         </DockPanel>
                                     </Border>
@@ -199,7 +219,7 @@
                         </WinUI:PopupButton.PopupContent>
                     </WinUI:PopupButton>
                     <Grid DockPanel.Dock="Right" Margin="0,0,5,0" x:Name="WebEngineButton">
-                        <WinUI:DropDownButton x:Name="WebEngineButtonInternal" BorderThickness="0" Tag="3" DockPanel.Dock="Right" Style="{StaticResource DropDownIconButton}" ToolTip="Switch Web Engine" Content="&#xec6c;">
+                        <WinUI:DropDownButton x:Name="WebEngineButtonInternal" BorderThickness="0" DockPanel.Dock="Right" Style="{StaticResource DropDownIconButton}" ToolTip="Switch Web Engine" Content="&#xec6c;">
                             <WinUI:DropDownButton.Menu>
                                 <ContextMenu Width="250">
                                     <MenuItem Icon="&#xe713;" Header="Default" Click="ButtonAction" Tag="58&lt;,&gt;-1"/>
@@ -210,7 +230,7 @@
                                 </ContextMenu>
                             </WinUI:DropDownButton.Menu>
                         </WinUI:DropDownButton>
-                        <Border Background="{StaticResource PrimaryBrush}" Width="10" Height="5" IsHitTestVisible="False"/>
+                        <!--TODO: Resolve interaction background disparity.-->
                         <TextBlock x:Name="WebEngineButtonIcon" Text="&#x2600;" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="7.5" FontFamily="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons" IsHitTestVisible="False" Background="{StaticResource PrimaryBrush}"/>
                     </Grid>
                     <WinUI:PopupButton Click="ButtonAction" Tag="57&lt;,&gt;0" BorderThickness="0" x:Name="QRButton" ToolTip="Create QR Code" Content="&#xed14;" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" DockPanel.Dock="Right">
@@ -247,7 +267,7 @@
                             </Border>
                         </WinUI:PopupButton.PopupContent>
                     </WinUI:PopupButton>
-                    <WinUI:DropDownButton BorderThickness="0" Tag="3" x:Name="ExtensionsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" ToolTip="Extensions" Content="&#xEA86;">
+                    <WinUI:DropDownButton BorderThickness="0" x:Name="ExtensionsButton" DockPanel.Dock="Right" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" ToolTip="Extensions" Content="&#xEA86;">
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu Width="250" x:Name="ExtensionsMenu">
                                 <!--<ContextMenu.ItemsSource>
@@ -438,7 +458,7 @@
                                     <StackPanel Focusable="False" Orientation="Horizontal" Margin="0">
                                         <Border Margin="-8,0,5,0" Width="30" Height="30" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}">
                                             <Grid>
-                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
+                                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
                                                 <Image Visibility="{Binding Image, Converter={StaticResource NullToVisibility}}" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" Source="{Binding Image}" Width="29" Height="29">
                                                     <Image.Style>
                                                         <Style TargetType="Image">
@@ -475,29 +495,29 @@
                     </Grid>
                 </DockPanel>
                 <Border BorderThickness="0" x:Name="FavouriteContainer" Margin="0" Padding="0" MinHeight="5" Height="41.25" Grid.Row="1" HorizontalAlignment="Stretch">
+                    <Border.ContextMenu>
+                        <ContextMenu OverridesDefaultStyle="False">
+                            <MenuItem Icon="&#xe774;" Click="ButtonAction" Tag="12" Header="Add page"/>
+                            <MenuItem Icon="&#xe8b7;" Click="ButtonAction" Tag="16" Header="Add folder"/>
+                            <Separator/>
+                            <MenuItem Header="Manage favourites" Icon="&#xe9a4;" Click="ButtonAction" Tag="5&lt;,&gt;slbr://favourites/"/>
+                        </ContextMenu>
+                    </Border.ContextMenu>
                     <ScrollViewer controls:SmoothScrollBehavior.Enable="True" FontFamily="None" x:Name="FavouriteScrollViewer" Margin="5,0,5,5" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Hidden">
                         <ItemsControl x:Name="FavouritesPanel" HorizontalAlignment="Stretch" ItemsSource="{Binding Favourites}">
                             <ItemsControl.Resources>
                                 <DataTemplate x:Key="UrlTemplate">
-                                    <Button MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" ToolTip="{Binding Url}" Margin="0,0,5,0" PreviewMouseUp="FavouriteButton_PreviewMouseUp" Height="30" Content="{Binding Name}">
+                                    <Button ContextMenu="{StaticResource FavouritePageContextMenu}" MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" TextOptions.TextFormattingMode="Display" ToolTip="{Binding Url}" Margin="0,0,5,0" PreviewMouseUp="FavouriteButton_PreviewMouseUp" Height="30" Content="{Binding Name}">
                                         <Button.Resources>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                                 <Setter Property="MaxWidth" Value="150"/>
                                             </Style>
                                         </Button.Resources>
-                                        <Button.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Icon="&#xe70f;" Click="FavouriteAction_Click" Header="Edit"/>
-                                                <MenuItem Icon="&#xe74d;" Click="FavouriteAction_Click" Header="Delete"/>
-                                                <Separator/>
-                                                <MenuItem Header="Favourites Manager" Icon="&#xe9a4;" Click="ButtonAction" Tag="5&lt;,&gt;slbr://favourites/"/>
-                                            </ContextMenu>
-                                        </Button.ContextMenu>
                                     </Button>
                                 </DataTemplate>
                                 <DataTemplate x:Key="FolderTemplate">
-                                    <WinUI:DropDownButton MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" Margin="0,0,5,0" Height="30">
+                                    <WinUI:DropDownButton ContextMenu="{StaticResource FavouriteFolderContextMenu}" MaxWidth="150" Width="Auto" TextOptions.TextFormattingMode="Display" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" Margin="0,0,5,0" Height="30">
                                         <WinUI:DropDownButton.Content>
                                             <DockPanel VerticalAlignment="Center">
                                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0" FontFamily="{StaticResource IconFontFamily}" Text="&#xe8b7;" FontSize="16"/>
@@ -510,22 +530,21 @@
                                                 <Setter Property="MaxWidth" Value="150"/>
                                             </Style>
                                         </WinUI:DropDownButton.Resources>
-                                        <WinUI:DropDownButton.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Icon="&#xe70f;" Click="FavouriteAction_Click" Header="Edit"/>
-                                                <MenuItem Icon="&#xe74d;" Click="FavouriteAction_Click" Header="Delete"/>
-                                                <Separator/>
-                                                <MenuItem Header="Favourites Manager" Icon="&#xe9a4;" Click="ButtonAction" Tag="5&lt;,&gt;slbr://favourites/"/>
-                                            </ContextMenu>
-                                        </WinUI:DropDownButton.ContextMenu>
                                         <WinUI:DropDownButton.Menu>
-                                            <!--TODO: Solve nested folder issue.-->
-                                            <ContextMenu MaxWidth="300" ItemsSource="{Binding Children}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                                            <ContextMenu PreviewMouseUp="FavouriteButton_PreviewMouseUp" MaxWidth="300" ItemsSource="{Binding Children}" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
                                                 <ContextMenu.ItemContainerStyle>
                                                     <Style TargetType="MenuItem">
+                                                        <Setter Property="Icon" Value="&#xe774;"/>
                                                         <Setter Property="Header" Value="{Binding Name}"/>
                                                         <Setter Property="ToolTip" Value="{Binding Url}"/>
-                                                        <EventSetter Event="PreviewMouseUp" Handler="FavouriteButton_PreviewMouseUp"/>
+                                                        <Setter Property="ItemsSource" Value="{Binding Children}"/>
+                                                        <Setter Property="ContextMenu" Value="{StaticResource FavouritePageContextMenu}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Type}" Value="folder">
+                                                                <Setter Property="Icon" Value="&#xe8b7;"/>
+                                                                <Setter Property="ContextMenu" Value="{StaticResource FavouriteFolderContextMenu}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
                                                     </Style>
                                                 </ContextMenu.ItemContainerStyle>
                                             </ContextMenu>

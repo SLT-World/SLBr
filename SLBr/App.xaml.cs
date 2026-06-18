@@ -6,6 +6,7 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
+using SLBr.Managers;
 using SLBr.Pages;
 using SLBr.WebView;
 using System.Collections.ObjectModel;
@@ -137,6 +138,17 @@ namespace SLBr
         }
         private string? _ToolTip;
 
+        public string? Icon
+        {
+            get => _Icon;
+            set
+            {
+                _Icon = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string? _Icon;
+
         public string? Text
         {
             get => _Text;
@@ -202,6 +214,8 @@ namespace SLBr
             }
         }
         private double? _BorderThickness;
+        public ObservableCollection<UIElementLayer> Children { get; set; }
+        public object? Data { get; set; }
     }
 
     public class AdBlockList : INotifyPropertyChanged
@@ -463,7 +477,7 @@ namespace SLBr
             {
                 _SubIcon = value;
                 RaisePropertyChanged();
-    }
+            }
         }
         private string? _SubIcon = null;
         public SolidColorBrush? SubIconForeground
@@ -896,7 +910,8 @@ namespace SLBr
             "5",//S
         ]);
 
-        public ObservableCollection<Favourite> Favourites = [];
+        public FavouriteManager FavouriteManager = new();
+
         public ObservableCollection<ActionStorage> History = [];
         private List<Extension> PrivateExtensions = [];
         public List<Extension> Extensions
@@ -2913,11 +2928,7 @@ Inner Exception: {7}";
                                                 PropertyNameCaseInsensitive = true
                                             })!;
                                             foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
-                                            {
-                                                if (string.IsNullOrEmpty(Bookmark.Name) && !string.IsNullOrEmpty(Bookmark.Url))
-                                                    Bookmark.Name = Utils.FastHost(Bookmark.Url);
-                                                Favourites.Add(Bookmark);
-                                            }
+                                                FavouriteManager.Add(Bookmark, null);
                                             FavouritesSetUp = true;
                                         }
                                         catch { }
@@ -2958,11 +2969,7 @@ Inner Exception: {7}";
                             PropertyNameCaseInsensitive = true
                         })!;
                         foreach (Favourite Bookmark in BookmarksContainer.Roots.Bookmarks.Children)
-                        {
-                            if (string.IsNullOrEmpty(Bookmark.Name) && !string.IsNullOrEmpty(Bookmark.Url))
-                                Bookmark.Name = Utils.FastHost(Bookmark.Url);
-                            Favourites.Add(Bookmark);
-                        }
+                            FavouriteManager.Add(Bookmark, null);
                     }
                     catch { }
                 }
@@ -3028,9 +3035,9 @@ Inner Exception: {7}";
                 SearchEngines =
                 [
                     DefaultSearchProvider,
-                    new() { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://api.bing.com/osjson.aspx?query={0}" },
+                    new() { Name = "Bing", Host = "bing.com", SearchUrl = "https://bing.com/search?q={0}", SuggestUrl = "https://www.bing.com/qbox?query={0}&pt=EdgBox&richanswersentity=1" },
                     new() { Name = "Ecosia", Host = "ecosia.org", SearchUrl = "https://www.ecosia.org/search?q={0}", SuggestUrl = "https://ac.ecosia.org/autocomplete?q={0}&type=list" },
-                    new() { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}" },
+                    new() { Name = "Brave Search", Host = "search.brave.com", SearchUrl = "https://search.brave.com/search?q={0}", SuggestUrl = "https://search.brave.com/api/suggest?q={0}&rich=true&source=desktop" },
                     new() { Name = "DuckDuckGo", Host = "duckduckgo.com", SearchUrl = "https://duckduckgo.com/?q={0}", SuggestUrl = "http://duckduckgo.com/ac/?type=list&q={0}" },
                     new() { Name = "Yandex", Host = "yandex.com", SearchUrl = "https://yandex.com/search/?text={0}", SuggestUrl = "https://yandex.ru/suggest/suggest-browser?part={0}&brandID=int&rich=1&srv=browser_desktop&rich_nav=1" },
                     new() { Name = "Yahoo Search", Host = "search.yahoo.com", SearchUrl = "https://search.yahoo.com/search?p={0}", SuggestUrl = "https://ff.search.yahoo.com/gossip?output=fxjson&command={0}" },
@@ -3254,7 +3261,8 @@ Inner Exception: {7}";
             SetAMP(bool.Parse(GlobalSave.Get("AMP", false.ToString())));
             SetRenderMode(GlobalSave.GetInt("RenderMode", (RenderCapability.Tier >> 16) == 0 ? 1 : 0));
 
-            Favourites.CollectionChanged += Favourites_CollectionChanged;
+
+            FavouriteManager.Changed += Favourites_Changed;
 
             SetAppearance(GetTheme(GlobalSave.Get("Theme", "System")), GlobalSave.GetInt("TabAlignment", 0), double.Parse(GlobalSave.Get("VerticalTabWidth", "250")), bool.Parse(GlobalSave.Get("HomeButton", true.ToString())), bool.Parse(GlobalSave.Get("TranslateButton", true.ToString())), bool.Parse(GlobalSave.Get("ReaderButton", true.ToString())), GlobalSave.GetInt("ExtensionButton", 0),  GlobalSave.GetInt("DownloadsButton", 0), GlobalSave.GetInt("FavouritesBar", 0), bool.Parse(GlobalSave.Get("QRButton", true.ToString())), bool.Parse(GlobalSave.Get("WebEngineButton", true.ToString())));
             bool PrivateTabs = bool.Parse(GlobalSave.Get("PrivateTabs"));
@@ -3332,7 +3340,7 @@ Inner Exception: {7}";
                 CurrentFocusedWindow().NewTab(CommandLineUrl, true, -1, PrivateTabs);
         }
 
-        private void Favourites_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void Favourites_Changed(object? sender, EventArgs e)
         {
             foreach (MainWindow _Window in AllWindows)
             {
@@ -4210,6 +4218,31 @@ Inner Exception: {7}";
             InfoWindow.ShowDialog();
         }
 
+        public void NewFavouriteFolder(Favourite? Parent = null)
+        {
+            List<InputField> Inputs = [new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text }];
+            var (Children, ParentLayer) = FavouriteManager.GenerateFolderTreeLayers(Parent);
+            ObservableCollection<UIElementLayer> FolderStructure = [new() {
+                Text = "Favourites bar",
+                Icon = "\xe8b7",
+                Children = Children
+            }];
+
+            Inputs.Add(new() { Name = "Folder", IsRequired = true, Type = DialogInputType.Tree, Children = FolderStructure, TreeValue = ParentLayer });
+            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "New Folder", Inputs, "\ue8f4", "Create") { Topmost = true };
+            if (_DynamicDialogWindow.ShowDialog() == true)
+            {
+                string Name = _DynamicDialogWindow.InputFields[0].Value;
+                UIElementLayer TreeSelection = _DynamicDialogWindow.InputFields[1].TreeValue;
+                Favourite NewFavourite = new() { Name = Name, Type = "folder" };
+                if (TreeSelection.Data is Favourite Target)
+                    FavouriteManager.Add(NewFavourite, Target);
+                else
+                //if (TreeSelection.Text == "Favourites bar")
+                    FavouriteManager.Add(NewFavourite, null);
+            }
+        }
+
         public async Task Save()
         {
             if (ReadOnlyInstance)
@@ -4219,7 +4252,7 @@ Inner Exception: {7}";
             StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
             StatisticsSave.Save();
 
-            string FavouritesRaw = JsonSerializer.Serialize(new BookmarksManager.Bookmarks() { Roots = new() { Bookmarks = new() { Name = "Bookmarks bar", Children = Favourites, Type = "folder" } } }, new JsonSerializerOptions
+            string FavouritesRaw = JsonSerializer.Serialize(new BookmarksManager.Bookmarks() { Roots = new() { Bookmarks = new() { Name = "Bookmarks bar", Children = FavouriteManager.Favourites, Type = "folder" } } }, new JsonSerializerOptions
             {
                 WriteIndented = false,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -4627,13 +4660,13 @@ Inner Exception: {7}";
         {
             GlobalSave.Set("SearchSuggestions", Toggle);
             SearchSuggestions = Toggle;
-                }
+        }
 
         public void SetSmartSuggestions(bool Toggle)
         {
             GlobalSave.Set("SmartSuggestions", Toggle);
             SmartSuggestions = Toggle;
-            }
+        }
 
         public void SetRichSuggestions(bool Toggle)
         {
@@ -4787,6 +4820,7 @@ Inner Exception: {7}";
         OpenFileExplorer = 13,
         OpenAsPopupBrowser = 14,
         SwitchUserPopup = 15,
+        FavouriteFolder = 16,
 
         ReaderMode = 17,
         

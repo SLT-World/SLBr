@@ -2,6 +2,9 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using SLBr.Controls;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,11 +15,39 @@ namespace SLBr.Pages
     /// <summary>
     /// Interaction logic for Settings.xaml
     /// </summary>
-    public partial class FavouritesPage : UserControl, IPageOverlay
+    public partial class FavouritesPage : UserControl, IPageOverlay, INotifyPropertyChanged
     {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        public Favourite CurrentFolder
+        {
+            get => _CurrentFolder;
+            set
+            {
+                _CurrentFolder = value;
+                RaisePropertyChanged();
+            }
+        }
+        private Favourite _CurrentFolder;
+
+        private ObservableCollection<Favourite> FavouritesBar;
+        
         public FavouritesPage()
         {
             InitializeComponent();
+            DataContext = this;
+            FavouritesBar = [new Favourite()
+            {
+                Name = "Favourites bar",
+                Type = "folder",
+                Children = App.Instance.FavouriteManager.Favourites
+            }];
+            CurrentFolder = FavouritesBar[0];
         }
 
         public void Initialize(Browser _BrowserView)
@@ -29,6 +60,7 @@ namespace SLBr.Pages
         public void Dispose()
         {
             FavouritesList.ItemsSource = null;
+            FavouritesTreeView.ItemsSource = null;
             GC.SuppressFinalize(this);
         }
 
@@ -47,23 +79,19 @@ namespace SLBr.Pages
 
         private void NewFavouriteButton_Click(object sender, RoutedEventArgs e)
         {
-            DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Favourite",
-                [
-                    new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text },
-                    new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text },
-                ],
-                "\ueb51"
-            )
-            {
-                Topmost = true
-            };
-            if (_DynamicDialogWindow.ShowDialog() == true)
-                App.Instance.Favourites.Add(new Favourite() { Type = "url", Url = _DynamicDialogWindow.InputFields[1].Value.Trim(), Name = _DynamicDialogWindow.InputFields[0].Value });
+            BrowserView.FavouriteAction(true, CurrentFolder);
+        }
+
+        private void NewFavouriteFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            App.Instance.NewFavouriteFolder(CurrentFolder);
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            FavouritesList.ItemsSource = App.Instance.Favourites;
+            FavouritesTreeView.ItemsSource = FavouritesBar;
+            TreeViewItem? Target = Utils.GetTreeViewItemContainer(FavouritesTreeView, CurrentFolder);
+            Target?.IsSelected = true;
             ApplyTheme(App.Instance.CurrentTheme);
         }
 
@@ -81,13 +109,13 @@ namespace SLBr.Pages
         {
             List<Favourite> Selected = FavouritesList.SelectedItems.Cast<Favourite>().ToList();
             foreach (Favourite Favourite in Selected)
-                App.Instance.Favourites.Remove(Favourite);
+                App.Instance.FavouriteManager.Remove(Favourite);
         }
 
         private void DeleteSingleButton_Click(object sender, RoutedEventArgs e)
         {
             if (((FrameworkElement)sender).DataContext is Favourite Favourite)
-                App.Instance.Favourites.Remove(Favourite);
+                App.Instance.FavouriteManager.Remove(Favourite);
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e)
@@ -114,6 +142,8 @@ namespace SLBr.Pages
 
         private void FavouritesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (e.OriginalSource != sender)
+                return;
             DeleteSelectedButton.Visibility = FavouritesList.SelectedItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
@@ -130,12 +160,12 @@ namespace SLBr.Pages
         {
             string SearchText = SearchBox.Text.ToLowerInvariant();
             if (SearchText.Length == 0)
-                FavouritesList.ItemsSource = App.Instance.Favourites;
+                FavouritesList.ItemsSource = App.Instance.FavouriteManager.Favourites;
             else
-                FavouritesList.ItemsSource = App.Instance.Favourites.Where(i => i.Type == "url" && (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Url?.ToLowerInvariant().Contains(SearchText) ?? false));
+                FavouritesList.ItemsSource = App.Instance.FavouriteManager.Favourites.Where(i => i.Type == "url" && (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Url?.ToLowerInvariant().Contains(SearchText) ?? false));
         }
 
-        private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             DependencyObject ClickedElement = e.OriginalSource as DependencyObject;
             while (ClickedElement != null && ClickedElement != sender)
@@ -146,8 +176,33 @@ namespace SLBr.Pages
             }
             if (sender is ListBoxItem Item && Item.IsSelected)
             {
-                Item.IsSelected = false;
+                // && _Favourite.Children != null && _Favourite.Children.Any()
+                if (Item.DataContext is Favourite _Favourite && _Favourite.Type == "folder")
+                {
+                    CurrentFolder = _Favourite;
+                    TreeViewItem? Target = Utils.GetTreeViewItemContainer(FavouritesTreeView, CurrentFolder);
+                    Target?.IsSelected = true;
+                }
+                else
+                    Item.IsSelected = false;
                 e.Handled = true;
+            }
+        }
+
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (e.OriginalSource != sender)
+                return;
+            if (e.NewValue is Favourite _Favourite)
+            {
+                CurrentFolder = _Favourite;
+                TreeViewItem? Target = Utils.GetTreeViewItemContainer(FavouritesTreeView, CurrentFolder);
+                if (Target != null)
+                {
+                    if (Target.HasItems)
+                        Target.IsExpanded = true;
+                    Target.Focus();
+                }
             }
         }
     }

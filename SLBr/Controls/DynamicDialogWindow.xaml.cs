@@ -17,7 +17,9 @@ namespace SLBr.Controls
         Text,
         Label,
         Boolean,
-        Color
+        Color,
+        Dropdown,
+        Tree
     }
 
     public class InputField : INotifyPropertyChanged
@@ -31,6 +33,7 @@ namespace SLBr.Controls
 
         private string _Value = "";
         private bool _BoolValue = false;
+        private UIElementLayer _TreeValue;
 
         public string Name { get; set; } = "";
         public bool _IsRequired { get; set; }
@@ -73,6 +76,22 @@ namespace SLBr.Controls
                 }
             }
         }
+
+        public UIElementLayer TreeValue
+        {
+            get => _TreeValue;
+            set
+            {
+                if (_TreeValue != value)
+                {
+                    _TreeValue = value;
+                    RaisePropertyChanged();
+                }
+            }
+        }
+
+        public List<string> Options { get; set; }
+        public ObservableCollection<UIElementLayer> Children { get; set; }
     }
 
     /// <summary>
@@ -80,13 +99,6 @@ namespace SLBr.Controls
     /// </summary>
     public partial class DynamicDialogWindow : Window
     {
-        /*TODO: Expand input types
-         * PasswordBox
-         * URL (Confirm URL validity)
-         * ComboBox
-         * DatePicker
-         * Slider
-         */
         public ObservableCollection<InputField> InputFields { get; set; } = [];
 
         public DynamicDialogWindow(string _Title, string Question, List<InputField> DefaultFields, string Icon = "", string PositiveText = "OK", string NegativeText = "Cancel")
@@ -192,6 +204,41 @@ namespace SLBr.Controls
                     }
                 }
             }
+            foreach (ComboBox _ComboBox in FindVisualChildren<ComboBox>(InputsList))
+            {
+                if (_ComboBox.DataContext is not InputField Field)
+                    continue;
+                if (Field.Type != DialogInputType.Dropdown)
+                    continue;
+                if (Field.Value == null && Field.Options.Count > 0)
+                {
+                    _ComboBox.SelectedIndex = 0;
+                    Field.Value = (string)_ComboBox.SelectedItem;
+                }
+            }
+
+            foreach (TreeView Tree in FindVisualChildren<TreeView>(InputsList))
+            {
+                if (Tree.DataContext is not InputField Field)
+                    continue;
+                if (Field.Children == null || Field.Children.Count == 0)
+                    continue;
+                TreeViewItem? Target;
+                if (Field.TreeValue != null)
+                {
+                    Target = Utils.GetTreeViewItemContainer(Tree, Field.TreeValue);
+                    Target ??= Utils.GetFirstTreeViewItem(Tree);
+                }
+                else
+                    Target = Utils.GetFirstTreeViewItem(Tree);
+                if (Target != null)
+                {
+                    Target.IsSelected = true;
+                    if (Target.HasItems)
+                        Target.IsExpanded = true;
+                    Target.Focus();
+                }
+            }
             HasInitialized = true;
         }
 
@@ -199,7 +246,7 @@ namespace SLBr.Controls
 
         private void ValidateInputs(object sender, KeyEventArgs e)
         {
-            PositiveButton.IsEnabled = InputFields.All(i => i.Type != DialogInputType.Text || !i.IsRequired || !string.IsNullOrWhiteSpace(i.Value));
+            PositiveButton.IsEnabled = InputFields.All(i => (i.Type != DialogInputType.Text || !i.IsRequired || !string.IsNullOrWhiteSpace(i.Value)) && (i.Type != DialogInputType.Dropdown || !i.IsRequired || i.Value != null));
         }
 
         private void ColorList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -227,6 +274,28 @@ namespace SLBr.Controls
             if (Item.Background is SolidColorBrush Background)
                 Field.Value = Utils.ColorToHex(Background.Color);
             ValidateInputs(null, null);
+        }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!HasInitialized)
+                return;
+            /*if (sender is not ComboBox _ComboBox)
+                return;
+            if (_ComboBox.DataContext is not InputField Field)
+                return;*/
+            ValidateInputs(null, null);
+        }
+
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (sender is not TreeView Tree || Tree.DataContext is not InputField Field)
+                return;
+            if (e.NewValue is UIElementLayer SelectedLayer)
+            {
+                Field.TreeValue = SelectedLayer;
+                ValidateInputs(null, null);
+            }
         }
     }
 }

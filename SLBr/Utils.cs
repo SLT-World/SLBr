@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using SLBr.WebView;
 using System.Buffers;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -24,6 +25,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DColor = System.Drawing.Color;
@@ -1065,6 +1067,43 @@ namespace SLBr
             return _Bitmap;
         }
 
+        public static TreeViewItem? GetFirstTreeViewItem(TreeView Tree)
+        {
+            object? First = Tree.Items.Cast<object>().FirstOrDefault();
+            if (First != null)
+            {
+                TreeViewItem? Container = GetTreeViewItemContainer(Tree, First);
+                if (Container != null)
+                    return Container;
+            }
+            return null;
+        }
+        public static TreeViewItem? GetTreeViewItemContainer(ItemsControl Parent, object Item)
+        {
+            if (Parent.ItemContainerGenerator.ContainerFromItem(Item) is TreeViewItem Container)
+                return Container;
+            foreach (object Child in Parent.Items)
+            {
+                TreeViewItem? ChildContainer = Parent.ItemContainerGenerator.ContainerFromItem(Child) as TreeViewItem;
+                if (ChildContainer == null)
+                {
+                    Parent.UpdateLayout();
+                    ChildContainer = Parent.ItemContainerGenerator.ContainerFromItem(Child) as TreeViewItem;
+                }
+                if (ChildContainer != null)
+                {
+                    bool Expanded = ChildContainer.IsExpanded;
+                    ChildContainer.IsExpanded = true;
+                    ChildContainer.UpdateLayout();
+                    TreeViewItem? Result = GetTreeViewItemContainer(ChildContainer, Item);
+                    if (Result != null)
+                        return Result;
+                    ChildContainer.IsExpanded = Expanded;
+                }
+            }
+            return null;
+        }
+
         public static Process GetAlreadyRunningInstance(Process CurrentProcess)
         {
             Process[] AllProcesses = Process.GetProcessesByName(CurrentProcess.ProcessName);
@@ -1854,7 +1893,26 @@ namespace SLBr
         #endregion
 
         [JsonPropertyName("children")]
-        public ObservableCollection<Favourite> Children { get; set; }
+        public ObservableCollection<Favourite> Children
+        {
+            get => _Children;
+            set
+            {
+                if (_Children != value)
+                {
+                    _Children?.CollectionChanged -= Children_CollectionChanged;
+                    _Children = value;
+                    _Children?.CollectionChanged += Children_CollectionChanged;
+                    RaisePropertyChanged();
+                }
+            }
+        }
+        private void Children_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            RaisePropertyChanged(nameof(HasFolderChildren));
+        }
+
+        private ObservableCollection<Favourite> _Children;
 
         [JsonPropertyName("name")]
         public string Name
@@ -1896,6 +1954,15 @@ namespace SLBr
             }
         }
         private string _Url;
+
+        [JsonIgnore]
+        public Favourite? Parent;
+
+        [JsonIgnore]
+        public bool HasFolderChildren
+        {
+            get => Children != null && Children.Any(i => i.Type == "folder");
+        }
     }
 
     public class BookmarksManager

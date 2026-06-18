@@ -70,8 +70,8 @@ namespace SLBr.Pages
             Address = Url;
             SetAudioState(false);
             DownloadsPopup.ItemsSource = App.Instance.VisibleDownloads;
-            FavouritesPanel.ItemsSource = App.Instance.Favourites;
-            FavouriteListMenu.Collection = App.Instance.Favourites;
+            FavouritesPanel.ItemsSource = App.Instance.FavouriteManager.Favourites;
+            FavouriteListMenu.Collection = App.Instance.FavouriteManager.Favourites;
             HistoryListMenu.Collection = App.Instance.History;
             ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working so turned it into a list
             InfoBarList.ItemsSource = VisibleInfoBars;
@@ -164,7 +164,7 @@ namespace SLBr.Pages
             * Web risk.
             * Private tab.
             * Loading state.
-                 */
+            */
             Tab.SubIcon = AudioPlaying ? (Muted ? "\ue74f" : "\ue767") : null;
             if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 Tab.ProgressBarVisibility = (Muted || !AudioPlaying) ? Visibility.Visible : Visibility.Collapsed;
@@ -175,7 +175,7 @@ namespace SLBr.Pages
         public void Favourites_CollectionChanged()
         {
             SetFavouritesBarVisibility();
-            if (FavouriteExists(Address) != -1)
+            if (App.Instance.FavouriteManager.Contains(Address) != null)
             {
                 FavouriteButton.Content = "\xEB52";
                 FavouriteButton.Foreground = App.Instance.FavouriteColor;
@@ -260,7 +260,13 @@ namespace SLBr.Pages
                     SetSideBarDock(int.Parse(V1));
                     break;
                 case Actions.Favourite:
+                    //if (string.IsNullOrEmpty(V1))
                     FavouriteAction();
+                    /*else
+                        FavouriteAction(V1 == "1");*/
+                    break;
+                case Actions.FavouriteFolder:
+                    App.Instance.NewFavouriteFolder();
                     break;
                 case Actions.OpenFileExplorer:
                     Utils.OpenFileExplorer(V1);
@@ -1626,7 +1632,7 @@ namespace SLBr.Pages
 
                 TopMenuStack.Children.Add(new MenuItem { IsEnabled = WebView.CanGoForward, Icon = "\uE76C", ToolTip = "Forward", Command = new RelayCommand(_ => WebView?.Forward()), Template = (ControlTemplate)FindResource("IconMenuItemTemplate") });
                 TopMenuStack.Children.Add(new MenuItem { Icon = "\uE72C", ToolTip = "Refresh", Command = new RelayCommand(_ => WebView?.Refresh()), Template = (ControlTemplate)FindResource("IconMenuItemTemplate") });
-                if (FavouriteExists(Address) != -1)
+                if (App.Instance.FavouriteManager.Contains(Address) != null)
                     TopMenuStack.Children.Add(new MenuItem { Icon = "\xEB52", ToolTip = "Remove from favourites", Foreground = App.Instance.FavouriteColor, Command = new RelayCommand(_ => FavouriteAction()), Template = (ControlTemplate)FindResource("IconMenuItemTemplate") });
                 else
                     TopMenuStack.Children.Add(new MenuItem { Icon = "\xEB51", ToolTip = "Add to favourites", Command = new RelayCommand(_ => FavouriteAction()), Template = (ControlTemplate)FindResource("IconMenuItemTemplate") });
@@ -1685,7 +1691,7 @@ namespace SLBr.Pages
             {
                 (BitmapSource, bool) IconData = await App.Instance.SetIcon(WebView.IsLoading, e, Address, Private);
                 SetIcon(IconData.Item1, IconData.Item2);
-        }
+            }
         }
 
         public async void UnFocus()
@@ -1876,7 +1882,7 @@ namespace SLBr.Pages
                     SetTemporarySiteInformation();
                 }
             }
-            if (FavouriteExists(Address) != -1)
+            if (App.Instance.FavouriteManager.Contains(Address) != null)
             {
                 FavouriteButton.Content = "\xEB52";
                 FavouriteButton.Foreground = App.Instance.FavouriteColor;
@@ -2639,23 +2645,52 @@ namespace SLBr.Pages
             SetAudioState(null);
         }
 
-        public void FavouriteAction()
+        public void FavouriteAction(bool Empty = false, Favourite? Parent = null)
         {
-            int FavouriteExistIndex = FavouriteExists(Address);
-            if (FavouriteExistIndex != -1)
+            bool Continue = Empty;
+            if (!Empty)
             {
-                App.Instance.Favourites.RemoveAt(FavouriteExistIndex);
-                FavouriteButton.Content = "\xEB51";
-                FavouriteButton.Foreground = (SolidColorBrush)FindResource("FontBrush");
-                FavouriteButton.ToolTip = "Add to favourites";
-                Tab.FavouriteCommandHeader = "Add to favourites";
+                Favourite? ExistingFavourite = App.Instance.FavouriteManager.Contains(Address);
+                if (ExistingFavourite != null)
+                {
+                    App.Instance.FavouriteManager.Remove(ExistingFavourite);
+                    FavouriteButton.Content = "\xEB51";
+                    FavouriteButton.Foreground = (SolidColorBrush)FindResource("FontBrush");
+                    FavouriteButton.ToolTip = "Add to favourites";
+                    Tab.FavouriteCommandHeader = "Add to favourites";
+                }
+                else if (!IsLoading)
+                    Continue = true;
             }
-            else if (!IsLoading)
+            if (Continue)
             {
+                /*List<string> Folders = ["Favourites bar"];
+                foreach (Favourite _Favourite in App.Instance.FavouriteManager.Favourites)
+                {
+                    if (_Favourite.Type == "folder")
+                    {
+                        Folders.Add(_Favourite.Name);*/
+                        /*foreach (Favourite _SFavourite in _Favourite.Children)
+                        {
+                            if (_SFavourite.Type == "folder")
+                                Folders.Add(_SFavourite.Name);
+                        }*/
+                    /*}
+                }*/
+                    
+                List<InputField> Inputs = [new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text }];
+                var (Children, ParentLayer) = App.Instance.FavouriteManager.GenerateFolderTreeLayers(Parent);
+                ObservableCollection<UIElementLayer> FolderStructure = [new() {
+                    Text = "Favourites bar",
+                    Icon = "\xe8b7",
+                    Children = Children
+                }];
                 DynamicDialogWindow _DynamicDialogWindow = new("Prompt", "Add Favourite",
                     [
-                        new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Title },
-                        new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Address },
+                        new() { Name = "Name", IsRequired = true, Type = DialogInputType.Text, Value = Empty ? string.Empty : Title },
+                        new() { Name = "URL", IsRequired = true, Type = DialogInputType.Text, Value = Empty ? string.Empty : Address },
+                        //new() { Name = "Folder", IsRequired = true, Type = DialogInputType.Dropdown, Value = Folders.First(), Options = Folders.ToList() }
+                        new() { Name = "Folder", IsRequired = true, Type = DialogInputType.Tree, Children = FolderStructure, TreeValue = ParentLayer }
                     ],
                     "\ueb51"
                 )
@@ -2665,7 +2700,20 @@ namespace SLBr.Pages
                 if (_DynamicDialogWindow.ShowDialog() == true)
                 {
                     string URL = _DynamicDialogWindow.InputFields[1].Value.Trim();
-                    App.Instance.Favourites.Add(new Favourite() { Type = "url", Url = URL, Name = _DynamicDialogWindow.InputFields[0].Value });
+                    Favourite NewFavourite = new() { Type = "url", Url = URL, Name = _DynamicDialogWindow.InputFields[0].Value };
+                    /*string Folder = _DynamicDialogWindow.InputFields[2].Value;
+                    if (Folder == "Favourites bar")
+                        App.Instance.FavouriteManager.Add(NewFavourite, null);
+                    else
+                    {
+                        Favourite? TargetFolder = App.Instance.FavouriteManager.Favourites.FirstOrDefault(i => i.Type == "folder" && i.Name == Folder);
+                        App.Instance.FavouriteManager.Add(NewFavourite, TargetFolder);
+                    }*/
+                    UIElementLayer TreeSelection = _DynamicDialogWindow.InputFields[2].TreeValue;
+                    if (TreeSelection.Data is Favourite Target)
+                        App.Instance.FavouriteManager.Add(NewFavourite, Target);
+                    else
+                        App.Instance.FavouriteManager.Add(NewFavourite, null);
                     if (URL == Address)
                     {
                         FavouriteButton.Content = "\xEB52";
@@ -2681,7 +2729,7 @@ namespace SLBr.Pages
         {
             if (App.Instance.ShowFavouritesBar == 0)
             {
-                if (App.Instance.Favourites.Count == 0)
+                if (App.Instance.FavouriteManager.Favourites.Count == 0)
                 {
                     FavouriteScrollViewer.Margin = new Thickness(0);
                     FavouriteContainer.Height = 5;
@@ -2712,13 +2760,6 @@ namespace SLBr.Pages
                 OpenDownloadsButton.Visibility = Visibility.Visible;
             else
                 OpenDownloadsButton.Visibility = Visibility.Collapsed;
-        }
-
-        static int FavouriteExists(string Url)
-        {
-            if (App.Instance.Favourites.Count == 0)
-                return -1;
-            return App.Instance.Favourites.ToList().FindIndex(0, i => i.Url == Url);
         }
         /*public void Zoom(int Delta)
         {
@@ -3779,7 +3820,6 @@ namespace SLBr.Pages
             {
                 SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
                 string FirstType = App.GetMiniSearchType(ProcessedText);
-                bool SmartSuggestions = bool.Parse(App.Instance.GlobalSave.Get("SmartSuggestions"));
                 if (FirstType == "W")
                 {
                     Suggestions.Add(App.GenerateSuggestion(ProcessedText, FirstType, LinkColor, "- Visit", null, OmniBoxOverrideSearch));
@@ -3822,7 +3862,7 @@ namespace SLBr.Pages
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
                                 break;
                             case "Favourites":
-                                foreach (Favourite Entry in App.Instance.Favourites.Where(i => i.Type == "url" && ((i.Name?.ToLowerInvariant().Contains(CurrentText) ?? false) || (i.Url?.ToLowerInvariant().Contains(CurrentText) ?? false))).Take(10))
+                                foreach (Favourite Entry in App.Instance.FavouriteManager.UrlCache.Where(i => i.Key.Contains(CurrentText) || i.Key.Contains(CurrentText)).Take(10).Select(i => i.Value))
                                     Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, OmniBoxOverrideSearch));
                                 break;
                         }
@@ -3913,7 +3953,7 @@ namespace SLBr.Pages
                                 Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Tooltip}", Entry.Tooltip, OmniBoxOverrideSearch));
                             break;
                         case "Favourites":
-                            foreach (Favourite Entry in App.Instance.Favourites.Where(i => i.Type == "url").Take(10))
+                            foreach (Favourite Entry in App.Instance.FavouriteManager.UrlCache.Take(10).Select(i => i.Value))
                                 Suggestions.Add(App.GenerateSuggestion(Entry.Name, "W", LinkColor, $"- {Entry.Url}", Entry.Url, OmniBoxOverrideSearch));
                             break;
                     }
@@ -3995,8 +4035,8 @@ namespace SLBr.Pages
 
                         string ResponseText = await Response.Content.ReadAsStringAsync();
 
-                    using JsonDocument Document = JsonDocument.Parse(ResponseText);
-                    SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
+                        using JsonDocument Document = JsonDocument.Parse(ResponseText);
+                        SolidColorBrush LinkColor = (SolidColorBrush)FindResource("IndicatorBrush");
 
                         JsonElement Root = Document.RootElement;
                         //https://source.chromium.org/chromium/chromium/src/+/main:components/omnibox/browser/search_suggestion_parser.cc
@@ -4072,7 +4112,7 @@ namespace SLBr.Pages
                                                 SubText = "- " + ExtractedSubText;
                                         }
                                         if (SuggestionElement.TryGetProperty("img", out JsonElement ImageElement))
-                                {
+                                        {
                                             string? ExtractedImage = ImageElement.GetString() ?? null;
                                             if (!string.IsNullOrEmpty(ExtractedImage))
                                                 ImageUrl = ExtractedImage;
@@ -4080,15 +4120,15 @@ namespace SLBr.Pages
                                     }
                                     else if (TypeArray.ValueKind == JsonValueKind.Array && Index < TypeArray.GetArrayLength())
                                     {
-                                    string GoogleType = TypeArray[Index].GetString() ?? string.Empty;
-                                    if (GoogleType == "NAVIGATION")
-                                        SuggestionType = "W";
-                                    //else if (GoogleType == "ENTITY")
-                                    else if (GoogleType == "CALCULATOR")
+                                        string GoogleType = TypeArray[Index].GetString() ?? string.Empty;
+                                        if (GoogleType == "NAVIGATION")
+                                            SuggestionType = "W";
+                                        //else if (GoogleType == "ENTITY")
+                                        else if (GoogleType == "CALCULATOR")
                                         {
                                             Index++;
-                                        continue;
-                                }
+                                            continue;
+                                        }
                                     }
                                 }
 
@@ -4102,16 +4142,16 @@ namespace SLBr.Pages
                                     {
                                         //NOTE: Utilized by Google.
                                         if (DetailElement.TryGetProperty("google:entityinfo", out JsonElement EntityInfoElement))
-                                    {
-                                        string? Base64Entity = EntityInfoElement.GetString();
-                                        if (!string.IsNullOrEmpty(Base64Entity))
                                         {
-                                            var (ExtractedDisplay, ExtractedSubText, ExtractedImage) = ParseEntityInfo(Base64Entity);
-                                            if (!string.IsNullOrEmpty(ExtractedDisplay))
+                                            string? Base64Entity = EntityInfoElement.GetString();
+                                            if (!string.IsNullOrEmpty(Base64Entity))
                                             {
-                                                DisplayText = ExtractedDisplay;
-                                                ActualText = Suggestion;
-                                    }
+                                                var (ExtractedDisplay, ExtractedSubText, ExtractedImage) = ParseEntityInfo(Base64Entity);
+                                                if (!string.IsNullOrEmpty(ExtractedDisplay))
+                                                {
+                                                    DisplayText = ExtractedDisplay;
+                                                    ActualText = Suggestion;
+                                                }
                                                 if (!string.IsNullOrEmpty(ExtractedSubText))
                                                     SubText = "- " + ExtractedSubText;
                                                 if (!string.IsNullOrEmpty(ExtractedImage))
@@ -4126,7 +4166,7 @@ namespace SLBr.Pages
                                                 string? ExtractedDisplay = TitleElement.GetString() ?? null;
                                                 if (!string.IsNullOrEmpty(ExtractedDisplay))
                                                     DisplayText = ExtractedDisplay;
-                                    }
+                                            }
                                             if (DetailElement.TryGetProperty("a", out JsonElement SubTextElement) && SubTextElement.ValueKind == JsonValueKind.String)
                                             {
                                                 string? ExtractedSubText = SubTextElement.GetString() ?? null;
@@ -4202,11 +4242,11 @@ namespace SLBr.Pages
                             break;*/
                         //Debug.WriteLine($"{WireType} {FieldNumber}");
                         if (WireType == 2)
-                    {
+                        {
                             ReadOnlySpan<byte> Slice = Reader.ReadLengthDelimited();
                             //Debug.WriteLine($"{FieldNumber} {Encoding.UTF8.GetString(Slice)}");
                             switch (FieldNumber)
-                        {
+                            {
                                 case 2:
                                     //WARNING: Do not optimize as Encoding.UTF8.GetString(Reader.ReadLengthDelimited())
                                     SubText = Encoding.UTF8.GetString(Slice);
@@ -4221,17 +4261,17 @@ namespace SLBr.Pages
                                     HasDisplay = true;
                                     break;
                                 //case 17: Affiliated URL.
+                            }
                         }
-                    }
                         else
                             Reader.SkipField(WireType);
                         if (HasSubText && HasImageUrl && HasDisplay)
                             break;
-                }
+                    }
                     return (Display, SubText, ImageUrl);
+                }
+                catch { }
             }
-            catch { }
-        }
             return (null, null, null);
         }
         /*private async void OmniBoxFastTimer_Tick(object? sender, EventArgs e)
@@ -4489,13 +4529,41 @@ namespace SLBr.Pages
 
         private void FavouriteButton_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (((FrameworkElement)sender).DataContext is Favourite Favourite)
+            FrameworkElement Element = FindAncestorFavourite(e.OriginalSource as DependencyObject);
+            if (Element != null && Element.DataContext is Favourite _Favourite)
             {
+                if (Element is MenuItem MenuItem)
+                {
+                    if (e.ChangedButton == MouseButton.Right)
+                    {
+                        e.Handled = true;
+                        if (Element.ContextMenu is ContextMenu TargetContextMenu)
+                        {
+                            TargetContextMenu.PlacementTarget = Element;
+                            TargetContextMenu.Placement = PlacementMode.MousePoint;
+                            TargetContextMenu.IsOpen = true;
+                        }
+                        return;
+                    }
+                    if (MenuItem.HasItems)
+                        return;
+                }
                 if (e.ChangedButton == MouseButton.Left)
-                    Navigate(Favourite.Url);
+                    Navigate(_Favourite.Url);
                 else if (e.ChangedButton == MouseButton.Middle)
-                    Tab.ParentWindow.NewTab(Favourite.Url, false, -1, Private);
+                    Tab.ParentWindow.NewTab(_Favourite.Url, false, -1, Private);
             }
+        }
+
+        private FrameworkElement FindAncestorFavourite(DependencyObject Element)
+        {
+            while (Element != null)
+            {
+                if (Element is MenuItem || Element is Button || Element is WinUI.DropDownButton)
+                    return Element as FrameworkElement;
+                Element = VisualTreeHelper.GetParent(Element);
+            }
+            return null;
         }
 
         private void DownloadsFolderButton_Click(object sender, RoutedEventArgs e)
@@ -4524,7 +4592,19 @@ namespace SLBr.Pages
                     }
                 }
                 else if (Action == "Delete")
-                    App.Instance.Favourites.Remove(Favourite);
+                    App.Instance.FavouriteManager.Remove(Favourite);
+                else if (Action == "Manage favourites")
+                {
+                    //TODO: Open within selected favourite.
+                    Tab.ParentWindow.NewTab("slbr://favourites", true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private, Tab.TabGroup);
+                }
+                else if (Favourite.Type == "folder")
+                {
+                    if (Action == "Add page")
+                        FavouriteAction(false, Favourite);
+                    else if (Action == "Add folder")
+                        App.Instance.NewFavouriteFolder(Favourite);
+                }
             }
         }
 
