@@ -57,7 +57,7 @@ namespace SLBr.Pages
         public ObservableCollection<InfoBar> VisibleInfoBars = [];
 
         Storyboard LoadingStoryboard;
-        bool IsWebIcon = false;
+        public bool IsUnthemedIcon = false;
         bool HasInitialized = false;
 
         public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false)
@@ -139,6 +139,8 @@ namespace SLBr.Pages
 
         public void InitializeBrowserComponent()
         {
+            Tab.SubIcon = null;
+            Tab.SubIconForeground = null;
             if (WebView == null)
                 CreateWebView([new(true, Address)], (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"));
             else
@@ -166,6 +168,7 @@ namespace SLBr.Pages
             * Loading state.
             */
             Tab.SubIcon = AudioPlaying ? (Muted ? "\ue74f" : "\ue767") : null;
+            Tab.SubIconForeground = null;
             if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 Tab.ProgressBarVisibility = (Muted || !AudioPlaying) ? Visibility.Visible : Visibility.Collapsed;
             else
@@ -316,7 +319,7 @@ namespace SLBr.Pages
                         {
                             CurrentWebAppManifest = await WebAppHandler.FetchManifestAsync(Address, CurrentWebAppManifestUrl);
                             if (CurrentWebAppManifest != null)
-                                App.Instance.AvailableWebAppManifests.Add(CurrentWebAppManifestUrl, CurrentWebAppManifest);
+                                App.Instance.AvailableWebAppManifests[CurrentWebAppManifestUrl] = CurrentWebAppManifest;
                         }
                         if (CurrentWebAppManifest != null)
                         {
@@ -909,10 +912,10 @@ namespace SLBr.Pages
             }
         }
 
-        void SetIcon(BitmapSource Image, bool IsWeb)
+        void SetIcon(BitmapSource Image, bool Unthemed)
         {
             Tab.Icon = Image;
-            IsWebIcon = IsWeb;
+            IsUnthemedIcon = Unthemed;
         }
 
         private void WebView_PermissionRequested(object? sender, PermissionRequestedEventArgs e)
@@ -1200,7 +1203,7 @@ namespace SLBr.Pages
                                     string? Language = ((await WebView?.EvaluateScriptAsync(Scripts.DetectLanguageScript)) ?? string.Empty).ToString().Split('-')[0];
                                     if (!string.IsNullOrEmpty(Language))
                                     {
-                                        if (!App.Instance.Languages.Any(i => i.Tooltip.StartsWith(Language)))
+                                        if (!App.Instance.Languages.Any(i => i.Tooltip.StartsWith(Language) || i.Name.ToLowerInvariant() == Language))
                                             TranslateButton.OpenPopup();
                                     }
                                 }
@@ -2148,6 +2151,7 @@ namespace SLBr.Pages
                             _BitmapImage.BeginInit();
                             _BitmapImage.DecodePixelWidth = 275;
                             _BitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                            //_BitmapImage.CreateOptions = BitmapCreateOptions.DelayCreation;
                             _BitmapImage.StreamSource = Stream;
                             _BitmapImage.EndInit();
                             _BitmapImage.SafeFreeze();
@@ -2243,9 +2247,14 @@ namespace SLBr.Pages
 
         public void Unload()
         {
+            if (Tab.IsUnloaded)
+                return;
             SetAudioState(false);
             if (bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadedIcon")))
-                SetIcon(App.Instance.UnloadedIcon, false);
+            {
+                Tab.SubIcon = "\uec0a";
+                Tab.SubIconForeground = App.Instance.GreenColor;
+            }
             DisposeBrowserCore();
             Tab.IsUnloaded = true;
             Tab.ProgressBarVisibility = Visibility.Collapsed;
@@ -3677,7 +3686,7 @@ namespace SLBr.Pages
 
         public async void SetAppearance(Theme _Theme)
         {
-            if (HasInitialized && !IsWebIcon)
+            if (HasInitialized && !IsUnthemedIcon)
             {
                 (BitmapSource, bool) IconData = await App.Instance.SetIcon(WebView?.IsLoading ?? false, "", Address, Private);
                 SetIcon(IconData.Item1, IconData.Item2);

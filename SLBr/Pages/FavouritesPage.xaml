@@ -132,7 +132,7 @@
                                             <Button DockPanel.Dock="Right" Click="EditButton_Click" Content="&#xe70f;" ToolTip="Edit" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                                             <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xe8b7;"/>
                                             <TextBlock Margin="0,0,5,0" Width="Auto" VerticalAlignment="Center" DockPanel.Dock="Left" Text="{Binding Name}" HorizontalAlignment="Stretch"/>
-                                            <!--TODO: Favourite count subtext (e.g. "N items").-->
+                                            <!--TODO: Favourite count subtext (e.g. "N items"). {Binding Children.Count, StringFormat='{}{0} items'}-->
                                             <TextBlock Margin="0,0,5,0" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center" Text="{Binding Url}" HorizontalAlignment="Stretch" Width="Auto"/>
                                         </DockPanel>
                                     </Border>

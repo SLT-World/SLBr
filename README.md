@@ -15,18 +15,19 @@
 </div>
 
 ## SLBr
+
 SLBr is an open-source, lightweight web browser based on Chromium. Built with .NET, WPF, CefSharp (CEF), and WebView2 to provide a modern browsing experience while remaining lightweight.
 
 ## Notable Features
+
 See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Clean, Modern UI:** Simple & clean design.
-- **Multi Web Engine:** Choose between Chromium engine (CEF), Edge engine (WebView2), Internet Explorer engine (Trident).
+- **Multiple Web Engines:** Choose between Chromium engine (CEF), Edge engine (WebView2), Internet Explorer engine (Trident).
 - **Ad & Tracker Blocking:** Browse with fewer ads & less tracking, customize ad block filter lists.
 - **Tab Layouts:** Choose vertical or horizontal tab alignment.
 - **Tab Unloading:** Save memory by unloading inactive tabs
-- **Phishing & Malware Site Protection:** Protect against malicious websites with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
-- **Download Protection:** Protect against suspicious files and malware with Google Safe Browsing.
-- **Web Page Translation:** Directly translate websites without proxies with Google, Microsoft, Yandex & Lingvanex providers..
+- **Phishing & Malware Protection:** Protect against malicious websites & downloads with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
+- **Web Page Translation:** Directly translate websites with Google, Microsoft, Yandex & Lingvanex providers.
 - **Smart Address Bar:** Search suggestions directly in the address bar, with quick calculations, weather, and translation.
 - **Private Tabs (Incognito Tabs):** Open private browsing sessions that don't store history and cookies.
 - **Tab Groups:** Organize tabs with color-coding & naming.
@@ -35,12 +36,14 @@ See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Extension Support:** Supports Chrome web store extensions. (Only for the Chromium web engine)
 
 ## Installation
+
 To install SLBr, follow these steps:
 1. Download the [latest release](https://github.com/SLT-World/SLBr/releases/latest).
 2. Ensure the following requirements are met:
-    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170) - [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+    - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170): [Direct Download x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)
     - [.NET 9.0](https://dotnet.microsoft.com/en-us/download/dotnet/9.0): An automated prompt to the .NET download page will be shown if .NET 9.0 is not detected upon launch.
     - Windows 10 & above.
+
 ## Thanks
 
 - **Chromium Embedded Framework (CEF)**: Thanks to [Marshall Greenblatt](https://github.com/magreenblatt).
@@ -48,11 +51,22 @@ To install SLBr, follow these steps:
 - **IPFS** (Not included in the latest release.): Thanks to [Mauve](https://github.com/rangermauve) for assisting with the implementation of IPFS in SLBr.
 
 ## License
+
 SLBr is licensed under the [GNU General Public License v3.0](https://github.com/SLT-World/SLBr/blob/main/LICENSE).
 
-## Contribution
-Feature suggestions and contributions would be much appreciated. Your input helps improve SLBr.
-Alternatively, you can also contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
+## Roadmap
+
+Development progress is tracked publicly.
+You can see the active feature backlog and in-progress tasks on the project board below:
+
+[SLBr To-Do Project Board](https://github.com/users/SLT-World/projects/2)
+
+## Contributing
+
+Feature suggestions and contributions would be appreciated to help improve SLBr.
+- **Features**: Anyone can contribute features via a pull request, provided they are relevant and fit the project's core scope. If you want to help but do not know what to do, please review the [project board](https://github.com/users/SLT-World/projects/2) to find open tasks.
+- **Important Guidelines**: Unrelated issues and spam contributions are not welcome and will be closed immediately. Please keep all discussions and submissions strictly related to the codebase.
+- **Financial Support**: Alternatively, you can contribute by sponsoring [CefSharp](https://github.com/sponsors/amaitland).
 
 ## Media
 

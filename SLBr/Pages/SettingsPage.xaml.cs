@@ -388,7 +388,7 @@ namespace SLBr.Pages
             WebNotificationsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WebNotifications"));
             WebAppsCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WebApps"));
 
-            DimIconsWhenUnloadedCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("DimUnloadedIcon"));
+            DimIconsWhenUnloadedCheckBox.IsChecked = App.Instance.DimUnloadedIcon;
             ShowUnloadedIconCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadedIcon"));
             ShowUnloadTimeLeftCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress"));
 

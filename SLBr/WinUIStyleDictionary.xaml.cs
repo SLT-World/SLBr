@@ -30,7 +30,10 @@ namespace SLBr
         {
             Image? Image = sender as Image;
             if (Image?.DataContext is BrowserTabItem CurrentTab)
+            {
                 CurrentTab.Icon = App.Instance.TabIcon;
+                CurrentTab.Content?.IsUnthemedIcon = false;
+            }
         }
 
         public void ButtonAction(object sender, RoutedEventArgs e)

@@ -37,6 +37,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shell;
 using System.Windows.Threading;
 using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SLBr
 {
@@ -841,8 +842,42 @@ namespace SLBr
         }
     }
 
-    public partial class App : Application
+    public partial class App : Application, INotifyPropertyChanged
     {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        /*private TextFormattingMode _TextMode = TextFormattingMode.Display;
+        public TextFormattingMode TextMode
+        {
+            get => _TextMode;
+            set
+            {
+                if (_TextMode != value)
+                {
+                    _TextMode = value;
+                    RaisePropertyChanged();
+                }
+            }
+        }*/
+        private bool _DimUnloadedIcon;
+        public bool DimUnloadedIcon
+        {
+            get => _DimUnloadedIcon;
+            set
+            {
+                if (_DimUnloadedIcon != value)
+                {
+                    _DimUnloadedIcon = value;
+                    RaisePropertyChanged();
+                }
+            }
+        }
+
         public static App Instance;
 
         public const string AMPEndpoint = "https://acceleratedmobilepageurl.googleapis.com/v1/ampUrls:batchGet";
@@ -1800,6 +1835,7 @@ namespace SLBr
             DispatcherUnhandledException += App_DispatcherUnhandledException;
             Dispatcher.UnhandledException += App_DispatcherUnhandledException;
 
+            //NOTE: Disregard the following error, most likely originating from Visual Studio's debugging tools.
             /*TODO: Investigate error "A Task's exception(s) were not observed either by Waiting on the Task or accessing its Exception property. As a result, the unobserved exception was rethrown by the finalizer thread. (Hwnd of zero is not valid.)" "System.ArgumentException: Hwnd of zero is not valid."
              * Reproduction: Delete AppData\Local\SLBr, run in Debug, create & open new profile, observe MessageBox.
              * Issue only reproducable on first-time run of profile.
@@ -2290,6 +2326,17 @@ $Toast = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, 
 #if DEBUG
         private void ReportError(Exception Error)
         {
+            //NOTE: If "WpfTap" / "Microsoft.VisualStudio.DesignTools" is within stack trace, disregard.
+
+            //Surpress exceptions originating from Visual Studio Debugging Tools.
+            /*if (Error is AggregateException _AggregateException)
+            {
+                foreach (Exception Inner in _AggregateException.InnerExceptions)
+                {
+                    if (Inner.StackTrace != null && (Inner.StackTrace.Contains("Microsoft.VisualStudio.DesignTools") || Inner.StackTrace.Contains("WpfTap")))
+                        return;
+                }
+            }*/
             string Report = string.Format(ReportExceptionText,
                 ReleaseVersion,
                 Cef.CefVersion,
@@ -2308,16 +2355,37 @@ $Toast = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, 
         private static string FormatInnerException(Exception Error)
         {
             StringBuilder Builder = new();
-            int Depth = 0;
-
-            while (Error.InnerException != null)
+            if (Error is AggregateException _AggregateException)
             {
-                Error = Error.InnerException;
-                Builder.AppendLine($"{new string(' ', Depth * 2)}--> {Error.GetType().FullName}: {Error.Message}");
-                Depth++;
+                int Index = 1;
+                foreach (Exception Inner in _AggregateException.InnerExceptions)
+                {
+                    Builder.AppendLine($"--- Inner Exception #{Index} ---");
+                    BuildExceptionTreeString(Inner, Builder, 0);
+                    Index++;
+                }
             }
-
+            else
+                BuildExceptionTreeString(Error.InnerException, Builder, 0);
             return Builder.Length == 0 ? "None" : Builder.ToString();
+        }
+
+        private static void BuildExceptionTreeString(Exception Error, StringBuilder Builder, int Depth)
+        {
+            if (Error == null) return;
+
+            string Indent = new(' ', Depth * 2);
+
+            Builder.AppendLine($"{Indent}--> Type: {Error.GetType().FullName}");
+            Builder.AppendLine($"{Indent}    Message: {Error.Message}");
+
+            if (!string.IsNullOrEmpty(Error.StackTrace))
+            {
+                string IndentedStackTrace = Error.StackTrace.Replace(Environment.NewLine, $"{Environment.NewLine}{Indent}    ");
+                Builder.AppendLine($"{Indent}    Stack Trace:{Environment.NewLine}{Indent}    {IndentedStackTrace}");
+            }
+            Builder.AppendLine();
+            BuildExceptionTreeString(Error.InnerException, Builder, Depth + 1);
         }
 #endif
 
@@ -3148,8 +3216,7 @@ Inner Exception: {7}";
                 GlobalSave.Set("TabUnloading", true);
             if (!GlobalSave.Has("ShowUnloadProgress"))
                 GlobalSave.Set("ShowUnloadProgress", false);
-            if (!GlobalSave.Has("DimUnloadedIcon"))
-                GlobalSave.Set("DimUnloadedIcon", true);
+            SetDimUnloadedIcon(bool.Parse(GlobalSave.Get("DimUnloadedIcon", true.ToString())));
             if (!GlobalSave.Has("ShowUnloadedIcon"))
                 GlobalSave.Set("ShowUnloadedIcon", true);
             UpdateTabUnloadingTimer(GlobalSave.GetInt("TabUnloadingTime", 10));
@@ -4431,7 +4498,6 @@ Inner Exception: {7}";
         public BitmapSource HistoryTabIcon;
         public BitmapSource FavouritesTabIcon;
         public BitmapSource DownloadsTabIcon;
-        public BitmapSource UnloadedIcon;
 
         public (BitmapSource, bool) GetIcon(string Url, bool IsPrivate = false)
         {
@@ -4447,7 +4513,13 @@ Inner Exception: {7}";
                             string GIconUrl = "https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false);
                             /*if (FaviconCache.TryGetValue(GIconUrl, out BitmapImage GCachedImage))
                                 return GCachedImage;*/
-                            BitmapImage _GImage = new(new Uri(GIconUrl));
+                            BitmapImage _GImage = new(new Uri(GIconUrl))
+                            {
+                                DecodePixelWidth = 20,
+                                DecodePixelHeight = 20,
+                                CacheOption = BitmapCacheOption.OnLoad,
+                                //CreateOptions = BitmapCreateOptions.DelayCreation,
+                            };
                             _GImage.SafeFreeze();
                             //FaviconCache[GIconUrl] = _GImage;
                             return (_GImage, true);
@@ -4455,7 +4527,13 @@ Inner Exception: {7}";
                             string YIconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url);
                             /*if (FaviconCache.TryGetValue(YIconUrl, out BitmapImage YCachedImage))
                                 return YCachedImage;*/
-                            BitmapImage _YImage = new(new Uri(YIconUrl));
+                            BitmapImage _YImage = new(new Uri(YIconUrl))
+                            {
+                                DecodePixelWidth = 20,
+                                DecodePixelHeight = 20,
+                                CacheOption = BitmapCacheOption.OnLoad,
+                                //CreateOptions = BitmapCreateOptions.DelayCreation
+                            };
                             _YImage.SafeFreeze();
                             //FaviconCache[YIconUrl] = _YImage;
                             return (_YImage, true);
@@ -4463,7 +4541,13 @@ Inner Exception: {7}";
                             string DIconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico";
                             /*if (FaviconCache.TryGetValue(DIconUrl, out BitmapImage DCachedImage))
                                 return DCachedImage;*/
-                            BitmapImage _DImage = new(new Uri(DIconUrl));
+                            BitmapImage _DImage = new(new Uri(DIconUrl))
+                            {
+                                DecodePixelWidth = 20,
+                                DecodePixelHeight = 20,
+                                CacheOption = BitmapCacheOption.OnLoad,
+                                //CreateOptions = BitmapCreateOptions.DelayCreation
+                            };
                             _DImage.SafeFreeze();
                             //FaviconCache[DIconUrl] = _DImage;
                             return (_DImage, true);
@@ -4471,7 +4555,13 @@ Inner Exception: {7}";
                             string AIconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url);
                             /*if (FaviconCache.TryGetValue(AIconUrl, out BitmapImage ACachedImage))
                                 return ACachedImage;*/
-                            BitmapImage _AImage = new(new Uri(AIconUrl));
+                            BitmapImage _AImage = new(new Uri(AIconUrl))
+                            {
+                                DecodePixelWidth = 20,
+                                DecodePixelHeight = 20,
+                                CacheOption = BitmapCacheOption.OnLoad,
+                                //CreateOptions = BitmapCreateOptions.DelayCreation,
+                            };
                             _AImage.SafeFreeze();
                             //FaviconCache[AIconUrl] = _AImage;
                             return (_AImage, true);
@@ -4525,7 +4615,13 @@ Inner Exception: {7}";
                     {
                         if (IconUrl.StartsWith("data:image/"))
                         {
-                            try { return (Utils.ConvertBase64ToBitmapImage(IconUrl), true); }
+                            try
+                            {
+                                int Base64Start = IconUrl.IndexOf("base64,");
+                                if (Base64Start != -1)
+                                    IconUrl = IconUrl[(Base64Start + 7)..];
+                                return (Utils.ConvertBase64ToBitmapImage(IconUrl), true);
+                            }
                             catch { }
                         }
                     }
@@ -4568,7 +4664,10 @@ Inner Exception: {7}";
                                         BitmapImage Bitmap = new();
                                         Bitmap.BeginInit();
                                         Bitmap.StreamSource = _Stream;
+                                        Bitmap.DecodePixelWidth = 20;
+                                        Bitmap.DecodePixelHeight = 20;
                                         Bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                        //Bitmap.CreateOptions = BitmapCreateOptions.DelayCreation;
                                         Bitmap.EndInit();
                                         Bitmap.SafeFreeze();
                                         CacheFavicon(IconUrl, Bitmap);
@@ -4680,8 +4779,7 @@ Inner Exception: {7}";
         public void SetDimUnloadedIcon(bool Toggle)
         {
             GlobalSave.Set("DimUnloadedIcon", Toggle);
-            foreach (MainWindow _Window in AllWindows)
-                _Window.DimUnloadedIcon = Toggle;
+            DimUnloadedIcon = Toggle;
         }
         public bool AllowHomeButton;
         public bool AllowTranslateButton;
@@ -4756,7 +4854,6 @@ Inner Exception: {7}";
             HistoryTabIcon = RenderFontIcon("\ue81c", IconBrush, Origin);
             FavouritesTabIcon = RenderFontIcon("\ueb51", IconBrush, Origin);
             DownloadsTabIcon = RenderFontIcon("\ue896", IconBrush, new Point(2, 0));
-            UnloadedIcon = RenderFontIcon("\uEC0A", GreenColor, Origin);
 
             foreach (MainWindow _Window in AllWindows)
                 _Window.SetAppearance(_Theme);
@@ -4850,6 +4947,7 @@ Inner Exception: {7}";
         CreateGroup = 80,
         Ungroup = 81,
         ModifyGroup = 82,
+        UnloadGroup = 83,
     }
 
     public class ActionStorage : INotifyPropertyChanged

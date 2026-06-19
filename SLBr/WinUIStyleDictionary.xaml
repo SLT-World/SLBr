@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:WinUI="clr-namespace:WinUI" xmlns:controls="clr-namespace:SLBr.Controls"
+                    xmlns:local="clr-namespace:SLBr"
                     x:Class="SLBr.WinUIStyleDictionary">
     <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
@@ -54,15 +55,34 @@
             </Trigger>
         </Style.Triggers>
     </Style>
-
+    
     <Style TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextHintingMode" Value="Fixed"/>
+        <!--<Setter Property="TextOptions.TextFormattingMode" Value="{Binding Source={x:Static local:App.Instance}, Path=TextMode, Mode=OneWay, UpdateSourceTrigger=Explicit}"/>-->
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
         <Style.Triggers>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
             </Trigger>
         </Style.Triggers>
+    </Style>
+
+    <Style TargetType="{x:Type Border}">
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+        <Setter Property="RenderOptions.EdgeMode" Value="Unspecified"/>
+        <!-- Fixes the compile error -->
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="LowQuality"/>
+        <!-- Keeps scaling efficient -->
+    </Style>
+
+    <Style TargetType="{x:Type ItemsControl}">
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel"/>
+        <Setter Property="VirtualizingPanel.CacheLengthUnit" Value="Page"/>
+        <Setter Property="VirtualizingPanel.CacheLength" Value="1,1"/>
     </Style>
 
     <Style TargetType="{x:Type ToggleButton}">
@@ -2469,14 +2489,14 @@ Margin="{TemplateBinding Padding}"/>
     </Style>
 
     <ContextMenu x:Key="AddTabContextMenu" OverridesDefaultStyle="False">
-        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
-        <MenuItem Icon="&#xE727;" Click="ButtonAction" Header="New Private Tab" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
-        <MenuItem Icon="&#xF5ED;" Click="ButtonAction" Header="New Group" Tag="80"/>
+        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New tab" Tag="5&lt;,&gt;{Homepage}"/>
+        <MenuItem Icon="&#xE727;" Click="ButtonAction" Header="New private tab" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
+        <MenuItem Icon="&#xF5ED;" Click="ButtonAction" Header="New group" Tag="80"/>
     </ContextMenu>
 
     <ContextMenu x:Key="TabItemContextMenu">
-        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New Tab" Tag="5&lt;,&gt;{Homepage}"/>
-        <MenuItem Icon="&#xEE40;" Click="ButtonAction" Header="Duplicate Tab" Tag="5"/>
+        <MenuItem Icon="&#xEC6C;" Click="ButtonAction" Header="New tab" Tag="5&lt;,&gt;{Homepage}"/>
+        <MenuItem Icon="&#xEE40;" Click="ButtonAction" Header="Duplicate tab" Tag="5"/>
         <Separator/>
         <MenuItem Icon="&#xe72c;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Refresh" Tag="3"/>
         <MenuItem Icon="&#xec0a;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="Unload" Tag="8"/>
@@ -2484,16 +2504,17 @@ Margin="{TemplateBinding Padding}"/>
         <MenuItem Icon="&#xEB51;" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="{Binding FavouriteCommandHeader}" Tag="12"/>
         <MenuItem Icon="{Binding MuteCommandIcon}" Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}" Click="ButtonAction" Header="{Binding MuteCommandHeader}" Tag="31"/>
         <Separator Visibility="{Binding IsUnloaded, Converter={StaticResource OppositeBooleanToVisibility}}"/>
-        <MenuItem Icon="&#xe711;" Click="ButtonAction" Header="Close Tab" Tag="6"/>
+        <MenuItem Icon="&#xe711;" Click="ButtonAction" Header="Close tab" Tag="6"/>
     </ContextMenu>
 
     <ContextMenu x:Key="TabGroupContextMenu">
-        <MenuItem Icon="&#xeccd;" Click="ButtonAction" Header="New Tab in group" Tag="5&lt;,&gt;{Homepage}&lt;,&gt;Group"/>
+        <MenuItem Icon="&#xeccd;" Click="ButtonAction" Header="New tab in group" Tag="5&lt;,&gt;{Homepage}&lt;,&gt;Group"/>
         <Separator/>
         <MenuItem Icon="&#xe70f;" Click="ButtonAction" Header="Edit" Tag="82"/>
+        <MenuItem Icon="&#xec0a;" Click="ButtonAction" Header="Unload all" Tag="83"/>
         <Separator/>
         <MenuItem Icon="&#xe8a7;" Click="ButtonAction" Header="Ungroup" Tag="81"/>
-        <MenuItem Icon="&#xf165;" Click="ButtonAction" Header="Close Group" Tag="6"/>
+        <MenuItem Icon="&#xf165;" Click="ButtonAction" Header="Close group" Tag="6"/>
     </ContextMenu>
 
     <Style TargetType="{x:Type TabItem}" x:Key="TabGroupButton">
@@ -2704,7 +2725,7 @@ Margin="{TemplateBinding Padding}"/>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding IsUnloaded}" Value="True"/>
-                                <Condition Binding="{Binding DimUnloadedIcon, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                <Condition Binding="{Binding Source={x:Static local:App.Instance}, Path=DimUnloadedIcon, Mode=OneWay, UpdateSourceTrigger=Explicit}" Value="True"/>
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="Icon" Property="Opacity" Value="0.25"/>
                         </MultiDataTrigger>
@@ -2712,7 +2733,6 @@ Margin="{TemplateBinding Padding}"/>
                         <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource WidthLessThan60}}" Value="True">
                             <Setter TargetName="CloseButton" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
-
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="UnloadProgress" Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="CloseButton" Property="Visibility" Value="Visible"/>
@@ -2857,7 +2877,7 @@ Margin="{TemplateBinding Padding}"/>
                                 <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" DockPanel.Dock="Left">
                                     <Grid VerticalAlignment="Center" HorizontalAlignment="Left" Height="20" Width="20" Margin="1.5,0,0,0">
                                         <Grid x:Name="IconContainer">
-                                            <Image RenderOptions.BitmapScalingMode="Fant" UseLayoutRounding="True" SnapsToDevicePixels="True" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" x:Name="Icon"/>
+                                            <Image RenderOptions.BitmapScalingMode="Fant" RenderOptions.ClearTypeHint="Enabled" RenderOptions.EdgeMode="Aliased" UseLayoutRounding="True" SnapsToDevicePixels="True" ImageFailed="TabIcon_ImageFailed" Stretch="Uniform" Source="{Binding Icon}" x:Name="Icon"/>
                                             <Grid.Style>
                                                 <Style TargetType="Grid">
                                                     <Setter Property="OpacityMask">
@@ -2943,7 +2963,7 @@ Margin="{TemplateBinding Padding}"/>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding IsUnloaded}" Value="True"/>
-                                <Condition Binding="{Binding DimUnloadedIcon, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                <Condition Binding="{Binding Source={x:Static local:App.Instance}, Path=DimUnloadedIcon, Mode=OneWay, UpdateSourceTrigger=Explicit}" Value="True"/>
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="Icon" Property="Opacity" Value="0.25" />
                         </MultiDataTrigger>

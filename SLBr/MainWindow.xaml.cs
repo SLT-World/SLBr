@@ -53,17 +53,6 @@ namespace SLBr
             }
         }
 
-        public bool DimUnloadedIcon
-        {
-            get => _DimUnloadedIcon;
-            set
-            {
-                _DimUnloadedIcon = value;
-                RaisePropertyChanged();
-            }
-        }
-        private bool _DimUnloadedIcon;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -210,7 +199,6 @@ namespace SLBr
                 Type = BrowserTabType.Add
             };
             Tabs.Add(NewTabTab);
-            DimUnloadedIcon = bool.Parse(App.Instance.GlobalSave.Get("DimUnloadedIcon"));
             TabsUI.ItemsSource = Tabs;
         }
 
@@ -856,6 +844,11 @@ namespace SLBr
                     break;
                 case Actions.Mute:
                     ToggleMute(V1);
+                    break;
+                case Actions.UnloadGroup:
+                    BrowserTabItem _GTab = string.IsNullOrEmpty(V1) ? Tabs[TabsUI.SelectedIndex] : GetBrowserTabWithId(int.Parse(V1));
+                    foreach (BrowserTabItem Item in Tabs.Where(i => i.TabGroup == _GTab.TabGroup && i.Content != null))
+                        UnloadTab(Item.Content, true);
                     break;
             }
         }

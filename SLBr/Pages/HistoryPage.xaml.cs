@@ -97,7 +97,7 @@ namespace SLBr.Pages
             if (SearchText.Length == 0)
                 HistoryList.ItemsSource = App.Instance.History;
             else
-                HistoryList.ItemsSource = App.Instance.History.Where(i => (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Tooltip?.ToLowerInvariant().Contains(SearchText) ?? false));
+                HistoryList.ItemsSource = App.Instance.History.Where(i => (i.Name?.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase) ?? false) || (i.Tooltip?.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase) ?? false));
         }
 
         private void ListBoxItem_DeselectPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -51,10 +51,10 @@
                             <ContextMenu>
                                 <MenuItem Visibility="Collapsed" Icon="&#xea6a;" Header="New Update" x:Name="NewUpdateMenu" Foreground="Orange" Click="UpdateSLBr"/>
                                 <Separator Visibility="Collapsed" x:Name="NewUpdateMenuSeparator"/>
-                                <MenuItem Icon="&#xEC6C;" Header="New Tab" Click="ButtonAction" Tag="5&lt;,&gt;{Homepage}"/>
-                                <MenuItem Icon="&#xE727;" Header="New Private Tab" Click="ButtonAction" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
-                                <MenuItem Icon="&#xF5ED;" Header="New Group" Click="ButtonAction" Tag="80"/>
-                                <MenuItem Icon="&#xe737;" Header="New Window" Click="ButtonAction" Tag="7"/>
+                                <MenuItem Icon="&#xEC6C;" Header="New tab" Click="ButtonAction" Tag="5&lt;,&gt;{Homepage}"/>
+                                <MenuItem Icon="&#xE727;" Header="New private tab" Click="ButtonAction" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
+                                <MenuItem Icon="&#xF5ED;" Header="New group" Click="ButtonAction" Tag="80"/>
+                                <MenuItem Icon="&#xe737;" Header="New window" Click="ButtonAction" Tag="7"/>
                                 <Separator/>
                                 <MenuItem Icon="&#xE81C;" Header="History">
                                     <MenuItem.ItemsSource>
@@ -66,7 +66,7 @@
                                     </MenuItem.ItemsSource>
                                     <MenuItem.ItemContainerStyle>
                                         <Style TargetType="MenuItem">
-                                            <Setter Property="Icon" Value="&#xEB41;"/>
+                                            <Setter Property="Icon" Value="&#xe774;"/>
                                             <Setter Property="Header" Value="{Binding Tooltip}"/>
                                             <Setter Property="Tag" Value="{Binding Arguments}"/>
                                             <EventSetter Event="Click" Handler="ButtonAction"/>
@@ -134,7 +134,7 @@
                                 </MenuItem>
                                 <MenuItem Icon="&#xE713;" Header="Settings" Click="ButtonAction" Tag="5&lt;,&gt;slbr://settings"/>
                                 <Separator/>
-                                <MenuItem Header="Exit" Click="ButtonAction" Tag="0"/>
+                                <MenuItem Icon="&#xe711;" Header="Exit" Click="ButtonAction" Tag="0"/>
                             </ContextMenu>
                         </WinUI:DropDownButton.Menu>
                     </WinUI:DropDownButton>
@@ -387,7 +387,7 @@
                                             <StackPanel>
                                                 <DockPanel>
                                                     <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                        <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18"/>
+                                                        <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" TextOptions.TextHintingMode="Animated" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18"/>
                                                     </Border>
                                                     <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText"/>
                                                 </DockPanel>

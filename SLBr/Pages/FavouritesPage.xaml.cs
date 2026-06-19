@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -90,9 +91,18 @@ namespace SLBr.Pages
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             FavouritesTreeView.ItemsSource = FavouritesBar;
-            TreeViewItem? Target = Utils.GetTreeViewItemContainer(FavouritesTreeView, CurrentFolder);
-            Target?.IsSelected = true;
             ApplyTheme(App.Instance.CurrentTheme);
+            FavouritesTreeView.ItemContainerGenerator.StatusChanged += ItemContainerGenerator_StatusChanged;
+        }
+
+        private void ItemContainerGenerator_StatusChanged(object? sender, EventArgs e)
+        {
+            if (FavouritesTreeView.ItemContainerGenerator.Status == GeneratorStatus.ContainersGenerated)
+            {
+                FavouritesTreeView.ItemContainerGenerator.StatusChanged -= ItemContainerGenerator_StatusChanged;
+                TreeViewItem? Target = Utils.GetTreeViewItemContainer(FavouritesTreeView, CurrentFolder);
+                Target?.IsSelected = true;
+            }
         }
 
         public void ApplyTheme(Theme _Theme)
@@ -159,10 +169,11 @@ namespace SLBr.Pages
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             string SearchText = SearchBox.Text.ToLowerInvariant();
+            //TODO: Enhance search functionality.
             if (SearchText.Length == 0)
-                FavouritesList.ItemsSource = App.Instance.FavouriteManager.Favourites;
+                FavouritesList.ItemsSource = CurrentFolder.Children;
             else
-                FavouritesList.ItemsSource = App.Instance.FavouriteManager.Favourites.Where(i => i.Type == "url" && (i.Name?.ToLowerInvariant().Contains(SearchText) ?? false) || (i.Url?.ToLowerInvariant().Contains(SearchText) ?? false));
+                FavouritesList.ItemsSource = CurrentFolder.Children.Where(i => i.Type == "url" && (i.Name?.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase) ?? false) || (i.Url?.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase) ?? false));
         }
 
         private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
