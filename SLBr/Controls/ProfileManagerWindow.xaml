@@ -70,7 +70,7 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Width="75" Height="75" Background="{StaticResource BorderBrush}" CornerRadius="1000" Margin="10">
-                                    <TextBlock FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xee57;"/>
+                                    <TextBlock FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xee57;"/>
                                 </Border>
                                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Grid.Row="1" Padding="10" Height="60">
                                     <TextBlock VerticalAlignment="Center" ToolTip="{Binding Name}" Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
@@ -102,7 +102,7 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Width="75" Height="75" Background="{StaticResource BorderBrush}" CornerRadius="1000" Margin="10">
-                                    <TextBlock FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xe710;"/>
+                                    <TextBlock FontWeight="DemiBold" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xe710;"/>
                                 </Border>
                                 <Border BorderThickness="0,1,0,0" Grid.Row="1" Padding="10" Height="60">
                                     <!--<Border.BorderBrush>

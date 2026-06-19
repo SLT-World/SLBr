@@ -395,6 +395,7 @@ namespace SLBr.Pages
             TabAlignmentComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("TabAlignment");
 
             NetworkLimitCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NetworkLimit"));
+            OfferTranslateCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("OfferTranslate"));
 
             SearchSuggestionsCheckBox.IsChecked = App.Instance.SearchSuggestions;
             SmartSuggestionsCheckBox.IsChecked = App.Instance.SmartSuggestions;
@@ -1079,6 +1080,11 @@ namespace SLBr.Pages
                 else StartupManager.DisableStartup(App.Instance.CurrentProfile.Name);
                 App.Instance.GlobalSave.Set("StartupBoost", Value.ToString());
             }
+        }
+        private void OfferTranslateCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.GlobalSave.Set("OfferTranslate", OfferTranslateCheckBox.IsChecked.GetValueOrDefault().ToString());
         }
         private void ReduceDiskCheckBox_Click(object sender, RoutedEventArgs e)
         {

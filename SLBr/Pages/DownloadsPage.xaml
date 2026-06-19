@@ -23,7 +23,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <TextBlock FontWeight="DemiBold" Margin="0,0,10,0" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xe896;"/>
+                <TextBlock FontWeight="DemiBold" Margin="0,0,10,0" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xe896;"/>
 
                 <TextBlock Grid.Column="1" FontWeight="DemiBold" FontSize="25">Downloads</TextBlock>
                 <TextBox x:Name="SearchBox" Grid.Column="2" HorizontalAlignment="Right" Width="300" TextChanged="SearchBox_TextChanged"/>
@@ -93,7 +93,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <Border Width="35" Height="35" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                                                <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
+                                                <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}"/>
                                             </Border>
                                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                                 <Grid.RowDefinitions>
@@ -105,13 +105,13 @@
                                             </Grid>
                                             <Button Grid.Column="2" Height="35" Click="CancelSingleButton_Click" Visibility="{Binding Stop}">
                                                 <DockPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                                                    <TextBlock Text="&#xE71A;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                     <TextBlock TextAlignment="Center" Text="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </DockPanel>
                                             </Button>
                                             <Button Grid.Column="2" Height="35" Click="OpenSingleButton_Click" Visibility="{Binding Open}">
                                                 <DockPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                                                    <TextBlock Text="&#xE838;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                     <TextBlock TextAlignment="Center" Text="Open" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </DockPanel>
                                             </Button>

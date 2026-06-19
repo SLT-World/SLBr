@@ -23,7 +23,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <TextBlock FontWeight="DemiBold" Margin="0,0,10,0" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xeb51;"/>
+                <TextBlock FontWeight="DemiBold" Margin="0,0,10,0" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="22" Text="&#xeb51;"/>
 
                 <TextBlock Grid.Column="1" FontWeight="DemiBold" FontSize="25">Favourites</TextBlock>
                 <TextBox x:Name="SearchBox" Grid.Column="2" HorizontalAlignment="Right" Width="300" TextChanged="SearchBox_TextChanged"/>
@@ -119,7 +119,7 @@
                                             <Button DockPanel.Dock="Right" Click="DeleteSingleButton_Click" ToolTip="Remove" Content="&#xe711;" Margin="0" Style="{StaticResource IconButton}"/>
                                             <Button DockPanel.Dock="Right" Click="EditButton_Click" Content="&#xe70f;" ToolTip="Edit" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
                                             <Button DockPanel.Dock="Right" PreviewMouseUp="FavouriteButton_PreviewMouseUp" Content="&#xe8a7;" ToolTip="Open" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
-                                            <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xe774;"/>
+                                            <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xe774;"/>
                                             <TextBlock Margin="0,0,5,0" Width="Auto" VerticalAlignment="Center" DockPanel.Dock="Left" Text="{Binding Name}" HorizontalAlignment="Stretch"/>
                                             <TextBlock Margin="0,0,5,0" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center" Text="{Binding Url}" HorizontalAlignment="Stretch" Width="Auto"/>
                                         </DockPanel>
@@ -130,7 +130,7 @@
                                         <DockPanel Margin="5">
                                             <Button DockPanel.Dock="Right" Click="DeleteSingleButton_Click" ToolTip="Remove" Content="&#xe711;" Margin="0" Style="{StaticResource IconButton}"/>
                                             <Button DockPanel.Dock="Right" Click="EditButton_Click" Content="&#xe70f;" ToolTip="Edit" Margin="0,0,5,0" Style="{StaticResource IconButton}"/>
-                                            <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xe8b7;"/>
+                                            <TextBlock Margin="0,0,5,0" DockPanel.Dock="Left" Width="35" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="20" Text="&#xe8b7;"/>
                                             <TextBlock Margin="0,0,5,0" Width="Auto" VerticalAlignment="Center" DockPanel.Dock="Left" Text="{Binding Name}" HorizontalAlignment="Stretch"/>
                                             <!--TODO: Favourite count subtext (e.g. "N items").-->
                                             <TextBlock Margin="0,0,5,0" Foreground="{StaticResource GrayBrush}" VerticalAlignment="Center" Text="{Binding Url}" HorizontalAlignment="Stretch" Width="Auto"/>

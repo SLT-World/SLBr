@@ -1181,6 +1181,31 @@ namespace SLBr.Pages
                                     CurrentWebAppManifestUrl = ManifestUrl;
                                 }
                             }
+                            if (bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme")))
+                            {
+                                try
+                                {
+                                    string CustomThemeColor = string.Empty;
+                                    string? Task = ((await WebView?.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content ?? document.querySelector('meta[name=\"msapplication-TileColor\"]')?.content")) ?? string.Empty).ToString();
+                                    if (Task != null)
+                                        CustomThemeColor = Task;
+                                    SetCustomTheme(CustomThemeColor);
+                                }
+                                catch { }
+                            }
+                            if (bool.Parse(App.Instance.GlobalSave.Get("OfferTranslate")))
+                            {
+                                try
+                                {
+                                    string? Language = ((await WebView?.EvaluateScriptAsync(Scripts.DetectLanguageScript)) ?? string.Empty).ToString().Split('-')[0];
+                                    if (!string.IsNullOrEmpty(Language))
+                                    {
+                                        if (!App.Instance.Languages.Any(i => i.Tooltip.StartsWith(Language)))
+                                            TranslateButton.OpenPopup();
+                                    }
+                                }
+                                catch { }
+                            }
                         }
                         else if (Address.StartsWith("file:///"))
                         {
@@ -1190,18 +1215,6 @@ namespace SLBr.Pages
                                     WebView?.ExecuteScript(Scripts.FileScript);
                             }
                         }
-                    }
-                    if (bool.Parse(App.Instance.GlobalSave.Get("AdaptiveTheme")))
-                    {
-                        try
-                        {
-                            string CustomThemeColor = string.Empty;
-                            string? Task = ((await WebView?.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content ?? document.querySelector('meta[name=\"msapplication-TileColor\"]')?.content")) ?? string.Empty).ToString();
-                            if (Task != null)
-                                CustomThemeColor = Task;
-                            SetCustomTheme(CustomThemeColor);
-                        }
-                        catch { }
                     }
                     /*IWebCookieManager CookieManager = await WebView.GetCookieManager();
                     List<string> CookieSites = await CookieManager.GetAllSites();

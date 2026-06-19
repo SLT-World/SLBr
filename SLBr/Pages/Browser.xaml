@@ -168,7 +168,7 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <DockPanel Margin="0,0,0,10" Height="Auto">
-                                            <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE896;</TextBlock>
+                                            <TextBlock FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE896;</TextBlock>
                                             <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Downloads</Label>
                                         </DockPanel>
                                         <ItemsControl Grid.Row="1" Margin="0,0,0,0" x:Name="DownloadsPopup">
@@ -183,7 +183,7 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
                                                                 <Border Width="30" Height="30" Margin="0,0,5,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                                                                    <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}"/>
+                                                                    <TextBlock Foreground="{Binding Color, TargetNullValue={StaticResource FontBrush}}" Text="{Binding Icon}" Margin="0" FontSize="18" FontWeight="UltraLight" VerticalAlignment="Center" TextAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}"/>
                                                                 </Border>
                                                                 <Grid Grid.Column="1" VerticalAlignment="Center">
                                                                     <Grid.RowDefinitions>
@@ -195,10 +195,10 @@
                                                                 </Grid>
                                                                 <!--TODO: Support pause & resume.-->
                                                                 <Button Grid.Column="2" Width="30" Height="30" ToolTip="Cancel" Click="DownloadCancelButton_Click" Tag="{Binding ID}" Visibility="{Binding Stop}">
-                                                                    <TextBlock Text="&#xE71A;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                                                                    <TextBlock Text="&#xE71A;" HorizontalAlignment="Center" VerticalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                                 </Button>
                                                                 <Button Grid.Column="2" Width="30" Height="30" ToolTip="Open" Click="DownloadOpenButton_Click" Tag="{Binding ID}" Visibility="{Binding Open}">
-                                                                    <TextBlock Text="&#xE838;" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                                                                    <TextBlock Text="&#xE838;" HorizontalAlignment="Center" VerticalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                                                                 </Button>
                                                             </Grid>
                                                             <ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Margin="0,5,0,0" Width="Auto" Maximum="100" Visibility="{Binding Progress}" Value="{Binding PercentComplete}"/>
@@ -231,7 +231,7 @@
                             </WinUI:DropDownButton.Menu>
                         </WinUI:DropDownButton>
                         <!--TODO: Resolve interaction background disparity.-->
-                        <TextBlock x:Name="WebEngineButtonIcon" Text="&#x2600;" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="7.5" FontFamily="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons" IsHitTestVisible="False" Background="{StaticResource PrimaryBrush}"/>
+                        <TextBlock x:Name="WebEngineButtonIcon" Text="&#x2600;" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="7.5" TextOptions.TextFormattingMode="Ideal" FontFamily="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons" IsHitTestVisible="False" Background="{StaticResource PrimaryBrush}"/>
                     </Grid>
                     <WinUI:PopupButton Click="ButtonAction" Tag="57&lt;,&gt;0" BorderThickness="0" x:Name="QRButton" ToolTip="Create QR Code" Content="&#xed14;" Margin="0,0,5,0" Style="{StaticResource ToolBarPopupIconButton}" DockPanel.Dock="Right">
                         <WinUI:PopupButton.PopupContent>
@@ -247,7 +247,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <DockPanel Grid.ColumnSpan="2" Margin="0,0,0,10" Height="Auto">
-                                        <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xee6f;</TextBlock>
+                                        <TextBlock FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xee6f;</TextBlock>
                                         <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Scan QR Code</Label>
                                     </DockPanel>
                                     <Grid Height="230" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
@@ -315,7 +315,7 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <DockPanel Grid.ColumnSpan="2" Margin="0,0,0,10" Height="Auto">
-                                            <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE8C1;</TextBlock>
+                                            <TextBlock FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xE8C1;</TextBlock>
                                             <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Translate Page</Label>
                                         </DockPanel>
                                         <StackPanel Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
@@ -331,7 +331,7 @@
                                                 <RowDefinition Height="10"/>
                                                 <RowDefinition Height="*"/>
                                             </Grid.RowDefinitions>
-                                            <TextBlock RenderTransformOrigin="0.5,0.5" Padding="0,0,0,0" FontSize="25px" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                            <TextBlock RenderTransformOrigin="0.5,0.5" Padding="0,0,0,0" FontSize="25px" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom">
                                                 <TextBlock.RenderTransform>
                                                     <RotateTransform/>
                                                 </TextBlock.RenderTransform>
@@ -369,7 +369,7 @@
                         <Border x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
                             <Grid>
                                 <DockPanel Margin="4.25">
-                                    <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0" Width="16px" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0" Width="16px" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock.RenderTransform>
                                             <RotateTransform x:Name="NoFreeze"/>
                                         </TextBlock.RenderTransform>
@@ -387,7 +387,7 @@
                                             <StackPanel>
                                                 <DockPanel>
                                                     <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                        <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18"/>
+                                                        <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupIcon" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18"/>
                                                     </Border>
                                                     <TextBlock VerticalAlignment="Center" x:Name="SiteInformationPopupText"/>
                                                 </DockPanel>
@@ -395,7 +395,7 @@
                                                     <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
                                                     <DockPanel>
                                                         <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xea18;"/>
+                                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xea18;"/>
                                                         </Border>
                                                         <ToggleButton x:Name="AdBlockToggleButton" Click="AdBlockToggleButton_Click" DockPanel.Dock="Right"/>
                                                         <StackPanel VerticalAlignment="Center">
@@ -408,7 +408,7 @@
                                                     <Separator Margin="0,0,0,10" Background="{StaticResource BorderBrush}"/>
                                                     <DockPanel>
                                                         <Border Width="35" Height="35" Margin="0,0,10,0" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource PrimaryBrush}" CornerRadius="5">
-                                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
+                                                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="&#xEB95;"/>
                                                         </Border>
                                                         <TextBlock x:Name="CertificateValidation" VerticalAlignment="Center" Text="Certificate is valid"/>
                                                     </DockPanel>
@@ -458,7 +458,7 @@
                                     <StackPanel Focusable="False" Orientation="Horizontal" Margin="0">
                                         <Border Margin="-8,0,5,0" Width="30" Height="30" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="5" Background="{StaticResource PrimaryBrush}">
                                             <Grid>
-                                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
+                                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" FontSize="18" Text="{Binding Icon}"/>
                                                 <Image Visibility="{Binding Image, Converter={StaticResource NullToVisibility}}" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" Source="{Binding Image}" Width="29" Height="29">
                                                     <Image.Style>
                                                         <Style TargetType="Image">
@@ -517,10 +517,10 @@
                                     </Button>
                                 </DataTemplate>
                                 <DataTemplate x:Key="FolderTemplate">
-                                    <WinUI:DropDownButton ContextMenu="{StaticResource FavouriteFolderContextMenu}" MaxWidth="150" Width="Auto" TextOptions.TextFormattingMode="Display" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" Margin="0,0,5,0" Height="30">
+                                    <WinUI:DropDownButton ContextMenu="{StaticResource FavouriteFolderContextMenu}" TextOptions.TextFormattingMode="Display" MaxWidth="150" Width="Auto" BorderBrush="Transparent" HorizontalContentAlignment="Left" Padding="5" VerticalContentAlignment="Center" Margin="0,0,5,0" Height="30">
                                         <WinUI:DropDownButton.Content>
                                             <DockPanel VerticalAlignment="Center">
-                                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0" FontFamily="{StaticResource IconFontFamily}" Text="&#xe8b7;" FontSize="16"/>
+                                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="&#xe8b7;" FontSize="16"/>
                                                 <TextBlock TextAlignment="Center" Text="{Binding Name}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </DockPanel>
                                         </WinUI:DropDownButton.Content>
@@ -582,7 +582,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <DockPanel Margin="10,5">
-                                                    <TextBlock Visibility="{Binding Icon, Converter={StaticResource NullToVisibility}}" Foreground="{Binding IconForeground, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,10,0" Text="{Binding Icon}"/>
+                                                    <TextBlock Visibility="{Binding Icon, Converter={StaticResource NullToVisibility}}" Foreground="{Binding IconForeground, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,10,0" Text="{Binding Icon}"/>
                                                     <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" TextTrimming="CharacterEllipsis" FontWeight="Medium" Text="{Binding Title}"/>
                                                     <ItemsControl ItemsSource="{Binding Description}" VerticalAlignment="Center" Margin="0,0,10,0">
                                                         <ItemsControl.ItemsPanel>
@@ -670,20 +670,20 @@
                             </DockPanel>
                             <ComboBox Width="55" SelectedIndex="3" ToolTip="Dock side" x:Name="SideBarDockDropdown" SelectionChanged="InspectorDockDropdown_SelectionChanged">
                                 <ComboBoxItem ToolTip="Top">
-                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" RenderTransformOrigin="0.5,0.5" Text="&#xE90E;">
+                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" RenderTransformOrigin="0.5,0.5" Text="&#xE90E;">
                                         <TextBlock.RenderTransform>
                                             <RotateTransform Angle="180"/>
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                 </ComboBoxItem>
                                 <ComboBoxItem ToolTip="Bottom">
-                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90E;"/>
+                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90E;"/>
                                 </ComboBoxItem>
                                 <ComboBoxItem ToolTip="Left">
-                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90C;"/>
+                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90C;"/>
                                 </ComboBoxItem>
                                 <ComboBoxItem ToolTip="Right">
-                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90D;"/>
+                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="18" FontWeight="Normal" TextAlignment="Center" Text="&#xE90D;"/>
                                 </ComboBoxItem>
                             </ComboBox>
                         </DockPanel>

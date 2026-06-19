@@ -57,6 +57,7 @@
 
     <Style TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
         <Style.Triggers>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
@@ -185,7 +186,7 @@
                             <Grid Width="{TemplateBinding Height}" Height="{TemplateBinding Height}">
                                 <Border x:Name="Border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" CornerRadius="5"/>
                                 <Border Opacity="0" x:Name="IndicatorBorder" BorderThickness="0" Background="{DynamicResource IndicatorBrush}" CornerRadius="5"/>
-                                <TextBlock Opacity="0" x:Name="Checkmark" Padding="0,0,0,0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Opacity="0" x:Name="Checkmark" Padding="0,0,0,0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
                         </BulletDecorator.Bullet>
                         <ContentPresenter x:Name="content" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" RecognizesAccessKey="True"/>
@@ -1136,7 +1137,7 @@ Margin="{TemplateBinding Padding}"/>
                                     </Style>
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
-                            <TextBlock Grid.Column="1" Margin="5,0,0,0" Foreground="{Binding Path=Foreground,RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Text="{Binding Path=(controls:ControlExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type Button}}}" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                            <TextBlock Grid.Column="1" Margin="5,0,0,0" Foreground="{Binding Path=Foreground,RelativeSource={RelativeSource AncestorType={x:Type Button}}}" Text="{Binding Path=(controls:ControlExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type Button}}}" HorizontalAlignment="Left" VerticalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                         </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -1186,6 +1187,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="FontWeight" Value="UltraLight"/>
         <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
     </Style>
     <Style TargetType="{x:Type Button}" x:Key="TabIconButton" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Height" Value="35"/>
@@ -1193,6 +1195,7 @@ Margin="{TemplateBinding Padding}"/>
         <Setter Property="FontSize" Value="18"/>
         <Setter Property="FontWeight" Value="UltraLight"/>
         <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -1251,7 +1254,7 @@ Margin="{TemplateBinding Padding}"/>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
                         <DockPanel Margin="{TemplateBinding Padding}" VerticalAlignment="Center">
-                            <TextBlock Foreground="{TemplateBinding Foreground}" Text="&#xe71b;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                            <TextBlock Foreground="{TemplateBinding Foreground}" Text="&#xe71b;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
                             <TextBlock x:Name="Text" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </DockPanel>
                     </Grid>
@@ -1354,7 +1357,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1455,7 +1458,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1499,7 +1502,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1828,7 +1831,7 @@ Margin="{TemplateBinding Padding}"/>
                         <Grid>
                             <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{TemplateBinding Background}"/>
                             <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                            <ContentPresenter Margin="{TemplateBinding Padding}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}"/>
+                            <ContentPresenter Margin="{TemplateBinding Padding}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}"/>
                         </Grid>
                         <Popup 
           Name="Popup"
@@ -1897,10 +1900,7 @@ Margin="{TemplateBinding Padding}"/>
     TargetType="{x:Type MenuItem}">
         <Border Name="Border">
             <Grid>
-                <ContentPresenter 
-          Margin="6,3,6,3" 
-          ContentSource="Header"
-          RecognizesAccessKey="True" />
+                <ContentPresenter Margin="6,3,6,3" ContentSource="Header" RecognizesAccessKey="True"/>
             </Grid>
         </Border>
         <ControlTemplate.Triggers>
@@ -1925,7 +1925,7 @@ Margin="{TemplateBinding Padding}"/>
     <ControlTemplate x:Key="IconMenuItemTemplate" TargetType="{x:Type MenuItem}">
         <Border Name="Border" CornerRadius="5" Margin="0" Height="35" Width="35" BorderThickness="1" BorderBrush="Transparent">
             <Border x:Name="Icon" Width="30" Height="30" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ContentPresenter Margin="0" TextBlock.Foreground="{TemplateBinding Foreground}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}">
+                <ContentPresenter Margin="0" TextBlock.Foreground="{TemplateBinding Foreground}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}">
                     <ContentPresenter.Resources>
                         <Style TargetType="TextBlock">
                             <Style.Triggers>
@@ -1969,7 +1969,7 @@ Margin="{TemplateBinding Padding}"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="Icon" Width="30" Height="30" Margin="2.5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
-                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}">
+                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}">
                         <ContentPresenter.Resources>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
@@ -1991,7 +1991,7 @@ Margin="{TemplateBinding Padding}"/>
                     </ContentPresenter>
                 </Border>
                 <Border Name="Check" Width="20" Height="20" Visibility="Collapsed" VerticalAlignment="Center" Margin="5,0" Background="{DynamicResource PrimaryBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                    <TextBlock Opacity="1" x:Name="Checkmark" Padding="0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Opacity="1" x:Name="Checkmark" Padding="0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <ContentPresenter 
           Name="HeaderHost"
@@ -2085,12 +2085,22 @@ Margin="{TemplateBinding Padding}"/>
             <Grid Margin="0,1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
-                <Border x:Name="Icon" Width="30" Height="30" Margin="2.5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
-                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextBlock.FontFamily="{StaticResource IconFontFamily}"/>
+                <Border x:Name="Icon" Width="30" Height="30" Margin="2.5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
+                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}">
+                        <ContentPresenter.Resources>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentPresenter.Resources>
+                    </ContentPresenter>
                 </Border>
                 <ContentPresenter 
           Name="HeaderHost"
@@ -2422,7 +2432,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock Padding="{TemplateBinding Padding}" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <TextBlock Padding="{TemplateBinding Padding}" TextOptions.TextFormattingMode="Ideal" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -2630,7 +2640,7 @@ Margin="{TemplateBinding Padding}"/>
                                             </Grid.Style>
                                         </Grid>
                                         <Border Visibility="{Binding SubIcon, Converter={StaticResource NullToVisibility}}" Margin="-7,-6" VerticalAlignment="Bottom" HorizontalAlignment="Right" CornerRadius="10" Width="16" Height="16">
-                                            <TextBlock Foreground="{Binding SubIconForeground, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" Text="{Binding SubIcon}"/>
+                                            <TextBlock Foreground="{Binding SubIconForeground, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="{Binding SubIcon}"/>
                                         </Border>
                                     </Grid>
                                     <!--<Image.Source>
@@ -2773,7 +2783,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border Name="Border" Width="35" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0"/>
                         <Border Opacity="0" Width="35" Name="BorderMouseOver" Background="{DynamicResource BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="5" Margin="0"/>
-                        <TextBlock Margin="0" RenderTransformOrigin="0.5,0.5"  FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" Foreground="{TemplateBinding Foreground}" Text="&#xE8BB;" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Margin="0" RenderTransformOrigin="0.5,0.5" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" TextAlignment="Center" Foreground="{TemplateBinding Foreground}" Text="&#xE8BB;" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock.RenderTransform>
                                 <RotateTransform Angle="45"/>
                             </TextBlock.RenderTransform>
@@ -2889,7 +2899,7 @@ Margin="{TemplateBinding Padding}"/>
                                             </Grid.Style>
                                         </Grid>
                                         <Border Visibility="{Binding SubIcon, Converter={StaticResource NullToVisibility}}" Margin="-7,-6" VerticalAlignment="Bottom" HorizontalAlignment="Right" CornerRadius="10" Width="16" Height="16">
-                                            <TextBlock Foreground="{Binding SubIconForeground, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource IconFontFamily}" Text="{Binding SubIcon}"/>
+                                            <TextBlock Foreground="{Binding SubIconForeground, TargetNullValue={StaticResource FontBrush}}" VerticalAlignment="Center" HorizontalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="{Binding SubIcon}"/>
                                         </Border>
                                     </Grid>
                                     <ContentPresenter HorizontalAlignment="Stretch" Width="{TemplateBinding MaxWidth}" x:Name="ContentSite" TextBlock.TextAlignment="Left" VerticalAlignment="Center" ContentSource="Header" Margin="7.5,0">
@@ -3065,7 +3075,7 @@ Margin="{TemplateBinding Padding}"/>
                                                         <GeometryDrawing.Brush>
                                                             <VisualBrush Stretch="Uniform">
                                                                 <VisualBrush.Visual>
-                                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="&#xE8BB;" RenderTransformOrigin="0.5,0.5">
+                                                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="&#xE8BB;" RenderTransformOrigin="0.5,0.5">
                                                                         <TextBlock.RenderTransform>
                                                                             <RotateTransform Angle="45"/>
                                                                         </TextBlock.RenderTransform>
@@ -3163,7 +3173,7 @@ Margin="{TemplateBinding Padding}"/>
                                                         <GeometryDrawing.Brush>
                                                             <VisualBrush Stretch="Uniform">
                                                                 <VisualBrush.Visual>
-                                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Tag}"/>
+                                                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Tag}"/>
                                                                 </VisualBrush.Visual>
                                                             </VisualBrush>
                                                         </GeometryDrawing.Brush>
@@ -3266,7 +3276,7 @@ Margin="{TemplateBinding Padding}"/>
                                                         <GeometryDrawing.Brush>
                                                             <VisualBrush Stretch="Uniform">
                                                                 <VisualBrush.Visual>
-                                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Tag}" Foreground="{TemplateBinding BorderBrush}"/>
+                                                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Tag}" Foreground="{TemplateBinding BorderBrush}"/>
                                                                 </VisualBrush.Visual>
                                                             </VisualBrush>
                                                         </GeometryDrawing.Brush>
@@ -3660,7 +3670,7 @@ Margin="{TemplateBinding Padding}"/>
                                                     <GeometryDrawing.Brush>
                                                         <VisualBrush Stretch="Uniform">
                                                             <VisualBrush.Visual>
-                                                                <TextBlock FontFamily="{StaticResource IconFontFamily}" Text="{Binding Path=(controls:ControlExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}}"/>
+                                                                <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="{Binding Path=(controls:ControlExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}}"/>
                                                             </VisualBrush.Visual>
                                                         </VisualBrush>
                                                     </GeometryDrawing.Brush>

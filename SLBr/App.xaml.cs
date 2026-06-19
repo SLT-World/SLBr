@@ -3169,6 +3169,9 @@ Inner Exception: {7}";
             if (!GlobalSave.Has("AdaptiveTheme"))
                 GlobalSave.Set("AdaptiveTheme", false);
 
+            if (!GlobalSave.Has("OfferTranslate"))
+                GlobalSave.Set("OfferTranslate", false);
+
             if (!GlobalSave.Has("ScreenshotFormat"))
                 GlobalSave.Set("ScreenshotFormat", 0);
 
@@ -5521,6 +5524,46 @@ window.addEventListener('click', function(e) {
         public const string DefaultBackgroundColorScript = @"(function() {
     function isTransparent(color){return !color||color==='transparent'||color==='rgba(0, 0, 0, 0)';}
     if (isTransparent(window.getComputedStyle(document.documentElement).backgroundColor)&&isTransparent(window.getComputedStyle(document.body).backgroundColor))document.documentElement.style.setProperty('background-color', 'white');
+})();";
+
+        public const string DetectLanguageScript = @"(function() {
+    const htmlLang = document.documentElement.getAttribute('lang');
+    if (htmlLang) return htmlLang.trim().toLowerCase();
+    const ogLocale = document.querySelector('meta[property=""og:locale""]');
+    if (ogLocale && ogLocale.getAttribute('content')) return ogLocale.getAttribute('content').trim().toLowerCase();
+    const legacyLang = document.querySelector('meta[name=""language""]');
+    if (legacyLang && legacyLang.getAttribute('content')) return legacyLang.getAttribute('content').trim().toLowerCase();
+    const twitterCountry = document.querySelector('meta[name=""twitter:app:country""]');
+    if (twitterCountry && twitterCountry.getAttribute('content')) return twitterCountry.getAttribute('content').trim().toLowerCase();
+    const jsonLdScripts = document.querySelectorAll('script[type=""application/ld+json""]');
+    function findInLanguage(obj) {
+        if (!obj || typeof obj !== 'object') return null;
+        if (obj.inLanguage) {
+            if (typeof obj.inLanguage === 'string') return obj.inLanguage;
+            if (typeof obj.inLanguage === 'object' && obj.inLanguage.name) return obj.inLanguage.name;
+            if (typeof obj.inLanguage === 'object' && obj.inLanguage.alternateName) return obj.inLanguage.alternateName;
+        }
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                const result = findInLanguage(obj[key]);
+                if (result) return result.toLowerCase();
+            }
+        }
+        return null;
+    }
+    for (const script of jsonLdScripts) {
+        try {
+            const data = JSON.parse(script.textContent);
+            const foundLang = findInLanguage(data);
+            if (foundLang) return foundLang.trim().toLowerCase();
+        } catch {}
+    }
+    const navEntry = performance.getEntriesByType('navigation')[0];
+    if (navEntry && navEntry.responseHeaders) {
+        const contentLangHeader = navEntry.responseHeaders.get('content-language');
+        if (contentLangHeader) return contentLangHeader.trim().toLowerCase();
+    }
+    return null;
 })();";
 
         /*public const string FetchOpenGraphProtocolScript = @"(async () => {

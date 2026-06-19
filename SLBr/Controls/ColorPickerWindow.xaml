@@ -24,7 +24,7 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel Margin="0,0,0,10" Grid.Row="0" Height="Auto">
-                    <TextBlock FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xef3c;</TextBlock>
+                    <TextBlock FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xef3c;</TextBlock>
                     <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Color Picker</Label>
                 </DockPanel>
                 <StackPanel Margin="0,0,0,10" Grid.Row="1">

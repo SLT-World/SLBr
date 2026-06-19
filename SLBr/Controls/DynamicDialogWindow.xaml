@@ -24,9 +24,9 @@
                 </Grid.RowDefinitions>
 
                 <DockPanel Margin="0,0,0,10" Grid.Row="0" Height="Auto">
-                    <TextBlock x:Name="TitleIcon" FontSize="18" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xe946;</TextBlock>
+                    <TextBlock x:Name="TitleIcon" FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0"></TextBlock>
                     <Label Margin="0,0,0,0" Padding="0" FontWeight="Medium" FontSize="14">
-                        <TextBlock Name="TitleText" TextTrimming="CharacterEllipsis">Title</TextBlock>
+                        <TextBlock Name="TitleText" TextTrimming="CharacterEllipsis"></TextBlock>
                     </Label>
                 </DockPanel>
                 <StackPanel x:Name="InputStack" Grid.Row="1">
@@ -84,7 +84,7 @@
                                                             <Grid Width="30" Height="30">
                                                                 <Border Name="ItemBorder" CornerRadius="1000" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
                                                                 <Border Opacity="0" x:Name="Border" BorderThickness="2" BorderBrush="{StaticResource IndicatorBrush}" CornerRadius="1000"/>
-                                                                <TextBlock Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center" FontSize="16" FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Content}"/>
+                                                                <TextBlock Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center" FontSize="16" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="{TemplateBinding Content}"/>
                                                             </Grid>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsSelected" Value="True">
