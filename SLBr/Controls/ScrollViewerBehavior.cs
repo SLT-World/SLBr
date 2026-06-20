@@ -10,15 +10,15 @@ namespace SLBr.Controls
     {
         public static readonly DependencyProperty VerticalOffsetProperty = DependencyProperty.RegisterAttached("VerticalOffset", typeof(double), typeof(ScrollViewerBehavior), new PropertyMetadata(0.0, OnVerticalOffsetChanged));
 
-        public static double GetVerticalOffset(DependencyObject element) =>
-            (double)element.GetValue(VerticalOffsetProperty);
+        public static double GetVerticalOffset(DependencyObject _Object) =>
+            (double)_Object.GetValue(VerticalOffsetProperty);
 
-        public static void SetVerticalOffset(DependencyObject element, double value) =>
-            element.SetValue(VerticalOffsetProperty, value);
+        public static void SetVerticalOffset(DependencyObject _Object, double Value) =>
+            _Object.SetValue(VerticalOffsetProperty, Value);
 
-        private static void OnVerticalOffsetChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
+        private static void OnVerticalOffsetChanged(DependencyObject _Object, DependencyPropertyChangedEventArgs e)
         {
-            if (element is ScrollViewer Viewer)
+            if (_Object is ScrollViewer Viewer)
                 Viewer.ScrollToVerticalOffset((double)e.NewValue);
         }
     }

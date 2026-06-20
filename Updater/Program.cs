@@ -131,9 +131,9 @@ namespace Updater
                                 long TotalRead = 0;
                                 int Read;
                                 int LastProgress = -1;
-                                while ((Read = await _Stream.ReadAsync(Buffer, 0, Buffer.Length)) > 0)
+                                while ((Read = await _Stream.ReadAsync(Buffer)) > 0)
                                 {
-                                    await _FileStream.WriteAsync(Buffer, 0, Read);
+                                    await _FileStream.WriteAsync(Buffer.AsMemory(0, Read));
                                     TotalRead += Read;
 
                                     if (TotalBytes.HasValue)

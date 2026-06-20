@@ -2,9 +2,11 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using System.IO;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace SLBr.Handlers
@@ -32,34 +34,36 @@ namespace SLBr.Handlers
         }
 
         //TODO: Figure out a way to generate an ico that can be used as an icon for shortcuts. Tried and failed without utilizing external libraries.
-        public static void SaveAsIcon(BitmapSource Image, string FilePath, int Size = 256)
+        public static async Task SaveAsIcon(BitmapSource Image, string FilePath, int Size = 256)
         {
-            TransformedBitmap Scaled = new(Image, new System.Windows.Media.ScaleTransform((double)Size / Image.PixelWidth, (double)Size / Image.PixelHeight));
+            double Scale = Math.Min((double)Size / Image.PixelWidth, (double)Size / Image.PixelHeight);
+            TransformedBitmap Scaled = new(Image, new ScaleTransform(Scale, Scale));
             PngBitmapEncoder Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(Scaled));
 
-            using (MemoryStream Stream = new())
-            using (FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write))
-            {
-                Encoder.Save(Stream);
-                byte[] Bytes = Stream.ToArray();
-                using (BinaryWriter Writer = new(_FileStream))
-                {
-                    Writer.Write((short)0);
-                    Writer.Write((short)1);
-                    Writer.Write((short)1);
+            using FileStream Stream = new(FilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+            using BinaryWriter Writer = new(Stream);
 
-                    Writer.Write((byte)Size);
-                    Writer.Write((byte)Size);
-                    Writer.Write((byte)0);
-                    Writer.Write((byte)0);
-                    Writer.Write((short)1);
-                    Writer.Write((short)32);
-                    Writer.Write(Bytes.Length);
-                    Writer.Write(6 + 16);
-                    Writer.Write(Bytes);
-                }
-            }
+            Writer.Write((short)0);
+            Writer.Write((short)1);
+            Writer.Write((short)1);
+            Writer.Write((byte)Size);
+            Writer.Write((byte)Size);
+            Writer.Write((byte)0);
+            Writer.Write((byte)0);
+            Writer.Write((short)1);
+            Writer.Write((short)32);
+            Writer.Write(0);
+            Writer.Write(6 + 16);
+
+            long DataStartOffset = Stream.Position;
+            Encoder.Save(Stream);
+            long DataEndOffset = Stream.Position;
+
+            int ByteLength = (int)(DataEndOffset - DataStartOffset);
+            Stream.Seek(14, SeekOrigin.Begin);
+            Writer.Write(ByteLength);
+            await Stream.FlushAsync();
         }
 
         public static async Task Install(WebAppManifest Manifest)
@@ -73,19 +77,22 @@ namespace SLBr.Handlers
             {
                 try
                 {
-                    using MemoryStream Stream = new(await App.MiniHttpClient.GetByteArrayAsync(Best.Source));
-                    BitmapDecoder Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                    BitmapFrame Frame = Decoder.Frames[0];
-                    Frame.SafeFreeze();
-                    try
+                    using HttpResponseMessage Response = await App.MiniHttpClient.GetAsync(Best.Source, HttpCompletionOption.ResponseHeadersRead);
+                    if (Response.IsSuccessStatusCode)
                     {
-                        using FileStream ImageStream = new(ImagePath, FileMode.Create);
-                        PngBitmapEncoder Encoder = new();
-                        Encoder.Frames.Add(Frame);
-                        Encoder.Save(ImageStream);
-                        SaveAsIcon(Frame, ImagePath);
+                        using Stream NetworkStream = await Response.Content.ReadAsStreamAsync();
+                        using MemoryStream Stream = new();
+                        await NetworkStream.CopyToAsync(Stream);
+                        Stream.Position = 0;
+                        BitmapDecoder Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                        if (Decoder.Frames.Count != 0)
+                        {
+                            BitmapFrame Frame = Decoder.Frames[0];
+                            Frame.SafeFreeze();
+                            try { await SaveAsIcon(Frame, ImagePath); }
+                            catch { }
+                        }
                     }
-                    catch { }
                 }
                 catch { }
             }

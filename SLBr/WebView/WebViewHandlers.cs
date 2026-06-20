@@ -748,7 +748,7 @@ namespace SLBr.WebView
             try
             {
                 //TODO: Implement pause & resume functionality.
-                using var Response = await DownloadHttpClient.Value.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
+                using HttpResponseMessage Response = await DownloadHttpClient.Value.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
 
                 Response.EnsureSuccessStatusCode();
                 Item.TotalBytes = Response.Content.Headers.ContentLength ?? -1;
@@ -1189,7 +1189,7 @@ namespace SLBr.WebView
                 DictionarySuggestions = parameters.DictionarySuggestions,
                 //MisspelledWord = parameters.MisspelledWord,
                 SourceUrl = parameters.SourceUrl,
-                SpellCheck = parameters.IsSpellCheckEnabled,
+                //SpellCheck = parameters.IsSpellCheckEnabled,
                 MediaType = parameters.MediaType.ToWebContextMenuMediaType(),
                 MenuType = parameters.TypeFlags.ToWebContextMenuType()
             });

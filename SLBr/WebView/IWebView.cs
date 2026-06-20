@@ -347,7 +347,7 @@ namespace SLBr.WebView
         public string SelectionText { get; set; }
 
         public bool IsEditable { get; set; }
-        public bool SpellCheck { get; set; }
+        //public bool SpellCheck { get; set; }
         public List<string> DictionarySuggestions { get; set; }
         public WebContextMenuMediaType MediaType { get; set; }
         public WebContextMenuType MenuType { get; set; }
@@ -2161,7 +2161,7 @@ namespace SLBr.WebView
 
     public class ChromiumEdgeWebView : IWebView, IDisposable
     {
-        private WebView2 Browser;
+        public WebView2 Browser;
         private WebViewBrowserSettings Settings;
         private readonly List<WebNavigationEntry> InitialUrls;
         public CoreWebView2 BrowserCore;
@@ -2533,7 +2533,7 @@ namespace SLBr.WebView
                 //MisspelledWord = string.Empty,
                 SourceUrl = SourceUrl,
                 FrameUrl = FrameUrl,
-                SpellCheck = false,
+                //SpellCheck = false,
                 MediaType = Target?.Kind.ToWebContextMenuMediaType() ?? WebContextMenuMediaType.None,
                 MenuType = Target?.MapWebContextMenuTarget() ?? WebContextMenuType.Page
             };
@@ -3794,9 +3794,9 @@ namespace SLBr.WebView
             var BitmapSource = Imaging.CreateBitmapSourceFromHBitmap(hBitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             DllUtils.DeleteObject(hBitmap);
 
-            PngBitmapEncoder Encoder = new PngBitmapEncoder();
+            PngBitmapEncoder Encoder = new();
             Encoder.Frames.Add(BitmapFrame.Create(BitmapSource));
-            using MemoryStream Stream = new MemoryStream();
+            using MemoryStream Stream = new();
             Encoder.Save(Stream);
             return Stream.ToArray();
         }

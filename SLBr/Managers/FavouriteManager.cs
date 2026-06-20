@@ -1,6 +1,13 @@
-﻿using CefSharp.DevTools.LayerTree;
+﻿/*Copyright © SLT Softwares. All rights reserved.
+Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
+
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SLBr.Managers
 {
@@ -147,6 +154,113 @@ namespace SLBr.Managers
                     GeneratedParent = Layer;
                 return Layer;
             }
+        }
+    }
+    public class Favourite : INotifyPropertyChanged
+    {
+        #region INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged = delegate { };
+
+        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
+            PropertyChanged(this, new PropertyChangedEventArgs(Name));
+        #endregion
+
+        [JsonPropertyName("children")]
+        public ObservableCollection<Favourite> Children
+        {
+            get => _Children;
+            set
+            {
+                if (_Children != value)
+                {
+                    _Children?.CollectionChanged -= Children_CollectionChanged;
+                    _Children = value;
+                    _Children?.CollectionChanged += Children_CollectionChanged;
+                    RaisePropertyChanged();
+                }
+            }
+        }
+        private void Children_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            RaisePropertyChanged(nameof(HasFolderChildren));
+        }
+
+        private ObservableCollection<Favourite> _Children;
+
+        [JsonPropertyName("name")]
+        public string Name
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_Name))
+                    return Url;
+                return _Name;
+            }
+            set
+            {
+                _Name = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Name;
+
+        [JsonPropertyName("type")]
+        public string Type
+        {
+            get => _Type;
+            set
+            {
+                _Type = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Type;
+
+        [JsonPropertyName("url")]
+        public string Url
+        {
+            get => _Url;
+            set
+            {
+                _Url = value;
+                RaisePropertyChanged();
+            }
+        }
+        private string _Url;
+
+        [JsonIgnore]
+        public Favourite? Parent;
+
+        [JsonIgnore]
+        public bool HasFolderChildren
+        {
+            get => Children != null && Children.Any(i => i.Type == "folder");
+        }
+    }
+
+    public class BookmarksManager
+    {
+        public class Bookmarks
+        {
+            [JsonPropertyName("roots")]
+            public BookmarkRoots Roots { get; set; }
+        }
+        public class BookmarkRoots
+        {
+            [JsonPropertyName("bookmark_bar")]
+            public Favourite Bookmarks { get; set; }
+        }
+
+        public static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        public static Bookmarks Import(string _Path)
+        {
+            return JsonSerializer.Deserialize<Bookmarks>(File.ReadAllText(_Path), JsonOptions)!;
         }
     }
 }

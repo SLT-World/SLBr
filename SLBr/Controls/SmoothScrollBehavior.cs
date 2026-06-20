@@ -20,15 +20,15 @@ namespace SLBr.Controls
         private static ScrollViewer? ActiveScrollViewer;
         private static bool Hooked;
 
-        public static void SetEnable(DependencyObject element, bool value) =>
-            element.SetValue(EnableProperty, value);
+        public static bool GetEnable(DependencyObject _Object) =>
+            (bool)_Object.GetValue(EnableProperty);
 
-        public static bool GetEnable(DependencyObject element) =>
-            (bool)element.GetValue(EnableProperty);
+        public static void SetEnable(DependencyObject _Object, bool Value) =>
+            _Object.SetValue(EnableProperty, Value);
 
-        private static void OnEnableChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
+        private static void OnEnableChanged(DependencyObject _Object, DependencyPropertyChangedEventArgs e)
         {
-            if (element is not UIElement Viewer)
+            if (_Object is not UIElement Viewer)
                 return;
 
             if ((bool)e.NewValue)

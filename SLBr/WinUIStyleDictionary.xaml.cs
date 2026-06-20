@@ -464,5 +464,10 @@ namespace SLBr
             if (sender is DependencyObject Object)
                 App.Instance.GetWindow(Object).GetTab().Content?.WebView_StatusMessage(null, "");
         }
+
+        private void EmojiMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Utils.ShowEmojiPicker();
+        }
     }
 }

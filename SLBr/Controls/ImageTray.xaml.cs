@@ -8,6 +8,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Windows.Shell;
 
 namespace SLBr.Controls
 {
@@ -49,20 +50,44 @@ namespace SLBr.Controls
             foreach (var Image in ImageFiles)
                 DownloadImages.Add(new DownloadImageEntry { Path = Image, File = Path.GetFileName(Image) });
 
+            DownloadsColumn.Width = new GridLength(DownloadImages.Any() ? 500 : 0);
+
             if (Clipboard.ContainsImage())
             {
-                PngBitmapEncoder Encoder = new PngBitmapEncoder();
-                Encoder.Frames.Add(BitmapFrame.Create(Clipboard.GetImage()));
-                string TempPath = Path.Combine(Path.GetTempPath(), $"clipboard_{Guid.NewGuid()}.png");
-                using (var _Stream = new FileStream(TempPath, FileMode.Create))
-                    Encoder.Save(_Stream);
-                ClipboardButton.Tag = TempPath;
-                ClipboardImage.ImageSource = new BitmapImage(new Uri(TempPath));
+                BitmapSource RawClipboardImage = Clipboard.GetImage();
+                if (RawClipboardImage == null)
+                    return;
+                RawClipboardImage.SafeFreeze();
+                ClipboardImage.ImageSource = RawClipboardImage;
                 ClipboardColumn.Width = new GridLength(160);
+
+                string TempPath = Path.Combine(Path.GetTempPath(), $"clipboard_{Guid.NewGuid()}.png");
+                ClipboardButton.Tag = TempPath;
                 ClipboardFileName.Content = Path.GetFileName(TempPath);
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        PngBitmapEncoder Encoder = new();
+                        Encoder.Frames.Add(BitmapFrame.Create(RawClipboardImage));
+                        using FileStream _Stream = new(TempPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+                        Encoder.Save(_Stream);
+                        await _Stream.FlushAsync();
+                    }
+                    catch { }
+                });
             }
             else
+            {
                 ClipboardColumn.Width = new GridLength(0);
+                if (!DownloadImages.Any())
+                {
+                    AllFilesButton_Click(null, null);
+                    DialogResult = true;
+                    Close();
+                }
+            }
         }
 
         private void FileButton_Click(object sender, RoutedEventArgs e)
@@ -80,7 +105,7 @@ namespace SLBr.Controls
 
         private void AllFilesButton_Click(object sender, RoutedEventArgs e)
         {
-            List<string> FilterParts = new();
+            List<string> FilterParts = [];
             if (FileDescriptions != null && FileExtensions != null && FileDescriptions.Count == FileExtensions.Count)
             {
                 string[] DescriptionArray = FileDescriptions.ToArray();

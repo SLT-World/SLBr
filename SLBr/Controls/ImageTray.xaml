@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SLBr.Controls"
         mc:Ignorable="d"
-        Title="ImageTray" Height="300" Width="500" Loaded="Window_Loaded" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent" MinWidth="400">
+        Title="ImageTray" Height="300" Loaded="Window_Loaded" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent">
     <Window.Resources>
         <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
     </Window.Resources>
@@ -25,10 +25,10 @@
                     <TextBlock FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xee71;</TextBlock>
                     <Label Padding="0" FontWeight="Medium" FontSize="14">Quick Image Picker</Label>
                 </DockPanel>
-                <Grid Grid.Row="1">
+                <Grid Grid.Row="1" Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition x:Name="ClipboardColumn" Width="160"/>
-                        <ColumnDefinition Width="*" MaxWidth="500"/>
+                        <ColumnDefinition Width="*" x:Name="DownloadsColumn" MaxWidth="500"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Margin="0,0,0,10" VerticalAlignment="Center">Clipboard</TextBlock>

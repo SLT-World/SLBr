@@ -69,6 +69,30 @@ namespace SLBr.Pages
         {
             BrowserView = _BrowserView;
         }
+
+        protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseRightButtonUp(e);
+            if (e.Handled) return;
+            /*if (Utils.FindAncestorOfType<TextBoxBase>(e.OriginalSource as DependencyObject) != null)
+                return;*/
+            /*if (Utils.FindAncestorOfType<TextBlock>(e.OriginalSource as DependencyObject) != null)
+                return;*/
+            var (Ancestor, HasContextMenu) = Utils.FindAncestorContextMenu(e.OriginalSource as DependencyObject);
+            if (HasContextMenu)
+                return;
+            if (Ancestor != null && !HasContextMenu && Ancestor is TextBlock _TextBlock)
+            {
+                string SelectionText = TextBlockSelectionBehaviour.GetSelectedText(_TextBlock);
+                if (!string.IsNullOrEmpty(SelectionText))
+                {
+                    BrowserView.WebView_ContextMenuRequested(Ancestor, new WebContextMenuEventArgs() { MenuType = WebContextMenuType.Selection, FrameUrl = BrowserView.Address, SelectionText = SelectionText });
+                    return;
+                }
+            }
+            BrowserView.WebView_ContextMenuRequested(this, new WebContextMenuEventArgs() { MenuType = WebContextMenuType.Page, FrameUrl = BrowserView.Address });
+        }
+
         string PreviousUrl = string.Empty;
         string CurrentUrl = string.Empty;
         public void OnNavigated()

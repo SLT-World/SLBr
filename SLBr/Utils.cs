@@ -4,11 +4,9 @@ Use of this source code is governed by a GNU license that can be found in the LI
 using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Win32;
+using SLBr.Controls;
 using SLBr.WebView;
 using System.Buffers;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
@@ -17,12 +15,10 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -761,9 +757,45 @@ namespace SLBr
             {
                 if (Element is T TypedElement)
                     return TypedElement;
-                Element = VisualTreeHelper.GetParent(Element);
+                if (Element is FrameworkContentElement ContentElement)
+                    Element = ContentElement.Parent;
+                else
+                    Element = VisualTreeHelper.GetParent(Element);
             }
             return null;
+        }
+
+        public static (FrameworkElement, bool HasContextMenu) FindAncestorContextMenu(DependencyObject Element)
+        {
+            try
+            {
+                while (Element != null)
+                {
+                    /*if (Element is FrameworkElement _FrameworkElement && _FrameworkElement.ContextMenu != null)
+                        return true;*/
+                    if (Element is FrameworkElement _FrameworkElement)
+                    {
+                        if (_FrameworkElement.ContextMenu != null)
+                        {
+                            if (_FrameworkElement is TextBlock _TextBlock && TextBlockSelectionBehaviour.GetEnable(_TextBlock) && TextBlockSelectionBehaviour.GetHasContextMenu(_TextBlock))
+                            {
+                                if (!string.IsNullOrEmpty(TextBlockSelectionBehaviour.GetSelectedText(_TextBlock)))
+                                    return (_FrameworkElement, true);
+                            }
+                            else
+                                return (_FrameworkElement, true);
+                        }
+                        else if (_FrameworkElement is TextBlock _TextBlock && TextBlockSelectionBehaviour.GetEnable(_TextBlock) && !TextBlockSelectionBehaviour.GetHasContextMenu(_TextBlock))
+                            return (_FrameworkElement, false);
+                    }
+                    if (Element is FrameworkContentElement ContentElement)
+                        Element = ContentElement.Parent;
+                    else
+                        Element = VisualTreeHelper.GetParent(Element);
+                }
+            }
+            catch { }
+            return (null, false);
         }
 
         public static void RaiseUIAsync(this EventHandler Handler, object? Sender)
@@ -1044,12 +1076,10 @@ namespace SLBr
 
         public static void SaveImage(BitmapSource Bitmap, string FilePath)
         {
-            using (FileStream _FileStream = new(FilePath, FileMode.Create))
-            {
-                PngBitmapEncoder PNGEncoder = new();
-                PNGEncoder.Frames.Add(BitmapFrame.Create(Bitmap));
-                PNGEncoder.Save(_FileStream);
-            }
+            using FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            PngBitmapEncoder PNGEncoder = new();
+            PNGEncoder.Frames.Add(BitmapFrame.Create(Bitmap));
+            PNGEncoder.Save(_FileStream);
         }
 
         public static BitmapImage ConvertBase64ToBitmapImage(string Base64)
@@ -1150,10 +1180,35 @@ namespace SLBr
         }
 
         //NOTE: Remove WinRT & Windows.SDK.NET usage.
-        //JS implementation is observably less reliable within Cef.
-        //TODO: No internet explorer support & unreliable activation in Cef.
-        public static void Share(IWebView View, string Title, string Url) =>
-            View.ExecuteScript($"navigator.share({{title:'{Title}',url:'{Url}'}});");
+        //TODO: No internet explorer support.
+        public async static void Share(IWebView View, string Title, string Url)
+        {
+            View.Control?.Focus();
+            if (View is ChromiumWebView ChromiumView)
+            {
+                object? ShareResult = await View.EvaluateScriptAsync($"(async()=>{{try {{await navigator.share({{title:'{Title}',url:'{Url}'}});return 1;}} catch (e) {{return 0;}}}})();");
+                if (ShareResult?.ToString() == "1")
+                    return;
+                IBrowserHost Host = ChromiumView.Browser.GetBrowser().GetHost();
+                View.ExecuteScript($@"(()=>{{
+const shareHandler = (e) => {{
+    if (e.keyCode === 0x79) {{
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        navigator.share({{title:'{Title}',url:'{Url}'}});
+        window.removeEventListener('keydown',shareHandler,true);
+    }}
+}};
+window.addEventListener('keydown',shareHandler,true);
+}})();");
+                Host.SendKeyEvent(new() { WindowsKeyCode = 0x79, Type = KeyEventType.KeyDown });
+                Host.SendKeyEvent(new() { WindowsKeyCode = 0x79, Type = KeyEventType.KeyUp });
+            }
+            //TODO: Resolve WebView2 NotAllowedError: Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.
+            //TODO: navigator.share causes backwards navigation on custom schemes within WebView2.
+            else
+                View.ExecuteScript($"navigator.share({{title:'{Title}',url:'{Url}'}});");
+        }
 
         //public static bool IsAdministrator() =>
         //    new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
@@ -1881,113 +1936,6 @@ namespace SLBr
                 if (Values.Length == 2)
                     Data[Values[0]] = Values[1];
             }
-        }
-    }
-    public class Favourite : INotifyPropertyChanged
-    {
-        #region INotifyPropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged = delegate { };
-
-        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
-            PropertyChanged(this, new PropertyChangedEventArgs(Name));
-        #endregion
-
-        [JsonPropertyName("children")]
-        public ObservableCollection<Favourite> Children
-        {
-            get => _Children;
-            set
-            {
-                if (_Children != value)
-                {
-                    _Children?.CollectionChanged -= Children_CollectionChanged;
-                    _Children = value;
-                    _Children?.CollectionChanged += Children_CollectionChanged;
-                    RaisePropertyChanged();
-                }
-            }
-        }
-        private void Children_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            RaisePropertyChanged(nameof(HasFolderChildren));
-        }
-
-        private ObservableCollection<Favourite> _Children;
-
-        [JsonPropertyName("name")]
-        public string Name
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_Name))
-                    return Url;
-                return _Name;
-            }
-            set
-            {
-                _Name = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _Name;
-
-        [JsonPropertyName("type")]
-        public string Type
-        {
-            get => _Type;
-            set
-            {
-                _Type = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _Type;
-
-        [JsonPropertyName("url")]
-        public string Url
-        {
-            get => _Url;
-            set
-            {
-                _Url = value;
-                RaisePropertyChanged();
-            }
-        }
-        private string _Url;
-
-        [JsonIgnore]
-        public Favourite? Parent;
-
-        [JsonIgnore]
-        public bool HasFolderChildren
-        {
-            get => Children != null && Children.Any(i => i.Type == "folder");
-        }
-    }
-
-    public class BookmarksManager
-    {
-        public class Bookmarks
-        {
-            [JsonPropertyName("roots")]
-            public BookmarkRoots Roots { get; set; }
-        }
-        public class BookmarkRoots
-        {
-            [JsonPropertyName("bookmark_bar")]
-            public Favourite Bookmarks { get; set; }
-        }
-
-        public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-
-        public static Bookmarks Import(string _Path)
-        {
-            return JsonSerializer.Deserialize<Bookmarks>(File.ReadAllText(_Path), JsonOptions)!;
         }
     }
 }

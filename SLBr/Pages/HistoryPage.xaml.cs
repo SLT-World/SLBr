@@ -1,6 +1,8 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using SLBr.Controls;
+using SLBr.WebView;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -21,6 +23,25 @@ namespace SLBr.Pages
         public void Initialize(Browser _BrowserView)
         {
             BrowserView = _BrowserView;
+        }
+
+        protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseRightButtonUp(e);
+            if (e.Handled) return;
+            var (Ancestor, HasContextMenu) = Utils.FindAncestorContextMenu(e.OriginalSource as DependencyObject);
+            if (HasContextMenu)
+                return;
+            if (Ancestor != null && !HasContextMenu && Ancestor is TextBlock _TextBlock)
+            {
+                string SelectionText = TextBlockSelectionBehaviour.GetSelectedText(_TextBlock);
+                if (!string.IsNullOrEmpty(SelectionText))
+                {
+                    BrowserView.WebView_ContextMenuRequested(Ancestor, new WebContextMenuEventArgs() { MenuType = WebContextMenuType.Selection, FrameUrl = BrowserView.Address, SelectionText = SelectionText });
+                    return;
+                }
+            }
+            BrowserView.WebView_ContextMenuRequested(this, new WebContextMenuEventArgs() { MenuType = WebContextMenuType.Page, FrameUrl = BrowserView.Address });
         }
 
         public void OnNavigated() { }

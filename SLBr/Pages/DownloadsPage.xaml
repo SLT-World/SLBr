@@ -12,6 +12,19 @@
         <ResourceDictionary Source="../WinUIStyleDictionary.xaml"/>
     </UserControl.Resources>
     <Grid Background="{StaticResource SecondaryBrush}">
+        <Grid.Resources>
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding FontFamily, RelativeSource={RelativeSource Self}}" Value="Segoe UI"/>
+                            <Condition Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}" Value="{x:Null}"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="controls:TextBlockSelectionBehaviour.Enable" Value="True"/>
+                    </MultiDataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>

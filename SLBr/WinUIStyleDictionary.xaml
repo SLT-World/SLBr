@@ -39,6 +39,19 @@
     <Color x:Key="SecondaryBrushColor">#251C31</Color>
     <Color x:Key="FontBrushColor">White</Color>
     <Color x:Key="IndicatorBrushColor">#934CFE</Color>-->
+    
+    <ContextMenu x:Key="EditableContextMenu">
+        <MenuItem Header="Emoji" InputGestureText="Win+Period" Click="EmojiMenuItem_Click"/>
+        <Separator/>
+        <MenuItem Header="Undo" Command="ApplicationCommands.Undo"/>
+        <MenuItem Header="Redo" Command="ApplicationCommands.Redo"/>
+        <Separator/>
+        <MenuItem Header="Cut" Command="ApplicationCommands.Cut"/>
+        <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
+        <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
+        <Separator/>
+        <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
+    </ContextMenu>
 
     <Style TargetType="{x:Type Paragraph}">
         <Setter Property="Margin" Value="0"/>
@@ -58,6 +71,8 @@
     
     <Style TargetType="{x:Type TextBlock}">
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <!--<Setter Property="controls:TextBlockSelectionBehaviour.Enable" Value="True"/>
+        <Setter Property="controls:TextBlockSelectionBehaviour.HasContextMenu" Value="True"/>-->
         <Setter Property="TextOptions.TextHintingMode" Value="Fixed"/>
         <!--<Setter Property="TextOptions.TextFormattingMode" Value="{Binding Source={x:Static local:App.Instance}, Path=TextMode, Mode=OneWay, UpdateSourceTrigger=Explicit}"/>-->
         <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -685,20 +700,7 @@
                         Background="Transparent"
                         BorderThickness="0"
                         Padding="0"
-                        IsReadOnly="{TemplateBinding IsReadOnly}" CaretBrush="{TemplateBinding Foreground}" Foreground="{TemplateBinding Foreground}">
-                            <TextBox.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Undo" Command="ApplicationCommands.Undo"/>
-                                    <MenuItem Header="Redo" Command="ApplicationCommands.Redo"/>
-                                    <Separator/>
-                                    <MenuItem Header="Cut" Command="ApplicationCommands.Cut"/>
-                                    <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
-                                    <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
-                                    <Separator/>
-                                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
-                                </ContextMenu>
-                            </TextBox.ContextMenu>
-                        </TextBox>
+                        IsReadOnly="{TemplateBinding IsReadOnly}" CaretBrush="{TemplateBinding Foreground}" Foreground="{TemplateBinding Foreground}" ContextMenu="{StaticResource EditableContextMenu}"/>
                         <Popup 
                         x:Name="Popup"
                         Placement="Bottom"
@@ -809,20 +811,7 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="ContextMenu">
-            <Setter.Value>
-                <ContextMenu>
-                    <MenuItem Header="Undo" Command="ApplicationCommands.Undo"/>
-                    <MenuItem Header="Redo" Command="ApplicationCommands.Redo"/>
-                    <Separator/>
-                    <MenuItem Header="Cut" Command="ApplicationCommands.Cut"/>
-                    <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
-                    <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
-                    <Separator/>
-                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
-                </ContextMenu>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="ContextMenu" Value="{StaticResource EditableContextMenu}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBox}">
@@ -897,20 +886,7 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="VerticalContentAlignment" Value="Top"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="ContextMenu">
-            <Setter.Value>
-                <ContextMenu>
-                    <MenuItem Header="Undo" Command="ApplicationCommands.Undo"/>
-                    <MenuItem Header="Redo" Command="ApplicationCommands.Redo"/>
-                    <Separator/>
-                    <MenuItem Header="Cut" Command="ApplicationCommands.Cut"/>
-                    <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
-                    <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
-                    <Separator/>
-                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
-                </ContextMenu>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="ContextMenu" Value="{StaticResource EditableContextMenu}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type RichTextBox}">
@@ -979,20 +955,7 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="ContextMenu">
-            <Setter.Value>
-                <ContextMenu>
-                    <MenuItem Header="Undo" Command="ApplicationCommands.Undo"/>
-                    <MenuItem Header="Redo" Command="ApplicationCommands.Redo"/>
-                    <Separator/>
-                    <MenuItem Header="Cut" Command="ApplicationCommands.Cut"/>
-                    <MenuItem Header="Copy" Command="ApplicationCommands.Copy"/>
-                    <MenuItem Header="Paste" Command="ApplicationCommands.Paste"/>
-                    <Separator/>
-                    <MenuItem Header="Select all" Command="ApplicationCommands.SelectAll"/>
-                </ContextMenu>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="ContextMenu" Value="{StaticResource EditableContextMenu}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type PasswordBox}">
@@ -2059,6 +2022,9 @@ Margin="{TemplateBinding Padding}"/>
             </Trigger>
             <Trigger Property="Header" Value="Select all">
                 <Setter Property="Icon" Value="&#xe8b3;"/>
+            </Trigger>
+            <Trigger Property="Header" Value="Emoji">
+                <Setter Property="Icon" Value="&#xe76e;"/>
             </Trigger>
 
             <Trigger Property="Icon" Value="{x:Null}">

@@ -8,6 +8,7 @@ using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
+using SLBr.Managers;
 using SLBr.Protobuf;
 using SLBr.WebView;
 using System.Collections.Concurrent;
@@ -1416,7 +1417,7 @@ namespace SLBr.Pages
             e.Launch = InfoWindow.ShowDialog() == true;
         }
         CancellationTokenSource? SpellCheckTokenCancellationTokenSource;
-        private async void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
+        public async void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
             SpellCheckTokenCancellationTokenSource?.Cancel();
             SpellCheckTokenCancellationTokenSource?.Dispose();
@@ -1447,27 +1448,37 @@ namespace SLBr.Pages
                     }
                     else if (i == WebContextMenuType.Selection && !e.IsEditable && !string.IsNullOrEmpty(e.SelectionText.ReplaceLineEndings("").Trim()))
                     {
+                        bool IsWPF = sender is TextBlock;
+                        //TextBlock? _TextBlock = sender as TextBlock;
                         IsPageMenu = false;
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
                         BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+C", Icon = "\ue8c8", Header = "Copy", Command = new RelayCommand(_ => App.Instance.CopyToClipboard(e.SelectionText, 2)) });
-                        BrowserMenu.Items.Add(new MenuItem
+                        //if (_TextBlock == null)
+                        if (!IsWPF)
                         {
-                            Icon = "\ue71b",
-                            Header = "Copy link to highlight",
-                            Command = new RelayCommand(async () =>
+                            BrowserMenu.Items.Add(new MenuItem
                             {
-                                //TODO: Implement offline support.
-                                string FragmentText = (await WebView.EvaluateScriptAsync(Scripts.TextFragmentRangeScript)).ToString();
-                                if (string.IsNullOrWhiteSpace(FragmentText))
+                                Icon = "\ue71b",
+                                Header = "Copy link to highlight",
+                                Command = new RelayCommand(async () =>
                                 {
-                                    App.Instance.CopyToClipboard(Address, 0);
-                                    return;
-                                }
-                                App.Instance.CopyToClipboard($"{Address.Split('#')[0]}#:~:text={FragmentText}", 0);
-                            })
-                        });
+                                    //TODO: Implement offline support.
+                                    string FragmentText = (await WebView.EvaluateScriptAsync(Scripts.TextFragmentRangeScript)).ToString();
+                                    if (string.IsNullOrWhiteSpace(FragmentText))
+                                    {
+                                        App.Instance.CopyToClipboard(Address, 0);
+                                        return;
+                                    }
+                                    App.Instance.CopyToClipboard($"{Address.Split('#')[0]}#:~:text={FragmentText}", 0);
+                                })
+                            });
+                        }
                         BrowserMenu.Items.Add(new Separator());
-                        BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
+                        //if (_TextBlock != null)
+                        if (IsWPF)
+                            BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = ApplicationCommands.SelectAll });
+                        else
+                            BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                     }
                     else if (i == WebContextMenuType.Media)
                     {

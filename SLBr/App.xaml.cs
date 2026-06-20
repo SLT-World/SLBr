@@ -2042,54 +2042,43 @@ $Toast = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, 
             try
             {
                 string Extension = Utils.GetFileExtension(Url).ToLower();
-                if (string.IsNullOrEmpty(Extension) || Extension is not ".png" and not ".jpg" and not ".jpeg" and not ".gif" and not ".webp" and not ".bmp" and not ".ico")
+                if (Extension.Length <= 3 || Extension is not ".png" and not ".jpg" and not ".jpeg" and not ".gif" and not ".webp" and not ".bmp" and not ".ico")
                     return null;
                 if (!Directory.Exists(NotificationTempPath))
                     Directory.CreateDirectory(NotificationTempPath);
                 string TargetPath = Path.Combine(NotificationTempPath, $"{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(Url)))}{Extension}");
                 if (File.Exists(TargetPath))
                     return TargetPath;
-                /*byte[] Data = await MiniHttpClient.GetByteArrayAsync(Url);
-                if (Data == null || Data.Length < 4)
-                    return null;
-                if (!Utils.IsValidImageFromBytes(Data))
-                    return null;
-                await File.WriteAllBytesAsync(TargetPath, Data);
-                return TargetPath;*/
 
-                using (var HeadRequest = new HttpRequestMessage(HttpMethod.Head, Url))
-                using (var HeaderResponse = await MiniHttpClient.SendAsync(HeadRequest, HttpCompletionOption.ResponseHeadersRead))
+                using HttpResponseMessage Response = await MiniHttpClient.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
+                if (!Response.IsSuccessStatusCode)
+                    return null;
+                if (Response.Content.Headers.ContentType != null)
                 {
-                    if (HeaderResponse.IsSuccessStatusCode && HeaderResponse.Content.Headers.ContentType != null)
-                    {
-                        string MimeType = HeaderResponse.Content.Headers.ContentType.MediaType.ToLower();
-                        if (!MimeType.StartsWith("image/") && MimeType != "application/octet-stream")
-                            return null;
-                    }
+                    string MimeType = Response.Content.Headers.ContentType.MediaType?.ToLower() ?? "";
+                    if (!MimeType.StartsWith("image/") && MimeType != "application/octet-stream")
+                        return null;
                 }
-
-                using var Response = await MiniHttpClient.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
-                if (!Response.IsSuccessStatusCode) return null;
 
                 using Stream NetworkStream = await Response.Content.ReadAsStreamAsync();
-                using MemoryStream _MemoryStream = new();
-                byte[] Buffer = new byte[4096];
-                int BytesRead;
-                bool SignatureVerified = false;
-
-                while ((BytesRead = await NetworkStream.ReadAsync(Buffer)) > 0)
+                byte[] SignatureBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(16);
+                try
                 {
-                    _MemoryStream.Write(Buffer, 0, BytesRead);
-                    if (!SignatureVerified && _MemoryStream.Length >= 12)
-                    {
-                        if (!Utils.IsValidImageBytes(_MemoryStream.ToArray()))
-                            return null;
-                        SignatureVerified = true;
-                    }
+                    int BytesRead = await NetworkStream.ReadAtLeastAsync(SignatureBuffer, 12, throwOnEndOfStream: false);
+                    if (BytesRead < 12)
+                        return null;
+                    if (!Utils.IsValidImageBytes(SignatureBuffer.AsSpan(0, BytesRead).ToArray()))
+                        return null;
                 }
-                if (!SignatureVerified && !Utils.IsValidImageBytes(_MemoryStream.ToArray()))
-                    return null;
-                await File.WriteAllBytesAsync(TargetPath, _MemoryStream.ToArray());
+                finally
+                {
+                    System.Buffers.ArrayPool<byte>.Shared.Return(SignatureBuffer);
+                }
+                using (FileStream _FileStream = new(TargetPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
+                {
+                    await _FileStream.WriteAsync(SignatureBuffer.AsMemory(0, 12));
+                    await NetworkStream.CopyToAsync(_FileStream);
+                }
                 return TargetPath;
             }
             catch
@@ -2583,7 +2572,7 @@ Inner Exception: {7}";
                             using HttpResponseMessage Response = await MiniHttpClient.GetAsync(List.Url, HttpCompletionOption.ResponseHeadersRead, _CancellationTokenSource.Token);
                             Response.EnsureSuccessStatusCode();
                             using Stream _Stream = await Response.Content.ReadAsStreamAsync(_CancellationTokenSource.Token);
-                            using FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+                            using FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
 
                             await _Stream.CopyToAsync(_FileStream, _CancellationTokenSource.Token);
                             _FileStream.Close();
