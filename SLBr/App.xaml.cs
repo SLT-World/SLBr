@@ -37,7 +37,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shell;
 using System.Windows.Threading;
 using System.Xml.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SLBr
 {
@@ -904,7 +903,6 @@ namespace SLBr
         public Saving AppSave;
         public Saving GlobalSave;
         public Saving SearchSave;
-        public Saving StatisticsSave;
         public Saving LanguagesSave;
         public Saving AllowListSave;
         public Saving AdBlockSave;
@@ -1215,7 +1213,7 @@ namespace SLBr
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            base.OnStartup(e); 
+            base.OnStartup(e);
             ApplicationLocalDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr");
             if (!Directory.Exists(ApplicationLocalDataPath))
                 Directory.CreateDirectory(ApplicationLocalDataPath);
@@ -2410,7 +2408,6 @@ Stack Trace: {6}
 
 Inner Exception: {7}";
 #endif
-        public int AdsBlocked;
 
         public int AdBlock;
         public bool AMP;
@@ -2909,7 +2906,6 @@ Inner Exception: {7}";
         {
             GlobalSave = new Saving("Save.bin", UserApplicationDataPath);
             SearchSave = new Saving("Search.bin", UserApplicationDataPath);
-            StatisticsSave = new Saving("Statistics.bin", UserApplicationDataPath);
             LanguagesSave = new Saving("Languages.bin", UserApplicationDataPath);
             AllowListSave = new Saving("AllowList.bin", UserApplicationDataPath);
             AdBlockSave = new Saving("AdBlock.bin", UserApplicationDataPath);
@@ -3210,7 +3206,6 @@ Inner Exception: {7}";
 
             if (!GlobalSave.Has("Homepage"))
                 GlobalSave.Set("Homepage", "slbr://newtab");
-            AdsBlocked = StatisticsSave.GetInt("BlockedAds", 0);
 
             if (!GlobalSave.Has("TabUnloading"))
                 GlobalSave.Set("TabUnloading", true);
@@ -4253,7 +4248,6 @@ Inner Exception: {7}";
 
         public async Task ClearAllData()
         {
-            AdsBlocked = 0;
             History.Clear();
             Cef.GetGlobalCookieManager().DeleteCookies(string.Empty, string.Empty);
             await Cef.GetGlobalRequestContext().ClearHttpAuthCredentialsAsync();
@@ -4318,9 +4312,6 @@ Inner Exception: {7}";
             if (ReadOnlyInstance)
                 return;
             string GlobalRaw = GlobalSave.Save();
-
-            StatisticsSave.Set("BlockedAds", AdsBlocked.ToString());
-            StatisticsSave.Save();
 
             string FavouritesRaw = JsonSerializer.Serialize(new BookmarksManager.Bookmarks() { Roots = new() { Bookmarks = new() { Name = "Bookmarks bar", Children = FavouriteManager.Favourites, Type = "folder" } } }, new JsonSerializerOptions
             {

@@ -363,7 +363,7 @@
                                         </DockPanel>
                                     </StackPanel>
                                 </GroupBox>
-                                <GroupBox Margin="0,0,0,10" Header="Omnibox">
+                                <GroupBox Margin="0,0,0,10" Header="Address Box">
                                     <StackPanel>
                                         <CheckBox x:Name="TrimURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="TrimURLCheckBox_Click" Content="Show simplified URLs"/>
                                         <CheckBox x:Name="PunycodeURLCheckBox" Margin="0,0,0,10" Width="Auto" Click="PunycodeURLCheckBox_Click" Content="Show punycode"/>
@@ -425,24 +425,8 @@
                                         Ads &amp; Trackers
                                     </GroupBox.Header>
                                     <StackPanel>
-                                        <DockPanel Margin="0,0,0,10" LastChildFill="False">
-                                            <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,10,0" Background="{StaticResource PrimaryBrush}" Width="150" Height="100">
-                                                <Grid VerticalAlignment="Center">
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
-                                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="&#xe7b3;" FontSize="20" Foreground="{StaticResource FontBrush}" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                                    <TextBlock Grid.Row="1" Text="Ads &amp; trackers blocked" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,5"/>
-                                                    <Border Grid.Row="2" Margin="10,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Background="{StaticResource PrimaryBrush}" Height="25">
-                                                        <TextBlock x:Name="AdsBlocked" Text="0" TextAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-                                        </DockPanel>
                                         <DockPanel Margin="0,0,0,10">
-                                            <TextBlock VerticalAlignment="Center" Text="Ads &amp; trackers blocking"/>
+                                            <TextBlock VerticalAlignment="Center" Text="Blocking"/>
                                             <ComboBox x:Name="AdBlockComboBox" Width="200px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="AdBlockComboBox_SelectionChanged">
                                                 <ComboBoxItem>Disabled</ComboBoxItem>
                                                 <ComboBoxItem>Standard</ComboBoxItem>
@@ -528,7 +512,7 @@
                                         <CheckBox IsEnabled="{Binding ElementName=AntiTamperCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="AntiFullscreenCheckBox" Width="Auto" Click="AntiFullscreenCheckBox_Click" Content="Disable Fullscreen API"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="controls://history" VerticalAlignment="Center" Content="History"/>
+                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="slbr://history" VerticalAlignment="Center" Content="History"/>
                                 <!--<GroupBox Margin="0,0,0,10">
                                     <GroupBox.Header>
                                         Data Collection
@@ -978,7 +962,7 @@
                                         <CheckBox x:Name="DownloadPromptCheckBox" Click="DownloadPromptCheckBox_Click" Content="Ask before downloading" Width="Auto"/>
                                     </StackPanel>
                                 </GroupBox>
-                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="controls://downloads" VerticalAlignment="Center" Content="Downloads"/>
+                                <Button Padding="10,20" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="slbr://downloads" VerticalAlignment="Center" Content="Downloads"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -1256,7 +1240,7 @@
                         Made possible by
                         <Hyperlink NavigateUri="https://github.com/cefsharp/CefSharp" RequestNavigate="Hyperlink_RequestNavigate">CefSharp</Hyperlink>
                         and other
-                        <Hyperlink NavigateUri="controls://credits" RequestNavigate="Hyperlink_RequestNavigate">open-source software</Hyperlink>.
+                        <Hyperlink NavigateUri="slbr://credits" RequestNavigate="Hyperlink_RequestNavigate">open-source software</Hyperlink>.
                                 </TextBlock>
                                 <TextBlock Margin="0,0,0,10">
                         If you find SLBr useful, consider starring the

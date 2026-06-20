@@ -771,7 +771,6 @@ namespace SLBr.Pages
             {
                 if (App.Instance._AdBlockHandler.ShouldBlockRequest(e.Url, e.FocusedUrl, e.ResourceRequestType))
                 {
-                    Interlocked.Increment(ref App.Instance.AdsBlocked);
                     e.Cancel = true;
                     return;
                 }

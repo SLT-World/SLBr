@@ -495,8 +495,6 @@ namespace SLBr.Pages
                     break;
             }
 
-            AdsBlocked.Text = App.Instance.AdsBlocked.ToString();
-
             HomeButtonToggleButton.IsChecked = App.Instance.AllowHomeButton;
             TranslateButtonToggleButton.IsChecked = App.Instance.AllowTranslateButton;
             ReaderButtonToggleButton.IsChecked = App.Instance.AllowReaderModeButton;
