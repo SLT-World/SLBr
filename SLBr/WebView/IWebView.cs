@@ -501,10 +501,21 @@ namespace SLBr.WebView
         public ResourceRequestType ResourceRequestType { get; } = _RequestType;
     }
 
-    public readonly struct ResourceRespondedResult(string _Url, ResourceRequestType _RequestType)
+    /*public readonly struct ResourceRespondedResult(string _Url, ResourceRequestType _RequestType)
     {
         public string Url { get; } = _Url;
         public ResourceRequestType ResourceRequestType { get; } = _RequestType;
+    }*/
+
+    public class ResponseInterceptedResult(string _Url, ResourceRequestType _RequestType, int _StatusCode, Func<Func<Stream, Task>, Task> _StreamProvider)
+    {
+        public string Url { get; } = _Url;
+        public ResourceRequestType ResourceRequestType { get; } = _RequestType;
+        public int StatusCode { get; } = _StatusCode;
+
+        private Func<Func<Stream, Task>, Task> StreamProvider = _StreamProvider;
+        public async Task CopyStream(Func<Stream, Task> Action) =>
+            await StreamProvider(Action);
     }
 
     public class ResourceRequestEventArgs(string _Url, string _FocusedUrl, string _Method, ResourceRequestType _RequestType, Dictionary<string, string> _Headers) : EventArgs
@@ -517,8 +528,18 @@ namespace SLBr.WebView
 
         private Dictionary<string, string>? _ModifiedHeaders;
         public Dictionary<string, string> ModifiedHeaders => _ModifiedHeaders ??= [with(StringComparer.OrdinalIgnoreCase)];
+        public WebResourceResponse? Response { get; set; } = null;
 
         public bool Cancel { get; set; }
+        public bool Intercept { get; set; } = false;
+    }
+
+    public class WebResourceResponse(Stream Content, string MimeType = "text/plain", int? StatusCode = null)
+    {
+        public Stream Content { get; } = new AutoDisposingStream(Content);
+        public string MimeType { get; } = MimeType;
+        public int? StatusCode { get; } = StatusCode;
+        public Lazy<Dictionary<string, string>> Headers { get; } = new(() => [with(StringComparer.OrdinalIgnoreCase)]);
     }
 
     public class WebAuthenticationRequestedEventArgs(string _Url) : EventArgs
@@ -1335,7 +1356,8 @@ namespace SLBr.WebView
 
         event EventHandler<ResourceRequestEventArgs> ResourceRequested;
         //Consider switching to things like EventHandler<(string Url, ResourceRequestType ResourceRequestType)>
-        event EventHandler<ResourceRespondedResult> ResourceResponded;
+        //event EventHandler<ResourceRespondedResult> ResourceResponded;
+        event EventHandler<ResponseInterceptedResult> ResponseIntercepted;
         event EventHandler<ResourceLoadedResult> ResourceLoaded;
         event EventHandler<PermissionRequestedEventArgs> PermissionRequested;
 
@@ -1589,6 +1611,8 @@ namespace SLBr.WebView
             CanGoForward = e.CanGoForward;
             CanReload = e.CanReload;
 
+            //if (!App.Instance.HighPerformanceMode)
+            //{
             StateChangeCount++;
 
             //LoadingStateChanged constantly triggered by https://www.skeptrune.com/posts/use-the-accept-header-to-serve-markdown-instead-of-html-to-llms/
@@ -1628,6 +1652,7 @@ namespace SLBr.WebView
                     StateChangeCount = 0;
                 LastStateChange = DateTime.Now;
             }
+            //}
             IsLoading = e.IsLoading;
             NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
             IsSecure = _NavigationEntry != null ? _NavigationEntry.SslStatus.IsSecureConnection : Address.StartsWith("https:");
@@ -1817,17 +1842,23 @@ namespace SLBr.WebView
         public event EventHandler<FindResult> FindResult;
         public event EventHandler<string> JavaScriptMessageReceived;
         public event EventHandler<ResourceRequestEventArgs> ResourceRequested;
-        public event EventHandler<ResourceRespondedResult> ResourceResponded;
+        //public event EventHandler<ResourceRespondedResult> ResourceResponded;
+        public event EventHandler<ResponseInterceptedResult> ResponseIntercepted;
         public event EventHandler<ResourceLoadedResult> ResourceLoaded;
         public void RaiseResourceRequest(ResourceRequestEventArgs e)
         {
             if (InitializingHistory) return;
             Browser?.Dispatcher.Invoke(() => ResourceRequested?.Invoke(this, e));
         }
-        public void RaiseResourceResponded(ResourceRespondedResult e)
+        /*public void RaiseResourceResponded(ResourceRespondedResult e)
         {
             if (InitializingHistory) return;
             ResourceResponded?.RaiseUIAsync(this, e);
+        }*/
+        public void RaiseResponseIntercepted(ResponseInterceptedResult e)
+        {
+            if (InitializingHistory) return;
+            ResponseIntercepted?.RaiseUIAsync(this, e);
         }
         public void RaiseResourceLoaded(ResourceLoadedResult Result)
         {
@@ -2478,26 +2509,6 @@ namespace SLBr.WebView
             }
         }
 
-        private void Browser_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
-        {
-            if (!RequestContexts.TryGetValue(e.Request.Uri, out CoreWebView2WebResourceContext ResourceContext))
-                ResourceContext = CoreWebView2WebResourceContext.Other;
-            ResourceResponded?.RaiseUIAsync(this, new ResourceRespondedResult(e.Request.Uri, ResourceContext.ToResourceRequestType()));
-            if (ResourceLoaded != null)
-            {
-                try
-                {
-                    if (e.Response.Headers.Contains("Content-Length"))
-                    {
-                        if (long.TryParse(e.Response.Headers.GetHeader("Content-Length"), out long ContentLength))
-                            ResourceLoaded?.RaiseUIAsync(this, new ResourceLoadedResult(e.Request.Uri, true, ContentLength, ResourceContext.ToResourceRequestType()));
-                    }
-                }
-                catch { }
-            }
-            RequestContexts.Remove(e.Request.Uri);
-        }
-
         private Dictionary<string, CoreWebView2WebResourceContext> RequestContexts = [];
 
         private void Browser_ContextMenuRequested(object? sender, CoreWebView2ContextMenuRequestedEventArgs e)
@@ -2544,6 +2555,8 @@ namespace SLBr.WebView
         private CancellationTokenSource? NavigationCancellationTokenSource;
         private long NavigationID = 0;
 
+        private HashSet<string> InterceptList = [];
+
         private void Browser_WebResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
         {
             //TODO: Set Content-Length.
@@ -2551,13 +2564,13 @@ namespace SLBr.WebView
             if (OverrideResponse != null)
             {
                 EncounteredError = true;
-                e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(OverrideResponse.Data), 200, "OK", $"Content-Type: {OverrideResponse.MimeType}\r\nContent-Length: {OverrideResponse.Data.Length}");
+                e.Response = BrowserCore?.Environment.CreateWebResourceResponse(new MemoryStream(OverrideResponse.Data), 200, "OK", $"Access-Control-Allow-Origin: *\r\nContent-Type: {OverrideResponse.MimeType}\r\nContent-Length: {OverrideResponse.Data.Length}");
                 return;
             }
             if (!RequestContexts.ContainsKey(e.Request.Uri))
                 RequestContexts[e.Request.Uri] = e.ResourceContext;
 
-            var Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> Headers = [with(StringComparer.OrdinalIgnoreCase)];
             foreach (var Header in e.Request.Headers)
                 Headers[Header.Key] = Header.Value;
             ResourceRequestEventArgs Args = new(e.Request.Uri, Address, e.Request.Method, e.ResourceContext.ToResourceRequestType(), Headers);
@@ -2565,28 +2578,58 @@ namespace SLBr.WebView
             //NOTE: Ad block testers misinterpret blocked requests as successful, due to the lack of invalid "(canceled)" responses
             //Ad block functionality remain consistent for all intents and purposes.
             if (Args.Cancel)
-                e.Response = BrowserCore.Environment.CreateWebResourceResponse(Stream.Null, 403, "Forbidden", "Content-Type: text/plain\r\nContent-Length: 0");
+                e.Response = BrowserCore.Environment.CreateWebResourceResponse(Stream.Null, 403, "Forbidden", "Access-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 0");
             else
             {
-                if (Utils.IsCustomScheme(e.Request.Uri) && Utils.IsCustomScheme(Address))
-                    _ = HandleWebResourceRequestedAsync(e, e.GetDeferral());
-                else
+                if (Args.ModifiedHeaders != null && Args.ModifiedHeaders.Count != 0)
                 {
-                    if (Args.ModifiedHeaders != null && Args.ModifiedHeaders.Count != 0)
+                    foreach (var Header in Args.ModifiedHeaders)
                     {
-                        foreach (var Header in Args.ModifiedHeaders)
+                        try
                         {
-                            try
-                            {
-                                e.Request.Headers.SetHeader(Header.Key, Header.Value);
-                            }
-                            catch { }
+                            e.Request.Headers.SetHeader(Header.Key, Header.Value);
                         }
+                        catch { }
                     }
                 }
+                if (Args.Intercept)
+                    InterceptList.Add(Args.Url);
+                if (Args.Response != null)
+                {
+                    if (Args.Response.Content.CanSeek)
+                        Args.Response.Content.Position = 0;
+                    int StatusCode = Args.Response.StatusCode ?? 200;
+
+                    StringBuilder HeadersBuilder = new();
+                    bool HasAllowOrigin = false;
+                    bool HasContentType = false;
+                    bool HasContentLength = false;
+                    if (Args.Response.Headers.IsValueCreated && Args.Response.Headers.Value.Count != 0)
+                    {
+                        foreach (var Header in Args.Response.Headers.Value)
+                        {
+                            HeadersBuilder.Append($"{Header.Key}: {Header.Value}\r\n");
+                            if (!HasAllowOrigin && Header.Key.Equals("Access-Control-Allow-Origin", StringComparison.OrdinalIgnoreCase))
+                                HasAllowOrigin = true;
+                            if (!HasContentType && Header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
+                                HasContentType = true;
+                            if (!HasContentLength && Header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
+                                HasContentLength = true;
+                        }
+                    }
+                    if (!HasAllowOrigin)
+                        HeadersBuilder.Append("Access-Control-Allow-Origin: *\r\n");
+                    if (!HasContentType)
+                        HeadersBuilder.Append($"Content-Type: {Args.Response.MimeType}\r\n");
+                    if (!HasContentLength)
+                        HeadersBuilder.Append($"Content-Length: {Args.Response.Content.Length}\r\n");
+
+                    e.Response = BrowserCore.Environment.CreateWebResourceResponse(Args.Response.Content, StatusCode, StatusCode == 200 ? "OK" : "Reason Unknown", HeadersBuilder.ToString());
+                }
+                if (Utils.IsCustomScheme(e.Request.Uri) && Utils.IsCustomScheme(Address))
+                    _ = HandleWebResourceRequestedAsync(e, e.GetDeferral());
             }
         }
-
 
         private async Task HandleWebResourceRequestedAsync(CoreWebView2WebResourceRequestedEventArgs e, CoreWebView2Deferral Deferral)
         {
@@ -2614,6 +2657,40 @@ namespace SLBr.WebView
             {
                 Deferral.Complete();
             }
+        }
+
+        private void Browser_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
+        {
+            //TODO: Merge InterceptList & RequestContexts.
+            if (!RequestContexts.TryGetValue(e.Request.Uri, out CoreWebView2WebResourceContext ResourceContext))
+                ResourceContext = CoreWebView2WebResourceContext.Other;
+            ResourceRequestType Type = ResourceContext.ToResourceRequestType();
+            //ResourceResponded?.RaiseUIAsync(this, new ResourceRespondedResult(e.Request.Uri, Type));
+            if (ResourceLoaded != null)
+            {
+                try
+                {
+                    if (e.Response.Headers.Contains("Content-Length"))
+                    {
+                        if (long.TryParse(e.Response.Headers.GetHeader("Content-Length"), out long ContentLength))
+                            ResourceLoaded?.RaiseUIAsync(this, new ResourceLoadedResult(e.Request.Uri, true, ContentLength, ResourceContext.ToResourceRequestType()));
+                    }
+                }
+                catch { }
+            }
+            if (InterceptList.Contains(e.Request.Uri))
+            {
+                InterceptList.Remove(e.Request.Uri);
+                ResponseInterceptedResult InterceptedResult = new(e.Request.Uri, Type, e.Response.StatusCode,
+                    async (Action) =>
+                    {
+                        using Stream _Stream = await e.Response.GetContentAsync();
+                        if (_Stream != null)
+                            await Action(_Stream);
+                    });
+                ResponseIntercepted?.Invoke(this, InterceptedResult);
+            }
+            RequestContexts.Remove(e.Request.Uri);
         }
 
         private void Browser_DownloadStarting(object? sender, CoreWebView2DownloadStartingEventArgs e)
@@ -3097,7 +3174,8 @@ namespace SLBr.WebView
         public event EventHandler<FindResult> FindResult;
         public event EventHandler<string> JavaScriptMessageReceived;
         public event EventHandler<ResourceRequestEventArgs> ResourceRequested;
-        public event EventHandler<ResourceRespondedResult> ResourceResponded;
+        //public event EventHandler<ResourceRespondedResult> ResourceResponded;
+        public event EventHandler<ResponseInterceptedResult> ResponseIntercepted;
         public event EventHandler<ResourceLoadedResult> ResourceLoaded;
         public event EventHandler<PermissionRequestedEventArgs> PermissionRequested;
 
@@ -3577,7 +3655,8 @@ namespace SLBr.WebView
         }
         private void LoadCompleted(object sender, NavigationEventArgs e)
         {
-            ResourceResponded?.RaiseUIAsync(this, new ResourceRespondedResult(e.Uri?.AbsoluteUri ?? Address, ResourceRequestType.SubResource));
+            //TODO: Support ResponseIntercepted.
+            //ResourceResponded?.RaiseUIAsync(this, new ResourceRespondedResult(e.Uri?.AbsoluteUri ?? Address, ResourceRequestType.SubResource));
             IsLoading = false;
             FrameLoadEnd?.RaiseUIAsync(this, e.Uri?.AbsoluteUri ?? Address);
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
@@ -3734,7 +3813,8 @@ namespace SLBr.WebView
         public event EventHandler<FindResult> FindResult;
         public event EventHandler<string> JavaScriptMessageReceived;
         public event EventHandler<ResourceRequestEventArgs> ResourceRequested;
-        public event EventHandler<ResourceRespondedResult> ResourceResponded;
+        //public event EventHandler<ResourceRespondedResult> ResourceResponded;
+        public event EventHandler<ResponseInterceptedResult> ResponseIntercepted;
         public event EventHandler<ResourceLoadedResult> ResourceLoaded;
         public event EventHandler<PermissionRequestedEventArgs> PermissionRequested;
 

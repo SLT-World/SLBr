@@ -1938,4 +1938,47 @@ window.addEventListener('keydown',shareHandler,true);
             }
         }
     }
+
+    //https://github.com/dotnet/maui/pull/9645
+    //https://github.com/MicrosoftEdge/WebView2Feedback/issues/2513
+    //https://github.com/dotnet/maui/blob/main/src/BlazorWebView/src/SharedSource/AutoCloseOnReadCompleteStream.cs
+    public class AutoDisposingStream(Stream _BaseStream) : Stream
+    {
+        private readonly Stream BaseStream = _BaseStream ?? throw new ArgumentNullException(nameof(_BaseStream));
+        private bool Disposed;
+
+        public override int Read(byte[] Buffer, int Offset, int Count)
+        {
+            if (Disposed)
+                return 0;
+            int BytesRead = BaseStream.Read(Buffer, Offset, Count);
+            if (BytesRead == 0)
+                Dispose();
+            return BytesRead;
+        }
+        public override bool CanRead => BaseStream.CanRead;
+        public override bool CanSeek => BaseStream.CanSeek;
+        public override bool CanWrite => BaseStream.CanWrite;
+        public override long Length => BaseStream.Length;
+        public override long Position
+        {
+            get => BaseStream.Position;
+            set => BaseStream.Position = value;
+        }
+        public override void Flush() => BaseStream.Flush();
+        public override long Seek(long Offset, SeekOrigin Origin) => BaseStream.Seek(Offset, Origin);
+        public override void SetLength(long Value) => BaseStream.SetLength(Value);
+        public override void Write(byte[] Buffer, int Offset, int Count) => BaseStream.Write(Buffer, Offset, Count);
+
+        protected override void Dispose(bool Disposing)
+        {
+            if (!Disposed)
+            {
+                if (Disposing)
+                    BaseStream.Dispose();
+                Disposed = true;
+            }
+            base.Dispose(Disposing);
+        }
+    }
 }

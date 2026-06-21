@@ -382,7 +382,7 @@ namespace SLBr.Pages
             WaybackInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar"));
             HomographInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographInfoBar"));
 
-            NeverSlowModeCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("NeverSlowMode"));
+            NeverSlowModeCheckBox.IsChecked = App.Instance.NeverSlowMode;
             AMPCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AMP"));
 
             AdBlockComboBox.SelectedIndex = App.Instance.GlobalSave.GetInt("AdBlock");

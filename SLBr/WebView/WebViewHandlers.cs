@@ -8,6 +8,7 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Protocols;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
@@ -918,13 +919,13 @@ namespace SLBr.WebView
             return false;
         }
     }
-    public class ChromiumResourceRequestHandler : IResourceRequestHandler
+
+    public class ChromiumResourceRequestHandler(ChromiumWebView _WebView) : IResourceRequestHandler
     {
-        private ChromiumWebView WebView;
-        public ChromiumResourceRequestHandler(ChromiumWebView _WebView)
-        {
-            WebView = _WebView;
-        }
+        private ChromiumWebView WebView = _WebView;
+
+        private WebResourceResponse? Response;
+        private bool Intercept;
 
         public CefReturnValue OnBeforeResourceLoad(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IRequestCallback callback)
         {
@@ -945,18 +946,61 @@ namespace SLBr.WebView
                 foreach (var Header in Args.ModifiedHeaders)
                     request.SetHeaderByName(Header.Key, Header.Value, true);
             }
+            Intercept = Args.Intercept;
+            if (Args.Response != null)
+                Response = Args.Response;
             return CefReturnValue.Continue;
         }
 
-        public IResourceHandler GetResourceHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request) => null;
+        public IResourceHandler GetResourceHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request)
+        {
+            if (Response != null)
+            {
+                if (Response.Content.CanSeek)
+                    Response.Content.Position = 0;
+                ResourceHandler ResourceOverride = ResourceHandler.FromStream(Response.Content, Response.MimeType, true);
+                if (Response.StatusCode.HasValue)
+                    ResourceOverride.StatusCode = Response.StatusCode.Value;
+                if (Response.Headers.IsValueCreated && Response.Headers.Value.Count != 0)
+                {
+                    foreach (var Header in Response.Headers.Value)
+                        ResourceOverride.Headers[Header.Key] = Header.Value;
+                }
+                return ResourceOverride;
+            }
+            return null;
+        }
         public ICookieAccessFilter GetCookieAccessFilter(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request) => null;
         public void OnResourceRedirect(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, ref string newUrl) { }
         public bool OnResourceResponse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
         {
-            WebView.RaiseResourceResponded(new ResourceRespondedResult(request.Url, request.ResourceType.ToResourceRequestType()));
+            //WebView.RaiseResourceResponded(new ResourceRespondedResult(request.Url, request.ResourceType.ToResourceRequestType()));
             return false;
         }
-        public IResponseFilter GetResourceResponseFilter(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response) => null;
+        public IResponseFilter GetResourceResponseFilter(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response)
+        {
+            if (Intercept)
+            {
+                string Url = request.Url;
+                ResourceRequestType Type = request.ResourceType.ToResourceRequestType();
+                int Code = response.StatusCode;
+                return new CefResponseInterceptorFilter((Bytes, Length) =>
+                {
+                    Task.Run(async () =>
+                    {
+                        MemoryStream _Stream = new(Bytes, 0, Length, false);
+                        ResponseInterceptedResult InterceptedResult = new(Url, Type, Code, async (Action) => {
+                            using (_Stream)
+                            {
+                                await Action(_Stream);
+                            }
+                        });
+                        WebView.RaiseResponseIntercepted(InterceptedResult);
+                    });
+                });
+            }
+            return null;
+        }
         public void OnResourceLoadComplete(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, IResponse response, UrlRequestStatus status, long receivedContentLength)
         {
             WebView.RaiseResourceLoaded(new ResourceLoadedResult(request.Url, status != UrlRequestStatus.Failed && status != UrlRequestStatus.Canceled, receivedContentLength, request.ResourceType.ToResourceRequestType()));
@@ -980,6 +1024,70 @@ namespace SLBr.WebView
             GC.SuppressFinalize(this);
         }
     }
+
+    public class CefResponseInterceptorFilter : IResponseFilter
+    {
+        private readonly MemoryStream ShadowBuffer = new(32768);
+        private readonly Action<byte[], int> OnComplete;
+
+        public CefResponseInterceptorFilter(Action<byte[], int> _OnComplete)
+        {
+            OnComplete = _OnComplete;
+        }
+
+        public bool InitFilter() => true;
+
+        public FilterStatus Filter(Stream? dataIn, out long dataInRead, Stream? dataOut, out long dataOutWritten)
+        {
+            dataInRead = 0;
+            dataOutWritten = 0;
+            if (dataIn == null || dataOut == null)
+            {
+                CompleteAndExtractBytes();
+                return FilterStatus.Done;
+            }
+            int Length = (int)dataIn.Length;
+            if (Length == 0)
+            {
+                CompleteAndExtractBytes();
+                return FilterStatus.Done;
+            }
+            byte[] Buffer = ArrayPool<byte>.Shared.Rent(Length);
+            try
+            {
+                dataInRead = dataIn.Read(Buffer, 0, Length);
+                if (dataInRead > 0)
+                {
+                    dataOut.Write(Buffer, 0, (int)dataInRead);
+                    dataOutWritten = dataInRead;
+                    ShadowBuffer.Write(Buffer, 0, (int)dataInRead);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(Buffer);
+            }
+            if (dataIn.Position >= Length)
+            {
+                CompleteAndExtractBytes();
+                return FilterStatus.Done;
+            }
+            return FilterStatus.NeedMoreData;
+        }
+
+        private void CompleteAndExtractBytes()
+        {
+            int Length = (int)ShadowBuffer.Length;
+            if (Length > 0)
+            {
+                OnComplete(ShadowBuffer.GetBuffer(), Length);
+                ShadowBuffer.SetLength(0);
+            }
+        }
+
+        public void Dispose() => ShadowBuffer.Dispose();
+    }
+
     public class ChromiumPermissionHandler : IPermissionHandler
     {
         public void OnDismissPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, PermissionRequestResult result) { }

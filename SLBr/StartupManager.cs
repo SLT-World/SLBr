@@ -10,6 +10,8 @@ namespace SLBr
     {
         private const string RegistryRunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
+        //TODO: Remove registry entry on profile deletion.
+
         public static void EnableStartup(string ProfileName)
         {
             string KeyName = $"SLBr-{ProfileName}";

@@ -69,7 +69,7 @@ namespace SLBr.Controls
 
             double Delta = -e.Delta;
 
-            if (App.Instance.LiteMode)
+            /*if (App.Instance.LiteMode)
             {
                 if (Horizontal && Viewer.ScrollableWidth > 0)
                     Viewer.ScrollToHorizontalOffset(Math.Max(0, Math.Min(Viewer.HorizontalOffset + Delta, Viewer.ScrollableWidth)));
@@ -77,7 +77,7 @@ namespace SLBr.Controls
                     Viewer.ScrollToVerticalOffset(Math.Max(0, Math.Min(Viewer.VerticalOffset + Delta, Viewer.ScrollableHeight)));
             }
             else
-            {
+            {*/
                 if (Horizontal && Viewer.ScrollableWidth > 0)
                     VelocityX += Delta * 0.1;
                 else
@@ -88,7 +88,7 @@ namespace SLBr.Controls
                     CompositionTarget.Rendering += OnRendering;
                     Hooked = true;
                 }
-            }
+            //}
         }
 
         private static void OnRendering(object sender, EventArgs e)

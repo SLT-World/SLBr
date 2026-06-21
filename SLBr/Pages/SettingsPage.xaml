@@ -760,12 +760,13 @@
                                     </GroupBox.Header>
                                     <StackPanel>
                                         <TextBlock Foreground="{StaticResource GrayBrush}">
-                                Unloading tabs frees memory and system resources from inactive tabs.
+                                Frees memory and system resources from inactive tabs.
                                 <LineBreak/>
                                 Inactive tabs will automatically reactivate when revisited.
                                         </TextBlock>
                                         <DockPanel>
                                             <TextBlock VerticalAlignment="Center" Text="Interval (minute)"/>
+                                            <!--TODO: Replace with number box.-->
                                             <ComboBox IsEnabled="{Binding ElementName=TabUnloadingCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="TabUnloadingTimeComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
                                         </DockPanel>
                                         <CheckBox x:Name="DimIconsWhenUnloadedCheckBox" Click="DimUnloadedIconCheckBox_Click" Margin="0,0,0,10" Content="Dim icon" Width="Auto"/>

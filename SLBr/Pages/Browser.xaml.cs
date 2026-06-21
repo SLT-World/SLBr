@@ -4,7 +4,6 @@ Use of this source code is governed by a GNU license that can be found in the LI
 using CefSharp;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 using SLBr.Controls;
 using SLBr.Handlers;
@@ -510,6 +509,7 @@ namespace SLBr.Pages
             WebView?.NewTabRequested += WebView_NewTabRequested;
             WebView?.PermissionRequested += WebView_PermissionRequested;
             WebView?.ResourceLoaded += WebView_ResourceLoaded;
+            //WebView?.ResponseIntercepted += WebView_ResponseIntercepted;
             WebView?.ResourceRequested += WebView_ResourceRequested;
             //WebView?.ResourceResponded += WebView_ResourceResponded;
             WebView?.ScriptDialogOpened += WebView_ScriptDialogOpened;
@@ -530,6 +530,7 @@ namespace SLBr.Pages
             WebView.NewTabRequested += (s, e) => Debug.WriteLine("WebView: NewTabRequested");
             WebView.PermissionRequested += (s, e) => Debug.WriteLine("WebView: PermissionRequested");
             WebView.ResourceLoaded += (s, e) => Debug.WriteLine("WebView: ResourceLoaded");
+            WebView.ResponseIntercepted += (s, e) => Debug.WriteLine("WebView: ResponseIntercepted");
             WebView.ResourceRequested += (s, e) => Debug.WriteLine("WebView: ResourceRequested");
             WebView.ScriptDialogOpened += (s, e) => Debug.WriteLine("WebView: ScriptDialogOpened");
             WebView.StatusMessage += (s, e) => Debug.WriteLine("WebView: StatusMessage");
@@ -2559,10 +2560,9 @@ namespace SLBr.Pages
                         {
                             Dispatcher.BeginInvoke(async () =>
                             {
-                                CoreWebView2? Core = ((WebView2)EdgeWebView.Control).CoreWebView2;
-                                if (Core != null)
+                                if (EdgeWebView.BrowserCore != null)
                                 {
-                                    Core.OpenDevToolsWindow();
+                                    EdgeWebView.BrowserCore.OpenDevToolsWindow();
                                     await Task.Delay(600);
                                     string DevToolsName = $"DevTools - {Utils.CleanUrl(Address, false, false, false, false, true)}";
                                     DllUtils.EnumWindows((hWnd, lParam) =>
@@ -3811,6 +3811,7 @@ namespace SLBr.Pages
                 DisposingWebView?.NewTabRequested -= WebView_NewTabRequested;
                 DisposingWebView?.PermissionRequested -= WebView_PermissionRequested;
                 DisposingWebView?.ResourceLoaded -= WebView_ResourceLoaded;
+                //DisposingWebView?.ResponseIntercepted -= WebView_ResponseIntercepted;
                 DisposingWebView?.ResourceRequested -= WebView_ResourceRequested;
                 //DisposingWebView?.ResourceResponded -= WebView_ResourceResponded;
                 DisposingWebView?.ScriptDialogOpened -= WebView_ScriptDialogOpened;

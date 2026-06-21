@@ -930,7 +930,6 @@ namespace SLBr
         public string ResourcesPath;
         public string AdBlockDataPath;
         public string NotificationTempPath;
-        //public string CdnPath;
 
         public bool AppInitialized;
 
@@ -1854,7 +1853,6 @@ namespace SLBr
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             AdBlockDataPath = Path.Combine(UserApplicationDataPath, "Filters");
             NotificationTempPath = Path.Combine(Path.GetTempPath(), "SLBr_NotificationCache");
-            //CdnPath = Path.Combine(ResourcesPath, "cdn");
 
             LocaleNames = AllLocales.Select(i => i.Value).ToList();
 
@@ -3303,7 +3301,7 @@ Inner Exception: {7}";
             SetRichSuggestions(bool.Parse(GlobalSave.Get("RichSuggestions", true.ToString())));
             SetSmartDarkMode(bool.Parse(GlobalSave.Get("SmartDarkMode", false.ToString())));
             SetBlockScreenCapture(int.Parse(GlobalSave.Get("BlockScreenCapture", "1")));
-            SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", true.ToString())));
+            SetTabMemory(bool.Parse(GlobalSave.Get("TabMemory", false.ToString())));
             SetTabPreview(bool.Parse(GlobalSave.Get("TabPreview", false.ToString())));
             SetExternalFonts(bool.Parse(GlobalSave.Get("ExternalFonts", true.ToString())));
             SetModernURL(bool.Parse(GlobalSave.Get("ModernURL", false.ToString())));
@@ -3864,6 +3862,8 @@ Inner Exception: {7}";
             Settings.AddFlag("intensive-wake-up-throttling-policy", "1");
             if (LiteMode)
             {
+                Settings.AddFlag("disable-back-forward-cache");
+
                 //Turns device memory into 0.5
                 Settings.AddFlag("enable-low-end-device-mode"); //Causes memory to be 20 MB more when minimized, but reduces 80 MB when not minimized
 
@@ -3920,7 +3920,7 @@ Inner Exception: {7}";
                     Settings.Flags.Remove("disable-mipmap-generation");
                     Settings.Flags.Remove("disable-highres-timer");
                     Settings.Flags.Remove("intensive-wake-up-throttling-policy");
-                    Settings.AddFlag("disable-ipc-flooding-protection");
+                    //Settings.AddFlag("disable-ipc-flooding-protection");
                     Settings.AddFlag("disable-renderer-backgrounding");
                     Settings.AddFlag("disable-background-timer-throttling");
                     Settings.AddFlag("disable-extensions-http-throttling");
@@ -3961,7 +3961,8 @@ Inner Exception: {7}";
 
         private void SetGraphicsFlags(WebViewSettings Settings)
         {
-            //Settings.AddFlag("in-process-gpu");//WARNING: Causes blank HTML dropdowns.
+            /*if (LiteMode)
+                Settings.AddFlag("in-process-gpu");*///WARNING: Causes blank HTML dropdowns.
             if (bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration")))
             {
                 Settings.AddFlag("enable-gpu");
@@ -4159,7 +4160,6 @@ Inner Exception: {7}";
             //https://chromium.googlesource.com/chromium/src/+/HEAD/third_party/blink/public/platform/web_effective_connection_type.h
             Settings.AddFlag("blink-settings", "hyperlinkAuditingEnabled=false,smoothScrollForFindEnabled=true,spellCheckEnabledByDefault=false,hideDownloadUI=true");
             //,disallowFetchForDocWrittenScriptsInMainFrame=true
-            
             if (bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration")))
                 Settings.Flags["enable-features"] += ",kD3D12VideoDecoder,kD3D12VideoEncodeAccelerator,D3D12SharedImageEncode";
 
@@ -4173,18 +4173,17 @@ Inner Exception: {7}";
             else
             {
                 Settings.Flags["blink-settings"] += ",batterySaverEnabled=true,preloadingDisabled=true,lowPriorityIframesThreshold=5,dnsPrefetchingEnabled=false,doHtmlPreloadScanning=false";
-                Settings.Flags["enable-features"] += ",ThrottleMainFrameTo60Hz,ThrottleRepeatedNoDamageFrames,PauseMutedBackgroundAudio,InfiniteTabsFreezing,UnimportantFramesPriority,ThrottleUnimportantFrameRate,LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
+                Settings.Flags["enable-features"] += ",MemoryPurgeOnFreeze,ThrottleMainFrameTo60Hz,ThrottleRepeatedNoDamageFrames,PauseMutedBackgroundAudio,InfiniteTabsFreezing,UnimportantFramesPriority,ThrottleUnimportantFrameRate,LazyImageLoading:automatic-lazy-load-images-enabled/true/restrict-lazy-load-images-to-data-saver-only/false,LazyFrameLoading:automatic-lazy-load-frames-enabled/true/restrict-lazy-load-frames-to-data-saver-only/false,LowLatencyCanvas2dImageChromium,LowLatencyWebGLImageChromium,NoStatePrefetchHoldback,ReduceCpuUtilization2,MemorySaverModeRenderTuning,OomIntervention,QuickIntensiveWakeUpThrottlingAfterLoading,LowerHighResolutionTimerThreshold,BatterySaverModeAlignWakeUps,RestrictThreadPoolInBackground,IntensiveWakeUpThrottling:grace_period_seconds/5,MemoryCacheStrongReference,OptOutZeroTimeoutTimersFromThrottling,CheckHTMLParserBudgetLessOften,Canvas2DHibernation,Canvas2DHibernationReleaseTransferMemory";
                 Settings.Flags["disable-features"] += ",RenderMutedAudio,LoadingPredictorPrefetch,SpeculationRulesPrefetchFuture,NavigationPredictor,Prerender2MainFrameNavigation,Prerender2NoVarySearch,Prerender2";
 
                 Settings.Flags["enable-blink-features"] += ",SkipPreloadScanning,LazyInitializeMediaControls,LazyFrameLoading,LazyImageLoading";
                 Settings.Flags["disable-blink-features"] += ",Prerender2";
-
                 if (LiteMode)
                 {
                     //https://github.com/cypress-io/cypress/issues/22622
                     //https://issues.chromium.org/issues/40220332
-                    Settings.Flags["disable-features"] += ",LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
-                    Settings.Flags["enable-features"] += ",LiteVideo,AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
+                    Settings.Flags["disable-features"] += ",BackForwardCache,LoadingTasksUnfreezable,LogJsConsoleMessages,BoostImagePriority,BoostImageSetLoadingTaskPriority,BoostFontLoadingTaskPriority,BoostVideoLoadingTaskPriority,BoostRenderBlockingStyleLoadingTaskPriority,BoostNonRenderBlockingStyleLoadingTaskPriority";
+                    Settings.Flags["enable-features"] += ",ReleaseResourceStrongReferencesOnMemoryPressure,ReleaseResourceDecodedDataOnMemoryPressure,NetworkServiceInProcess2,WebContentsDiscard,ReduceGpuPriorityOnBackground,LiteVideo,AllowAggressiveThrottlingWithWebSocket,stop-in-background,ClientHintsSaveData,SaveDataImgSrcset,LowPriorityScriptLoading,LowPriorityAsyncScriptExecution";
                     Settings.Flags["enable-blink-features"] += ",PrefersReducedData,ForceReduceMotion";
                     Settings.Flags["blink-settings"] += ",webGL1Enabled=false,webGL2Enabled=false,imageAnimationPolicy=1,prefersReducedTransparency=true,prefersReducedMotion=true,lazyLoadingFrameMarginPxUnknown=0,lazyLoadingFrameMarginPxOffline=0,lazyLoadingFrameMarginPxSlow2G=0,lazyLoadingFrameMarginPx2G=0,lazyLoadingFrameMarginPx3G=0,lazyLoadingFrameMarginPx4G=0,lazyLoadingImageMarginPxUnknown=0,lazyLoadingImageMarginPxOffline=0,lazyLoadingImageMarginPxSlow2G=0,lazyLoadingImageMarginPx2G=0,lazyLoadingImageMarginPx3G=0,lazyLoadingImageMarginPx4G=0";
                     JsFlags += " --max-lazy --lite-mode --noexpose-wasm --optimize-for-size";
@@ -4978,34 +4977,6 @@ Inner Exception: {7}";
         private string DArguments { get; set; }
         private string DTooltip { get; set; }
     }
-
-    /*public struct CdnEntry
-    {
-        public readonly string Prefix;
-        public readonly string Suffix;
-        public readonly string LocalPath;
-
-        public CdnEntry(string _Prefix, string _Suffix, string _LocalPath)
-        {
-            Prefix = _Prefix;
-            Suffix = _Suffix;
-            LocalPath = _LocalPath;
-        }
-
-        public bool TryMatch(string Url, out string? ResolvedPath)
-        {
-            ResolvedPath = null;
-            if (!Url.StartsWith(Prefix)) return false;
-            if (!Url.EndsWith(Suffix)) return false;
-            int VersionStart = Prefix.Length;
-            int VersionEnd = Url.Length - Suffix.Length;
-            if (VersionEnd <= VersionStart) return false;
-
-            string Version = Url.Substring(VersionStart, VersionEnd - VersionStart);
-            ResolvedPath = string.Format(LocalPath, Version);
-            return true;
-        }
-    }*/
 
     public static class Scripts
     {
