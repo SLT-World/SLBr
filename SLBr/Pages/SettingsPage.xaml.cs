@@ -382,6 +382,8 @@ namespace SLBr.Pages
             WaybackInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar"));
             HomographInfoBarCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("HomographInfoBar"));
 
+            LocalCdnCheckBox.IsChecked = App.Instance.LocalCdn;
+            LocalCdnUpgradeCheckBox.IsChecked = App.Instance.LocalCdnUpgrade;
             NeverSlowModeCheckBox.IsChecked = App.Instance.NeverSlowMode;
             AMPCheckBox.IsChecked = bool.Parse(App.Instance.GlobalSave.Get("AMP"));
 
@@ -839,6 +841,16 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
                 App.Instance.SetNeverSlowMode(NeverSlowModeCheckBox.IsChecked.GetValueOrDefault());
+        }
+        private void LocalCdnCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetLocalCdn(LocalCdnCheckBox.IsChecked.GetValueOrDefault());
+        }
+        private void LocalCdnUpgradeCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+                App.Instance.SetLocalCdnUpgrade(LocalCdnUpgradeCheckBox.IsChecked.GetValueOrDefault());
         }
         private void AMPCheckBox_Click(object sender, RoutedEventArgs e)
         {

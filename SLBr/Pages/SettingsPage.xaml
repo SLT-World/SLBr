@@ -803,6 +803,17 @@
                                         </Grid>
                                     </StackPanel>
                                 </GroupBox>
+                                <GroupBox Margin="0,0,0,10">
+                                    <GroupBox.Header>
+                                        <CheckBox x:Name="LocalCdnCheckBox" Click="LocalCdnCheckBox_Click" Content="Local CDN" Width="Auto"/>
+                                    </GroupBox.Header>
+                                    <StackPanel>
+                                        <TextBlock Foreground="{StaticResource GrayBrush}" Margin="0,0,0,10">
+Caches common web libraries on local disk to reduce bandwidth usage.
+                                        </TextBlock>
+                                        <CheckBox IsEnabled="{Binding ElementName=LocalCdnCheckBox, Path=IsChecked, TargetNullValue=False}" x:Name="LocalCdnUpgradeCheckBox" Click="LocalCdnUpgradeCheckBox_Click" Content="Automatic version upgrades" Width="Auto"/>
+                                    </StackPanel>
+                                </GroupBox>
                             </StackPanel>
                         </Border>
                     </Grid>

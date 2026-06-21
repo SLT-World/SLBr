@@ -371,97 +371,136 @@ namespace SLBr
             {
                 _ = Convert.ToHexString(MD5.HashData(Data));
             });*/
-        //byte[] LocalHash = [0x5B, 0x0B, 0x89, 0x75, 0x0C, 0x78, 0xF2, 0x33, 0xFE, 0xE2, 0x5C, 0x6B, 0xE3, 0x2D, 0x92, 0x8F, 0xCD, 0x80, 0x5A, 0x8C, 0x54, 0x55, 0xC2, 0x11, 0x0D, 0x29, 0x35, 0x3C, 0x2F, 0x51, 0x7F, 0xEE];
-        //byte[] Bytes = [0x0A, 0x2D, 0x0A, 0x20, 0x5B, 0x0B, 0x89, 0x75, 0x0C, 0x78, 0xF2, 0x33, 0xFE, 0xE2, 0x5C, 0x6B, 0xE3, 0x2D, 0x92, 0x8F, 0xCD, 0x80, 0x5A, 0x8C, 0x54, 0x55, 0xC2, 0x11, 0x0D, 0x29, 0x35, 0x3C, 0x2F, 0x51, 0x7F, 0xEE, 0x12, 0x05, 0x08, 0x01, 0x12, 0x01, 0x02, 0x12, 0x02, 0x08, 0x04, 0x12, 0x03, 0x08, 0xAC, 0x02];
-        //MessageBox.Show($"Run {Handlers.WebRiskHandler.SBv5GetThreatType(ProtoBuf.Serializer.Deserialize<SafeBrowsing.SearchHashesResponse>(Bytes), LocalHash).ToString()} {Protobuf.SafeBrowsingV5Parser.SBv5GetThreatType(Protobuf.SafeBrowsingV5Parser.ParseResponse(Bytes), LocalHash).ToString()}");
-        /*Benchmark.Run("protobuf-net", Iterations, () =>
-        {
-            _ = Handlers.WebRiskHandler.SBv5GetThreatType(ProtoBuf.Serializer.Deserialize<SafeBrowsing.SearchHashesResponse>(Bytes), LocalHash);
-        });
-        Benchmark.Run("CSharp", Iterations, () =>
-        {
-            _ = Protobuf.SafeBrowsingV5Parser.SBv5GetThreatType(Protobuf.SafeBrowsingV5Parser.ParseResponse(Bytes), LocalHash);
-        });*/
-        /*Benchmark.Run("CSharpParse", Iterations, () =>
-        {
-            _ = Protobuf.SafeBrowsingV5Parser.ParseResponse(Bytes);
-        });*/
-        //byte[] Bytes = [0x08, 0x01, 0x1A, 0x80, 0x02, 0x64, 0x65, 0x32, 0x61, 0x39, 0x32, 0x34, 0x64, 0x64, 0x31, 0x61, 0x64, 0x38, 0x38, 0x39, 0x63, 0x35, 0x63, 0x36, 0x36, 0x66, 0x34, 0x31, 0x31, 0x33, 0x31, 0x33, 0x63, 0x64, 0x65, 0x62, 0x66, 0x61, 0x65, 0x35, 0x38, 0x66, 0x33, 0x64, 0x32, 0x37, 0x32, 0x35, 0x39, 0x32, 0x32, 0x33, 0x37, 0x30, 0x32, 0x31, 0x36, 0x39, 0x31, 0x30, 0x63, 0x61, 0x62, 0x63, 0x63, 0x32, 0x62, 0x66, 0x64, 0x39, 0x30, 0x30, 0x35, 0x63, 0x66, 0x66, 0x36, 0x35, 0x32, 0x30, 0x66, 0x31, 0x31, 0x61, 0x66, 0x35, 0x38, 0x65, 0x64, 0x33, 0x35, 0x33, 0x64, 0x61, 0x61, 0x63, 0x64, 0x31, 0x65, 0x63, 0x65, 0x35, 0x34, 0x63, 0x64, 0x66, 0x39, 0x39, 0x30, 0x37, 0x61, 0x32, 0x62, 0x65, 0x30, 0x64, 0x39, 0x66, 0x39, 0x36, 0x61, 0x38, 0x62, 0x62, 0x62, 0x33, 0x61, 0x65, 0x35, 0x64, 0x31, 0x38, 0x62, 0x62, 0x34, 0x33, 0x31, 0x64, 0x64, 0x34, 0x38, 0x64, 0x63, 0x63, 0x64, 0x66, 0x61, 0x63, 0x30, 0x31, 0x65, 0x33, 0x35, 0x35, 0x30, 0x62, 0x32, 0x34, 0x66, 0x36, 0x35, 0x32, 0x36, 0x30, 0x63, 0x35, 0x34, 0x31, 0x62, 0x33, 0x32, 0x32, 0x32, 0x66, 0x63, 0x36, 0x32, 0x33, 0x35, 0x32, 0x62, 0x39, 0x63, 0x64, 0x36, 0x64, 0x65, 0x38, 0x37, 0x32, 0x32, 0x64, 0x66, 0x34, 0x62, 0x34, 0x35, 0x66, 0x61, 0x63, 0x31, 0x64, 0x63, 0x32, 0x32, 0x33, 0x33, 0x39, 0x32, 0x33, 0x64, 0x66, 0x63, 0x32, 0x31, 0x61, 0x33, 0x30, 0x31, 0x36, 0x33, 0x62, 0x61, 0x38, 0x35, 0x33, 0x30, 0x36, 0x65, 0x63, 0x30, 0x36, 0x30, 0x61, 0x38, 0x37, 0x65, 0x33, 0x38, 0x30, 0x63, 0x37, 0x36, 0x64, 0x65, 0x63, 0x35, 0x39, 0x35, 0x30, 0x34, 0x66, 0x33, 0x39, 0x31, 0x32, 0x37, 0x36, 0x35, 0x65, 0x61];
-        //MessageBox.Show($"Run {ProtoBuf.Serializer.Deserialize<SafeBrowsing.ClientDownloadResponse>(Bytes).ToVerdict().ToString()} {Protobuf.SafeBrowsingDownloadParser.ParseResponse(Bytes).ToVerdict().ToString()}");
-        /*Benchmark.Run("protobuf-net", Iterations, () =>
-        {
-            _ = ProtoBuf.Serializer.Deserialize<SafeBrowsing.ClientDownloadResponse>(Bytes).ToVerdict();
-        });*/
-        /*Benchmark.Run("CSharp", Iterations, () =>
-        {
-            _ = Protobuf.SafeBrowsingDownloadParser.ParseResponse(Bytes);
-        });*/
-        /*MessageBox.Show($"Run");
-        await Benchmark.RunAsync("protobuf-net", Iterations, async () =>
-        {
-            _ = DownloadRiskHandler.SBGetDownloadResponseBytesNet("C:/Path/Path/Path/File.path", "C:/Path/Path/Path/File.exe", "https://example.com/path/file.exe", "https://example.com");
-        });
-        await Benchmark.RunAsync("CSharp", Iterations, async () =>
-        {
-            _ = DownloadRiskHandler.SBGetDownloadResponseBytes("C:/Path/Path/Path/File.path", "C:/Path/Path/Path/File.exe", "https://example.com/path/file.exe", "https://example.com");
-        });*/
-        /*MessageBox.Show($"{Utils.GetFileExtension("https://example.com/example.pdf#id?query=123")} {System.IO.Path.GetExtension("https://example.com/example.pdf#id?query=123")}");
-        Benchmark.Run("GetFileExtension", Iterations, () =>
-        {
-            _ = Utils.GetFileExtension("https://example.com/example.pdf#id?query=123");
-        });
-        Benchmark.Run("GetExtension", Iterations, () =>
-        {
-            _ = System.IO.Path.GetExtension("https://example.com/example.pdf#id?query=123");
-        });*/
-        //MessageBox.Show($"{Utils.FastHost("https://google.com/search?q=Hello+World")} {Utils.Host("https://google.com/search?q=Hello+World")}");
-        /*Benchmark.Run("CapitalizeAllFirstCharacters", Iterations, () =>
-        {
-            _ = Utils.CapitalizeAllFirstCharacters("example.html foo bar");
-        });
-        Benchmark.Run("ToTitleCase", Iterations, () =>
-        {
-            _ = CultureInfo.InvariantCulture.TextInfo.ToTitleCase("example.html foo bar");
-        });*/
-        /*Benchmark.Run("FastHost", Iterations, () =>
-        {
-            _ = Utils.FastHost("https://google.com/search?q=Hello+World");
-        });
-        Benchmark.Run("Host", Iterations, () =>
-        {
-            _ = Utils.Host("https://google.com/search?q=Hello+World");
-        });*/
-        /*Benchmark.Run("Uri EscapeDataString JIT", 1, () =>
-        {
-            _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar");
-        });
-        Benchmark.Run("Utils EscapeDataString Span JIT", 1, () =>
-        {
-            _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar".AsSpan());
-        });
-        Benchmark.Run("Uri EscapeDataString", Iterations, () =>
-        {
-            _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar");
-        });
-        Benchmark.Run("Utils EscapeDataString Span", Iterations, () =>
-        {
-            _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar".AsSpan());
-        });*/
-        /*const string Domain = "adc3-launch.adcolony.com";
-        SLBr.Handlers.AdBlockHandler _AdBlockHandler = new(App.Instance.AllowListSave);
-        Benchmark.Run("ParseAdd", 1, () =>
-        {
-            _AdBlockHandler.ParseAdd(System.IO.File.ReadAllText(@"ads-ags.txt"));
-        });
-        Benchmark.Run("BlockRequest", Iterations, () =>
-        {
-            _ = _AdBlockHandler.ShouldBlockRequest(Domain, Domain, ResourceRequestType.Script);
-        });*/
-        /*MessageBox.Show(Benchmark.Report());
-    }*/
+            //byte[] LocalHash = [0x5B, 0x0B, 0x89, 0x75, 0x0C, 0x78, 0xF2, 0x33, 0xFE, 0xE2, 0x5C, 0x6B, 0xE3, 0x2D, 0x92, 0x8F, 0xCD, 0x80, 0x5A, 0x8C, 0x54, 0x55, 0xC2, 0x11, 0x0D, 0x29, 0x35, 0x3C, 0x2F, 0x51, 0x7F, 0xEE];
+            //byte[] Bytes = [0x0A, 0x2D, 0x0A, 0x20, 0x5B, 0x0B, 0x89, 0x75, 0x0C, 0x78, 0xF2, 0x33, 0xFE, 0xE2, 0x5C, 0x6B, 0xE3, 0x2D, 0x92, 0x8F, 0xCD, 0x80, 0x5A, 0x8C, 0x54, 0x55, 0xC2, 0x11, 0x0D, 0x29, 0x35, 0x3C, 0x2F, 0x51, 0x7F, 0xEE, 0x12, 0x05, 0x08, 0x01, 0x12, 0x01, 0x02, 0x12, 0x02, 0x08, 0x04, 0x12, 0x03, 0x08, 0xAC, 0x02];
+            //MessageBox.Show($"Run {Handlers.WebRiskHandler.SBv5GetThreatType(ProtoBuf.Serializer.Deserialize<SafeBrowsing.SearchHashesResponse>(Bytes), LocalHash).ToString()} {Protobuf.SafeBrowsingV5Parser.SBv5GetThreatType(Protobuf.SafeBrowsingV5Parser.ParseResponse(Bytes), LocalHash).ToString()}");
+            /*Benchmark.Run("protobuf-net", Iterations, () =>
+            {
+                _ = Handlers.WebRiskHandler.SBv5GetThreatType(ProtoBuf.Serializer.Deserialize<SafeBrowsing.SearchHashesResponse>(Bytes), LocalHash);
+            });
+            Benchmark.Run("CSharp", Iterations, () =>
+            {
+                _ = Protobuf.SafeBrowsingV5Parser.SBv5GetThreatType(Protobuf.SafeBrowsingV5Parser.ParseResponse(Bytes), LocalHash);
+            });*/
+            /*Benchmark.Run("CSharpParse", Iterations, () =>
+            {
+                _ = Protobuf.SafeBrowsingV5Parser.ParseResponse(Bytes);
+            });*/
+            //byte[] Bytes = [0x08, 0x01, 0x1A, 0x80, 0x02, 0x64, 0x65, 0x32, 0x61, 0x39, 0x32, 0x34, 0x64, 0x64, 0x31, 0x61, 0x64, 0x38, 0x38, 0x39, 0x63, 0x35, 0x63, 0x36, 0x36, 0x66, 0x34, 0x31, 0x31, 0x33, 0x31, 0x33, 0x63, 0x64, 0x65, 0x62, 0x66, 0x61, 0x65, 0x35, 0x38, 0x66, 0x33, 0x64, 0x32, 0x37, 0x32, 0x35, 0x39, 0x32, 0x32, 0x33, 0x37, 0x30, 0x32, 0x31, 0x36, 0x39, 0x31, 0x30, 0x63, 0x61, 0x62, 0x63, 0x63, 0x32, 0x62, 0x66, 0x64, 0x39, 0x30, 0x30, 0x35, 0x63, 0x66, 0x66, 0x36, 0x35, 0x32, 0x30, 0x66, 0x31, 0x31, 0x61, 0x66, 0x35, 0x38, 0x65, 0x64, 0x33, 0x35, 0x33, 0x64, 0x61, 0x61, 0x63, 0x64, 0x31, 0x65, 0x63, 0x65, 0x35, 0x34, 0x63, 0x64, 0x66, 0x39, 0x39, 0x30, 0x37, 0x61, 0x32, 0x62, 0x65, 0x30, 0x64, 0x39, 0x66, 0x39, 0x36, 0x61, 0x38, 0x62, 0x62, 0x62, 0x33, 0x61, 0x65, 0x35, 0x64, 0x31, 0x38, 0x62, 0x62, 0x34, 0x33, 0x31, 0x64, 0x64, 0x34, 0x38, 0x64, 0x63, 0x63, 0x64, 0x66, 0x61, 0x63, 0x30, 0x31, 0x65, 0x33, 0x35, 0x35, 0x30, 0x62, 0x32, 0x34, 0x66, 0x36, 0x35, 0x32, 0x36, 0x30, 0x63, 0x35, 0x34, 0x31, 0x62, 0x33, 0x32, 0x32, 0x32, 0x66, 0x63, 0x36, 0x32, 0x33, 0x35, 0x32, 0x62, 0x39, 0x63, 0x64, 0x36, 0x64, 0x65, 0x38, 0x37, 0x32, 0x32, 0x64, 0x66, 0x34, 0x62, 0x34, 0x35, 0x66, 0x61, 0x63, 0x31, 0x64, 0x63, 0x32, 0x32, 0x33, 0x33, 0x39, 0x32, 0x33, 0x64, 0x66, 0x63, 0x32, 0x31, 0x61, 0x33, 0x30, 0x31, 0x36, 0x33, 0x62, 0x61, 0x38, 0x35, 0x33, 0x30, 0x36, 0x65, 0x63, 0x30, 0x36, 0x30, 0x61, 0x38, 0x37, 0x65, 0x33, 0x38, 0x30, 0x63, 0x37, 0x36, 0x64, 0x65, 0x63, 0x35, 0x39, 0x35, 0x30, 0x34, 0x66, 0x33, 0x39, 0x31, 0x32, 0x37, 0x36, 0x35, 0x65, 0x61];
+            //MessageBox.Show($"Run {ProtoBuf.Serializer.Deserialize<SafeBrowsing.ClientDownloadResponse>(Bytes).ToVerdict().ToString()} {Protobuf.SafeBrowsingDownloadParser.ParseResponse(Bytes).ToVerdict().ToString()}");
+            /*Benchmark.Run("protobuf-net", Iterations, () =>
+            {
+                _ = ProtoBuf.Serializer.Deserialize<SafeBrowsing.ClientDownloadResponse>(Bytes).ToVerdict();
+            });*/
+            /*Benchmark.Run("CSharp", Iterations, () =>
+            {
+                _ = Protobuf.SafeBrowsingDownloadParser.ParseResponse(Bytes);
+            });*/
+            /*MessageBox.Show($"Run");
+            await Benchmark.RunAsync("protobuf-net", Iterations, async () =>
+            {
+                _ = DownloadRiskHandler.SBGetDownloadResponseBytesNet("C:/Path/Path/Path/File.path", "C:/Path/Path/Path/File.exe", "https://example.com/path/file.exe", "https://example.com");
+            });
+            await Benchmark.RunAsync("CSharp", Iterations, async () =>
+            {
+                _ = DownloadRiskHandler.SBGetDownloadResponseBytes("C:/Path/Path/Path/File.path", "C:/Path/Path/Path/File.exe", "https://example.com/path/file.exe", "https://example.com");
+            });*/
+            /*MessageBox.Show($"{Utils.GetFileExtension("https://example.com/example.pdf#id?query=123")} {System.IO.Path.GetExtension("https://example.com/example.pdf#id?query=123")}");
+            Benchmark.Run("GetFileExtension", Iterations, () =>
+            {
+                _ = Utils.GetFileExtension("https://example.com/example.pdf#id?query=123");
+            });
+            Benchmark.Run("GetExtension", Iterations, () =>
+            {
+                _ = System.IO.Path.GetExtension("https://example.com/example.pdf#id?query=123");
+            });*/
+            //MessageBox.Show($"{Utils.FastHost("https://google.com/search?q=Hello+World")} {Utils.Host("https://google.com/search?q=Hello+World")}");
+            /*Benchmark.Run("CapitalizeAllFirstCharacters", Iterations, () =>
+            {
+                _ = Utils.CapitalizeAllFirstCharacters("example.html foo bar");
+            });
+            Benchmark.Run("ToTitleCase", Iterations, () =>
+            {
+                _ = CultureInfo.InvariantCulture.TextInfo.ToTitleCase("example.html foo bar");
+            });*/
+            /*Benchmark.Run("FastHost", Iterations, () =>
+            {
+                _ = Utils.FastHost("https://google.com/search?q=Hello+World");
+            });
+            Benchmark.Run("Host", Iterations, () =>
+            {
+                _ = Utils.Host("https://google.com/search?q=Hello+World");
+            });*/
+            /*Benchmark.Run("Uri EscapeDataString JIT", 1, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar");
+            });
+            Benchmark.Run("Utils EscapeDataString Span JIT", 1, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar".AsSpan());
+            });
+            Benchmark.Run("Uri EscapeDataString", Iterations, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar");
+            });
+            Benchmark.Run("Utils EscapeDataString Span", Iterations, () =>
+            {
+                _ = Uri.EscapeDataString("foo=C# Example&bar=Foo Bar".AsSpan());
+            });*/
+            /*const string Domain = "adc3-launch.adcolony.com";
+            SLBr.Handlers.AdBlockHandler _AdBlockHandler = new(App.Instance.AllowListSave);
+            Benchmark.Run("ParseAdd", 1, () =>
+            {
+                _AdBlockHandler.ParseAdd(System.IO.File.ReadAllText(@"ads-ags.txt"));
+            });
+            Benchmark.Run("BlockRequest", Iterations, () =>
+            {
+                _ = _AdBlockHandler.ShouldBlockRequest(Domain, Domain, ResourceRequestType.Script);
+            });*/
+            /*MessageBox.Show(Benchmark.Report());
+        }*/
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             SetAppearance(App.Instance.CurrentTheme);
+            /*string Path1;
+            if (new Managers.CdnManager(App.Instance.CdnPath).TryMatch("https://fonts.gstatic.com/s/materialsymbolsrounded/v352/syl0-zNym6YjUruM-QrEh7-nyTnjDwKNJ_190FjpZIvDmUSVOK7BDB_Qb9vUSzq3wzLK-P0J-V_Zs-QtQth3-jOcbTCVpeRL2w5rwZu2rIelXxc.woff2", out Path1))
+                MessageBox.Show(Path1);*/
+            /*if (new Managers.CdnManager(App.Instance.CdnPath).TryMatchLatest("https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.1.1/modernizr.min.js", out Path1))
+                MessageBox.Show(Path1);*/
+            /*if (App.Instance.CdnManager.TryMatch("https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js", out Path1))
+                MessageBox.Show(Path1);*/
+            /*if (App.Instance.CdnManager.TryMatch("https://cdnjs.cloudflare.com/ajax/libs/react/19.1.1/cjs/react.production.min.js?version=19.1.1", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://cdnjs.cloudflare.com/ajax/libs/react/19.1.1/cjs/react.production.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://cdn.jsdelivr.net/npm/jquery@3.6.4/src/core.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.googleapis.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.googleapis.com/ajax/libs/cesiumjs/1.78/Build/Cesium/Cesium.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.microsoft.com/ajax/jQuery/jquery-1.8.0.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://ajax.aspnetcdn.com/ajax/bootstrap/4.6.0/bootstrap.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Tirra:wght@400;500;600;700;800;900&display=swap", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://unpkg.com/preact@10.26.4/dist/preact.min.js", out Path1))
+                MessageBox.Show(Path1);
+            if (App.Instance.CdnManager.TryMatch("https://unpkg.com/preact@latest/dist/preact.min.js", out Path1))
+                MessageBox.Show(Path1);*/
             //PerformBenchmark();
             #region Benchmark
             /*Benchmark.Clear();

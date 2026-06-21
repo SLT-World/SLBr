@@ -930,6 +930,9 @@ namespace SLBr
         public string ResourcesPath;
         public string AdBlockDataPath;
         public string NotificationTempPath;
+        public string CdnPath;
+
+        public CdnManager CdnManager;
 
         public bool AppInitialized;
 
@@ -1853,6 +1856,7 @@ namespace SLBr
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             AdBlockDataPath = Path.Combine(UserApplicationDataPath, "Filters");
             NotificationTempPath = Path.Combine(Path.GetTempPath(), "SLBr_NotificationCache");
+            CdnPath = Path.Combine(UserApplicationDataPath, "CDN");
 
             LocaleNames = AllLocales.Select(i => i.Value).ToList();
 
@@ -2399,6 +2403,9 @@ Inner Exception: {7}";
         public int AdBlock;
         public bool AMP;
 
+        public bool LocalCdn;
+        public bool LocalCdnUpgrade;
+
         //https://chromium-review.googlesource.com/c/chromium/src/+/1265506
         public bool NeverSlowMode;
 
@@ -2546,6 +2553,18 @@ Inner Exception: {7}";
                     await SetAdBlockLists();
                 });
             }
+        }
+        public void SetLocalCdn(bool Toggle)
+        {
+            GlobalSave.Set("Cdn", Toggle);
+            LocalCdn = Toggle;
+            if (Toggle && CdnManager == null)
+                CdnManager = new CdnManager(CdnPath);
+        }
+        public void SetLocalCdnUpgrade(bool Toggle)
+        {
+            GlobalSave.Set("CdnUpgrade", Toggle);
+            LocalCdnUpgrade = Toggle;
         }
         public async Task SetAdBlockLists()
         {
@@ -3309,6 +3328,8 @@ Inner Exception: {7}";
             SetTrimURL(bool.Parse(GlobalSave.Get("TrimURL", true.ToString())));
             SetHomographProtection(bool.Parse(GlobalSave.Get("HomographProtection", true.ToString())));
             SetNeverSlowMode(bool.Parse(GlobalSave.Get("NeverSlowMode", false.ToString())));
+            SetLocalCdn(bool.Parse(GlobalSave.Get("Cdn", false.ToString())));
+            SetLocalCdnUpgrade(bool.Parse(GlobalSave.Get("CdnUpgrade", true.ToString())));
             SetAdBlock(GlobalSave.GetInt("AdBlock", 0));
             SetAMP(bool.Parse(GlobalSave.Get("AMP", false.ToString())));
             SetRenderMode(GlobalSave.GetInt("RenderMode", (RenderCapability.Tier >> 16) == 0 ? 1 : 0));

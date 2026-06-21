@@ -509,7 +509,7 @@ namespace SLBr.Pages
             WebView?.NewTabRequested += WebView_NewTabRequested;
             WebView?.PermissionRequested += WebView_PermissionRequested;
             WebView?.ResourceLoaded += WebView_ResourceLoaded;
-            //WebView?.ResponseIntercepted += WebView_ResponseIntercepted;
+            WebView?.ResponseIntercepted += WebView_ResponseIntercepted;
             WebView?.ResourceRequested += WebView_ResourceRequested;
             //WebView?.ResourceResponded += WebView_ResourceResponded;
             WebView?.ScriptDialogOpened += WebView_ScriptDialogOpened;
@@ -778,6 +778,29 @@ namespace SLBr.Pages
                 }
             }
 
+            if (App.Instance.LocalCdn && App.Instance.CdnManager.IsValidCdn(e.Url, e.ResourceRequestType))
+            {
+                string? TargetPath;
+                if ((App.Instance.LocalCdnUpgrade ? App.Instance.CdnManager.TryMatchLatest(e.Url, out TargetPath) : App.Instance.CdnManager.TryMatch(e.Url, out TargetPath)) && !string.IsNullOrEmpty(TargetPath))
+                {
+                    if (File.Exists(TargetPath))
+                    {
+                        try
+                        {
+                            //TODO: Certain cached Google Fonts do not operate as expected, as evident in https://slt-world.github.io.
+                            WebResourceResponse ResourceOverride = new(File.OpenRead(TargetPath), Cef.GetMimeType(Path.GetExtension(TargetPath)));
+                            ResourceOverride.Headers.Value.Add("Cache-Control", "private, max-age=31536000, immutable");
+                            e.Response = ResourceOverride;
+                        }
+                        catch { }
+                    }
+                    else
+                        e.Intercept = true;
+                }
+            }
+            /*if (e.Url == "https://slt-world.github.io/tests/style.css")
+                e.Response = new WebResourceResponse(File.OpenRead(@"test.css"), Cef.GetMimeType(".css"));*/
+
             //Proof of concept.
             //https://github.com/users/SLT-World/projects/2/views/2?pane=issue&itemId=159222997
             //TODO: Inject styling, refer to SLChat markdown implementation.
@@ -811,6 +834,27 @@ namespace SLBr.Pages
                             ]
                         };
                         LocalInfoBars.Add(ProprietaryCodecsInfoBar);
+                    });
+                }
+            }
+        }
+
+        private async void WebView_ResponseIntercepted(object? sender, ResponseInterceptedResult e)
+        {
+            if (App.Instance.LocalCdn && e.StatusCode == 200 && App.Instance.CdnManager.IsValidCdn(e.Url, e.ResourceRequestType) && App.Instance.CdnManager.TryMatch(e.Url, out string? TargetPath) && TargetPath != null)
+            {
+                //Debug.WriteLine(TargetPath);
+                //return;
+                if (!File.Exists(TargetPath))
+                {
+                    await e.CopyStream(async (_Stream) =>
+                    {
+                        string? _Directory = Path.GetDirectoryName(TargetPath);
+                        if (!string.IsNullOrEmpty(_Directory))
+                            Directory.CreateDirectory(_Directory);
+
+                        using FileStream _FileStream = new(TargetPath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, true);
+                        await _Stream.CopyToAsync(_FileStream);
                     });
                 }
             }
@@ -3811,7 +3855,7 @@ namespace SLBr.Pages
                 DisposingWebView?.NewTabRequested -= WebView_NewTabRequested;
                 DisposingWebView?.PermissionRequested -= WebView_PermissionRequested;
                 DisposingWebView?.ResourceLoaded -= WebView_ResourceLoaded;
-                //DisposingWebView?.ResponseIntercepted -= WebView_ResponseIntercepted;
+                DisposingWebView?.ResponseIntercepted -= WebView_ResponseIntercepted;
                 DisposingWebView?.ResourceRequested -= WebView_ResourceRequested;
                 //DisposingWebView?.ResourceResponded -= WebView_ResourceResponded;
                 DisposingWebView?.ScriptDialogOpened -= WebView_ScriptDialogOpened;
