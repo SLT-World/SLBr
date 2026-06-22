@@ -49,7 +49,7 @@
                     <WinUI:DropDownButton x:Name="OptionsButton" ToolTip="Options" BorderThickness="0" Content="&#xE712;" Margin="0,0,5,0" Style="{StaticResource DropDownIconButton}" DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <WinUI:DropDownButton.Menu>
                             <ContextMenu>
-                                <MenuItem Visibility="Collapsed" Icon="&#xea6a;" Header="New Update" x:Name="NewUpdateMenu" Foreground="Orange" Click="UpdateSLBr"/>
+                                <MenuItem Visibility="Collapsed" Icon="&#xea6a;" Header="New update" x:Name="NewUpdateMenu" Foreground="Orange" Click="UpdateSLBr"/>
                                 <Separator Visibility="Collapsed" x:Name="NewUpdateMenuSeparator"/>
                                 <MenuItem Icon="&#xEC6C;" Header="New tab" Click="ButtonAction" Tag="5&lt;,&gt;{Homepage}"/>
                                 <MenuItem Icon="&#xE727;" Header="New private tab" Click="ButtonAction" Tag="5&lt;,&gt;slbr://newtab&lt;,&gt;Private"/>
@@ -119,17 +119,18 @@
                                     <MenuItem Icon="&#xe72c;" Header="Reset" Click="ButtonAction" Tag="42"/>
                                 </MenuItem>-->
                                 <MenuItem Header="Tools" Icon="&#xe821;">
-                                    <MenuItem Header="Create QR Code" Icon="&#xed14;" Click="ButtonAction" Tag="57&lt;,&gt;0"/>
+                                    <MenuItem Header="Create QR code" Icon="&#xed14;" Click="ButtonAction" Tag="57&lt;,&gt;0"/>
                                     <MenuItem Header="Share" Icon="&#xe72d;" Click="ButtonAction" Tag="33"/>
-                                    <MenuItem Header="Reader Mode" Icon="&#xF000;" Click="ButtonAction" Tag="17"/>
-                                    <MenuItem Header="News Feed" Icon="&#xe8a1;" Click="ButtonAction" Tag="23"/>
+                                    <MenuItem Header="Reader mode" Icon="&#xF000;" Click="ButtonAction" Tag="17"/>
+                                    <MenuItem Header="News feed" Icon="&#xe8a1;" Click="ButtonAction" Tag="23"/>
                                     <Separator/>
-                                    <MenuItem Header="Developer Tools" Icon="&#xec7a;" Click="ButtonAction" Tag="9" InputGestureText="F12"/>
+                                    <MenuItem Header="Developer tools" Icon="&#xec7a;" Click="ButtonAction" Tag="9" InputGestureText="F12"/>
+                                    <MenuItem Header="Task manager" Icon="&#xe9d9;" Click="ButtonAction" Tag="60" InputGestureText="Shift+Esc"/>
                                 </MenuItem>
                                 <Separator/>
                                 <MenuItem Icon="&#xE748;" Header="Switch User" Click="ButtonAction" Tag="15"/>
                                 <MenuItem Header="Help" Icon="&#xe897;">
-                                    <MenuItem Header="What's New" Icon="&#xf133;" Click="ButtonAction" Tag="5&lt;,&gt;https://github.com/SLT-World/SLBr/releases/latest"/>
+                                    <MenuItem Header="What's new" Icon="&#xf133;" Click="ButtonAction" Tag="5&lt;,&gt;https://github.com/SLT-World/SLBr/releases/latest"/>
                                     <MenuItem Header="Report issue" Icon="&#xe7ba;" Click="ButtonAction" Tag="5&lt;,&gt;https://github.com/SLT-World/SLBr/issues"/>
                                 </MenuItem>
                                 <MenuItem Icon="&#xE713;" Header="Settings" Click="ButtonAction" Tag="5&lt;,&gt;slbr://settings"/>

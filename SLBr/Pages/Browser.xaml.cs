@@ -434,6 +434,9 @@ namespace SLBr.Pages
                 case Actions.Translate:
                     Translate(V1 == "1");
                     break;
+                case Actions.TaskManager:
+                    WebView?.OpenTaskManager();
+                    break;
                 case Actions.CreateGroup:
                     Tab.ParentWindow.CreateGroup();
                     break;

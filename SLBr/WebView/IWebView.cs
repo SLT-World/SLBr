@@ -1334,6 +1334,7 @@ namespace SLBr.WebView
         void Find(string Text, bool Forward, bool MatchCase, bool FindNext);
         void StopFind();
         void SaveAs();
+        void OpenTaskManager();
 
         event EventHandler AudioPlayingChanged;
         event EventHandler<bool> FullscreenChanged;
@@ -1725,20 +1726,19 @@ namespace SLBr.WebView
         {
             if (!Browser.IsBrowserInitialized)
                 return;
-            //TODO: https://github.com/cefsharp/CefSharp/pull/5257
             if (ClearCache)
             {
-                /*if (WebViewManager.Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
+                if (WebViewManager.Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
                 {
-                    Browser.ExecuteChromeCommand(CefIdMappers.CefIdForCommandIdName("IDC_RELOAD_CLEARING_CACHE"), WindowOpenDisposition.CurrentTab);
+                    Browser.ExecuteChromeCommand(Cef.MapChromeCommandNameToId("IDC_RELOAD_CLEARING_CACHE"), WindowOpenDisposition.CurrentTab);
                     return;
                 }
                 else
-                {*/
-                using DevToolsClient _DevToolsClient = Browser.GetDevToolsClient();
-                _DevToolsClient.Page.ClearCompilationCacheAsync();
-                _DevToolsClient.Network.ClearBrowserCacheAsync();
-                //}
+                {
+                    using DevToolsClient _DevToolsClient = Browser.GetDevToolsClient();
+                    _DevToolsClient.Page.ClearCompilationCacheAsync();
+                    _DevToolsClient.Network.ClearBrowserCacheAsync();
+                }
             }
             Browser?.Reload(IgnoreCache);
         }
@@ -1764,16 +1764,21 @@ namespace SLBr.WebView
                 Browser?.StopFinding(true);
         }
 
-        //TODO: https://github.com/cefsharp/CefSharp/pull/5257
-        /*public void SaveAs()
+        public void SaveAs()
         {
-            if (Browser.IsBrowserInitialized) return;
+            if (!Browser.IsBrowserInitialized) return;
             if (WebViewManager.Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
-                Browser?.ExecuteChromeCommand(CefIdMappers.CefIdForCommandIdName("IDC_SAVE_PAGE"), WindowOpenDisposition.CurrentTab);
+                Browser?.ExecuteChromeCommand(Cef.MapChromeCommandNameToId("IDC_SAVE_PAGE"), WindowOpenDisposition.CurrentTab);
             else
                 Browser?.StartDownload(Address);
-        }*/
-        public void SaveAs() => Browser?.StartDownload(Address);
+        }
+
+        public void OpenTaskManager()
+        {
+            if (!Browser.IsBrowserInitialized) return;
+            if (WebViewManager.Settings.CefRuntimeStyle == CefRuntimeStyle.Chrome)
+                Browser?.ExecuteChromeCommand(Cef.MapChromeCommandNameToId("IDC_TASK_MANAGER"), WindowOpenDisposition.CurrentTab);
+        }
 
         public void Cut()
         {
@@ -2227,6 +2232,12 @@ namespace SLBr.WebView
 
         private async void Browser_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
         {
+
+            Browser.CoreWebView2.ProcessFailed += (s, args) =>
+            {
+                // Check this output immediately after the 1ms flash occurs
+                System.Diagnostics.Debug.WriteLine($"Task Manager Failure Type: {args.ProcessFailedKind}, Reason: {args.Reason}");
+            };
             BrowserCore = Browser.CoreWebView2;
             Browser.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
             BrowserCore.Profile.PreferredTrackingPreventionLevel = CoreWebView2TrackingPreventionLevel.Basic;
@@ -3149,6 +3160,14 @@ namespace SLBr.WebView
             }
             catch { }
         }
+        public void OpenTaskManager()
+        {
+            try
+            {
+                BrowserCore?.OpenTaskManagerWindow();
+            }
+            catch { }
+        }
 
         public void Cut() => ExecuteScript("document.execCommand('cut');");
         public void Copy() => ExecuteScript("document.execCommand('copy');");
@@ -3788,6 +3807,7 @@ namespace SLBr.WebView
         public void Find(string Text, bool Forward, bool MatchCase, bool FindNext) { }
         public void StopFind() { }
         public void SaveAs() => SafeExecWB(SHDocVw.OLECMDID.OLECMDID_SAVEAS, SHDocVw.OLECMDEXECOPT.OLECMDEXECOPT_DONTPROMPTUSER);
+        public void OpenTaskManager() { }
 
         public void Cut() => Browser.InvokeScript("execCommand", "cut", false, null);
         public void Copy() => Browser.InvokeScript("execCommand", "copy", false, null);

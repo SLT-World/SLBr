@@ -3451,9 +3451,9 @@ Inner Exception: {7}";
             switch (_Action)
             {
                 case 0:
-                    Browser BrowserView = CurrentWindow.GetTab().Content;
-                    BrowserView.OmniBox.Focus();
-                    Keyboard.Focus(BrowserView.OmniBox);
+                    Browser? BrowserView = CurrentWindow.GetTab().Content;
+                    BrowserView?.OmniBox.Focus();
+                    Keyboard.Focus(BrowserView?.OmniBox);
                     break;
                 case 1:
                     CurrentWindow.NewTab(GlobalSave.Get("Homepage"), true, -1, bool.Parse(GlobalSave.Get("PrivateTabs")));
@@ -3461,19 +3461,19 @@ Inner Exception: {7}";
                 case 2:
                     Fullscreen(true);
                     CurrentWindow.StopFind();
-                    CurrentWindow.GetTab().Content.Stop();
+                    CurrentWindow.GetTab().Content?.Stop();
                     break;
                 case 3:
-                    CurrentWindow.GetTab().Content.FavouriteAction();
+                    CurrentWindow.GetTab().Content?.FavouriteAction();
                     break;
                 case 4:
-                    CurrentWindow.GetTab().Content.WebView?.SaveAs();
+                    CurrentWindow.GetTab().Content?.WebView?.SaveAs();
                     break;
                 case 5:
-                    CurrentWindow.GetTab().Content.ToggleReaderMode();
+                    CurrentWindow.GetTab().Content?.ToggleReaderMode();
                     break;
                 case 6:
-                    CurrentWindow.GetTab().Content.WebView?.Print();
+                    CurrentWindow.GetTab().Content?.WebView?.Print();
                     break;
                 case 7:
                     int RightCurrentIndex = CurrentWindow.TabsUI.SelectedIndex;
@@ -3500,12 +3500,12 @@ Inner Exception: {7}";
                     }
                     break;
                 case 9:
-                    BrowserTabItem? TargetTab = CurrentWindow.Tabs.Where(i => i.Type == BrowserTabType.Navigation).OrderByDescending(i => CurrentWindow.Tabs.IndexOf(i)).FirstOrDefault();
+                    BrowserTabItem? TargetTab = CurrentWindow.Tabs.Where(i => i.Type == BrowserTabType.Navigation).OrderByDescending(CurrentWindow.Tabs.IndexOf).FirstOrDefault();
                     if (TargetTab != null)
                         CurrentWindow.TabsUI.SelectedItem = TargetTab;
                     break;
                 case 10:
-                    CurrentWindow.GetTab().Content.Navigate(GlobalSave.Get("Homepage"));
+                    CurrentWindow.GetTab().Content?.Navigate(GlobalSave.Get("Homepage"));
                     break;
                 case 11:
                     CurrentWindow.CloseTab(CurrentWindow.GetTab().ID, CurrentWindow.ID);
@@ -3530,10 +3530,13 @@ Inner Exception: {7}";
                     CurrentWindow.NewTab($"view-source:{CurrentTab.Content?.Address}", true, CurrentWindow.TabsUI.SelectedIndex + 1, CurrentTab.Content?.Private ?? bool.Parse(GlobalSave.Get("PrivateTabs")), CurrentTab.TabGroup);
                     break;
                 case 18:
-                    CurrentWindow.GetTab().Content?.WebView.ExecuteScript("window.scrollTo({top:0,behavior:'smooth'});");
+                    CurrentWindow.GetTab().Content?.WebView?.ExecuteScript("window.scrollTo({top:0,behavior:'smooth'});");
                     break;
                 case 19:
-                    CurrentWindow.GetTab().Content?.WebView.ExecuteScript("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});");
+                    CurrentWindow.GetTab().Content?.WebView?.ExecuteScript("window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});");
+                    break;
+                case 20:
+                    CurrentWindow.GetTab().Content?.WebView?.OpenTaskManager();
                     break;
             }
         }
@@ -3622,6 +3625,7 @@ Inner Exception: {7}";
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(17), (int)Key.U, true, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(18), (int)Key.Home, false, false, false));
             HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(19), (int)Key.End, false, false, false));
+            HotKeyManager.HotKeys.Add(new HotKey(() => KeyAction(20), (int)Key.Escape, false, true, false));
 
             WebViewManager.DownloadManager.DownloadStarted += UpdateDownloadItem;
             WebViewManager.DownloadManager.DownloadUpdated += UpdateDownloadItem;
@@ -4922,6 +4926,7 @@ Inner Exception: {7}";
         QR = 57,
         SwitchWebEngine = 58,
         Translate = 59,
+        TaskManager = 60,
 
         CreateGroup = 80,
         Ungroup = 81,
