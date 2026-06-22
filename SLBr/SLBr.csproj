@@ -78,7 +78,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="148.0.90" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="149.0.40" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4071-prerelease" />
     <PackageReference Include="NUglify" Version="1.21.17" PrivateAssets="all" />
   </ItemGroup>
@@ -127,15 +127,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="148.0.9" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="149.0.4" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="148.0.9" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="149.0.4" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="148.0.9" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="149.0.4" />
   </ItemGroup>
 	
 	<Target Name="PublishTask" AfterTargets="Publish">
