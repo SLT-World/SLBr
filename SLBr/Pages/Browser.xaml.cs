@@ -350,12 +350,26 @@ namespace SLBr.Pages
                         {
                             try
                             {
-                                string ScreenshotPath = App.Instance.GlobalSave.Get("ScreenshotPath");
-                                if (!Directory.Exists(ScreenshotPath))
-                                    Directory.CreateDirectory(ScreenshotPath);
-                                string Url = Path.Combine(ScreenshotPath, Utils.SanitizeFileName(Address) + ".png");
-                                Utils.SaveImage(QRBitmap, Url);
-                                Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true });
+                                using MemoryStream _Stream = new();
+                                string FileExtension;
+                                string Filter;
+                                if (App.Instance.GlobalSave.GetInt("ScreenshotFormat") == 1)
+                                {
+                                    PngBitmapEncoder PNGEncoder = new();
+                                    PNGEncoder.Frames.Add(BitmapFrame.Create(QRBitmap));
+                                    PNGEncoder.Save(_Stream);
+                                    FileExtension = "png";
+                                    Filter = "PNG Image (*.png)|*.png";
+                                }
+                                else
+                                {
+                                    JpegBitmapEncoder JpegEncoder = new();
+                                    JpegEncoder.Frames.Add(BitmapFrame.Create(QRBitmap));
+                                    JpegEncoder.Save(_Stream);
+                                    FileExtension = "jpeg";
+                                    Filter = "JPEG Image (*.jpeg)|*.jpeg";
+                                }
+                                WebViewManager.DownloadManager.WriteDownload(_Stream.ToArray(), Path.Combine(WebViewManager.RuntimeSettings.DownloadFolderPath, $"qrcode_{Utils.SanitizeFileName(Address)}.{FileExtension}"), WebViewManager.RuntimeSettings.DownloadPrompt, Filter);
                             }
                             catch { }
                         }
@@ -2819,20 +2833,25 @@ namespace SLBr.Pages
                 return;
             try
             {
-                int _ScreenshotFormat = App.Instance.GlobalSave.GetInt("ScreenshotFormat");
-                string FileExtension = "jpg";
-                WebScreenshotFormat ScreenshotFormat = WebScreenshotFormat.JPEG;
-                if (_ScreenshotFormat == 1)
+                string FileExtension;
+                string Filter;
+                WebScreenshotFormat ScreenshotFormat;
+                if (App.Instance.GlobalSave.GetInt("ScreenshotFormat") == 1)
                 {
                     FileExtension = "png";
+                    Filter = "PNG Image (*.png)|*.png";
                     ScreenshotFormat = WebScreenshotFormat.PNG;
                 }
-                string ScreenshotPath = App.Instance.GlobalSave.Get("ScreenshotPath");
-                DateTime CurrentTime = DateTime.Now;
-                string Url = Path.Combine(ScreenshotPath, Regex.Replace($"{WebView.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}", "[^a-zA-Z0-9._ -]", string.Empty));
-                File.WriteAllBytes(Url, await WebView.TakeScreenshotAsync(ScreenshotFormat));
+                else
+                {
+                    FileExtension = "jpeg";
+                    Filter = "JPEG Image (*.jpeg)|*.jpeg";
+                    ScreenshotFormat = WebScreenshotFormat.JPEG;
+                }
+                byte[] ImageBytes = await WebView.TakeScreenshotAsync(ScreenshotFormat);
                 SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
-                Process.Start(new ProcessStartInfo(Url) { UseShellExecute = true });
+                DateTime CurrentTime = DateTime.Now;
+                WebViewManager.DownloadManager.WriteDownload(ImageBytes, Path.Combine(App.Instance.GlobalSave.Get("ScreenshotPath"), Utils.SanitizeFileName($"{WebView.Title} {CurrentTime.Day}-{CurrentTime.Month}-{CurrentTime.Year} {string.Format("{0:hh:mm tt}", DateTime.Now)}.{FileExtension}")), WebViewManager.RuntimeSettings.DownloadPrompt, Filter);
             }
             catch { }
         }

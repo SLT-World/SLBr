@@ -369,6 +369,7 @@
                         <Border x:Name="OmniBoxBorder" Grid.ColumnSpan="2" Width="Auto" Margin="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Height="35" Padding="0"/>
                         <Border x:Name="SiteInformationPanel" Background="{StaticResource SecondaryBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" MinWidth="25" Width="Auto" CornerRadius="5" Margin="4">
                             <Grid>
+                                <!--TODO: Utilize WinUI:PopupButton.Content-->
                                 <DockPanel Margin="4.25">
                                     <TextBlock DockPanel.Dock="Left" RenderTransformOrigin="0.5,0.5" x:Name="SiteInformationIcon" Padding="0" Width="16px" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontWeight="UltraLight" FontSize="14" Text="&#xF16A;" TextAlignment="Center" Foreground="{StaticResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock.RenderTransform>

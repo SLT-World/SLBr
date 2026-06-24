@@ -2232,12 +2232,6 @@ namespace SLBr.WebView
 
         private async void Browser_CoreWebView2InitializationCompleted(object? sender, CoreWebView2InitializationCompletedEventArgs e)
         {
-
-            Browser.CoreWebView2.ProcessFailed += (s, args) =>
-            {
-                // Check this output immediately after the 1ms flash occurs
-                System.Diagnostics.Debug.WriteLine($"Task Manager Failure Type: {args.ProcessFailedKind}, Reason: {args.Reason}");
-            };
             BrowserCore = Browser.CoreWebView2;
             Browser.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
             BrowserCore.Profile.PreferredTrackingPreventionLevel = CoreWebView2TrackingPreventionLevel.Basic;

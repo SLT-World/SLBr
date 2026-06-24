@@ -1074,14 +1074,6 @@ namespace SLBr
         public static bool IsInternetAvailable() =>
             DllUtils.InternetGetConnectedState(out int Description, 0);
 
-        public static void SaveImage(BitmapSource Bitmap, string FilePath)
-        {
-            using FileStream _FileStream = new(FilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            PngBitmapEncoder PNGEncoder = new();
-            PNGEncoder.Frames.Add(BitmapFrame.Create(Bitmap));
-            PNGEncoder.Save(_FileStream);
-        }
-
         public static BitmapImage ConvertBase64ToBitmapImage(string Base64)
         {
             using MemoryStream _Stream = new(Convert.FromBase64String(Base64));

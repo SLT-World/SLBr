@@ -719,21 +719,26 @@ namespace SLBr.WebView
             ConnectTimeout = TimeSpan.FromSeconds(30)
         }));
 
-        public async Task StartDownloadAsync(string Url, string TargetPath, bool ShowDialog, string DialogFilter = "")
+        public async Task StartDownloadAsync(string Url, string TargetPath, bool ShowDialog, string? DialogFilter = null)
         {
             if (ShowDialog)
             {
                 SaveFileDialog SaveDialog = new()
                 {
-                    Filter = string.IsNullOrEmpty(DialogFilter) ? "All Files (*.*)|*.*" : DialogFilter,
-                    //https://learn.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/dd459587(v=vs.95) Guide on proper file dialog wild cards
+                    FileName = Path.GetFileName(Url),
                     InitialDirectory = WebViewManager.RuntimeSettings.DownloadFolderPath,
-                    FileName = Path.GetFileName(Url)
+                    //Guide on proper file dialog wild cards https://learn.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/dd459587(v=vs.95)
+                    Filter = string.IsNullOrEmpty(DialogFilter) ? "All Files (*.*)|*.*" : DialogFilter
                 };
                 if (SaveDialog.ShowDialog() == true)
                     TargetPath = SaveDialog.FileName;
                 else
                     return;
+            }
+            else if (!string.IsNullOrEmpty(TargetPath))
+            {
+                if (Directory.Exists(TargetPath) || !Path.HasExtension(TargetPath))
+                    TargetPath = Path.Combine(TargetPath, Path.GetFileName(Url));
             }
             WebDownloadItem Item = new()
             {
@@ -774,6 +779,52 @@ namespace SLBr.WebView
                 Item.State = WebDownloadState.Canceled;
                 Completed(Item);
             }
+        }
+
+        public void WriteDownload(byte[] Data, string? TargetPath, bool ShowDialog, string? DialogFilter = null)
+        {
+            if (ShowDialog)
+            {
+                SaveFileDialog SaveDialog = new()
+                {
+                    FileName = Path.GetFileName(TargetPath),
+                    InitialDirectory = Path.GetDirectoryName(TargetPath),
+                    //Guide on proper file dialog wild cards https://learn.microsoft.com/en-us/previous-versions/windows/silverlight/dotnet-windows-silverlight/dd459587(v=vs.95)
+                    Filter = string.IsNullOrEmpty(DialogFilter) ? "All Files (*.*)|*.*" : DialogFilter
+                };
+                if (SaveDialog.ShowDialog() == true)
+                    TargetPath = SaveDialog.FileName;
+                else
+                    return;
+            }
+            WebDownloadItem Item = new()
+            {
+                ID = Guid.NewGuid().ToString(),
+                Url = string.Empty,
+                FileName = Path.GetFileName(TargetPath),
+                FullPath = TargetPath,
+                State = WebDownloadState.InProgress,
+                TotalBytes = Data.Length,
+                ReceivedBytes = Data.Length
+            };
+            Started(Item);
+            if (Data != null)
+            {
+                try
+                {
+                    string? _Directory = Path.GetDirectoryName(TargetPath);
+                    if (!Directory.Exists(_Directory))
+                        Directory.CreateDirectory(_Directory);
+                    File.WriteAllBytes(TargetPath, Data);
+                    Item.State = WebDownloadState.Completed;
+                }
+                catch
+                {
+                    //TODO: Interrupt reason.
+                    Item.State = WebDownloadState.Canceled;
+                }
+            }
+            Completed(Item);
         }
     }
 
