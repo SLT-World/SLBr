@@ -58,7 +58,7 @@ namespace SLBr
         {
             QRCodeImageDimension = ModuleSize * QRCodeDimension + 2 * QuietZone;
 
-            WriteableBitmap _WriteableBitmap = new WriteableBitmap(
+            WriteableBitmap _WriteableBitmap = new(
                 QRCodeImageDimension,
                 QRCodeImageDimension,
                 96, 96,

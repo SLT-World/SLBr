@@ -1482,7 +1482,7 @@ namespace SLBr.WebView
             }
             if (Settings.AudioListener && Json.EndsWith(@"""type"":""__cef_audio__""}"))
             {
-                SetAudioPlaying(Json.StartsWith(@"{""playing"":1"));
+                SetAudioPlaying(Json.StartsWith(@"{""play"":1"));
                 return;
             }
             JavaScriptMessageReceived.RaiseUIAsync(this, Json);

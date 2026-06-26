@@ -1314,6 +1314,7 @@ namespace SLBr.WebView
                 Item.State = WebDownloadState.Paused;
                 WebViewManager.DownloadManager.Updated(Item);
             }
+            //TODO: https://github.com/cefsharp/CefSharp/pull/5266
             else
             {
                 //WARNING: Keep this warning path otherwise the open downloads wouldn't work

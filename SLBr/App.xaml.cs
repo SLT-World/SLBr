@@ -1025,11 +1025,37 @@ namespace SLBr
         public void UpdateDownloadItem(WebDownloadItem Item)
         {
             Downloads[Item.ID] = Item;
+
+            double TotalBytesToDownload = 0;
+            double TotalBytesReceived = 0;
+            bool ActiveDownloads = false;
+            foreach (WebDownloadItem Download in Downloads.Values)
+            {
+                if (Download.State == WebDownloadState.InProgress)
+                {
+                    ActiveDownloads = true;
+                    if (Download.TotalBytes > 0)
+                    {
+                        TotalBytesToDownload += Download.TotalBytes;
+                        TotalBytesReceived += Download.ReceivedBytes;
+                    }
+                }
+            }
+            double AggregateProgress = 0;
+            if (ActiveDownloads && TotalBytesToDownload > 0)
+                AggregateProgress = TotalBytesReceived / TotalBytesToDownload;
+
             Dispatcher.BeginInvoke(async () =>
             {
                 foreach (MainWindow _Window in AllWindows)
-                    _Window.TaskbarItem.ProgressValue = Item.State == WebDownloadState.Completed ? 0 : Item.Progress;
-                DownloadEntry _Entry = VisibleDownloads.FirstOrDefault(d => d.ID == Item.ID);
+                {
+                    _Window.TaskbarItem.ProgressValue = AggregateProgress;
+                    _Window.TaskbarItem.ProgressState = ActiveDownloads ? TaskbarItemProgressState.Normal : TaskbarItemProgressState.None;
+                }
+
+                Browser BrowserView = CurrentFocusedWindow().GetTab().Content;
+                BrowserView.UpdateDownloadsButtonForeground(ActiveDownloads);
+                DownloadEntry? _Entry = VisibleDownloads.FirstOrDefault(i => i.ID == Item.ID);
                 if (_Entry != null)
                 {
                     if (string.IsNullOrEmpty(_Entry.FileName))
@@ -1065,9 +1091,6 @@ namespace SLBr
 
                                 _ => "\uE8A5",
                             };
-                            MainWindow Current = CurrentFocusedWindow();
-                            if (Current != null)
-                                Current?.Tabs[Current.TabsUI.SelectedIndex].Content?.OpenDownloadsButton.OpenPopup();
                         }
                     }
                     _Entry.PercentComplete = (int)(Item.Progress * 100);
@@ -1187,7 +1210,14 @@ namespace SLBr
                 else
                 {
                     VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID });
-                    CurrentFocusedWindow().GetTab()?.Content?.SetDownloadsButtonVisibility();
+                    if (BrowserView != null)
+                    {
+                        BrowserView.SetDownloadsButtonVisibility();
+                        //TODO: Display popup on download initialization / completion.
+                        //TODO: if (bool.Parse(GlobalSave.Get("ShowDownloadsPopup")))
+                        BrowserView.OpenDownloadsButton.UpdateLayout();
+                        BrowserView.OpenDownloadsButton.OpenPopup();
+                }
                 }
             });
         }
@@ -1245,7 +1275,7 @@ namespace SLBr
 
             foreach (string DirectoryPath in ProfileDirectories)
             {
-                DirectoryInfo _DirectoryInfo = new DirectoryInfo(DirectoryPath);
+                DirectoryInfo _DirectoryInfo = new(DirectoryPath);
                 Profiles.Insert(0, new Profile { Name = _DirectoryInfo.Name, Type = ProfileType.User });
             }
             Profile? DefaultProfile = null;
@@ -1420,7 +1450,7 @@ namespace SLBr
 
         public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush? Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null, string? Hidden = null, string? Image = null)
         {
-            OmniSuggestion Suggestion = new(){ Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride, Hidden = Hidden, Image = Image };
+            OmniSuggestion Suggestion = new() { Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride, Hidden = Hidden, Image = Image };
             //if (string.IsNullOrEmpty(Image))
             //{
             switch (Type)
@@ -2716,7 +2746,7 @@ Inner Exception: {7}";
                 string Response = MiniHttpClient.GetStringAsync(Url).Result;
                 XDocument XML = XDocument.Parse(Response);
                 XNamespace Namespace = "http://a9.com/-/spec/opensearch/1.1/";
-                var SearchProviderInfo = new SearchProvider
+                SearchProvider SearchProviderInfo = new()
                 {
                     Name = string.IsNullOrEmpty(Name) ? XML.Root.Element(Namespace + "ShortName")?.Value : Name,
                     //FaviconUrl = doc.Root.Element(ns + "Image")?.Value
@@ -3212,7 +3242,7 @@ Inner Exception: {7}";
             //if (!GlobalSave.Has("SendDiagnostics"))
             //    GlobalSave.Set("SendDiagnostics", false);
             if (!GlobalSave.Has("WebNotifications"))
-                GlobalSave.Set("WebNotifications", true);
+                GlobalSave.Set("WebNotifications", false);//TODO: Re-enable on proper implementation of notification permission.
             if (!GlobalSave.Has("WebApps"))
                 GlobalSave.Set("WebApps", true);
             if (!GlobalSave.Has("AdaptiveTheme"))
@@ -3563,10 +3593,10 @@ Inner Exception: {7}";
                 case 5: Settings.TridentVersion = TridentEmulationVersion.Edge; break;
             }
             if (!ReadOnlyInstance)
-                Settings.UserDataPath = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "User Data"));
+                Settings.UserDataPath = Path.Combine(UserApplicationDataPath, "User Data");
             Settings.Language = Locale.Tooltip;
             Settings.Languages = Languages.Select(i => i.Tooltip).ToArray();
-            Settings.LogFile = Path.GetFullPath(Path.Combine(UserApplicationDataPath, "Errors.log"));
+            Settings.LogFile = Path.Combine(UserApplicationDataPath, "Errors.log");
 
             Settings.Performance = (PerformancePreset)GlobalSave.GetInt("Performance");
             Settings.GPUAcceleration = bool.Parse(GlobalSave.Get("BrowserHardwareAcceleration"));
@@ -4490,65 +4520,35 @@ Inner Exception: {7}";
             {
                 if (!IsPrivate && Utils.IsHttpScheme(Url) && bool.Parse(GlobalSave.Get("Favicons")))
                 {
+                    string IconUrl;
                     switch (GlobalSave.GetInt("FaviconService", 0))
                     {
+                        default:
                         case 0:
-                            string GIconUrl = "https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false);
-                            /*if (FaviconCache.TryGetValue(GIconUrl, out BitmapImage GCachedImage))
-                                return GCachedImage;*/
-                            BitmapImage _GImage = new(new Uri(GIconUrl))
-                            {
-                                DecodePixelWidth = 20,
-                                DecodePixelHeight = 20,
-                                CacheOption = BitmapCacheOption.OnLoad,
-                                //CreateOptions = BitmapCreateOptions.DelayCreation,
-                            };
-                            _GImage.SafeFreeze();
-                            //FaviconCache[GIconUrl] = _GImage;
-                            return (_GImage, true);
+                            IconUrl = "https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false);
+                            break;
                         case 1:
-                            string YIconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url);
-                            /*if (FaviconCache.TryGetValue(YIconUrl, out BitmapImage YCachedImage))
-                                return YCachedImage;*/
-                            BitmapImage _YImage = new(new Uri(YIconUrl))
-                            {
-                                DecodePixelWidth = 20,
-                                DecodePixelHeight = 20,
-                                CacheOption = BitmapCacheOption.OnLoad,
-                                //CreateOptions = BitmapCreateOptions.DelayCreation
-                            };
-                            _YImage.SafeFreeze();
-                            //FaviconCache[YIconUrl] = _YImage;
-                            return (_YImage, true);
+                            IconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url);
+                            break;
                         case 2:
-                            string DIconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico";
-                            /*if (FaviconCache.TryGetValue(DIconUrl, out BitmapImage DCachedImage))
-                                return DCachedImage;*/
-                            BitmapImage _DImage = new(new Uri(DIconUrl))
-                            {
-                                DecodePixelWidth = 20,
-                                DecodePixelHeight = 20,
-                                CacheOption = BitmapCacheOption.OnLoad,
-                                //CreateOptions = BitmapCreateOptions.DelayCreation
-                            };
-                            _DImage.SafeFreeze();
-                            //FaviconCache[DIconUrl] = _DImage;
-                            return (_DImage, true);
+                            IconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico";
+                            break;
                         case 3:
-                            string AIconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url);
-                            /*if (FaviconCache.TryGetValue(AIconUrl, out BitmapImage ACachedImage))
-                                return ACachedImage;*/
-                            BitmapImage _AImage = new(new Uri(AIconUrl))
+                            IconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url);
+                            break;
+                    }
+                    /*if (FaviconCache.TryGetValue(IconUrl, out BitmapImage CachedImage))
+                        return CachedImage;*/
+                    BitmapImage _Image = new(new Uri(IconUrl))
                             {
                                 DecodePixelWidth = 20,
                                 DecodePixelHeight = 20,
                                 CacheOption = BitmapCacheOption.OnLoad,
                                 //CreateOptions = BitmapCreateOptions.DelayCreation,
                             };
-                            _AImage.SafeFreeze();
-                            //FaviconCache[AIconUrl] = _AImage;
-                            return (_AImage, true);
-                    }
+                    _Image.SafeFreeze();
+                    //FaviconCache[IconUrl] = _GImage;
+                    return (_Image, true);
                 }
                 else if (Url.StartsWith("slbr://newtab"))
                     return (NewTabIcon, false);
@@ -5187,10 +5187,10 @@ Inner Exception: {7}";
         }
       }
     }
-    if (!playing && window.__cef_audio_ctxs) {
-      if (window.__cef_audio_ctxs.length > 0) foundMedia = true;
-      for (let i = 0; i < window.__cef_audio_ctxs.length; i++) {
-        if (window.__cef_audio_ctxs[i].state === 'running') {
+    if (!playing && window.__cef_audio_ctxs__) {
+      if (window.__cef_audio_ctxs__.length > 0) foundMedia = true;
+      for (let i = 0; i < window.__cef_audio_ctxs__.length; i++) {
+        if (window.__cef_audio_ctxs__[i].state === 'running') {
           playing = true;
           break;
         }
@@ -5198,7 +5198,7 @@ Inner Exception: {7}";
     }
     if (playing !== lastState) {
       lastState = playing;
-      engine.postMessage({ type: '__cef_audio__', playing: playing ? 1 : 0 });
+      engine.postMessage({ type: '__cef_audio__', play: playing ? 1 : 0 });
     }
     if (!foundMedia) {
       checksWithoutMedia++;
@@ -5222,14 +5222,14 @@ Inner Exception: {7}";
   (function () {
     const Orig = window.AudioContext || window.webkitAudioContext;
     if (!Orig) return;
-    window.__cef_audio_ctxs = [];
+    window.__cef_audio_ctxs__ = [];
     function WrappedAudioContext() {
       const ctx = new Orig();
-      window.__cef_audio_ctxs.push(ctx);
+      window.__cef_audio_ctxs__.push(ctx);
       const oldClose = ctx.close.bind(ctx);
       ctx.close = function () {
-        const i = window.__cef_audio_ctxs.indexOf(ctx);
-        if (i > -1) window.__cef_audio_ctxs.splice(i, 1);
+        const i = window.__cef_audio_ctxs__.indexOf(ctx);
+        if (i > -1) window.__cef_audio_ctxs__.splice(i, 1);
         return oldClose();
       };
       return ctx;

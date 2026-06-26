@@ -125,7 +125,7 @@ namespace SLBr.Controls
             {
                 using (callback)
                 {
-                    CredentialsDialogWindow _CredentialsDialogWindow = new CredentialsDialogWindow($"Sign in to {host}", "\uec19")
+                    CredentialsDialogWindow _CredentialsDialogWindow = new($"Sign in to {host}", "\uec19")
                     {
                         Topmost = true
                     };

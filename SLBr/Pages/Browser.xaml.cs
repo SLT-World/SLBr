@@ -58,15 +58,12 @@ namespace SLBr.Pages
 
         Storyboard LoadingStoryboard;
         public bool IsUnthemedIcon = false;
-        bool HasInitialized = false;
 
         public Browser(string Url, BrowserTabItem _Tab = null, bool IsPrivate = false)
         {
             InitializeComponent();
             Tab = _Tab ?? Tab.ParentWindow.GetTab(this);
             Private = IsPrivate;
-            (BitmapSource, bool) IconData = App.Instance.GetIcon(Url, Private);
-            SetIcon(IconData.Item1, IconData.Item2);
             Address = Url;
             SetAudioState(false);
             DownloadsPopup.ItemsSource = App.Instance.VisibleDownloads;
@@ -76,6 +73,8 @@ namespace SLBr.Pages
             ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working so turned it into a list
             InfoBarList.ItemsSource = VisibleInfoBars;
             SetAppearance(App.Instance.CurrentTheme);
+            (BitmapSource, bool) IconData = App.Instance.GetIcon(Url, Private);
+            SetIcon(IconData.Item1, IconData.Item2);
 
             if (!Private)
             {
@@ -1770,6 +1769,7 @@ namespace SLBr.Pages
             if (!bool.Parse(App.Instance.GlobalSave.Get("ShowUnloadProgress")))
                 App.Instance.ScheduleNextEfficientTick();
             SetDownloadsButtonVisibility();
+            UpdateDownloadsButtonForeground();
             if (Tab.IsUnloaded)
             {
                 InitializeBrowserComponent();
@@ -2810,6 +2810,16 @@ namespace SLBr.Pages
             else
                 OpenDownloadsButton.Visibility = Visibility.Collapsed;
         }
+
+        public void UpdateDownloadsButtonForeground(bool? HasActiveDownloads = null)
+        {
+            if (!HasActiveDownloads.HasValue)
+                HasActiveDownloads = App.Instance.Downloads.Values.Any(i => i.State == WebDownloadState.InProgress);
+            if (HasActiveDownloads.Value)
+                OpenDownloadsButton.Foreground = (SolidColorBrush)FindResource("IndicatorBrush");
+            else
+                OpenDownloadsButton.ClearValue(ForegroundProperty);
+        }
         /*public void Zoom(int Delta)
         {
             if (WebView == null)
@@ -3718,13 +3728,14 @@ namespace SLBr.Pages
 
         public async void SetAppearance(Theme _Theme)
         {
-            if (HasInitialized && !IsUnthemedIcon)
+            if (Tab.Icon != null && !IsUnthemedIcon)
             {
                 (BitmapSource, bool) IconData = await App.Instance.SetIcon(WebView?.IsLoading ?? false, "", Address, Private);
                 SetIcon(IconData.Item1, IconData.Item2);
             }
             SetFavouritesBarVisibility();
             SetDownloadsButtonVisibility();
+            UpdateDownloadsButtonForeground();
             HomeButton.Visibility = App.Instance.AllowHomeButton ? Visibility.Visible : Visibility.Collapsed;
             QRButton.Visibility = App.Instance.AllowQRButton ? Visibility.Visible : Visibility.Collapsed;
             WebEngineButton.Visibility = App.Instance.AllowWebEngineButton ? Visibility.Visible : Visibility.Collapsed;
