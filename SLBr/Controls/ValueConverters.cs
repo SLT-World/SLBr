@@ -77,4 +77,13 @@ namespace SLBr.Controls
         public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
             throw new NotImplementedException();
     }
+
+    public class PasswordTextConverter : IValueConverter
+    {
+        public object Convert(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            Value?.ToString() ?? string.Empty;
+
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            Value?.ToString() ?? string.Empty;
+    }
 }

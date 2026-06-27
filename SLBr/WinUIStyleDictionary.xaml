@@ -118,7 +118,7 @@
                         <Border x:Name="ToggleBorder" CornerRadius="12.5" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}"/>
                         <Border Opacity="0" x:Name="ToggleBorderChecked" CornerRadius="12.5" Background="{DynamicResource IndicatorBrush}" BorderThickness="0" BorderBrush="{TemplateBinding BorderBrush}"/>
                         <Border CornerRadius="12.5" Background="Transparent" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="Transparent">
-                            <Path x:Name="path">
+                            <Path x:Name="IconPath">
                                 <Path.Fill>
                                     <LinearGradientBrush StartPoint="1,0" EndPoint="1,1">
                                         <GradientStop Color="{DynamicResource PrimaryBrushColor}"/>
@@ -146,7 +146,7 @@
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="(FrameworkElement.Margin)" Storyboard.TargetName="path">
+                                        <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="(FrameworkElement.Margin)" Storyboard.TargetName="IconPath">
                                             <EasingThicknessKeyFrame KeyTime="00:00:0.25" Value="25,0,0,0"/>
                                         </ThicknessAnimationUsingKeyFrames>
                                         <DoubleAnimation Storyboard.TargetName="ToggleBorderChecked" Duration="0:0:0.250" To="1.0" Storyboard.TargetProperty="Opacity"/>
@@ -156,7 +156,7 @@
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="(FrameworkElement.Margin)" Storyboard.TargetName="path">
+                                        <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="(FrameworkElement.Margin)" Storyboard.TargetName="IconPath">
                                             <EasingThicknessKeyFrame KeyTime="00:00:0.25" Value="0"/>
                                         </ThicknessAnimationUsingKeyFrames>
                                         <DoubleAnimation Storyboard.TargetName="ToggleBorderChecked" Duration="0:0:0.250" To="0.0" Storyboard.TargetProperty="Opacity"/>
@@ -166,14 +166,14 @@
                             <!--<Setter Property="Background" Value="{DynamicResource IndicatorBrush}"/>-->
                         </Trigger>
                         <Trigger Property="IsChecked" Value="False">
-                            <Setter TargetName="path" Property="Fill">
+                            <Setter TargetName="IconPath" Property="Fill">
                                 <Setter.Value>
                                     <LinearGradientBrush StartPoint="1,0" EndPoint="1,1">
                                         <GradientStop Color="{DynamicResource GrayBrushColor}"/>
                                     </LinearGradientBrush>
                                 </Setter.Value>
                             </Setter>
-                            <Setter TargetName="path" Property="Data">
+                            <Setter TargetName="IconPath" Property="Data">
                                 <Setter.Value>
                                     <GeometryGroup>
                                         <GeometryGroup.Children>
@@ -186,7 +186,7 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="ToggleBorderChecked" Property="BorderThickness" Value="1"/>
                             <Setter TargetName="ToggleBorderChecked" Property="Background" Value="{DynamicResource SecondaryBrush}"/>
-                            <Setter TargetName="path" Property="Fill">
+                            <Setter TargetName="IconPath" Property="Fill">
                                 <Setter.Value>
                                     <LinearGradientBrush StartPoint="1,0" EndPoint="1,1">
                                         <GradientStop Color="{DynamicResource BorderBrushColor}"/>
@@ -708,15 +708,10 @@
                         AllowsTransparency="True" 
                         Focusable="True"
                         PopupAnimation="Slide">
-                            <Grid 
-                            Name="DropDown"
-                            SnapsToDevicePixels="True"
-                            Width="{TemplateBinding ActualWidth}"
-                            MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                            <Grid Name="DropDown" SnapsToDevicePixels="True" Width="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                 <Border x:Name="DropDownBorder" Background="{DynamicResource PrimaryBrush}" CornerRadius="5" Margin="15" SnapsToDevicePixels="True" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
                                     <ScrollViewer Margin="5" SnapsToDevicePixels="True">
-                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained">
-                                        </StackPanel>
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
                                     </ScrollViewer>
                                 </Border>
                             </Grid>
@@ -777,11 +772,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ComboBoxItem}">
-                    <Border x:Name="Border"
-                          Padding="10,0"
-                          CornerRadius="5"
-                          Background="{TemplateBinding Background}"
-                          SnapsToDevicePixels="true" BorderThickness="1" BorderBrush="Transparent">
+                    <Border x:Name="Border" Padding="10,0" CornerRadius="5" Background="{TemplateBinding Background}" SnapsToDevicePixels="true" BorderThickness="1" BorderBrush="Transparent">
                         <ContentPresenter VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -803,7 +794,7 @@
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
         <Setter Property="CaretBrush" Value="{DynamicResource FontBrush}"/>
-        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Padding" Value="5"/>
         <Setter Property="Height" Value="35"/>
         <Setter Property="Width" Value="100"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -818,21 +809,7 @@
                     <Grid>
                         <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"/>
                         <Border x:Name="IndicatorBorder" Opacity="0" CornerRadius="5" Background="Transparent" BorderBrush="{DynamicResource IndicatorBrush}" BorderThickness="2"/>
-                        <ScrollViewer x:Name="PART_ContentHost" 
-                                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                         HorizontalAlignment="Stretch"
-                                         VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                         Margin="{TemplateBinding Padding}"/>
-                        <TextBlock IsHitTestVisible="False"
-                                      Text="Enter"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      Margin="5,0,0,0"
-                                      FontSize="{TemplateBinding FontSize}"
-                                      Foreground="{DynamicResource BorderBrush}"
-                                      x:Name="Placeholder"
-                                      Visibility="Collapsed"/>
+                        <ScrollViewer x:Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Stretch" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="True">
@@ -862,13 +839,6 @@
                                 </BeginStoryboard>
                             </MultiTrigger.ExitActions>
                         </MultiTrigger>
-                        <!--<MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="Text" Value=""/>
-                                <Condition Property="IsFocused" Value="False"/>
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                        </MultiTrigger>-->
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -879,7 +849,7 @@
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
         <Setter Property="CaretBrush" Value="{DynamicResource FontBrush}"/>
-        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Padding" Value="5"/>
         <Setter Property="MinHeight" Value="35"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -893,21 +863,7 @@
                     <Grid>
                         <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"/>
                         <Border x:Name="IndicatorBorder" Opacity="0" CornerRadius="5" Background="Transparent" BorderBrush="{DynamicResource IndicatorBrush}" BorderThickness="2"/>
-                        <ScrollViewer x:Name="PART_ContentHost" 
-                                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                         HorizontalAlignment="Stretch"
-                                         VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                         Margin="{TemplateBinding Padding}"/>
-                        <TextBlock IsHitTestVisible="False"
-                                      Text="Enter"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      Margin="5,0,0,0"
-                                      FontSize="{TemplateBinding FontSize}"
-                                      Foreground="{DynamicResource BorderBrush}"
-                                      x:Name="Placeholder"
-                                      Visibility="Collapsed"/>
+                        <ScrollViewer x:Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Stretch" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="True">
@@ -942,12 +898,14 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <controls:PasswordTextConverter x:Key="PasswordTextConverter"/>
     <Style TargetType="{x:Type PasswordBox}">
+        <Setter Property="controls:PasswordBoxBehaviour.Enable" Value="True"/>
         <Setter Property="Cursor" Value="No"/>
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
         <Setter Property="CaretBrush" Value="{DynamicResource FontBrush}"/>
-        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Padding" Value="5"/>
         <Setter Property="Height" Value="35"/>
         <Setter Property="Width" Value="100"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -962,30 +920,48 @@
                     <Grid>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="Disabled" />
-                                <VisualState x:Name="MouseOver" />
+                                <VisualState x:Name="Normal"/>
+                                <VisualState x:Name="Disabled"/>
+                                <VisualState x:Name="MouseOver"/>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
                         <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"/>
                         <Border x:Name="IndicatorBorder" Opacity="0" CornerRadius="5" Background="Transparent" BorderBrush="{DynamicResource IndicatorBrush}" BorderThickness="2"/>
-                        <ScrollViewer x:Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                         HorizontalAlignment="Stretch"
-VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-Margin="{TemplateBinding Padding}"/>
-                        <TextBlock IsHitTestVisible="False"
-                                      Text="Enter"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      Margin="5,0,0,0"
-                                      FontSize="{TemplateBinding FontSize}"
-                                      Foreground="{DynamicResource BorderBrush}"
-                                      x:Name="Placeholder"
-                                      Visibility="Collapsed">
-                        </TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ScrollViewer x:Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Stretch" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
+                            <TextBox x:Name="RevealTextBox" Padding="0" Margin="{TemplateBinding Padding}" Background="Transparent" BorderThickness="0" Visibility="Collapsed" Foreground="{TemplateBinding Foreground}" CaretBrush="{TemplateBinding CaretBrush}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Stretch" Width="Auto" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            <!--Text="{Binding Path=(controls:PasswordBoxBehaviour.BindablePassword), RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource PasswordTextConverter}}"-->
+                            <ToggleButton x:Name="RevealButton" Grid.Column="1" Width="25" Height="25" Margin="0,0,5,0" VerticalAlignment="Center" BorderThickness="0" Focusable="False">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                            <TextBlock x:Name="IconText" Text="&#xE7B3;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{DynamicResource FontBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Path=(controls:PasswordBoxBehaviour.Enable), RelativeSource={RelativeSource AncestorType={x:Type PasswordBox}}}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="IconText" Property="Text" Value="&#xED1A;"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                        </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger SourceName="RevealButton" Property="IsChecked" Value="True">
+                            <Setter TargetName="PART_ContentHost" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="RevealTextBox" Property="Visibility" Value="Visible"/>
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="True">
                             <Setter Property="Cursor" Value="IBeam"/>
                         </Trigger>
@@ -996,7 +972,7 @@ Margin="{TemplateBinding Padding}"/>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="BorderThickness" Value="1"/>
-                                <Condition Property="IsKeyboardFocused" Value="True"/>
+                                <Condition Property="IsKeyboardFocusWithin" Value="True"/>
                             </MultiTrigger.Conditions>
                             <MultiTrigger.EnterActions>
                                 <BeginStoryboard>
@@ -1013,14 +989,6 @@ Margin="{TemplateBinding Padding}"/>
                                 </BeginStoryboard>
                             </MultiTrigger.ExitActions>
                         </MultiTrigger>
-
-                        <!--<MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsKeyboardFocusWithin" Value="False"/>
-                                <Condition Property="IsFocused" Value="False"/>
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
-                        </MultiTrigger>-->
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -1052,14 +1020,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <ContentPresenter Margin="{TemplateBinding Padding}" x:Name="myContentPresenter" Content="{TemplateBinding Content}" TextBlock.TextAlignment="{TemplateBinding HorizontalContentAlignment}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
-                            <ContentPresenter.Resources>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{Binding Path=Foreground,RelativeSource={RelativeSource AncestorType={x:Type Button}}}"/>
-                                </Style>
-                            </ContentPresenter.Resources>
-                        </ContentPresenter>
-                        <!--<TextBlock Padding="{TemplateBinding Padding}" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>-->
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1295,7 +1256,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <ContentPresenter Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" TextBlock.TextAlignment="{TemplateBinding HorizontalContentAlignment}" TextBlock.Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1340,7 +1301,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}" TextBlock.Foreground="{TemplateBinding Foreground}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1396,8 +1357,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock Margin="{TemplateBinding Padding}" TextAlignment="{TemplateBinding HorizontalContentAlignment}" Foreground="{TemplateBinding Foreground}" Text="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        <!--TODO: Utilize ContentPresenter-->
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1442,7 +1402,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}" TextBlock.Foreground="{TemplateBinding Foreground}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -1486,7 +1446,7 @@ Margin="{TemplateBinding Padding}"/>
                     <Grid>
                         <Border x:Name="BackgroundNormal" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{TemplateBinding Background}"/>
                         <Border x:Name="BackgroundMouseOver" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Background="{DynamicResource SecondaryBrush}" Opacity="0.0"/>
-                        <TextBlock TextAlignment="Center" Foreground="{TemplateBinding Foreground}" FontSize="18" Text="{TemplateBinding Content}" FontWeight="UltraLight" Margin="{TemplateBinding Padding}" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}" TextBlock.Foreground="{TemplateBinding Foreground}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">
@@ -3547,7 +3507,7 @@ Margin="{TemplateBinding Padding}"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Foreground="{TemplateBinding Foreground}" Grid.Column="0" FontSize="16" FontFamily="Segoe Fluent Icons" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Center" Text="{Binding Path=(controls:ControlExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}}" Margin="0,0,5,0">
+                            <TextBlock Foreground="{TemplateBinding Foreground}" Grid.Column="0" FontSize="16" FontFamily="{StaticResource IconFontFamily}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Center" Text="{Binding Path=(controls:ControlExtensions.Icon), RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}}" Margin="0,0,5,0">
                                 <TextBlock.Style>
                                     <Style TargetType="{x:Type TextBlock}">
                                         <Style.Triggers>

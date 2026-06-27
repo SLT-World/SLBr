@@ -1436,6 +1436,7 @@ namespace SLBr.Pages
         CancellationTokenSource? SpellCheckTokenCancellationTokenSource;
         public async void WebView_ContextMenuRequested(object? sender, WebContextMenuEventArgs e)
         {
+            bool IsWPF = sender is FrameworkElement;
             SpellCheckTokenCancellationTokenSource?.Cancel();
             SpellCheckTokenCancellationTokenSource?.Dispose();
             SpellCheckTokenCancellationTokenSource = null;
@@ -1465,7 +1466,6 @@ namespace SLBr.Pages
                     }
                     else if (i == WebContextMenuType.Selection && !e.IsEditable && !string.IsNullOrEmpty(e.SelectionText.ReplaceLineEndings("").Trim()))
                     {
-                        bool IsWPF = sender is TextBlock;
                         //TextBlock? _TextBlock = sender as TextBlock;
                         IsPageMenu = false;
                         BrowserMenu.Items.Add(new MenuItem { Icon = "\uF6Fa", Header = $"Search \"{e.SelectionText.ReplaceLineEndings("").Trim().Cut(20, true)}\" in new tab", Command = new RelayCommand(_ => Tab.ParentWindow.NewTab(Utils.FixUrl(string.Format(App.Instance.DefaultSearchProvider.SearchUrl, e.SelectionText.ReplaceLineEndings("").Trim())), true, Tab.ParentWindow.TabsUI.SelectedIndex + 1, Private)) });
@@ -1683,16 +1683,16 @@ namespace SLBr.Pages
                 BrowserMenu.Items.Add(new MenuItem { Template = (ControlTemplate)FindResource("EmptyMenuItemTemplate"), Focusable = false, Header = TopMenuStack });
 
                 BrowserMenu.Items.Add(new Separator());
-                BrowserMenu.Items.Add(new MenuItem { Icon = "\ue792", Header = "Save as", Command = new RelayCommand(_ => WebView?.SaveAs()) });
-                BrowserMenu.Items.Add(new MenuItem { Icon = "\uE749", Header = "Print", Command = new RelayCommand(_ => WebView?.Print()) });
-                BrowserMenu.Items.Add(new MenuItem { InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
+                BrowserMenu.Items.Add(new MenuItem { IsEnabled = !IsWPF, Icon = "\ue792", Header = "Save as", Command = new RelayCommand(_ => WebView?.SaveAs()) });
+                BrowserMenu.Items.Add(new MenuItem { IsEnabled = !IsWPF, Icon = "\uE749", Header = "Print", Command = new RelayCommand(_ => WebView?.Print()) });
+                BrowserMenu.Items.Add(new MenuItem { IsEnabled = !IsWPF, InputGestureText = "Ctrl+A", Icon = "\ue8b3", Header = "Select all", Command = new RelayCommand(_ => WebView?.SelectAll()) });
                 BrowserMenu.Items.Add(new Separator());
 
 
                 MenuItem ToolsSubMenuModel = new() { Icon = "\ue821", Header = "More tools" };
                 ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\ue72d", Header = "Share", Command = new RelayCommand(_ => Share()) });
-                ToolsSubMenuModel.Items.Add(new MenuItem { IsEnabled = !IsLoading && !Address.StartsWith("slbr:"), Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
-                ToolsSubMenuModel.Items.Add(new MenuItem { Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
+                ToolsSubMenuModel.Items.Add(new MenuItem { IsEnabled = !IsLoading && !IsWPF, Icon = "\uE8C1", Header = $"Translate to {TranslateComboBox.SelectedValue}", Command = new RelayCommand(_ => Translate()) });
+                ToolsSubMenuModel.Items.Add(new MenuItem { IsEnabled = !IsWPF, Icon = "\uE924", Header = "Screenshot", Command = new RelayCommand(_ => Screenshot()) });
                 BrowserMenu.Items.Add(ToolsSubMenuModel);
 
                 /*MenuItem ZoomSubMenuModel = new MenuItem { Icon = "\ue71e", Header = "Zoom" };
@@ -3337,7 +3337,7 @@ namespace SLBr.Pages
                 }
                 if (OmniBox.IsDropDownOpen)
                 {
-                    OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);
+                    OmniBoxPopup.HorizontalOffset = -(SiteInformationPopupButton.ActualWidth + 8);
                     OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
                 }
             }
@@ -4031,7 +4031,7 @@ namespace SLBr.Pages
             OmniBox.Focus();
             if (OmniBox.IsDropDownOpen)
             {
-                OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);
+                OmniBoxPopup.HorizontalOffset = -(SiteInformationPopupButton.ActualWidth + 8);
                 OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
             }
         }
@@ -4425,7 +4425,7 @@ namespace SLBr.Pages
         private void OmniBox_DropDownOpened(object sender, EventArgs e)
         {
             WebView?.Control.Focusable = false;
-            OmniBoxPopup.HorizontalOffset = -(SiteInformationPanel.ActualWidth + 8);// + 4 + 4
+            OmniBoxPopup.HorizontalOffset = -(SiteInformationPopupButton.ActualWidth + 8);// + 4 + 4
             OmniBoxPopupDropDown.Width = OmniBoxContainer.ActualWidth;
         }
 

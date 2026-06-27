@@ -28,14 +28,12 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>none</DebugType>
-	<DebugSymbols>false</DebugSymbols>
-	<AllowedReferenceRelatedFileExtensions>*.pdb</AllowedReferenceRelatedFileExtensions>
-	<ExcludeFilesFromDeployment>bin\**\*.pdb</ExcludeFilesFromDeployment>
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<DebugType>portable</DebugType>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
     <DebugType>none</DebugType>
 	<DebugSymbols>false</DebugSymbols>
 	<AllowedReferenceRelatedFileExtensions>*.pdb</AllowedReferenceRelatedFileExtensions>
@@ -138,20 +136,31 @@
     <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="149.0.4" />
   </ItemGroup>
 	
+	<Target Name="RemoveUnusedAssembly" BeforeTargets="ResolveAssemblyReferences">
+		<ItemGroup>
+			<Reference Remove="@(Reference->WithMetadataValue('FileName', 'Microsoft.Web.WebView2.WinForms'))"/>
+		</ItemGroup>
+	</Target>
+	
+	<Target Name="RemoveDuplicated" BeforeTargets="AssignTargetPaths">
+		<ItemGroup>
+			<Content Remove="@(Content)" Condition="%(Content.Link) == 'runtimes\win-x64\native\WebView2Loader.dll'" />
+		</ItemGroup>
+	</Target>
+
+	<Target Name="FilterPublishItems" BeforeTargets="ComputeFilesToPublish">
+		<ItemGroup>
+			<ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="%(Extension) == '.pdb'" />
+			<ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="%(Extension) == '.xml'" />
+			<ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::new('%(RelativeDir)').Contains('locales')) And '%(Filename)' != 'en-US'" />
+		</ItemGroup>
+	</Target>
+	
 	<Target Name="PublishTask" AfterTargets="Publish">
 		<Copy SourceFiles="..\Updater\bin\$(Configuration)\net\publish\Updater.exe" DestinationFolder="$(PublishDir)" />
-		<Delete Files="$(PublishDir)\Microsoft.Web.WebView2.WinForms.dll" />
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.exe" />
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.dll" />
 		<Delete Files="$(PublishDir)\CefSharp.BrowserSubprocess.runtimeconfig.json" />
-		<ItemGroup>
-			<FilesToDelete Include="$(PublishDir)*.pdb;$(PublishDir)\*.xml" />
-            <!--<FilesToDelete Include="$(PublishDir)\locales\*_FEMININE.pak" />
-            <FilesToDelete Include="$(PublishDir)\locales\*_MASCULINE.pak" />
-            <FilesToDelete Include="$(PublishDir)\locales\*_NEUTER.pak" />-->
-			<FilesToDelete Include="$(PublishDir)\locales\*.pak" Exclude="$(PublishDir)\locales\en-US.pak" />
-		</ItemGroup>
-		<Delete Files="@(FilesToDelete)" />
 		<Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\minify.ps1&quot; -PublishDir &quot;$(PublishDir.TrimEnd('\'))&quot;" />
 	</Target>
 
