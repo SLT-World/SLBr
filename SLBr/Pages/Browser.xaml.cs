@@ -90,8 +90,6 @@ namespace SLBr.Pages
             TranslateComboBox.SelectedValue = App.Instance.Locale.Name;
             LocalInfoBars.CollectionChanged += LocalInfoBars_CollectionChanged;
             SyncInfobars();
-            InitializeBrowserComponent();
-            //TranslateAttribution.Inlines.Clear();
             switch (App.Instance.GlobalSave.GetInt("TranslationProvider"))
             {
                 case 0:
@@ -113,7 +111,6 @@ namespace SLBr.Pages
             }
             FindPopup.CustomPopupPlacementCallback = new CustomPopupPlacementCallback(FindPopupPlacement);
             StatusBubblePopup.CustomPopupPlacementCallback = new CustomPopupPlacementCallback(StatusBubblePopupPlacement);
-            HasInitialized = true;
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -334,8 +331,27 @@ namespace SLBr.Pages
                 case Actions.QR:
                     if (V1 == "0")
                     {
+                        if (Address.Length > 2000)
+                        {
+                            QRImageContainer.Visibility = Visibility.Collapsed;
+                            QRCharacterLimit.Visibility = Visibility.Visible;
+                            QRCopyButton.IsEnabled = false;
+                            QRDownloadButton.IsEnabled = false;
+                            QRImage.Source = null;
+                        }
+                        else
+                        {
+                            QRImageContainer.Visibility = Visibility.Visible;
+                            QRCharacterLimit.Visibility = Visibility.Collapsed;
+                            QRCopyButton.IsEnabled = true;
+                            QRDownloadButton.IsEnabled = true;
+                            try
+                            {
                         QRBitmap ??= new QRSaveBitmapImage(App.MiniQREncoder.Encode(Address)) { ModuleSize = 5, QuietZone = 10 }.CreateQRCodeBitmap();
                         QRImage.Source = QRBitmap;
+                            }
+                            catch { }
+                        }
                         QRButton.OpenPopup();
                     }
                     else if (V1 == "1")
@@ -499,7 +515,7 @@ namespace SLBr.Pages
                 LocalInfoBars.Add(EngineInitializationInfoBar);
             }
             //TODO: Improve tab session file with firefox sessionstore JSON format.
-            //WebView = WebViewManager.Create(WebEngineType.Chromium, [new(false, "slbr://newtab"), new(true, "https://google.com"), new(false, "https://apple.com")], WebViewSettings);
+            //WebView = await WebViewManager.Create(WebEngineType.Chromium, [new(false, "slbr://newtab"), new(false, "https://google.com"), new(false, "https://apple.com"), new(false, "https://microsoft.com"), new(false, "https://github.com"), new(false, "https://youtube.com"), new(false, "https://yandex.com"), new(false, "slbr://settings/user"), new(true, "https://microsoft.com")], WebViewSettings);
             WebView = await WebViewManager.Create(Engine, History, WebViewSettings);
             CloseInfoBar(EngineInitializationInfoBar);
 
@@ -1728,11 +1744,18 @@ namespace SLBr.Pages
             });
         }
 
+        private CancellationTokenSource? FaviconCancellationTokenSource;
         private async void WebView_FaviconChanged(object? sender, string e)
         {
+            FaviconCancellationTokenSource?.Cancel();
+            FaviconCancellationTokenSource?.Dispose();
+            FaviconCancellationTokenSource = new CancellationTokenSource();
+            var Token = FaviconCancellationTokenSource.Token;
             if (!Private)
             {
                 (BitmapSource, bool) IconData = await App.Instance.SetIcon(WebView.IsLoading, e, Address, Private);
+                if (Token.IsCancellationRequested)
+                    return;
                 SetIcon(IconData.Item1, IconData.Item2);
             }
         }

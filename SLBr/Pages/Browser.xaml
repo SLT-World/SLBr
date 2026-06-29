@@ -242,6 +242,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -251,7 +252,7 @@
                                         <TextBlock FontSize="18" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,5,0">&#xee6f;</TextBlock>
                                         <Label Margin="0" Padding="0" FontWeight="Medium" FontSize="14">Scan QR Code</Label>
                                     </DockPanel>
-                                    <Grid Height="230" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
+                                    <Grid x:Name="QRImageContainer" Height="230" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,0,0,10">
                                         <Image x:Name="QRImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="Fant">
                                             <Image.OpacityMask>
                                                 <VisualBrush>
@@ -262,8 +263,9 @@
                                             </Image.OpacityMask>
                                         </Image>
                                     </Grid>
-                                    <Button Click="ButtonAction" Grid.Column="0" Margin="0,0,5,0" Width="Auto" Tag="57&lt;,&gt;1" Grid.Row="2">Copy</Button>
-                                    <Button Click="ButtonAction" Grid.Column="1" Margin="5,0,0,0" Width="Auto" Tag="57&lt;,&gt;2" Grid.Row="2">Download</Button>
+                                    <TextBlock x:Name="QRCharacterLimit" Visibility="Collapsed" Margin="0,0,0,10" Grid.ColumnSpan="2" Foreground="{StaticResource GrayBrush}" Grid.Row="2">Use 2,000 characters or fewer.</TextBlock>
+                                    <Button x:Name="QRCopyButton" Click="ButtonAction" Grid.Column="0" Margin="0,0,5,0" Width="Auto" Tag="57&lt;,&gt;1" Grid.Row="3">Copy</Button>
+                                    <Button x:Name="QRDownloadButton" Click="ButtonAction" Grid.Column="1" Margin="5,0,0,0" Width="Auto" Tag="57&lt;,&gt;2" Grid.Row="3">Download</Button>
                                 </Grid>
                             </Border>
                         </WinUI:PopupButton.PopupContent>

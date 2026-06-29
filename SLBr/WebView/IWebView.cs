@@ -4,6 +4,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 using CefSharp;
 using CefSharp.DevTools;
 using CefSharp.Enums;
+using CefSharp.Handler;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -1389,6 +1390,22 @@ namespace SLBr.WebView
         public FrameworkElement Control { get; }
     }
 
+    public class HistoryMockHandler : ResourceRequestHandler
+    {
+        protected override IResourceHandler GetResourceHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request)
+        {
+            return ResourceHandler.FromString(App.HistoryPlaceholder);
+        }
+    }
+
+    public class HistoryMockRequestHandler : RequestHandler
+    {
+        protected override IResourceRequestHandler GetResourceRequestHandler(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
+        {
+            return new HistoryMockHandler();
+        }
+    }
+
     public class ChromiumWebView : IWebView, IDisposable, IRequestHandler, IDisplayHandler
     {
         public ChromiumWebBrowser Browser;
@@ -1516,38 +1533,45 @@ namespace SLBr.WebView
         {
             Browser?.Dispatcher.BeginInvoke(() => IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty));
 
-            /*TODO: Resolve quirks & issues of history persistence in regards to initializing with multiple entries.
-             * Missing history entries after initialization.
-             * Incomplete initialization, resulting in permanent loading without interaction.
-             * Incorrect web engine information.
-             */
             try
             {
+                //High memory usage observed with back/forward cache.
+
+                //TODO: 2nd final entry consistently triggers LoadingStateChanged.
                 if (Browser?.IsBrowserInitialized ?? false)
                 {
+                    TaskCompletionSource<bool> NavigationTaskCompletion = null;
+                    void Browser_MockFrameLoadEnd(object? sender, FrameLoadEndEventArgs e)
+                    {
+                        NavigationTaskCompletion?.TrySetResult(true);
+                    }
                     bool LastActive = InitialUrls.Last().IsCurrent == true;
                     int CurrentIndex = InitialUrls.IndexOf(InitialUrls.First(i => i.IsCurrent));
+                    IRequestHandler PreviousRequestHandler = Browser?.RequestHandler;
+                    Visibility PreviousVisible = Browser?.Visibility ?? Visibility.Visible;
+                    Browser?.Visibility = Visibility.Hidden;
+                    bool ContainsTravelLog = InitialUrls.Count > 1;
+                    if (ContainsTravelLog)
+                    {
+                        Browser?.RequestHandler = new HistoryMockRequestHandler();
+                        Browser?.FrameLoadEnd += Browser_MockFrameLoadEnd;
+                    }
                     for (int i = 0; i < InitialUrls.Count; i++)
                     {
-                        string Url = InitialUrls[i].Url;
-                        bool IsHistory = !LastActive || i < InitialUrls.Count - 1;
-                        if (IsHistory)
-                            WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
-                        await CallDevToolsAsync("Page.navigate", new
-                        {
-                            url = Url,
-                            transitionType = "generated"
-                        });
-                        InitializingHistory = IsHistory;
-                        if (IsHistory)
-                        {
-                            await Task.Delay(TimeSpan.FromMilliseconds(100));
-                            if (i == 0 && Browser != null)
-                                await Browser.WaitForInitialLoadAsync();
-                        }
+                        InitializingHistory = !LastActive || i < InitialUrls.Count - 1;
+                        if (!InitializingHistory)
+                            Browser?.RequestHandler = PreviousRequestHandler;
+                        if (ContainsTravelLog)
+                            NavigationTaskCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                        Browser?.Load(InitialUrls[i].Url);
+
+                        if (ContainsTravelLog)
+                            await NavigationTaskCompletion.Task;
                     }
-                    if (!LastActive)
-                        await Task.Delay(TimeSpan.FromMilliseconds(100));
+                    Browser?.Visibility = PreviousVisible;
+                    Browser?.RequestHandler = PreviousRequestHandler;
+                    Browser?.FrameLoadEnd -= Browser_MockFrameLoadEnd;
                     if (Browser != null)
                         await Browser.WaitForInitialLoadAsync();
                     InitializingHistory = false;
@@ -1561,7 +1585,6 @@ namespace SLBr.WebView
                             {
                                 entryId = SelectedHistory.ID
                             });
-                            //await CallDevToolsAsync("Page.reload");
                         }
                     }
                     if (Browser != null)
@@ -1590,6 +1613,7 @@ namespace SLBr.WebView
             if (e.Frame.IsMain)
             {
                 Favicon = string.Empty;
+                if (!InitializingHistory)
                 FaviconChanged?.RaiseUIAsync(this, Favicon);
             }
             if (InitializingHistory) return;
@@ -1938,8 +1962,7 @@ namespace SLBr.WebView
 
                 if (Parameters != null)
                 {
-                    var JSON = JsonSerializer.Serialize(Parameters, DevToolsSerializer.Value);
-                    using JsonDocument Document = JsonDocument.Parse(JSON);
+                    using JsonDocument Document = JsonDocument.Parse(JsonSerializer.Serialize(Parameters, DevToolsSerializer.Value));
                     Dict = ConvertJsonElement(Document.RootElement) as IDictionary<string, object>;
                 }
 
@@ -2112,6 +2135,7 @@ namespace SLBr.WebView
         #region RequestHandler
         public bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
         {
+            //if (InitializingHistory) return false;
             WebAuthenticationRequestedEventArgs Args = new(originUrl);
             Browser?.Dispatcher.Invoke(() => AuthenticationRequested?.Invoke(this, Args));
             if (Args.Cancel)
@@ -2122,6 +2146,7 @@ namespace SLBr.WebView
         }
         public bool OnBeforeBrowse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool userGesture, bool isRedirect)
         {
+            //if (InitializingHistory) return false;
             BeforeNavigationEventArgs Args = new(request.Url, frame.IsMain);
             Browser?.Dispatcher.Invoke(() => BeforeNavigation?.Invoke(this, Args));
 
@@ -2130,6 +2155,7 @@ namespace SLBr.WebView
         public bool OnCertificateError(IWebBrowser browserControl, IBrowser browser, CefErrorCode errorCode, string requestUrl, ISslInfo sslInfo, IRequestCallback callback) => true;
         public bool OnOpenUrlFromTab(IWebBrowser browserControl, IBrowser browser, IFrame frame, string targetUrl, WindowOpenDisposition targetDisposition, bool userGesture)
         {
+            //if (InitializingHistory) return true;
             if (targetDisposition == WindowOpenDisposition.NewBackgroundTab)
             {
                 NotifyNewTabRequested(new NewTabRequestEventArgs(targetUrl, true, null));
@@ -2160,32 +2186,34 @@ namespace SLBr.WebView
                 return;
             if (CurrentAddress != addressChangedArgs.Address)
             {
-                AddressChanged?.RaiseUIAsync(this, addressChangedArgs.Address);
                 CurrentAddress = addressChangedArgs.Address;
+                if (!InitializingHistory)
+                {
+                    AddressChanged?.RaiseUIAsync(this, addressChangedArgs.Address);
                 NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
                 LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
             }
         }
+        }
         public bool OnAutoResize(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.Structs.Size newSize) => false;
         public bool OnConsoleMessage(IWebBrowser chromiumWebBrowser, ConsoleMessageEventArgs consoleMessageArgs) => false;
-        public bool OnCursorChange(IWebBrowser chromiumWebBrowser, IBrowser browser, nint cursor, CefSharp.Enums.CursorType type, CefSharp.Structs.CursorInfo customCursorInfo) => false;
+        public bool OnCursorChange(IWebBrowser chromiumWebBrowser, IBrowser browser, nint cursor, CursorType type, CefSharp.Structs.CursorInfo customCursorInfo) => false;
         public void OnFaviconUrlChange(IWebBrowser chromiumWebBrowser, IBrowser browser, IList<string> urls)
         {
-            if (InitializingHistory)
-                return;
             if (urls.Count != 0)
             {
                 string Url = urls.OrderBy(url => url.EndsWith(".ico") ? 0 : url.EndsWith(".png") ? 1 : 2).ToList().First();
                 if (Favicon != Url)
                 {
                     Favicon = Url;
-                    if (!Url.EndsWith(".svg"))
+                    if (!InitializingHistory && !Url.EndsWith(".svg"))
                         FaviconChanged?.RaiseUIAsync(this, Url);
                 }
             }
         }
         public void OnFullscreenModeChange(IWebBrowser chromiumWebBrowser, IBrowser browser, bool fullscreen)
         {
+            if (InitializingHistory) return;
             FullscreenChanged?.RaiseUIAsync(this, fullscreen);
         }
         public void OnLoadingProgressChange(IWebBrowser chromiumWebBrowser, IBrowser browser, double progress) { }
@@ -2321,26 +2349,61 @@ namespace SLBr.WebView
 #endif
             bool LastActive = InitialUrls.Last().IsCurrent == true;
             int CurrentIndex = InitialUrls.IndexOf(InitialUrls.First(i => i.IsCurrent));
+            Visibility PreviousVisible = Browser?.Visibility ?? Visibility.Visible;
+            Browser?.Visibility = Visibility.Hidden;
+            bool MockRequest = false;
+
+            void Browser_MockResourceRequested(object sender, CoreWebView2WebResourceRequestedEventArgs e)
+            {
+                e.Response = BrowserCore.Environment.CreateWebResourceResponse(new MemoryStream(Encoding.UTF8.GetBytes(App.HistoryPlaceholder)), 200, "OK", "Content-Type: text/html");
+            }
+
+            bool ContainsTravelLog = InitialUrls.Count > 1;
+            if (ContainsTravelLog)
+            {
+                BrowserCore.WebResourceRequested -= Browser_WebResourceRequested;
+                BrowserCore.WebResourceRequested += Browser_MockResourceRequested;
+                MockRequest = true;
+            }
+
+            TaskCompletionSource<bool> NavigationTaskCompletion = null;
+            void Browser_MockNavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+            {
+                NavigationTaskCompletion?.TrySetResult(e.IsSuccess);
+            }
+            if (ContainsTravelLog)
+                BrowserCore.NavigationCompleted += Browser_MockNavigationCompleted;
             for (int i = 0; i < InitialUrls.Count; i++)
             {
-                string Url = InitialUrls[i].Url;
-                bool IsHistory = !LastActive || i < InitialUrls.Count - 1;
-                if (IsHistory)
-                    WebViewManager.RegisterOverrideRequest(Url, ResourceHandler.GetByteArray(App.HistoryPlaceholder, Encoding.UTF8), "text/html", 1);
-                await CallDevToolsAsync("Page.navigate", new
+                InitializingHistory = !LastActive || i < InitialUrls.Count - 1;
+                if (!InitializingHistory && MockRequest)
                 {
-                    url = Url,
-                    transitionType = "generated"
-                });
-                InitializingHistory = IsHistory;
-                if (IsHistory)
-                    await Task.Delay(TimeSpan.FromMilliseconds(100));
+                    BrowserCore.WebResourceRequested += Browser_WebResourceRequested;
+                    BrowserCore.WebResourceRequested -= Browser_MockResourceRequested;
+                    MockRequest = false;
             }
-            if (!LastActive)
-                await Task.Delay(TimeSpan.FromMilliseconds(100));
+                if (ContainsTravelLog)
+                    NavigationTaskCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                BrowserCore.Navigate(InitialUrls[i].Url);
+
+                if (ContainsTravelLog)
+                    await NavigationTaskCompletion.Task;
+            }
+            if (ContainsTravelLog)
+                BrowserCore.NavigationCompleted -= Browser_MockNavigationCompleted;
+            Browser?.Visibility = PreviousVisible;
+            if (MockRequest)
+            {
+                BrowserCore.WebResourceRequested += Browser_WebResourceRequested;
+                BrowserCore.WebResourceRequested -= Browser_MockResourceRequested;
+                MockRequest = false;
+            }
             InitializingHistory = false;
             if (!LastActive)
             {
+                await Task.Yield();
+
                 List<WebNavigationEntry> History = await GetNavigationHistoryAsync();
                 if (CurrentIndex < History.Count - 1)
                 {
@@ -2402,14 +2465,16 @@ namespace SLBr.WebView
         private void Browser_SourceChanged(object? sender, CoreWebView2SourceChangedEventArgs e)
         {
             CurrentAddress = Browser?.Source?.AbsoluteUri ?? string.Empty;
+            if (!InitializingHistory)
+            {
             AddressChanged?.RaiseUIAsync(this, CurrentAddress);
             LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
+            }
             //Investigate e.IsNewDocument;
         }
 
         private async void Browser_FaviconChanged(object? sender, object e)
         {
-            if (InitializingHistory) return;
             //BrowserCore.GetFaviconAsync(CoreWebView2FaviconImageFormat.Png)
             //FaviconChanged?.RaiseUIAsync(this, BrowserCore.FaviconUri);
             try
@@ -2421,7 +2486,10 @@ namespace SLBr.WebView
                     {
                         string Icon = (await EvaluateScriptAsync(Scripts.GetFaviconScript)).ToString() ?? string.Empty;
                         if (!string.IsNullOrEmpty(Icon))
+                        {
+                            if (!InitializingHistory)
                             FaviconChanged?.RaiseUIAsync(this, Icon);
+                        }
                         else
                             LocateAlternativeIcon = true;
                     }
@@ -2455,7 +2523,7 @@ namespace SLBr.WebView
         bool EncounteredError = false;
         private void Browser_ServerCertificateErrorDetected(object? sender, CoreWebView2ServerCertificateErrorDetectedEventArgs e)
         {
-            if (InitializingHistory) return;
+            //if (InitializingHistory) return;
             EncounteredError = true;
             IsSecure = false;
         }
@@ -2503,6 +2571,11 @@ namespace SLBr.WebView
 
         private void Browser_BasicAuthenticationRequested(object? sender, CoreWebView2BasicAuthenticationRequestedEventArgs e)
         {
+            if (InitializingHistory)
+            {
+                e.Cancel = true;
+                return;
+            }
             WebAuthenticationRequestedEventArgs Args = new(e.Uri);
             Browser?.Dispatcher.Invoke(() => AuthenticationRequested?.Invoke(this, Args));
             if (Args.Cancel)
@@ -2666,6 +2739,7 @@ namespace SLBr.WebView
 
         private void Browser_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
         {
+            if (InitializingHistory) return;
             //TODO: Merge InterceptList & RequestContexts.
             if (!RequestContexts.TryGetValue(e.Request.Uri, out CoreWebView2WebResourceContext ResourceContext))
                 ResourceContext = CoreWebView2WebResourceContext.Other;
@@ -2816,10 +2890,10 @@ namespace SLBr.WebView
         private void Browser_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
             Favicon = string.Empty;
-            FaviconChanged?.RaiseUIAsync(this, Favicon);
             CurrentAddress = e.Uri;
             if (InitializingHistory) return;
-            BeforeNavigationEventArgs Args = new BeforeNavigationEventArgs(e.Uri, true);
+            FaviconChanged?.RaiseUIAsync(this, Favicon);
+            BeforeNavigationEventArgs Args = new(e.Uri, true);
             Browser?.Dispatcher.Invoke(() => BeforeNavigation?.Invoke(this, Args));
             if (Args.Cancel)
             {
@@ -2844,7 +2918,7 @@ namespace SLBr.WebView
 
         public Task<CoreWebView2> WaitForCoreWebView2Async()
         {
-            var TaskSource = new TaskCompletionSource<CoreWebView2>();
+            TaskCompletionSource<CoreWebView2> TaskSource = new();
             if (BrowserCore != null)
                 TaskSource.TrySetResult(BrowserCore);
             else
@@ -2949,7 +3023,7 @@ namespace SLBr.WebView
 
         private void Browser_ScriptDialogOpening(object? sender, CoreWebView2ScriptDialogOpeningEventArgs e)
         {
-            ScriptDialogEventArgs Args = new ScriptDialogEventArgs(e.Kind.ToScriptDialogType(), e.Uri, e.Message, e.DefaultText);
+            ScriptDialogEventArgs Args = new(e.Kind.ToScriptDialogType(), e.Uri, e.Message, e.DefaultText);
             Browser?.Dispatcher.Invoke(() => { ScriptDialogOpened?.Invoke(this, Args); });
             if (Args.Result)
             {

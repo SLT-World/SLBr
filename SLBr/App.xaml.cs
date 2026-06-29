@@ -375,7 +375,7 @@ namespace SLBr
                 RaisePropertyChanged();
             }
         }
-        private bool _IsUnloaded;
+        private bool _IsUnloaded = true;
         public string Header
         {
             get => _Header;
@@ -3691,8 +3691,8 @@ Inner Exception: {7}";
         public const string ProcessCrashedError = @"<html><head><title>Process crashed</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}button{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}#content{width:90%;max-width:700px;margin: 140px auto 0 auto;}.icon{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Process crashed</h2><h5>Process crashed while attempting to load content. Refresh the page to resolve the problem.</h5></div></body></html>";
         public const string WebRiskInterstitialPage = @"<html><head><title>Dangerous site ahead</title><style>html{{background:#A4000F;color:white;}}body{{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}}h5{{font-weight:500;}}button{{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}}#content{{width:90%;max-width:700px;margin: 140px auto 0 auto;}}.icon{{font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}}a{{color:skyblue;text-decoration:none;}}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Dangerous site ahead</h2><h5>{0}</h5><div style=""position:relative;""><button style=""left:0;border:1px solid white;background:transparent;color:white;"" onclick=""engine.postMessage({{type:'__web_risk_ignore__'}})"">Proceed anyway</button><button style=""right:0;background:white;"" onclick=""history.back()"">Go back</button></div></div></body></html>";
         public const string WebRiskBillingInterstitialPage = @"<html><head><title>Deceptive billing ahead</title><style>body{text-align:center;width:100%;margin:0px;font-family:'Segoe UI',Tahoma,sans-serif;}h5{font-weight:500;}button{border:0;padding:10px;border-radius:5px;cursor:pointer;position:absolute;}#content{width:90%;max-width:700px;margin: 140px auto 0 auto;}.icon{color:red;font-family:'Segoe Fluent Icons','Segoe MDL2 Assets';font-size:150px;user-select:none;}a{color:skyblue;text-decoration:none;}</style></head><body><div id=""content""><h1 class=""icon""></h1><h2>Deceptive billing ahead</h2><h5>The site may attempt to trick you into agreeing to hidden fees or recurring subscription charges.</h5><div style=""position:relative;""><button style=""left:0;border:1px solid gainsboro;background:transparent;"" onclick=""engine.postMessage({type:'__web_risk_ignore__'})"">Proceed anyway</button><button style=""right:0;"" onclick=""history.back()"">Go back</button></div></div></body></html>";
-        public const string HistoryPlaceholder = @"<html><head><script>window.addEventListener(""pageshow"",function(e){e.persisted&&location.reload()});</script></head></html>";
-        public const string OverlayPagePlaceholder = "<html><head><title>{0}</title></head></html>";
+        public const string HistoryPlaceholder = @"<head><script>window.addEventListener(""pageshow"",function(e){e.persisted&&location.reload()});</script></head>";
+        public const string OverlayPagePlaceholder = "<head><title>{0}</title></head>";
 
         private void SetBrowserFlags(WebViewSettings Settings)
         {
