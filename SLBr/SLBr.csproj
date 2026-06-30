@@ -76,7 +76,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="149.0.40" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="149.0.60" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4071-prerelease" />
     <PackageReference Include="NUglify" Version="1.21.17" PrivateAssets="all" />
   </ItemGroup>
@@ -125,20 +125,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="149.0.4" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="149.0.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="149.0.4" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="149.0.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="149.0.4" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="149.0.6" />
   </ItemGroup>
 
 	<Target Name="RemoveUnusedAssembly" BeforeTargets="ResolveAssemblyReferences">
 		<ItemGroup>
-			<Reference Remove="@(Reference->WithMetadataValue('FileName', 'Microsoft.Web.WebView2.WinForms'))"/>
+			<Reference Remove="@(Reference-&gt;WithMetadataValue('FileName', 'Microsoft.Web.WebView2.WinForms'))" />
 		</ItemGroup>
 	</Target>
 	
