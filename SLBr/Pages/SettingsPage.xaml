@@ -295,7 +295,7 @@
                                             </ComboBox>
                                         </DockPanel>-->
                                         <CheckBox Margin="0,0,0,10" x:Name="TabPreviewCheckBox" Width="Auto" Click="TabPreviewCheckBox_Click" Content="Show preview on tab hover card"/>
-                                        <CheckBox Margin="0,0,0,0" x:Name="TabMemoryCheckBox" Width="Auto" Click="TabMemoryCheckBox_Click" Content="Show estimated memory usage on tab hover card"/>
+                                        <CheckBox Margin="0,0,0,0" x:Name="TabMemoryCheckBox" Width="Auto" Click="TabMemoryCheckBox_Click" Content="Show memory usage on tab hover card"/>
                                     </StackPanel>
                                 </GroupBox>
                                 <GroupBox Margin="0,0,0,10" Header="Browser">
@@ -720,7 +720,7 @@
                                         <DockPanel>
                                             <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Image type"/>
                                             <ComboBox x:Name="ScreenshotFormatComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ScreenshotFormatComboBox_SelectionChanged">
-                                                <ComboBoxItem>JPG</ComboBoxItem>
+                                                <ComboBoxItem>JPEG</ComboBoxItem>
                                                 <ComboBoxItem>PNG</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>

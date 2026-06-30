@@ -785,8 +785,8 @@ namespace SLBr
                 RaisePropertyChanged();
             }
         }
-        private SolidColorBrush PColor;
-        public SolidColorBrush Color
+        private SolidColorBrush? PColor;
+        public SolidColorBrush? Color
         {
             get => PColor;
             set
@@ -5546,14 +5546,6 @@ for (const el of elements) {
 const brights = [...colors].map(brightness);
 const avg = brights.length ? brights.reduce((a,b)=>a+b,0)/brights.length : 255;
 return avg < 110 ? 0 : 1;
-})();";
-
-        public const string EstimatedMemoryUsageScript = @"(function() {
-const domMemory = document.getElementsByTagName('*').length * 2048;
-const imageMemory = [...document.images].reduce((sum, img) => sum + (img.naturalWidth * img.naturalHeight * 4), 0);
-const canvasMemory = [...document.querySelectorAll('canvas')].reduce((sum, c) => sum + (c.width * c.height * 4), 0);
-const total = performance.memory.totalJSHeapSize + domMemory + imageMemory + canvasMemory;
-return Math.round(total / (1024 * 1024) * 10) / 10;
 })();";
 
         public const string TextFragmentRangeScript = @"(async() => {

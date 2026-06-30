@@ -1384,6 +1384,7 @@ namespace SLBr.WebView
         void SubscribeDevToolsEvent(string Event, Action<string> Handler);
         //Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType);
         Task<List<WebNavigationEntry>> GetNavigationHistoryAsync();
+        Task<long?> GetMemoryUsage();
         Task<IWebCookieManager> GetCookieManager();
         Task<IPermissionManager?> GetPermissionManager();
 
@@ -2027,6 +2028,19 @@ namespace SLBr.WebView
                 History.Add(new WebNavigationEntry(true, Address, Title, null));
             return History;
         }
+
+        public async Task<long?> GetMemoryUsage()
+        {
+            if (!Browser.CanExecuteJavascriptInMainFrame)
+                return null;
+            int? RawProcessId = (int)await EvaluateScriptAsync("engine.renderProcessId");
+            if (RawProcessId == null)
+                return null;
+            using Process _Process = Process.GetProcessById(RawProcessId.Value);
+            _Process.Refresh();
+            return _Process.PrivateMemorySize64;
+        }
+
         /*public async Task ClearBrowsingDataAsync(WebViewBrowsingDataTypes DataType)
         {
             var Context = Browser.GetBrowserHost()?.RequestContext;
@@ -3395,6 +3409,17 @@ namespace SLBr.WebView
             return History;
         }
 
+        public async Task<long?> GetMemoryUsage()
+        {
+            IReadOnlyList<CoreWebView2ProcessExtendedInfo> Processes = await BrowserCore.Environment.GetProcessExtendedInfosAsync();
+            CoreWebView2ProcessExtendedInfo? TargetProcessInfo = Processes.FirstOrDefault(i => i.ProcessInfo.Kind == CoreWebView2ProcessKind.Renderer && i.AssociatedFrameInfos.Any(f => f.Source == BrowserCore.Source));
+            if (TargetProcessInfo == null)
+                return null;
+            using Process _Process = Process.GetProcessById(TargetProcessInfo.ProcessInfo.ProcessId);
+            _Process.Refresh();
+            return _Process.PrivateMemorySize64;
+        }
+
         ChromiumEdgeCookieManager CookieManager;
         public async Task<IWebCookieManager> GetCookieManager()
         {
@@ -3977,6 +4002,8 @@ namespace SLBr.WebView
             History.Add(new WebNavigationEntry(true, Address, Title, null));
             return History;
         }
+
+        public async Task<long?> GetMemoryUsage() => null;
 
         TridentCookieManager CookieManager;
         public async Task<IWebCookieManager> GetCookieManager()

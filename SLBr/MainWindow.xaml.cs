@@ -1336,8 +1336,12 @@ namespace SLBr
                     if (Tab?.Content != null)
                     {
                         TabPreviewHost.Text = Utils.HostOnlyHTTP(Tab?.Content?.Address).ReplaceLineEndings("").Trim().Cut(50, true);
-                        if (App.Instance.TabMemory && !Tab.IsUnloaded && Tab?.Content?.WebView != null && Tab?.Content?.WebView?.Engine != WebEngineType.Trident)
-                            TabPreviewState.Text = $"Memory usage: {await Tab?.Content?.WebView?.EvaluateScriptAsync(Scripts.EstimatedMemoryUsageScript)} MB";
+                        if (App.Instance.TabMemory && !Tab.IsUnloaded && Tab?.Content?.WebView != null)
+                        {
+                            long? MemoryUsage = await Tab?.Content?.WebView?.GetMemoryUsage();
+                            if (MemoryUsage.HasValue)
+                                TabPreviewState.Text = $"Memory usage: {App.FormatBytes(MemoryUsage.Value)}";
+                        }
                         //Rich Tab Tooltips OGP proof of concept.
                         //TODO
                         /*if (!Tab.IsUnloaded && Tab?.Content?.WebView != null && Tab?.Content?.WebView?.Engine != WebEngineType.Trident)
