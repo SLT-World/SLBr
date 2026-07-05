@@ -1300,26 +1300,67 @@ namespace SLBr.WebView
             if (downloadItem.IsInProgress)
             {
                 DownloadCallbacks[downloadItem.Id] = callback;
-                Item.Pause = () => { DownloadCallbacks[downloadItem.Id].Pause(); };
-                Item.Resume = () => { DownloadCallbacks[downloadItem.Id].Resume(); };
-                Item.Cancel = () => { DownloadCallbacks[downloadItem.Id].Cancel(); };
+                Item.Pause = async () =>
+                {
+                    try
+                    {
+                        DownloadCallbacks[downloadItem.Id].Pause();
+
+                        await Task.Delay(100);
+                        downloadItem.IsPaused = true;
+                        downloadItem.IsInProgress = false;
+                        downloadItem.IsInterrupted = false;
+                        OnDownloadUpdated(chromiumWebBrowser, browser, downloadItem, callback);
+                    }
+                    catch { }
+                };
+                Item.Resume = () =>
+                {
+                    try
+                    {
+                        DownloadCallbacks[downloadItem.Id].Resume();
+                    }
+                    catch { }
+                };
+                Item.Cancel = async () =>
+                {
+                    try
+                    {
+                        DownloadCallbacks[downloadItem.Id].Cancel();
+                        await Task.Delay(100);
+                        if (!downloadItem.IsCancelled)
+                        {
+                            downloadItem.IsCancelled = true;
+                            downloadItem.IsComplete = false;
+                            downloadItem.IsPaused = false;
+                            downloadItem.IsInProgress = false;
+                            downloadItem.IsInterrupted = false;
+                            OnDownloadUpdated(chromiumWebBrowser, browser, downloadItem, callback);
+                        }
+                    }
+                    catch { }
+                };
                 Item.State = WebDownloadState.InProgress;
                 WebViewManager.DownloadManager.Updated(Item);
             }
-            //TODO: Submit pull request for downloadItem.IsInterrupted & GetInterruptReason.
-            //https://cef-builds.spotifycdn.com/docs/148.0/classCefDownloadItem.html
-
+            //TODO: Pause() does not fire OnDownloadUpdated until another event is called.
             else if (downloadItem.IsPaused)
             {
+                //Debug.WriteLine("Download paused");
                 Item.State = WebDownloadState.Paused;
                 WebViewManager.DownloadManager.Updated(Item);
             }
-            //TODO: https://github.com/cefsharp/CefSharp/pull/5266
+            else if (downloadItem.IsInterrupted && downloadItem.InterruptReason != DownloadInterruptReason.UserCanceled)
+            {
+                Item.State = WebDownloadState.Interrupted;
+                Item.InterruptReason = downloadItem.InterruptReason.ToWebDownloadInterruptReason();
+                WebViewManager.DownloadManager.Updated(Item);
+            }
             else
             {
                 //WARNING: Keep this warning path otherwise the open downloads wouldn't work
                 DownloadCallbacks.Remove(downloadItem.Id);
-                if (downloadItem.IsCancelled)
+                if (downloadItem.IsCancelled || downloadItem.IsInterrupted && downloadItem.InterruptReason == DownloadInterruptReason.UserCanceled)
                     Item.State = WebDownloadState.Canceled;
                 else if (downloadItem.IsComplete)
                     Item.State = WebDownloadState.Completed;

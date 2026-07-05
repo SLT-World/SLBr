@@ -42,7 +42,8 @@ namespace SLBr.WebView
         InProgress,
         Paused,
         Completed,
-        Canceled
+        Canceled,
+        Interrupted
     }
 
     public enum WebContextMenuMediaType
@@ -329,6 +330,40 @@ namespace SLBr.WebView
         None = 0
     }
 
+    public enum WebDownloadInterruptReason
+    {
+        None = 0,
+        FileFailed = 1,
+        FileAccessDenied = 2,
+        FileNoSpace = 3,
+        FileNameTooLong = 5,
+        FileTooLarge = 6,
+        FileVirusInfected = 7,
+        FileTransientError = 10,
+        FileBlocked = 11,
+        FileSecurityCheckFailed = 12,
+        FileTooShort = 13,
+        FileHashMismatch = 14,
+        FileSameAsSource = 15,
+        NetworkFailed = 20,
+        NetworkTimeout = 21,
+        NetworkDisconnected = 22,
+        NetworkServerDown = 23,
+        NetworkInvalidRequest = 24,
+        ServerFailed = 30,
+        ServerNoRange = 31,
+        ServerBadContent = 33,
+        ServerUnauthorized = 34,
+        ServerCertProblem = 35,
+        ServerForbidden = 36,
+        ServerUnreachable = 37,
+        ServerContentLengthMismatch = 38,
+        ServerCrossOriginRedirect = 39,
+        //UserCanceled = 40,
+        UserShutdown = 41,
+        Crash = 50
+    }
+
     public class NavigationErrorEventArgs(WebErrorCode _ErrorCode, string _RawError, string _Url) : EventArgs
     {
         public string Url { get; } = _Url;
@@ -366,6 +401,7 @@ namespace SLBr.WebView
         public DateTime? EndTime { get; set; }
         public double Progress => TotalBytes > 0 ? (double)ReceivedBytes / TotalBytes : 0;
         public WebDownloadState State { get; set; }
+        public WebDownloadInterruptReason InterruptReason { get; set; } = WebDownloadInterruptReason.None;
 
         public Action? Pause { get; set; }
         public Action? Resume { get; set; }
@@ -1255,6 +1291,81 @@ namespace SLBr.WebView
                 _ => ScriptDialogType.Alert
             };
         }
+        public static WebDownloadInterruptReason ToWebDownloadInterruptReason(this CoreWebView2DownloadInterruptReason Reason)
+        {
+            return Reason switch
+            {
+                //CoreWebView2DownloadInterruptReason.None => WebDownloadInterruptReason.None,
+                CoreWebView2DownloadInterruptReason.FileFailed => WebDownloadInterruptReason.FileFailed,
+                CoreWebView2DownloadInterruptReason.FileAccessDenied => WebDownloadInterruptReason.FileAccessDenied,
+                CoreWebView2DownloadInterruptReason.FileNoSpace => WebDownloadInterruptReason.FileNoSpace,
+                CoreWebView2DownloadInterruptReason.FileNameTooLong => WebDownloadInterruptReason.FileNameTooLong,
+                CoreWebView2DownloadInterruptReason.FileTooLarge => WebDownloadInterruptReason.FileTooLarge,
+                CoreWebView2DownloadInterruptReason.FileMalicious => WebDownloadInterruptReason.FileVirusInfected,
+                CoreWebView2DownloadInterruptReason.FileTransientError => WebDownloadInterruptReason.FileTransientError,
+                CoreWebView2DownloadInterruptReason.FileBlockedByPolicy => WebDownloadInterruptReason.FileBlocked,
+                CoreWebView2DownloadInterruptReason.FileSecurityCheckFailed => WebDownloadInterruptReason.FileSecurityCheckFailed,
+                CoreWebView2DownloadInterruptReason.FileTooShort => WebDownloadInterruptReason.FileTooShort,
+                CoreWebView2DownloadInterruptReason.FileHashMismatch => WebDownloadInterruptReason.FileHashMismatch,
+                //NOTE: FileSameAsSource is absent within CoreWebView2DownloadInterruptReason.
+                //CoreWebView2DownloadInterruptReason.FileSameAsSource => WebDownloadInterruptReason.FileSameAsSource,
+                CoreWebView2DownloadInterruptReason.NetworkFailed => WebDownloadInterruptReason.NetworkFailed,
+                CoreWebView2DownloadInterruptReason.NetworkTimeout => WebDownloadInterruptReason.NetworkTimeout,
+                CoreWebView2DownloadInterruptReason.NetworkDisconnected => WebDownloadInterruptReason.NetworkDisconnected,
+                CoreWebView2DownloadInterruptReason.NetworkServerDown => WebDownloadInterruptReason.NetworkServerDown,
+                CoreWebView2DownloadInterruptReason.NetworkInvalidRequest => WebDownloadInterruptReason.NetworkInvalidRequest,
+                CoreWebView2DownloadInterruptReason.ServerFailed => WebDownloadInterruptReason.ServerFailed,
+                CoreWebView2DownloadInterruptReason.ServerNoRange=> WebDownloadInterruptReason.ServerNoRange,
+                CoreWebView2DownloadInterruptReason.ServerBadContent => WebDownloadInterruptReason.ServerBadContent,
+                CoreWebView2DownloadInterruptReason.ServerUnauthorized => WebDownloadInterruptReason.ServerUnauthorized,
+                CoreWebView2DownloadInterruptReason.ServerCertificateProblem => WebDownloadInterruptReason.ServerCertProblem,
+                CoreWebView2DownloadInterruptReason.ServerForbidden => WebDownloadInterruptReason.ServerForbidden,
+                CoreWebView2DownloadInterruptReason.ServerUnexpectedResponse => WebDownloadInterruptReason.ServerUnreachable,
+                CoreWebView2DownloadInterruptReason.ServerContentLengthMismatch => WebDownloadInterruptReason.ServerContentLengthMismatch,
+                CoreWebView2DownloadInterruptReason.ServerCrossOriginRedirect => WebDownloadInterruptReason.ServerCrossOriginRedirect,
+                //CoreWebView2DownloadInterruptReason.UserCanceled => WebDownloadInterruptReason.UserCanceled,
+                CoreWebView2DownloadInterruptReason.UserShutdown => WebDownloadInterruptReason.UserShutdown,
+                CoreWebView2DownloadInterruptReason.DownloadProcessCrashed => WebDownloadInterruptReason.Crash,
+                _ => WebDownloadInterruptReason.None
+            };
+        }
+        public static WebDownloadInterruptReason ToWebDownloadInterruptReason(this DownloadInterruptReason Reason)
+        {
+            return Reason switch
+            {
+                //DownloadInterruptReason.None => WebDownloadInterruptReason.None,
+                DownloadInterruptReason.FileFailed => WebDownloadInterruptReason.FileFailed,
+                DownloadInterruptReason.FileAccessDenied => WebDownloadInterruptReason.FileAccessDenied,
+                DownloadInterruptReason.FileNoSpace => WebDownloadInterruptReason.FileNoSpace,
+                DownloadInterruptReason.FileNameTooLong => WebDownloadInterruptReason.FileNameTooLong,
+                DownloadInterruptReason.FileTooLarge => WebDownloadInterruptReason.FileTooLarge,
+                DownloadInterruptReason.FileVirusInfected => WebDownloadInterruptReason.FileVirusInfected,
+                DownloadInterruptReason.FileTransientError => WebDownloadInterruptReason.FileTransientError,
+                DownloadInterruptReason.FileBlocked => WebDownloadInterruptReason.FileBlocked,
+                DownloadInterruptReason.FileSecurityCheckFailed => WebDownloadInterruptReason.FileSecurityCheckFailed,
+                DownloadInterruptReason.FileTooShort => WebDownloadInterruptReason.FileTooShort,
+                DownloadInterruptReason.FileHashMismatch => WebDownloadInterruptReason.FileHashMismatch,
+                DownloadInterruptReason.FileSameAsSource => WebDownloadInterruptReason.FileSameAsSource,
+                DownloadInterruptReason.NetworkFailed => WebDownloadInterruptReason.NetworkFailed,
+                DownloadInterruptReason.NetworkTimeout => WebDownloadInterruptReason.NetworkTimeout,
+                DownloadInterruptReason.NetworkDisconnected => WebDownloadInterruptReason.NetworkDisconnected,
+                DownloadInterruptReason.NetworkServerDown => WebDownloadInterruptReason.NetworkServerDown,
+                DownloadInterruptReason.NetworkInvalidRequest => WebDownloadInterruptReason.NetworkInvalidRequest,
+                DownloadInterruptReason.ServerFailed => WebDownloadInterruptReason.ServerFailed,
+                DownloadInterruptReason.ServerNoRange=> WebDownloadInterruptReason.ServerNoRange,
+                DownloadInterruptReason.ServerBadContent => WebDownloadInterruptReason.ServerBadContent,
+                DownloadInterruptReason.ServerUnauthorized => WebDownloadInterruptReason.ServerUnauthorized,
+                DownloadInterruptReason.ServerCertProblem => WebDownloadInterruptReason.ServerCertProblem,
+                DownloadInterruptReason.ServerForbidden => WebDownloadInterruptReason.ServerForbidden,
+                DownloadInterruptReason.ServerUnreachable => WebDownloadInterruptReason.ServerUnreachable,
+                DownloadInterruptReason.ServerContentLengthMismatch => WebDownloadInterruptReason.ServerContentLengthMismatch,
+                DownloadInterruptReason.ServerCrossOriginRedirect => WebDownloadInterruptReason.ServerCrossOriginRedirect,
+                //DownloadInterruptReason.UserCanceled => WebDownloadInterruptReason.UserCanceled,
+                DownloadInterruptReason.UserShutdown => WebDownloadInterruptReason.UserShutdown,
+                DownloadInterruptReason.Crash => WebDownloadInterruptReason.Crash,
+                _ => WebDownloadInterruptReason.None
+            };
+    }
     }
 
     public class PermissionRequestedEventArgs(string _Url, WebPermissionKind _Kind) : EventArgs
@@ -2877,10 +2988,17 @@ namespace SLBr.WebView
                             Item.State = WebDownloadState.Paused;
                             WebViewManager.DownloadManager.Updated(Item);
                         }
-                        else
+                        else if (e.DownloadOperation.InterruptReason == CoreWebView2DownloadInterruptReason.UserCanceled)
                         {
                             Item.State = WebDownloadState.Canceled;
                             WebViewManager.DownloadManager.Completed(Item);
+                        }
+                        else
+                        {
+                            //TODO: WebView2 does not deliver interrupt reason on network disconnection.
+                            Item.State = WebDownloadState.Interrupted;
+                            Item.InterruptReason = e.DownloadOperation.InterruptReason.ToWebDownloadInterruptReason();
+                            WebViewManager.DownloadManager.Updated(Item);
                         }
                         break;
                     case CoreWebView2DownloadState.InProgress:

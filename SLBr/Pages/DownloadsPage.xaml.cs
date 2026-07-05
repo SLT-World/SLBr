@@ -86,6 +86,30 @@ namespace SLBr.Pages
             }
         }
 
+        private void ResumeSingleButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button _Button && _Button.DataContext is DownloadEntry DownloadsEntry)
+            {
+                try
+                {
+                    App.Instance.Downloads.GetValueOrDefault(DownloadsEntry.ID)?.Resume();
+                }
+                catch { }
+            }
+        }
+
+        private void PauseSingleButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button _Button && _Button.DataContext is DownloadEntry DownloadsEntry)
+            {
+                try
+                {
+                    App.Instance.Downloads.GetValueOrDefault(DownloadsEntry.ID)?.Pause();
+                }
+                catch { }
+            }
+        }
+
         private void CancelSingleButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button _Button && _Button.DataContext is DownloadEntry DownloadsEntry)

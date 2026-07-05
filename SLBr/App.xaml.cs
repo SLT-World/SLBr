@@ -818,6 +818,28 @@ namespace SLBr
             }
         }
 
+        private Visibility PResume;
+        public Visibility Resume
+        {
+            get => PResume;
+            set
+            {
+                PResume = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        private Visibility PPause;
+        public Visibility Pause
+        {
+            get => PPause;
+            set
+            {
+                PPause = value;
+                RaisePropertyChanged();
+            }
+        }
+
         private Visibility PProgress;
         public Visibility Progress
         {
@@ -839,6 +861,7 @@ namespace SLBr
                 RaisePropertyChanged();
             }
         }
+        public WebDownloadItem Source;
     }
 
     public partial class App : Application, INotifyPropertyChanged
@@ -1096,7 +1119,10 @@ namespace SLBr
                     _Entry.PercentComplete = (int)(Item.Progress * 100);
                     if (Item.State == WebDownloadState.Completed)
                     {
+                        _Entry.Color = null;
                         _Entry.Stop = Visibility.Collapsed;
+                        _Entry.Resume = Visibility.Collapsed;
+                        _Entry.Pause = Visibility.Collapsed;
                         if (DownloadSecurityService != DownloadSecurityService.None)
                         {
                             try
@@ -1158,20 +1184,72 @@ namespace SLBr
                             VisibleDownloads.Remove(_Entry);
                             return;
                         }
+                        _Entry.Color = null;
                         _Entry.FormattedProgress = "Canceled";
                         _Entry.Open = Visibility.Collapsed;
                         _Entry.Stop = Visibility.Collapsed;
+                        _Entry.Resume = Visibility.Collapsed;
+                        _Entry.Pause = Visibility.Collapsed;
                         _Entry.Progress = Visibility.Collapsed;
                     }
                     else if (Item.State == WebDownloadState.Paused)
                     {
+                        _Entry.Color = OrangeColor;
                         _Entry.FormattedProgress = "Paused";
                         _Entry.Open = Visibility.Collapsed;
                         _Entry.Stop = Visibility.Visible;
+                        _Entry.Resume = Visibility.Visible;
+                        _Entry.Pause = Visibility.Collapsed;
                         _Entry.Progress = Visibility.Visible;
+                    }
+                    else if (Item.State == WebDownloadState.Interrupted)
+                    {
+                        _Entry.Color = RedColor;
+                        //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/download/download_item_model_unittest.cc
+                        _Entry.FormattedProgress = Item.InterruptReason switch
+                        {
+                            WebDownloadInterruptReason.None => "Resuming",
+                            WebDownloadInterruptReason.FileFailed => "Something went wrong",
+                            WebDownloadInterruptReason.FileAccessDenied => "Permission required to download",
+                            WebDownloadInterruptReason.FileNoSpace => "Out of storage space",
+                            WebDownloadInterruptReason.FileNameTooLong => "File name or location is too long",
+                            WebDownloadInterruptReason.FileTooLarge => "File is too big for this device",
+                            //TODO: Handle FileVirusInfected, utilized by WebView2.
+                            WebDownloadInterruptReason.FileVirusInfected => "Virus detected",
+                            WebDownloadInterruptReason.FileTransientError => "Couldn't finish download",
+                            WebDownloadInterruptReason.FileBlocked => "Blocked by organization",
+                            WebDownloadInterruptReason.FileSecurityCheckFailed => "Virus scan failed",
+                            WebDownloadInterruptReason.FileTooShort => "Something went wrong",
+                            WebDownloadInterruptReason.FileHashMismatch => "Something went wrong",
+                            WebDownloadInterruptReason.FileSameAsSource => "Already downloaded",
+                            WebDownloadInterruptReason.NetworkFailed => "Check internet connection",
+                            WebDownloadInterruptReason.NetworkTimeout => "Check internet connection",
+                            WebDownloadInterruptReason.NetworkDisconnected => "Check internet connection",
+                            WebDownloadInterruptReason.NetworkServerDown => "Site is unavailable",
+                            WebDownloadInterruptReason.NetworkInvalidRequest => "Check internet connection",
+                            WebDownloadInterruptReason.ServerFailed => "Site is unavailable",
+                            WebDownloadInterruptReason.ServerNoRange => "Something went wrong",
+                            WebDownloadInterruptReason.ServerBadContent => "File is not available on site",
+                            WebDownloadInterruptReason.ServerUnauthorized => "File is unavailable on site",
+                            WebDownloadInterruptReason.ServerCertProblem => "Site is unavailable",
+                            WebDownloadInterruptReason.ServerForbidden => "File is unavailable on site",
+                            WebDownloadInterruptReason.ServerUnreachable => "Site is unavailable",
+                            WebDownloadInterruptReason.ServerContentLengthMismatch => "Couldn't finish download",
+                            WebDownloadInterruptReason.ServerCrossOriginRedirect => "Something went wrong",
+                            //WebDownloadInterruptReason.UserCanceled => UserCanceled,
+                            WebDownloadInterruptReason.UserShutdown => "Couldn't finish download",
+                            WebDownloadInterruptReason.Crash => "Couldn't finish download",
+                            _ => "Something went wrong"
+                        };
+                        _Entry.Open = Visibility.Collapsed;
+                        _Entry.Stop = Visibility.Visible;
+                        _Entry.Resume = Visibility.Visible;
+                        _Entry.Pause = Visibility.Collapsed;
+                        _Entry.Progress = Visibility.Collapsed;
                     }
                     else
                     {
+                        _Entry.Color = null;
                         string FormattedDescription;
                         DateTime? EndTime = Item.EndTime ?? Item.CalculatedEndTime;
                         if (EndTime.HasValue)
@@ -1204,12 +1282,14 @@ namespace SLBr
                         }
                         _Entry.Open = Visibility.Collapsed;
                         _Entry.Stop = Visibility.Visible;
+                        _Entry.Resume = Visibility.Collapsed;
+                        _Entry.Pause = Visibility.Visible;
                         _Entry.Progress = Visibility.Visible;
                     }
                 }
                 else
                 {
-                    VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID });
+                    VisibleDownloads.Insert(0, new DownloadEntry { ID = Item.ID, Source = Item });
                     if (BrowserView != null)
                     {
                         BrowserView.SetDownloadsButtonVisibility();
@@ -1217,7 +1297,7 @@ namespace SLBr
                         //TODO: if (bool.Parse(GlobalSave.Get("ShowDownloadsPopup")))
                         BrowserView.OpenDownloadsButton.UpdateLayout();
                         BrowserView.OpenDownloadsButton.OpenPopup();
-                }
+                    }
                 }
             });
         }
@@ -4545,12 +4625,12 @@ Inner Exception: {7}";
                     /*if (FaviconCache.TryGetValue(IconUrl, out BitmapImage CachedImage))
                         return CachedImage;*/
                     BitmapImage _Image = new(new Uri(IconUrl))
-                            {
-                                DecodePixelWidth = 20,
-                                DecodePixelHeight = 20,
-                                CacheOption = BitmapCacheOption.OnLoad,
-                                //CreateOptions = BitmapCreateOptions.DelayCreation,
-                            };
+                    {
+                        DecodePixelWidth = 20,
+                        DecodePixelHeight = 20,
+                        CacheOption = BitmapCacheOption.OnLoad,
+                        //CreateOptions = BitmapCreateOptions.DelayCreation,
+                    };
                     _Image.SafeFreeze();
                     //FaviconCache[IconUrl] = _GImage;
                     return (_Image, true);

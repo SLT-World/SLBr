@@ -33,6 +33,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using System.Xml.Linq;
 
 namespace SLBr.Pages
 {
@@ -4602,18 +4603,22 @@ namespace SLBr.Pages
             });
         }
 
-        private void DownloadCancelButton_Click(object sender, RoutedEventArgs e)
+        private void DownloadActionButton_Click(object sender, RoutedEventArgs e)
         {
+            if (sender is FrameworkElement Element && Element.DataContext is DownloadEntry _Entry)
             try
             {
-                App.Instance.Downloads.GetValueOrDefault(((FrameworkElement)sender).Tag.ToString())?.Cancel();
+                string Value = ((Button)sender).ToolTip.ToString()!;
+                if (Value == "Cancel")
+                    _Entry.Source?.Cancel();
+                else if (Value == "Open")
+                    Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{_Entry.Source.FullPath}\"") { UseShellExecute = true });
+                else if (Value == "Resume")
+                    _Entry.Source?.Resume();
+                else if (Value == "Pause")
+                    _Entry.Source?.Pause();
             }
             catch { }
-        }
-
-        private void DownloadOpenButton_Click(object sender, RoutedEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{App.Instance.Downloads.GetValueOrDefault(((FrameworkElement)sender).Tag.ToString()).FullPath}\"") { UseShellExecute = true });
         }
 
         private void FavouriteButton_PreviewMouseUp(object sender, MouseButtonEventArgs e)
