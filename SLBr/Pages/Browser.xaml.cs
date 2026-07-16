@@ -348,8 +348,8 @@ namespace SLBr.Pages
                             QRDownloadButton.IsEnabled = true;
                             try
                             {
-                        QRBitmap ??= new QRSaveBitmapImage(App.MiniQREncoder.Encode(Address)) { ModuleSize = 5, QuietZone = 10 }.CreateQRCodeBitmap();
-                        QRImage.Source = QRBitmap;
+                                QRBitmap ??= new QRSaveBitmapImage(App.MiniQREncoder.Encode(Address)) { ModuleSize = 5, QuietZone = 10 }.CreateQRCodeBitmap();
+                                QRImage.Source = QRBitmap;
                             }
                             catch { }
                         }
@@ -1222,11 +1222,11 @@ namespace SLBr.Pages
                             {
                                 try
                                 {
-                                    string CustomThemeColor = string.Empty;
+                                    Color? ThemeColor = null;
                                     string? Task = ((await WebView?.EvaluateScriptAsync("document.querySelector('meta[name=\"theme-color\"]')?.content ?? document.querySelector('meta[name=\"msapplication-TileColor\"]')?.content")) ?? string.Empty).ToString();
                                     if (Task != null)
-                                        CustomThemeColor = Task;
-                                    SetCustomTheme(CustomThemeColor);
+                                        ThemeColor = Utils.ParseHTMLColor(Task);
+                                    SetCustomTheme(ThemeColor);
                                 }
                                 catch { }
                             }
@@ -1273,12 +1273,36 @@ namespace SLBr.Pages
             }
         }
 
-        private void SetCustomTheme(string Color)
+        /*public async Task<Color?> GetTopPixelColor()
         {
-            if (!string.IsNullOrEmpty(Color))
+            byte[] Bytes = await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Rect((int)WebView.Control.Width / 2, 1, 1, 1));
+            if (Bytes == null || Bytes.Length == 0)
+                return null;
+            try
+            {
+                using MemoryStream Stream = new(Bytes);
+                BitmapDecoder Decoder = BitmapDecoder.Create(Stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                BitmapFrame Frame = Decoder.Frames[0];
+                byte[] Pixels = new byte[4];
+                Frame.CopyPixels(new Int32Rect(0, 0, 1, 1), Pixels, 4, 0);
+                byte B = Pixels[0];
+                byte G = Pixels[1];
+                byte R = Pixels[2];
+                byte A = Pixels[3];
+                return Color.FromArgb(A, R, G, B);
+            }
+            catch
+            {
+                return null;
+            }
+        }*/
+
+        private void SetCustomTheme(Color? _Color)
+        {
+            if (_Color.HasValue)
             {
                 IsCustomTheme = true;
-                Theme SiteTheme = App.Instance.GenerateTheme(Utils.ParseHTMLColor(Color));
+                Theme SiteTheme = App.Instance.GenerateTheme(_Color.Value);
                 SetAppearance(SiteTheme);
                 TabItem _TabItem = Tab.ParentWindow.TabsUI.ItemContainerGenerator.ContainerFromItem(Tab) as TabItem;
                 _TabItem.Foreground = new SolidColorBrush(SiteTheme.FontColor);
@@ -2198,7 +2222,7 @@ namespace SLBr.Pages
                         BitmapImage _BitmapImage = new();
                         //WARNING: Do not move, prevents duplicate captures caused by async race condition.
                         Tab.Preview = _BitmapImage;
-                        using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Size { Height = (int)CoreContainerSizeEmulator.ActualHeight, Width = (int)CoreContainerSizeEmulator.ActualWidth })))
+                        using (MemoryStream Stream = new(await WebView.TakeScreenshotAsync(WebScreenshotFormat.JPEG, new Rect(0, 0, (int)CoreContainerSizeEmulator.ActualWidth, (int)CoreContainerSizeEmulator.ActualHeight))))
                         {
                             _BitmapImage.BeginInit();
                             _BitmapImage.DecodePixelWidth = 275;
@@ -2247,6 +2271,7 @@ namespace SLBr.Pages
                                     WaybackInfoBar.Actions[0].Background = App.Instance.OrangeColor;
                                     try
                                     {
+                                        //TODO: Implement http://web.archive.org/cdx/search/cdx?url=archive.org&output=json&limit=1 fallback.
                                         string Json = await App.MiniHttpClient.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={Address}");
                                         CloseInfoBar(WaybackInfoBar);
                                         using JsonDocument Document = JsonDocument.Parse(Json);
@@ -2870,17 +2895,23 @@ namespace SLBr.Pages
                 string FileExtension;
                 string Filter;
                 WebScreenshotFormat ScreenshotFormat;
-                if (App.Instance.GlobalSave.GetInt("ScreenshotFormat") == 1)
+                switch (App.Instance.GlobalSave.GetInt("ScreenshotFormat"))
                 {
-                    FileExtension = "png";
-                    Filter = "PNG Image (*.png)|*.png";
-                    ScreenshotFormat = WebScreenshotFormat.PNG;
-                }
-                else
-                {
-                    FileExtension = "jpeg";
-                    Filter = "JPEG Image (*.jpeg)|*.jpeg";
-                    ScreenshotFormat = WebScreenshotFormat.JPEG;
+                    case 0:
+                        FileExtension = "jpeg";
+                        Filter = "JPEG Image (*.jpeg)|*.jpeg";
+                        ScreenshotFormat = WebScreenshotFormat.JPEG;
+                        break;
+                    case 1:
+                        FileExtension = "png";
+                        Filter = "PNG Image (*.png)|*.png";
+                        ScreenshotFormat = WebScreenshotFormat.PNG;
+                        break;
+                    default:
+                        FileExtension = "webp";
+                        Filter = "WEBP Image (*.webp)|*.webp";
+                        ScreenshotFormat = WebScreenshotFormat.WebP;
+                        break;
                 }
                 byte[] ImageBytes = await WebView.TakeScreenshotAsync(ScreenshotFormat);
                 SetDarkMode(App.Instance.CurrentTheme.DarkWebPage);
@@ -3834,7 +3865,7 @@ namespace SLBr.Pages
 
         public void DisposeBrowserCore()
         {
-            SetCustomTheme(string.Empty);
+            SetCustomTheme(null);
             SmartSuggestionCancellation?.Cancel();
             OmniBoxFastTimer?.Stop();
             OmniBoxSmartTimer?.Stop();

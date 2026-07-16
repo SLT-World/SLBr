@@ -35,6 +35,7 @@ namespace SLBr.WebView
     {
         JPEG,
         PNG,
+        WebP
     }
 
     public enum WebDownloadState
@@ -798,16 +799,7 @@ namespace SLBr.WebView
             {
                 WebScreenshotFormat.PNG => CefSharp.DevTools.Page.CaptureScreenshotFormat.Png,
                 WebScreenshotFormat.JPEG => CefSharp.DevTools.Page.CaptureScreenshotFormat.Jpeg,
-                _ => CefSharp.DevTools.Page.CaptureScreenshotFormat.Png
-            };
-        }
-        public static CoreWebView2CapturePreviewImageFormat ToWebView2ScreenshotFormat(this WebScreenshotFormat State)
-        {
-            return State switch
-            {
-                WebScreenshotFormat.PNG => CoreWebView2CapturePreviewImageFormat.Png,
-                WebScreenshotFormat.JPEG => CoreWebView2CapturePreviewImageFormat.Jpeg,
-                _ => CoreWebView2CapturePreviewImageFormat.Png
+                _ => CefSharp.DevTools.Page.CaptureScreenshotFormat.Webp,
             };
         }
         public static CoreWebView2PermissionState ToWebView2PermissionState(this WebPermissionState State)
@@ -1365,7 +1357,7 @@ namespace SLBr.WebView
                 DownloadInterruptReason.Crash => WebDownloadInterruptReason.Crash,
                 _ => WebDownloadInterruptReason.None
             };
-    }
+        }
     }
 
     public class PermissionRequestedEventArgs(string _Url, WebPermissionKind _Kind) : EventArgs
@@ -1483,7 +1475,7 @@ namespace SLBr.WebView
         event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null);
+        Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Rect? Viewport = null);
         Task<string> GetSourceAsync();
 
         void Download(string Url);
@@ -1726,7 +1718,7 @@ namespace SLBr.WebView
             {
                 Favicon = string.Empty;
                 if (!InitializingHistory)
-                FaviconChanged?.RaiseUIAsync(this, Favicon);
+                    FaviconChanged?.RaiseUIAsync(this, Favicon);
             }
             if (InitializingHistory) return;
             FrameLoadStart?.RaiseUIAsync(this, e.Url);
@@ -2056,14 +2048,14 @@ namespace SLBr.WebView
             return Result.Result;
         }
 
-        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
+        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Rect? Viewport = null)
         {
             if (Viewport == null)
             {
                 var ContentSize = await Browser.GetContentSizeAsync();
-                Viewport = new Size { Height = ContentSize.Height, Width = ContentSize.Width };
+                Viewport = new Rect(0, 0, ContentSize.Width, ContentSize.Height);
             }
-            return await Browser.CaptureScreenshotAsync(Format.ToCefScreenshotFormat(), null, new CefSharp.DevTools.Page.Viewport { Width = (int)Viewport?.Width, Height = (int)Viewport?.Height }, true, true);
+            return await Browser.CaptureScreenshotAsync(Format.ToCefScreenshotFormat(), null, new CefSharp.DevTools.Page.Viewport { X = Viewport.Value.X, Y = Viewport.Value.Y, Width = (int)Viewport.Value.Width, Height = (int)Viewport.Value.Height }, true, true);
         }
         public async Task<string> GetSourceAsync() => await Browser.GetSourceAsync();
         public async Task<string> CallDevToolsAsync(string Method, object? Parameters = null)
@@ -2315,10 +2307,10 @@ namespace SLBr.WebView
                 if (!InitializingHistory)
                 {
                     AddressChanged?.RaiseUIAsync(this, addressChangedArgs.Address);
-                NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
-                LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
+                    NavigationEntry _NavigationEntry = await Browser.GetVisibleNavigationEntryAsync();
+                    LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, _NavigationEntry?.HttpStatusCode));
+                }
             }
-        }
         }
         public bool OnAutoResize(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.Structs.Size newSize) => false;
         public bool OnConsoleMessage(IWebBrowser chromiumWebBrowser, ConsoleMessageEventArgs consoleMessageArgs) => false;
@@ -2506,7 +2498,7 @@ namespace SLBr.WebView
                     BrowserCore.WebResourceRequested += Browser_WebResourceRequested;
                     BrowserCore.WebResourceRequested -= Browser_MockResourceRequested;
                     MockRequest = false;
-            }
+                }
                 if (ContainsTravelLog)
                     NavigationTaskCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -2592,8 +2584,8 @@ namespace SLBr.WebView
             CurrentAddress = Browser?.Source?.AbsoluteUri ?? string.Empty;
             if (!InitializingHistory)
             {
-            AddressChanged?.RaiseUIAsync(this, CurrentAddress);
-            LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
+                AddressChanged?.RaiseUIAsync(this, CurrentAddress);
+                LoadingStateChanged?.RaiseUIAsync(this, new LoadingStateResult(IsLoading, null));
             }
             //Investigate e.IsNewDocument;
         }
@@ -2613,7 +2605,7 @@ namespace SLBr.WebView
                         if (!string.IsNullOrEmpty(Icon))
                         {
                             if (!InitializingHistory)
-                            FaviconChanged?.RaiseUIAsync(this, Icon);
+                                FaviconChanged?.RaiseUIAsync(this, Icon);
                         }
                         else
                             LocateAlternativeIcon = true;
@@ -3454,14 +3446,42 @@ namespace SLBr.WebView
             return null;
         }
 
-
-        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
+        //https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-captureScreenshot
+        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Rect? Viewport = null)
         {
             try
             {
-                using var Stream = new MemoryStream();
-                await BrowserCore.CapturePreviewAsync(Format.ToWebView2ScreenshotFormat(), Stream);
-                return Stream.ToArray();
+                if (Viewport == null)
+                {
+                    string LayoutMetrics = await CallDevToolsAsync("Page.getLayoutMetrics");
+                    using JsonDocument Document = JsonDocument.Parse(LayoutMetrics);
+                    JsonElement ContentSize = Document.RootElement.GetProperty("contentSize");
+                    Viewport = new Rect(0, 0, ContentSize.GetProperty("width").GetInt32(), ContentSize.GetProperty("height").GetInt32());
+                }
+
+                string ImageResult = await CallDevToolsAsync("Page.captureScreenshot", new
+                {
+                    format = Format switch
+                    {
+                        WebScreenshotFormat.PNG => "png",
+                        WebScreenshotFormat.JPEG => "jpeg",
+                        _ => "webp",
+                    },
+                    fromSurface = true,
+                    captureBeyondViewport = true,
+                    clip = new
+                    {
+                        x = Viewport.Value.X,
+                        y = Viewport.Value.Y,
+                        width = Viewport.Value.Width,
+                        height = Viewport.Value.Height,
+                        scale = 1
+                    }
+                });
+
+                using JsonDocument ResultDocument = JsonDocument.Parse(ImageResult);
+                string Base64Data = ResultDocument.RootElement.GetProperty("data").GetString();
+                return Convert.FromBase64String(Base64Data);
             }
             catch { }
             return [];
@@ -4085,11 +4105,13 @@ namespace SLBr.WebView
             return Task.Task;
         }
 
-        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Size? Viewport = null)
+        public async Task<byte[]> TakeScreenshotAsync(WebScreenshotFormat Format, Rect? Viewport = null)
         {
             var HWND = Browser.Handle;
             if (HWND == IntPtr.Zero) return [];
 
+            var X = (int)(Viewport?.X ?? 0);
+            var Y = (int)(Viewport?.Y ?? 0);
             var Width = (int)(Viewport?.Width ?? Browser.ActualWidth);
             var Height = (int)(Viewport?.Height ?? Browser.ActualHeight);
 
@@ -4097,7 +4119,7 @@ namespace SLBr.WebView
             var hdcDest = DllUtils.CreateCompatibleDC(hdcSrc);
             var hBitmap = DllUtils.CreateCompatibleBitmap(hdcSrc, Width, Height);
             var hOld = DllUtils.SelectObject(hdcDest, hBitmap);
-            DllUtils.BitBlt(hdcDest, 0, 0, Width, Height, hdcSrc, 0, 0, DllUtils.SRCCOPY);
+            DllUtils.BitBlt(hdcDest, 0, 0, Width, Height, hdcSrc, X, Y, DllUtils.SRCCOPY);
             DllUtils.SelectObject(hdcDest, hOld);
             DllUtils.DeleteDC(hdcDest);
             DllUtils.ReleaseDC(HWND, hdcSrc);
@@ -4105,7 +4127,13 @@ namespace SLBr.WebView
             var BitmapSource = Imaging.CreateBitmapSourceFromHBitmap(hBitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             DllUtils.DeleteObject(hBitmap);
 
-            PngBitmapEncoder Encoder = new();
+            BitmapEncoder Encoder = Format switch
+            {
+                WebScreenshotFormat.PNG => new PngBitmapEncoder(),
+                WebScreenshotFormat.JPEG => new JpegBitmapEncoder(),
+                _ => new PngBitmapEncoder()
+                //TODO: Implement WebP support.
+            };
             Encoder.Frames.Add(BitmapFrame.Create(BitmapSource));
             using MemoryStream Stream = new();
             Encoder.Save(Stream);

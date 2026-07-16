@@ -917,44 +917,51 @@ namespace SLBr
         [GeneratedRegex(@"\d+\.?\d*")]
         public static partial Regex DigitsRegex();
 
-        public static MColor ParseHTMLColor(string ColorString)
+        public static MColor? ParseHTMLColor(string ColorString)
         {
-            if (ColorString.StartsWith("rgb"))
-            {
-                string[] Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => m.Value).ToArray();
-                byte R = byte.Parse(Numbers[0]);
-                byte G = byte.Parse(Numbers[1]);
-                byte B = byte.Parse(Numbers[2]);
-                /*if (Numbers.Length == 4)
-                {
-                    byte A = (byte)Math.Round(float.Parse(Numbers[3], CultureInfo.InvariantCulture) * 255);
-                    return MColor.FromArgb(A, R, G, B);
-                }*/
-                return MColor.FromRgb(R, G, B);
-            }
-            else if (ColorString.StartsWith("hsl"))
-            {
-                string[] Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => m.Value).ToArray();
-
-                float H = byte.Parse(Numbers[0]);
-                float S = byte.Parse(Numbers[1]) / 100f;
-                float L = byte.Parse(Numbers[2]) / 100f;
-                /*if (Numbers.Length == 4)
-                {
-                    byte A = (byte)Math.Round(float.Parse(Numbers[3], CultureInfo.InvariantCulture));
-                    return ColorFromHSLA(H, S, L, A);
-                }*/
-
-                //float A = Numbers.Length == 4 ? byte.Parse(Numbers[3]) : 1.0f;
-                return ColorFromHSL(H, S, L);//, A
-            }
             try
             {
-                return (MColor)System.Windows.Media.ColorConverter.ConvertFromString(ColorString);
+                if (ColorString.StartsWith("rgb"))
+                {
+                    string[] Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => m.Value).ToArray();
+                    byte R = byte.Parse(Numbers[0]);
+                    byte G = byte.Parse(Numbers[1]);
+                    byte B = byte.Parse(Numbers[2]);
+                    /*if (Numbers.Length == 4)
+                    {
+                        byte A = (byte)Math.Round(float.Parse(Numbers[3], CultureInfo.InvariantCulture) * 255);
+                        return MColor.FromArgb(A, R, G, B);
+                    }*/
+                    return MColor.FromRgb(R, G, B);
+                }
+                else if (ColorString.StartsWith("hsl"))
+                {
+                    string[] Numbers = DigitsRegex().Matches(ColorString).Cast<Match>().Select(m => m.Value).ToArray();
+
+                    float H = byte.Parse(Numbers[0]);
+                    float S = byte.Parse(Numbers[1]) / 100f;
+                    float L = byte.Parse(Numbers[2]) / 100f;
+                    /*if (Numbers.Length == 4)
+                    {
+                        byte A = (byte)Math.Round(float.Parse(Numbers[3], CultureInfo.InvariantCulture));
+                        return ColorFromHSLA(H, S, L, A);
+                    }*/
+
+                    //float A = Numbers.Length == 4 ? byte.Parse(Numbers[3]) : 1.0f;
+                    return ColorFromHSL(H, S, L);//, A
+                }
+                try
+                {
+                    return (MColor)System.Windows.Media.ColorConverter.ConvertFromString(ColorString);
+                }
+                catch
+                {
+                    return ColorTranslator.FromHtml(ColorString).ToMediaColor();
+                }
             }
             catch
             {
-                return ColorTranslator.FromHtml(ColorString).ToMediaColor();
+                return null;
             }
         }
 

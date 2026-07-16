@@ -722,6 +722,7 @@
                                             <ComboBox x:Name="ScreenshotFormatComboBox" Width="100px" VerticalAlignment="Center" SelectedIndex="0" DockPanel.Dock="Right" HorizontalAlignment="Right" SelectionChanged="ScreenshotFormatComboBox_SelectionChanged">
                                                 <ComboBoxItem>JPEG</ComboBoxItem>
                                                 <ComboBoxItem>PNG</ComboBoxItem>
+                                                <ComboBoxItem>WebP</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>
                                     </StackPanel>
