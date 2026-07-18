@@ -12,8 +12,8 @@
     <SignAssembly>False</SignAssembly>
     <ApplicationIcon>Resources\SLBr.ico</ApplicationIcon>
     <Copyright>Copyright (c) SLT Softwares. All rights reserved.</Copyright>
-    <AssemblyVersion>2026.5.30.0</AssemblyVersion>
-    <FileVersion>2026.5.30.0</FileVersion>
+    <AssemblyVersion>2026.7.18.0</AssemblyVersion>
+    <FileVersion>2026.7.18.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>AnyCPU;x64</Platforms>
     <Company>$(Authors)</Company>
@@ -76,7 +76,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="149.0.60" />
+    <PackageReference Include="CefSharp.Wpf.HwndHost" Version="150.0.110" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4126-prerelease" />
     <PackageReference Include="NUglify" Version="1.22.0" PrivateAssets="all" />
   </ItemGroup>
@@ -125,15 +125,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="149.0.6" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-arm64" Version="150.0.11" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="149.0.6" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x64" Version="150.0.11" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="149.0.6" />
+    <PackageReference Update="chromiumembeddedframework.runtime.win-x86" Version="150.0.11" />
   </ItemGroup>
 
 	<Target Name="RemoveUnusedAssembly" BeforeTargets="ResolveAssemblyReferences">
