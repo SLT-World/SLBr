@@ -4613,13 +4613,16 @@ Inner Exception: {7}";
                             IconUrl = "https://t0.gstatic.com/faviconV2?client=chrome_desktop&nfrp=2&check_seen=true&size=24&min_size=16&max_size=256&fallback_opts=TYPE,SIZE,URL&url=" + Utils.CleanUrl(Url, true, true, true, false, false);
                             break;
                         case 1:
-                            IconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url);
+                            IconUrl = "https://favicon.yandex.net/favicon/" + Utils.FastHost(Url, false);
                             break;
                         case 2:
-                            IconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url) + ".ico";
+                            IconUrl = "https://icons.duckduckgo.com/ip3/" + Utils.FastHost(Url, false) + ".ico";
                             break;
                         case 3:
-                            IconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url);
+                            IconUrl = "https://f1.allesedv.com/32/" + Utils.FastHost(Url, false);
+                            break;
+                        case 4:
+                            IconUrl = $"https://news.kagi.com/api/favicon-proxy?domain={Utils.FastHost(Url, false)}&quality=fast";
                             break;
                     }
                     /*if (FaviconCache.TryGetValue(IconUrl, out BitmapImage CachedImage))

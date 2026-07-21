@@ -701,6 +701,7 @@
                                                 <ComboBoxItem>Yandex</ComboBoxItem>
                                                 <ComboBoxItem>DuckDuckGo</ComboBoxItem>
                                                 <ComboBoxItem>AllesEDV</ComboBoxItem>
+                                                <ComboBoxItem>Kagi</ComboBoxItem>
                                             </ComboBox>
                                         </DockPanel>
                                     </StackPanel>
