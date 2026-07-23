@@ -1,22 +1,13 @@
 ﻿/*Copyright © SLT Softwares. All rights reserved.
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
+using SLBr.WebView;
 using System.Runtime.InteropServices;
 
 namespace SLBr.Tests.Helpers
 {
     public class UserAgentTests
     {
-        [Theory]
-        [InlineData("10.0", "Win64; x64", "Windows NT 10.0; Win64; x64")]
-        [InlineData("10.0", "", "Windows NT 10.0")]
-        [InlineData("6.1", "WOW64", "Windows NT 6.1; WOW64")]
-        public void BuildOSCpuInfoFromOSVersionAndCpuType_FormatsCorrectly(string OSVersion, string CPUType, string Expected)
-        {
-            string Actual = UserAgentGenerator.BuildOSCpuInfoFromOSVersionAndCpuType(OSVersion, CPUType);
-            Assert.Equal(Expected, Actual);
-        }
-
         [Theory]
         [InlineData("Windows NT 10.0; Win64; x64", "SLBr/1.0", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) SLBr/1.0 Safari/537.36")]
         [InlineData("Linux; Android 10; K", "Chrome/148.0.0.0 Mobile", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36")]
@@ -27,10 +18,10 @@ namespace SLBr.Tests.Helpers
         }
 
         [Fact]
-        public void BuildMobileUserAgentFromProduct_ContainsMobileSuffixAndAndroidOs()
+        public void BuildUserAgentFromProduct_ContainsMobileSuffixAndAndroidOs()
         {
             string Product = "SLBr";
-            string Actual = UserAgentGenerator.BuildMobileUserAgentFromProduct(Product);
+            string Actual = UserAgentGenerator.BuildUserAgentFromProduct(Product, PlatformID.Unix);
 
             Assert.Equal("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SLBr Mobile Safari/537.36", Actual);
         }
@@ -64,16 +55,14 @@ namespace SLBr.Tests.Helpers
             Assert.Equal(Expected, Actual);
         }
 
-        [Fact]
-        public void BuildCPUInfo_ReturnsExpectedStringBasedOnProcessBitness()
+        [Theory]
+        [InlineData(84, "Not;A=Brand", "8")]
+        [InlineData(86, "Not?A_Brand", "24")]
+        public void GetGreasedUserAgentBrandVersion_ReturnsExpectedBrandVersion(int Seed, string ExpectedBrand, string ExpectedVersion)
         {
-            string Actual = UserAgentGenerator.BuildCPUInfo();
-            if (!Environment.Is64BitOperatingSystem)
-                Assert.Equal(string.Empty, Actual);
-            else if (!Environment.Is64BitProcess)
-                Assert.Equal("WOW64", Actual);
-            else
-                Assert.StartsWith("Win64; ", Actual);
+            WebUserAgentBrand Actual = UserAgentGenerator.GetGreasedUserAgentBrandVersion(Seed);
+            Assert.Equal(ExpectedBrand, Actual.Brand);
+            Assert.Equal(ExpectedVersion, Actual.Version);
         }
     }
 }

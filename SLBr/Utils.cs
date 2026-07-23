@@ -371,134 +371,6 @@ namespace SLBr
 
     public static class UserAgentGenerator //https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc
     {
-        //public static string FrozenUserAgentTemplate = "Mozilla/5.0 ({0}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{1}.0.0.0 Safari/537.36";
-
-        /*public static string GetUserAgentPlatform()
-        {
-            return "";
-        }*/
-
-        /*public static string GetUnifiedPlatform()
-        {
-            return "Windows NT 10.0; Win64; x64";
-        }*/
-
-        /*// Inaccurately named for historical reasons
-        public static string GetWebKitVersion()
-        {
-            return string.Format("537.36 ({0})", CHROMIUM_GIT_REVISION);
-        }
-
-        public static string GetChromiumGitRevision()
-        {
-            return CHROMIUM_GIT_REVISION;
-        }*/
-
-        /*[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool IsWow64Process2([In] IntPtr hProcess, [Out] ImageFileMachine pProcessMachine, [Out, Optional] ImageFileMachine pNativeMachine);*/
-
-        /*[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern unsafe bool IsWow64Process2(IntPtr hProcess, ImageFileMachine* pProcessMachine, [Optional] ImageFileMachine* pNativeMachine);
-
-        public static unsafe void IsWow64Process2(SafeHandle hProcess, out ImageFileMachine pProcessMachine, out ImageFileMachine pNativeMachine)
-        {
-            bool hProcessAddRef = false;
-            try
-            {
-                fixed (ImageFileMachine* pProcessMachineLocal = &pProcessMachine)
-                {
-                    fixed (ImageFileMachine* pNativeMachineLocal = &pNativeMachine)
-                    {
-                        IntPtr hProcessLocal;
-                        if (hProcess is object)
-                        {
-                            hProcess.DangerousAddRef(ref hProcessAddRef);
-                            hProcessLocal = hProcess.DangerousGetHandle();
-                            if (IsWow64Process2(hProcessLocal, pProcessMachineLocal, pNativeMachineLocal))
-                                return;
-                            else throw new Win32Exception();
-                        }
-                        else
-                            throw new ArgumentNullException(nameof(hProcess));
-                    }
-                }
-            }
-            finally
-            {
-                if (hProcessAddRef)
-                    hProcess.DangerousRelease();
-            }
-        }*/
-
-        /*[DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool IsWow64Process([In] IntPtr hProcess, [Out] out bool wow64Process);
-
-        public static bool IsWow64()
-        {
-            //if (Environment.OSVersion.Version.Major >= 6 || (Environment.OSVersion.Version.Major == 5 && Environment.OSVersion.Version.Minor >= 1))
-            //{
-            if (!IsWow64Process(Process.GetCurrentProcess().Handle, out bool RetVal))
-                return false;
-            return RetVal;
-            //}
-            //return false;
-        }*/
-
-        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool IsWow64Process2(IntPtr process, out ushort processMachine, out ushort nativeMachine);
-
-        public static bool IsIA64()
-        {
-            /*IsWow64Process2(Process.GetCurrentProcess().SafeHandle, out ImageFileMachine pProcessMachine, out ImageFileMachine pNativeMachine);
-            //pProcessMachine.ToString() // IMAGE_FILE_MACHINE_UNKNOWN
-            return pNativeMachine == ImageFileMachine.IA64;*/
-            IsWow64Process2(Process.GetCurrentProcess().Handle, out ushort pProcessMachine, out ushort pNativeMachine);
-            return pNativeMachine == 512;
-        }
-
-        //https://gist.github.com/BinToss/aa6a269f5eb58088425cdb5a2341e14e
-        //http://zuga.net/articles/cs-is64bitprocess-vs-iswow64process/
-
-        /*public enum ImageFileMachine : ushort
-        {
-            AXP64 = 644,
-            I386 = 332,
-            IA64 = 512,
-            AMD64 = 34404,
-            UNKNOWN = 0,
-            TARGET_HOST = 1,
-            R3000 = 354,
-            R4000 = 358,
-            R10000 = 360,
-            WCEMIPSV2 = 361,
-            ALPHA = 388,
-            SH3 = 418,
-            SH3DSP = 419,
-            SH3E = 420,
-            SH4 = 422,
-            SH5 = 424,
-            ARM = 448,
-            THUMB = 450,
-            ARMNT = 452,
-            AM33 = 467,
-            POWERPC = 496,
-            POWERPCFP = 497,
-            MIPS16 = 614,
-            ALPHA64 = 644,
-            MIPSFPU = 870,
-            MIPSFPU16 = 1126,
-            TRICORE = 1312,
-            CEF = 3311,
-            EBC = 3772,
-            M32R = 36929,
-            ARM64 = 43620,
-            CEE = 49390,
-        }*/
-
         private static bool? PIsWindows11OrGreater;
 
         public static bool IsWindows11OrGreater
@@ -512,28 +384,15 @@ namespace SLBr
             }
         }
 
-        public static string BuildCPUInfo()
+        public static string GetUnifiedPlatform(PlatformID Platform)
         {
-            if (Environment.Is64BitOperatingSystem)
+            switch (Platform)
             {
-                if (!Environment.Is64BitProcess) //IsWow64()
-                    return "WOW64";
-                else
-                {
-                    if (IsIA64())
-                        return "Win64; IA64";
-                    else
-                        return "Win64; x64";
-                }
-
-                /*if (Environment.Is64BitProcess)
-                    return "Win64; x64";
-                else if (IsIA64())
-                    return "Win64; IA64";
-                else if (IsWow64())
-                    return "WOW64";*/
+                case PlatformID.Unix:
+                    return "Linux; Android 10; K";
+                default:
+                    return "Windows NT 10.0; Win64; x64";
             }
-            return string.Empty;
         }
 
         public static string GetCPUArchitecture()
@@ -578,37 +437,78 @@ namespace SLBr
         public static string BuildChromeBrand() =>
             $"Chrome/{Cef.ChromiumVersion.Split('.')[0]}.0.0.0";
 
-        public static string BuildOSCpuInfo() =>
-            BuildOSCpuInfoFromOSVersionAndCpuType(GetOSVersion(), BuildCPUInfo());
-
-        public static string BuildOSCpuInfoFromOSVersionAndCpuType(string OSVersion, string CPUType)
-        {
-            if (CPUType.Length == 0)
-                return string.Format("Windows NT {0}", OSVersion);
-            else
-                return string.Format("Windows NT {0}; {1}", OSVersion, CPUType);
-        }
-
-        /*public static string GetReducedUserAgent(string major_version)
-        {
-            return string.Format(FrozenUserAgentTemplate, GetUnifiedPlatform(), major_version);
-        }
-
-        public static string BuildUnifiedPlatformUserAgentFromProduct(string product)
-        {
-            return BuildUserAgentFromOSAndProduct(GetUnifiedPlatform(), product);
-        }*/
-
-        public static string BuildUserAgentFromProduct(string Product) =>
-            BuildUserAgentFromOSAndProduct(/*GetUserAgentPlatform()+*/BuildOSCpuInfo(), Product);
-
-        public static string BuildMobileUserAgentFromProduct(string Product) =>
-            BuildUserAgentFromOSAndProduct("Linux; Android 10; K", Product + " Mobile");
+        public static string BuildUserAgentFromProduct(string Product, PlatformID? Platform = null) =>
+            BuildUserAgentFromOSAndProduct(GetUnifiedPlatform(Platform ?? Environment.OSVersion.Platform), $"{Product}{(Platform == PlatformID.Unix ? " Mobile" : "")}");
 
         public static string BuildUserAgentFromOSAndProduct(string OSInfo, string Product) =>
             $"Mozilla/5.0 ({OSInfo}) AppleWebKit/537.36 (KHTML, like Gecko) {Product} Safari/537.36";
-        /* Derived from Safari's UA string.
-         * This is done to expose our product name in a manner that is maximally compatible with Safari, we hope!!*/
+
+        public static WebUserAgentBrand GetProcessedGreasedBrandVersion(string GreaseyBrand, string GreaseyVersion)
+        {
+            string GreaseyMajorVersion;
+            if (Version.TryParse(GreaseyVersion, out Version _Version))
+                GreaseyMajorVersion = _Version.Major.ToString();
+            else
+                GreaseyMajorVersion = GreaseyVersion;
+            return new() { Brand = GreaseyBrand, Version = GreaseyMajorVersion };
+        }
+
+        public static WebUserAgentBrand GetGreasedUserAgentBrandVersion(int Seed)
+        {
+            string[] GreaseyChars = [" ", "(", ":", "-", ".", "/", ")", ";", "=", "?", "_"];
+            string[] GreasedVersions = ["8", "99", "24"];
+
+            string FirstChar = GreaseyChars[Seed % GreaseyChars.Length];
+            string SecondChar = GreaseyChars[(Seed + 1) % GreaseyChars.Length];
+            string GreaseyBrand = $"Not{FirstChar}A{SecondChar}Brand";
+
+            string GreaseyVersion = GreasedVersions[Seed % GreasedVersions.Length];
+
+            return GetProcessedGreasedBrandVersion(GreaseyBrand, GreaseyVersion);
+        }
+
+        private static readonly int[][] OrdersSize3 =
+        [
+            [0, 1, 2], [0, 2, 1], [1, 0, 2],
+            [1, 2, 0], [2, 0, 1], [2, 1, 0]
+        ];
+
+        private static readonly int[][] OrdersSize4 =
+        [
+            [0, 1, 2, 3], [0, 1, 3, 2], [0, 2, 1, 3], [0, 2, 3, 1], [0, 3, 1, 2],
+            [0, 3, 2, 1], [1, 0, 2, 3], [1, 0, 3, 2], [1, 2, 0, 3], [1, 2, 3, 0],
+            [1, 3, 0, 2], [1, 3, 2, 0], [2, 0, 1, 3], [2, 0, 3, 1], [2, 1, 0, 3],
+            [2, 1, 3, 0], [2, 3, 0, 1], [2, 3, 1, 0], [3, 0, 1, 2], [3, 0, 2, 1],
+            [3, 1, 0, 2], [3, 1, 2, 0], [3, 2, 0, 1], [3, 2, 1, 0]
+        ];
+
+        public static int[]? GetRandomOrder(int Seed, int Size)
+        {
+            if (Size < 2 || Size > 4)
+                return null;
+            if (Size == 2)
+                return [Seed % Size, (Seed + 1) % Size];
+            else if (Size == 3)
+                return OrdersSize3[Seed % OrdersSize3.Length];
+            else
+                return OrdersSize4[Seed % OrdersSize4.Length];
+        }
+
+        public static List<WebUserAgentBrand> ShuffleBrandList(List<WebUserAgentBrand> BrandVersionList, int Seed)
+        {
+            int Size = BrandVersionList.Count;
+            int[]? Order = GetRandomOrder(Seed, Size);
+
+            if (Order == null)
+                return BrandVersionList;
+
+            WebUserAgentBrand[] ShuffledArray = new WebUserAgentBrand[Size];
+
+            for (int i = 0; i < Order.Length; i++)
+                ShuffledArray[Order[i]] = BrandVersionList[i];
+
+            return new List<WebUserAgentBrand>(ShuffledArray);
+        }
     }
 
     public static class ClassExtensions

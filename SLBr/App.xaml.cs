@@ -4779,23 +4779,25 @@ Inner Exception: {7}";
 
         public void SetMobileView(bool Toggle)
         {
-            UserAgent = Toggle ? UserAgentGenerator.BuildMobileUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}") : UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}");
+            UserAgent = UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}", Toggle ? PlatformID.Unix : null);
             MobileView = Toggle;
-            UserAgentData = new()
-            {
-                Brands =
-                [
+            int ChromiumMajor = int.Parse(Cef.ChromiumVersion.Split('.')[0]);
+            List<WebUserAgentBrand> Brands = UserAgentGenerator.ShuffleBrandList([
+                    UserAgentGenerator.GetGreasedUserAgentBrandVersion(ChromiumMajor),
+                    new()
+                    {
+                        Brand = "Chromium",
+                        Version = ChromiumMajor.ToString()
+                    },
                     new()
                     {
                         Brand = "SLBr",
                         Version = ReleaseVersion.Split('.')[0]
-                    },
-                    new()
-                    {
-                        Brand = "Chromium",
-                        Version = Cef.ChromiumVersion.Split('.')[0]
                     }
-                ],
+                ], ChromiumMajor);
+            UserAgentData = new()
+            {
+                Brands = Brands,
                 Architecture = Toggle ? "arm" : UserAgentGenerator.GetCPUArchitecture(),
                 Model = string.Empty,
                 Platform = Toggle ? "Android" : "Windows",
@@ -4803,8 +4805,7 @@ Inner Exception: {7}";
                 FullVersion = Cef.ChromiumVersion,
                 Mobile = Toggle
             };
-            //WARNING: \r\n SHOULD NOT BE REMOVED, CLOUDFLARE TURNSTILE WILL NOT WORK
-            UserAgentBrandsString = "\r\n" + string.Join(", ", UserAgentData.Brands.Select(b => $"\"{b.Brand}\";v=\"{b.Version}\""));
+            UserAgentBrandsString = string.Join(", ", Brands.Select(b => $"\"{b.Brand}\";v=\"{b.Version}\""));
 
             GlobalSave.Set("MobileView", Toggle);
             foreach (MainWindow _Window in AllWindows)
