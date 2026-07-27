@@ -459,6 +459,26 @@ namespace SLBr.WebView
             }
         }
 
+        public static async Task<ProtocolResponse> IPFSHandler(string Url, string Extra = "", CancellationToken? Token = null)
+        {
+            /*try
+            {*/
+                string Page = Url[7..];
+                Token ??= CancellationToken.None;
+                using Stream FileStream = await App.MiniIPFSClient.Value.FileSystem.ReadFileAsync(Page, Token.Value);
+                using MemoryStream Stream = new();
+                await FileStream.CopyToAsync(Stream, Token.Value);
+                return ProtocolResponse.FromBytes(Stream.ToArray(), Cef.GetMimeType(Url), 200, WebErrorCode.None);
+            /*}
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception _Exception)
+            {
+                return ProtocolResponse.FromString($"<h1>IPFS Error</h1><pre>{_Exception.Message}</pre>", "text/html", 0, WebErrorCode.Failed);
+            }*/
+        }
         public static async Task<ProtocolResponse> GopherHandler(string Url, string Extra = "", CancellationToken? Token = null)
         {
             try

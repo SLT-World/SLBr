@@ -2,6 +2,7 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using CefSharp;
+using Ipfs.Http;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
@@ -1841,6 +1842,8 @@ namespace SLBr
             EnableMultipleHttp3Connections = true,
             PooledConnectionLifetime = TimeSpan.FromMinutes(15),
         });
+        //TODO: Host local IPFS Kubo daemon.
+        public static Lazy<IpfsClient> MiniIPFSClient = new(() => new IpfsClient());
         /*public static HttpClient MimicHttpClient = new(new SocketsHttpHandler
         {
             PooledConnectionLifetime = TimeSpan.FromMinutes(2),
@@ -3660,6 +3663,7 @@ Inner Exception: {7}";
             WebViewSettings Settings = new();
             Settings.RegisterProtocol("gemini", WebViewManager.GeminiHandler);
             Settings.RegisterProtocol("gopher", WebViewManager.GopherHandler);
+            Settings.RegisterProtocol("ipfs", WebViewManager.IPFSHandler);
             Settings.RegisterProtocol("slbr", WebViewManager.SLBrHandler);
 
             Settings.CefRuntimeStyle = GlobalSave.GetInt("ChromiumRuntimeStyle", 0) == 1 ? CefRuntimeStyle.Alloy : CefRuntimeStyle.Chrome;
