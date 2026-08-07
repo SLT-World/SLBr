@@ -32,6 +32,9 @@ namespace SLBr
     static class DllUtils
     {
         [DllImport("user32.dll")]
+        public static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
+
+        [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetWindowDisplayAffinity(IntPtr hWnd, WindowDisplayAffinity affinity);
 
@@ -85,8 +88,8 @@ namespace SLBr
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        /*[DllImport("user32.dll")]
-        public static extern IntPtr GetForegroundWindow();*/
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
 
         [DllImport("user32.dll")]
         public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
@@ -136,8 +139,8 @@ namespace SLBr
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-        /*[DllImport("user32.dll")]
-        public static extern IntPtr GetDesktopWindow();*/
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetDesktopWindow();
 
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
@@ -297,7 +300,7 @@ namespace SLBr
         public const int WS_EX_ACCEPTFILES = 0x00000010;
         public const int WS_EX_TRANSPARENT = 0x00000020;
         public const int WS_EX_MDICHILD = 0x00000040;*/
-        //public const int WS_EX_TOOLWINDOW = 0x00000080;
+        public const int WS_EX_TOOLWINDOW = 0x00000080;
         /*public const int WS_EX_WINDOWEDGE = 0x00000100;
         public const int WS_EX_CONTEXTHELP = 0x00000400;
         public const int WS_EX_RIGHT = 0x00001000;
@@ -366,7 +369,9 @@ namespace SLBr
     {
         DWMWA_USE_IMMERSIVE_DARK_MODE = 20,
         DWMWA_MICA_EFFECT = 1029,
-        DWMWA_CAPTION_COLOR = 35
+        DWMWA_CAPTION_COLOR = 35,
+        DWMWA_WINDOW_CORNER_PREFERENCE = 33,
+        //DWMWCP_ROUND = 2,
     }
 
     public static class UserAgentGenerator //https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc

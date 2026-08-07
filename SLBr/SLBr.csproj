@@ -77,8 +77,8 @@
 
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.HwndHost" Version="150.0.110" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4126-prerelease" />
-    <PackageReference Include="NUglify" Version="1.22.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4181-prerelease" />
+    <PackageReference Include="NUglify" Version="1.22.3" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

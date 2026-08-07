@@ -86,25 +86,6 @@ namespace SLBr.WebView
                     }
             }
         }
-        /*public static string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
-        {
-            if (ObjectPair.Value is System.Dynamic.ExpandoObject _Expando)
-            {
-                foreach (KeyValuePair<string, object> Property in (IDictionary<string, object>)_Expando)
-                    _String = $"{GetPreferencesString(_String, Parents + $"[{ObjectPair.Key}]", Property)}";
-                if (string.IsNullOrEmpty(Parents))
-                    _String += "\n";
-            }
-            else if (ObjectPair.Value is List<object> _List)
-                _String += string.Join(", ", _List);
-            else
-            {
-                if (!string.IsNullOrEmpty(Parents))
-                    _String += $"{Parents}: ";
-                _String += $"{ObjectPair.Key}: {ObjectPair.Value}\n";
-            }
-            return _String;
-        }*/
 
         private static Task<bool>? CEFInitializeTask;
         private static readonly Lock CEFInitializeLock = new();
@@ -157,6 +138,7 @@ namespace SLBr.WebView
             {
                 ChromiumSettings.CachePath = Path.GetFullPath(Path.Combine(Settings.UserDataPath, "Cache"));
                 ChromiumSettings.RootCachePath = Settings.UserDataPath;
+                CEFExtensionsPath = Path.Combine(Settings.UserDataPath, "Default", "Extensions");
             }
 
             ChromiumSettings.CefCommandLineArgs.Remove("disable-back-forward-cache");
@@ -186,7 +168,7 @@ namespace SLBr.WebView
 
             await Cef.UIThreadTaskFactory.StartNew(async delegate
             {
-                var GlobalRequestContext = Cef.GetGlobalRequestContext();
+                IRequestContext GlobalRequestContext = Cef.GetGlobalRequestContext();
                 //GlobalRequestContext.SetPreference("extensions.ui.developer_mode", true, out _);
                 GlobalRequestContext.SetPreference("plugins.always_open_pdf_externally", !RuntimeSettings.PDFViewer, out _);
                 GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !RuntimeSettings.PDFViewer, out _);
@@ -201,12 +183,32 @@ namespace SLBr.WebView
                 GlobalRequestContext.SetPreference("autofill.profile_enabled", false, out _);
                 GlobalRequestContext.SetPreference("autofill.credit_card_enabled", false, out _);
 
+                /*string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
+                {
+                    if (ObjectPair.Value is System.Dynamic.ExpandoObject _Expando)
+                    {
+                        foreach (KeyValuePair<string, object> Property in (IDictionary<string, object>)_Expando)
+                            _String = $"{GetPreferencesString(_String, Parents + $"[{ObjectPair.Key}]", Property)}";
+                        if (string.IsNullOrEmpty(Parents))
+                            _String += "\n";
+                    }
+                    else if (ObjectPair.Value is List<object> _List)
+                        _String += string.Join(", ", _List);
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(Parents))
+                            _String += $"{Parents}: ";
+                        _String += $"{ObjectPair.Key}: {ObjectPair.Value}\n";
+                    }
+                    return _String;
+                }
+
                 //TODO: Investigate the absence of "net.happy_eyeballs_v3_enabled" https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/pref_names.h;l=3033?q=HappyEyeballsV3
-                /*string _Preferences = string.Empty;
+                string _Preferences = string.Empty;
                 foreach (KeyValuePair<string, object> e in GlobalRequestContext.GetAllPreferences(true))
                     _Preferences = GetPreferencesString(_Preferences, string.Empty, e);
-                using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WriteLines.txt")))
-                    outputFile.Write(_Preferences);*/
+                using (StreamWriter OutputFile = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WriteLines.txt")))
+                    OutputFile.Write(_Preferences);*/
 
                 GlobalRequestContext.SetPreference("download_bubble.partial_view_enabled", false, out _);
 
@@ -329,8 +331,16 @@ namespace SLBr.WebView
             GlobalFindHandler = new ChromiumFindHandler();
             GlobalDialogHandler = new ChromiumDialogHandler();
             IsCefInitialized = true;
+            await App.Instance.ExtensionManager.LoadCEFExtensions();
             return true;
         }
+        public static void ShutdownCEF()
+        {
+            Cef.Shutdown();
+        }
+
+        public static string? CEFExtensionsPath;
+        public static string? WebView2ExtensionsPath;
 
         private static Task<bool>? WebView2InitializeTask;
         private static readonly Lock WebView2InitializeLock = new();
@@ -351,18 +361,16 @@ namespace SLBr.WebView
         {
             if (IsWebView2Initialized)
                 return true;
+            WebView2ExtensionsPath = Path.Combine(Settings.UserDataPath, "EBWebView", "Default", "Extensions");
             //https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags
             //msWebView2TreatAppSuspendAsDeviceSuspend
             List<CoreWebView2CustomSchemeRegistration> CustomSchemeRegistrations = [];
             foreach (var Scheme in Settings.Schemes.Where(i => i.Key != "*"))
                 CustomSchemeRegistrations.Add(new(Scheme.Key) { HasAuthorityComponent = true, TreatAsSecure = true });
+
             CoreWebView2EnvironmentOptions EnvironmentOptions = new(Settings.BuildFlags(true), Settings.Language, null, false, CustomSchemeRegistrations);
             try { WebView2Version = CoreWebView2Environment.GetAvailableBrowserVersionString(null, EnvironmentOptions); }
-            catch (WebView2RuntimeNotFoundException)
-            {
-                //MessageBox.Show("WebView2 Runtime is not installed. Please install it or disable WebView2.");
-                return false;
-            }
+            catch (WebView2RuntimeNotFoundException) { return false; }
 
             EnvironmentOptions.AreBrowserExtensionsEnabled = true;
             EnvironmentOptions.IsCustomCrashReportingEnabled = true;
@@ -393,6 +401,7 @@ namespace SLBr.WebView
             WebView2FindOptions.ShouldMatchWord = false;
             WebView2FindOptions.SuppressDefaultFindDialog = true;
             IsWebView2Initialized = true;
+            await InstallWebView2Extensions();
             return true;
         }
         public static void DeleteWebView2HighDPIRegistry()
@@ -416,6 +425,72 @@ namespace SLBr.WebView
                 }
             }
             catch { }
+        }
+        public static CoreWebView2 HeadlessEdgeCore;
+        public static CoreWebView2Controller HeadlessEdgeController;
+        public static async Task CreateHeadlessWebView2()
+        {
+            HeadlessEdgeController = await WebView2Environment.CreateCoreWebView2ControllerAsync(DllUtils.GetDesktopWindow(), WebView2ControllerOptions);
+            if (HeadlessEdgeController != null && HeadlessEdgeController.CoreWebView2 != null)
+            {
+                IntPtr HWND = HeadlessEdgeController.ParentWindow;
+                if (HWND != IntPtr.Zero)
+                {
+                    int ExStyle = DllUtils.GetWindowLong(HWND, DllUtils.GWL_EXSTYLE);
+
+                    ExStyle &= ~DllUtils.WS_EX_APPWINDOW;
+                    ExStyle |= DllUtils.WS_EX_TOOLWINDOW;
+
+                    DllUtils.SetWindowLong(HWND, DllUtils.GWL_EXSTYLE, ExStyle);
+                }
+                HeadlessEdgeController.IsVisible = false;
+                HeadlessEdgeController.Bounds = new Rectangle(0, 0, 0, 0);
+
+                HeadlessEdgeCore = HeadlessEdgeController.CoreWebView2;
+            }
+        }
+
+        public static async Task InstallWebView2Extensions()
+        {
+            if (WebView2Environment == null) return;
+            if (HeadlessEdgeCore == null || HeadlessEdgeController == null)
+                await CreateHeadlessWebView2();
+
+            try
+            {
+                _ = HeadlessEdgeCore.Profile;
+            }
+            catch (InvalidOperationException)
+            {
+                HeadlessEdgeController?.Close();
+                await CreateHeadlessWebView2();
+            }
+
+            CoreWebView2Profile Profile = HeadlessEdgeCore.Profile;
+            if (Directory.Exists(WebView2ExtensionsPath))
+            {
+                string[] ExtensionsDirectory = Directory.GetDirectories(WebView2ExtensionsPath);
+                foreach (string ProfilePath in ExtensionsDirectory)
+                {
+                    Debug.WriteLine(ProfilePath);
+                    string? ExtensionPath = Directory.GetDirectories(ProfilePath).FirstOrDefault();
+                    if (!Directory.Exists(ExtensionPath))
+                        ExtensionPath = ProfilePath;
+                    if (ExtensionPath != null)
+                    {
+                        try
+                        {
+                            await Profile.AddBrowserExtensionAsync(ExtensionPath);
+                        }
+                        catch { }
+                    }
+                }
+                await App.Instance.ExtensionManager.LoadWebView2Extensions();
+            }
+        }
+        public static void ShutdownWebView2()
+        {
+            HeadlessEdgeController?.Close();
         }
 
         public static void InitializeTrident()
@@ -742,6 +817,7 @@ namespace SLBr.WebView
             }
             WebDownloadItem Item = new()
             {
+                Engine = WebEngineType.Trident,
                 ID = Guid.NewGuid().ToString(),
                 Url = Url,
                 FileName = Path.GetFileName(TargetPath),
@@ -799,6 +875,7 @@ namespace SLBr.WebView
             }
             WebDownloadItem Item = new()
             {
+                Engine = WebEngineType.Trident,
                 ID = Guid.NewGuid().ToString(),
                 Url = string.Empty,
                 FileName = Path.GetFileName(TargetPath),
@@ -1269,6 +1346,7 @@ namespace SLBr.WebView
 
                 WebDownloadItem Item = new()
                 {
+                    Engine = WebEngineType.Chromium,
                     ID = downloadItem.Id.ToString(),
                     Url = downloadItem.Url,
                     FileName = Path.GetFileName(PreferredPath),

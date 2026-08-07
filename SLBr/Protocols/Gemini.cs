@@ -358,7 +358,7 @@ function geminiSearch(url){let q=prompt(""Search query:"");q&&(window.location.h
             }
             SslStream SSLStream = new(_Client.GetStream(), false, _Callback, null);
 
-            X509CertificateCollection Certificates = new();
+            X509CertificateCollection Certificates = [];
             if (ClientCertificate != null)
                 Certificates.Add(ClientCertificate);
 

@@ -66,12 +66,14 @@ namespace SLBr.Handlers
             await Stream.FlushAsync();
         }
 
+        private static JsonSerializerOptions SerializerOptions = new() { WriteIndented = false };
+
         public static async Task Install(WebAppManifest Manifest)
         {
             ManifestIcon Best = PickBestIcon(Manifest);
             string ID = Utils.SanitizeFileName(Manifest.StartUrl);
             string ManifestPath = Path.Combine(AppsFolder, $"{ID}.json");
-            File.WriteAllText(ManifestPath, JsonSerializer.Serialize(Manifest, new JsonSerializerOptions { WriteIndented = false }));
+            File.WriteAllText(ManifestPath, JsonSerializer.Serialize(Manifest, SerializerOptions));
             string ImagePath = Path.Combine(AppsFolder, $"{ID}.ico");
             if (Best != null)
             {

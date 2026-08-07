@@ -392,6 +392,7 @@ namespace SLBr.WebView
 
     public class WebDownloadItem
     {
+        public WebEngineType Engine { get; set; }
         public string ID { get; set; }
         public string Url { get; set; }
         public string FileName { get; set; }
@@ -2436,6 +2437,8 @@ namespace SLBr.WebView
                 BrowserCore.IsMutedChanged += (s, e) => AudioPlayingChanged?.RaiseUIAsync(this);
             }
             BrowserCore.ContainsFullScreenElementChanged += (s, e) => FullscreenChanged?.RaiseUIAsync(this, BrowserCore.ContainsFullScreenElement);
+            BrowserCore.AddWebResourceRequestedFilter("https://permanently-removed.invalid/*", CoreWebView2WebResourceContext.All);
+            BrowserCore.WebResourceRequested += Browser_WebStoreResourceRequested;
             BrowserCore.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
             BrowserCore.WebResourceRequested += Browser_WebResourceRequested;
             BrowserCore.WebResourceResponseReceived += Browser_WebResourceResponseReceived;
@@ -2747,6 +2750,31 @@ namespace SLBr.WebView
             ContextMenuRequested?.RaiseUIAsync(this, args);
         }
 
+        private void Browser_WebStoreResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
+        {
+            //NOTE: I genuinely cannot believe that the functionality of web store extension installation within WebView2 could be fully restored with such a mundane workaround. Please, accept my sincere gratitude, Microsoft.
+            string OriginalUrl = e.Request.Uri;
+            if (OriginalUrl.StartsWith("https://permanently-removed.invalid/", StringComparison.OrdinalIgnoreCase))
+            {
+                string Referer = string.Empty;
+                foreach (KeyValuePair<string, string> Header in e.Request.Headers)
+                {
+                    if (Header.Key.Equals("Referer", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Referer = Header.Value;
+                        break;
+                    }
+                }
+                if (Referer.StartsWith("https://chromewebstore.google.com/", StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] Split = OriginalUrl.Split('?');
+                    string Query = Split.Length > 1 ? Split[1] : "";
+                    string RedirectUrl = $"https://clients2.google.com/service/update2/crx?{Query}";
+                    e.Response = BrowserCore.Environment.CreateWebResourceResponse(null, 307, "Temporary Redirect", $"Location: {RedirectUrl}");
+                }
+            }
+        }
+
         private CancellationTokenSource? NavigationCancellationTokenSource;
         private long NavigationID = 0;
 
@@ -2918,9 +2946,9 @@ namespace SLBr.WebView
                 TempPath = PreferredPath + ".part";
 
             e.ResultFilePath = TempPath;
-
             WebDownloadItem Item = new()
             {
+                Engine = WebEngineType.ChromiumEdge,
                 ID = Guid.NewGuid().ToString(),
                 Url = e.DownloadOperation.Uri,
                 FileName = Path.GetFileName(PreferredPath),
@@ -3610,6 +3638,7 @@ namespace SLBr.WebView
                     Core.ScriptDialogOpening -= Browser_ScriptDialogOpening;
                     Core.NewWindowRequested -= Browser_NewWindowRequested;
                     Core.ContainsFullScreenElementChanged -= (s, e) => FullscreenChanged?.RaiseUIAsync(this, Core.ContainsFullScreenElement);
+                    Core.WebResourceRequested -= Browser_WebStoreResourceRequested;
                     Core.WebResourceRequested -= Browser_WebResourceRequested;
                     Core.WebResourceResponseReceived -= Browser_WebResourceResponseReceived;
                     if (Settings.JavaScriptMessage)

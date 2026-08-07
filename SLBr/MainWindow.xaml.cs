@@ -881,6 +881,7 @@ namespace SLBr
 
         private void Window_StateChanged(object sender, EventArgs e)
         {
+            App.Instance.ExtensionManager.CloseAction();
             TabPreviewPopup.IsOpen = false;
             MaximizeRestoreButton.Tag = null;
             if (WindowState != WindowState.Minimized)
@@ -913,6 +914,7 @@ namespace SLBr
 
         private void Window_LocationChanged(object sender, EventArgs e)
         {
+            App.Instance.ExtensionManager.CloseAction();
             TabPreviewPopup.IsOpen = false;
             MaximizeRestoreButton.Tag = null;
             GetTab()?.Content?.TriggerLocationChanged();
@@ -920,6 +922,7 @@ namespace SLBr
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
+            App.Instance.ExtensionManager.CloseAction();
             TabPreviewPopup.IsOpen = false;
             MaximizeRestoreButton.Tag = null;
             foreach (BrowserTabItem Tab in Tabs)

@@ -1091,9 +1091,9 @@
                                                                     <TextBlock Text="{Binding Version}" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
                                                                 </DockPanel>
                                                                 <TextBlock Text="{Binding Description}" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
-                                                                <!--<DockPanel LastChildFill="False" VerticalAlignment="Bottom">
-                                                        <ToggleButton Click="ExtensionToggleButton_Click" DockPanel.Dock="Right" Content="&#xe8ad;" Tag="{Binding ID}" IsChecked="{Binding IsEnabled}"/>
-                                                    </DockPanel>-->
+                                                                <DockPanel LastChildFill="False" VerticalAlignment="Bottom" Visibility="{Binding IsEnabled, Converter={StaticResource NullToVisibility}}">
+                                                                    <ToggleButton DockPanel.Dock="Right" Content="&#xe8ad;" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
+                                                                </DockPanel>
                                                             </Grid>
                                                         </DockPanel>
                                                     </Border>

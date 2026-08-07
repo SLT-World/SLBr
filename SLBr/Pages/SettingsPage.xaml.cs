@@ -611,8 +611,7 @@ namespace SLBr.Pages
                 });
             }
 
-            App.Instance.LoadExtensions();
-            ExtensionsList.ItemsSource = App.Instance.Extensions;
+            ExtensionsList.ItemsSource = App.Instance.ExtensionManager.GetExtensions(BrowserView?.WebView?.Engine ?? (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"));
 
             UsernameInitial.Text = App.Instance.CurrentProfile.Initial;
             UsernameInitial.Foreground = App.Instance.CurrentProfile.Foreground;

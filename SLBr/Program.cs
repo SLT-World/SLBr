@@ -6,6 +6,7 @@ using CefSharp.BrowserSubprocess;
 using CefSharp.Wpf.HwndHost;
 using SLBr.Controls;
 using SLBr.Handlers;
+using SLBr.WebView;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime;
@@ -183,7 +184,8 @@ namespace SLBr
             else
             {
                 App.Main();
-                Cef.Shutdown();
+                WebViewManager.ShutdownCEF();
+                WebViewManager.ShutdownWebView2();
             }
             return Environment.ExitCode;
         }

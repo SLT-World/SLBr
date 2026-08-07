@@ -6,6 +6,7 @@ using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
+using SLBr.Extensions;
 using SLBr.Handlers;
 using SLBr.Managers;
 using SLBr.Protobuf;
@@ -16,7 +17,6 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -71,7 +71,6 @@ namespace SLBr.Pages
             FavouritesPanel.ItemsSource = App.Instance.FavouriteManager.Favourites;
             FavouriteListMenu.Collection = App.Instance.FavouriteManager.Favourites;
             HistoryListMenu.Collection = App.Instance.History;
-            ExtensionsMenu.ItemsSource = App.Instance.Extensions;//ObservableCollection wasn't working so turned it into a list
             InfoBarList.ItemsSource = VisibleInfoBars;
             SetAppearance(App.Instance.CurrentTheme);
             (BitmapSource, bool) IconData = App.Instance.GetIcon(Url, Private);
@@ -572,6 +571,7 @@ namespace SLBr.Pages
 
             CoreContainer.Visibility = Visibility.Collapsed;
             CoreContainer.Children.Add(WebView?.Control);
+            ExtensionsMenu.ItemsSource = App.Instance.ExtensionManager.GetExtensions(Engine);
             //Chromium.Visibility = Visibility.Collapsed;//VIDEO
 
             /*Tab.ParentWindow.WindowState = WindowState.Normal;//VIDEO
@@ -1187,20 +1187,23 @@ namespace SLBr.Pages
             for (int i = 0; i < LocalInfoBars.Count; i++)
                 CloseInfoBar(LocalInfoBars[i]);
             BrowserLoadChanged(Address, IsLoading, e.HttpStatusCode);
+            if (WebView?.CanExecuteJavascript ?? false)
+            {
+                if (Address.StartsWith("https://chromewebstore.google.com/detail"))
+                    WebView?.ExecuteScript(Scripts.WebStoreScript);
+            }
             if (!IsLoading)
             {
                 if (!Private)
                     App.Instance.AddHistory(Address, Title);
                 if (bool.Parse(App.Instance.GlobalSave.Get("SmoothScroll")))
-                    WebView.ExecuteScript(Scripts.ScrollScript);
+                    WebView?.ExecuteScript(Scripts.ScrollScript);
                 if (!Address.StartsWith("slbr:"))
                 {
-                    if (WebView.CanExecuteJavascript)
+                    if (WebView?.CanExecuteJavascript ?? false)
                     {
                         if (Utils.IsHttpScheme(Address))
                         {
-                            if (Address.Contains("chromewebstore.google.com/detail"))
-                                WebView?.ExecuteScript(Scripts.WebStoreScript);
                             if (bool.Parse(App.Instance.GlobalSave.Get("WebNotifications")))
                                 WebView?.ExecuteScript(Scripts.NotificationPolyfill);
                             if (!Private && bool.Parse(App.Instance.GlobalSave.Get("OpenSearch")))
@@ -1808,6 +1811,7 @@ namespace SLBr.Pages
             ExtensionsButton.CloseMenu();
             WebEngineButtonInternal.CloseMenu();
             OptionsButton.CloseMenu();
+            App.Instance.ExtensionManager.CloseAction();
         }
 
         public void ReFocus()
@@ -3807,7 +3811,7 @@ namespace SLBr.Pages
             _NewsFeed?.ApplyTheme(_Theme);
 
             if (App.Instance.ShowExtensionButton == 0)
-                ExtensionsButton.Visibility = App.Instance.Extensions.Count != 0 ? Visibility.Visible : Visibility.Collapsed;
+                ExtensionsButton.Visibility = App.Instance.ExtensionManager.GetExtensions(WebView?.Engine ?? (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine")).Count != 0 ? Visibility.Visible : Visibility.Collapsed;
             else if (App.Instance.ShowExtensionButton == 1)
                 ExtensionsButton.Visibility = Visibility.Visible;
             else
@@ -4543,95 +4547,24 @@ namespace SLBr.Pages
                 OmniBox.Focus();
             }
         }
-
-        Window ExtensionWindow;
-        private void LoadExtensionPopup(object sender, RoutedEventArgs e)
+        private async void LoadExtensionPopup(object sender, RoutedEventArgs e)
         {
-            /*NOTE: Full implementation of extension popups is practically impossible at this stage, in both WebView2 & CefSharp.
-             * Possible solutions:
-             * "chrome" namespace extension API polyfill.
-             * Request feature implementation in upstream Cef & WebView2, though unlikely to gain traction.
-             * Remove extension popup support.
-             */
-            //TODO: Investigate kPrivilegedExtension.
-            //https://chromium.googlesource.com/chromium/src/+/HEAD/extensions/renderer/native_extension_bindings_system.cc
-            //https://source.chromium.org/chromium/chromium/src/+/main:extensions/renderer/script_context_set.cc
-            //https://source.chromium.org/chromium/chromium/src/+/main:extensions/renderer/script_context.cc
-            //https://source.chromium.org/chromium/chromium/src/+/main:extensions/common/extension.cc
-            //TODO: Utilize PopupBrowser.
-            Extension? _Extension = App.Instance.Extensions.FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
+            if (WebView == null)
+                return;
+            if (WebView.Engine == WebEngineType.Trident)
+            {
+                if (UnavailableExtensionInfoBar == null)
+                {
+                    UnavailableExtensionInfoBar = new() { Title = "Extension Unavailable", Description = [new() { Text = "Trident webview does not support extensions." }] };
+                    LocalInfoBars.Add(UnavailableExtensionInfoBar);
+                }
+                return;
+            }
+
+            Extension? _Extension = App.Instance.ExtensionManager.GetExtensions(WebView.Engine).FirstOrDefault(i => i.ID == ((FrameworkElement)sender).Tag.ToString());
             if (_Extension == null)
                 return;
-            //TODO: Investigate Extensions.triggerAction.
-            ExtensionWindow = new Window();
-            ChromiumWebBrowser ExtensionBrowser = new("about:blank");
-            ExtensionBrowser.IsBrowserInitializedChanged += async (s, e) => {
-                if (ExtensionBrowser.IsBrowserInitialized)
-                {
-                    /*TODO: Implement chrome extension polyfill
-                     * string WindowJson = await WebView.CallDevToolsAsync("Browser.getWindowForTarget");
-                     * int WindowId = JsonNode.Parse(WindowJson)["windowId"].GetValue<int>();
-                     * Based on experimentation, results from "chrome.tabs.query" matches with
-                     * tab.id = WindowId + 1
-                     * tab.windowId = WindowId
-                     */
-                    ExtensionBrowser.Load(_Extension.Popup);
-                }
-            };
-            ExtensionBrowser.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
-            nint ExtensionHandle = new WindowInteropHelper(ExtensionWindow).EnsureHandle();
-            HwndSource.FromHwnd(ExtensionHandle).AddHook(WndProc);
-            ExtensionBrowser.LoadingStateChanged += (s, args) =>
-            {
-                if (!args.IsLoading)
-                    ExtensionBrowser.ExecuteScriptAsync(Scripts.ExtensionScript);
-            };
-            int DarkModeValue = App.Instance.CurrentTheme.DarkTitleBar ? 0x01 : 0x00;
-            DllUtils.DwmSetWindowAttribute(ExtensionHandle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref DarkModeValue, Marshal.SizeOf(typeof(int)));
-            int trueValue = 0x01;
-            DllUtils.DwmSetWindowAttribute(ExtensionHandle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
-            ExtensionBrowser.JavascriptMessageReceived += ExtensionBrowser_JavascriptMessageReceived;
-            ExtensionBrowser.SnapsToDevicePixels = true;
-            //ExtensionBrowser.MenuHandler = App.Instance._LimitedContextMenuHandler;
-            //ExtensionBrowser.DownloadHandler = App.Instance._DownloadHandler;
-            //TODO
-            ExtensionBrowser.AllowDrop = true;
-            ExtensionBrowser.IsManipulationEnabled = true;
-            ExtensionWindow.Content = ExtensionBrowser;
-            ExtensionWindow.Title = _Extension.Name + " - Extension";
-            ExtensionWindow.ResizeMode = ResizeMode.NoResize;
-            ExtensionWindow.SizeChanged += ExtensionWindow_SizeChanged;
-            ExtensionWindow.MaxHeight = 700;
-            ExtensionWindow.MaxWidth = 700;
-            ExtensionWindow.ShowDialog();
-        }
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            switch (msg)
-            {
-                case DllUtils.WM_SYSCOMMAND:
-                    int Command = wParam.ToInt32() & 0xFFF0;
-                    if (Command == DllUtils.SC_MOVE)
-                        handled = true;
-                    break;
-            }
-            return IntPtr.Zero;
-        }
-        private void ExtensionWindow_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            Rect WorkArea = SystemParameters.WorkArea;
-            ExtensionWindow.Left = (WorkArea.Width - ExtensionWindow.Width) / 2 + WorkArea.Left;
-            ExtensionWindow.Top = (WorkArea.Height - ExtensionWindow.Height) / 2 + WorkArea.Top;
-        }
-
-        private void ExtensionBrowser_JavascriptMessageReceived(object? sender, JavascriptMessageReceivedEventArgs e)
-        {
-            Dispatcher.BeginInvoke(() =>
-            {
-                dynamic Data = e.Message;
-                ExtensionWindow.Height = Data.height;
-                ExtensionWindow.Width = Data.width;
-            });
+            App.Instance.ExtensionManager.TriggerAction(_Extension, this, ExtensionsButton);
         }
 
         private void DownloadActionButton_Click(object sender, RoutedEventArgs e)
@@ -4749,6 +4682,8 @@ namespace SLBr.Pages
                 WaybackInfoBar = null;
             else if (Bar == UnavailableInspectorInfoBar)
                 UnavailableInspectorInfoBar = null;
+            else if (Bar == UnavailableExtensionInfoBar)
+                UnavailableExtensionInfoBar = null;
             else if (Bar == UnavailableTranslationInfoBar)
                 UnavailableTranslationInfoBar = null;
             else if (Bar == HomographInfoBar)
@@ -4759,6 +4694,7 @@ namespace SLBr.Pages
 
         InfoBar? UnavailableTranslationInfoBar;
         InfoBar? UnavailableInspectorInfoBar;
+        InfoBar? UnavailableExtensionInfoBar;
         InfoBar? ProprietaryCodecsInfoBar;
         InfoBar? WaybackInfoBar;
         InfoBar? HomographInfoBar;

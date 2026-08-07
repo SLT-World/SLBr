@@ -5,6 +5,7 @@ using CefSharp;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
+using SLBr.Extensions;
 using SLBr.Handlers;
 using SLBr.Managers;
 using SLBr.Pages;
@@ -588,104 +589,6 @@ namespace SLBr
         System
     }
 
-    public class Extension : INotifyPropertyChanged
-    {
-        #region INotifyPropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged = delegate { };
-
-        private void RaisePropertyChanged([CallerMemberName] string Name = null) =>
-            PropertyChanged(this, new PropertyChangedEventArgs(Name));
-        #endregion
-
-        private string PID;
-        public string ID
-        {
-            get => PID;
-            set
-            {
-                PID = value;
-                RaisePropertyChanged();
-            }
-        }
-
-        private string PName;
-        public string Name
-        {
-            get => PName;
-            set
-            {
-                PName = value;
-                RaisePropertyChanged();
-            }
-        }
-
-        private string PPopup;
-        public string Popup
-        {
-            get => PPopup;
-            set
-            {
-                PPopup = value;
-                RaisePropertyChanged();
-            }
-        }
-
-        private string PVersion;
-        public string Version
-        {
-            get => PVersion;
-            set
-            {
-                PVersion = value;
-                RaisePropertyChanged();
-            }
-        }
-
-        /*private string PManifestVersion;
-        public string ManifestVersion
-        {
-            get { return PManifestVersion; }
-            set
-            {
-                PManifestVersion = value;
-                RaisePropertyChanged(nameof(ManifestVersion));
-            }
-        }
-
-        private string PIcon;
-        public string Icon
-        {
-            get { return PIcon; }
-            set
-            {
-                PIcon = value;
-                RaisePropertyChanged(nameof(Icon));
-            }
-        }*/
-
-        private string PDescription;
-        public string Description
-        {
-            get => PDescription;
-            set
-            {
-                PDescription = value;
-                RaisePropertyChanged();
-            }
-        }
-
-        /*private bool PIsEnabled = true;
-        public bool IsEnabled
-        {
-            get { return PIsEnabled; }
-            set
-            {
-                PIsEnabled = value;
-                RaisePropertyChanged(nameof(IsEnabled));
-            }
-        }*/
-    }
-
     public class SearchProvider : INotifyPropertyChanged
     {
         #region INotifyPropertyChanged
@@ -949,7 +852,6 @@ namespace SLBr
         public string UserApplicationWindowsPath;
         public string UserApplicationDataPath;
         public string ExecutablePath;
-        public string ExtensionsPath;
         public string ResourcesPath;
         public string AdBlockDataPath;
         public string NotificationTempPath;
@@ -966,50 +868,9 @@ namespace SLBr
         ]);
 
         public FavouriteManager FavouriteManager = new();
+        public ExtensionManager ExtensionManager = new();
 
         public ObservableCollection<ActionStorage> History = [];
-        private List<Extension> PrivateExtensions = [];
-        public List<Extension> Extensions
-        {
-            get => PrivateExtensions;
-            set
-            {
-                PrivateExtensions = value;
-                switch (GlobalSave.GetInt("ExtensionButton"))
-                {
-                    case 0:
-                        foreach (MainWindow _Window in AllWindows)
-                        {
-                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
-                            {
-                                BrowserView.ExtensionsButton.Visibility = value.Count != 0 ? Visibility.Visible : Visibility.Collapsed;
-                                BrowserView.ExtensionsMenu.ItemsSource = Extensions;
-                            }
-                        }
-                        break;
-                    case 1:
-                        foreach (MainWindow _Window in AllWindows)
-                        {
-                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
-                            {
-                                BrowserView.ExtensionsButton.Visibility = Visibility.Visible;
-                                BrowserView.ExtensionsMenu.ItemsSource = Extensions;
-                            }
-                        }
-                        break;
-                    case 2:
-                        foreach (MainWindow _Window in AllWindows)
-                        {
-                            foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
-                            {
-                                BrowserView.ExtensionsButton.Visibility = Visibility.Collapsed;
-                                BrowserView.ExtensionsMenu.ItemsSource = Extensions;
-                            }
-                        }
-                        break;
-                }
-            }
-        }
 
         public Dictionary<string, WebAppManifest> AvailableWebAppManifests = [];
 
@@ -1158,6 +1019,23 @@ namespace SLBr
                                         _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
                                         _Entry.Open = Visibility.Visible;
                                         WebViewManager.DownloadManager.RemoveFileStaging(Item);
+
+                                        if (Path.GetExtension(Item.FullPath) == ".crx")
+                                        {
+                                            _ = Dispatcher.BeginInvoke(async () =>
+                                            {
+                                                await Task.Delay(1000);
+                                                switch (Item.Engine)
+                                                {
+                                                    case WebEngineType.Chromium:
+                                                        await ExtensionManager.LoadCEFExtensions();
+                                                        break;
+                                                    case WebEngineType.ChromiumEdge:
+                                                        await WebViewManager.InstallWebView2Extensions();
+                                                        break;
+                                                }
+                                            });
+                                        }
                                         break;
                                 }
                             }
@@ -1167,6 +1045,23 @@ namespace SLBr
                                 _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
                                 _Entry.Open = Visibility.Visible;
                                 WebViewManager.DownloadManager.RemoveFileStaging(Item);
+
+                                if (Path.GetExtension(Item.FullPath) == ".crx")
+                                {
+                                    _ = Dispatcher.BeginInvoke(async () =>
+                                    {
+                                        await Task.Delay(1000);
+                                        switch (Item.Engine)
+                                        {
+                                            case WebEngineType.Chromium:
+                                                await ExtensionManager.LoadCEFExtensions();
+                                                break;
+                                            case WebEngineType.ChromiumEdge:
+                                                await WebViewManager.InstallWebView2Extensions();
+                                                break;
+                                        }
+                                    });
+                                }
                             }
                         }
                         else
@@ -1175,6 +1070,23 @@ namespace SLBr
                             _Entry.FormattedProgress = $"{FormatBytes(Item.TotalBytes)} - Complete";
                             _Entry.Open = Visibility.Visible;
                             WebViewManager.DownloadManager.RemoveFileStaging(Item);
+
+                            if (Path.GetExtension(Item.FullPath) == ".crx")
+                            {
+                                _ = Dispatcher.BeginInvoke(async () =>
+                                {
+                                    await Task.Delay(1000);
+                                    switch (Item.Engine)
+                                    {
+                                        case WebEngineType.Chromium:
+                                            await ExtensionManager.LoadCEFExtensions();
+                                            break;
+                                        case WebEngineType.ChromiumEdge:
+                                            await WebViewManager.InstallWebView2Extensions();
+                                            break;
+                                    }
+                                });
+                            }
                         }
                     }
                     else if (Item.State == WebDownloadState.Canceled)
@@ -1205,7 +1117,6 @@ namespace SLBr
                     else if (Item.State == WebDownloadState.Interrupted)
                     {
                         _Entry.Color = RedColor;
-                        //https://source.chromium.org/chromium/chromium/src/+/main:chrome/browser/download/download_item_model_unittest.cc
                         _Entry.FormattedProgress = Item.InterruptReason switch
                         {
                             WebDownloadInterruptReason.None => "Resuming",
@@ -1431,102 +1342,6 @@ namespace SLBr
         public string UserAgent;
         public string UserAgentBrandsString;
         public WebUserAgentMetaData UserAgentData;
-
-        public void LoadExtensions()
-        {
-            //TODO: Handle WebView2 extensions & CefSharp unpacked extensions.
-            Extensions.Clear();
-            if (Directory.Exists(ExtensionsPath))
-            {
-                var ExtensionsDirectory = Directory.GetDirectories(ExtensionsPath);
-                if (ExtensionsDirectory.Length != 0)
-                {
-                    List<Extension> _Extensions = [];
-                    foreach (var ExtensionParentDirectory in ExtensionsDirectory)
-                    {
-                        try
-                        {
-                            string ExtensionDirectory = Directory.EnumerateDirectories(ExtensionParentDirectory).FirstOrDefault();
-                            if (!Directory.Exists(ExtensionDirectory))
-                                ExtensionDirectory = ExtensionParentDirectory;
-                            string[] Manifests = Directory.GetFiles(ExtensionDirectory, "manifest.json", SearchOption.TopDirectoryOnly);
-                            foreach (string ManifestFile in Manifests)
-                            {
-                                using JsonDocument Document = JsonDocument.Parse(File.ReadAllText(ManifestFile));
-                                JsonElement Manifest = Document.RootElement;
-
-                                Extension _Extension = new() { ID = Path.GetFileName(ExtensionParentDirectory), Version = Manifest.GetProperty("version").ToString()/*, ManifestVersion = Manifest.GetProperty("manifest_version").ToString()*/ };
-
-                                if (Manifest.TryGetProperty("action", out JsonElement ExtensionAction))
-                                {
-                                    if (ExtensionAction.TryGetProperty("default_popup", out JsonElement ExtensionPopup))
-                                        _Extension.Popup = $"chrome-extension://{_Extension.ID}/{ExtensionPopup.GetString()}";
-                                    /*else if (ExtensionAction.TryGetProperty("default_icon", out JsonElement defaultIconValue))
-                                    {
-                                        var firstIcon = defaultIconValue.EnumerateObject().OrderBy(kvp => int.Parse(kvp.Name)).FirstOrDefault();
-                                        _Extension.Icon = $"chrome-extension://{ExtensionID}/{firstIcon.Value.GetString()}";
-                                    }*/
-                                }
-                                List<string> VarsInMessages = [];
-                                if (Manifest.TryGetProperty("name", out JsonElement ExtensionName))
-                                {
-                                    string Name = ExtensionName.GetString();
-                                    if (Name.StartsWith("__MSG_"))
-                                        VarsInMessages.Add($"Name<|>{Name}");
-                                    else
-                                        _Extension.Name = Name;
-                                }
-                                if (Manifest.TryGetProperty("description", out JsonElement ExtensionDescription))
-                                {
-                                    string Description = ExtensionDescription.GetString();
-                                    if (Description.StartsWith("__MSG_"))
-                                        VarsInMessages.Add($"Description<|>{Description}");
-                                    else
-                                        _Extension.Description = Description;
-                                }
-
-                                foreach (string Var in VarsInMessages)
-                                {
-                                    string _Locale = "en";
-                                    string[] LocalesDirectory = Directory.GetDirectories(Path.Combine(ExtensionDirectory, "_locales"));
-                                    foreach (string LocaleDirectory in LocalesDirectory)
-                                    {
-                                        string CompareLocale = Locale.Name.Replace("-", "_");
-                                        if (Path.GetFileName(LocaleDirectory) == CompareLocale)
-                                        {
-                                            _Locale = CompareLocale;
-                                            break;
-                                        }
-                                    }
-                                    string[] MessagesFiles = Directory.GetFiles(Path.Combine(ExtensionDirectory, "_locales", _Locale), "messages.json", SearchOption.TopDirectoryOnly);
-                                    foreach (string MessagesFile in MessagesFiles)
-                                    {
-                                        using JsonDocument MDocument = JsonDocument.Parse(File.ReadAllText(MessagesFile));
-                                        JsonElement Messages = MDocument.RootElement;
-                                        string[] Vars = Var.Split("<|>");
-                                        if (Vars[0] == "Description")
-                                        {
-                                            _Extension.Description = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
-                                            break;
-                                        }
-                                        else if (Vars[0] == "Name")
-                                        {
-                                            _Extension.Name = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                //_Extension.IsEnabled = true;
-                                _Extensions.Add(_Extension);
-                            }
-                        }
-                        catch { }
-                    }
-                    Extensions = _Extensions;
-                }
-            }
-        }
 
         public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush? Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null, string? Hidden = null, string? Image = null)
         {
@@ -1959,7 +1774,6 @@ namespace SLBr
 
             UserApplicationDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SLBr", CurrentProfile.Name);
             UserApplicationWindowsPath = Path.Combine(UserApplicationDataPath, "Windows");
-            ExtensionsPath = Path.Combine(UserApplicationDataPath, "User Data", "Default", "Extensions");
             ResourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             AdBlockDataPath = Path.Combine(UserApplicationDataPath, "Filters");
             NotificationTempPath = Path.Combine(Path.GetTempPath(), "SLBr_NotificationCache");
@@ -1988,6 +1802,7 @@ namespace SLBr
             WhiteColor.SafeFreeze();
             IconFont = (FontFamily)Resources["IconFontFamily"];
             SLBrFont = new FontFamily(new Uri("pack://application:,,,/SLBr;component/"), "./Fonts/#SLBr Icons");
+            ExtensionManager.Changed += ExtensionManager_Changed;
             await InitializeSaves();
 
             //MimicHttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
@@ -2105,6 +1920,46 @@ namespace SLBr
             _ = CleanTempCache();
             if (!Background)
                 ContinueBackgroundInitialization();
+        }
+
+        private void ExtensionManager_Changed(object? sender, EventArgs e)
+        {
+            switch (GlobalSave.GetInt("ExtensionButton"))
+            {
+                case 0:
+                    foreach (MainWindow _Window in AllWindows)
+                    {
+                        foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                        {
+                            ObservableCollection<Extension> Value = App.Instance.ExtensionManager.GetExtensions(BrowserView?.WebView?.Engine ?? (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"));
+                            BrowserView.ExtensionsButton.Visibility = Value?.Count != 0 ? Visibility.Visible : Visibility.Collapsed;
+                            BrowserView.ExtensionsMenu.ItemsSource = Value;
+                        }
+                    }
+                    break;
+                case 1:
+                    foreach (MainWindow _Window in AllWindows)
+                    {
+                        foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                        {
+                            ObservableCollection<Extension> Value = App.Instance.ExtensionManager.GetExtensions(BrowserView?.WebView?.Engine ?? (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"));
+                            BrowserView.ExtensionsButton.Visibility = Visibility.Visible;
+                            BrowserView.ExtensionsMenu.ItemsSource = Value;
+                        }
+                    }
+                    break;
+                case 2:
+                    foreach (MainWindow _Window in AllWindows)
+                    {
+                        foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content).Where(i => i != null))
+                        {
+                            ObservableCollection<Extension> Value = App.Instance.ExtensionManager.GetExtensions(BrowserView?.WebView?.Engine ?? (WebEngineType)App.Instance.GlobalSave.GetInt("WebEngine"));
+                            BrowserView.ExtensionsButton.Visibility = Visibility.Collapsed;
+                            BrowserView.ExtensionsMenu.ItemsSource = Value;
+                        }
+                    }
+                    break;
+            }
         }
 
         //TODO: Implement full https://developer.mozilla.org/en-US/docs/Web/API/Notification API support.
@@ -3756,7 +3611,6 @@ Inner Exception: {7}";
                     WebViewManager.InitializeTrident();
                     break;
             }
-            LoadExtensions();
             foreach (MainWindow _Window in AllWindows)
             {
                 foreach (Browser BrowserView in _Window.Tabs.Select(i => i.Content))
@@ -4584,7 +4438,8 @@ Inner Exception: {7}";
             }
             MiniHttpClient.Dispose();
             AppInitialized = false;
-            Cef.Shutdown();
+            WebViewManager.ShutdownCEF();
+            WebViewManager.ShutdownWebView2();
             Shutdown();
         }
 
@@ -5486,6 +5341,8 @@ static get permission(){return 'granted';}
 Notification.autoClose = 7000;
 window.Notification = Notification;
 })();";
+        public const string ScrollScript = @"!function(){var e,t,o,n={pulseNormalize:1},r=n,a=!1,i={x:0,y:0},l=!1,c=document.documentElement,u=[],s=37,d=38,f=39,m=40,h=32,v=33,w=34,y=35,p=36,b={37:1,38:1,39:1,40:1};function g(){if(!l&&document.body){l=!0;var o=document.body,n=document.documentElement,r=window.innerHeight,i=o.scrollHeight;if(c=0<=document.compatMode.indexOf(""CSS"")?n:o,e=o,X(""keydown"",B),top!=self)a=!0;else if(r<i&&(o.offsetHeight<=r||n.offsetHeight<=r)){var u,s=document.createElement(""div"");if(s.style.cssText=""position:absolute; z-index:-10000; top:0; left:0; right:0; height:""+c.scrollHeight+""px"",document.body.appendChild(s),t=function(){u||(u=setTimeout(function(){s.style.height=""0"",s.style.height=c.scrollHeight+""px"",u=null},500))},setTimeout(t,10),X(""resize"",t),new _(t).observe(o,{attributes:!0,childList:!0,characterData:!1}),c.offsetHeight<=r){var d=document.createElement(""div"");d.style.clear=""both"",o.appendChild(d)}}}}var x=[],k=!1,E=Date.now();function C(e,t,o){var n,r;n=0<(n=t)?1:-1,r=0<(r=o)?1:-1,(i.x!==n||i.y!==r)&&(i.x=n,i.y=r,x=[],E=0);var a=Date.now()-E;if(a<50){var l=(1+50/a)/2;1<l&&(l=Math.min(l,3),t*=l,o*=l)}if(E=Date.now(),x.push({x:t,y:o,lastX:t<0?.99:-.99,lastY:o<0?.99:-.99,start:Date.now()}),!k){var c=V(),u=e===c||e===document.body;null==e.$scrollBehavior&&function(e){var t=D(e);if(null==K[t]){var o=getComputedStyle(e,"""")[""scroll-behavior""];K[t]=""smooth""==o}return K[t]}(e)&&(e.$scrollBehavior=e.style.scrollBehavior,e.style.scrollBehavior=""auto"");var s=function(n){for(var r=Date.now(),a=0,i=0,l=0;l<x.length;l++){var c=x[l],d=r-c.start,f=d>=400,m=f?1:d/400;m=G(m);var h=c.x*m-c.lastX|0,v=c.y*m-c.lastY|0;a+=h,i+=v,c.lastX+=h,c.lastY+=v,f&&(x.splice(l,1),l--)}u?window.scrollBy(a,i):(a&&(e.scrollLeft+=a),i&&(e.scrollTop+=i)),t||o||(x=[]),x.length?I(s,e,1e3/150+1):(k=!1,null!=e.$scrollBehavior&&(e.style.scrollBehavior=e.$scrollBehavior,e.$scrollBehavior=null))};I(s,e,0),k=!0}}function S(t){l||g();var n=t.target;if(t.defaultPrevented||t.ctrlKey)return!0;if(Y(e,""embed"")||Y(n,""embed"")&&/\.pdf/i.test(n.src)||Y(e,""object"")||n.shadowRoot)return!0;var r=-t.wheelDeltaX||t.deltaX||0,i=-t.wheelDeltaY||t.deltaY||0;r||i||(i=-t.wheelDelta||0),1===t.deltaMode&&(r*=40,i*=40);var c=$(n);return c?!!function(e){if(e){u.length||(u=[e,e,e]),e=Math.abs(e),u.push(e),u.shift(),clearTimeout(o),o=setTimeout(function(){try{localStorage.SS_deltaBuffer=u.join("","")}catch(e){}},1e3);var t=120<e&&A(e);return!A(120)&&!A(100)&&!t}}(i)||(1.2<Math.abs(r)&&(r*=100/120),1.2<Math.abs(i)&&(i*=100/120),C(c,r,i),t.preventDefault(),void N()):!a||!W||(Object.defineProperty(t,""target"",{value:window.frameElement}),parent.wheel(t))}function B(t){var o=t.target,n=t.ctrlKey||t.altKey||t.metaKey||t.shiftKey&&t.keyCode!==h;document.body.contains(e)||(e=document.activeElement);var r=/^(button|submit|radio|checkbox|file|color|image)$/i;if(t.defaultPrevented||/^(textarea|select|embed|object)$/i.test(o.nodeName)||Y(o,""input"")&&!r.test(o.type)||Y(e,""video"")||function(e){var t=e.target,o=!1;if(-1!=document.URL.indexOf(""www.youtube.com/watch""))do{if(o=t.classList&&t.classList.contains(""html5-video-controls""))break}while(t=t.parentNode);return o}(t)||o.isContentEditable||n)return!0;if((Y(o,""button"")||Y(o,""input"")&&r.test(o.type))&&t.keyCode===h)return!0;if(Y(o,""input"")&&""radio""==o.type&&b[t.keyCode])return!0;var i=0,l=0,c=$(e);if(!c)return!a||!W||parent.keydown(t);var u=c.clientHeight;switch(c==document.body&&(u=window.innerHeight),t.keyCode){case d:l=-50;break;case m:l=50;break;case h:l=-(t.shiftKey?1:-1)*u*.9;break;case v:l=.9*-u;break;case w:l=.9*u;break;case p:c==document.body&&document.scrollingElement&&(c=document.scrollingElement),l=-c.scrollTop;break;case y:var g=c.scrollHeight-c.scrollTop-u;l=0<g?g+10:0;break;case s:i=-50;break;case f:i=50;break;default:return!0}C(c,i,l),t.preventDefault(),N()}function H(t){e=t.target}var M,T,D=(M=0,function(e){return e.uniqueID||(e.uniqueID=M++)}),L={},z={},K={};function N(){clearTimeout(T),T=setInterval(function(){L=z=K={}},1e3)}function O(e,t,o){for(var n=o?L:z,r=e.length;r--;)n[D(e[r])]=t;return t}function $(e){var t=[],o=document.body,n=c.scrollHeight;do{var r=z[D(e)];if(r)return O(t,r);if(t.push(e),n===e.scrollHeight){var i=j(c)&&j(o)||q(c);if(a&&P(c)||!a&&i)return O(t,V())}else if(P(e)&&q(e))return O(t,e)}while(e=e.parentElement)}function P(e){return e.clientHeight+10<e.scrollHeight}function j(e){return""hidden""!==getComputedStyle(e,"""").getPropertyValue(""overflow-y"")}function q(e){var t=getComputedStyle(e,"""").getPropertyValue(""overflow-y"");return""scroll""===t||""auto""===t}function X(e,t,o){window.addEventListener(e,t,o||!1)}function Y(e,t){return e&&(e.nodeName||"""").toLowerCase()===t.toLowerCase()}if(window.localStorage&&localStorage.SS_deltaBuffer)try{u=localStorage.SS_deltaBuffer.split("","")}catch(S){}function R(e,t){return Math.floor(e/t)==e/t}function A(e){return R(u[0],e)&&R(u[1],e)&&R(u[2],e)}var F,I=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||function(e,t,o){window.setTimeout(e,o||1e3/60)},_=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver,V=(F=document.scrollingElement,function(){if(!F){var e=document.createElement(""div"");e.style.cssText=""height:10000px;width:1px;"",document.body.appendChild(e);var t=document.body.scrollTop;document.documentElement.scrollTop,window.scrollBy(0,3),F=document.body.scrollTop!=t?document.body:document.documentElement,window.scrollBy(0,-3),document.body.removeChild(e)}return F});function U(e){var t;return((e*=4)<1?e-(1-Math.exp(-e)):(e-=1,(t=Math.exp(-1))+(1-Math.exp(-e))*(1-t)))*r.pulseNormalize}function G(e){return 1<=e?1:e<=0?0:(1==r.pulseNormalize&&(r.pulseNormalize/=U(1)),U(e))}try{window.addEventListener(""test"",null,Object.defineProperty({},""passive"",{get:function(){ee=!0}}))}catch(S){}var J=!!ee&&{passive:!1},Q=""onwheel""in document.createElement(""div"")?""wheel"":""mousewheel"";Q&&(X(Q,S,J),X(""mousedown"",H),X(""load"",g))}();";
+
         public const string WebStoreScript = @"(function () {
 if (window.__slbr_web_store__) return;
 window.__slbr_web_store__ = true;
@@ -5499,8 +5356,47 @@ for (const button of document.querySelectorAll(buttonQueries.join(','))){
 scanButton();
 new MutationObserver(scanButton).observe(document.body,{attributes:true,childList:true,subtree:true});
 })();";
-        public const string ScrollScript = @"!function(){var e,t,o,n={pulseNormalize:1},r=n,a=!1,i={x:0,y:0},l=!1,c=document.documentElement,u=[],s=37,d=38,f=39,m=40,h=32,v=33,w=34,y=35,p=36,b={37:1,38:1,39:1,40:1};function g(){if(!l&&document.body){l=!0;var o=document.body,n=document.documentElement,r=window.innerHeight,i=o.scrollHeight;if(c=0<=document.compatMode.indexOf(""CSS"")?n:o,e=o,X(""keydown"",B),top!=self)a=!0;else if(r<i&&(o.offsetHeight<=r||n.offsetHeight<=r)){var u,s=document.createElement(""div"");if(s.style.cssText=""position:absolute; z-index:-10000; top:0; left:0; right:0; height:""+c.scrollHeight+""px"",document.body.appendChild(s),t=function(){u||(u=setTimeout(function(){s.style.height=""0"",s.style.height=c.scrollHeight+""px"",u=null},500))},setTimeout(t,10),X(""resize"",t),new _(t).observe(o,{attributes:!0,childList:!0,characterData:!1}),c.offsetHeight<=r){var d=document.createElement(""div"");d.style.clear=""both"",o.appendChild(d)}}}}var x=[],k=!1,E=Date.now();function C(e,t,o){var n,r;n=0<(n=t)?1:-1,r=0<(r=o)?1:-1,(i.x!==n||i.y!==r)&&(i.x=n,i.y=r,x=[],E=0);var a=Date.now()-E;if(a<50){var l=(1+50/a)/2;1<l&&(l=Math.min(l,3),t*=l,o*=l)}if(E=Date.now(),x.push({x:t,y:o,lastX:t<0?.99:-.99,lastY:o<0?.99:-.99,start:Date.now()}),!k){var c=V(),u=e===c||e===document.body;null==e.$scrollBehavior&&function(e){var t=D(e);if(null==K[t]){var o=getComputedStyle(e,"""")[""scroll-behavior""];K[t]=""smooth""==o}return K[t]}(e)&&(e.$scrollBehavior=e.style.scrollBehavior,e.style.scrollBehavior=""auto"");var s=function(n){for(var r=Date.now(),a=0,i=0,l=0;l<x.length;l++){var c=x[l],d=r-c.start,f=d>=400,m=f?1:d/400;m=G(m);var h=c.x*m-c.lastX|0,v=c.y*m-c.lastY|0;a+=h,i+=v,c.lastX+=h,c.lastY+=v,f&&(x.splice(l,1),l--)}u?window.scrollBy(a,i):(a&&(e.scrollLeft+=a),i&&(e.scrollTop+=i)),t||o||(x=[]),x.length?I(s,e,1e3/150+1):(k=!1,null!=e.$scrollBehavior&&(e.style.scrollBehavior=e.$scrollBehavior,e.$scrollBehavior=null))};I(s,e,0),k=!0}}function S(t){l||g();var n=t.target;if(t.defaultPrevented||t.ctrlKey)return!0;if(Y(e,""embed"")||Y(n,""embed"")&&/\.pdf/i.test(n.src)||Y(e,""object"")||n.shadowRoot)return!0;var r=-t.wheelDeltaX||t.deltaX||0,i=-t.wheelDeltaY||t.deltaY||0;r||i||(i=-t.wheelDelta||0),1===t.deltaMode&&(r*=40,i*=40);var c=$(n);return c?!!function(e){if(e){u.length||(u=[e,e,e]),e=Math.abs(e),u.push(e),u.shift(),clearTimeout(o),o=setTimeout(function(){try{localStorage.SS_deltaBuffer=u.join("","")}catch(e){}},1e3);var t=120<e&&A(e);return!A(120)&&!A(100)&&!t}}(i)||(1.2<Math.abs(r)&&(r*=100/120),1.2<Math.abs(i)&&(i*=100/120),C(c,r,i),t.preventDefault(),void N()):!a||!W||(Object.defineProperty(t,""target"",{value:window.frameElement}),parent.wheel(t))}function B(t){var o=t.target,n=t.ctrlKey||t.altKey||t.metaKey||t.shiftKey&&t.keyCode!==h;document.body.contains(e)||(e=document.activeElement);var r=/^(button|submit|radio|checkbox|file|color|image)$/i;if(t.defaultPrevented||/^(textarea|select|embed|object)$/i.test(o.nodeName)||Y(o,""input"")&&!r.test(o.type)||Y(e,""video"")||function(e){var t=e.target,o=!1;if(-1!=document.URL.indexOf(""www.youtube.com/watch""))do{if(o=t.classList&&t.classList.contains(""html5-video-controls""))break}while(t=t.parentNode);return o}(t)||o.isContentEditable||n)return!0;if((Y(o,""button"")||Y(o,""input"")&&r.test(o.type))&&t.keyCode===h)return!0;if(Y(o,""input"")&&""radio""==o.type&&b[t.keyCode])return!0;var i=0,l=0,c=$(e);if(!c)return!a||!W||parent.keydown(t);var u=c.clientHeight;switch(c==document.body&&(u=window.innerHeight),t.keyCode){case d:l=-50;break;case m:l=50;break;case h:l=-(t.shiftKey?1:-1)*u*.9;break;case v:l=.9*-u;break;case w:l=.9*u;break;case p:c==document.body&&document.scrollingElement&&(c=document.scrollingElement),l=-c.scrollTop;break;case y:var g=c.scrollHeight-c.scrollTop-u;l=0<g?g+10:0;break;case s:i=-50;break;case f:i=50;break;default:return!0}C(c,i,l),t.preventDefault(),N()}function H(t){e=t.target}var M,T,D=(M=0,function(e){return e.uniqueID||(e.uniqueID=M++)}),L={},z={},K={};function N(){clearTimeout(T),T=setInterval(function(){L=z=K={}},1e3)}function O(e,t,o){for(var n=o?L:z,r=e.length;r--;)n[D(e[r])]=t;return t}function $(e){var t=[],o=document.body,n=c.scrollHeight;do{var r=z[D(e)];if(r)return O(t,r);if(t.push(e),n===e.scrollHeight){var i=j(c)&&j(o)||q(c);if(a&&P(c)||!a&&i)return O(t,V())}else if(P(e)&&q(e))return O(t,e)}while(e=e.parentElement)}function P(e){return e.clientHeight+10<e.scrollHeight}function j(e){return""hidden""!==getComputedStyle(e,"""").getPropertyValue(""overflow-y"")}function q(e){var t=getComputedStyle(e,"""").getPropertyValue(""overflow-y"");return""scroll""===t||""auto""===t}function X(e,t,o){window.addEventListener(e,t,o||!1)}function Y(e,t){return e&&(e.nodeName||"""").toLowerCase()===t.toLowerCase()}if(window.localStorage&&localStorage.SS_deltaBuffer)try{u=localStorage.SS_deltaBuffer.split("","")}catch(S){}function R(e,t){return Math.floor(e/t)==e/t}function A(e){return R(u[0],e)&&R(u[1],e)&&R(u[2],e)}var F,I=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||function(e,t,o){window.setTimeout(e,o||1e3/60)},_=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver,V=(F=document.scrollingElement,function(){if(!F){var e=document.createElement(""div"");e.style.cssText=""height:10000px;width:1px;"",document.body.appendChild(e);var t=document.body.scrollTop;document.documentElement.scrollTop,window.scrollBy(0,3),F=document.body.scrollTop!=t?document.body:document.documentElement,window.scrollBy(0,-3),document.body.removeChild(e)}return F});function U(e){var t;return((e*=4)<1?e-(1-Math.exp(-e)):(e-=1,(t=Math.exp(-1))+(1-Math.exp(-e))*(1-t)))*r.pulseNormalize}function G(e){return 1<=e?1:e<=0?0:(1==r.pulseNormalize&&(r.pulseNormalize/=U(1)),U(e))}try{window.addEventListener(""test"",null,Object.defineProperty({},""passive"",{get:function(){ee=!0}}))}catch(S){}var J=!!ee&&{passive:!1},Q=""onwheel""in document.createElement(""div"")?""wheel"":""mousewheel"";Q&&(X(Q,S,J),X(""mousedown"",H),X(""load"",g))}();";
-        public const string ExtensionScript = "var rect=document.body.getBoundingClientRect();engine.postMessage({width:rect.width+16,height:rect.height+40});";
+        public const string ExtensionPopupScript = @"(async function() {
+    if (window.__slbr_extension_size__) return;
+    window.__slbr_extension_size__ = true;
+    const sendLayoutMetrics = () => {
+        if (!document.body || !document.documentElement) return;
+
+        const bodyScrollWidth = document.body.scrollWidth;
+        const bodyScrollHeight = document.body.scrollHeight;
+        const htmlScrollWidth = document.documentElement.scrollWidth;
+        const htmlScrollHeight = document.documentElement.scrollHeight;
+        const bodyRect = document.body.getBoundingClientRect();
+
+        let finalWidth = Math.max(bodyScrollWidth, htmlScrollWidth);
+        let finalHeight = Math.max(bodyScrollHeight, htmlScrollHeight);
+
+        if (htmlScrollHeight > bodyScrollHeight && bodyScrollHeight > 0) {
+            const htmlComputed = window.getComputedStyle(document.documentElement);
+            const htmlPaddingY = parseFloat(htmlComputed.paddingTop) + parseFloat(htmlComputed.paddingBottom);
+            const htmlBorderY = parseFloat(htmlComputed.borderTopWidth) + parseFloat(htmlComputed.borderBottomWidth);
+            if (htmlScrollHeight > (bodyScrollHeight + htmlPaddingY + htmlBorderY)) finalHeight = Math.max(bodyScrollHeight, Math.ceil(bodyRect.height));
+        }
+        if (htmlScrollWidth > bodyScrollWidth && bodyScrollWidth > 0) {
+            const htmlComputed = window.getComputedStyle(document.documentElement);
+            const htmlPaddingX = parseFloat(htmlComputed.paddingLeft) + parseFloat(htmlComputed.paddingRight);
+            const htmlBorderX = parseFloat(htmlComputed.borderLeftWidth) + parseFloat(htmlComputed.borderRightWidth);
+            if (htmlScrollWidth > (bodyScrollWidth + htmlPaddingX + htmlBorderX)) finalWidth = Math.max(bodyScrollWidth, Math.ceil(bodyRect.width));
+        }
+        if (finalWidth > 0 && finalHeight > 0) engine.postMessage({ width: Math.ceil(finalWidth), height: Math.ceil(finalHeight) });
+    };
+    sendLayoutMetrics();
+    const initObserver = () => {
+        sendLayoutMetrics();
+        if (typeof ResizeObserver !== 'undefined' && document.documentElement) {
+            const structuralObserver = new MutationObserver(() => { sendLayoutMetrics(); });
+            structuralObserver.observe(document.documentElement, { attributes: true, childList: true, subtree: true });
+        }
+    };
+    if (document.documentElement) initObserver();
+    else document.addEventListener('DOMContentLoaded', initObserver);
+})();";
+})();";
         
         public const string OpenSearchScript = @"(function(){let link=document.querySelector('link[rel=""search""][type=""application/opensearchdescription+xml""]');if (link){engine.postMessage({type:'__opensearch__',url:link.href,name:link.title||''});}})();";
 
