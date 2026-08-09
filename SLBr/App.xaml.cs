@@ -1342,7 +1342,7 @@ namespace SLBr
         public string UserAgent;
         public string UserAgentBrandsString;
         public WebUserAgentMetaData UserAgentData;
-
+        
         public static OmniSuggestion GenerateSuggestion(string Display, string Type, SolidColorBrush? Color, string SubText = "", string? Actual = null, SearchProvider? ProviderOverride = null, string? Hidden = null, string? Image = null)
         {
             OmniSuggestion Suggestion = new() { Text = Actual ?? Display, Display = Display, Color = Color, SubText = SubText, ProviderOverride = ProviderOverride, Hidden = Hidden, Image = Image };
@@ -5396,8 +5396,290 @@ new MutationObserver(scanButton).observe(document.body,{attributes:true,childLis
     if (document.documentElement) initObserver();
     else document.addEventListener('DOMContentLoaded', initObserver);
 })();";
+        public const string ExtensionPolyfillScript = @"(function() {
+    if (window.__slbr_extension_rewire__) return;
+    window.__slbr_extension_rewire__ = true;
+    try {
+        const root = (typeof globalThis !== 'undefined') ? globalThis : ((typeof self !== 'undefined') ? self : window);
+
+        if (root.chrome) {
+            console.log('Rewiring SLBr extension...');
+            if (root.chrome.tabs) {
+                const nativeQuery = root.chrome.tabs.query;
+                const nativeGetCurrent = root.chrome.tabs.getCurrent;
+
+                const rewiredQuery = async function(queryInfo, callback) {
+                    queryInfo = queryInfo || {};
+                    const allTabs = await nativeQuery({});
+                    const extensionInstance = await nativeGetCurrent();
+
+                    if (extensionInstance) {
+                        const index = allTabs.findIndex(tab => tab.id === extensionInstance.id);
+                        if (index > -1) allTabs.splice(index, 1);
+                    }
+
+                    await engine.bindObjectAsync('slbrExtensionContext');
+                    const at = await root.slbrExtensionContext.getActiveTab();
+
+                    let targetNativeTab = null;
+                    let highestScore = -1;
+
+                    const timestamps = allTabs.map(t => t.lastAccessed || 0).filter(t => t > 0);
+                    const maxLastAccessed = timestamps.length > 0 ? Math.max(...timestamps) : 0;
+
+                    for (const tab of allTabs) {
+                        if (!tab) continue;
+                        let score = 0;
+                        if (at.url && tab.url === at.url) score += 100;
+                        if (at.title && tab.title === at.title) score += 50;
+                        if (at.width && tab.width === at.width) score += 30;
+                        if (at.height && tab.height === at.height) score += 30;
+                        const nativeIsLoading = tab.status === 'loading';
+                        if (at.isLoading === nativeIsLoading) score += 10;
+                        if (at.audible !== undefined && tab.audible === at.audible) score += 40;
+                        if (at.muted !== undefined && tab.mutedInfo) {
+                            const nativeIsMuted = tab.mutedInfo.muted || false;
+                            if (nativeIsMuted === at.muted) score += 20;
+                        }
+                        if (tab.lastAccessed && tab.lastAccessed === maxLastAccessed) score += 60; 
+
+                        if (score > highestScore) {
+                            highestScore = score;
+                            targetNativeTab = tab;
+                        }
+                    }
+
+                    if (!targetNativeTab || highestScore <= 0) {
+                        const webTabs = allTabs.filter(t => t && !(t.width <= 14 && t.height <= 14));
+                        if (webTabs.length > 0) {
+                            webTabs.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
+                            targetNativeTab = webTabs[0];
+                        }
+                        else targetNativeTab = allTabs[0];
+                    }
+
+                    if (!targetNativeTab) {
+                        if (typeof callback === 'function') callback([]);
+                        return [];
+                    }
+
+                    const targetWindowId = targetNativeTab.windowId;
+
+                    const processedTabs = allTabs.map(tab => {
+                        if (!tab) return null;
+
+                        const isBackgroundSize = (tab.width <= 14 && tab.height <= 14);
+                        const isActuallyActive = (tab.windowId === targetWindowId) && !isBackgroundSize;
+
+                        return Object.assign({}, tab, {
+                            active: isActuallyActive,
+                            selected: isActuallyActive,
+                            highlighted: isActuallyActive
+                        });
+                    }).filter(t => t !== null);
+
+                    const filteredTabs = processedTabs.filter(tab => {
+                        if (queryInfo.currentWindow === true) {
+                            if (tab.windowId !== targetWindowId) return false;
+                        } 
+                        else if (queryInfo.currentWindow === false) {
+                            if (tab.windowId === targetWindowId) return false;
+                        }
+
+                        if (queryInfo.windowId !== undefined && tab.windowId !== queryInfo.windowId) return false;
+                        if (queryInfo.active !== undefined && tab.active !== queryInfo.active) return false;
+                        if (queryInfo.status !== undefined && tab.status !== queryInfo.status) return false;
+
+                        if (queryInfo.url !== undefined) {
+                            if (!tab.url) return false;
+                            if (Array.isArray(queryInfo.url)) {
+                                if (!queryInfo.url.some(u => tab.url.includes(u))) return false;
+                            }
+                            else if (typeof queryInfo.url === 'string' && !tab.url.includes(queryInfo.url)) return false;
+                        }
+                        return true;
+                    });
+
+                    if (typeof callback === 'function') {
+                        callback(filteredTabs);
+                    }
+                    return filteredTabs;
+                };
+
+                Object.defineProperty(root.chrome.tabs, 'query', {
+                    value: rewiredQuery,
+                    writable: true,
+                    configurable: true
+                });
+
+                Object.defineProperty(root.chrome.tabs, 'getCurrent', {
+                    value: async function(callback) {
+                        if (typeof callback === 'function') callback(undefined);
+                        return undefined;
+                    },
+                    writable: true,
+                    configurable: true
+                });
+            }
+            if (root.chrome.windows) {
+                const nativeGetWindow = root.chrome.windows.get;
+                const nativeGetCurrentWindow = root.chrome.windows.getCurrent;
+                const rewiredGetCurrentWindow = async function(lookups, callback) {
+                    if (typeof lookups === 'function') {
+                        callback = lookups;
+                        lookups = {};
+                    }
+                    const [targetTab] = await root.chrome.tabs.query({ active: true, currentWindow: true });
+                    if (targetTab && targetTab.windowId) {
+                        const targetWindow = await nativeGetWindow(targetTab.windowId, lookups);
+                        const processedWindow = Object.assign({}, targetWindow, {
+                            focused: true,
+                            alwaysOnTop: true
+                        });
+                        if (typeof callback === 'function') callback(processedWindow);
+                        return processedWindow;
+                    }
+
+                    return nativeGetCurrentWindow(lookups, callback);
+                };
+
+                Object.defineProperty(root.chrome.windows, 'getCurrent', {
+                    value: rewiredGetCurrentWindow,
+                    writable: true,
+                    configurable: true
+                });
+            }
+            if (root.chrome.scripting) {
+                const nativeScriptingExecute = root.chrome.scripting.executeScript;
+                Object.defineProperty(root.chrome.scripting, 'executeScript', {
+                    value: async function(injectionDetails, callback) {
+                        injectionDetails = injectionDetails || {};
+                        if (!injectionDetails.target || !injectionDetails.target.tabId) {
+                            const [targetTab] = await root.chrome.tabs.query({ active: true, currentWindow: true });
+                            if (targetTab) {
+                                injectionDetails.target = injectionDetails.target || {};
+                                injectionDetails.target.tabId = targetTab.id;
+                            }
+                        }
+                        return nativeScriptingExecute(injectionDetails, callback);
+                    },
+                    writable: true,
+                    configurable: true
+                });
+            }
+            if (root.chrome.tabCapture) {
+                const nativeCapture = root.chrome.tabCapture.capture;
+                const rewiredCapture = function(options, callback) {
+                    nativeCapture(options, function(stream) {
+                        if (!stream || root.chrome.runtime.lastError) {
+                            if (root.chrome.runtime.lastError) {
+                                delete root.chrome.runtime.lastError;
+                            }
+
+                            if (root.navigator && root.navigator.mediaDevices) {
+                                root.navigator.mediaDevices.getUserMedia({
+                                    audio: {
+                                        mandatory: {
+                                            chromeMediaSource: 'desktop'
+                                        }
+                                    },
+                                    video: {
+                                        mandatory: {
+                                            chromeMediaSource: 'desktop',
+                                            maxWidth: 1,
+                                            maxHeight: 1,
+                                            maxFrameRate: 1
+                                        }
+                                    }
+                                })
+                                .then(desktopStream => {
+                                    if (typeof callback === 'function') callback(desktopStream);
+                                })
+                                .catch(err => {
+                                    const audioCtx = new (root.AudioContext || root.webkitAudioContext)();
+                                    const destination = audioCtx.createMediaStreamDestination();
+                                    
+                                    const oscillator = audioCtx.createOscillator();
+                                    const gainNode = audioCtx.createGain();
+                                    oscillator.type = 'sine';
+                                    oscillator.frequency.setValueAtTime(1, audioCtx.currentTime);
+                                    gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                                    
+                                    oscillator.connect(gainNode);
+                                    gainNode.connect(destination);
+                                    oscillator.start();
+                                    
+                                    if (typeof callback === 'function') callback(destination.stream);
+                                });
+                                return;
+                            }
+                        }
+
+                        if (typeof callback === 'function') callback(stream);
+                    });
+                };
+
+                Object.defineProperty(root.chrome.tabCapture, 'capture', {
+                    value: rewiredCapture,
+                    writable: true,
+                    configurable: true
+                });
+            }
+
+            const nativeAudioContext = root.AudioContext || root.webkitAudioContext;
+            if (nativeAudioContext) {
+                const nativeCreateMediaStreamSource = nativeAudioContext.prototype.createMediaStreamSource;
+                const nativeClose = nativeAudioContext.prototype.close;
+
+                nativeAudioContext.prototype.close = async function() {
+                    if (this.state === 'closed') {
+                        return Promise.resolve();
+                    }
+                    return nativeClose.call(this);
+                };
+
+                nativeAudioContext.prototype.createMediaStreamSource = function(stream) {
+                    if (!stream || !(stream instanceof MediaStream) || stream.getAudioTracks().length === 0) {
+                        const emergencyCtx = new nativeAudioContext();
+                        const emergencyDest = emergencyCtx.createMediaStreamDestination();
+                        const osc = emergencyCtx.createOscillator();
+                        osc.frequency.setValueAtTime(1, emergencyCtx.currentTime);
+                        osc.connect(emergencyDest);
+                        osc.start();
+
+                        return nativeCreateMediaStreamSource.call(this, emergencyDest.stream);
+                    }
+                    const sourceNode = nativeCreateMediaStreamSource.call(this, stream);
+                    const nativeNodeConnect = sourceNode.connect;
+                    sourceNode.connect = function(destination, output, input) {
+                        if (destination === sourceNode.context.destination) {
+                            const muteGain = sourceNode.context.createGain();
+                            muteGain.gain.setValueAtTime(0, sourceNode.context.currentTime);
+                            muteGain.connect(sourceNode.context.destination);
+                            return nativeNodeConnect.call(this, muteGain, output, input);
+                        }
+                        return nativeNodeConnect.call(this, destination, output, input);
+                    };
+                    return sourceNode;
+                };
+            }
+            const targetsToSync = ['tabs', 'windows', 'scripting', 'tabCapture'];
+            for (const key of targetsToSync) {
+                if (root.chrome[key]) {
+                    if (!root.browser[key]) root.browser[key] = {};
+                    Object.getOwnPropertyNames(root.chrome[key]).forEach(propName => {
+                        const desc = Object.getOwnPropertyDescriptor(root.chrome[key], propName);
+                        if (desc) Object.defineProperty(root.browser[key], propName, desc);
+                    });
+                }
+            }
+            console.log('SLBr extension rewired successfully.');
+        }
+    } catch (e) {
+        console.error('Failed to rewire SLBr extension:', e);
+    }
 })();";
-        
+
         public const string OpenSearchScript = @"(function(){let link=document.querySelector('link[rel=""search""][type=""application/opensearchdescription+xml""]');if (link){engine.postMessage({type:'__opensearch__',url:link.href,name:link.title||''});}})();";
 
         public const string ShiftContextMenuScript = @"document.addEventListener('contextmenu',function(e){if (e.shiftKey){e.stopPropagation();}},true);";

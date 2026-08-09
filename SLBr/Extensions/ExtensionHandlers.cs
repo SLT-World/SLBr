@@ -692,10 +692,15 @@ namespace SLBr.Extensions
             };
 
             View.JavascriptObjectRepository.Settings.JavascriptBindingApiGlobalObjectName = "engine";
+            View.JavascriptObjectRepository.Settings.LegacyBindingEnabled = false;
+            View.JavascriptObjectRepository.Register("slbrExtensionContext", new CefExtensionContextProvider(_Browser.WebView), BindingOptions.DefaultBinder);
+
             View.IsBrowserInitializedChanged += async (_, _) =>
             {
                 if (View.IsBrowserInitialized)
                 {
+                    await View.GetDevToolsClient().Page.AddScriptToEvaluateOnNewDocumentAsync(Scripts.ExtensionPolyfillScript, null, null, true);
+                    await View.GetDevToolsClient().Page.EnableAsync();
                     View.Load(_Extension.ActionPopup);
                 }
             };
@@ -727,8 +732,19 @@ namespace SLBr.Extensions
             {
                 try
                 {
+                    View.CoreWebView2.AddHostObjectToScript("slbrExtensionContext", new WebView2ExtensionContextProvider(_Browser.WebView));
+
                     await View.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(Scripts.WebView2DocumentCreatedScript);
 
+                    string BridgeAdapter = @"engine.bindObjectAsync = function(name) { return Promise.resolve(true); };
+window.slbrExtensionContext = {
+    getActiveTab: async function() {
+        const raw = await window.chrome.webview.hostObjects.slbrExtensionContext.GetActiveTab();
+        return JSON.parse(raw);
+    }
+};";
+                    await View.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(BridgeAdapter + Scripts.ExtensionPolyfillScript);
+                    await View.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(Scripts.ExtensionPopupScript);
                     View.CoreWebView2.Navigate(_Extension.ActionPopup);
                 }
                 catch { }
