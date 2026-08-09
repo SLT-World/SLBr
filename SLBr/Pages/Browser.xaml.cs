@@ -817,16 +817,18 @@ namespace SLBr.Pages
             //if (e.Url.Contains("developers.cloudflare.com/fundamentals/reference/markdown-for-agents"))
             //{
             //    var AcceptHeaders = e.Headers.TryGetValue("Accept", out var Value) ? Value : "*/*";
-            //    e.ModifiedHeaders.Add("Accept", $"text/markdown,{AcceptHeaders}");
+            //    e.ModifiedHeaders["Accept"] = $"text/markdown,{AcceptHeaders}";
             //}
 
             if (App.Instance.LiteMode)
-                e.ModifiedHeaders.Add("Save-Data", "on");
+                e.ModifiedHeaders["Save-Data"] = "on";
             if (UserAgentBranding)
             {
-                e.ModifiedHeaders.Add("User-Agent", App.Instance.UserAgent);
-                e.ModifiedHeaders.Add("Sec-Ch-Ua", App.Instance.UserAgentBrandsString);
+                e.ModifiedHeaders["User-Agent"] = App.Instance.UserAgent;
+                e.ModifiedHeaders["Sec-Ch-Ua"] = App.Instance.UserAgentBrandsString;
             }
+            if (e.Url.StartsWith("https://addons.mozilla.org/en-US/firefox/addon/"))/*App.Instance.ExtensionManager.SupportFirefoxExtensions && */
+                e.ModifiedHeaders["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0";
             if (ProprietaryCodecsInfoBar == null && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
             {
                 if (bool.Parse(App.Instance.GlobalSave.Get("WarnCodec")))

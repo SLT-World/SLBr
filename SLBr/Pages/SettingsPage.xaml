@@ -1017,12 +1017,24 @@
                                 </GroupBox>
                                 <Button Padding="10,20" Margin="0,0,0,10" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="http://chromewebstore.google.com" VerticalAlignment="Center" Content="Chrome Web Store"/>
                                 <Button Padding="10,20" Margin="0,0,0,10" Style="{StaticResource NavigationButton}" controls:ControlExtensions.Icon="&#xe8a7;" Background="{StaticResource SecondaryBrush}" Click="HyperlinkButton_Click" Tag="chrome://extensions" VerticalAlignment="Center" Content="Chromium Extensions"/>
+                                <GroupBox Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <DockPanel LastChildFill="False">
+                                            <Button x:Name="ExtensionRefreshButton" Click="ExtensionRefreshButton_Click" Tag="0" Margin="0,0,10,0">
+                                                <DockPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xE72C;" Margin="0,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" FontSize="16"/>
+                                                    <TextBlock TextAlignment="Center" Text="Refresh" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                            </Button>
+                                        </DockPanel>
+                                    </StackPanel>
+                                </GroupBox>
                                 <ScrollViewer Margin="0,0,0,10" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                                     <StackPanel>
                                         <Border Height="100" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
                                             <DockPanel>
                                                 <Border Width="75" Background="{StaticResource PrimaryBrush}" CornerRadius="4.5,0,0,4.5" BorderThickness="0,0,1,0" BorderBrush="{StaticResource BorderBrush}">
-                                                    <Image RenderOptions.BitmapScalingMode="LowQuality" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25" Margin="1.5,0,0,0" Stretch="Uniform">
+                                                    <Image RenderOptions.BitmapScalingMode="LowQuality" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25" Stretch="Uniform">
                                                         <Image.Source>
                                                             <DrawingImage>
                                                                 <DrawingImage.Drawing>
@@ -1040,19 +1052,21 @@
                                                                     </GeometryDrawing>
                                                                 </DrawingImage.Drawing>
                                                             </DrawingImage>
-                                                            <!--<BitmapImage DecodePixelWidth="50" UriSource=""/>-->
                                                         </Image.Source>
                                                     </Image>
                                                 </Border>
                                                 <Grid Margin="10">
-                                                    <DockPanel VerticalAlignment="Top">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <DockPanel Grid.Row="0">
                                                         <TextBlock Foreground="{StaticResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="PDF Viewer" Margin="0,0,5,0"/>
-                                                        <TextBlock Text="1.0.0" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
                                                     </DockPanel>
-                                                    <TextBlock Text="View and interact with PDF documents directly within the browser" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
-                                                    <DockPanel LastChildFill="False" VerticalAlignment="Bottom">
-                                                        <!--<TextBlock Text="Manifest Version 3" DockPanel.Dock="Left" Height="Auto" VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>-->
-                                                        <ToggleButton x:Name="PDFViewerToggleButton" Click="ExtensionToggleButton_Click" DockPanel.Dock="Right" Tag="PDF"/>
+                                                    <TextBlock Grid.Row="1" Text="View and interact with PDF documents directly within the browser" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
+                                                    <DockPanel Grid.Row="2" LastChildFill="False" VerticalAlignment="Bottom">
+                                                        <ToggleButton x:Name="PDFViewerToggleButton" Click="PDFToggleButton_Click" DockPanel.Dock="Right" Tag="PDF"/>
                                                     </DockPanel>
                                                 </Grid>
                                             </DockPanel>
@@ -1060,39 +1074,50 @@
                                         <ItemsControl x:Name="ExtensionsList">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Height="100" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
+                                                    <Border Height="125" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SecondaryBrush}" BorderThickness="1" CornerRadius="5" Margin="0,0,0,10">
                                                         <DockPanel>
                                                             <Border Width="75" Background="{StaticResource PrimaryBrush}" CornerRadius="4.5,0,0,4.5" BorderThickness="0,0,1,0" BorderBrush="{StaticResource BorderBrush}">
-                                                                <Image RenderOptions.BitmapScalingMode="LowQuality" VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25" Margin="1.5,0,0,0" Stretch="Uniform">
-                                                                    <Image.Source>
-                                                                        <DrawingImage>
-                                                                            <DrawingImage.Drawing>
-                                                                                <GeometryDrawing>
-                                                                                    <GeometryDrawing.Brush>
-                                                                                        <VisualBrush Stretch="Uniform">
-                                                                                            <VisualBrush.Visual>
-                                                                                                <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="&#xEA86;"/>
-                                                                                            </VisualBrush.Visual>
-                                                                                        </VisualBrush>
-                                                                                    </GeometryDrawing.Brush>
-                                                                                    <GeometryDrawing.Geometry>
-                                                                                        <RectangleGeometry Rect="0,0,20,20"/>
-                                                                                    </GeometryDrawing.Geometry>
-                                                                                </GeometryDrawing>
-                                                                            </DrawingImage.Drawing>
-                                                                        </DrawingImage>
-                                                                        <!--<BitmapImage DecodePixelWidth="50" UriSource=""/>-->
-                                                                    </Image.Source>
-                                                                </Image>
+                                                                <Grid VerticalAlignment="Center" HorizontalAlignment="Center" Height="25" Width="25">
+                                                                    <Image Visibility="{Binding ActionIcon, Converter={StaticResource NullToVisibility}}" Source="{Binding ActionIcon}" RenderOptions.BitmapScalingMode="LowQuality" Stretch="Uniform"/>
+                                                                    <TextBlock Visibility="{Binding ActionIcon, Converter={StaticResource OppositeNullToVisibility}}" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="&#xEA86;" FontSize="21" Margin="2.5,2,0,0" VerticalAlignment="Stretch" TextAlignment="Center" HorizontalAlignment="Stretch"/>
+                                                                    <!--<Image RenderOptions.BitmapScalingMode="LowQuality" Stretch="Uniform">
+                                                                        <Image.Source>
+                                                                            <DrawingImage>
+                                                                                <DrawingImage.Drawing>
+                                                                                    <GeometryDrawing>
+                                                                                        <GeometryDrawing.Brush>
+                                                                                            <VisualBrush Stretch="Uniform">
+                                                                                                <VisualBrush.Visual>
+                                                                                                    <TextBlock TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Text="&#xEA86;"/>
+                                                                                                </VisualBrush.Visual>
+                                                                                            </VisualBrush>
+                                                                                        </GeometryDrawing.Brush>
+                                                                                        <GeometryDrawing.Geometry>
+                                                                                            <RectangleGeometry Rect="0,0,20,20"/>
+                                                                                        </GeometryDrawing.Geometry>
+                                                                                    </GeometryDrawing>
+                                                                                </DrawingImage.Drawing>
+                                                                            </DrawingImage>
+                                                                        </Image.Source>
+                                                                    </Image>-->
+                                                                </Grid>
                                                             </Border>
                                                             <Grid Margin="10">
-                                                                <DockPanel VerticalAlignment="Top">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition Height="Auto"/>
+                                                                    <RowDefinition/>
+                                                                    <RowDefinition Height="Auto"/>
+                                                                </Grid.RowDefinitions>
+                                                                <DockPanel Grid.Row="0">
                                                                     <TextBlock Foreground="{StaticResource FontBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Name}" Margin="0,0,5,0"/>
                                                                     <TextBlock Text="{Binding Version}" Height="Auto" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
                                                                 </DockPanel>
-                                                                <TextBlock Text="{Binding Description}" Margin="0,17.5,0,25" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
-                                                                <DockPanel LastChildFill="False" VerticalAlignment="Bottom" Visibility="{Binding IsEnabled, Converter={StaticResource NullToVisibility}}">
-                                                                    <ToggleButton DockPanel.Dock="Right" Content="&#xe8ad;" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
+                                                                <TextBlock Grid.Row="1" Text="{Binding Description}" Height="Auto" VerticalAlignment="Stretch" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>
+                                                                <DockPanel Grid.Row="2" LastChildFill="False">
+                                                                    <!--<TextBlock Text="Manifest Version 3" DockPanel.Dock="Left" Height="Auto" VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis" TextWrapping="WrapWithOverflow" Foreground="{StaticResource GrayBrush}"/>-->
+                                                                    <Button Visibility="{Binding IsEnabled, Converter={StaticResource NullToVisibility}}" Margin="0" DockPanel.Dock="Left" Click="ExtensionRemoveButton_Click" ToolTip="Remove" Content="&#xe711;" Style="{StaticResource ToolBarIconButton}"/>
+                                                                    <Button Visibility="{Binding IsEnabled, Converter={StaticResource OppositeNullToVisibility}}" Margin="0" DockPanel.Dock="Left" Click="HyperlinkButton_Click" Tag="chrome://extensions" ToolTip="Settings" Content="&#xe713;" Style="{StaticResource ToolBarIconButton}"/>
+                                                                    <ToggleButton Visibility="{Binding IsEnabled, Converter={StaticResource NullToVisibility}}" DockPanel.Dock="Right" Content="&#xe8ad;" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
                                                                 </DockPanel>
                                                             </Grid>
                                                         </DockPanel>

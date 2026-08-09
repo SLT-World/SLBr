@@ -9,8 +9,10 @@
     <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility"/>
     <controls:InvertBooleanConverter x:Key="InvertBoolean"/>
     <controls:NullToVisibilityConverter x:Key="NullToVisibility"/>
+    <controls:NullToVisibilityConverter x:Key="OppositeNullToVisibility" Invert="True"/>
     <controls:SubtractConverter x:Key="Subtract"/>
     <controls:LessThanConverter x:Key="WidthLessThan60" Threshold="60"/>
+    <controls:TextIconToBooleanConverter x:Key="TextIconToBoolean"/>
 
     <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderBrushColor}"/>
     <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryBrushColor}"/>
@@ -1839,9 +1841,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <ControlTemplate 
-    x:Key="{x:Static MenuItem.TopLevelItemTemplateKey}" 
-    TargetType="{x:Type MenuItem}">
+    <ControlTemplate x:Key="{x:Static MenuItem.TopLevelItemTemplateKey}" TargetType="{x:Type MenuItem}">
         <Border Name="Border">
             <Grid>
                 <ContentPresenter Margin="6,3,6,3" ContentSource="Header" RecognizesAccessKey="True"/>
@@ -1913,26 +1913,29 @@
                     <ColumnDefinition Width="13"/>
                 </Grid.ColumnDefinitions>
                 <Border x:Name="Icon" Width="30" Height="30" Margin="2.5,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5" VerticalAlignment="Center">
-                    <ContentPresenter Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" ContentSource="Icon" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}">
-                        <ContentPresenter.Resources>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <Trigger Property="IsEnabled" Value="False">
-                                        <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
-                                    </Trigger>
-                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2600;">
-                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2601;">
-                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2602;">
-                                        <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ContentPresenter.Resources>
-                    </ContentPresenter>
+                    <Grid>
+                        <ContentPresenter x:Name="TextIconHost" Margin="0" TextBlock.FontSize="18" TextBlock.FontWeight="UltraLight" VerticalAlignment="Center" TextBlock.TextAlignment="Center" HorizontalAlignment="Center" Content="{TemplateBinding Icon}" TextOptions.TextFormattingMode="Ideal" TextBlock.FontFamily="{StaticResource IconFontFamily}">
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Foreground" Value="{DynamicResource BorderBrush}"/>
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2600;">
+                                            <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2601;">
+                                            <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Content, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="&#x2602;">
+                                            <Setter Property="FontFamily" Value="pack://application:,,,/SLBr;component/Fonts/#SLBr Icons"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
+                        <Image x:Name="ImageIconHost" VerticalAlignment="Center" HorizontalAlignment="Center" Height="20" Width="20" Stretch="Uniform" Visibility="Collapsed" RenderOptions.BitmapScalingMode="LowQuality" Source="{Binding Path=Icon, RelativeSource={RelativeSource TemplatedParent}}"/>
+                    </Grid>
                 </Border>
                 <Border Name="Check" Width="20" Height="20" Visibility="Collapsed" VerticalAlignment="Center" Margin="5,0" Background="{DynamicResource PrimaryBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="5">
                     <TextBlock Opacity="1" x:Name="Checkmark" Padding="0" FontWeight="UltraBold" FontSize="14" TextAlignment="Center" TextOptions.TextFormattingMode="Ideal" FontFamily="{StaticResource IconFontFamily}" Foreground="{DynamicResource PrimaryBrush}" Text="&#xe73e;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -1994,6 +1997,12 @@
             <Trigger Property="Icon" Value="None">
                 <Setter TargetName="Icon" Property="Visibility" Value="Collapsed"/>
             </Trigger>
+
+            <DataTrigger Binding="{Binding Icon, RelativeSource={RelativeSource Self}, Converter={StaticResource TextIconToBoolean}}" Value="False">
+                <Setter TargetName="TextIconHost" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="ImageIconHost" Property="Visibility" Value="Visible"/>
+            </DataTrigger>
+
             <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="Check" Property="BorderThickness" Value="0"/>
                 <Setter TargetName="Check" Property="Background" Value="{DynamicResource IndicatorBrush}"/>

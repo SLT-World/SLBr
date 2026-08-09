@@ -297,10 +297,18 @@
                                 </ContextMenu.ItemContainerStyle>-->
                                 <ContextMenu.ItemContainerStyle>
                                     <Style TargetType="MenuItem">
-                                        <Setter Property="Icon" Value="&#xEA86;"/>
+                                        <!--TODO: Remove fixed width, resolve non-functional ellipsis.-->
+                                        <Setter Property="Width" Value="237.5"/>
+                                        <Setter Property="Icon" Value="{Binding ActionIcon, TargetNullValue='&#xEA86;'}"/>
                                         <Setter Property="Header" Value="{Binding Name}"/>
                                         <Setter Property="Tag" Value="{Binding ID}"/>
+                                        <Setter Property="Visibility" Value="{Binding IsEnabled, Converter={StaticResource BooleanToVisibility}}" />
                                         <EventSetter Event="Click" Handler="LoadExtensionPopup"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEnabled}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
                                     </Style>
                                 </ContextMenu.ItemContainerStyle>
                             </ContextMenu>

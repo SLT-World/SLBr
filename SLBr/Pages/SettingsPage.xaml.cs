@@ -5,6 +5,7 @@ using CefSharp;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using SLBr.Controls;
+using SLBr.Extensions;
 using SLBr.WebView;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -17,7 +18,6 @@ using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
@@ -1223,16 +1223,39 @@ namespace SLBr.Pages
             }
         }
 
-        private void ExtensionToggleButton_Click(object sender, RoutedEventArgs e)
+        private void PDFToggleButton_Click(object sender, RoutedEventArgs e)
         {
             if (SettingsInitialized)
             {
-                ToggleButton Target = (ToggleButton)sender;
-                if (Target.Tag.ToString().Split("<,>", StringSplitOptions.None)[0] == "PDF")
+                WebViewManager.RuntimeSettings.PDFViewer = PDFViewerToggleButton.IsChecked.GetValueOrDefault();
+                App.Instance.GlobalSave.Set("PDF", WebViewManager.RuntimeSettings.PDFViewer);
+            }
+        }
+
+        private async void ExtensionRefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                ExtensionRefreshButton.IsEnabled = false;
+                switch (BrowserView.WebView.Engine)
                 {
-                    WebViewManager.RuntimeSettings.PDFViewer = Target.IsChecked.GetValueOrDefault();
-                    App.Instance.GlobalSave.Set("PDF", WebViewManager.RuntimeSettings.PDFViewer);
+                    case WebEngineType.Chromium:
+                        await App.Instance.ExtensionManager.LoadCEFExtensions();
+                        break;
+                    case WebEngineType.ChromiumEdge:
+                        await App.Instance.ExtensionManager.LoadWebView2Extensions();
+                        break;
                 }
+                ExtensionRefreshButton.IsEnabled = true;
+            }
+        }
+
+        private void ExtensionRemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SettingsInitialized)
+            {
+                if (sender is Button _Button && _Button.DataContext is Extension ExtensionEntry)
+                    App.Instance.ExtensionManager.UninstallExtension(ExtensionEntry);
             }
         }
 

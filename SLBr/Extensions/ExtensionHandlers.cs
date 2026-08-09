@@ -92,8 +92,8 @@ namespace SLBr.Extensions
             }
         }
 
-        private string _ActionIcon;
-        public string ActionIcon
+        private string? _ActionIcon;
+        public string? ActionIcon
         {
             get { return _ActionIcon; }
             set
@@ -120,6 +120,8 @@ namespace SLBr.Extensions
         private ObservableCollection<Extension> CEFExtensions = [];
         private ObservableCollection<Extension> WebView2Extensions = [];
 
+        //public bool SupportFirefoxExtensions = true;
+
         public ObservableCollection<Extension>? GetExtensions(WebEngineType Engine)
         {
             return Engine switch
@@ -145,7 +147,7 @@ namespace SLBr.Extensions
 
         public async Task LoadCEFExtensions()
         {
-            if (WebViewManager.CEFExtensionsPath == null)
+            if (string.IsNullOrEmpty(WebViewManager.CEFExtensionsPath))
                 return;
             List<Extension> Results = await Cef.UIThreadTaskFactory.StartNew(() =>
             {
@@ -158,8 +160,7 @@ namespace SLBr.Extensions
                     {
                         foreach (KeyValuePair<string, object> KeyValue in SettingsData)
                         {
-                            IDictionary<string, object>? ExtensionData = KeyValue.Value as IDictionary<string, object>;
-                            if (ExtensionData == null)
+                            if (KeyValue.Value is not IDictionary<string, object> ExtensionData)
                                 continue;
                             if (ExtensionData.TryGetValue("creation_flags", out var CreationProperty) && CreationProperty is int Creation && Creation == 1)
                                 continue;
@@ -173,6 +174,19 @@ namespace SLBr.Extensions
                                     ID = KeyValue.Key,
                                     IsEnabled = null
                                 };
+                                /*TODO: Implement CefPreferenceManager.AddPreferenceObserver.
+                                 * https://github.com/cefsharp/CefSharp/pull/5279
+                                 * 
+                                 * https://github.com/chromiumembedded/cef/blob/master/include/cef_preference.h
+                                 * https://github.com/cefsharp/CefSharp/blob/master/CefSharp.Core.Runtime/RequestContext.cpp
+                                 * IsEnabled is to be determined via accessing "disable_reasons" preference.
+                                 * AddPreferenceObserver is required in the detection of any modifications to this preference.
+                                 * "disable_reasons" is an array instance.
+                                 * Integers are contained within when extension is disabled.
+                                 * https://source.chromium.org/chromium/chromium/src/+/main:extensions/browser/disable_reason.h
+                                 * 
+                                 * In addition, AddPreferenceObserver may aid in the detection of new or removed extensions, though further testing is required.
+                                 */
                                 if (ExtensionData.TryGetValue("manifest", out var ManifestProperty) && ManifestProperty is IDictionary<string, object> ManifestData)
                                 {
                                     if (ManifestData.TryGetValue("name", out var NameProperty))
@@ -195,75 +209,7 @@ namespace SLBr.Extensions
                                     }
                                 }
                                 else
-                                {
-                                    string ManifestPath = Path.Combine(ExtensionPath, "manifest.json");
-                                    if (File.Exists(ManifestPath))
-                                    {
-                                        using JsonDocument Document = JsonDocument.Parse(File.ReadAllText(ManifestPath));
-                                        JsonElement Manifest = Document.RootElement;
-                                        if (Manifest.TryGetProperty("version", out JsonElement VersionProperty))
-                                            _Extension.Version = VersionProperty.GetString();
-                                        if (Manifest.TryGetProperty("action", out JsonElement ExtensionAction))
-                                        {
-                                            if (ExtensionAction.TryGetProperty("default_popup", out JsonElement ExtensionPopup))
-                                                _Extension.ActionPopup = $"chrome-extension://{_Extension.ID}/{ExtensionPopup.GetString()}";
-                                            else if (ExtensionAction.TryGetProperty("default_icon", out JsonElement IconProperty))
-                                            {
-                                                JsonProperty FirstIcon = IconProperty.EnumerateObject().OrderBy(i => int.Parse(i.Name)).FirstOrDefault();
-                                                _Extension.ActionIcon = Path.Combine(ExtensionPath, FirstIcon.Value.GetString());
-                                            }
-                                        }
-                                        List<string> VarsInMessages = [];
-                                        if (Manifest.TryGetProperty("name", out JsonElement NameProperty))
-                                        {
-                                            string Name = NameProperty.GetString();
-                                            if (Name.StartsWith("__MSG_"))
-                                                VarsInMessages.Add($"Name<|>{Name}");
-                                            else
-                                                _Extension.Name = Name;
-                                        }
-                                        if (Manifest.TryGetProperty("description", out JsonElement DescriptionProperty))
-                                        {
-                                            string Description = DescriptionProperty.GetString();
-                                            if (Description.StartsWith("__MSG_"))
-                                                VarsInMessages.Add($"Description<|>{Description}");
-                                            else
-                                                _Extension.Description = Description;
-                                        }
-
-                                        foreach (string Var in VarsInMessages)
-                                        {
-                                            string _Locale = "en";
-                                            string[] LocalesDirectory = Directory.GetDirectories(Path.Combine(ExtensionPath, "_locales"));
-                                            foreach (string LocaleDirectory in LocalesDirectory)
-                                            {
-                                                string CompareLocale = App.Instance.Locale.Name.Replace("-", "_");
-                                                if (Path.GetFileName(LocaleDirectory) == CompareLocale)
-                                                {
-                                                    _Locale = CompareLocale;
-                                                    break;
-                                                }
-                                            }
-                                            string[] MessagesFiles = Directory.GetFiles(Path.Combine(ExtensionPath, "_locales", _Locale), "messages.json", SearchOption.TopDirectoryOnly);
-                                            foreach (string MessagesFile in MessagesFiles)
-                                            {
-                                                using JsonDocument MDocument = JsonDocument.Parse(File.ReadAllText(MessagesFile));
-                                                JsonElement Messages = MDocument.RootElement;
-                                                string[] Vars = Var.Split("<|>");
-                                                if (Vars[0] == "Description")
-                                                {
-                                                    _Extension.Description = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
-                                                    break;
-                                                }
-                                                else if (Vars[0] == "Name")
-                                                {
-                                                    _Extension.Name = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                    SetManifest(_Extension, Path.Combine(ExtensionPath, "manifest.json"));
                                 List.Add(_Extension);
                             }
                         }
@@ -297,21 +243,9 @@ namespace SLBr.Extensions
         public async Task LoadWebView2Extensions()
         {
             List<Extension> Results = [];
-            if (WebViewManager.WebView2ExtensionsPath == null)
+            if (string.IsNullOrEmpty(WebViewManager.WebView2ExtensionsPath))
                 return;
-
-            if (WebViewManager.HeadlessEdgeCore == null || WebViewManager.HeadlessEdgeController == null)
-                await WebViewManager.CreateHeadlessWebView2();
-
-            try
-            {
-                _ = WebViewManager.HeadlessEdgeCore.Profile;
-            }
-            catch (InvalidOperationException)
-            {
-                WebViewManager.HeadlessEdgeController?.Close();
-                await WebViewManager.CreateHeadlessWebView2();
-            }
+            await WebViewManager.CheckHeadlessWebView2Availability();
             CoreWebView2Profile Profile = WebViewManager.HeadlessEdgeCore.Profile;
             try
             {
@@ -333,79 +267,24 @@ namespace SLBr.Extensions
                         Name = WebView2Extension.Name,
                     };
                     string ProfilePath = Path.Combine(WebViewManager.WebView2ExtensionsPath, _Extension.ID);
-                    if (Directory.Exists(ProfilePath))
+                    if (!Directory.Exists(ProfilePath) && !string.IsNullOrEmpty(WebViewManager.WebView2UnpackedExtensionsPath))
                     {
-                        string? ExtensionPath = Directory.GetDirectories(ProfilePath).FirstOrDefault();
-                        if (!Directory.Exists(ExtensionPath))
-                            ExtensionPath = ProfilePath;
-                        string ManifestPath = Path.Combine(ExtensionPath, "manifest.json");
-                        if (File.Exists(ManifestPath))
+                        foreach (string UnpackedPath in Directory.GetDirectories(WebViewManager.WebView2UnpackedExtensionsPath))
                         {
-                            using JsonDocument Document = JsonDocument.Parse(File.ReadAllText(ManifestPath));
-                            JsonElement Manifest = Document.RootElement;
-                            if (Manifest.TryGetProperty("version", out JsonElement VersionProperty))
-                                _Extension.Version = VersionProperty.GetString();
-                            if (Manifest.TryGetProperty("action", out JsonElement ExtensionAction))
+                            if (_Extension.ID == GenerateUnpackedExtensionID(UnpackedPath))
                             {
-                                if (ExtensionAction.TryGetProperty("default_popup", out JsonElement ExtensionPopup))
-                                    _Extension.ActionPopup = $"chrome-extension://{_Extension.ID}/{ExtensionPopup.GetString()}";
-                                else if (ExtensionAction.TryGetProperty("default_icon", out JsonElement IconProperty))
-                                {
-                                    JsonProperty FirstIcon = IconProperty.EnumerateObject().OrderBy(i => int.Parse(i.Name)).FirstOrDefault();
-                                    _Extension.ActionIcon = Path.Combine(ExtensionPath, FirstIcon.Value.GetString());
-                                }
-                            }
-                            List<string> VarsInMessages = [];
-                            if (Manifest.TryGetProperty("name", out JsonElement NameProperty))
-                            {
-                                string Name = NameProperty.GetString();
-                                if (Name.StartsWith("__MSG_"))
-                                    VarsInMessages.Add($"Name<|>{Name}");
-                                else
-                                    _Extension.Name = Name;
-                            }
-                            if (Manifest.TryGetProperty("description", out JsonElement DescriptionProperty))
-                            {
-                                string Description = DescriptionProperty.GetString();
-                                if (Description.StartsWith("__MSG_"))
-                                    VarsInMessages.Add($"Description<|>{Description}");
-                                else
-                                    _Extension.Description = Description;
-                            }
-
-                            foreach (string Var in VarsInMessages)
-                            {
-                                string _Locale = "en";
-                                string[] LocalesDirectory = Directory.GetDirectories(Path.Combine(ExtensionPath, "_locales"));
-                                foreach (string LocaleDirectory in LocalesDirectory)
-                                {
-                                    string CompareLocale = App.Instance.Locale.Name.Replace("-", "_");
-                                    if (Path.GetFileName(LocaleDirectory) == CompareLocale)
-                                    {
-                                        _Locale = CompareLocale;
-                                        break;
-                                    }
-                                }
-                                string[] MessagesFiles = Directory.GetFiles(Path.Combine(ExtensionPath, "_locales", _Locale), "messages.json", SearchOption.TopDirectoryOnly);
-                                foreach (string MessagesFile in MessagesFiles)
-                                {
-                                    using JsonDocument MDocument = JsonDocument.Parse(File.ReadAllText(MessagesFile));
-                                    JsonElement Messages = MDocument.RootElement;
-                                    string[] Vars = Var.Split("<|>");
-                                    if (Vars[0] == "Description")
-                                    {
-                                        _Extension.Description = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
-                                        break;
-                                    }
-                                    else if (Vars[0] == "Name")
-                                    {
-                                        _Extension.Name = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
-                                        break;
-                                    }
-                                }
+                                ProfilePath = UnpackedPath;
+                                break;
                             }
                         }
                     }
+                    if (Directory.Exists(ProfilePath))
+                    {
+                        string ExtensionPath = ProfilePath;
+                        if (!File.Exists(Path.Combine(ProfilePath, "manifest.json")))
+                            ExtensionPath = Directory.GetDirectories(ProfilePath).FirstOrDefault(i => File.Exists(Path.Combine(i, "manifest.json"))) ?? ProfilePath;
+                        SetManifest(_Extension, Path.Combine(ExtensionPath, "manifest.json"));
+        }
                     Results.Add(_Extension);
                 }
             }
@@ -413,22 +292,12 @@ namespace SLBr.Extensions
             WebView2Extensions.Clear();
             foreach (Extension _Extension in Results)
                 WebView2Extensions.Add(_Extension);
-            /*if (Directory.Exists(WebViewManager.WebView2ExtensionsPath))
+        }
+
+        public void SetManifest(Extension _Extension, string ManifestPath)
+        {
+            try
             {
-                string[] ExtensionsDirectory = Directory.GetDirectories(WebViewManager.WebView2ExtensionsPath);
-                foreach (string ExtensionParentDirectory in ExtensionsDirectory)
-                {
-                    try
-                    {
-                        Extension _Extension = new()
-                        {
-                            ID = Path.GetFileName(ExtensionParentDirectory),
-                            IsEnabled = true
-                        };
-                        string ExtensionPath = Directory.EnumerateDirectories(ExtensionParentDirectory).FirstOrDefault();
-                        if (!Directory.Exists(ExtensionPath))
-                            ExtensionPath = ExtensionParentDirectory;
-                        string ManifestPath = Path.Combine(ExtensionPath, "manifest.json");
                         if (File.Exists(ManifestPath))
                         {
                             using JsonDocument Document = JsonDocument.Parse(File.ReadAllText(ManifestPath));
@@ -437,36 +306,40 @@ namespace SLBr.Extensions
                                 _Extension.Version = VersionProperty.GetString();
                             if (Manifest.TryGetProperty("action", out JsonElement ExtensionAction))
                             {
-                                if (ExtensionAction.TryGetProperty("default_popup", out JsonElement ExtensionPopup))
-                                    _Extension.ActionPopup = $"chrome-extension://{_Extension.ID}/{ExtensionPopup.GetString()}";
-                                else if (ExtensionAction.TryGetProperty("default_icon", out JsonElement IconProperty))
+                        if (ExtensionAction.TryGetProperty("default_popup", out JsonElement ExtensionPopup) && ExtensionPopup.GetString() is string PopupUrl)
+                            _Extension.ActionPopup = $"chrome-extension://{_Extension.ID}/{PopupUrl}";
+                        if (ExtensionAction.TryGetProperty("default_icon", out JsonElement IconProperty))
                                 {
-                                    JsonProperty FirstIcon = IconProperty.EnumerateObject().OrderBy(i => int.Parse(i.Name)).FirstOrDefault();
-                                    _Extension.ActionIcon = Path.Combine(ExtensionPath, FirstIcon.Value.GetString());
-                                }
-                            }
-                            List<string> VarsInMessages = [];
-                            if (Manifest.TryGetProperty("name", out JsonElement NameProperty))
+                            if (IconProperty.ValueKind == JsonValueKind.Object)
                             {
-                                string Name = NameProperty.GetString();
+                                JsonProperty? FirstIcon = IconProperty.EnumerateObject().OrderByDescending(i => int.Parse(i.Name)).FirstOrDefault();
+                                if (FirstIcon.HasValue && FirstIcon.Value.Value.GetString() is string IconUrl)
+                                    _Extension.ActionIcon = Path.Combine(_Extension.LocalPath, IconUrl);
+                                }
+                            else if (IconProperty.ValueKind == JsonValueKind.String && IconProperty.GetString() is string IconUrl)
+                                _Extension.ActionIcon = Path.Combine(_Extension.LocalPath, IconUrl);
+                            }
+                    }
+                    Dictionary<string, string> MessageVariables = [];
+                    if (Manifest.TryGetProperty("name", out JsonElement NameProperty) && NameProperty.GetString() is string Name)
+                            {
                                 if (Name.StartsWith("__MSG_"))
-                                    VarsInMessages.Add($"Name<|>{Name}");
+                            MessageVariables.Add("Name", Name[5..].Trim('_'));
                                 else
                                     _Extension.Name = Name;
                             }
-                            if (Manifest.TryGetProperty("description", out JsonElement DescriptionProperty))
+                    if (Manifest.TryGetProperty("description", out JsonElement DescriptionProperty) && DescriptionProperty.GetString() is string Description)
                             {
-                                string Description = DescriptionProperty.GetString();
                                 if (Description.StartsWith("__MSG_"))
-                                    VarsInMessages.Add($"Description<|>{Description}");
+                            MessageVariables.Add("Description", Description[5..].Trim('_'));
                                 else
                                     _Extension.Description = Description;
                             }
 
-                            foreach (string Var in VarsInMessages)
+                    if (MessageVariables.Count != 0)
                             {
                                 string _Locale = "en";
-                                string[] LocalesDirectory = Directory.GetDirectories(Path.Combine(ExtensionPath, "_locales"));
+                        string[] LocalesDirectory = Directory.GetDirectories(Path.Combine(_Extension.LocalPath, "_locales"));
                                 foreach (string LocaleDirectory in LocalesDirectory)
                                 {
                                     string CompareLocale = App.Instance.Locale.Name.Replace("-", "_");
@@ -476,45 +349,82 @@ namespace SLBr.Extensions
                                         break;
                                     }
                                 }
-                                string[] MessagesFiles = Directory.GetFiles(Path.Combine(ExtensionPath, "_locales", _Locale), "messages.json", SearchOption.TopDirectoryOnly);
-                                foreach (string MessagesFile in MessagesFiles)
+                        string LocaleMessagesPath = Path.Combine(_Extension.LocalPath, "_locales", _Locale, "messages.json");
+                        if (File.Exists(LocaleMessagesPath))
                                 {
-                                    using JsonDocument MDocument = JsonDocument.Parse(File.ReadAllText(MessagesFile));
-                                    JsonElement Messages = MDocument.RootElement;
-                                    string[] Vars = Var.Split("<|>");
-                                    if (Vars[0] == "Description")
+                            using JsonDocument MessagesDocument = JsonDocument.Parse(File.ReadAllText(LocaleMessagesPath));
+                            JsonElement Messages = MessagesDocument.RootElement;
+                            foreach (KeyValuePair<string, string> KVP in MessageVariables)
                                     {
-                                        _Extension.Description = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
+                                switch (KVP.Key)
+                                    {
+                                    case "Description":
+                                        _Extension.Description = Messages.GetProperty(KVP.Value).GetProperty("message").ToString();
                                         break;
-                                    }
-                                    else if (Vars[0] == "Name")
-                                    {
-                                        _Extension.Name = Messages.GetProperty(Vars[1][5..].Trim('_')).GetProperty("message").ToString();
+                                    case "Name":
+                                        _Extension.Name = Messages.GetProperty(KVP.Value).GetProperty("message").ToString();
                                         break;
                                     }
                                 }
                             }
                         }
-                        WebView2Extensions.Add(_Extension);
                     }
-                    catch { }
                 }
-            }*/
+            catch { }
         }
 
         public async Task ToggleExtension(Extension _Extension, bool Enable)
-        {
-            if (_Extension.IsEnabled != Enable)
-                _Extension.IsEnabled = Enable;
-            else
             {
-                if (_Extension.EngineType == WebEngineType.ChromiumEdge)
+            try
+            {
+                if (_Extension.IsEnabled != Enable)
+                    _Extension.IsEnabled = Enable;
+                else
                 {
-                    CoreWebView2Profile Profile = WebViewManager.HeadlessEdgeCore.Profile;
-                    IReadOnlyList<CoreWebView2BrowserExtension> WebView2InternalExtensions = await Profile.GetBrowserExtensionsAsync();
-                    await WebView2InternalExtensions.FirstOrDefault(i => i.Id == _Extension.ID)?.EnableAsync(Enable);
+                    if (_Extension.EngineType == WebEngineType.ChromiumEdge)
+                    {
+                        await WebViewManager.CheckHeadlessWebView2Availability();
+                        CoreWebView2Profile Profile = WebViewManager.HeadlessEdgeCore.Profile;
+                        IReadOnlyList<CoreWebView2BrowserExtension> WebView2InternalExtensions = await Profile.GetBrowserExtensionsAsync();
+                        await WebView2InternalExtensions.FirstOrDefault(i => i.Id == _Extension.ID)?.EnableAsync(Enable);
+                    }
                 }
             }
+            catch { }
+        }
+
+        public async Task UninstallExtension(Extension _Extension)
+                {
+                    try
+                    {
+                if (_Extension.EngineType == WebEngineType.ChromiumEdge)
+                        {
+                    await WebViewManager.CheckHeadlessWebView2Availability();
+                    CoreWebView2Profile Profile = WebViewManager.HeadlessEdgeCore.Profile;
+                    IReadOnlyList<CoreWebView2BrowserExtension> WebView2InternalExtensions = await Profile.GetBrowserExtensionsAsync();
+                    await WebView2InternalExtensions.FirstOrDefault(i => i.Id == _Extension.ID)?.RemoveAsync();
+                    WebView2Extensions.Remove(_Extension);
+                }
+            }
+            catch { }
+        }
+
+        public static string GenerateUnpackedExtensionID(string Directory) =>
+            GenerateExtensionID(Encoding.Unicode.GetBytes(Path.GetFullPath(Directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)));
+
+        private static string GenerateExtensionID(byte[] KeyBytes)
+                                    {
+            //https://source.chromium.org/chromium/chromium/src/+/main:components/crx_file/id_util.cc
+            byte[] HashBytes = SHA256.HashData(KeyBytes);
+
+            StringBuilder ID = new(32);
+            for (int i = 0; i < 16; i++)
+                {
+                byte Byte = HashBytes[i];
+                ID.Append((char)('a' + ((Byte >> 4) & 0x0F)));
+                ID.Append((char)('a' + (Byte & 0x0F)));
+            }
+            return ID.ToString();
         }
 
         #region Popup

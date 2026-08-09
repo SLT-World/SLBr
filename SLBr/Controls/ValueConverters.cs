@@ -33,6 +33,24 @@ namespace SLBr.Controls
             throw new NotImplementedException();
     }
 
+    public class TextIconToBooleanConverter : IValueConverter
+    {
+        public bool Invert { get; set; } = false;
+        public object Convert(object Value, Type TargetType, object Parameter, CultureInfo Culture)
+        {
+            string? Str = Value as string;
+            if (string.IsNullOrEmpty(Str)) return Invert;
+
+            char FirstCharacter = Str[0];
+            bool Result = Str.Length == 1 || (FirstCharacter >= 0xE000 && FirstCharacter <= 0xF8FF) || (FirstCharacter >= 0x2600 && FirstCharacter <= 0x26FF);
+
+            return Invert ? !Result : Result;
+        }
+
+        public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
+            throw new NotImplementedException();
+    }
+
     public class BooleanToVisibilityConverter : IValueConverter
     {
         public bool Invert { get; set; } = false;
@@ -44,8 +62,9 @@ namespace SLBr.Controls
     }
     public class NullToVisibilityConverter : IValueConverter
     {
+        public bool Invert { get; set; } = false;
         public object Convert(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
-            Value != null ? Visibility.Visible : Visibility.Collapsed;
+            (Invert ? Value == null : Value != null) ? Visibility.Visible : Visibility.Collapsed;
         public object ConvertBack(object Value, Type TargetType, object Parameter, CultureInfo Culture) =>
             throw new NotImplementedException();
     }
