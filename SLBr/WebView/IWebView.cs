@@ -3429,7 +3429,12 @@ namespace SLBr.WebView
 
         public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, string.Empty);
 
-        public void ExecuteScript(string Script) => Browser.ExecuteScriptAsync(Script);
+        public void ExecuteScript(string Script)
+        {
+            if (BrowserCore == null)
+                return;
+            Browser?.ExecuteScriptAsync(Script);
+        }
         public bool CanExecuteJavascript => BrowserCore != null;
 
         public async Task<object?> EvaluateScriptAsync(string Script)

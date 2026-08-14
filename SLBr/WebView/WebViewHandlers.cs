@@ -141,6 +141,13 @@ namespace SLBr.WebView
                 CEFExtensionsPath = Path.Combine(Settings.UserDataPath, "Default", "Extensions");
             }
 
+            if (Settings.ExtensionsPath != null)
+            {
+                CEFUnpackedExtensionsPath = Path.Combine(Settings.ExtensionsPath, "CEF");
+                if (!Directory.Exists(CEFUnpackedExtensionsPath))
+                    Directory.CreateDirectory(CEFUnpackedExtensionsPath);
+            }
+
             ChromiumSettings.CefCommandLineArgs.Remove("disable-back-forward-cache");
             //NOTE: Resolved in https://github.com/cefsharp/CefSharp/pull/5245
             //ChromiumSettings.AddNoErrorFlag("disable-features", "EnableHangWatcher,GlicActorUi,AutofillActorMode,LensOverlay");
@@ -174,7 +181,7 @@ namespace SLBr.WebView
                 GlobalRequestContext.SetPreference("download.open_pdf_in_system_reader", !RuntimeSettings.PDFViewer, out _);
 
                 //GlobalRequestContext.SetPreference("browser.theme.color_scheme", 0, out _);
-                GlobalRequestContext.SetPreference("compact_mode", true, out _);
+                //GlobalRequestContext.SetPreference("compact_mode", true, out _);
                 GlobalRequestContext.SetPreference("history.saving_disabled", true, out _);
                 GlobalRequestContext.SetPreference("profile.content_settings.enable_cpss.geolocation", false, out _);
                 //GlobalRequestContext.SetPreference("accessibility.captions.live_caption_enabled", false, out _);
@@ -183,32 +190,37 @@ namespace SLBr.WebView
                 GlobalRequestContext.SetPreference("autofill.profile_enabled", false, out _);
                 GlobalRequestContext.SetPreference("autofill.credit_card_enabled", false, out _);
 
-                /*string GetPreferencesString(string _String, string Parents, KeyValuePair<string, object> ObjectPair)
+                /*void BuildPreferencesString(StringBuilder Builder, string ParentPath, string CurrentKey, object Value)
                 {
-                    if (ObjectPair.Value is System.Dynamic.ExpandoObject _Expando)
+                    string FullPath = string.IsNullOrEmpty(ParentPath) ? CurrentKey : $"{ParentPath}.{CurrentKey}";
+                    if (Value is System.Dynamic.ExpandoObject Expando)
                     {
-                        foreach (KeyValuePair<string, object> Property in (IDictionary<string, object>)_Expando)
-                            _String = $"{GetPreferencesString(_String, Parents + $"[{ObjectPair.Key}]", Property)}";
-                        if (string.IsNullOrEmpty(Parents))
-                            _String += "\n";
+                        foreach (KeyValuePair<string, object> Property in (IDictionary<string, object>)Expando)
+                            BuildPreferencesString(Builder, FullPath, Property.Key, Property.Value);
                     }
-                    else if (ObjectPair.Value is List<object> _List)
-                        _String += string.Join(", ", _List);
+                    else if (Value is System.Collections.IEnumerable List && Value is not string)
+                    {
+                        int Index = 0;
+                        foreach (object Item in List)
+                        {
+                            BuildPreferencesString(Builder, FullPath, $"[{Index}]", Item);
+                            Index++;
+                        }
+                    }
                     else
-                    {
-                        if (!string.IsNullOrEmpty(Parents))
-                            _String += $"{Parents}: ";
-                        _String += $"{ObjectPair.Key}: {ObjectPair.Value}\n";
-                    }
-                    return _String;
+                        Builder.AppendLine($"{FullPath}: {Value}");
                 }
 
                 //TODO: Investigate the absence of "net.happy_eyeballs_v3_enabled" https://source.chromium.org/chromium/chromium/src/+/main:chrome/common/pref_names.h;l=3033?q=HappyEyeballsV3
-                string _Preferences = string.Empty;
-                foreach (KeyValuePair<string, object> e in GlobalRequestContext.GetAllPreferences(true))
-                    _Preferences = GetPreferencesString(_Preferences, string.Empty, e);
-                using (StreamWriter OutputFile = new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WriteLines.txt")))
-                    OutputFile.Write(_Preferences);*/
+
+                IDictionary<string, object> Preferences = GlobalRequestContext.GetAllPreferences(true);
+                StringBuilder Builder = new();
+
+                foreach (KeyValuePair<string, object> Pair in Preferences)
+                    BuildPreferencesString(Builder, string.Empty, Pair.Key, Pair.Value);
+                File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WriteLines.txt"), Builder.ToString());*/
+
+                //File.WriteAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WriteLines.txt"), System.Text.Json.JsonSerializer.Serialize(GlobalRequestContext.GetAllPreferences(true), new System.Text.Json.JsonSerializerOptions { WriteIndented = true }), Encoding.UTF8);
 
                 GlobalRequestContext.SetPreference("download_bubble.partial_view_enabled", false, out _);
 
@@ -340,7 +352,9 @@ namespace SLBr.WebView
         }
 
         public static string? CEFExtensionsPath;
+        public static string? CEFUnpackedExtensionsPath;
         public static string? WebView2ExtensionsPath;
+        public static string? WebView2UnpackedExtensionsPath;
 
         private static Task<bool>? WebView2InitializeTask;
         private static readonly Lock WebView2InitializeLock = new();
@@ -361,7 +375,15 @@ namespace SLBr.WebView
         {
             if (IsWebView2Initialized)
                 return true;
-            WebView2ExtensionsPath = Path.Combine(Settings.UserDataPath, "EBWebView", "Default", "Extensions");
+            if (Settings.UserDataPath != null)
+                WebView2ExtensionsPath = Path.Combine(Settings.UserDataPath, "EBWebView", "Default", "Extensions");
+
+            if (Settings.ExtensionsPath != null)
+            {
+                WebView2UnpackedExtensionsPath = Path.Combine(Settings.ExtensionsPath, "WebView2");
+                if (!Directory.Exists(WebView2UnpackedExtensionsPath))
+                    Directory.CreateDirectory(WebView2UnpackedExtensionsPath);
+            }
             //https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags
             //msWebView2TreatAppSuspendAsDeviceSuspend
             List<CoreWebView2CustomSchemeRegistration> CustomSchemeRegistrations = [];
@@ -450,9 +472,8 @@ namespace SLBr.WebView
             }
         }
 
-        public static async Task InstallWebView2Extensions()
+        public static async Task CheckHeadlessWebView2Availability()
         {
-            if (WebView2Environment == null) return;
             if (HeadlessEdgeCore == null || HeadlessEdgeController == null)
                 await CreateHeadlessWebView2();
 
@@ -465,17 +486,26 @@ namespace SLBr.WebView
                 HeadlessEdgeController?.Close();
                 await CreateHeadlessWebView2();
             }
+        }
+
+        public static async Task InstallWebView2Extensions()
+        {
+            if (WebView2Environment == null) return;
+            await CheckHeadlessWebView2Availability();
 
             CoreWebView2Profile Profile = HeadlessEdgeCore.Profile;
-            if (Directory.Exists(WebView2ExtensionsPath))
+            if (!string.IsNullOrEmpty(WebView2ExtensionsPath) && !string.IsNullOrEmpty(WebView2UnpackedExtensionsPath))
             {
-                string[] ExtensionsDirectory = Directory.GetDirectories(WebView2ExtensionsPath);
+                List<string> ExtensionsDirectory = [];
+                if (Directory.Exists(WebView2ExtensionsPath))
+                    ExtensionsDirectory.AddRange(Directory.GetDirectories(WebView2ExtensionsPath));
+                if (Directory.Exists(WebView2UnpackedExtensionsPath))
+                    ExtensionsDirectory.AddRange(Directory.GetDirectories(WebView2UnpackedExtensionsPath));
                 foreach (string ProfilePath in ExtensionsDirectory)
                 {
-                    Debug.WriteLine(ProfilePath);
-                    string? ExtensionPath = Directory.GetDirectories(ProfilePath).FirstOrDefault();
-                    if (!Directory.Exists(ExtensionPath))
-                        ExtensionPath = ProfilePath;
+                    string ExtensionPath = ProfilePath;
+                    if (!File.Exists(Path.Combine(ProfilePath, "manifest.json")))
+                        ExtensionPath = Directory.GetDirectories(ProfilePath).FirstOrDefault(i => File.Exists(Path.Combine(i, "manifest.json"))) ?? ProfilePath;
                     if (ExtensionPath != null)
                     {
                         try
@@ -670,6 +700,7 @@ namespace SLBr.WebView
         public string[] Languages = [];
 
         public string? UserDataPath = null;
+        public string? ExtensionsPath = null;
         public string LogFile;
 
         public PerformancePreset Performance = PerformancePreset.Default;

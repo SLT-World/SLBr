@@ -25,6 +25,7 @@ See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Multiple Web Engines:** Choose between Chromium engine (CEF), Edge engine (WebView2), Internet Explorer engine (Trident).
 - **Ad & Tracker Blocking:** Browse with fewer ads & less tracking, customize ad block filter lists.
 - **Tab Layouts:** Choose vertical or horizontal tab alignment.
+- **Extension Support:** Supports extensions from Chrome Web Store, Edge Add-ons, and Firefox Add-ons.
 - **Tab Unloading:** Save memory by unloading inactive tabs
 - **Phishing & Malware Protection:** Protect against malicious websites & downloads with Google Safe Browsing, Yandex Safe Browsing & PhishTank.
 - **Web Page Translation:** Directly translate websites with Google, Microsoft, Yandex & Lingvanex providers.
@@ -33,7 +34,6 @@ See the full feature list, [here](https://slt-world.github.io/slbr/)
 - **Tab Groups:** Organize tabs with color-coding & naming.
 - **Profiles:** Browse with multiple profiles.
 - **Clipboard & Download Popup:** Attach recent images from the clipboard/downloads, inspired by Opera's Easy Files. (Only for the Chromium web engine)
-- **Extension Support:** Supports Chrome web store extensions. (Only for the Chromium web engine)
 
 ## Installation
 

@@ -319,7 +319,7 @@ namespace SLBr.Pages
                         }
                         if (CurrentWebAppManifest != null)
                         {
-                            InformationDialogWindow InfoWindow = new("Information", $"Install {CurrentWebAppManifest.ShortName ?? CurrentWebAppManifest.Name}", "This site can be installed as an application.", "\ueb3b", "Install", "Cancel")
+                            InformationDialogWindow InfoWindow = new("Confirmation", $"Install \"{CurrentWebAppManifest.ShortName ?? CurrentWebAppManifest.Name}\" Web App", "This site can be installed as an application.", "\ueb3b", "Install", "Cancel")
                             {
                                 Topmost = true
                             };
@@ -827,8 +827,9 @@ namespace SLBr.Pages
                 e.ModifiedHeaders["User-Agent"] = App.Instance.UserAgent;
                 e.ModifiedHeaders["Sec-Ch-Ua"] = App.Instance.UserAgentBrandsString;
             }
-            if (e.Url.StartsWith("https://addons.mozilla.org/en-US/firefox/addon/"))/*App.Instance.ExtensionManager.SupportFirefoxExtensions && */
-                e.ModifiedHeaders["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:153.0) Gecko/20100101 Firefox/153.0";
+
+            if (e.Url.StartsWith("https://addons.mozilla.org/en-US/firefox/addon/"))
+                e.ModifiedHeaders["User-Agent"] = App.Instance.FirefoxUserAgent;
             if (ProprietaryCodecsInfoBar == null && WebView.Engine == WebEngineType.Chromium && e.ResourceRequestType == ResourceRequestType.Media && Utils.IsProprietaryCodec(Utils.GetFileExtension(e.Url)))
             {
                 if (bool.Parse(App.Instance.GlobalSave.Get("WarnCodec")))
@@ -1191,8 +1192,18 @@ namespace SLBr.Pages
             BrowserLoadChanged(Address, IsLoading, e.HttpStatusCode);
             if (WebView?.CanExecuteJavascript ?? false)
             {
-                if (Address.StartsWith("https://chromewebstore.google.com/detail"))
-                    WebView?.ExecuteScript(Scripts.WebStoreScript);
+                if (Address.StartsWith("https://chromewebstore.google.com/detail/"))
+                    WebView?.ExecuteScript(Scripts.ChromeWebStoreScript);
+                else if (Address.StartsWith("https://microsoftedge.microsoft.com/addons/detail/"))
+                {
+                    WebView?.ExecuteScript(Scripts.WebStoreAPIScript);
+                    WebView?.ExecuteScript(Scripts.EdgeWebStoreScript);
+                }
+                else if (Address.StartsWith("https://addons.mozilla.org/en-US/firefox/addon/"))
+                {
+                    WebView?.ExecuteScript(Scripts.WebStoreAPIScript);
+                    WebView?.ExecuteScript(Scripts.FirefoxWebStoreScript);
+                }
             }
             if (!IsLoading)
             {
@@ -1377,7 +1388,7 @@ namespace SLBr.Pages
             catch { }
         }
 
-        private void WebView_JavaScriptMessageReceived(object? sender, string e)
+        private async void WebView_JavaScriptMessageReceived(object? sender, string e)
         {
             if (string.IsNullOrWhiteSpace(e))
                 return;
@@ -1392,6 +1403,160 @@ namespace SLBr.Pages
 
             switch (Value.ToString())
             {
+                case "__extension__":
+                    if (ExtensionFailInfoBar != null)
+                        LocalInfoBars.Remove(ExtensionFailInfoBar);
+                    bool Edge = false;
+                    bool Firefox = false;
+                    if (Address.StartsWith("https://microsoftedge.microsoft.com/addons/detail/"))
+                        Edge = true;
+                    else if (Address.StartsWith("https://addons.mozilla.org/en-US/firefox/addon/"))
+                        Firefox = true;
+                    if (Edge || Firefox)
+                    {
+                        string Task = Message["task"]?.ToString()!;
+                        string Payload = Message["data"]?.ToString()!;
+
+                        switch (Message["action"]?.ToString()!)
+                        {
+                            case "check":
+                                if (App.Instance.ReadOnlyInstance)
+                                    WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', false);");
+                                else
+                                    WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', {App.Instance.ExtensionManager.GetExtensions(WebView.Engine)?.Any(i => i.AlternateID == Payload).ToString().ToLower()});");
+                                    //WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', {App.Instance.ExtensionManager.GetExtensions(WebView.Engine)?.Any(i => i.ID == Payload || i.AlternateID == Payload).ToString().ToLower()});");
+                                break;
+                            case "install":
+                                if (App.Instance.ReadOnlyInstance)
+                                {
+                                    _ = Dispatcher.BeginInvoke(() =>
+                                    {
+                                        ExtensionFailInfoBar = new()
+                                        {
+                                            Icon = "\xea86",
+                                            Title = "Extension Installation Failed",
+                                            Description = [new() { Text = "Extensions cannot be installed in guest mode." }],
+                                        };
+                                        LocalInfoBars.Add(ExtensionFailInfoBar);
+                                    });
+                                    WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', false);");
+                                }
+                                else if (WebView.Engine == WebEngineType.Chromium)
+                                {
+                                    _ = Dispatcher.BeginInvoke(() =>
+                                    {
+                                        ExtensionFailInfoBar = new()
+                                        {
+                                            Icon = "\xea86",
+                                            Title = "Extension Installation Failed",
+                                            Description = [new() { Text = "Installation of extensions at runtime is not supported by Chromium (CEF). Do you want to switch to the Edge (WebView2) engine?" }],
+                                            Actions = [
+                                                new() { Text = "Switch", Background = (SolidColorBrush)FindResource("IndicatorBrush"), Foreground = App.Instance.WhiteColor, Command = new RelayCommand(() => { CloseInfoBar(ProprietaryCodecsInfoBar); Action(Actions.SwitchWebEngine, "1"); }) },
+                                            ]
+                                        };
+                                        LocalInfoBars.Add(ExtensionFailInfoBar);
+                                    });
+                                    WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', false);");
+                                }
+                                else
+                                {
+                                    bool Result = false;
+                                    string? DownloadUrl = null;
+                                    using JsonDocument Document = JsonDocument.Parse(Payload);
+
+                                    string DialogIcon = "\uEA86";
+                                    if (Document.RootElement.TryGetProperty("icon", out JsonElement IconProperty) && IconProperty.GetString() is string IconUrl)
+                                        DialogIcon = IconUrl;
+                                    InformationDialogWindow InfoWindow = new("Confirmation", $"Install \"{Document.RootElement.GetProperty("name").GetString()}\" extension", "This extension can be installed on SLBr.", DialogIcon, "Install", "Cancel")
+                                    {
+                                        Topmost = true
+                                    };
+                                    if (InfoWindow.ShowDialog() == true)
+                                    {
+                                        if (Document.RootElement.GetProperty("url").GetString() is string RawDownloadUrl)
+                                            DownloadUrl = RawDownloadUrl;
+                                        else
+                                            DownloadUrl = $"https://edge.microsoft.com/extensionwebstorebase/v1/crx?response=redirect&os=win&arch=x64&prod=chromiumcrx&prodchannel=canary&prodversion={Cef.ChromiumVersion}&lang=en-US&acceptformat=crx3,puff&x=id%3D{Document.RootElement.GetProperty("id").GetString()}%26installsource%3Dondemand%26uc";
+                                        if (!string.IsNullOrEmpty(DownloadUrl))
+                                        {
+                                            HttpRequestMessage Request = new(HttpMethod.Get, DownloadUrl);
+                                            Request.Headers.Add("User-Agent", App.Instance.UserAgent);
+
+                                            HttpResponseMessage Response = await App.MiniHttpClient.SendAsync(Request);
+
+                                            byte[] Bytes = null;
+
+                                            if (Response.StatusCode == System.Net.HttpStatusCode.Redirect || Response.StatusCode == System.Net.HttpStatusCode.Found || Response.StatusCode == System.Net.HttpStatusCode.MovedPermanently)
+                                            {
+                                                Uri? RedirectUrl = Response.Headers.Location;
+                                                if (RedirectUrl != null)
+                                                    Bytes = await App.MiniHttpClient.GetByteArrayAsync(RedirectUrl.ToString());
+                                            }
+                                            else if (Response.IsSuccessStatusCode)
+                                                Bytes = await Response.Content.ReadAsByteArrayAsync();
+
+                                            if (Bytes != null && Bytes.Length > 0)
+                                            {
+                                                (Result, string? Error) = await App.Instance.ExtensionManager.InstallExtension(Bytes, WebView.Engine);
+                                                if (Result)
+                                                    ExtensionsButton.OpenMenu();
+                                                else if (!string.IsNullOrEmpty(Error))
+                                                {
+                                                    _ = Dispatcher.BeginInvoke(() =>
+                                                    {
+                                                        ExtensionFailInfoBar = new()
+                                                        {
+                                                            Icon = "\xea86",
+                                                            Title = "Extension Installation Failed",
+                                                            Description = [new() { Text = Error }]
+                                                        };
+                                                        LocalInfoBars.Add(ExtensionFailInfoBar);
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    }
+                                    WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', {Result.ToString().ToLower()});");
+                                }
+                                break;
+                            case "remove":
+                                if (App.Instance.ReadOnlyInstance)
+                                    WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', false);");
+                                else
+                                {
+                                    bool Result = false;
+                                    Extension? _Extension = App.Instance.ExtensionManager.GetExtensions(WebView.Engine)?.FirstOrDefault(i => i.AlternateID == Payload);
+                                    if (_Extension != null)
+                                    {
+                                        string DialogIcon = "\uEA86";
+                                        if (!string.IsNullOrEmpty(_Extension.ActionIcon))
+                                            DialogIcon = _Extension.ActionIcon;
+                                        InformationDialogWindow InfoWindow = new("Confirmation", $"Uninstall \"{_Extension.Name}\" extension", "Are you sure you want to remove this extension?", DialogIcon, "Remove", "Cancel")
+                                        {
+                                            Topmost = true
+                                        };
+                                        if (InfoWindow.ShowDialog() == true)
+                                            Result = await App.Instance.ExtensionManager.UninstallExtension(_Extension);
+                                    }
+                                    WebView.ExecuteScript($"window.slbr.webstore.receive('{Task}', {Result.ToString().ToLower()});");
+                                }
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        _ = Dispatcher.BeginInvoke(() =>
+                        {
+                            ExtensionFailInfoBar = new()
+                            {
+                                Icon = "\xea86",
+                                Title = "Extension Installation Failed",
+                                Description = [new() { Text = "Extensions cannot be installed from untrusted sources." }],
+                            };
+                            LocalInfoBars.Add(ExtensionFailInfoBar);
+                        });
+                    }
+                    break;
                 case "__opensearch__":
                     App.Instance.SaveOpenSearch(Message["name"]?.ToString()!, Message["url"]?.ToString()!);
                     break;
@@ -2651,7 +2816,9 @@ namespace SLBr.Pages
                                         }
                                         return true;
                                     }, IntPtr.Zero);
-                                    if (WebView2DevToolsHWND != IntPtr.Zero)
+
+                                    //NOTE: DevToolsHost safeguard, do not remove.
+                                    if (WebView2DevToolsHWND != IntPtr.Zero && DevToolsHost != null)
                                     {
                                         App.Instance.WebView2DevTools.Add(WebView2DevToolsHWND);
 
@@ -4678,6 +4845,8 @@ namespace SLBr.Pages
         {
             LocalInfoBars.Remove(Bar);
             App.Instance.InfoBars.Remove(Bar);
+            if (Bar == ExtensionFailInfoBar)
+                ExtensionFailInfoBar = null;
             if (Bar == ProprietaryCodecsInfoBar)
                 ProprietaryCodecsInfoBar = null;
             else if (Bar == WaybackInfoBar)
@@ -4698,6 +4867,7 @@ namespace SLBr.Pages
         InfoBar? UnavailableInspectorInfoBar;
         InfoBar? UnavailableExtensionInfoBar;
         InfoBar? ProprietaryCodecsInfoBar;
+        InfoBar? ExtensionFailInfoBar;
         InfoBar? WaybackInfoBar;
         InfoBar? HomographInfoBar;
         InfoBar? EngineInitializationInfoBar;

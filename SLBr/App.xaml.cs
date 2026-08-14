@@ -2672,6 +2672,14 @@ Inner Exception: {7}";
             }
         }
 
+        /*public static string GetActiveChromeVersion()
+        {
+            if (WebViewManager.IsWebView2Initialized)
+                return WebViewManager.WebView2Version;
+            //if (WebViewManager.IsCefInitialized)
+            return Cef.ChromiumVersion;
+        }*/
+
         public void SaveOpenSearch(string Name, string Url)
         {
             try
@@ -3528,7 +3536,10 @@ Inner Exception: {7}";
                 case 5: Settings.TridentVersion = TridentEmulationVersion.Edge; break;
             }
             if (!ReadOnlyInstance)
+            {
                 Settings.UserDataPath = Path.Combine(UserApplicationDataPath, "User Data");
+                Settings.ExtensionsPath = Path.Combine(UserApplicationDataPath, "Unpacked Extensions");
+            }
             Settings.Language = Locale.Tooltip;
             Settings.Languages = Languages.Select(i => i.Tooltip).ToArray();
             Settings.LogFile = Path.Combine(UserApplicationDataPath, "Errors.log");
@@ -4632,11 +4643,14 @@ Inner Exception: {7}";
 
         public bool MobileView;
 
+        public string FirefoxUserAgent;
+
         public void SetMobileView(bool Toggle)
         {
             UserAgent = UserAgentGenerator.BuildUserAgentFromProduct($"SLBr/{ReleaseVersion} {UserAgentGenerator.BuildChromeBrand()}", Toggle ? PlatformID.Unix : null);
             MobileView = Toggle;
             int ChromiumMajor = int.Parse(Cef.ChromiumVersion.Split('.')[0]);
+            FirefoxUserAgent = $"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:{ChromiumMajor}.0) Gecko/20100101 Firefox/{ChromiumMajor}.0";
             List<WebUserAgentBrand> Brands = UserAgentGenerator.ShuffleBrandList([
                     UserAgentGenerator.GetGreasedUserAgentBrandVersion(ChromiumMajor),
                     new()
@@ -5343,18 +5357,294 @@ window.Notification = Notification;
 })();";
         public const string ScrollScript = @"!function(){var e,t,o,n={pulseNormalize:1},r=n,a=!1,i={x:0,y:0},l=!1,c=document.documentElement,u=[],s=37,d=38,f=39,m=40,h=32,v=33,w=34,y=35,p=36,b={37:1,38:1,39:1,40:1};function g(){if(!l&&document.body){l=!0;var o=document.body,n=document.documentElement,r=window.innerHeight,i=o.scrollHeight;if(c=0<=document.compatMode.indexOf(""CSS"")?n:o,e=o,X(""keydown"",B),top!=self)a=!0;else if(r<i&&(o.offsetHeight<=r||n.offsetHeight<=r)){var u,s=document.createElement(""div"");if(s.style.cssText=""position:absolute; z-index:-10000; top:0; left:0; right:0; height:""+c.scrollHeight+""px"",document.body.appendChild(s),t=function(){u||(u=setTimeout(function(){s.style.height=""0"",s.style.height=c.scrollHeight+""px"",u=null},500))},setTimeout(t,10),X(""resize"",t),new _(t).observe(o,{attributes:!0,childList:!0,characterData:!1}),c.offsetHeight<=r){var d=document.createElement(""div"");d.style.clear=""both"",o.appendChild(d)}}}}var x=[],k=!1,E=Date.now();function C(e,t,o){var n,r;n=0<(n=t)?1:-1,r=0<(r=o)?1:-1,(i.x!==n||i.y!==r)&&(i.x=n,i.y=r,x=[],E=0);var a=Date.now()-E;if(a<50){var l=(1+50/a)/2;1<l&&(l=Math.min(l,3),t*=l,o*=l)}if(E=Date.now(),x.push({x:t,y:o,lastX:t<0?.99:-.99,lastY:o<0?.99:-.99,start:Date.now()}),!k){var c=V(),u=e===c||e===document.body;null==e.$scrollBehavior&&function(e){var t=D(e);if(null==K[t]){var o=getComputedStyle(e,"""")[""scroll-behavior""];K[t]=""smooth""==o}return K[t]}(e)&&(e.$scrollBehavior=e.style.scrollBehavior,e.style.scrollBehavior=""auto"");var s=function(n){for(var r=Date.now(),a=0,i=0,l=0;l<x.length;l++){var c=x[l],d=r-c.start,f=d>=400,m=f?1:d/400;m=G(m);var h=c.x*m-c.lastX|0,v=c.y*m-c.lastY|0;a+=h,i+=v,c.lastX+=h,c.lastY+=v,f&&(x.splice(l,1),l--)}u?window.scrollBy(a,i):(a&&(e.scrollLeft+=a),i&&(e.scrollTop+=i)),t||o||(x=[]),x.length?I(s,e,1e3/150+1):(k=!1,null!=e.$scrollBehavior&&(e.style.scrollBehavior=e.$scrollBehavior,e.$scrollBehavior=null))};I(s,e,0),k=!0}}function S(t){l||g();var n=t.target;if(t.defaultPrevented||t.ctrlKey)return!0;if(Y(e,""embed"")||Y(n,""embed"")&&/\.pdf/i.test(n.src)||Y(e,""object"")||n.shadowRoot)return!0;var r=-t.wheelDeltaX||t.deltaX||0,i=-t.wheelDeltaY||t.deltaY||0;r||i||(i=-t.wheelDelta||0),1===t.deltaMode&&(r*=40,i*=40);var c=$(n);return c?!!function(e){if(e){u.length||(u=[e,e,e]),e=Math.abs(e),u.push(e),u.shift(),clearTimeout(o),o=setTimeout(function(){try{localStorage.SS_deltaBuffer=u.join("","")}catch(e){}},1e3);var t=120<e&&A(e);return!A(120)&&!A(100)&&!t}}(i)||(1.2<Math.abs(r)&&(r*=100/120),1.2<Math.abs(i)&&(i*=100/120),C(c,r,i),t.preventDefault(),void N()):!a||!W||(Object.defineProperty(t,""target"",{value:window.frameElement}),parent.wheel(t))}function B(t){var o=t.target,n=t.ctrlKey||t.altKey||t.metaKey||t.shiftKey&&t.keyCode!==h;document.body.contains(e)||(e=document.activeElement);var r=/^(button|submit|radio|checkbox|file|color|image)$/i;if(t.defaultPrevented||/^(textarea|select|embed|object)$/i.test(o.nodeName)||Y(o,""input"")&&!r.test(o.type)||Y(e,""video"")||function(e){var t=e.target,o=!1;if(-1!=document.URL.indexOf(""www.youtube.com/watch""))do{if(o=t.classList&&t.classList.contains(""html5-video-controls""))break}while(t=t.parentNode);return o}(t)||o.isContentEditable||n)return!0;if((Y(o,""button"")||Y(o,""input"")&&r.test(o.type))&&t.keyCode===h)return!0;if(Y(o,""input"")&&""radio""==o.type&&b[t.keyCode])return!0;var i=0,l=0,c=$(e);if(!c)return!a||!W||parent.keydown(t);var u=c.clientHeight;switch(c==document.body&&(u=window.innerHeight),t.keyCode){case d:l=-50;break;case m:l=50;break;case h:l=-(t.shiftKey?1:-1)*u*.9;break;case v:l=.9*-u;break;case w:l=.9*u;break;case p:c==document.body&&document.scrollingElement&&(c=document.scrollingElement),l=-c.scrollTop;break;case y:var g=c.scrollHeight-c.scrollTop-u;l=0<g?g+10:0;break;case s:i=-50;break;case f:i=50;break;default:return!0}C(c,i,l),t.preventDefault(),N()}function H(t){e=t.target}var M,T,D=(M=0,function(e){return e.uniqueID||(e.uniqueID=M++)}),L={},z={},K={};function N(){clearTimeout(T),T=setInterval(function(){L=z=K={}},1e3)}function O(e,t,o){for(var n=o?L:z,r=e.length;r--;)n[D(e[r])]=t;return t}function $(e){var t=[],o=document.body,n=c.scrollHeight;do{var r=z[D(e)];if(r)return O(t,r);if(t.push(e),n===e.scrollHeight){var i=j(c)&&j(o)||q(c);if(a&&P(c)||!a&&i)return O(t,V())}else if(P(e)&&q(e))return O(t,e)}while(e=e.parentElement)}function P(e){return e.clientHeight+10<e.scrollHeight}function j(e){return""hidden""!==getComputedStyle(e,"""").getPropertyValue(""overflow-y"")}function q(e){var t=getComputedStyle(e,"""").getPropertyValue(""overflow-y"");return""scroll""===t||""auto""===t}function X(e,t,o){window.addEventListener(e,t,o||!1)}function Y(e,t){return e&&(e.nodeName||"""").toLowerCase()===t.toLowerCase()}if(window.localStorage&&localStorage.SS_deltaBuffer)try{u=localStorage.SS_deltaBuffer.split("","")}catch(S){}function R(e,t){return Math.floor(e/t)==e/t}function A(e){return R(u[0],e)&&R(u[1],e)&&R(u[2],e)}var F,I=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||function(e,t,o){window.setTimeout(e,o||1e3/60)},_=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver,V=(F=document.scrollingElement,function(){if(!F){var e=document.createElement(""div"");e.style.cssText=""height:10000px;width:1px;"",document.body.appendChild(e);var t=document.body.scrollTop;document.documentElement.scrollTop,window.scrollBy(0,3),F=document.body.scrollTop!=t?document.body:document.documentElement,window.scrollBy(0,-3),document.body.removeChild(e)}return F});function U(e){var t;return((e*=4)<1?e-(1-Math.exp(-e)):(e-=1,(t=Math.exp(-1))+(1-Math.exp(-e))*(1-t)))*r.pulseNormalize}function G(e){return 1<=e?1:e<=0?0:(1==r.pulseNormalize&&(r.pulseNormalize/=U(1)),U(e))}try{window.addEventListener(""test"",null,Object.defineProperty({},""passive"",{get:function(){ee=!0}}))}catch(S){}var J=!!ee&&{passive:!1},Q=""onwheel""in document.createElement(""div"")?""wheel"":""mousewheel"";Q&&(X(Q,S,J),X(""mousedown"",H),X(""load"",g))}();";
 
-        public const string WebStoreScript = @"(function () {
-if (window.__slbr_web_store__) return;
-window.__slbr_web_store__ = true;
-function scanButton(){
-const buttonQueries = ['button span[jsname]:not(:empty)']
-for (const button of document.querySelectorAll(buttonQueries.join(','))){
-    const text=button.textContent||''
-    if (text==='Add to Chrome'||text==='Remove from Chrome') button.textContent=text.replace('Chrome','SLBr')
-  }
-}
-scanButton();
-new MutationObserver(scanButton).observe(document.body,{attributes:true,childList:true,subtree:true});
+        public const string ChromeWebStoreScript = @"(function () {
+    if (window.__slbr_web_store__) return;
+    window.__slbr_web_store__ = true;
+    function scanButton(){
+    const buttons = ['button span[jsname]:not(:empty)']
+    for (const button of document.querySelectorAll(buttons.join(','))){
+        const text=button.textContent||''
+        if (text==='Add to Chrome'||text==='Remove from Chrome') button.textContent=text.replace('Chrome','SLBr')
+      }
+    }
+
+    const initObserver = () => {
+        scanButton();
+        const targetNode = document.documentElement || document.body;
+        if (targetNode) new MutationObserver(scanButton).observe(targetNode, { attributes: true, childList: true, subtree: true });
+        else setTimeout(initObserver, 100);
+    };
+    if (document.documentElement) initObserver();
+    else document.addEventListener('DOMContentLoaded', initObserver);
+})();";
+
+        public const string WebStoreAPIScript = @"(function () {
+    if (window.__slbr_web_store_api__) return;
+    window.__slbr_web_store_api__ = true;
+
+    window.slbr = {
+        webstore: {
+            _transactions: new Map(),
+            _nextTask: 1,
+
+            _createTransaction: function(resolve, reject) {
+                const task = String(this._nextTask++);
+                this._transactions.set(task, { resolve, reject });
+                return task;
+            },
+
+            receive: function(task, success, data) {
+                if (this._transactions.has(task)) {
+                    const { resolve } = this._transactions.get(task);
+                    this._transactions.delete(task);
+                    resolve(success);
+                }
+            },
+
+            isInstalled: function(payload) {
+                return new Promise((resolve, reject) => {
+                    const task = this._createTransaction(resolve, reject);
+                    engine.postMessage({
+                        type: '__extension__',
+                        action: 'check',
+                        task: task,
+                        data: payload
+                    });
+                });
+            },
+
+            install: function(payload) {
+                return new Promise((resolve, reject) => {
+                    const task = this._createTransaction(resolve, reject);
+                    engine.postMessage({
+                        type: '__extension__',
+                        action: 'install',
+                        task: task,
+                        data: payload
+                    });
+                });
+            },
+
+            remove: function(payload) {
+                return new Promise((resolve, reject) => {
+                    const task = this._createTransaction(resolve, reject);
+                    engine.postMessage({
+                        type: '__extension__',
+                        action: 'remove',
+                        task: task,
+                        data: payload
+                    });
+                });
+            }
+        }
+    };
+})();";
+
+        public const string EdgeWebStoreScript = @"(function () {
+    if (window.__slbr_web_store__) return;
+    window.__slbr_web_store__ = true;
+
+    function setActiveState(btn, remove) {
+        btn.disabled = false;
+        btn.style.pointerEvents = 'auto';
+        btn.style.cursor = 'pointer';
+        btn.style.color = 'var(--colorNeutralForegroundOnBrand)';
+        btn.style.backgroundColor = 'var(--colorBrandBackground)';
+        const buttonText = btn.querySelector('div');
+
+        if (remove) buttonText.textContent = 'Remove';
+        else buttonText.textContent = 'Get';
+    }
+
+    function setLoadingState(btn) {
+        btn.disabled = true;
+        btn.style.pointerEvents = 'none';
+        btn.style.cursor = 'not-allowed';
+        btn.style.color = 'var(--colorNeutralForegroundDisabled)';
+        btn.style.backgroundColor = 'var(--colorNeutralBackgroundDisabled)';
+        btn.querySelector('div').textContent = 'Checking...';
+    }
+
+    async function scanButton(){
+        const btn = document.querySelector('[id^=""installButton-""]');
+        console.log(btn);
+        if (!btn || btn.dataset.__slbr_patched__ === 'true') return;
+
+        btn.dataset.__slbr_patched__ = 'true';
+
+        let extensionId = btn.id.replace('installButton-', '').split('-')[0];
+
+        const iconImg = Array.from(document.querySelectorAll('img')).find(img => {
+            const src = img.getAttribute('src') || '';
+            const style = img.getAttribute('style') || '';
+            return src.includes('store-images.s-microsoft.com') && style.includes('object-fit: contain');
+        });
+
+        if (iconImg) {
+            window.slbr.webstore.icon = iconImg.src;
+            window.slbr.webstore.name = iconImg.getAttribute('alt');
+        }
+        else return;
+    
+        const buttonText = btn.querySelector('div');
+
+        setLoadingState(btn);
+
+        const alreadyInstalled = await window.slbr.webstore.isInstalled(extensionId);
+        setActiveState(btn, alreadyInstalled);
+
+        btn.onmouseenter = () => {
+            if (btn.disabled) return;
+            btn.style.backgroundColor = 'var(--colorBrandBackgroundHover)';
+        };
+        btn.onmouseleave = () => {
+            if (btn.disabled) return;
+            btn.style.backgroundColor = 'var(--colorBrandBackground)';
+        };
+        btn.onmousedown = () => {
+            if (btn.disabled) return;
+            btn.style.backgroundColor = 'var(--colorBrandBackgroundPressed)';
+        };
+        btn.onmouseup = () => {
+            if (btn.disabled) return;
+            btn.style.backgroundColor = 'var(--colorBrandBackgroundHover)';
+        };
+
+        const parentContainer = btn.parentElement;
+        if (parentContainer) {
+            const targetDiv = parentContainer.querySelector('div[aria-live=""polite""]');
+            if (targetDiv) {
+                targetDiv.style.display = 'flex';
+                targetDiv.style.alignItems = 'center';
+                targetDiv.style.marginTop = '8px';
+                const pTag = targetDiv.querySelector('p.incompatible');
+                if (pTag) {
+                    const cleanSpan = document.createElement('span');
+                    cleanSpan.style.fontSize = '10px';
+                    cleanSpan.style.marginInlineEnd = '0px';
+                    cleanSpan.style.color = 'var(--colorNeutralForeground4)';
+                    cleanSpan.style.lineHeight = '14px';
+                    cleanSpan.style.fontWeight = '600';
+                    cleanSpan.textContent = 'Compatible with your browser';
+                    targetDiv.innerHTML = '';
+                    targetDiv.appendChild(cleanSpan);
+                }
+            }
+        }
+
+        btn.addEventListener('click', async function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (buttonText.textContent === 'Remove') {
+                setLoadingState(btn);
+                const removeSuccess = await window.slbr.webstore.remove(extensionId);
+                setActiveState(btn, !removeSuccess);
+            }
+            else {
+                setLoadingState(btn);
+                const installSuccess = await window.slbr.webstore.install({ id: extensionId, name: window.slbr.webstore.name, icon: window.slbr.webstore.icon });
+                setActiveState(btn, installSuccess);
+            }
+        }, true);
+    }
+
+    const initObserver = () => {
+        scanButton();
+        const targetNode = document.documentElement || document.body;
+        if (targetNode) new MutationObserver(scanButton).observe(targetNode, { attributes: true, childList: true, subtree: true });
+        else setTimeout(initObserver, 100);
+    };
+    if (document.documentElement) initObserver();
+    else document.addEventListener('DOMContentLoaded', initObserver);
+})();";
+
+        public const string FirefoxWebStoreScript = @"(function () {
+    if (window.__slbr_web_store__) return;
+    window.__slbr_web_store__ = true;
+
+    function setActiveState(currentElement, remove) {
+        let activeAnchor = currentElement.firstElementChild;
+
+        if (activeAnchor.tagName.toLowerCase() === 'div') {
+            activeAnchor = document.createElement('a');
+            activeAnchor.addEventListener('click', handleButtonClick, true);
+            currentElement.innerHTML = '';
+            currentElement.appendChild(activeAnchor);
+        }
+
+        if (remove) {
+            activeAnchor.textContent = 'Remove';
+            activeAnchor.className = ""Button Button--neutral AMInstallButton-button AMInstallButton-button--uninstall Button--puffy AMInstallButton-transition-enter-done"";
+        }
+        else {
+            activeAnchor.textContent = 'Add to SLBr';
+            activeAnchor.className = ""Button Button--action AMInstallButton-button Button--puffy"";
+        }
+    }
+
+    function setLoadingState(currentElement) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = ""AMInstallButton-loading-button AMInstallButton-loading-button--puffy AMInstallButton-transition-enter-done"";
+        loadingDiv.setAttribute('title', 'Installing');
+        loadingDiv.innerHTML = `<div class=""AMInstallButton-loader""><div class=""AMInstallButton-loader-container""><div class=""AMInstallButton-loader-ball""></div></div><span class=""visually-hidden"">Installing</span></div>`;
+        currentElement.innerHTML = '';
+        currentElement.appendChild(loadingDiv);
+    }
+
+    async function handleButtonClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        let btn = event.currentTarget;
+        let container = btn.parentNode;
+        setLoadingState(container);
+
+        if (btn.textContent === 'Remove') {
+            const removeSuccess = await window.slbr.webstore.remove(window.slbr.webstore.extensionId);
+            setActiveState(container, !removeSuccess);
+        }
+        else {
+            const installSuccess = await window.slbr.webstore.install({ id: window.slbr.webstore.extensionId, url: window.slbr.webstore.downloadUrl, name: window.slbr.webstore.name, icon: window.slbr.webstore.icon });
+            setActiveState(container, installSuccess);
+        }
+    }
+
+    async function scanButton(){
+        const extensionDataScript = document.getElementById('redux-store-state');
+        if (extensionDataScript) {
+            const idMatch = extensionDataScript.textContent.match(/""guid""\s*:\s*""([^""]+)""/);
+            if (idMatch && idMatch[1]) window.slbr.webstore.extensionId = idMatch[1];
+
+            const iconMatch = extensionDataScript.textContent.match(/""icon_url""\s*:\s*""([^""]+)""/);
+            if (iconMatch && iconMatch[1] && !iconMatch[1].startsWith('https:\\u002F\\u002Faddons.mozilla.org\\u002Fstatic-server')) window.slbr.webstore.icon = iconMatch[1].replace(/\\u002F|\\\/|\\/g, '/');
+
+            const nameMatch = extensionDataScript.textContent.match(/""icon_url"".+?""name""\s*:\s*""([^""]+)""/);
+            if (nameMatch && nameMatch[1]) window.slbr.webstore.name = nameMatch[1];
+        }
+        else return;
+
+        const container = document.querySelector('.AMInstallButton');
+        if (!container || container.dataset.__slbr_patched__ === 'true') return;
+        container.dataset.__slbr_patched__ = 'true';
+
+        let btn = container.querySelector('a');
+        window.slbr.webstore.downloadUrl = btn.href;
+
+        btn.addEventListener('click', handleButtonClick, true);
+        setLoadingState(container);
+        const alreadyInstalled = await window.slbr.webstore.isInstalled(window.slbr.webstore.extensionId);
+        setActiveState(container, alreadyInstalled);
+    }
+
+    const initObserver = () => {
+        scanButton();
+        const targetNode = document.documentElement || document.body;
+        if (targetNode) new MutationObserver(scanButton).observe(targetNode, { attributes: true, childList: true, subtree: true });
+        else setTimeout(initObserver, 100);
+    };
+    if (document.documentElement) initObserver();
+    else document.addEventListener('DOMContentLoaded', initObserver);
 })();";
         public const string ExtensionPopupScript = @"(async function() {
     if (window.__slbr_extension_size__) return;

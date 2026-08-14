@@ -3,6 +3,7 @@ Use of this source code is governed by a GNU license that can be found in the LI
 
 using System.Windows;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 
 namespace SLBr.Controls
 {
@@ -19,7 +20,18 @@ namespace SLBr.Controls
 
             QuestionText.Text = Question;
             if (!string.IsNullOrEmpty(_Icon))
-                QuestionIcon.Text = _Icon;
+            {
+                char FirstCharacter = _Icon[0];
+                bool IsIcon = _Icon.Length == 1 || (FirstCharacter >= 0xE000 && FirstCharacter <= 0xF8FF) || (FirstCharacter >= 0x2600 && FirstCharacter <= 0x26FF);
+                if (IsIcon)
+                    QuestionIcon.Text = _Icon;
+                else
+                {
+                    QuestionIcon.Visibility = Visibility.Collapsed;
+                    QuestionImageIcon.Visibility = Visibility.Visible;
+                    QuestionImageIcon.Source = new BitmapImage(new Uri(_Icon));
+                }
+            }
             DescriptionText.Text = Description;
             ApplyTheme(App.Instance.CurrentTheme);
 

@@ -1254,8 +1254,18 @@ namespace SLBr.Pages
         {
             if (SettingsInitialized)
             {
-                if (sender is Button _Button && _Button.DataContext is Extension ExtensionEntry)
-                    App.Instance.ExtensionManager.UninstallExtension(ExtensionEntry);
+                if (sender is Button _Button && _Button.DataContext is Extension _Extension)
+                {
+                    string DialogIcon = "\uEA86";
+                    if (!string.IsNullOrEmpty(_Extension.ActionIcon))
+                        DialogIcon = _Extension.ActionIcon;
+                    InformationDialogWindow InfoWindow = new("Confirmation", $"Uninstall \"{_Extension.Name}\" extension", "Are you sure you want to remove this extension?", DialogIcon, "Remove", "Cancel")
+                    {
+                        Topmost = true
+                    };
+                    if (InfoWindow.ShowDialog() == true)
+                        App.Instance.ExtensionManager.UninstallExtension(_Extension);
+                }
             }
         }
 
@@ -1601,7 +1611,7 @@ namespace SLBr.Pages
             PreviousUrl = CurrentUrl;
             CurrentUrl = $"slbr://settings/{Name}{SubPath}";
             if (BrowserView.Address != CurrentUrl)
-                BrowserView.WebView.ExecuteScript($"history.replaceState(null, \"\", \"{CurrentUrl}\");");
+                BrowserView.WebView?.ExecuteScript($"history.replaceState(null, \"\", \"{CurrentUrl}\");");
         }
 
         private void NavigateButton_Click(object sender, RoutedEventArgs e)
