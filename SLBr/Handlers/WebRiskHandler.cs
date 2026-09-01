@@ -204,10 +204,6 @@ namespace SLBr.Handlers
                     Result = SBv5GetThreatType(SBv5Response(LocalHash, GoogleEndpoint + SECRETS.GOOGLE_API_KEY), LocalHash);
                     break;
                 case WebSecurityService.Yandex:
-                    //TODO: Implement Yandex Hash-based check.
-                    //https://yandex.com/dev/safebrowsing/doc/en/concepts/url-hash
-                    //https://yandex.com/dev/safebrowsing/doc/en/concepts/update-fullhashes-find
-                    //https://yandex.com/dev/safebrowsing/doc/en/
                     Result = SBv4GetThreatType(SBv4Response(LocalHash, YandexEndpoint + SECRETS.YANDEX_API_KEY), LocalHash);
                     break;
                 case WebSecurityService.PhishTank:

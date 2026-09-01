@@ -1205,7 +1205,7 @@ namespace SLBr
                     {
                         BrowserView.SetDownloadsButtonVisibility();
                         //TODO: Display popup on download initialization / completion.
-                        //TODO: if (bool.Parse(GlobalSave.Get("ShowDownloadsPopup")))
+                        //if (bool.Parse(GlobalSave.Get("ShowDownloadsPopup")))
                         BrowserView.OpenDownloadsButton.UpdateLayout();
                         BrowserView.OpenDownloadsButton.OpenPopup();
                     }
@@ -2879,7 +2879,7 @@ Inner Exception: {7}";
                 GlobalSave.Set("SyncData", "Favourites,Settings");//,Tabs
             if (!GlobalSave.Has("Sync"))
                 GlobalSave.Set("Sync", false);
-            //TODO: Implement "Sync Provider" variety [GitHub Gist, Google Drive, OneDrive, etc]
+            //TODO: Implement additional sync providers [GitHub Gist, Google Drive, OneDrive, etc]
             //TODO: Implement data compression.
             else if (bool.Parse(GlobalSave.Get("Sync")))
             {

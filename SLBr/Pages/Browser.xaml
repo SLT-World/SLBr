@@ -304,11 +304,11 @@
                                         <Setter Property="Tag" Value="{Binding ID}"/>
                                         <Setter Property="Visibility" Value="{Binding IsEnabled, Converter={StaticResource BooleanToVisibility}}" />
                                         <EventSetter Event="Click" Handler="LoadExtensionPopup"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsEnabled}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Visible"/>
+                                        <!--<Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActionPopup}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
                                             </DataTrigger>
-                                        </Style.Triggers>
+                                        </Style.Triggers>-->
                                     </Style>
                                 </ContextMenu.ItemContainerStyle>
                             </ContextMenu>

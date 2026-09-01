@@ -2,6 +2,7 @@
 Use of this source code is governed by a GNU license that can be found in the LICENSE file.*/
 
 using CefSharp;
+using CefSharp.Callback;
 using CefSharp.Wpf.HwndHost;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -92,8 +93,8 @@ namespace SLBr.Extensions
             }
         }
 
-        private bool? _IsEnabled = null;
-        public bool? IsEnabled
+        private bool _IsEnabled = true;
+        public bool IsEnabled
         {
             get { return _IsEnabled; }
             set
@@ -102,8 +103,21 @@ namespace SLBr.Extensions
                 {
                     _IsEnabled = value;
                     RaisePropertyChanged(nameof(IsEnabled));
-                    if (value.HasValue)
-                        App.Instance.ExtensionManager.ToggleExtension(this, value.Value);
+                    App.Instance.ExtensionManager.ToggleExtension(this, value);
+                }
+            }
+        }
+
+        private bool _Configurable = false;
+        public bool Configurable
+        {
+            get { return _Configurable; }
+            set
+            {
+                if (value != _Configurable)
+                {
+                    _Configurable = value;
+                    RaisePropertyChanged(nameof(Configurable));
                 }
             }
         }
@@ -119,8 +133,8 @@ namespace SLBr.Extensions
             }
         }
 
-        private string _ActionPopup;
-        public string ActionPopup
+        private string? _ActionPopup = null;
+        public string? ActionPopup
         {
             get => _ActionPopup;
             set
@@ -161,6 +175,33 @@ namespace SLBr.Extensions
             Changed?.Invoke(this, e);
         }
 
+        class CefExtensionPreferenceObserver : IPreferenceObserver
+        {
+            private static Timer DebounceTimer;
+
+            public void Dispose()
+            {
+                DebounceTimer?.Dispose();
+            }
+
+            public void OnPreferenceChanged(string name)
+            {
+                DebounceTimer ??= new Timer(DebounceCallback, null, Timeout.Infinite, Timeout.Infinite);
+                DebounceTimer.Change(300, Timeout.Infinite);
+            }
+
+            private void DebounceCallback(object _)
+            {
+                Application.Current.Dispatcher.BeginInvoke(async () =>
+                {
+                    await App.Instance.ExtensionManager.LoadCEFExtensions();
+                });
+            }
+        }
+
+        CefExtensionPreferenceObserver _CefExtensionPreferenceObserver;
+        IRegistration _CefPreferenceRegistration;
+
         public async Task LoadCEFExtensions()
         {
             if (string.IsNullOrEmpty(WebViewManager.CEFExtensionsPath))
@@ -169,6 +210,12 @@ namespace SLBr.Extensions
             {
                 List<Extension> List = [];
                 IRequestContext GlobalRequestContext = Cef.GetGlobalRequestContext();
+                if (_CefExtensionPreferenceObserver == null)
+                {
+                    _CefExtensionPreferenceObserver = new CefExtensionPreferenceObserver();
+                    _CefPreferenceRegistration = GlobalRequestContext.AddPreferenceObserver("extensions.settings", _CefExtensionPreferenceObserver);
+                    //WARNING: Do not remove _CefPreferenceRegistration. A reference to IRegistration must be keep alive to prevent .NET GC from destroying the observer adapter.
+                }
                 if (GlobalRequestContext.HasPreference("extensions.settings"))
                 {
                     object Settings = GlobalRequestContext.GetPreference("extensions.settings");
@@ -186,6 +233,8 @@ namespace SLBr.Extensions
                                 if (!Path.Exists(ExtensionPath))
                                 {
                                     string ProfilePath = Path.Combine(WebViewManager.CEFExtensionsPath, ExtensionPath);
+                                    if (!Path.Exists(ProfilePath))
+                                        continue;
                                     ExtensionPath = ProfilePath;
                                     if (!File.Exists(Path.Combine(ProfilePath, "manifest.json")))
                                         ExtensionPath = Directory.GetDirectories(ProfilePath).FirstOrDefault(i => File.Exists(Path.Combine(i, "manifest.json"))) ?? ProfilePath;
@@ -196,27 +245,21 @@ namespace SLBr.Extensions
                                     if (FolderName != KeyValue.Key)
                                         AlternateID = FolderName;
                                 }
+                                bool IsEnabled = true;
+                                if (ExtensionData.TryGetValue("disable_reasons", out var DisableReasonsProperty) && DisableReasonsProperty is IEnumerable<object> DisableReasons && DisableReasons.Any())
+                                //{
+                                    IsEnabled = false;
+                                    //Debug.WriteLine(string.Join(", ", DisableReasons));
+                                //}
                                 Extension _Extension = new()
                                 {
+                                    Configurable = false,
                                     EngineType = WebEngineType.Chromium,
                                     ID = KeyValue.Key,
-                                    IsEnabled = null,
+                                    IsEnabled = IsEnabled,
                                     LocalPath = ExtensionPath,
                                     AlternateID = AlternateID
                                 };
-                                /*TODO: Implement CefPreferenceManager.AddPreferenceObserver.
-                                 * https://github.com/cefsharp/CefSharp/pull/5279
-                                 * 
-                                 * https://github.com/chromiumembedded/cef/blob/master/include/cef_preference.h
-                                 * https://github.com/cefsharp/CefSharp/blob/master/CefSharp.Core.Runtime/RequestContext.cpp
-                                 * IsEnabled is to be determined via accessing "disable_reasons" preference.
-                                 * AddPreferenceObserver is required in the detection of any modifications to this preference.
-                                 * "disable_reasons" is an array instance.
-                                 * Integers are contained within when extension is disabled.
-                                 * https://source.chromium.org/chromium/chromium/src/+/main:extensions/browser/disable_reason.h
-                                 * 
-                                 * In addition, AddPreferenceObserver may aid in the detection of new or removed extensions, though further testing is required.
-                                 */
                                 if (ExtensionData.TryGetValue("manifest", out var ManifestProperty) && ManifestProperty is IDictionary<string, object> ManifestData)
                                 {
                                     if (ManifestData.TryGetValue("name", out var NameProperty))
@@ -293,6 +336,7 @@ namespace SLBr.Extensions
                     }
                     Extension _Extension = new()
                     {
+                        Configurable = true,
                         EngineType = WebEngineType.ChromiumEdge,
                         ID = WebView2Extension.Id,
                         IsEnabled = WebView2Extension.IsEnabled,
@@ -674,6 +718,8 @@ namespace SLBr.Extensions
             if (PopupWindow != null)
                 CloseAction();
             if (Target.WebView == null)
+                return;
+            if (string.IsNullOrEmpty(_Extension.ActionPopup))
                 return;
             PopupWindow = new();
 

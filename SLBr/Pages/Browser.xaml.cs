@@ -4742,15 +4742,24 @@ namespace SLBr.Pages
             try
             {
                 string Value = ((Button)sender).ToolTip.ToString()!;
-                if (Value == "Cancel")
-                    _Entry.Source?.Cancel();
-                else if (Value == "Open")
-                    Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{_Entry.Source.FullPath}\"") { UseShellExecute = true });
-                else if (Value == "Resume")
-                    _Entry.Source?.Resume();
-                else if (Value == "Pause")
-                    _Entry.Source?.Pause();
-            }
+                    if (Value == "Cancel")
+                    {
+                        if (_Entry.Source?.Cancel != null)
+                            _Entry.Source?.Cancel();
+                    }
+                    else if (Value == "Open")
+                        Process.Start(new ProcessStartInfo("explorer.exe", $"/select, \"{_Entry.Source.FullPath}\"") { UseShellExecute = true });
+                    else if (Value == "Resume")
+                    {
+                        if (_Entry.Source?.Resume != null)
+                            _Entry.Source?.Resume();
+                    }
+                    else if (Value == "Pause")
+                    {
+                        if (_Entry.Source?.Pause != null)
+                            _Entry.Source?.Pause();
+                    }
+                }
             catch { }
         }
 
