@@ -344,12 +344,162 @@ namespace SLBr.WebView
             GlobalDialogHandler = new ChromiumDialogHandler();
             IsCefInitialized = true;
             await App.Instance.ExtensionManager.LoadCEFExtensions();
+            _ = Task.Run(async () =>
+            {
+                HashSet<IntPtr> KnownWindows = [];
+                HashSet<uint> ProcessIDs = Process.GetProcessesByName("SLBr").Select(i => (uint)i.Id).ToHashSet();
+                int ProcessIDRefreshCounter = 0;
+                int Interval = 1000;
+
+                StringBuilder ClassBuilder = new(256);
+                StringBuilder TitleBuilder = new(256);
+
+                while (true)
+                {
+                    if (++ProcessIDRefreshCounter >= 10)
+                    {
+                        ProcessIDs = Process.GetProcessesByName("SLBr").Select(i => (uint)i.Id).ToHashSet();
+                        ProcessIDRefreshCounter = 0;
+
+                        KnownWindows.RemoveWhere(i => !DllUtils.IsWindow(i));
+                    }
+
+                    DllUtils.EnumWindows((HWND, lParam) =>
+                    {
+                        if (KnownWindows.Contains(HWND))
+                            return true;
+
+                        if (!DllUtils.IsWindowVisible(HWND))
+                            return true;
+
+                        DllUtils.GetWindowThreadProcessId(HWND, out uint WindowPID);
+                        if (!ProcessIDs.Contains(WindowPID))
+                            return true;
+
+                        ClassBuilder.Clear();
+                        DllUtils.GetClassName(HWND, ClassBuilder, ClassBuilder.Capacity);
+
+                        if (ClassBuilder.ToString() != "Chrome_WidgetWin_1")
+                        {
+                            KnownWindows.Add(HWND);
+                            return true;
+                        }
+
+                        int ExStyle = DllUtils.GetWindowLong(HWND, DllUtils.GWL_EXSTYLE);
+
+                        //NOTE: Prevents undesired closure of Chromium Task Manager.
+                        if ((ExStyle & DllUtils.WS_EX_DLGMODALFRAME) == DllUtils.WS_EX_DLGMODALFRAME)
+                        {
+                            KnownWindows.Add(HWND);
+                            return true;
+                        }
+
+                        int Style = DllUtils.GetWindowLong(HWND, DllUtils.GWL_STYLE);
+                        bool HasTitleBar = (Style & DllUtils.WS_CAPTION) == DllUtils.WS_CAPTION;
+                        bool HasSystemMenu = (Style & DllUtils.WS_SYSMENU) == DllUtils.WS_SYSMENU;
+                        bool IsResizable = (Style & DllUtils.WS_THICKFRAME) == DllUtils.WS_THICKFRAME;
+
+                        if (HasTitleBar && HasSystemMenu && IsResizable && DllUtils.GetWindow(HWND, DllUtils.GW_OWNER) == IntPtr.Zero)
+                        {
+                            TitleBuilder.Clear();
+                            DllUtils.GetWindowText(HWND, TitleBuilder, TitleBuilder.Capacity);
+                            string Title = TitleBuilder.ToString();
+
+                            /*List<string> MatchingStyles = GetMatchingStyles(Style, typeof(WindowStyles));
+                            List<string> MatchingExStyles = GetMatchingStyles(ExStyle, typeof(WindowExStyles));
+
+                            Debug.WriteLine($"[Window] HWND: {HWND} | Title: {Title}");
+                            Debug.WriteLine($"[Styles] {string.Join(", ", MatchingStyles)}");
+                            Debug.WriteLine($"[Ex Styles] {string.Join(", ", MatchingExStyles)}");
+                            */
+
+                            if (Title.EndsWith(" - Chromium"))
+                            {
+                                DllUtils.PostMessage(HWND, DllUtils.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                                return true;
+                            }
+                        }
+                        KnownWindows.Add(HWND);
+                        return true;
+                    }, 0);
+                    await Task.Delay(Interval);
+                }
+            });
             return true;
         }
         public static void ShutdownCEF()
         {
             Cef.Shutdown();
         }
+        /*private static List<string> GetMatchingStyles(int CurrentStyle, Type ConstantsType)
+        {
+            List<string> Flags = [];
+            FieldInfo[] Fields = ConstantsType.GetFields(BindingFlags.Public | BindingFlags.Static);
+
+            foreach (FieldInfo Field in Fields)
+            {
+                if (Field.FieldType == typeof(uint) || Field.FieldType == typeof(int))
+                {
+                    long FieldValue = Convert.ToInt64(Field.GetValue(null));
+                    if (FieldValue != 0 && (CurrentStyle & FieldValue) == FieldValue)
+                        Flags.Add(Field.Name);
+                }
+            }
+            return Flags;
+        }
+
+        public static class WindowStyles
+        {
+            public const uint WS_OVERLAPPED = 0x00000000;
+            public const uint WS_POPUP = 0x80000000;
+            public const uint WS_CHILD = 0x40000000;
+            public const uint WS_MINIMIZE = 0x20000000;
+            public const uint WS_VISIBLE = 0x10000000;
+            public const uint WS_DISABLED = 0x08000000;
+            public const uint WS_CLIPSIBLINGS = 0x04000000;
+            public const uint WS_CLIPCHILDREN = 0x02000000;
+            public const uint WS_MAXIMIZE = 0x01000000;
+            public const uint WS_CAPTION = 0x00C00000;
+            public const uint WS_BORDER = 0x00800000;
+            public const uint WS_DLGFRAME = 0x00400000;
+            public const uint WS_VSCROLL = 0x00200000;
+            public const uint WS_HSCROLL = 0x00100000;
+            public const uint WS_SYSMENU = 0x00080000;
+            public const uint WS_THICKFRAME = 0x00040000;
+            public const uint WS_GROUP = 0x00020000;
+            public const uint WS_TABSTOP = 0x00010000;
+            public const uint WS_MINIMIZEBOX = 0x00020000;
+            public const uint WS_MAXIMIZEBOX = 0x00010000;
+        }
+
+        public static class WindowExStyles
+        {
+            public const uint WS_EX_DLGMODALFRAME = 0x00000001;
+            public const uint WS_EX_NOPARENTNOTIFY = 0x00000004;
+            public const uint WS_EX_TOPMOST = 0x00000008;
+            public const uint WS_EX_ACCEPTFILES = 0x00000010;
+            public const uint WS_EX_TRANSPARENT = 0x00000020;
+            public const uint WS_EX_MDICHILD = 0x00000040;
+            public const uint WS_EX_TOOLWINDOW = 0x00000080;
+            public const uint WS_EX_WINDOWEDGE = 0x00000100;
+            public const uint WS_EX_CLIENTEDGE = 0x00000200;
+            public const uint WS_EX_CONTEXTHELP = 0x00000400;
+            public const uint WS_EX_RIGHT = 0x00001000;
+            public const uint WS_EX_LEFT = 0x00000000;
+            public const uint WS_EX_RTLREADING = 0x00002000;
+            public const uint WS_EX_LTRREADING = 0x00000000;
+            public const uint WS_EX_LEFTSCROLLBAR = 0x00004000;
+            public const uint WS_EX_RIGHTSCROLLBAR = 0x00000000;
+            public const uint WS_EX_CONTROLPARENT = 0x00010000;
+            public const uint WS_EX_STATICEDGE = 0x00020000;
+            public const uint WS_EX_APPWINDOW = 0x00040000;
+            public const uint WS_EX_LAYERED = 0x00080000;
+            public const uint WS_EX_NOINHERITLAYOUT = 0x00100000;
+            public const uint WS_EX_NOREDIRECTIONBITMAP = 0x00200000;
+            public const uint WS_EX_LAYOUTRTL = 0x00400000;
+            public const uint WS_EX_COMPOSITED = 0x02000000;
+            public const uint WS_EX_NOACTIVATE = 0x08000000;
+        }*/
 
         public static string? CEFExtensionsPath;
         public static string? CEFUnpackedExtensionsPath;

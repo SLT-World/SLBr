@@ -169,6 +169,9 @@ namespace SLBr
         [DllImport("wininet.dll")]
         public extern static bool InternetGetConnectedState(out int description, int reservedValue);
 
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+
         public const int WM_KEYDOWN = 0x0100;
         public const int WM_KEYUP = 0x0101;
 
@@ -213,15 +216,19 @@ namespace SLBr
         //public const byte VK_Z = 0x5A;
         public const uint KEYEVENTF_KEYUP = 0x0002;
 
-        /*[DllImport("user32.dll", SetLastError = true)]
+        [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
 
-        public const uint GW_HWNDFIRST = 0;
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsWindow(IntPtr hWnd);
+
+        /*public const uint GW_HWNDFIRST = 0;
         public const uint GW_HWNDLAST = 1;
         public const uint GW_HWNDNEXT = 2;
-        public const uint GW_HWNDPREV = 3;
+        public const uint GW_HWNDPREV = 3;*/
         public const uint GW_OWNER = 4;
-        public const uint GW_CHILD = 5;
+        /*public const uint GW_CHILD = 5;
         public const uint GW_ENABLEDPOPUP = 6;*/
 
         //public const int SW_SHOWNA = 8;
