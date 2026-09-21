@@ -124,7 +124,7 @@
             <RowDefinition Height="45" x:Name="CaptionHeight"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Column="0" Grid.ColumnSpan="10">
+        <Grid Grid.Column="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition MinWidth="7.5"/>
                 <ColumnDefinition Width="Auto"/>

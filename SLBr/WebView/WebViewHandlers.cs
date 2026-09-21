@@ -15,6 +15,7 @@ using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Windows;
@@ -975,7 +976,7 @@ namespace SLBr.WebView
             ConnectTimeout = TimeSpan.FromSeconds(30)
         }));
 
-        public async Task StartDownloadAsync(string Url, string TargetPath, bool ShowDialog, string? DialogFilter = null)
+        public async Task StartDownloadAsync(string Url, string? TargetPath, bool ShowDialog, string? DialogFilter = null)
         {
             if (ShowDialog)
             {
@@ -991,11 +992,23 @@ namespace SLBr.WebView
                 else
                     return;
             }
-            else if (!string.IsNullOrEmpty(TargetPath))
+            else
             {
-                if (Directory.Exists(TargetPath) || !Path.HasExtension(TargetPath))
-                    TargetPath = Path.Combine(TargetPath, Path.GetFileName(Url));
+                if (string.IsNullOrEmpty(TargetPath))
+                    TargetPath = Path.Combine(WebViewManager.RuntimeSettings.DownloadFolderPath, Path.GetFileName(Url));
+                else
+                {
+                    if (Directory.Exists(TargetPath) || !Path.HasExtension(TargetPath))
+                        TargetPath = Path.Combine(TargetPath, Path.GetFileName(Url));
+                }
             }
+
+            string TempPath;
+            if (Path.GetExtension(TargetPath) == ".crx")
+                TempPath = TargetPath;
+            else
+                TempPath = TargetPath + ".part";
+
             WebDownloadItem Item = new()
             {
                 Engine = WebEngineType.Trident,
@@ -1003,42 +1016,122 @@ namespace SLBr.WebView
                 Url = Url,
                 FileName = Path.GetFileName(TargetPath),
                 FullPath = TargetPath,
-                State = WebDownloadState.InProgress
+                TempPath = TempPath,
+                State = WebDownloadState.InProgress,
+                Interruptible = true
+            };
+
+            CancellationTokenSource _CancellationTokenSource = new();
+            ManualResetEventSlim PauseEvent = new(true);
+
+            Item.Pause = () =>
+            {
+                if (Item.State == WebDownloadState.InProgress)
+                {
+                    Item.State = WebDownloadState.Paused;
+                    PauseEvent.Reset();
+                    Updated(Item);
+                }
+            };
+
+            Item.Resume = () =>
+            {
+                if (Item.State == WebDownloadState.Paused || Item.State == WebDownloadState.Interrupted)
+                {
+                    Item.State = WebDownloadState.InProgress;
+                    PauseEvent.Set();
+                    Updated(Item);
+                }
+            };
+
+            Item.Cancel = () =>
+            {
+                if (Item.State == WebDownloadState.InProgress || Item.State == WebDownloadState.Paused || Item.State == WebDownloadState.Interrupted)
+                {
+                    Item.State = WebDownloadState.Canceled;
+                    _CancellationTokenSource.Cancel();
+                }
             };
 
             Started(Item);
 
             try
             {
-                //TODO: Implement pause & resume functionality.
-                using HttpResponseMessage Response = await DownloadHttpClient.Value.GetAsync(Url, HttpCompletionOption.ResponseHeadersRead);
+                long ExistingLength = 0;
+                FileMode FileMode = FileMode.Create;
 
-                Response.EnsureSuccessStatusCode();
-                Item.TotalBytes = Response.Content.Headers.ContentLength ?? -1;
+                if (File.Exists(TempPath))
+                {
+                    ExistingLength = new FileInfo(TempPath).Length;
+                    if (ExistingLength > 0)
+                    {
+                        FileMode = FileMode.Append;
+                        Item.ReceivedBytes = ExistingLength;
+                    }
+                }
 
-                await using FileStream _FileStream = new(TargetPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                await using var Stream = await Response.Content.ReadAsStreamAsync();
+                using HttpRequestMessage Request = new(HttpMethod.Get, Url);
+
+                if (ExistingLength > 0)
+                    Request.Headers.Range = new RangeHeaderValue(ExistingLength, null);
+
+                using HttpResponseMessage Response = await DownloadHttpClient.Value.SendAsync(Request, HttpCompletionOption.ResponseHeadersRead, _CancellationTokenSource.Token);
+
+                if (Response.StatusCode == HttpStatusCode.PartialContent)
+                    Item.TotalBytes = (Response.Content.Headers.ContentLength ?? 0) + ExistingLength;
+                else
+                {
+                    Response.EnsureSuccessStatusCode();
+                    Item.TotalBytes = Response.Content.Headers.ContentLength ?? -1;
+                    FileMode = FileMode.Create;
+                    Item.ReceivedBytes = 0;
+                }
+
+                await using FileStream _FileStream = new(TempPath, FileMode, FileAccess.Write, FileShare.None);
+                await using Stream _Stream = await Response.Content.ReadAsStreamAsync(_CancellationTokenSource.Token);
 
                 var Buffer = new byte[8192];
                 int Read;
-                while ((Read = await Stream.ReadAsync(Buffer)) > 0)
+
+                while (true)
                 {
-                    await _FileStream.WriteAsync(Buffer.AsMemory(0, Read));
+                    _CancellationTokenSource.Token.ThrowIfCancellationRequested();
+                    PauseEvent.Wait(_CancellationTokenSource.Token);
+
+                    Read = await _Stream.ReadAsync(Buffer, _CancellationTokenSource.Token);
+                    if (Read <= 0) break;
+
+                    await _FileStream.WriteAsync(Buffer.AsMemory(0, Read), _CancellationTokenSource.Token);
                     Item.ReceivedBytes += Read;
                     Updated(Item);
                 }
 
                 Item.State = WebDownloadState.Completed;
+                Item.EndTime = DateTime.Now;
                 Completed(Item);
             }
+            /*catch (OperationCanceledException)
+            {
+                Item.State = WebDownloadState.Canceled;
+                Completed(Item);
+            }*/
             catch
             {
                 Item.State = WebDownloadState.Canceled;
                 Completed(Item);
             }
+            finally
+            {
+                PauseEvent.Dispose();
+                _CancellationTokenSource.Dispose();
+
+                Item.Pause = null;
+                Item.Resume = null;
+                Item.Cancel = null;
+            }
         }
 
-        public void WriteDownload(byte[] Data, string? TargetPath, bool ShowDialog, string? DialogFilter = null)
+        public void WriteDownload(byte[] Data, string TargetPath, bool ShowDialog, string? DialogFilter = null)
         {
             if (ShowDialog)
             {
@@ -1054,6 +1147,13 @@ namespace SLBr.WebView
                 else
                     return;
             }
+
+            string TempPath;
+            if (Path.GetExtension(TargetPath) == ".crx")
+                TempPath = TargetPath;
+            else
+                TempPath = TargetPath + ".part";
+
             WebDownloadItem Item = new()
             {
                 Engine = WebEngineType.Trident,
@@ -1061,19 +1161,21 @@ namespace SLBr.WebView
                 Url = string.Empty,
                 FileName = Path.GetFileName(TargetPath),
                 FullPath = TargetPath,
+                TempPath = TempPath,
                 State = WebDownloadState.InProgress,
                 TotalBytes = Data.Length,
-                ReceivedBytes = Data.Length
+                ReceivedBytes = Data.Length,
+                Interruptible = false
             };
             Started(Item);
             if (Data != null)
             {
                 try
                 {
-                    string? _Directory = Path.GetDirectoryName(TargetPath);
+                    string? _Directory = Path.GetDirectoryName(TempPath);
                     if (!Directory.Exists(_Directory))
                         Directory.CreateDirectory(_Directory);
-                    File.WriteAllBytes(TargetPath, Data);
+                    File.WriteAllBytes(TempPath, Data);
                     Item.State = WebDownloadState.Completed;
                 }
                 catch
@@ -1460,7 +1562,10 @@ namespace SLBr.WebView
             WebAppInstallation = 1 << 22,
             WindowManagement = 1 << 23,
             FileSystemAccess = 1 << 24,
-            LocalNetworkAccess = 1 << 25
+            LocalNetworkAccess = 1 << 25,
+            LocalNetwork = 1 << 26,
+            LoopbackNetwork = 1 << 27,
+            Sensors = 1 << 28,
         }
 
         public bool OnShowPermissionPrompt(IWebBrowser chromiumWebBrowser, IBrowser browser, ulong promptId, string requestingOrigin, PermissionRequestType requestedPermissions, IPermissionPromptCallback callback)
@@ -1534,7 +1639,8 @@ namespace SLBr.WebView
                     FullPath = PreferredPath,
                     TempPath = TempPath,
                     TotalBytes = downloadItem.TotalBytes,
-                    State = WebDownloadState.InProgress
+                    State = WebDownloadState.InProgress,
+                    Interruptible = true
                 };
 
                 WebDownloadItems[downloadItem.Id] = Item;

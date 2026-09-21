@@ -134,7 +134,6 @@ namespace SLBr.Handlers
         }
         private static string SBv4Response(byte[] LocalHash, string Endpoint)
         {
-            //TODO: Investigate Yandex clientId & clientVersion.
             string Payload = $@"{{
     ""client"":{{""clientId"":""{SECRETS.GOOGLE_DEFAULT_CLIENT_ID}"",""clientVersion"":""1.0.0""}},
     ""threatInfo"":{{

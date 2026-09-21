@@ -1154,8 +1154,16 @@ namespace SLBr
                         };
                         _Entry.Open = Visibility.Collapsed;
                         _Entry.Stop = Visibility.Visible;
-                        _Entry.Resume = Visibility.Visible;
-                        _Entry.Pause = Visibility.Collapsed;
+                        if (_Entry.Source.Interruptible)
+                        {
+                            _Entry.Resume = Visibility.Visible;
+                            _Entry.Pause = Visibility.Collapsed;
+                        }
+                        else
+                        {
+                            _Entry.Resume = Visibility.Collapsed;
+                            _Entry.Pause = Visibility.Collapsed;
+                        }
                         _Entry.Progress = Visibility.Collapsed;
                     }
                     else
@@ -1193,8 +1201,16 @@ namespace SLBr
                         }
                         _Entry.Open = Visibility.Collapsed;
                         _Entry.Stop = Visibility.Visible;
-                        _Entry.Resume = Visibility.Collapsed;
-                        _Entry.Pause = Visibility.Visible;
+                        if (_Entry.Source.Interruptible)
+                        {
+                            _Entry.Resume = Visibility.Collapsed;
+                            _Entry.Pause = Visibility.Visible;
+                        }
+                        else
+                        {
+                            _Entry.Resume = Visibility.Collapsed;
+                            _Entry.Pause = Visibility.Collapsed;
+                        }
                         _Entry.Progress = Visibility.Visible;
                     }
                 }

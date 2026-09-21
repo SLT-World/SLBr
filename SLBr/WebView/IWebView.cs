@@ -408,6 +408,7 @@ namespace SLBr.WebView
         public Action? Pause { get; set; }
         public Action? Resume { get; set; }
         public Action? Cancel { get; set; }
+        public bool Interruptible { get; set; }
 
         public DateTime? CalculatedEndTime { get; set; }
         public DateTime LastCheckTime = DateTime.Now;
@@ -629,6 +630,9 @@ namespace SLBr.WebView
         LocalNetworkAccess = 1 << 25,
         RecordAudio = 1 << 26,
         ScreenShare = 1 << 27,
+        LocalNetwork = 1 << 28,
+        LoopbackNetwork = 1 << 29,
+        Sensors = 1 << 30,
     }
 
     public enum WebPermissionState
@@ -1143,6 +1147,15 @@ namespace SLBr.WebView
             if (Kind.HasFlag(FixedPermissionRequestType.LocalNetworkAccess))
                 Flags |= WebPermissionKind.LocalNetworkAccess;
 
+            if (Kind.HasFlag(FixedPermissionRequestType.LocalNetwork))
+                Flags |= WebPermissionKind.LocalNetwork;
+
+            if (Kind.HasFlag(FixedPermissionRequestType.LoopbackNetwork))
+                Flags |= WebPermissionKind.LoopbackNetwork;
+
+            if (Kind.HasFlag(FixedPermissionRequestType.Sensors))
+                Flags |= WebPermissionKind.Sensors;
+
             return Flags;
         }
         public static WebPermissionKind ToWebPermission(this CoreWebView2PermissionKind Kind)
@@ -1181,10 +1194,13 @@ namespace SLBr.WebView
                 case CoreWebView2PermissionKind.WindowManagement:
                     Flags |= WebPermissionKind.WindowManagement;
                     break;
+                case CoreWebView2PermissionKind.PersistentStorage:
+                    Flags |= WebPermissionKind.StorageAccess;
+                    break;
                 //case CoreWebView2PermissionKind.Autoplay:
                 //    return WebPermissionKind.Autoplay;
-                //case CoreWebView2PermissionKind.OtherSensors:
-                //    return WebPermissionKind.OtherSensors;
+                case CoreWebView2PermissionKind.OtherSensors:
+                    return WebPermissionKind.Sensors;
                 default:
                     return WebPermissionKind.None;
             }
@@ -2455,6 +2471,8 @@ namespace SLBr.WebView
             BrowserCore.LaunchingExternalUriScheme += Browser_LaunchingExternalUriScheme;
 
             BrowserCore.SourceChanged += Browser_SourceChanged;
+
+            BrowserCore.SaveFileSecurityCheckStarting += Browser_SaveFileSecurityCheckStarting;
             //BrowserCore.HistoryChanged += Browser_HistoryChanged;
 
             if (Settings.JavaScriptMessage)
@@ -2538,6 +2556,13 @@ namespace SLBr.WebView
             }
             catch { }
 #endif
+        }
+
+        //NOTE: Disabled in favour of SLBr download risk handler.
+        private void Browser_SaveFileSecurityCheckStarting(object? sender, CoreWebView2SaveFileSecurityCheckStartingEventArgs e)
+        {
+            //e.CancelSave = false;
+            e.SuppressDefaultPolicy = true;
         }
 
         private async void Browser_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -2962,7 +2987,8 @@ namespace SLBr.WebView
                     if (e.DownloadOperation.CanResume)
                         e.DownloadOperation.Resume();
                 },
-                Cancel = e.DownloadOperation.Cancel
+                Cancel = e.DownloadOperation.Cancel,
+                Interruptible = true
             };
 
             WebViewManager.DownloadManager.Started(Item);
@@ -3055,7 +3081,7 @@ namespace SLBr.WebView
             if (!WebViewManager.RuntimeSettings.PDFViewer && Utils.GetFileExtension(e.Uri) == ".pdf")
             {
                 e.Cancel = true;
-                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(e.Uri, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
+                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(e.Uri, null, WebViewManager.RuntimeSettings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
                 return;
             }
             NavigationCancellationTokenSource?.Cancel();
@@ -3427,7 +3453,7 @@ namespace SLBr.WebView
         public event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         public event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, string.Empty);
+        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, null, WebViewManager.RuntimeSettings.DownloadPrompt, null);
 
         public void ExecuteScript(string Script)
         {
@@ -3882,10 +3908,10 @@ namespace SLBr.WebView
                 e.Cancel = true;
                 return;
             }
-            if (!WebViewManager.RuntimeSettings.PDFViewer && e.Uri != null && e.Uri.Segments[e.Uri.Segments.Length - 1].EndsWith(".pdf"))
+            if (!WebViewManager.RuntimeSettings.PDFViewer && e.Uri != null && e.Uri.Segments[^1].EndsWith(".pdf"))
             {
                 e.Cancel = true;
-                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
+                Browser?.Dispatcher.BeginInvoke(() => WebViewManager.DownloadManager.StartDownloadAsync(Url, null, WebViewManager.RuntimeSettings.DownloadPrompt, "PDF File (*.pdf)|*.pdf"));
                 return;
             }
             if (Utils.IsCustomScheme(Url))
@@ -4108,7 +4134,7 @@ namespace SLBr.WebView
         public event EventHandler<ExternalProtocolEventArgs> ExternalProtocolRequested;
         public event EventHandler<NavigationErrorEventArgs> NavigationError;
 
-        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, string.Empty, WebViewManager.RuntimeSettings.DownloadPrompt, string.Empty);
+        public void Download(string Url) => WebViewManager.DownloadManager.StartDownloadAsync(Url, null, WebViewManager.RuntimeSettings.DownloadPrompt, null);
 
         public void ExecuteScript(string Script) { try { Browser?.InvokeScript("execScript", [Script, "JavaScript"]); } catch { } }
 
