@@ -2427,7 +2427,7 @@ namespace SLBr.Pages
                 //https://github.com/brave/brave-core/blob/master/components/brave_wayback_machine/brave_wayback_machine_tab_helper.cc
                 if (WaybackInfoBar == null && StatusCode is 404 or 408 or 410 or 451 or 500 or 502 or 503 or 504 or 509 or 520 or 521 or 523 or 524 or 525 or 526 && Host != "web.archive.org" && bool.Parse(App.Instance.GlobalSave.Get("WaybackInfoBar")))
                 {
-                    Dispatcher.BeginInvoke(async () =>
+                    _ = Dispatcher.BeginInvoke(async () =>
                     {
                         WaybackInfoBar = new()
                         {
@@ -2443,6 +2443,7 @@ namespace SLBr.Pages
                                     try
                                     {
                                         //TODO: Implement http://web.archive.org/cdx/search/cdx?url=archive.org&output=json&limit=1 fallback.
+                                        //https://github.com/internetarchive/wayback/blob/master/wayback-cdx-server/README.md
                                         string Json = await App.MiniHttpClient.GetStringAsync($"https://brave-api.archive.org/wayback/available?url={Address}");
                                         CloseInfoBar(WaybackInfoBar);
                                         using JsonDocument Document = JsonDocument.Parse(Json);
